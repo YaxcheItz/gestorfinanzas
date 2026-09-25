@@ -15,5 +15,8 @@ public interface CategoriaRepository extends JpaRepository<Categoria, Long> {
     @Query("SELECT c FROM Categoria c WHERE c.usuario.id = :usuarioId OR c.usuario IS NULL")
     List<Categoria> findDisponiblesParaUsuario(@Param("usuarioId") Long usuarioId);
 
+    @Query("SELECT c FROM Categoria c WHERE c.id = :id AND (c.usuario.id = :usuarioId OR c.usuario IS NULL)")
+    java.util.Optional<Categoria> findAccessibleById(@Param("id") Long id, @Param("usuarioId") Long usuarioId);
+
     List<Categoria> findByUsuarioIdAndTipo(Long usuarioId, TipoTransaccion tipo);
 }
