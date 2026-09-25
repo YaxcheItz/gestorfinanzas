@@ -7,6 +7,9 @@ import {
   Cuenta,
   CuentaPayload,
   DashboardResumen,
+  Presupuesto,
+  PresupuestoPayload,
+  PresupuestoResumen,
   Transaccion,
   TransaccionPayload
 } from '../models/finanzas.models';
@@ -56,4 +59,21 @@ export class FinanzasService {
     if (anio) params = params.set('anio', anio);
     return this.http.get<ApiResponse<DashboardResumen>>(`${this.baseUrl}/dashboard/resumen`, { params });
   }
+
+  // --- Presupuestos ---
+  getPresupuestos(mes?: number, anio?: number): Observable<ApiResponse<PresupuestoResumen>> {
+    let params = new HttpParams();
+    if (mes) params = params.set('mes', mes);
+    if (anio) params = params.set('anio', anio);
+    return this.http.get<ApiResponse<PresupuestoResumen>>(`${this.baseUrl}/presupuestos`, { params });
+  }
+
+  guardarPresupuesto(payload: PresupuestoPayload): Observable<ApiResponse<Presupuesto>> {
+    return this.http.post<ApiResponse<Presupuesto>>(`${this.baseUrl}/presupuestos`, payload);
+  }
+
+  eliminarPresupuesto(id: number): Observable<ApiResponse<void>> {
+    return this.http.delete<ApiResponse<void>>(`${this.baseUrl}/presupuestos/${id}`);
+  }
 }
+

@@ -11,4 +11,5 @@ import java.util.Optional;
 public interface PresupuestoRepository extends JpaRepository<Presupuesto, Long> {
     List<Presupuesto> findByUsuarioIdAndMesAndAnio(Long usuarioId, int mes, int anio);
     Optional<Presupuesto> findByUsuarioIdAndCategoriaIdAndMesAndAnio(Long usuarioId, Long categoriaId, int mes, int anio);
+    Optional<Presupuesto> findByIdAndUsuarioId(Long id, Long usuarioId);
 }
