@@ -7,10 +7,12 @@ import {
   Cuenta,
   CuentaPayload,
   DashboardResumen,
+  PageResponse,
   Presupuesto,
   PresupuestoPayload,
   PresupuestoResumen,
   Transaccion,
+  TransaccionFiltro,
   TransaccionPayload
 } from '../models/finanzas.models';
 
@@ -42,6 +44,23 @@ export class FinanzasService {
   // --- Transacciones ---
   getTransaccionesRecientes(): Observable<ApiResponse<Transaccion[]>> {
     return this.http.get<ApiResponse<Transaccion[]>>(`${this.baseUrl}/transacciones/recientes`);
+  }
+
+  getTransaccionesPaginadas(filtros?: TransaccionFiltro, page = 0, size = 20): Observable<ApiResponse<PageResponse<Transaccion>>> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString());
+
+    if (filtros) {
+      if (filtros.tipo) params = params.set('tipo', filtros.tipo);
+      if (filtros.cuentaId != null) params = params.set('cuentaId', filtros.cuentaId.toString());
+      if (filtros.categoriaId != null) params = params.set('categoriaId', filtros.categoriaId.toString());
+      if (filtros.fechaInicio) params = params.set('fechaInicio', filtros.fechaInicio);
+      if (filtros.fechaFin) params = params.set('fechaFin', filtros.fechaFin);
+      if (filtros.busqueda && filtros.busqueda.trim()) params = params.set('busqueda', filtros.busqueda.trim());
+    }
+
+    return this.http.get<ApiResponse<PageResponse<Transaccion>>>(`${this.baseUrl}/transacciones`, { params });
   }
 
   crearTransaccion(payload: TransaccionPayload): Observable<ApiResponse<Transaccion>> {
