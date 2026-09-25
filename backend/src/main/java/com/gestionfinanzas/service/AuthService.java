@@ -26,6 +26,7 @@ public class AuthService {
 
     private final UsuarioRepository usuarioRepository;
     private final CategoriaRepository categoriaRepository;
+    private final CuentaService cuentaService;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final AuthenticationManager authenticationManager;
@@ -48,6 +49,9 @@ public class AuthService {
 
         // Sembrar categorías predeterminadas para el nuevo usuario
         crearCategoriasPredeterminadas(guardado);
+
+        // Sembrar cuenta predeterminada para evitar que el usuario quede sin cuentas iniciales
+        cuentaService.crearCuentaPredeterminada(guardado);
 
         String token = jwtUtil.generarToken(guardado.getEmail(), guardado.getId());
         return AuthResponse.of(token, guardado.getId(), guardado.getNombre(), guardado.getEmail());
