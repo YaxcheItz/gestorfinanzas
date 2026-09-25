@@ -69,3 +69,38 @@ export interface DashboardResumen {
   anio: number;
   ultimosMovimientos: Transaccion[];
 }
+
+export type EstadoPresupuesto = 'NORMAL' | 'ALERTA' | 'EXCEDIDO';
+
+export interface Presupuesto {
+  id: number;
+  categoriaId: number;
+  categoriaNombre: string;
+  categoriaIcono?: string | null;
+  categoriaColor?: string | null;
+  montoLimite: number;
+  montoGastado: number;
+  montoDisponible: number;
+  porcentajeConsumido: number;
+  mes: number;
+  anio: number;
+  estado: EstadoPresupuesto;
+}
+
+export interface PresupuestoPayload {
+  categoriaId: number;
+  montoLimite: number;
+  mes: number;
+  anio: number;
+}
+
+export interface PresupuestoResumen {
+  mes: number;
+  anio: number;
+  totalPresupuestado: number;
+  totalGastado: number;
+  totalDisponible: number;
+  porcentajeConsumidoGlobal: number;
+  presupuestos: Presupuesto[];
+}
+
