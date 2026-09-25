@@ -1,5 +1,6 @@
 package com.gestionfinanzas.service;
 
+import com.gestionfinanzas.dto.request.TransaccionFiltroRequest;
 import com.gestionfinanzas.dto.request.TransaccionRequest;
 import com.gestionfinanzas.dto.response.TransaccionResponse;
 import com.gestionfinanzas.model.entity.Categoria;
@@ -11,9 +12,11 @@ import com.gestionfinanzas.repository.CategoriaRepository;
 import com.gestionfinanzas.repository.CuentaRepository;
 import com.gestionfinanzas.repository.TransaccionRepository;
 import com.gestionfinanzas.repository.UsuarioRepository;
+import com.gestionfinanzas.repository.specification.TransaccionSpecification;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -103,7 +106,13 @@ public class TransaccionService {
 
     @Transactional(readOnly = true)
     public Page<TransaccionResponse> listarPaginadas(Long usuarioId, Pageable pageable) {
-        return transaccionRepository.findByUsuarioIdOrderByFechaDesc(usuarioId, pageable)
+        return listarConFiltros(usuarioId, null, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<TransaccionResponse> listarConFiltros(Long usuarioId, TransaccionFiltroRequest filtro, Pageable pageable) {
+        Specification<Transaccion> spec = TransaccionSpecification.conFiltros(usuarioId, filtro);
+        return transaccionRepository.findAll(spec, pageable)
                 .map(TransaccionResponse::fromEntity);
     }
 

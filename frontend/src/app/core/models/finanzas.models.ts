@@ -104,3 +104,24 @@ export interface PresupuestoResumen {
   presupuestos: Presupuesto[];
 }
 
+export interface TransaccionFiltro {
+  tipo?: TipoTransaccion | '';
+  cuentaId?: number | null;
+  categoriaId?: number | null;
+  fechaInicio?: string | null;
+  fechaFin?: string | null;
+  busqueda?: string;
+}
+
+export interface PageResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+  first: boolean;
+  last: boolean;
+  empty: boolean;
+}
+
+

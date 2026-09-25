@@ -1,8 +1,10 @@
 package com.gestionfinanzas.controller;
 
+import com.gestionfinanzas.dto.request.TransaccionFiltroRequest;
 import com.gestionfinanzas.dto.request.TransaccionRequest;
 import com.gestionfinanzas.dto.response.ApiResponse;
 import com.gestionfinanzas.dto.response.TransaccionResponse;
+import com.gestionfinanzas.model.enums.TipoTransaccion;
 import com.gestionfinanzas.security.CustomUserDetails;
 import com.gestionfinanzas.service.TransaccionService;
 import jakarta.validation.Valid;
@@ -10,11 +12,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -46,10 +50,17 @@ public class TransaccionController {
     public ResponseEntity<ApiResponse<Page<TransaccionResponse>>> listarPaginadas(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) TipoTransaccion tipo,
+            @RequestParam(required = false) Long cuentaId,
+            @RequestParam(required = false) Long categoriaId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+            @RequestParam(required = false) String busqueda,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "fecha", "id"));
-        Page<TransaccionResponse> resultado = transaccionService.listarPaginadas(userDetails.getId(), pageRequest);
+        TransaccionFiltroRequest filtro = new TransaccionFiltroRequest(tipo, cuentaId, categoriaId, fechaInicio, fechaFin, busqueda);
+        Page<TransaccionResponse> resultado = transaccionService.listarConFiltros(userDetails.getId(), filtro, pageRequest);
         return ResponseEntity.ok(ApiResponse.ok("Transacciones obtenidas correctamente", resultado));
     }
 
