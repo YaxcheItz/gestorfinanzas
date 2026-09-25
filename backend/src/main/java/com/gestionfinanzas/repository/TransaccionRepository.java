@@ -35,4 +35,15 @@ public interface TransaccionRepository extends JpaRepository<Transaccion, Long> 
             @Param("inicio") LocalDate inicio,
             @Param("fin") LocalDate fin
     );
+
+    @Query("SELECT COALESCE(SUM(t.monto), 0) FROM Transaccion t " +
+           "WHERE t.usuario.id = :usuarioId AND t.categoria.id = :categoriaId " +
+           "AND t.tipo = com.gestionfinanzas.model.enums.TipoTransaccion.GASTO " +
+           "AND t.fecha BETWEEN :inicio AND :fin")
+    BigDecimal sumGastosPorUsuarioYCategoriaYPeriodo(
+            @Param("usuarioId") Long usuarioId,
+            @Param("categoriaId") Long categoriaId,
+            @Param("inicio") LocalDate inicio,
+            @Param("fin") LocalDate fin
+    );
 }
