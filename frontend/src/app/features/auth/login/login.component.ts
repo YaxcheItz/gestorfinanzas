@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
@@ -21,6 +21,15 @@ import { AuthService } from '../../../core/services/auth.service';
           <h1 class="text-2xl font-bold tracking-tight text-slate-900">Bienvenido de nuevo</h1>
           <p class="text-sm text-slate-500">Ingresa a tu gestor de finanzas personales</p>
         </div>
+
+        @if (sessionExpiredWarning()) {
+          <div class="bg-amber-50 border border-amber-200 text-amber-800 text-sm px-4 py-3 rounded-xl flex items-start space-x-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0 text-amber-500 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+            </svg>
+            <span>Tu sesión ha expirado. Ingresa nuevamente para continuar.</span>
+          </div>
+        }
 
         @if (errorMessage()) {
           <div class="bg-rose-50 border border-rose-200 text-rose-700 text-sm px-4 py-3 rounded-xl flex items-start space-x-2">
@@ -90,11 +99,22 @@ import { AuthService } from '../../../core/services/auth.service';
 export class LoginComponent {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   email = '';
   password = '';
   loading = signal(false);
   errorMessage = signal<string | null>(null);
+  sessionExpiredWarning = signal<boolean>(false);
+
+  constructor() {
+    // Detectar si viene desde un redirect por sesión expirada
+    this.route.queryParams.subscribe(params => {
+      if (params['sessionExpired'] === 'true') {
+        this.sessionExpiredWarning.set(true);
+      }
+    });
+  }
 
   onSubmit(): void {
     if (!this.email || !this.password) {
@@ -104,6 +124,7 @@ export class LoginComponent {
 
     this.loading.set(true);
     this.errorMessage.set(null);
+    this.sessionExpiredWarning.set(false);
 
     this.authService.login({ email: this.email, password: this.password }).subscribe({
       next: () => {
