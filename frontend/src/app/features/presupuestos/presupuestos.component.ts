@@ -2,6 +2,8 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FinanzasService } from '../../core/services/finanzas.service';
+import { ToastService } from '../../core/services/toast.service';
+import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import {
   Categoria,
   Presupuesto,
@@ -402,6 +404,8 @@ import {
 })
 export class PresupuestosComponent implements OnInit {
   private readonly finanzasService = inject(FinanzasService);
+  private readonly toastService = inject(ToastService);
+  private readonly confirmDialogService = inject(ConfirmDialogService);
 
   readonly meses = [
     { numero: 1, nombre: 'Enero' },
@@ -538,14 +542,21 @@ export class PresupuestosComponent implements OnInit {
     });
   }
 
-  eliminarPresupuesto(id: number): void {
-    if (confirm('¿Deseas eliminar este presupuesto para el mes actual?')) {
+  async eliminarPresupuesto(id: number): Promise<void> {
+    const confirmed = await this.confirmDialogService.confirm({
+      title: 'Eliminar Presupuesto',
+      message: '¿Deseas eliminar este presupuesto para el mes actual?',
+      type: 'warning'
+    });
+
+    if (confirmed) {
       this.finanzasService.eliminarPresupuesto(id).subscribe({
         next: () => {
           this.cargarPresupuestos();
+          this.toastService.success('Presupuesto eliminado correctamente');
         },
         error: (err) => {
-          alert('Error al eliminar presupuesto: ' + (err.error?.message || 'Desconocido'));
+          this.toastService.error('Error al eliminar presupuesto: ' + (err.error?.message || 'Desconocido'));
         }
       });
     }
