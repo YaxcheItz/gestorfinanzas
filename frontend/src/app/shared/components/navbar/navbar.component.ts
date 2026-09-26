@@ -40,6 +40,10 @@ import { AuthService } from '../../../core/services/auth.service';
                  class="px-3 py-2 rounded-lg text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors">
                 Presupuestos
               </a>
+              <a routerLink="/cuentas" routerLinkActive="bg-slate-100 text-slate-900 font-semibold"
+                 class="px-3 py-2 rounded-lg text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors">
+                Cuentas
+              </a>
             </nav>
 
             <!-- User Menu & Logout -->
