@@ -8,6 +8,7 @@ import { ConfirmDialogService } from '../../core/services/confirm-dialog.service
 import {
   Categoria,
   Cuenta,
+  DashboardAnalitica,
   DashboardResumen,
   TipoTransaccion,
   TransaccionPayload
@@ -155,6 +156,106 @@ import {
         </div>
 
       </div>
+
+      <!-- Analítica de gastos e ingresos -->
+      <section aria-label="Analítica financiera" class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <article class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
+          <div class="mb-6">
+            <h2 class="text-base font-bold text-slate-900">Gastos por categoría</h2>
+            <p class="text-xs text-slate-500 mt-1">Distribución del mes actual</p>
+          </div>
+
+          @if (analiticaLoading()) {
+            <div class="h-52 flex items-center justify-center text-sm text-slate-400">
+              <div class="w-5 h-5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin mr-2"></div>
+              Cargando analítica...
+            </div>
+          } @else if (analiticaError()) {
+            <div class="h-52 flex flex-col items-center justify-center gap-2 text-center">
+              <p class="text-sm text-rose-600">{{ analiticaError() }}</p>
+              <button type="button" (click)="cargarAnalitica()" class="text-xs font-semibold text-emerald-700 hover:underline cursor-pointer">
+                Reintentar
+              </button>
+            </div>
+          } @else if (gastosTotales() === 0) {
+            <div class="h-52 flex items-center justify-center text-sm text-slate-400">
+              No hay gastos registrados este mes.
+            </div>
+          } @else {
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-7">
+              <div
+                class="w-44 h-44 rounded-full flex items-center justify-center shrink-0"
+                role="img"
+                [attr.aria-label]="'Distribución de gastos por categoría. Total: $' + (gastosTotales() | number:'1.2-2')"
+                [style.background]="donutGradient()">
+                <div class="w-28 h-28 rounded-full bg-white flex flex-col items-center justify-center text-center">
+                  <span class="text-[10px] uppercase tracking-wide text-slate-400">Total</span>
+                  <span class="text-sm font-bold text-slate-900">\${{ gastosTotales() | number:'1.0-0' }}</span>
+                </div>
+              </div>
+              <ul class="w-full space-y-3">
+                @for (categoria of analitica()?.gastosPorCategoria; track categoria.categoriaId ?? categoria.categoriaNombre; let i = $index) {
+                  <li class="flex items-center justify-between gap-3 text-xs">
+                    <span class="flex items-center gap-2 min-w-0 text-slate-600">
+                      <span class="w-2.5 h-2.5 rounded-full shrink-0" [style.background-color]="colorCategoria(categoria, i)"></span>
+                      <span class="truncate">{{ categoria.categoriaNombre }}</span>
+                    </span>
+                    <span class="font-semibold text-slate-800 whitespace-nowrap">
+                      \${{ categoria.monto | number:'1.2-2' }}
+                      <span class="font-normal text-slate-400">({{ categoria.monto / gastosTotales() | percent:'1.0-0' }})</span>
+                    </span>
+                  </li>
+                }
+              </ul>
+            </div>
+          }
+        </article>
+
+        <article class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
+          <div class="mb-6">
+            <h2 class="text-base font-bold text-slate-900">Ingresos vs. gastos</h2>
+            <p class="text-xs text-slate-500 mt-1">Comparativo de los últimos seis meses</p>
+          </div>
+
+          @if (analiticaLoading()) {
+            <div class="h-52 flex items-center justify-center text-sm text-slate-400">
+              <div class="w-5 h-5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin mr-2"></div>
+              Cargando analítica...
+            </div>
+          } @else if (analiticaError()) {
+            <div class="h-52 flex flex-col items-center justify-center gap-2 text-center">
+              <p class="text-sm text-rose-600">{{ analiticaError() }}</p>
+              <button type="button" (click)="cargarAnalitica()" class="text-xs font-semibold text-emerald-700 hover:underline cursor-pointer">
+                Reintentar
+              </button>
+            </div>
+          } @else {
+            <div class="flex items-center justify-center gap-5 text-xs text-slate-500 mb-3">
+              <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-sm bg-emerald-500"></span>Ingresos</span>
+              <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-sm bg-rose-500"></span>Gastos</span>
+            </div>
+            <div class="h-44 flex items-end justify-around gap-2 border-b border-slate-100 px-1">
+              @for (mes of barrasMensuales(); track mes.anio + '-' + mes.mes) {
+                <div class="flex-1 h-full flex flex-col justify-end items-center min-w-0" [attr.aria-label]="mes.etiqueta + ': ingresos $' + mes.ingresos + ', gastos $' + mes.gastos">
+                  <div class="w-full max-w-12 flex items-end justify-center gap-1 h-full">
+                    <div
+                      class="w-3 sm:w-4 bg-emerald-500 rounded-t-sm transition-[height]"
+                      [style.height.%]="mes.ingresosAltura"
+                      [title]="'Ingresos: $' + (mes.ingresos | number:'1.2-2')">
+                    </div>
+                    <div
+                      class="w-3 sm:w-4 bg-rose-500 rounded-t-sm transition-[height]"
+                      [style.height.%]="mes.gastosAltura"
+                      [title]="'Gastos: $' + (mes.gastos | number:'1.2-2')">
+                    </div>
+                  </div>
+                  <span class="mt-2 text-[10px] sm:text-xs text-slate-500 capitalize">{{ mes.etiqueta }}</span>
+                </div>
+              }
+            </div>
+          }
+        </article>
+      </section>
 
       <!-- Banner de Inteligencia Artificial (Spring AI) -->
       <div class="bg-linear-to-r from-emerald-900 to-slate-900 text-white p-6 rounded-2xl shadow-lg relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -527,6 +628,9 @@ export class DashboardComponent implements OnInit {
   loading = signal<boolean>(true);
   error = signal<string | null>(null);
   resumen = signal<DashboardResumen | null>(null);
+  analiticaLoading = signal<boolean>(true);
+  analiticaError = signal<string | null>(null);
+  analitica = signal<DashboardAnalitica | null>(null);
 
   cuentas = signal<Cuenta[]>([]);
   categorias = signal<Categoria[]>([]);
@@ -551,6 +655,39 @@ export class DashboardComponent implements OnInit {
     return this.categorias().filter(c => c.tipo === tipo);
   });
 
+  gastosTotales = computed(() =>
+    this.analitica()?.gastosPorCategoria.reduce((total, categoria) => total + categoria.monto, 0) ?? 0
+  );
+
+  barrasMensuales = computed(() => {
+    const meses = this.analitica()?.ultimosSeisMeses ?? [];
+    const maximo = Math.max(1, ...meses.flatMap(mes => [mes.ingresos, mes.gastos]));
+
+    return meses.map(mes => ({
+      ...mes,
+      etiqueta: new Date(mes.anio, mes.mes - 1, 1)
+        .toLocaleDateString('es-MX', { month: 'short' })
+        .replace('.', ''),
+      ingresosAltura: mes.ingresos > 0 ? mes.ingresos / maximo * 100 : 0,
+      gastosAltura: mes.gastos > 0 ? mes.gastos / maximo * 100 : 0
+    }));
+  });
+
+  donutGradient = computed(() => {
+    const categorias = this.analitica()?.gastosPorCategoria ?? [];
+    const total = this.gastosTotales();
+    if (total <= 0) return 'conic-gradient(#e2e8f0 0% 100%)';
+
+    let inicio = 0;
+    const segmentos = categorias.map((categoria, indice) => {
+      const fin = inicio + categoria.monto / total * 100;
+      const segmento = `${this.colorCategoria(categoria, indice)} ${inicio}% ${fin}%`;
+      inicio = fin;
+      return segmento;
+    });
+    return `conic-gradient(${segmentos.join(', ')})`;
+  });
+
   ngOnInit(): void {
     this.cargarDashboard();
     this.cargarCuentasYCategorias();
@@ -559,6 +696,7 @@ export class DashboardComponent implements OnInit {
   cargarDashboard(): void {
     this.loading.set(true);
     this.error.set(null);
+    this.cargarAnalitica();
 
     this.finanzasService.getDashboardResumen().subscribe({
       next: (res) => {
@@ -572,6 +710,33 @@ export class DashboardComponent implements OnInit {
         this.loading.set(false);
       }
     });
+  }
+
+  cargarAnalitica(): void {
+    this.analiticaLoading.set(true);
+    this.analiticaError.set(null);
+
+    this.finanzasService.getDashboardAnalitica().subscribe({
+      next: (res) => {
+        if (res.success && res.data) {
+          this.analitica.set(res.data);
+        } else {
+          this.analiticaError.set('No se pudo cargar la analítica financiera.');
+        }
+        this.analiticaLoading.set(false);
+      },
+      error: () => {
+        this.analiticaError.set('No se pudo cargar la analítica financiera.');
+        this.analiticaLoading.set(false);
+      }
+    });
+  }
+
+  colorCategoria(categoria: DashboardAnalitica['gastosPorCategoria'][number], indice: number): string {
+    const color = categoria.categoriaColor;
+    return color && /^#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?$/.test(color)
+      ? color
+      : ['#10b981', '#3b82f6', '#f59e0b', '#f43f5e', '#8b5cf6', '#06b6d4', '#64748b'][indice % 7];
   }
 
   cargarCuentasYCategorias(): void {
