@@ -3,5 +3,6 @@ package com.gestionfinanzas.model.enums;
 public enum TipoTransaccion {
     INGRESO,
     GASTO,
-    TRANSFERENCIA
+    TRANSFERENCIA,
+    SALDO_INICIAL
 }
