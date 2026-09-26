@@ -49,6 +49,15 @@ public class TransaccionService {
             throw new IllegalArgumentException("No se pueden registrar transacciones en una cuenta inactiva");
         }
 
+        Categoria categoria = null;
+        if (request.categoriaId() != null) {
+            categoria = categoriaRepository.findAccessibleById(request.categoriaId(), usuarioId)
+                    .orElseThrow(() -> new IllegalArgumentException("Categoría no encontrada o no accesible"));
+            if (categoria.getTipo() != request.tipo()) {
+                throw new IllegalArgumentException("La categoría debe corresponder al tipo de transacción");
+            }
+        }
+
         Cuenta cuentaDestino = null;
         BigDecimal montoDestino = null;
         BigDecimal tasaCambio = null;
@@ -97,12 +106,6 @@ public class TransaccionService {
         } else if (request.tipo() == TipoTransaccion.INGRESO) {
             cuentaOrigen.setSaldoActual(cuentaOrigen.getSaldoActual().add(request.monto()));
             cuentaRepository.save(cuentaOrigen);
-        }
-
-        Categoria categoria = null;
-        if (request.categoriaId() != null) {
-            categoria = categoriaRepository.findAccessibleById(request.categoriaId(), usuarioId)
-                    .orElseThrow(() -> new IllegalArgumentException("Categoría no encontrada o no accesible"));
         }
 
         Transaccion transaccion = Transaccion.builder()

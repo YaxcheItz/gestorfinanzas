@@ -7,6 +7,7 @@ import com.gestionfinanzas.dto.response.PresupuestoMonedaResumenResponse;
 import com.gestionfinanzas.model.entity.Categoria;
 import com.gestionfinanzas.model.entity.Presupuesto;
 import com.gestionfinanzas.model.entity.Usuario;
+import com.gestionfinanzas.model.enums.TipoTransaccion;
 import com.gestionfinanzas.repository.CategoriaRepository;
 import com.gestionfinanzas.repository.PresupuestoRepository;
 import com.gestionfinanzas.repository.TransaccionRepository;
@@ -43,12 +44,14 @@ public class PresupuestoService {
         );
 
         Presupuesto presupuesto;
+        Categoria categoria;
         if (existente.isPresent()) {
             presupuesto = existente.get();
+            categoria = presupuesto.getCategoria();
             presupuesto.setMontoLimite(request.montoLimite());
             presupuesto.setMoneda(normalizarMoneda(request.moneda()));
         } else {
-            Categoria categoria = categoriaRepository.findAccessibleById(request.categoriaId(), usuarioId)
+            categoria = categoriaRepository.findAccessibleById(request.categoriaId(), usuarioId)
                     .orElseThrow(() -> new IllegalArgumentException("Categoría no encontrada o no accesible"));
             presupuesto = Presupuesto.builder()
                     .usuario(usuario)
@@ -58,6 +61,9 @@ public class PresupuestoService {
                     .mes(request.mes())
                     .anio(request.anio())
                     .build();
+        }
+        if (categoria.getTipo() != TipoTransaccion.GASTO) {
+            throw new IllegalArgumentException("Los presupuestos solo pueden asignarse a categorías de gasto");
         }
 
         Presupuesto guardado = presupuestoRepository.save(presupuesto);
