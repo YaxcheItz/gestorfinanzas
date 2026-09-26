@@ -2,6 +2,8 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FinanzasService } from '../../core/services/finanzas.service';
+import { ToastService } from '../../core/services/toast.service';
+import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import {
   Categoria,
   Cuenta,
@@ -556,6 +558,8 @@ import {
 })
 export class TransaccionesComponent implements OnInit {
   private readonly finanzasService = inject(FinanzasService);
+  private readonly toastService = inject(ToastService);
+  private readonly confirmDialogService = inject(ConfirmDialogService);
 
   // Filtros Signals
   readonly filtroTipo = signal<TipoTransaccion | ''>('');
@@ -760,15 +764,22 @@ export class TransaccionesComponent implements OnInit {
     return Math.min((this.paginaActual() + 1) * this.tamanioPagina(), this.pageData()!.totalElements);
   }
 
-  eliminarMovimiento(id: number): void {
-    if (confirm('¿Eliminar este movimiento? Los saldos se recalcularán automáticamente.')) {
+  async eliminarMovimiento(id: number): Promise<void> {
+    const confirmed = await this.confirmDialogService.confirm({
+      title: 'Eliminar Movimiento',
+      message: '¿Eliminar este movimiento? Los saldos se recalcularán automáticamente.',
+      type: 'danger'
+    });
+
+    if (confirmed) {
       this.finanzasService.eliminarTransaccion(id).subscribe({
         next: () => {
           this.cargarTransacciones();
           this.cargarCuentasYCategorias();
+          this.toastService.success('Movimiento eliminado correctamente');
         },
         error: (err) => {
-          alert('Error al eliminar: ' + (err.error?.message || 'Desconocido'));
+          this.toastService.error('Error al eliminar: ' + (err.error?.message || 'Desconocido'));
         }
       });
     }
