@@ -70,6 +70,25 @@ export interface DashboardResumen {
   ultimosMovimientos: Transaccion[];
 }
 
+export interface DashboardGastoCategoria {
+  categoriaId: number | null;
+  categoriaNombre: string;
+  categoriaColor?: string | null;
+  monto: number;
+}
+
+export interface DashboardMes {
+  anio: number;
+  mes: number;
+  ingresos: number;
+  gastos: number;
+}
+
+export interface DashboardAnalitica {
+  gastosPorCategoria: DashboardGastoCategoria[];
+  ultimosSeisMeses: DashboardMes[];
+}
+
 export type EstadoPresupuesto = 'NORMAL' | 'ALERTA' | 'EXCEDIDO';
 
 export interface Presupuesto {
@@ -123,5 +142,4 @@ export interface PageResponse<T> {
   last: boolean;
   empty: boolean;
 }
-
 
