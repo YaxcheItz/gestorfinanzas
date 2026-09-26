@@ -6,5 +6,6 @@ public record DashboardGastoCategoriaResponse(
     Long categoriaId,
     String categoriaNombre,
     String categoriaColor,
-    BigDecimal monto
+    BigDecimal monto,
+    String moneda
 ) {}

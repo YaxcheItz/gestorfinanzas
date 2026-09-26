@@ -8,5 +8,6 @@ public record DashboardMesTipoTotal(
     int anio,
     int mes,
     TipoTransaccion tipo,
-    BigDecimal monto
+    BigDecimal monto,
+    String moneda
 ) {}

@@ -6,5 +6,6 @@ public record DashboardMesResponse(
     int anio,
     int mes,
     BigDecimal ingresos,
-    BigDecimal gastos
+    BigDecimal gastos,
+    String moneda
 ) {}

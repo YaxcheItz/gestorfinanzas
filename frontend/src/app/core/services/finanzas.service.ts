@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { ApiResponse } from '../models/auth.models';
 import {
   Categoria,
+  CategoriaPayload,
   Cuenta,
   CuentaPayload,
   DashboardAnalitica,
@@ -25,8 +26,9 @@ export class FinanzasService {
   private readonly baseUrl = 'http://localhost:8080/api';
 
   // --- Cuentas ---
-  getCuentas(): Observable<ApiResponse<Cuenta[]>> {
-    return this.http.get<ApiResponse<Cuenta[]>>(`${this.baseUrl}/cuentas`);
+  getCuentas(incluirInactivas = false): Observable<ApiResponse<Cuenta[]>> {
+    const params = incluirInactivas ? new HttpParams().set('incluirInactivas', 'true') : undefined;
+    return this.http.get<ApiResponse<Cuenta[]>>(`${this.baseUrl}/cuentas`, { params });
   }
 
   crearCuenta(payload: CuentaPayload): Observable<ApiResponse<Cuenta>> {
@@ -41,9 +43,31 @@ export class FinanzasService {
     return this.http.delete<ApiResponse<void>>(`${this.baseUrl}/cuentas/${id}`);
   }
 
+  reactivarCuenta(id: number): Observable<ApiResponse<void>> {
+    return this.http.patch<ApiResponse<void>>(`${this.baseUrl}/cuentas/${id}/reactivar`, {});
+  }
+
   // --- Categorías ---
   getCategorias(): Observable<ApiResponse<Categoria[]>> {
     return this.http.get<ApiResponse<Categoria[]>>(`${this.baseUrl}/categorias`);
+  }
+
+  getMisCategorias(): Observable<ApiResponse<Categoria[]>> {
+    return this.http.get<ApiResponse<Categoria[]>>(`${this.baseUrl}/categorias/mias`);
+  }
+
+  crearCategoria(payload: CategoriaPayload): Observable<ApiResponse<Categoria>> {
+    return this.http.post<ApiResponse<Categoria>>(`${this.baseUrl}/categorias`, payload);
+  }
+
+  actualizarCategoria(id: number, payload: CategoriaPayload): Observable<ApiResponse<Categoria>> {
+    return this.http.put<ApiResponse<Categoria>>(`${this.baseUrl}/categorias/${id}`, payload);
+  }
+
+  cambiarEstadoCategoria(id: number, activa: boolean): Observable<ApiResponse<void>> {
+    return this.http.patch<ApiResponse<void>>(`${this.baseUrl}/categorias/${id}/estado`, {}, {
+      params: new HttpParams().set('activa', activa)
+    });
   }
 
   // --- Transacciones ---

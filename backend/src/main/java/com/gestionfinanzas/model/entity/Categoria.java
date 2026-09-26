@@ -34,4 +34,8 @@ public class Categoria {
 
     @Column(length = 20)
     private String color;
+
+    @Column(nullable = false, columnDefinition = "boolean not null default true")
+    @Builder.Default
+    private boolean activo = true;
 }

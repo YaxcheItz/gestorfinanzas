@@ -49,6 +49,12 @@ public class Transaccion {
     @Column(nullable = false, precision = 15, scale = 2)
     private BigDecimal monto;
 
+    @Column(name = "monto_destino", precision = 15, scale = 2)
+    private BigDecimal montoDestino;
+
+    @Column(name = "tasa_cambio", precision = 20, scale = 8)
+    private BigDecimal tasaCambio;
+
     @Column(nullable = false)
     private LocalDate fecha;
 

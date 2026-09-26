@@ -12,5 +12,6 @@ public record DashboardResumenResponse(
     int totalCuentas,
     int mes,
     int anio,
-    List<TransaccionResponse> ultimosMovimientos
+    List<TransaccionResponse> ultimosMovimientos,
+    List<DashboardMonedaResumenResponse> resumenPorMoneda
 ) {}

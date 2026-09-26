@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Cuenta, CuentaPayload, TipoCuenta } from '../../core/models/finanzas.models';
+import { Cuenta, CuentaPayload, MONEDAS_DISPONIBLES, TipoCuenta } from '../../core/models/finanzas.models';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { FinanzasService } from '../../core/services/finanzas.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -25,6 +25,23 @@ import { ToastService } from '../../core/services/toast.service';
         </button>
       </header>
 
+      <div class="inline-flex p-1 bg-slate-100 rounded-xl" role="group" aria-label="Filtrar cuentas">
+        <button
+          type="button"
+          (click)="filtroEstado.set('ACTIVAS')"
+          [class]="filtroEstado() === 'ACTIVAS' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600'"
+          class="px-3 py-2 rounded-lg text-xs font-semibold cursor-pointer">
+          Activas
+        </button>
+        <button
+          type="button"
+          (click)="filtroEstado.set('INACTIVAS')"
+          [class]="filtroEstado() === 'INACTIVAS' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600'"
+          class="px-3 py-2 rounded-lg text-xs font-semibold cursor-pointer">
+          Inactivas
+        </button>
+      </div>
+
       @if (error()) {
         <div class="p-4 bg-rose-50 border border-rose-200 rounded-xl text-sm text-rose-700 flex items-center justify-between gap-3">
           <span>{{ error() }}</span>
@@ -34,21 +51,25 @@ import { ToastService } from '../../core/services/toast.service';
 
       @if (loading()) {
         <div class="p-12 text-center text-sm text-slate-400">Cargando cuentas...</div>
-      } @else if (cuentas().length === 0) {
+      } @else if (cuentasVisibles().length === 0) {
         <section class="bg-white p-10 rounded-2xl border border-slate-200 text-center">
-          <h2 class="text-lg font-semibold text-slate-800">Aún no tienes cuentas activas</h2>
-          <p class="text-sm text-slate-500 mt-2">Agrega una cuenta para registrar movimientos y consultar tu balance.</p>
-          <button
-            type="button"
-            (click)="abrirCrear()"
-            class="mt-5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold cursor-pointer">
-            Crear mi primera cuenta
-          </button>
+          @if (filtroEstado() === 'ACTIVAS') {
+            <h2 class="text-lg font-semibold text-slate-800">Aún no tienes cuentas activas</h2>
+            <p class="text-sm text-slate-500 mt-2">Agrega una cuenta para registrar movimientos y consultar tu balance.</p>
+            <button
+              type="button"
+              (click)="abrirCrear()"
+              class="mt-5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold cursor-pointer">
+              Crear mi primera cuenta
+            </button>
+          } @else {
+            <p class="text-sm text-slate-500">No hay cuentas inactivas.</p>
+          }
         </section>
       } @else {
-        <section aria-label="Cuentas activas" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-          @for (cuenta of cuentas(); track cuenta.id) {
-            <article class="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
+        <section [attr.aria-label]="filtroEstado() === 'ACTIVAS' ? 'Cuentas activas' : 'Cuentas inactivas'" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+          @for (cuenta of cuentasVisibles(); track cuenta.id) {
+            <article class="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs" [class.opacity-75]="!cuenta.activo">
               <div class="flex items-start justify-between gap-4">
                 <div class="min-w-0">
                   <span class="inline-flex px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-semibold uppercase tracking-wide">
@@ -78,12 +99,21 @@ import { ToastService } from '../../core/services/toast.service';
                   class="px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 rounded-lg cursor-pointer">
                   Editar
                 </button>
-                <button
-                  type="button"
-                  (click)="desactivar(cuenta)"
-                  class="px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-50 rounded-lg cursor-pointer">
-                  Desactivar
-                </button>
+                @if (cuenta.activo) {
+                  <button
+                    type="button"
+                    (click)="desactivar(cuenta)"
+                    class="px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-50 rounded-lg cursor-pointer">
+                    Desactivar
+                  </button>
+                } @else {
+                  <button
+                    type="button"
+                    (click)="reactivar(cuenta)"
+                    class="px-3 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 rounded-lg cursor-pointer">
+                    Reactivar
+                  </button>
+                }
               </div>
             </article>
           }
@@ -164,15 +194,19 @@ import { ToastService } from '../../core/services/toast.service';
 
             <div>
               <label for="cuenta-moneda" class="block text-xs font-semibold text-slate-700 mb-1.5">Moneda</label>
-              <input
+              <select
                 id="cuenta-moneda"
                 name="moneda"
-                type="text"
-                minlength="3"
-                maxlength="10"
+                required
                 [(ngModel)]="moneda"
-                class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm uppercase focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white"
-                placeholder="MXN" />
+                class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm uppercase focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white">
+                @for (opcion of monedasDisponibles; track opcion.codigo) {
+                  <option [ngValue]="opcion.codigo">{{ opcion.codigo }} — {{ opcion.nombre }}</option>
+                }
+              </select>
+              @if (cuentaEditando() && cuentaEditando()!.moneda !== moneda) {
+                <p class="mt-1 text-xs text-amber-700">No se puede cambiar la moneda de una cuenta con saldo o movimientos.</p>
+              }
             </div>
 
             <div>
@@ -216,8 +250,12 @@ export class CuentasComponent implements OnInit {
     { valor: 'AHORRO', etiqueta: 'Ahorro' },
     { valor: 'INVERSION', etiqueta: 'Inversión' }
   ];
+  readonly monedasDisponibles = MONEDAS_DISPONIBLES;
 
   readonly cuentas = signal<Cuenta[]>([]);
+  readonly filtroEstado = signal<'ACTIVAS' | 'INACTIVAS'>('ACTIVAS');
+  readonly cuentasVisibles = computed(() => this.cuentas()
+    .filter(cuenta => this.filtroEstado() === 'ACTIVAS' ? cuenta.activo : !cuenta.activo));
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly modalAbierto = signal(false);
@@ -238,7 +276,7 @@ export class CuentasComponent implements OnInit {
   cargarCuentas(): void {
     this.loading.set(true);
     this.error.set(null);
-    this.finanzasService.getCuentas().subscribe({
+    this.finanzasService.getCuentas(true).subscribe({
       next: response => {
         if (!response.success || !response.data) {
           this.error.set(response.message || 'No se pudieron cargar las cuentas.');
@@ -354,6 +392,20 @@ export class CuentasComponent implements OnInit {
         this.cargarCuentas();
       },
       error: err => this.toastService.error(err.error?.message || 'No se pudo desactivar la cuenta.')
+    });
+  }
+
+  reactivar(cuenta: Cuenta): void {
+    this.finanzasService.reactivarCuenta(cuenta.id).subscribe({
+      next: response => {
+        if (!response.success) {
+          this.toastService.error(response.message || 'No se pudo reactivar la cuenta.');
+          return;
+        }
+        this.toastService.success('Cuenta reactivada correctamente.');
+        this.cargarCuentas();
+      },
+      error: err => this.toastService.error(err.error?.message || 'No se pudo reactivar la cuenta.')
     });
   }
 

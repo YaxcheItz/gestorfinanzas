@@ -6,6 +6,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import {
   Categoria,
+  MONEDAS_DISPONIBLES,
   Presupuesto,
   PresupuestoPayload,
   PresupuestoResumen
@@ -79,101 +80,22 @@ import {
         </div>
       }
 
-      <!-- Resumen Global de Métricas (4 Cards) -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        
-        <!-- Total Presupuestado -->
-        <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs hover:border-slate-300 transition-all">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Presupuestado</span>
-            <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-              </svg>
+      <!-- Totales separados por moneda -->
+      <section class="space-y-4" aria-label="Totales de presupuestos por moneda">
+        @for (moneda of resumen()?.resumenPorMoneda ?? []; track moneda.moneda) {
+          <article class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+            <h2 class="mb-4 text-xs font-bold uppercase tracking-wider text-slate-500">{{ moneda.moneda }}</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div><p class="text-xs text-slate-500">Presupuestado</p><p class="mt-1 text-xl font-bold text-slate-900">{{ moneda.totalPresupuestado | currency:moneda.moneda:'symbol':'1.2-2' }}</p></div>
+              <div><p class="text-xs text-slate-500">Gastado</p><p class="mt-1 text-xl font-bold text-rose-600">{{ moneda.totalGastado | currency:moneda.moneda:'symbol':'1.2-2' }}</p></div>
+              <div><p class="text-xs text-slate-500">Disponible</p><p class="mt-1 text-xl font-bold" [class.text-emerald-600]="moneda.totalDisponible >= 0" [class.text-rose-600]="moneda.totalDisponible < 0">{{ moneda.totalDisponible | currency:moneda.moneda:'symbol':'1.2-2' }}</p></div>
+              <div><p class="text-xs text-slate-500">Consumo</p><p class="mt-1 text-xl font-bold text-violet-600">{{ moneda.porcentajeConsumido | number:'1.1-1' }}%</p></div>
             </div>
-          </div>
-          <div class="mt-4">
-            <div class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
-              \${{ (resumen()?.totalPresupuestado || 0) | number:'1.2-2' }}
-              <span class="text-xs text-slate-400 font-normal">MXN</span>
-            </div>
-            <p class="text-xs text-slate-500 font-medium mt-1">
-              {{ resumen()?.presupuestos?.length || 0 }} categoría{{ (resumen()?.presupuestos?.length || 0) === 1 ? '' : 's' }} con meta
-            </p>
-          </div>
-        </div>
-
-        <!-- Total Gastado en Presupuestos -->
-        <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs hover:border-slate-300 transition-all">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Gastado Acumulado</span>
-            <div class="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 13l-5 5m0 0l-5-5m5 5V6" />
-              </svg>
-            </div>
-          </div>
-          <div class="mt-4">
-            <div class="text-2xl sm:text-3xl font-bold tracking-tight text-rose-600">
-              \${{ (resumen()?.totalGastado || 0) | number:'1.2-2' }}
-            </div>
-            <p class="text-xs text-slate-500 font-medium mt-1">
-              Consumido en el período seleccionado
-            </p>
-          </div>
-        </div>
-
-        <!-- Saldo Disponible Restante -->
-        <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs hover:border-slate-300 transition-all">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Margen Disponible</span>
-            <div 
-              [class]="(resumen()?.totalDisponible || 0) >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'"
-              class="w-9 h-9 rounded-xl flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-          </div>
-          <div class="mt-4">
-            <div 
-              [class]="(resumen()?.totalDisponible || 0) >= 0 ? 'text-emerald-600' : 'text-rose-600'"
-              class="text-2xl sm:text-3xl font-bold tracking-tight">
-              \${{ (resumen()?.totalDisponible || 0) | number:'1.2-2' }}
-            </div>
-            <p class="text-xs text-slate-500 font-medium mt-1">
-              {{ (resumen()?.totalDisponible || 0) >= 0 ? 'Saldo a favor para gastar' : 'Límite global superado' }}
-            </p>
-          </div>
-        </div>
-
-        <!-- % Consumo Global -->
-        <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs hover:border-slate-300 transition-all">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Consumo Global</span>
-            <div class="w-9 h-9 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
-              </svg>
-            </div>
-          </div>
-          <div class="mt-4">
-            <div class="text-2xl sm:text-3xl font-bold tracking-tight text-violet-600">
-              {{ (resumen()?.porcentajeConsumidoGlobal || 0) | number:'1.1-1' }}%
-            </div>
-            <!-- Barra de Progreso Global Mini -->
-            <div class="w-full bg-slate-100 rounded-full h-2 mt-2 overflow-hidden">
-              <div 
-                [style.width.%]="obtenerAnchoBarra(resumen()?.porcentajeConsumidoGlobal || 0)"
-                [class]="obtenerColorBarra(resumen()?.porcentajeConsumidoGlobal || 0)"
-                class="h-full rounded-full transition-all duration-500">
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </div>
+          </article>
+        } @empty {
+          <p class="p-5 bg-white border border-slate-200 rounded-2xl text-sm text-slate-500">Todavía no hay presupuestos para este período.</p>
+        }
+      </section>
 
       <!-- Sección de Tarjetas de Presupuesto por Categoría -->
       <div>
@@ -266,8 +188,8 @@ import {
                 <!-- Barra de Progreso y Montos -->
                 <div class="space-y-2">
                   <div class="flex items-center justify-between text-xs">
-                    <span class="text-slate-500 font-medium">Gastado: \${{ p.montoGastado | number:'1.2-2' }}</span>
-                    <span class="font-bold text-slate-800">Meta: \${{ p.montoLimite | number:'1.2-2' }}</span>
+                    <span class="text-slate-500 font-medium">Gastado: {{ p.montoGastado | currency:p.moneda:'symbol':'1.2-2' }}</span>
+                    <span class="font-bold text-slate-800">Meta: {{ p.montoLimite | currency:p.moneda:'symbol':'1.2-2' }}</span>
                   </div>
 
                   <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
@@ -281,7 +203,7 @@ import {
                   <div class="flex items-center justify-between text-xs pt-1">
                     <span 
                       [class]="p.montoDisponible >= 0 ? 'text-slate-500' : 'text-rose-600 font-bold'">
-                      {{ p.montoDisponible >= 0 ? 'Disponible: $' + (p.montoDisponible | number:'1.2-2') : 'Excedido por: $' + (-p.montoDisponible | number:'1.2-2') }}
+                      {{ p.montoDisponible >= 0 ? 'Disponible: ' : 'Excedido por: ' }}{{ (p.montoDisponible >= 0 ? p.montoDisponible : -p.montoDisponible) | currency:p.moneda:'symbol':'1.2-2' }}
                     </span>
                     <span class="font-bold text-slate-700">
                       {{ p.porcentajeConsumido | number:'1.0-0' }}%
@@ -344,14 +266,23 @@ import {
               </select>
             </div>
 
+            <div>
+              <label for="modalMoneda" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Moneda del presupuesto</label>
+              <select id="modalMoneda" [(ngModel)]="formMoneda" name="moneda" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm">
+                @for (moneda of monedasDisponibles; track moneda.codigo) {
+                  <option [ngValue]="moneda.codigo">{{ moneda.codigo }} — {{ moneda.nombre }}</option>
+                }
+              </select>
+            </div>
+
             <!-- Monto Límite -->
             <div>
               <label for="modalMonto" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                Monto Límite Mensual ($)
+                Monto límite mensual ({{ formMoneda }})
               </label>
               <div class="relative rounded-xl shadow-2xs">
                 <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 font-bold">
-                  $
+                  {{ formMoneda }}
                 </div>
                 <input
                   id="modalMonto"
@@ -441,6 +372,8 @@ export class PresupuestosComponent implements OnInit {
   // Form Fields
   formCategoriaId: number | null = null;
   formMontoLimite: number | null = null;
+  formMoneda = 'MXN';
+  readonly monedasDisponibles = MONEDAS_DISPONIBLES;
 
   ngOnInit(): void {
     this.cargarCategorias();
@@ -491,6 +424,7 @@ export class PresupuestosComponent implements OnInit {
     this.modoEdicion.set(false);
     this.modalError.set(null);
     this.formMontoLimite = null;
+    this.formMoneda = 'MXN';
     const cats = this.categorias();
     this.formCategoriaId = cats.length > 0 ? cats[0].id : null;
     this.modalAbierto.set(true);
@@ -501,6 +435,7 @@ export class PresupuestosComponent implements OnInit {
     this.modalError.set(null);
     this.formCategoriaId = p.categoriaId;
     this.formMontoLimite = p.montoLimite;
+    this.formMoneda = p.moneda;
     this.modalAbierto.set(true);
   }
 
@@ -522,6 +457,7 @@ export class PresupuestosComponent implements OnInit {
     const payload: PresupuestoPayload = {
       categoriaId: this.formCategoriaId,
       montoLimite: this.formMontoLimite,
+      moneda: this.formMoneda,
       mes: this.mesSeleccionado(),
       anio: this.anioSeleccionado()
     };
