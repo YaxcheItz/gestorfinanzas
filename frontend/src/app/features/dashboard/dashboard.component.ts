@@ -193,17 +193,17 @@ import {
             </div>
             <div class="h-44 flex items-end justify-around gap-2 border-b border-slate-100 px-1">
               @for (mes of barrasMensuales(); track mes.anio + '-' + mes.mes) {
-                <div class="flex-1 h-full flex flex-col justify-end items-center min-w-0" [attr.aria-label]="mes.etiqueta + ': ingresos $' + mes.ingresos + ', gastos $' + mes.gastos">
+                <div class="flex-1 h-full flex flex-col justify-end items-center min-w-0" [attr.aria-label]="mes.etiqueta + ': ingresos ' + mes.ingresos + ' ' + monedaAnalitica() + ', gastos ' + mes.gastos + ' ' + monedaAnalitica()">
                   <div class="w-full max-w-12 flex items-end justify-center gap-1 h-full">
                     <div
                       class="w-3 sm:w-4 bg-emerald-500 rounded-t-sm transition-[height]"
                       [style.height.%]="mes.ingresosAltura"
-                      [title]="'Ingresos: $' + (mes.ingresos | number:'1.2-2')">
+                      [title]="'Ingresos: ' + (mes.ingresos | number:'1.2-2') + ' ' + monedaAnalitica()">
                     </div>
                     <div
                       class="w-3 sm:w-4 bg-rose-500 rounded-t-sm transition-[height]"
                       [style.height.%]="mes.gastosAltura"
-                      [title]="'Gastos: $' + (mes.gastos | number:'1.2-2')">
+                      [title]="'Gastos: ' + (mes.gastos | number:'1.2-2') + ' ' + monedaAnalitica()">
                     </div>
                   </div>
                   <span class="mt-2 text-[10px] sm:text-xs text-slate-500 capitalize">{{ mes.etiqueta }}</span>
@@ -426,11 +426,11 @@ import {
             <!-- Monto -->
             <div>
               <label for="monto" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                Monto ($)
+                Monto ({{ monedaCuenta(formCuentaId) }})
               </label>
               <div class="relative rounded-xl shadow-2xs">
                 <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 font-bold">
-                  $
+                  {{ monedaCuenta(formCuentaId) }}
                 </div>
                 <input
                   id="monto"

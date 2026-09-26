@@ -1,6 +1,7 @@
 package com.gestionfinanzas.service;
 
 import com.gestionfinanzas.dto.request.TransaccionRequest;
+import com.gestionfinanzas.model.entity.Categoria;
 import com.gestionfinanzas.model.entity.Cuenta;
 import com.gestionfinanzas.model.entity.Transaccion;
 import com.gestionfinanzas.model.entity.Usuario;
@@ -17,8 +18,11 @@ import java.time.LocalDate;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class TransaccionServiceTest {
@@ -77,6 +81,27 @@ class TransaccionServiceTest {
 
         assertEquals(new BigDecimal("500.00"), origen.getSaldoActual());
         assertEquals(new BigDecimal("1000.00"), destino.getSaldoActual());
+    }
+
+    @Test
+    void categoriaDebeCoincidirConTipoAntesDeActualizarSaldo() {
+        Usuario usuario = Usuario.builder().id(7L).build();
+        Cuenta cuenta = cuenta(1L, usuario, "MXN", "100.00");
+        Categoria gasto = Categoria.builder().id(4L).usuario(usuario).nombre("Comida")
+                .tipo(TipoTransaccion.GASTO).activo(true).build();
+        when(usuarioRepository.findById(7L)).thenReturn(Optional.of(usuario));
+        when(cuentaRepository.findByIdAndUsuarioId(1L, 7L)).thenReturn(Optional.of(cuenta));
+        when(categoriaRepository.findAccessibleById(4L, 7L)).thenReturn(Optional.of(gasto));
+
+        assertThrows(IllegalArgumentException.class, () -> transaccionService.crearTransaccion(
+                7L, new TransaccionRequest(
+                        1L, null, 4L, TipoTransaccion.INGRESO, new BigDecimal("10.00"),
+                        null, LocalDate.now(), "Ingreso incompatible", null
+                )
+        ));
+
+        assertEquals(new BigDecimal("100.00"), cuenta.getSaldoActual());
+        verify(cuentaRepository, never()).save(any(Cuenta.class));
     }
 
     private Cuenta cuenta(Long id, Usuario usuario, String moneda, String saldo) {
