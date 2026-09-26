@@ -2,6 +2,7 @@ package com.gestionfinanzas.service;
 
 import com.gestionfinanzas.dto.response.DashboardGastoCategoriaResponse;
 import com.gestionfinanzas.dto.response.DashboardMesTipoTotal;
+import com.gestionfinanzas.dto.response.DashboardMonedaTotales;
 import com.gestionfinanzas.model.enums.TipoTransaccion;
 import com.gestionfinanzas.repository.CuentaRepository;
 import com.gestionfinanzas.repository.TransaccionRepository;
@@ -28,7 +29,7 @@ class DashboardServiceTest {
         YearMonth mesActual = YearMonth.now();
         YearMonth mesAnterior = mesActual.minusMonths(1);
         List<DashboardGastoCategoriaResponse> gastos = List.of(
-                new DashboardGastoCategoriaResponse(2L, "Comida", "#10b981", new BigDecimal("250.00"))
+                new DashboardGastoCategoriaResponse(2L, "Comida", "#10b981", new BigDecimal("250.00"), "MXN")
         );
         when(transaccionRepository.findGastosPorCategoria(
                 usuarioId, TipoTransaccion.GASTO, mesActual.atDay(1), mesActual.atEndOfMonth()
@@ -40,9 +41,14 @@ class DashboardServiceTest {
                 mesActual.atEndOfMonth()
         )).thenReturn(List.of(
                 new DashboardMesTipoTotal(mesAnterior.getYear(), mesAnterior.getMonthValue(),
-                        TipoTransaccion.GASTO, new BigDecimal("80.00")),
+                        TipoTransaccion.GASTO, new BigDecimal("80.00"), "MXN"),
                 new DashboardMesTipoTotal(mesActual.getYear(), mesActual.getMonthValue(),
-                        TipoTransaccion.INGRESO, new BigDecimal("1000.00"))
+                        TipoTransaccion.INGRESO, new BigDecimal("1000.00"), "MXN")
+        ));
+        when(transaccionRepository.findTotalesMensualesPorMoneda(
+                usuarioId, mesActual.minusMonths(5).atDay(1), mesActual.atEndOfMonth()
+        )).thenReturn(List.of(
+                new DashboardMonedaTotales("MXN", new BigDecimal("1000.00"), new BigDecimal("80.00"))
         ));
 
         var resultado = dashboardService.obtenerAnalitica(usuarioId);
@@ -59,6 +65,7 @@ class DashboardServiceTest {
         var datosMesActual = resultado.ultimosSeisMeses().get(5);
         assertEquals(new BigDecimal("1000.00"), datosMesActual.ingresos());
         assertEquals(BigDecimal.ZERO, datosMesActual.gastos());
+        assertEquals("MXN", datosMesActual.moneda());
         verify(transaccionRepository).findGastosPorCategoria(
                 usuarioId, TipoTransaccion.GASTO, mesActual.atDay(1), mesActual.atEndOfMonth()
         );

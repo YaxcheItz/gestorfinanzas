@@ -2,6 +2,7 @@ package com.gestionfinanzas.dto.request;
 
 import com.gestionfinanzas.model.enums.TipoCuenta;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -17,6 +18,7 @@ public record CuentaRequest(
     TipoCuenta tipo,
 
     @DecimalMin(value = "0.00", message = "El saldo inicial no puede ser negativo")
+    @Digits(integer = 13, fraction = 2, message = "El saldo inicial debe tener hasta 2 decimales")
     BigDecimal saldoInicial,
 
     @Size(min = 3, max = 10, message = "El código de moneda debe tener entre 3 y 10 caracteres")

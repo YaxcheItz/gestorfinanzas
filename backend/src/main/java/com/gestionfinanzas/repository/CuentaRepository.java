@@ -10,6 +10,7 @@ import java.util.Optional;
 @Repository
 public interface CuentaRepository extends JpaRepository<Cuenta, Long> {
     List<Cuenta> findByUsuarioIdAndActivoTrue(Long usuarioId);
+    List<Cuenta> findByUsuarioIdOrderByActivoDescNombreAsc(Long usuarioId);
     Optional<Cuenta> findByIdAndUsuarioId(Long id, Long usuarioId);
     boolean existsByUsuarioIdAndNombreIgnoreCase(Long usuarioId, String nombre);
 }

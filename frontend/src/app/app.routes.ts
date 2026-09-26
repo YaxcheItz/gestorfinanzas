@@ -5,6 +5,7 @@ import { DashboardComponent } from './features/dashboard/dashboard.component';
 import { PresupuestosComponent } from './features/presupuestos/presupuestos.component';
 import { TransaccionesComponent } from './features/transacciones/transacciones.component';
 import { CuentasComponent } from './features/cuentas/cuentas.component';
+import { CategoriasComponent } from './features/categorias/categorias.component';
 import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
@@ -14,6 +15,7 @@ export const routes: Routes = [
   { path: 'transacciones', component: TransaccionesComponent, canActivate: [authGuard] },
   { path: 'presupuestos', component: PresupuestosComponent, canActivate: [authGuard] },
   { path: 'cuentas', component: CuentasComponent, canActivate: [authGuard] },
+  { path: 'categorias', component: CategoriasComponent, canActivate: [authGuard] },
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
   { path: '**', redirectTo: 'dashboard' }
 ];

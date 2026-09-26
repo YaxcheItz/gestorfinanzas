@@ -66,6 +66,7 @@ class TransaccionRepositoryAnalyticsTest {
         assertEquals("Sin categoría", gastos.get(1).categoriaNombre());
         assertNull(gastos.get(1).categoriaId());
         assertEquals(new BigDecimal("20.00"), gastos.get(1).monto());
+        assertEquals("MXN", gastos.get(0).moneda());
         assertEquals(2, totalesMensuales.size());
         assertEquals(new BigDecimal("100.00"), totalesMensuales.stream()
                 .filter(total -> total.tipo() == TipoTransaccion.INGRESO)
