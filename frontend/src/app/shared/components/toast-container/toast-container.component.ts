@@ -7,7 +7,7 @@ import { ToastService, ToastMessage } from '../../../core/services/toast.service
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="fixed bottom-5 right-5 sm:top-5 sm:bottom-auto z-50 flex flex-col space-y-2.5 max-w-sm w-full px-4 sm:px-0 pointer-events-none">
+    <div class="fixed bottom-5 left-3 right-3 sm:left-auto sm:right-5 sm:top-5 sm:bottom-auto z-50 flex flex-col space-y-2.5 max-w-sm w-auto sm:w-full px-0 pointer-events-none">
       @for (toast of toastService.toasts(); track toast.id) {
         <div 
           class="pointer-events-auto flex items-start p-4 rounded-2xl bg-white/95 backdrop-blur-md shadow-xl border transition-all duration-300 transform translate-y-0 opacity-100"

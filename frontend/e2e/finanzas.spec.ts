@@ -60,6 +60,7 @@ function budgetCard(page: Page, category: string): Locator {
 }
 
 test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analítica', async ({ page }) => {
+  test.setTimeout(90_000);
   const pageErrors: string[] = [];
   page.on('pageerror', error => pageErrors.push(error.message));
   await page.route('http://localhost:8080/api/**', async route => {
@@ -80,6 +81,22 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   await expect(page).toHaveURL(/\/dashboard$/);
   await expect(page.getByRole('heading', { name: 'Resumen Financiero' })).toBeVisible();
   await expect(page.getByText('Hola, Usuario E2E.')).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByRole('button', { name: 'Abrir menú de navegación' })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth))
+    .toBeLessThanOrEqual(await page.evaluate(() => window.innerWidth));
+  await page.getByRole('button', { name: 'Abrir menú de navegación' }).click();
+  await expect(page.getByRole('navigation', { name: 'Navegación principal' })).toBeVisible();
+  await page.getByRole('navigation', { name: 'Navegación principal' }).getByRole('link', { name: 'Cuentas' }).click();
+  await expect(page.getByRole('heading', { name: 'Mis cuentas' })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth))
+    .toBeLessThanOrEqual(await page.evaluate(() => window.innerWidth));
+  await page.getByRole('button', { name: 'Abrir menú de navegación' }).click();
+  await page.getByRole('navigation', { name: 'Navegación principal' }).getByRole('link', { name: 'Panel General' }).click();
+  await page.setViewportSize({ width: 768, height: 1024 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth))
+    .toBeLessThanOrEqual(await page.evaluate(() => window.innerWidth));
+  await page.setViewportSize({ width: 1280, height: 900 });
 
   let cuentas = await apiGet<Cuenta[]>(page, '/cuentas?incluirInactivas=true');
   expect(cuentas.some(cuenta => cuenta.nombre === 'Billetera / Efectivo' && cuenta.moneda === 'MXN')).toBeTruthy();
@@ -308,6 +325,36 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   await expect(page.getByRole('alert')).toContainText('No se puede cambiar el tipo');
   await page.getByLabel('Tipo', { exact: true }).selectOption('GASTO');
   await page.getByLabel('Nombre', { exact: true }).fill('E2E Categoría editada');
+  await page.getByRole('button', { name: 'Guardar' }).click();
+  await expect(page.getByRole('heading', { name: 'E2E Categoría editada' })).toBeVisible();
+  await page.getByRole('button', { name: 'Editar E2E Categoría editada' }).click();
+  const nombreLargo = 'CategoriaConNombreExtensoSinEspaciosParaProbarElDesbordamiento';
+  await page.getByLabel('Nombre', { exact: true }).fill(nombreLargo);
+  await page.getByLabel('Icono o emoji (opcional)').fill('ICONO'.repeat(10));
+  await page.getByRole('button', { name: 'Guardar' }).click();
+  const tarjetaCategoriaLarga = page.getByRole('article').filter({ hasText: nombreLargo });
+  await expect(tarjetaCategoriaLarga).toBeVisible();
+  const desbordamiento = await tarjetaCategoriaLarga.evaluate(element => {
+    const icono = element.querySelector('span')!;
+    const nombre = element.querySelector('h2')!;
+    const caja = element.getBoundingClientRect();
+    return {
+      iconoRecortado: getComputedStyle(icono).overflowX === 'hidden' && icono.scrollWidth > icono.clientWidth,
+      nombreRecortado: nombre.scrollWidth > nombre.clientWidth,
+      contenidoDentroDeTarjeta: Array.from(element.children).every(child => {
+        const contenido = child.getBoundingClientRect();
+        return contenido.left >= caja.left && contenido.right <= caja.right;
+      })
+    };
+  });
+  expect(desbordamiento).toEqual({
+    iconoRecortado: true,
+    nombreRecortado: true,
+    contenidoDentroDeTarjeta: true
+  });
+  await tarjetaCategoriaLarga.getByRole('button', { name: `Editar ${nombreLargo}` }).click();
+  await page.getByLabel('Nombre', { exact: true }).fill('E2E Categoría editada');
+  await page.getByLabel('Icono o emoji (opcional)').fill('');
   await page.getByRole('button', { name: 'Guardar' }).click();
   await expect(page.getByRole('heading', { name: 'E2E Categoría editada' })).toBeVisible();
   await page.getByRole('button', { name: 'Archivar E2E Categoría editada' }).click();

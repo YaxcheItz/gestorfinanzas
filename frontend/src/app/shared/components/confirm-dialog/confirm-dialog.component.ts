@@ -10,16 +10,16 @@ import { ConfirmDialogService } from '../../../core/services/confirm-dialog.serv
     @if (dialogService.isOpen()) {
       <!-- Overlay -->
       <div 
-        class="fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
+        class="fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4"
         (click)="dialogService.handleCancel()">
         
         <!-- Modal Card -->
         <div 
-          class="bg-white rounded-3xl w-full max-w-sm shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+          class="bg-white rounded-2xl sm:rounded-3xl w-full max-w-sm max-h-[calc(100dvh-1rem)] overflow-y-auto shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150"
           (click)="$event.stopPropagation()">
           
           <!-- Icono + Encabezado -->
-          <div class="pt-8 px-6 pb-4 text-center">
+          <div class="pt-6 sm:pt-8 px-4 sm:px-6 pb-4 text-center">
             <div 
               class="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center mb-4"
               [ngClass]="getIconBgClass()">
@@ -46,7 +46,7 @@ import { ConfirmDialogService } from '../../../core/services/confirm-dialog.serv
           </div>
 
           <!-- Botones de Acción -->
-          <div class="flex items-center gap-3 px-6 pb-6 pt-2">
+          <div class="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 px-4 sm:px-6 pb-4 sm:pb-6 pt-2">
             <!-- Cancelar -->
             <button 
               type="button"

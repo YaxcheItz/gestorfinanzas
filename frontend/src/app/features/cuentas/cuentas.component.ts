@@ -11,7 +11,7 @@ import { ToastService } from '../../core/services/toast.service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <main class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-5 sm:space-y-6">
       <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">Mis cuentas</h1>
@@ -69,7 +69,7 @@ import { ToastService } from '../../core/services/toast.service';
       } @else {
         <section [attr.aria-label]="filtroEstado() === 'ACTIVAS' ? 'Cuentas activas' : 'Cuentas inactivas'" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           @for (cuenta of cuentasVisibles(); track cuenta.id) {
-            <article class="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs" [class.opacity-75]="!cuenta.activo">
+            <article class="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-xs" [class.opacity-75]="!cuenta.activo">
               <div class="flex items-start justify-between gap-4">
                 <div class="min-w-0">
                   <span class="inline-flex px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-semibold uppercase tracking-wide">
@@ -122,13 +122,13 @@ import { ToastService } from '../../core/services/toast.service';
     </main>
 
     @if (modalAbierto()) {
-      <div class="fixed inset-0 z-40 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+      <div class="fixed inset-0 z-40 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-2 sm:p-4">
         <section
           role="dialog"
           aria-modal="true"
           aria-labelledby="cuenta-modal-titulo"
-          class="bg-white rounded-2xl max-w-lg w-full border border-slate-200 shadow-2xl overflow-hidden">
-          <header class="p-6 border-b border-slate-100 flex items-center justify-between">
+          class="bg-white rounded-2xl max-w-lg w-full max-h-[calc(100dvh-1rem)] overflow-y-auto border border-slate-200 shadow-2xl">
+          <header class="p-4 sm:p-6 border-b border-slate-100 flex items-center justify-between">
             <div>
               <h2 id="cuenta-modal-titulo" class="text-lg font-bold text-slate-900">
                 {{ cuentaEditando() ? 'Editar cuenta' : 'Agregar cuenta' }}
@@ -144,7 +144,7 @@ import { ToastService } from '../../core/services/toast.service';
             </button>
           </header>
 
-          <form (ngSubmit)="guardar()" class="p-6 space-y-4">
+          <form (ngSubmit)="guardar()" class="p-4 sm:p-6 space-y-4">
             @if (modalError()) {
               <p role="alert" class="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-sm">{{ modalError() }}</p>
             }
@@ -221,14 +221,14 @@ import { ToastService } from '../../core/services/toast.service';
                 placeholder="Agrega una nota sobre esta cuenta"></textarea>
             </div>
 
-            <footer class="pt-3 flex justify-end gap-3 border-t border-slate-100">
-              <button type="button" (click)="cerrarModal()" class="px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-xl cursor-pointer">
+            <footer class="pt-3 flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3 border-t border-slate-100">
+              <button type="button" (click)="cerrarModal()" class="w-full sm:w-auto px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-xl cursor-pointer">
                 Cancelar
               </button>
               <button
                 type="submit"
                 [disabled]="guardando()"
-                class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-semibold rounded-xl cursor-pointer">
+                class="w-full sm:w-auto px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-semibold rounded-xl cursor-pointer">
                 {{ guardando() ? 'Guardando...' : cuentaEditando() ? 'Guardar cambios' : 'Crear cuenta' }}
               </button>
             </footer>

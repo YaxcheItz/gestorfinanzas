@@ -19,7 +19,7 @@ import {
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-6 sm:space-y-8">
       
       <!-- Encabezado y Saludo -->
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -32,11 +32,11 @@ import {
           </p>
         </div>
 
-        <div class="flex items-center space-x-3">
+        <div class="flex w-full sm:w-auto flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
           <button 
             type="button"
             (click)="cargarDashboard()" 
-            class="inline-flex items-center px-4 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 transition-colors shadow-2xs cursor-pointer"
+            class="inline-flex items-center justify-center px-3 sm:px-4 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 transition-colors shadow-2xs cursor-pointer"
             title="Actualizar datos">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-slate-400" [class.animate-spin]="loading()" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -47,7 +47,7 @@ import {
           <button 
             type="button"
             (click)="abrirModal('GASTO')"
-            class="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-xl text-sm font-semibold shadow-md shadow-emerald-600/20 transition-all cursor-pointer">
+            class="inline-flex items-center justify-center px-3 sm:px-4 py-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-xl text-sm font-semibold shadow-md shadow-emerald-600/20 transition-all cursor-pointer">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
@@ -77,21 +77,21 @@ import {
           <div>
             <h2 class="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">{{ moneda.moneda }}</h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              <article class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+              <article class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs">
                 <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Balance total</p>
                 <p class="mt-3 text-2xl font-bold text-slate-900">{{ moneda.balanceTotal | currency:moneda.moneda:'symbol':'1.2-2' }}</p>
                 <p class="mt-1 text-xs text-slate-500">{{ moneda.totalCuentas }} cuenta{{ moneda.totalCuentas === 1 ? '' : 's' }} activa{{ moneda.totalCuentas === 1 ? '' : 's' }}</p>
               </article>
-              <article class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+              <article class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs">
                 <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Ingresos del mes</p>
                 <p class="mt-3 text-2xl font-bold text-emerald-600">{{ moneda.ingresosMes | currency:moneda.moneda:'symbol':'1.2-2' }}</p>
               </article>
-              <article class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+              <article class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs">
                 <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Gastos del mes</p>
                 <p class="mt-3 text-2xl font-bold text-rose-600">{{ moneda.gastosMes | currency:moneda.moneda:'symbol':'1.2-2' }}</p>
                 <p class="mt-1 text-xs text-slate-500">Balance mensual: {{ moneda.balanceMes | currency:moneda.moneda:'symbol':'1.2-2' }}</p>
               </article>
-              <article class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+              <article class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs">
                 <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Tasa de ahorro</p>
                 <p class="mt-3 text-2xl font-bold text-violet-600">{{ moneda.tasaAhorro | number:'1.1-1' }}%</p>
                 <p class="mt-1 text-xs text-slate-500">{{ moneda.tasaAhorro >= 20 ? 'Excelente ritmo de ahorro' : 'Margen para optimizar' }}</p>
@@ -105,7 +105,7 @@ import {
 
       <!-- Analítica de gastos e ingresos -->
       <section aria-label="Analítica financiera" class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <article class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
+        <article class="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200/80 shadow-xs">
           <div class="mb-6">
             <h2 class="text-base font-bold text-slate-900">Gastos por categoría</h2>
             <div class="mt-2 flex flex-wrap items-center justify-between gap-2">
@@ -168,7 +168,7 @@ import {
           }
         </article>
 
-        <article class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
+        <article class="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200/80 shadow-xs">
           <div class="mb-6">
             <h2 class="text-base font-bold text-slate-900">Ingresos vs. gastos</h2>
             <p class="text-xs text-slate-500 mt-1">Comparativo de los últimos seis meses</p>
@@ -215,7 +215,7 @@ import {
       </section>
 
       <!-- Banner de Inteligencia Artificial (Spring AI) -->
-      <div class="bg-linear-to-r from-emerald-900 to-slate-900 text-white p-6 rounded-2xl shadow-lg relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div class="bg-linear-to-r from-emerald-900 to-slate-900 text-white p-4 sm:p-6 rounded-2xl shadow-lg relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div class="space-y-1 relative z-10">
           <div class="flex items-center space-x-2">
             <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
@@ -237,7 +237,7 @@ import {
 
       <!-- Tabla de Transacciones Recientes -->
       <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
-        <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+        <div class="p-4 sm:p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h2 class="text-base font-bold text-slate-900">Últimos Movimientos</h2>
             <p class="text-xs text-slate-500 mt-0.5">Historial registrado en tiempo real en la base de datos</p>
@@ -272,8 +272,8 @@ import {
             </button>
           </div>
         } @else {
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-sm text-slate-600">
+          <div class="overflow-x-auto" role="region" aria-label="Últimos movimientos; desliza horizontalmente para ver más columnas" tabindex="0">
+            <table class="w-full min-w-[640px] text-left text-sm text-slate-600">
               <thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-400 tracking-wider">
                 <tr>
                   <th class="px-6 py-3.5">Concepto</th>

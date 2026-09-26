@@ -10,7 +10,7 @@ import { ToastService } from '../../core/services/toast.service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <main class="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-5 sm:space-y-6">
       <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">Mis categorías</h1>
@@ -42,8 +42,8 @@ import { ToastService } from '../../core/services/toast.service';
       } @else {
         <section aria-label="Categorías personalizadas" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
           @for (categoria of categoriasVisibles(); track categoria.id) {
-            <article class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-4" [class.opacity-70]="!categoria.activo">
-              <span class="w-11 h-11 rounded-xl flex items-center justify-center text-lg shrink-0"
+            <article class="min-w-0 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-4" [class.opacity-70]="!categoria.activo">
+              <span class="w-11 h-11 rounded-xl flex items-center justify-center text-lg shrink-0 overflow-hidden whitespace-nowrap"
                     [style.background-color]="categoria.color || '#10b981'"
                     [style.color]="contrasteColor(categoria.color)">
                 {{ categoria.icono || (categoria.tipo === 'GASTO' ? '−' : '+') }}
@@ -53,7 +53,7 @@ import { ToastService } from '../../core/services/toast.service';
                 <p class="text-xs text-slate-500">{{ categoria.tipo === 'GASTO' ? 'Gasto' : 'Ingreso' }} · Personalizada</p>
               </div>
               @if (categoria.activo) {
-                <div class="flex shrink-0">
+                <div class="flex shrink-0 flex-col sm:flex-row">
                   <button type="button" (click)="abrirEditar(categoria)" class="p-2 text-slate-500 hover:text-slate-900 rounded-lg cursor-pointer" [attr.aria-label]="'Editar ' + categoria.nombre">Editar</button>
                   <button type="button" (click)="cambiarEstado(categoria, false)" class="p-2 text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer" [attr.aria-label]="'Archivar ' + categoria.nombre">Archivar</button>
                 </div>
@@ -67,13 +67,13 @@ import { ToastService } from '../../core/services/toast.service';
     </main>
 
     @if (modalAbierto()) {
-      <div class="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-        <section role="dialog" aria-modal="true" aria-labelledby="categoria-titulo" class="bg-white rounded-2xl max-w-lg w-full border border-slate-200 shadow-2xl">
-          <header class="p-6 border-b border-slate-100 flex items-center justify-between">
+      <div class="fixed inset-0 z-40 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-2 sm:p-4">
+        <section role="dialog" aria-modal="true" aria-labelledby="categoria-titulo" class="bg-white rounded-2xl max-w-lg w-full max-h-[calc(100dvh-1rem)] overflow-y-auto border border-slate-200 shadow-2xl">
+          <header class="p-4 sm:p-6 border-b border-slate-100 flex items-center justify-between">
             <h2 id="categoria-titulo" class="text-lg font-bold text-slate-900">{{ editando() ? 'Editar categoría' : 'Nueva categoría' }}</h2>
             <button type="button" (click)="cerrar()" class="p-2 text-slate-400 hover:text-slate-700 cursor-pointer" aria-label="Cerrar">✕</button>
           </header>
-          <form (ngSubmit)="guardar()" class="p-6 space-y-4">
+          <form (ngSubmit)="guardar()" class="p-4 sm:p-6 space-y-4">
             @if (modalError()) {
               <p role="alert" class="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-sm">{{ modalError() }}</p>
             }
@@ -98,9 +98,9 @@ import { ToastService } from '../../core/services/toast.service';
                 <input id="categoria-color" name="color" type="color" [(ngModel)]="color" class="w-full h-11 p-1 bg-slate-50 border border-slate-300 rounded-xl cursor-pointer" />
               </div>
             </div>
-            <footer class="pt-3 border-t border-slate-100 flex justify-end gap-3">
-              <button type="button" (click)="cerrar()" class="px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-xl cursor-pointer">Cancelar</button>
-              <button type="submit" [disabled]="guardando()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-semibold rounded-xl cursor-pointer">
+            <footer class="pt-3 border-t border-slate-100 flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3">
+              <button type="button" (click)="cerrar()" class="w-full sm:w-auto px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-xl cursor-pointer">Cancelar</button>
+              <button type="submit" [disabled]="guardando()" class="w-full sm:w-auto px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-semibold rounded-xl cursor-pointer">
                 {{ guardando() ? 'Guardando...' : 'Guardar' }}
               </button>
             </footer>

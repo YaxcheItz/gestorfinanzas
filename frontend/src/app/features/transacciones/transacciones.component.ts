@@ -19,7 +19,7 @@ import {
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-5 sm:space-y-6">
 
       <!-- Encabezado y Acción Principal -->
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -165,7 +165,7 @@ import {
         </div>
 
         <!-- Presets Rápidos de Fecha -->
-        <div class="flex items-center space-x-2 text-xs text-slate-500 pt-1">
+        <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500 pt-1">
           <span class="font-medium text-slate-400">Rango rápido:</span>
           <button (click)="aplicarRangoRapido('ESTE_MES')" class="text-xs text-emerald-600 hover:underline font-semibold cursor-pointer">Este mes</button>
           <span>•</span>
@@ -240,8 +240,8 @@ import {
             }
           </div>
         } @else {
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-sm text-slate-600">
+          <div class="overflow-x-auto" role="region" aria-label="Movimientos; desliza horizontalmente para ver más columnas" tabindex="0">
+            <table class="w-full min-w-[720px] text-left text-sm text-slate-600">
               <thead class="bg-slate-50 text-[11px] uppercase font-semibold text-slate-400 tracking-wider">
                 <tr>
                   <th class="px-6 py-3.5">Concepto</th>
@@ -319,7 +319,7 @@ import {
                       <button 
                         type="button"
                         (click)="eliminarMovimiento(m.id)"
-                        class="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-rose-600 transition-opacity p-1.5 rounded-lg hover:bg-rose-50 cursor-pointer"
+                        class="text-slate-400 hover:text-rose-600 transition-opacity p-1.5 rounded-lg hover:bg-rose-50 cursor-pointer sm:opacity-0 sm:group-hover:opacity-100"
                         title="Eliminar movimiento">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -370,11 +370,11 @@ import {
 
     <!-- Modal Interactivo 'Nuevo Movimiento' -->
     @if (modalAbierto()) {
-      <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+      <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-2 sm:p-4">
         
-        <div class="bg-white rounded-3xl max-w-lg w-full border border-slate-200 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+        <div class="bg-white rounded-2xl sm:rounded-3xl max-w-lg w-full max-h-[calc(100dvh-1rem)] overflow-y-auto border border-slate-200 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
           
-          <div class="p-6 border-b border-slate-100">
+          <div class="p-4 sm:p-6 border-b border-slate-100">
             <div class="flex items-center justify-between pb-4">
               <h2 class="text-lg font-bold text-slate-900">Registrar Movimiento</h2>
               <button 
@@ -414,7 +414,7 @@ import {
           </div>
 
           <!-- Formulario -->
-          <form (ngSubmit)="guardarMovimiento()" class="p-6 space-y-4">
+          <form (ngSubmit)="guardarMovimiento()" class="p-4 sm:p-6 space-y-4">
             
             @if (modalError()) {
               <div class="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs">
@@ -570,7 +570,7 @@ import {
             </div>
 
             <!-- Botones de Acción -->
-            <div class="flex items-center justify-end space-x-3 pt-4 border-t border-slate-100">
+            <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 pt-4 border-t border-slate-100">
               <button 
                 type="button"
                 (click)="cerrarModal()"
@@ -581,7 +581,7 @@ import {
               <button 
                 type="submit"
                 [disabled]="submitting()"
-                class="inline-flex items-center px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-50 text-white rounded-xl text-xs font-semibold shadow-md shadow-emerald-600/20 transition-all cursor-pointer">
+                class="inline-flex items-center justify-center px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-50 text-white rounded-xl text-xs font-semibold shadow-md shadow-emerald-600/20 transition-all cursor-pointer">
                 @if (submitting()) {
                   <div class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
                   <span>Guardando...</span>
