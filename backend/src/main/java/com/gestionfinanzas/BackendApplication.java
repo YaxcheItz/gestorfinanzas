@@ -11,7 +11,23 @@ import java.nio.file.Path;
 public class BackendApplication {
 
     public static void main(String[] args) {
-        cargarVariablesEnv();
+        boolean entornoE2E = Boolean.parseBoolean(System.getenv("FINANZAS_E2E"));
+        boolean perfilDePruebas = "test".equals(System.getenv("SPRING_PROFILES_ACTIVE"))
+                || "test".equals(System.getProperty("spring.profiles.active"))
+                || java.util.Arrays.stream(args)
+                        .filter(argumento -> argumento.startsWith("--spring.profiles.active="))
+                        .flatMap(argumento -> java.util.Arrays.stream(argumento.substring(
+                                "--spring.profiles.active=".length()).split(",")))
+                        .anyMatch("test"::equals);
+        if (entornoE2E) {
+            String url = System.getenv("SPRING_DATASOURCE_URL");
+            if (url == null || !url.startsWith("jdbc:h2:")) {
+                throw new IllegalStateException("El entorno E2E requiere una base H2 aislada.");
+            }
+        }
+        if (!entornoE2E && !perfilDePruebas) {
+            cargarVariablesEnv();
+        }
         SpringApplication.run(BackendApplication.class, args);
     }
 
