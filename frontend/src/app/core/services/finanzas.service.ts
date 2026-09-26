@@ -6,6 +6,7 @@ import {
   Categoria,
   Cuenta,
   CuentaPayload,
+  DashboardAnalitica,
   DashboardResumen,
   PageResponse,
   Presupuesto,
@@ -79,6 +80,10 @@ export class FinanzasService {
     return this.http.get<ApiResponse<DashboardResumen>>(`${this.baseUrl}/dashboard/resumen`, { params });
   }
 
+  getDashboardAnalitica(): Observable<ApiResponse<DashboardAnalitica>> {
+    return this.http.get<ApiResponse<DashboardAnalitica>>(`${this.baseUrl}/dashboard/analitica`);
+  }
+
   // --- Presupuestos ---
   getPresupuestos(mes?: number, anio?: number): Observable<ApiResponse<PresupuestoResumen>> {
     let params = new HttpParams();
@@ -95,4 +100,3 @@ export class FinanzasService {
     return this.http.delete<ApiResponse<void>>(`${this.baseUrl}/presupuestos/${id}`);
   }
 }
-
