@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
 import { FinanzasService } from '../../core/services/finanzas.service';
+import { ToastService } from '../../core/services/toast.service';
+import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import {
   Categoria,
   Cuenta,
@@ -516,6 +518,8 @@ import {
 export class DashboardComponent implements OnInit {
   public readonly authService = inject(AuthService);
   private readonly finanzasService = inject(FinanzasService);
+  private readonly toastService = inject(ToastService);
+  private readonly confirmDialog = inject(ConfirmDialogService);
 
   readonly anioActual = new Date().getFullYear();
 
@@ -671,6 +675,7 @@ export class DashboardComponent implements OnInit {
         this.cerrarModal();
         this.cargarDashboard();
         this.cargarCuentasYCategorias();
+        this.toastService.success('Movimiento registrado correctamente.');
       },
       error: (err) => {
         this.submitting.set(false);
@@ -681,17 +686,25 @@ export class DashboardComponent implements OnInit {
   }
 
   eliminarMovimiento(id: number): void {
-    if (confirm('¿Estás seguro de eliminar este movimiento? Los saldos se recalcularán automáticamente.')) {
+    this.confirmDialog.confirm({
+      title: 'Eliminar movimiento',
+      message: 'Esta acción eliminará el movimiento y recalculará automáticamente los saldos de las cuentas involucradas. ¿Deseas continuar?',
+      confirmText: 'Sí, eliminar',
+      cancelText: 'Cancelar',
+      type: 'danger'
+    }).then(confirmed => {
+      if (!confirmed) return;
       this.finanzasService.eliminarTransaccion(id).subscribe({
         next: () => {
+          this.toastService.success('Movimiento eliminado y saldos actualizados.');
           this.cargarDashboard();
           this.cargarCuentasYCategorias();
         },
         error: (err) => {
-          alert('No se pudo eliminar el movimiento: ' + (err.error?.message || 'Error desconocido'));
+          this.toastService.error(err.error?.message || 'No se pudo eliminar el movimiento.');
         }
       });
-    }
+    });
   }
 
   nombreMesActual(): string {
