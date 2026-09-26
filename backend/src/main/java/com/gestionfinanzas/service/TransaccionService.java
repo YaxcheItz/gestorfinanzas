@@ -20,6 +20,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 
 @Service
@@ -33,6 +35,10 @@ public class TransaccionService {
 
     @Transactional
     public TransaccionResponse crearTransaccion(Long usuarioId, TransaccionRequest request) {
+        if (request.tipo() == TipoTransaccion.SALDO_INICIAL) {
+            throw new IllegalArgumentException("El saldo inicial solo se crea al registrar una cuenta");
+        }
+
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
 
@@ -44,6 +50,8 @@ public class TransaccionService {
         }
 
         Cuenta cuentaDestino = null;
+        BigDecimal montoDestino = null;
+        BigDecimal tasaCambio = null;
         if (request.tipo() == TipoTransaccion.TRANSFERENCIA) {
             if (request.cuentaDestinoId() == null) {
                 throw new IllegalArgumentException("Debe especificar la cuenta de destino para realizar una transferencia");
@@ -59,9 +67,26 @@ public class TransaccionService {
                 throw new IllegalArgumentException("La cuenta de destino se encuentra inactiva");
             }
 
+            if (cuentaOrigen.getMoneda().equals(cuentaDestino.getMoneda())) {
+                if (request.tasaCambio() != null && request.tasaCambio().compareTo(BigDecimal.ONE) != 0) {
+                    throw new IllegalArgumentException("La tasa de cambio debe ser 1 cuando ambas cuentas usan la misma moneda");
+                }
+                tasaCambio = BigDecimal.ONE;
+                montoDestino = request.monto().setScale(2, RoundingMode.HALF_UP);
+            } else {
+                if (request.tasaCambio() == null || request.tasaCambio().compareTo(BigDecimal.ZERO) <= 0) {
+                    throw new IllegalArgumentException("Indica una tasa de cambio mayor a 0 para transferir entre monedas distintas");
+                }
+                tasaCambio = request.tasaCambio();
+                montoDestino = request.monto().multiply(tasaCambio).setScale(2, RoundingMode.HALF_UP);
+                if (montoDestino.compareTo(BigDecimal.ZERO) <= 0 || montoDestino.precision() - montoDestino.scale() > 13) {
+                    throw new IllegalArgumentException("El monto convertido debe ser mayor a 0 y no exceder el máximo permitido");
+                }
+            }
+
             // Aplicar matemática de balance para transferencia
             cuentaOrigen.setSaldoActual(cuentaOrigen.getSaldoActual().subtract(request.monto()));
-            cuentaDestino.setSaldoActual(cuentaDestino.getSaldoActual().add(request.monto()));
+            cuentaDestino.setSaldoActual(cuentaDestino.getSaldoActual().add(montoDestino));
             cuentaRepository.save(cuentaOrigen);
             cuentaRepository.save(cuentaDestino);
 
@@ -87,6 +112,8 @@ public class TransaccionService {
                 .categoria(categoria)
                 .tipo(request.tipo())
                 .monto(request.monto())
+                .montoDestino(montoDestino)
+                .tasaCambio(tasaCambio)
                 .fecha(request.fecha())
                 .descripcion(request.descripcion().trim())
                 .notas(request.notas() != null && !request.notas().isBlank() ? request.notas().trim() : null)
@@ -145,9 +172,15 @@ public class TransaccionService {
 
             if (transaccion.getCuentaDestino() != null) {
                 Cuenta cuentaDestino = transaccion.getCuentaDestino();
-                cuentaDestino.setSaldoActual(cuentaDestino.getSaldoActual().subtract(transaccion.getMonto()));
+                BigDecimal montoDestino = transaccion.getMontoDestino() != null
+                        ? transaccion.getMontoDestino()
+                        : transaccion.getMonto();
+                cuentaDestino.setSaldoActual(cuentaDestino.getSaldoActual().subtract(montoDestino));
                 cuentaRepository.save(cuentaDestino);
             }
+        } else if (transaccion.getTipo() == TipoTransaccion.SALDO_INICIAL) {
+            cuentaOrigen.setSaldoActual(cuentaOrigen.getSaldoActual().subtract(transaccion.getMonto()));
+            cuentaRepository.save(cuentaOrigen);
         }
 
         transaccionRepository.delete(transaccion);

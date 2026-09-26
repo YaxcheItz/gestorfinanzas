@@ -40,7 +40,7 @@ public class Cuenta {
     @Builder.Default
     private BigDecimal saldoActual = BigDecimal.ZERO;
 
-    @Column(nullable = false, length = 10)
+    @Column(nullable = false, length = 10, columnDefinition = "varchar(10) not null default 'MXN'")
     @Builder.Default
     private String moneda = "MXN";
 

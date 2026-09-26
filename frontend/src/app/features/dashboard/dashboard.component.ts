@@ -71,98 +71,55 @@ import {
         </div>
       }
 
-      <!-- Tarjetas Métricas Principales (Grid responsive 4 columnas) -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        
-        <!-- Balance Total -->
-        <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs hover:border-slate-300 transition-all">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Balance Total</span>
-            <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-              </svg>
+      <!-- Métricas separadas por moneda -->
+      <section class="space-y-4" aria-label="Resumen financiero por moneda">
+        @for (moneda of resumen()?.resumenPorMoneda ?? []; track moneda.moneda) {
+          <div>
+            <h2 class="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">{{ moneda.moneda }}</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              <article class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+                <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Balance total</p>
+                <p class="mt-3 text-2xl font-bold text-slate-900">{{ moneda.balanceTotal | currency:moneda.moneda:'symbol':'1.2-2' }}</p>
+                <p class="mt-1 text-xs text-slate-500">{{ moneda.totalCuentas }} cuenta{{ moneda.totalCuentas === 1 ? '' : 's' }} activa{{ moneda.totalCuentas === 1 ? '' : 's' }}</p>
+              </article>
+              <article class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+                <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Ingresos del mes</p>
+                <p class="mt-3 text-2xl font-bold text-emerald-600">{{ moneda.ingresosMes | currency:moneda.moneda:'symbol':'1.2-2' }}</p>
+              </article>
+              <article class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+                <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Gastos del mes</p>
+                <p class="mt-3 text-2xl font-bold text-rose-600">{{ moneda.gastosMes | currency:moneda.moneda:'symbol':'1.2-2' }}</p>
+                <p class="mt-1 text-xs text-slate-500">Balance mensual: {{ moneda.balanceMes | currency:moneda.moneda:'symbol':'1.2-2' }}</p>
+              </article>
+              <article class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+                <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Tasa de ahorro</p>
+                <p class="mt-3 text-2xl font-bold text-violet-600">{{ moneda.tasaAhorro | number:'1.1-1' }}%</p>
+                <p class="mt-1 text-xs text-slate-500">{{ moneda.tasaAhorro >= 20 ? 'Excelente ritmo de ahorro' : 'Margen para optimizar' }}</p>
+              </article>
             </div>
           </div>
-          <div class="mt-4">
-            <div class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
-              \${{ (resumen()?.balanceTotal || 0) | number:'1.2-2' }} 
-              <span class="text-xs text-slate-400 font-normal">MXN</span>
-            </div>
-            <p class="text-xs text-slate-500 font-medium mt-1">
-              {{ resumen()?.totalCuentas || 0 }} cuenta{{ (resumen()?.totalCuentas || 0) === 1 ? '' : 's' }} activa{{ (resumen()?.totalCuentas || 0) === 1 ? '' : 's' }}
-            </p>
-          </div>
-        </div>
-
-        <!-- Ingresos del Mes -->
-        <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs hover:border-slate-300 transition-all">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Ingresos (Mes)</span>
-            <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12" />
-              </svg>
-            </div>
-          </div>
-          <div class="mt-4">
-            <div class="text-2xl sm:text-3xl font-bold tracking-tight text-emerald-600">
-              +\${{ (resumen()?.ingresosMes || 0) | number:'1.2-2' }}
-            </div>
-            <p class="text-xs text-slate-500 font-medium mt-1">
-              Total recibido en el período
-            </p>
-          </div>
-        </div>
-
-        <!-- Gastos del Mes -->
-        <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs hover:border-slate-300 transition-all">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Gastos (Mes)</span>
-            <div class="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 13l-5 5m0 0l-5-5m5 5V6" />
-              </svg>
-            </div>
-          </div>
-          <div class="mt-4">
-            <div class="text-2xl sm:text-3xl font-bold tracking-tight text-rose-600">
-              -\${{ (resumen()?.gastosMes || 0) | number:'1.2-2' }}
-            </div>
-            <p class="text-xs text-slate-500 font-medium mt-1">
-              Balance mensual: \${{ (resumen()?.balanceMes || 0) | number:'1.2-2' }}
-            </p>
-          </div>
-        </div>
-
-        <!-- Tasa de Ahorro -->
-        <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs hover:border-slate-300 transition-all">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Tasa de Ahorro</span>
-            <div class="w-9 h-9 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-              </svg>
-            </div>
-          </div>
-          <div class="mt-4">
-            <div class="text-2xl sm:text-3xl font-bold tracking-tight text-violet-600">
-              {{ (resumen()?.tasaAhorro || 0) | number:'1.1-1' }}%
-            </div>
-            <p class="text-xs text-slate-500 font-medium mt-1">
-              {{ (resumen()?.tasaAhorro || 0) >= 20 ? 'Excelente ritmo de ahorro' : 'Margen para optimizar' }}
-            </p>
-          </div>
-        </div>
-
-      </div>
+        } @empty {
+          <p class="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500">Agrega una cuenta para ver tus métricas.</p>
+        }
+      </section>
 
       <!-- Analítica de gastos e ingresos -->
       <section aria-label="Analítica financiera" class="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <article class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
           <div class="mb-6">
             <h2 class="text-base font-bold text-slate-900">Gastos por categoría</h2>
-            <p class="text-xs text-slate-500 mt-1">Distribución del mes actual</p>
+            <div class="mt-2 flex flex-wrap items-center justify-between gap-2">
+              <p class="text-xs text-slate-500">Distribución del mes actual</p>
+              <select
+                aria-label="Moneda de la analítica"
+                [ngModel]="monedaAnalitica()"
+                (ngModelChange)="monedaAnalitica.set($event)"
+                class="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700">
+                @for (moneda of monedasAnalitica(); track moneda) {
+                  <option [value]="moneda">{{ moneda }}</option>
+                }
+              </select>
+            </div>
           </div>
 
           @if (analiticaLoading()) {
@@ -186,22 +143,22 @@ import {
               <div
                 class="w-44 h-44 rounded-full flex items-center justify-center shrink-0"
                 role="img"
-                [attr.aria-label]="'Distribución de gastos por categoría. Total: $' + (gastosTotales() | number:'1.2-2')"
+                [attr.aria-label]="'Distribución de gastos en ' + monedaAnalitica() + '. Total: ' + (gastosTotales() | currency:monedaAnalitica():'symbol':'1.2-2')"
                 [style.background]="donutGradient()">
                 <div class="w-28 h-28 rounded-full bg-white flex flex-col items-center justify-center text-center">
                   <span class="text-[10px] uppercase tracking-wide text-slate-400">Total</span>
-                  <span class="text-sm font-bold text-slate-900">\${{ gastosTotales() | number:'1.0-0' }}</span>
+                  <span class="text-sm font-bold text-slate-900">{{ gastosTotales() | currency:monedaAnalitica():'symbol':'1.0-0' }}</span>
                 </div>
               </div>
               <ul class="w-full space-y-3">
-                @for (categoria of analitica()?.gastosPorCategoria; track categoria.categoriaId ?? categoria.categoriaNombre; let i = $index) {
+                @for (categoria of gastosPorCategoria(); track categoria.categoriaId ?? categoria.categoriaNombre; let i = $index) {
                   <li class="flex items-center justify-between gap-3 text-xs">
                     <span class="flex items-center gap-2 min-w-0 text-slate-600">
                       <span class="w-2.5 h-2.5 rounded-full shrink-0" [style.background-color]="colorCategoria(categoria, i)"></span>
                       <span class="truncate">{{ categoria.categoriaNombre }}</span>
                     </span>
                     <span class="font-semibold text-slate-800 whitespace-nowrap">
-                      \${{ categoria.monto | number:'1.2-2' }}
+                      {{ categoria.monto | currency:monedaAnalitica():'symbol':'1.2-2' }}
                       <span class="font-normal text-slate-400">({{ categoria.monto / gastosTotales() | percent:'1.0-0' }})</span>
                     </span>
                   </li>
@@ -361,7 +318,9 @@ import {
                           {{ m.categoriaNombre }}
                         </span>
                       } @else {
-                        <span class="text-xs text-slate-400 italic">Transferencia</span>
+                        <span class="text-xs text-slate-400 italic">
+                          {{ m.tipo === 'TRANSFERENCIA' ? 'Transferencia' : m.tipo === 'SALDO_INICIAL' ? 'Saldo inicial' : 'Sin categoría' }}
+                        </span>
                       }
                     </td>
                     <td class="px-6 py-4 text-xs font-medium text-slate-600">
@@ -377,8 +336,16 @@ import {
                     <td class="px-6 py-4 text-right font-bold whitespace-nowrap"
                         [class.text-emerald-600]="m.tipo === 'INGRESO'"
                         [class.text-rose-600]="m.tipo === 'GASTO'"
-                        [class.text-blue-600]="m.tipo === 'TRANSFERENCIA'">
-                      {{ m.tipo === 'INGRESO' ? '+' : (m.tipo === 'GASTO' ? '-' : '') }}\${{ m.monto | number:'1.2-2' }}
+                        [class.text-blue-600]="m.tipo === 'TRANSFERENCIA'"
+                        [class.text-emerald-600]="m.tipo === 'SALDO_INICIAL'">
+                      @if (m.tipo === 'TRANSFERENCIA') {
+                        -{{ m.monto | currency:m.moneda:'symbol':'1.2-2' }}
+                        <span class="block text-xs font-medium text-slate-500">
+                          +{{ (m.montoDestino ?? m.monto) | currency:(m.monedaDestino ?? m.moneda):'symbol':'1.2-2' }}
+                        </span>
+                      } @else {
+                        {{ m.tipo === 'INGRESO' || m.tipo === 'SALDO_INICIAL' ? '+' : '-' }}{{ m.monto | currency:m.moneda:'symbol':'1.2-2' }}
+                      }
                     </td>
                     <td class="px-4 py-4 text-center">
                       <button 
@@ -509,7 +476,7 @@ import {
                   class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all cursor-pointer">
                   @for (c of cuentas(); track c.id) {
                     <option [ngValue]="c.id">
-                      {{ c.nombre }} (\${{ c.saldoActual | number:'1.2-2' }})
+                      {{ c.nombre }} ({{ c.saldoActual | currency:c.moneda:'symbol':'1.2-2' }})
                     </option>
                   }
                 </select>
@@ -529,11 +496,33 @@ import {
                     @for (c of cuentas(); track c.id) {
                       @if (c.id !== formCuentaId) {
                         <option [ngValue]="c.id">
-                          {{ c.nombre }} (\${{ c.saldoActual | number:'1.2-2' }})
+                          {{ c.nombre }} ({{ c.saldoActual | currency:c.moneda:'symbol':'1.2-2' }})
                         </option>
                       }
                     }
                   </select>
+                  @if (monedaCuenta(formCuentaId) !== monedaCuenta(formCuentaDestinoId)) {
+                    <div class="mt-4">
+                      <label for="dashboard-tasa-cambio" class="block text-xs font-semibold text-slate-700 mb-1.5">
+                        Tasa de cambio (1 {{ monedaCuenta(formCuentaId) }} = ? {{ monedaCuenta(formCuentaDestinoId) }})
+                      </label>
+                      <input
+                        id="dashboard-tasa-cambio"
+                        type="number"
+                        name="tasaCambio"
+                        min="0.00000001"
+                        step="0.00000001"
+                        required
+                        [(ngModel)]="formTasaCambio"
+                        class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                        placeholder="Ej. 17.25" />
+                      @if (formMonto && formTasaCambio && formTasaCambio > 0) {
+                        <p class="mt-1 text-xs text-slate-500">
+                          Se depositarán {{ formMonto * formTasaCambio | currency:monedaCuenta(formCuentaDestinoId):'symbol':'1.2-2' }}.
+                        </p>
+                      }
+                    </div>
+                  }
                 </div>
               } @else {
                 <!-- Categoría (solo para Gasto o Ingreso) -->
@@ -631,6 +620,7 @@ export class DashboardComponent implements OnInit {
   analiticaLoading = signal<boolean>(true);
   analiticaError = signal<string | null>(null);
   analitica = signal<DashboardAnalitica | null>(null);
+  monedaAnalitica = signal('MXN');
 
   cuentas = signal<Cuenta[]>([]);
   categorias = signal<Categoria[]>([]);
@@ -646,6 +636,7 @@ export class DashboardComponent implements OnInit {
   formDescripcion = '';
   formCuentaId: number | null = null;
   formCuentaDestinoId: number | null = null;
+  formTasaCambio: number | null = null;
   formCategoriaId: number | null = null;
   formFecha = new Date().toISOString().split('T')[0];
   formNotas = '';
@@ -655,12 +646,29 @@ export class DashboardComponent implements OnInit {
     return this.categorias().filter(c => c.tipo === tipo);
   });
 
+  monedaCuenta(id: number | null): string {
+    return this.cuentas().find(cuenta => cuenta.id === id)?.moneda ?? 'MXN';
+  }
+
   gastosTotales = computed(() =>
-    this.analitica()?.gastosPorCategoria.reduce((total, categoria) => total + categoria.monto, 0) ?? 0
+    this.gastosPorCategoria().reduce((total, categoria) => total + categoria.monto, 0)
+  );
+
+  monedasAnalitica = computed(() => {
+    const currencies = new Set([
+      ...(this.analitica()?.gastosPorCategoria.map(item => item.moneda) ?? []),
+      ...(this.analitica()?.ultimosSeisMeses.map(item => item.moneda) ?? [])
+    ]);
+    return [...currencies].sort();
+  });
+
+  gastosPorCategoria = computed(() =>
+    (this.analitica()?.gastosPorCategoria ?? []).filter(item => item.moneda === this.monedaAnalitica())
   );
 
   barrasMensuales = computed(() => {
-    const meses = this.analitica()?.ultimosSeisMeses ?? [];
+    const meses = (this.analitica()?.ultimosSeisMeses ?? [])
+      .filter(item => item.moneda === this.monedaAnalitica());
     const maximo = Math.max(1, ...meses.flatMap(mes => [mes.ingresos, mes.gastos]));
 
     return meses.map(mes => ({
@@ -674,7 +682,7 @@ export class DashboardComponent implements OnInit {
   });
 
   donutGradient = computed(() => {
-    const categorias = this.analitica()?.gastosPorCategoria ?? [];
+    const categorias = this.gastosPorCategoria();
     const total = this.gastosTotales();
     if (total <= 0) return 'conic-gradient(#e2e8f0 0% 100%)';
 
@@ -720,6 +728,13 @@ export class DashboardComponent implements OnInit {
       next: (res) => {
         if (res.success && res.data) {
           this.analitica.set(res.data);
+          const currencies = new Set([
+            ...res.data.gastosPorCategoria.map(item => item.moneda),
+            ...res.data.ultimosSeisMeses.map(item => item.moneda)
+          ]);
+          if (!currencies.has(this.monedaAnalitica()) && currencies.size > 0) {
+            this.monedaAnalitica.set(currencies.has('MXN') ? 'MXN' : [...currencies].sort()[0]);
+          }
         } else {
           this.analiticaError.set('No se pudo cargar la analítica financiera.');
         }
@@ -767,6 +782,7 @@ export class DashboardComponent implements OnInit {
     this.formDescripcion = '';
     this.formNotas = '';
     this.formFecha = new Date().toISOString().split('T')[0];
+    this.formTasaCambio = null;
 
     const listaCuentas = this.cuentas();
     if (listaCuentas.length > 0) {
@@ -818,6 +834,11 @@ export class DashboardComponent implements OnInit {
         this.modalError.set('La cuenta origen y destino deben ser distintas');
         return;
       }
+      if (this.monedaCuenta(this.formCuentaDestinoId) !== this.monedaCuenta(this.formCuentaId)
+          && (!this.formTasaCambio || !Number.isFinite(this.formTasaCambio) || this.formTasaCambio <= 0)) {
+        this.modalError.set('Ingresa una tasa de cambio mayor a 0 para transferir entre monedas distintas');
+        return;
+      }
     }
 
     const payload: TransaccionPayload = {
@@ -826,6 +847,10 @@ export class DashboardComponent implements OnInit {
       categoriaId: this.formTipo() !== 'TRANSFERENCIA' ? this.formCategoriaId : null,
       tipo: this.formTipo(),
       monto: this.formMonto,
+      tasaCambio: this.formTipo() === 'TRANSFERENCIA'
+        && this.monedaCuenta(this.formCuentaDestinoId) !== this.monedaCuenta(this.formCuentaId)
+        ? this.formTasaCambio
+        : null,
       fecha: this.formFecha,
       descripcion: this.formDescripcion.trim(),
       notas: this.formNotas.trim() || null

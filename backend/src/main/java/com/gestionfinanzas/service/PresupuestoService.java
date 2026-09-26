@@ -3,6 +3,7 @@ package com.gestionfinanzas.service;
 import com.gestionfinanzas.dto.request.PresupuestoRequest;
 import com.gestionfinanzas.dto.response.PresupuestoResponse;
 import com.gestionfinanzas.dto.response.PresupuestoResumenResponse;
+import com.gestionfinanzas.dto.response.PresupuestoMonedaResumenResponse;
 import com.gestionfinanzas.model.entity.Categoria;
 import com.gestionfinanzas.model.entity.Presupuesto;
 import com.gestionfinanzas.model.entity.Usuario;
@@ -20,6 +21,8 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Map;
+import java.util.TreeMap;
 
 @Service
 @RequiredArgsConstructor
@@ -35,9 +38,6 @@ public class PresupuestoService {
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
 
-        Categoria categoria = categoriaRepository.findAccessibleById(request.categoriaId(), usuarioId)
-                .orElseThrow(() -> new IllegalArgumentException("Categoría no encontrada o no accesible"));
-
         Optional<Presupuesto> existente = presupuestoRepository.findByUsuarioIdAndCategoriaIdAndMesAndAnio(
                 usuarioId, request.categoriaId(), request.mes(), request.anio()
         );
@@ -46,11 +46,15 @@ public class PresupuestoService {
         if (existente.isPresent()) {
             presupuesto = existente.get();
             presupuesto.setMontoLimite(request.montoLimite());
+            presupuesto.setMoneda(normalizarMoneda(request.moneda()));
         } else {
+            Categoria categoria = categoriaRepository.findAccessibleById(request.categoriaId(), usuarioId)
+                    .orElseThrow(() -> new IllegalArgumentException("Categoría no encontrada o no accesible"));
             presupuesto = Presupuesto.builder()
                     .usuario(usuario)
                     .categoria(categoria)
                     .montoLimite(request.montoLimite())
+                    .moneda(normalizarMoneda(request.moneda()))
                     .mes(request.mes())
                     .anio(request.anio())
                     .build();
@@ -70,32 +74,48 @@ public class PresupuestoService {
                 usuarioId, mesConsulta, anioConsulta
         );
 
-        BigDecimal totalPresupuestado = BigDecimal.ZERO;
-        BigDecimal totalGastado = BigDecimal.ZERO;
         List<PresupuestoResponse> responses = new ArrayList<>();
+        Map<String, BigDecimal[]> totalesPorMoneda = new TreeMap<>();
 
         for (Presupuesto p : presupuestos) {
             PresupuestoResponse resp = calcularMetricasPresupuesto(p, usuarioId);
-            totalPresupuestado = totalPresupuestado.add(resp.montoLimite());
-            totalGastado = totalGastado.add(resp.montoGastado());
             responses.add(resp);
+            BigDecimal[] totales = totalesPorMoneda.computeIfAbsent(
+                    resp.moneda(), ignored -> new BigDecimal[] { BigDecimal.ZERO, BigDecimal.ZERO }
+            );
+            totales[0] = totales[0].add(resp.montoLimite());
+            totales[1] = totales[1].add(resp.montoGastado());
         }
 
-        BigDecimal totalDisponible = totalPresupuestado.subtract(totalGastado);
-        BigDecimal porcentajeConsumidoGlobal = BigDecimal.ZERO;
-        if (totalPresupuestado.compareTo(BigDecimal.ZERO) > 0) {
-            porcentajeConsumidoGlobal = totalGastado.multiply(BigDecimal.valueOf(100))
-                    .divide(totalPresupuestado, 2, RoundingMode.HALF_UP);
-        }
+        List<PresupuestoMonedaResumenResponse> resumenPorMoneda = totalesPorMoneda.entrySet().stream()
+                .map(entry -> {
+                    BigDecimal presupuesto = entry.getValue()[0];
+                    BigDecimal gasto = entry.getValue()[1];
+                    BigDecimal disponible = presupuesto.subtract(gasto);
+                    BigDecimal porcentaje = presupuesto.signum() > 0
+                            ? gasto.multiply(BigDecimal.valueOf(100)).divide(presupuesto, 2, RoundingMode.HALF_UP)
+                            : BigDecimal.ZERO;
+                    return new PresupuestoMonedaResumenResponse(
+                            entry.getKey(), presupuesto, gasto, disponible, porcentaje
+                    );
+                })
+                .toList();
+        PresupuestoMonedaResumenResponse resumenMxn = resumenPorMoneda.stream()
+                .filter(resumen -> "MXN".equals(resumen.moneda()))
+                .findFirst()
+                .orElse(new PresupuestoMonedaResumenResponse(
+                        "MXN", BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO
+                ));
 
         return new PresupuestoResumenResponse(
                 mesConsulta,
                 anioConsulta,
-                totalPresupuestado,
-                totalGastado,
-                totalDisponible,
-                porcentajeConsumidoGlobal,
-                responses
+                resumenMxn.totalPresupuestado(),
+                resumenMxn.totalGastado(),
+                resumenMxn.totalDisponible(),
+                resumenMxn.porcentajeConsumido(),
+                responses,
+                resumenPorMoneda
         );
     }
 
@@ -111,7 +131,7 @@ public class PresupuestoService {
         LocalDate finPeriodo = inicioPeriodo.withDayOfMonth(inicioPeriodo.lengthOfMonth());
 
         BigDecimal montoGastado = transaccionRepository.sumGastosPorUsuarioYCategoriaYPeriodo(
-                usuarioId, p.getCategoria().getId(), inicioPeriodo, finPeriodo
+                usuarioId, p.getCategoria().getId(), p.getMoneda(), inicioPeriodo, finPeriodo
         );
         if (montoGastado == null) {
             montoGastado = BigDecimal.ZERO;
@@ -133,5 +153,9 @@ public class PresupuestoService {
         }
 
         return PresupuestoResponse.of(p, montoGastado, montoDisponible, porcentajeConsumido, estado);
+    }
+
+    private String normalizarMoneda(String moneda) {
+        return moneda == null || moneda.isBlank() ? "MXN" : moneda.trim().toUpperCase();
     }
 }

@@ -5,6 +5,8 @@ import com.gestionfinanzas.dto.response.DashboardAnaliticaResponse;
 import com.gestionfinanzas.dto.response.DashboardGastoCategoriaResponse;
 import com.gestionfinanzas.dto.response.DashboardMesResponse;
 import com.gestionfinanzas.dto.response.DashboardMesTipoTotal;
+import com.gestionfinanzas.dto.response.DashboardMonedaResumenResponse;
+import com.gestionfinanzas.dto.response.DashboardMonedaTotales;
 import com.gestionfinanzas.dto.response.TransaccionResponse;
 import com.gestionfinanzas.model.entity.Cuenta;
 import com.gestionfinanzas.model.enums.TipoTransaccion;
@@ -22,6 +24,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 @Service
 @RequiredArgsConstructor
@@ -40,32 +44,42 @@ public class DashboardService {
         LocalDate finPeriodo = inicioPeriodo.withDayOfMonth(inicioPeriodo.lengthOfMonth());
 
         List<Cuenta> cuentasActivas = cuentaRepository.findByUsuarioIdAndActivoTrue(usuarioId);
-        BigDecimal balanceTotal = cuentasActivas.stream()
-                .map(Cuenta::getSaldoActual)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        BigDecimal ingresosMes = transaccionRepository.sumMontoPorUsuarioYTipoYPeriodo(
-                usuarioId, TipoTransaccion.INGRESO, inicioPeriodo, finPeriodo
-        );
-        if (ingresosMes == null) {
-            ingresosMes = BigDecimal.ZERO;
+        Map<String, BigDecimal> balancesPorMoneda = new HashMap<>();
+        Map<String, Integer> cuentasPorMoneda = new HashMap<>();
+        for (Cuenta cuenta : cuentasActivas) {
+            balancesPorMoneda.merge(cuenta.getMoneda(), cuenta.getSaldoActual(), BigDecimal::add);
+            cuentasPorMoneda.merge(cuenta.getMoneda(), 1, Integer::sum);
         }
-
-        BigDecimal gastosMes = transaccionRepository.sumMontoPorUsuarioYTipoYPeriodo(
-                usuarioId, TipoTransaccion.GASTO, inicioPeriodo, finPeriodo
-        );
-        if (gastosMes == null) {
-            gastosMes = BigDecimal.ZERO;
-        }
-
-        BigDecimal balanceMes = ingresosMes.subtract(gastosMes);
-
-        BigDecimal tasaAhorro = BigDecimal.ZERO;
-        if (ingresosMes.compareTo(BigDecimal.ZERO) > 0) {
-            BigDecimal ahorroPositivo = balanceMes.max(BigDecimal.ZERO);
-            tasaAhorro = ahorroPositivo.multiply(BigDecimal.valueOf(100))
-                    .divide(ingresosMes, 2, RoundingMode.HALF_UP);
-        }
+        List<DashboardMonedaTotales> totalesMensuales =
+                transaccionRepository.findTotalesMensualesPorMoneda(usuarioId, inicioPeriodo, finPeriodo);
+        Map<String, DashboardMonedaTotales> totalesPorMoneda = new HashMap<>();
+        totalesMensuales.forEach(total -> totalesPorMoneda.put(total.moneda(), total));
+        Set<String> monedas = new TreeSet<>(balancesPorMoneda.keySet());
+        monedas.addAll(totalesPorMoneda.keySet());
+        List<DashboardMonedaResumenResponse> resumenPorMoneda = monedas.stream()
+                .map(moneda -> {
+                    BigDecimal balance = balancesPorMoneda.getOrDefault(moneda, BigDecimal.ZERO);
+                    DashboardMonedaTotales totales = totalesPorMoneda.get(moneda);
+                    BigDecimal ingresos = totales != null ? totales.ingresos() : BigDecimal.ZERO;
+                    BigDecimal gastos = totales != null ? totales.gastos() : BigDecimal.ZERO;
+                    BigDecimal balanceMes = ingresos.subtract(gastos);
+                    BigDecimal tasaAhorro = ingresos.compareTo(BigDecimal.ZERO) > 0
+                            ? balanceMes.max(BigDecimal.ZERO).multiply(BigDecimal.valueOf(100))
+                                    .divide(ingresos, 2, RoundingMode.HALF_UP)
+                            : BigDecimal.ZERO;
+                    return new DashboardMonedaResumenResponse(
+                            moneda, balance, ingresos, gastos, balanceMes, tasaAhorro,
+                            cuentasPorMoneda.getOrDefault(moneda, 0)
+                    );
+                })
+                .toList();
+        DashboardMonedaResumenResponse resumenMxn = resumenPorMoneda.stream()
+                .filter(resumen -> "MXN".equals(resumen.moneda()))
+                .findFirst()
+                .orElse(new DashboardMonedaResumenResponse(
+                        "MXN", BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO,
+                        BigDecimal.ZERO, BigDecimal.ZERO, 0
+                ));
 
         List<TransaccionResponse> ultimosMovimientos = transaccionRepository
                 .findTop10ByUsuarioIdOrderByFechaDescIdDesc(usuarioId)
@@ -74,15 +88,16 @@ public class DashboardService {
                 .toList();
 
         return new DashboardResumenResponse(
-                balanceTotal,
-                ingresosMes,
-                gastosMes,
-                balanceMes,
-                tasaAhorro,
+                resumenMxn.balanceTotal(),
+                resumenMxn.ingresosMes(),
+                resumenMxn.gastosMes(),
+                resumenMxn.balanceMes(),
+                resumenMxn.tasaAhorro(),
                 cuentasActivas.size(),
                 mesConsulta,
                 anioConsulta,
-                ultimosMovimientos
+                ultimosMovimientos,
+                resumenPorMoneda
         );
     }
 
@@ -106,24 +121,44 @@ public class DashboardService {
                         finMes
                 );
 
-        Map<YearMonth, BigDecimal[]> montosPorMes = new HashMap<>();
-        for (int i = 0; i < 6; i++) {
-            montosPorMes.put(primerMes.plusMonths(i), new BigDecimal[] { BigDecimal.ZERO, BigDecimal.ZERO });
+        Map<String, Map<YearMonth, BigDecimal[]>> montosPorMonedaYMes = new HashMap<>();
+        Set<String> monedas = new TreeSet<>();
+        cuentaRepository.findByUsuarioIdAndActivoTrue(usuarioId)
+                .forEach(cuenta -> monedas.add(cuenta.getMoneda()));
+        totalesMensuales.forEach(total -> monedas.add(total.moneda()));
+        for (String moneda : monedas) {
+            Map<YearMonth, BigDecimal[]> montosPorMes = montosPorMonedaYMes.computeIfAbsent(
+                    moneda, ignored -> new HashMap<>()
+            );
+            for (int i = 0; i < 6; i++) {
+                YearMonth mes = primerMes.plusMonths(i);
+                montosPorMes
+                        .putIfAbsent(mes, new BigDecimal[] { BigDecimal.ZERO, BigDecimal.ZERO });
+            }
         }
 
         for (DashboardMesTipoTotal total : totalesMensuales) {
-            BigDecimal[] montos = montosPorMes.get(YearMonth.of(total.anio(), total.mes()));
+            YearMonth mes = YearMonth.of(total.anio(), total.mes());
+            BigDecimal[] montos = montosPorMonedaYMes
+                    .computeIfAbsent(total.moneda(), ignored -> new HashMap<>())
+                    .computeIfAbsent(mes, ignored -> new BigDecimal[] { BigDecimal.ZERO, BigDecimal.ZERO });
             if (montos != null) {
                 int indice = total.tipo() == TipoTransaccion.INGRESO ? 0 : 1;
                 montos[indice] = total.monto();
             }
         }
 
-        List<DashboardMesResponse> ultimosSeisMeses = new ArrayList<>(6);
+        List<DashboardMesResponse> ultimosSeisMeses = new ArrayList<>(montosPorMonedaYMes.size() * 6);
+        for (String moneda : new TreeSet<>(montosPorMonedaYMes.keySet())) {
         for (int i = 0; i < 6; i++) {
             YearMonth mes = primerMes.plusMonths(i);
-            BigDecimal[] montos = montosPorMes.get(mes);
-            ultimosSeisMeses.add(new DashboardMesResponse(mes.getYear(), mes.getMonthValue(), montos[0], montos[1]));
+            BigDecimal[] montos = montosPorMonedaYMes.get(moneda).getOrDefault(
+                    mes, new BigDecimal[] { BigDecimal.ZERO, BigDecimal.ZERO }
+            );
+            ultimosSeisMeses.add(new DashboardMesResponse(
+                    mes.getYear(), mes.getMonthValue(), montos[0], montos[1], moneda
+            ));
+        }
         }
 
         return new DashboardAnaliticaResponse(gastosPorCategoria, ultimosSeisMeses);

@@ -9,7 +9,8 @@ public record CategoriaResponse(
     TipoTransaccion tipo,
     String icono,
     String color,
-    boolean esPersonalizada
+    boolean esPersonalizada,
+    boolean activo
 ) {
     public static CategoriaResponse fromEntity(Categoria categoria) {
         return new CategoriaResponse(
@@ -18,7 +19,8 @@ public record CategoriaResponse(
             categoria.getTipo(),
             categoria.getIcono(),
             categoria.getColor(),
-            categoria.getUsuario() != null
+            categoria.getUsuario() != null,
+            categoria.isActivo()
         );
     }
 }

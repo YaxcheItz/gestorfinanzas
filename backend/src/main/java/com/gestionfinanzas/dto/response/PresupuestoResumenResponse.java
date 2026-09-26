@@ -10,6 +10,7 @@ public record PresupuestoResumenResponse(
         BigDecimal totalGastado,
         BigDecimal totalDisponible,
         BigDecimal porcentajeConsumidoGlobal,
-        List<PresupuestoResponse> presupuestos
+        List<PresupuestoResponse> presupuestos,
+        List<PresupuestoMonedaResumenResponse> resumenPorMoneda
 ) {
 }

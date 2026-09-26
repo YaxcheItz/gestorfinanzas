@@ -1,5 +1,13 @@
 export type TipoCuenta = 'EFECTIVO' | 'DEBITO' | 'CREDITO' | 'AHORRO' | 'INVERSION';
-export type TipoTransaccion = 'INGRESO' | 'GASTO' | 'TRANSFERENCIA';
+export type TipoTransaccion = 'INGRESO' | 'GASTO' | 'TRANSFERENCIA' | 'SALDO_INICIAL';
+
+export const MONEDAS_DISPONIBLES = [
+  { codigo: 'MXN', nombre: 'Peso mexicano' },
+  { codigo: 'USD', nombre: 'Dólar estadounidense' },
+  { codigo: 'CAD', nombre: 'Dólar canadiense' },
+  { codigo: 'EUR', nombre: 'Euro' },
+  { codigo: 'GBP', nombre: 'Libra esterlina' }
+] as const;
 
 export interface Cuenta {
   id: number;
@@ -27,6 +35,14 @@ export interface Categoria {
   icono?: string;
   color?: string;
   esPersonalizada: boolean;
+  activo: boolean;
+}
+
+export interface CategoriaPayload {
+  nombre: string;
+  tipo: 'INGRESO' | 'GASTO';
+  icono?: string;
+  color?: string;
 }
 
 export interface Transaccion {
@@ -41,6 +57,10 @@ export interface Transaccion {
   categoriaColor?: string | null;
   tipo: TipoTransaccion;
   monto: number;
+  montoDestino?: number | null;
+  tasaCambio?: number | null;
+  moneda: string;
+  monedaDestino?: string | null;
   fecha: string;
   descripcion: string;
   notas?: string | null;
@@ -53,6 +73,7 @@ export interface TransaccionPayload {
   categoriaId?: number | null;
   tipo: TipoTransaccion;
   monto: number;
+  tasaCambio?: number | null;
   fecha: string;
   descripcion: string;
   notas?: string | null;
@@ -68,6 +89,17 @@ export interface DashboardResumen {
   mes: number;
   anio: number;
   ultimosMovimientos: Transaccion[];
+  resumenPorMoneda: DashboardMonedaResumen[];
+}
+
+export interface DashboardMonedaResumen {
+  moneda: string;
+  balanceTotal: number;
+  ingresosMes: number;
+  gastosMes: number;
+  balanceMes: number;
+  tasaAhorro: number;
+  totalCuentas: number;
 }
 
 export interface DashboardGastoCategoria {
@@ -75,6 +107,7 @@ export interface DashboardGastoCategoria {
   categoriaNombre: string;
   categoriaColor?: string | null;
   monto: number;
+  moneda: string;
 }
 
 export interface DashboardMes {
@@ -82,6 +115,7 @@ export interface DashboardMes {
   mes: number;
   ingresos: number;
   gastos: number;
+  moneda: string;
 }
 
 export interface DashboardAnalitica {
@@ -98,6 +132,7 @@ export interface Presupuesto {
   categoriaIcono?: string | null;
   categoriaColor?: string | null;
   montoLimite: number;
+  moneda: string;
   montoGastado: number;
   montoDisponible: number;
   porcentajeConsumido: number;
@@ -109,6 +144,7 @@ export interface Presupuesto {
 export interface PresupuestoPayload {
   categoriaId: number;
   montoLimite: number;
+  moneda: string;
   mes: number;
   anio: number;
 }
@@ -121,6 +157,15 @@ export interface PresupuestoResumen {
   totalDisponible: number;
   porcentajeConsumidoGlobal: number;
   presupuestos: Presupuesto[];
+  resumenPorMoneda: PresupuestoMonedaResumen[];
+}
+
+export interface PresupuestoMonedaResumen {
+  moneda: string;
+  totalPresupuestado: number;
+  totalGastado: number;
+  totalDisponible: number;
+  porcentajeConsumido: number;
 }
 
 export interface TransaccionFiltro {
@@ -142,4 +187,3 @@ export interface PageResponse<T> {
   last: boolean;
   empty: boolean;
 }
-

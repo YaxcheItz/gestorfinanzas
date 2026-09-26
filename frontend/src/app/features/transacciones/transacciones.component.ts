@@ -178,24 +178,34 @@ import {
 
       </div>
 
-      <!-- Resumen de Totales del Filtro Actual -->
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div class="bg-white px-5 py-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
-          <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Ingresos (Página)</span>
-          <span class="text-base font-bold text-emerald-600">+\${{ totalIngresosPagina() | number:'1.2-2' }}</span>
-        </div>
-        <div class="bg-white px-5 py-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
-          <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Gastos (Página)</span>
-          <span class="text-base font-bold text-rose-600">-\${{ totalGastosPagina() | number:'1.2-2' }}</span>
-        </div>
-        <div class="bg-white px-5 py-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
-          <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Balance Neto</span>
-          <span 
-            [class]="balanceNetoPagina() >= 0 ? 'text-emerald-600' : 'text-rose-600'"
-            class="text-base font-bold">
-            \${{ balanceNetoPagina() | number:'1.2-2' }}
-          </span>
-        </div>
+      <!-- Resumen de Totales del Filtro Actual, separado por moneda -->
+      <div class="space-y-3">
+        @for (resumen of resumenPaginaPorMoneda(); track resumen.moneda) {
+          <section class="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs">
+            <h2 class="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">{{ resumen.moneda }}</h2>
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Ingresos (Página)</span>
+                <span class="text-base font-bold text-emerald-600">+{{ resumen.ingresos | currency:resumen.moneda:'symbol':'1.2-2' }}</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Gastos (Página)</span>
+                <span class="text-base font-bold text-rose-600">-{{ resumen.gastos | currency:resumen.moneda:'symbol':'1.2-2' }}</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Balance Neto</span>
+                <span
+                  [class.text-emerald-600]="resumen.balance >= 0"
+                  [class.text-rose-600]="resumen.balance < 0"
+                  class="text-base font-bold">
+                  {{ resumen.balance | currency:resumen.moneda:'symbol':'1.2-2' }}
+                </span>
+              </div>
+            </div>
+          </section>
+        } @empty {
+          <p class="text-sm text-slate-500">No hay ingresos ni gastos en esta página.</p>
+        }
       </div>
 
       <!-- Tabla de Transacciones -->
@@ -276,7 +286,9 @@ import {
                           {{ m.categoriaNombre }}
                         </span>
                       } @else {
-                        <span class="text-xs text-slate-400 italic">Transferencia</span>
+                        <span class="text-xs text-slate-400 italic">
+                          {{ m.tipo === 'TRANSFERENCIA' ? 'Transferencia' : m.tipo === 'SALDO_INICIAL' ? 'Saldo inicial' : 'Sin categoría' }}
+                        </span>
                       }
                     </td>
                     <td class="px-6 py-4 text-xs font-medium text-slate-600">
@@ -292,8 +304,16 @@ import {
                     <td class="px-6 py-4 text-right font-bold whitespace-nowrap"
                         [class.text-emerald-600]="m.tipo === 'INGRESO'"
                         [class.text-rose-600]="m.tipo === 'GASTO'"
-                        [class.text-blue-600]="m.tipo === 'TRANSFERENCIA'">
-                      {{ m.tipo === 'INGRESO' ? '+' : (m.tipo === 'GASTO' ? '-' : '') }}\${{ m.monto | number:'1.2-2' }}
+                        [class.text-blue-600]="m.tipo === 'TRANSFERENCIA'"
+                        [class.text-emerald-600]="m.tipo === 'SALDO_INICIAL'">
+                      @if (m.tipo === 'TRANSFERENCIA') {
+                        -{{ m.monto | currency:m.moneda:'symbol':'1.2-2' }}
+                        <span class="block text-xs font-medium text-slate-500">
+                          +{{ (m.montoDestino ?? m.monto) | currency:(m.monedaDestino ?? m.moneda):'symbol':'1.2-2' }}
+                        </span>
+                      } @else {
+                        {{ m.tipo === 'INGRESO' || m.tipo === 'SALDO_INICIAL' ? '+' : '-' }}{{ m.monto | currency:m.moneda:'symbol':'1.2-2' }}
+                      }
                     </td>
                     <td class="px-4 py-4 text-center">
                       <button 
@@ -454,7 +474,7 @@ import {
                   name="cuentaId"
                   class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all cursor-pointer">
                   @for (c of cuentas(); track c.id) {
-                    <option [value]="c.id">{{ c.nombre }} (\${{ c.saldoActual | number:'1.2-2' }})</option>
+                    <option [ngValue]="c.id">{{ c.nombre }} ({{ c.saldoActual | currency:c.moneda:'symbol':'1.2-2' }})</option>
                   }
                 </select>
               </div>
@@ -472,10 +492,32 @@ import {
                     class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all cursor-pointer">
                     @for (c of cuentas(); track c.id) {
                       @if (c.id !== formCuentaId) {
-                        <option [value]="c.id">{{ c.nombre }} (\${{ c.saldoActual | number:'1.2-2' }})</option>
+                        <option [ngValue]="c.id">{{ c.nombre }} ({{ c.saldoActual | currency:c.moneda:'symbol':'1.2-2' }})</option>
                       }
                     }
                   </select>
+                  @if (monedaCuenta(formCuentaId) !== monedaCuenta(formCuentaDestinoId)) {
+                    <div class="mt-4">
+                      <label for="tasaCambio" class="block text-xs font-semibold text-slate-700 mb-1.5">
+                        Tasa de cambio (1 {{ monedaCuenta(formCuentaId) }} = ? {{ monedaCuenta(formCuentaDestinoId) }})
+                      </label>
+                      <input
+                        id="tasaCambio"
+                        type="number"
+                        name="tasaCambio"
+                        min="0.00000001"
+                        step="0.00000001"
+                        required
+                        [(ngModel)]="formTasaCambio"
+                        class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                        placeholder="Ej. 17.25" />
+                      @if (formMonto && formTasaCambio && formTasaCambio > 0) {
+                        <p class="mt-1 text-xs text-slate-500">
+                          Se depositarán {{ formMonto * formTasaCambio | currency:monedaCuenta(formCuentaDestinoId):'symbol':'1.2-2' }}.
+                        </p>
+                      }
+                    </div>
+                  }
                 </div>
               } @else {
                 <div>
@@ -590,6 +632,7 @@ export class TransaccionesComponent implements OnInit {
   formDescripcion: string = '';
   formCuentaId: number | null = null;
   formCuentaDestinoId: number | null = null;
+  formTasaCambio: number | null = null;
   formCategoriaId: number | null = null;
   formFecha: string = '';
   formNotas: string = '';
@@ -599,23 +642,25 @@ export class TransaccionesComponent implements OnInit {
     return this.categorias().filter(c => c.tipo === this.formTipo());
   });
 
-  // Métricas rápidas de la página actual
-  readonly totalIngresosPagina = computed(() => {
-    const items = this.pageData()?.content || [];
-    return items
-      .filter(t => t.tipo === 'INGRESO')
-      .reduce((sum, t) => sum + Number(t.monto), 0);
-  });
+  monedaCuenta(id: number | null): string {
+    return this.cuentas().find(cuenta => cuenta.id === id)?.moneda ?? 'MXN';
+  }
 
-  readonly totalGastosPagina = computed(() => {
-    const items = this.pageData()?.content || [];
-    return items
-      .filter(t => t.tipo === 'GASTO')
-      .reduce((sum, t) => sum + Number(t.monto), 0);
-  });
-
-  readonly balanceNetoPagina = computed(() => {
-    return this.totalIngresosPagina() - this.totalGastosPagina();
+  readonly resumenPaginaPorMoneda = computed(() => {
+    const resumen = new Map<string, { ingresos: number; gastos: number }>();
+    for (const transaccion of this.pageData()?.content || []) {
+      if (transaccion.tipo !== 'INGRESO' && transaccion.tipo !== 'GASTO') continue;
+      const totales = resumen.get(transaccion.moneda) ?? { ingresos: 0, gastos: 0 };
+      if (transaccion.tipo === 'INGRESO') totales.ingresos += Number(transaccion.monto);
+      else totales.gastos += Number(transaccion.monto);
+      resumen.set(transaccion.moneda, totales);
+    }
+    return Array.from(resumen, ([moneda, totales]) => ({
+      moneda,
+      ingresos: totales.ingresos,
+      gastos: totales.gastos,
+      balance: totales.ingresos - totales.gastos
+    }));
   });
 
   readonly tieneFiltrosActivos = computed(() => {
@@ -795,6 +840,7 @@ export class TransaccionesComponent implements OnInit {
     this.modalError.set(null);
 
     const lista = this.cuentas();
+    this.formTasaCambio = null;
     if (lista.length > 0) {
       this.formCuentaId = lista[0].id;
       if (lista.length > 1) {
@@ -840,6 +886,11 @@ export class TransaccionesComponent implements OnInit {
         this.modalError.set('La cuenta origen y destino deben ser distintas');
         return;
       }
+      if (this.monedaCuenta(this.formCuentaDestinoId) !== this.monedaCuenta(this.formCuentaId)
+          && (!this.formTasaCambio || !Number.isFinite(this.formTasaCambio) || this.formTasaCambio <= 0)) {
+        this.modalError.set('Ingresa una tasa de cambio mayor a 0 para transferir entre monedas distintas');
+        return;
+      }
     }
 
     const payload: TransaccionPayload = {
@@ -848,6 +899,10 @@ export class TransaccionesComponent implements OnInit {
       categoriaId: this.formTipo() !== 'TRANSFERENCIA' ? this.formCategoriaId : null,
       tipo: this.formTipo(),
       monto: this.formMonto,
+      tasaCambio: this.formTipo() === 'TRANSFERENCIA'
+        && this.monedaCuenta(this.formCuentaDestinoId) !== this.monedaCuenta(this.formCuentaId)
+        ? this.formTasaCambio
+        : null,
       fecha: this.formFecha,
       descripcion: this.formDescripcion.trim(),
       notas: this.formNotas.trim() || null
