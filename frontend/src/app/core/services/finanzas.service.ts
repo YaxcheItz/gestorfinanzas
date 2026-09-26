@@ -33,6 +33,10 @@ export class FinanzasService {
     return this.http.post<ApiResponse<Cuenta>>(`${this.baseUrl}/cuentas`, payload);
   }
 
+  actualizarCuenta(id: number, payload: CuentaPayload): Observable<ApiResponse<Cuenta>> {
+    return this.http.put<ApiResponse<Cuenta>>(`${this.baseUrl}/cuentas/${id}`, payload);
+  }
+
   desactivarCuenta(id: number): Observable<ApiResponse<void>> {
     return this.http.delete<ApiResponse<void>>(`${this.baseUrl}/cuentas/${id}`);
   }
