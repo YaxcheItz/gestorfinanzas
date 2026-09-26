@@ -9,8 +9,8 @@ import { AuthService } from '../../../core/services/auth.service';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
   template: `
-    <div class="min-h-[calc(100vh-4rem)] flex items-center justify-center p-4">
-      <div class="w-full max-w-md bg-white border border-slate-200 rounded-2xl shadow-xl shadow-slate-200/50 p-8 space-y-6">
+    <div class="min-h-[calc(100vh-4rem)] flex items-center justify-center p-3 sm:p-4">
+      <div class="w-full max-w-md bg-white border border-slate-200 rounded-2xl shadow-xl shadow-slate-200/50 p-5 sm:p-8 space-y-6">
         
         <div class="text-center space-y-2">
           <div class="w-12 h-12 bg-emerald-100 text-emerald-700 rounded-xl mx-auto flex items-center justify-center font-bold text-xl mb-3">
