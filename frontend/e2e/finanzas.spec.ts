@@ -138,11 +138,39 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   await page.setViewportSize({ width: 1280, height: 900 });
   await expect(page.getByRole('heading', { name: 'Resumen Financiero' })).toBeVisible();
   await expect(page.getByText('Hola, Usuario E2E.')).toBeVisible();
+  const dashboardDate = page.getByLabel('Fecha actual');
+  await expect(dashboardDate).toBeVisible();
+  await expect(dashboardDate).toContainText(/\d{1,2} de [a-záéíóú]+ de \d{4}/i);
+  await expect(page.getByRole('button', { name: 'Actualizar resumen financiero' })).toHaveCount(0);
   await expect(page.getByText('Personal', { exact: true })).toHaveCount(0);
   await expect(page.getByRole('navigation', { name: 'Navegación de escritorio' }).getByRole('link', { name: 'Configuración' })).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Perfil' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Salir' })).toBeVisible();
   await expect(page.getByText('Conectado como')).toBeVisible();
+  const desktopNavigation = page.getByRole('navigation', { name: 'Navegación de escritorio' });
+  await expect(desktopNavigation.getByRole('link', { name: 'Movimientos' })).toHaveCount(0);
+  await expect(desktopNavigation.getByRole('link', { name: 'Asistente IA' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Ver asistente' })).toBeVisible();
+  const recentTransactionsSection = page.getByRole('region', { name: 'Últimos movimientos' });
+  const recentHeadingBounds = await recentTransactionsSection.getByRole('heading', { name: 'Últimos movimientos' }).boundingBox();
+  const viewMoreBounds = await recentTransactionsSection.getByRole('button', { name: 'Ver más' }).boundingBox();
+  expect(recentHeadingBounds).not.toBeNull();
+  expect(viewMoreBounds).not.toBeNull();
+  expect(Math.abs(recentHeadingBounds!.y + recentHeadingBounds!.height / 2 - (viewMoreBounds!.y + viewMoreBounds!.height / 2)))
+    .toBeLessThanOrEqual(2);
+  await page.screenshot({ path: 'test-results/capturas/dashboard-transacciones-recientes.png', fullPage: true });
+  await page.getByRole('button', { name: 'Ver asistente' }).click();
+  await expect(page.getByRole('heading', { name: 'Asistente IA' })).toBeVisible();
+  await expect(page.getByText('En preparación')).toBeVisible();
+  await page.screenshot({ path: 'test-results/capturas/asistente-ia-escritorio.png', fullPage: true });
+  await page.getByRole('link', { name: 'Panel General' }).click();
+  await page.getByRole('button', { name: 'Ver más' }).click();
+  await expect(page).toHaveURL(/\/transacciones$/);
+  await expect(page.getByRole('heading', { name: 'Transacciones recientes' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Exportar CSV' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Nuevo Movimiento' })).toBeVisible();
+  await page.getByRole('link', { name: 'Inicio' }).click();
+  await expect(page.getByRole('heading', { name: 'Resumen Financiero' })).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
   const mobileBrand = page.getByRole('link', { name: 'Kaptal - ir al inicio' }).boundingBox();
   const mobileProfile = page.getByRole('link', { name: 'Perfil' }).boundingBox();
@@ -175,7 +203,20 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   await expect(mobileNavigation).toHaveCSS('position', 'fixed');
   await expect(mobileNavigation.locator('svg use')).toHaveCount(4);
   await expect(mobileNavigation.getByRole('link', { name: 'Inicio' })).toBeVisible();
+  await expect(mobileNavigation.getByRole('link', { name: 'Movimientos' })).toHaveCount(0);
+  await expect(mobileNavigation.getByRole('link', { name: 'Asistente IA' })).toBeVisible();
   await expect(mobileNavigation.getByRole('link', { name: 'Categorías' })).toHaveCount(0);
+  const mobileNavLinks = await mobileNavigation.locator('a').evaluateAll(links =>
+    links.map(link => {
+      const bounds = link.getBoundingClientRect();
+      return { left: bounds.left, right: bounds.right, width: bounds.width };
+    })
+  );
+  expect(mobileNavLinks).toHaveLength(4);
+  expect(mobileNavLinks.every(link => link.width > 0 && link.left >= 0 && link.right <= 390)).toBeTruthy();
+  expect(mobileNavLinks[0].left).toBeLessThan(mobileNavLinks[1].left);
+  expect(mobileNavLinks[1].left).toBeLessThan(mobileNavLinks[2].left);
+  expect(mobileNavLinks[2].left).toBeLessThan(mobileNavLinks[3].left);
   expect(await page.evaluate(() => document.documentElement.scrollWidth))
     .toBeLessThanOrEqual(await page.evaluate(() => window.innerWidth));
   await mobileNavigation.getByRole('link', { name: 'Cuentas' }).click();
@@ -183,6 +224,23 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   expect(await page.evaluate(() => document.documentElement.scrollWidth))
     .toBeLessThanOrEqual(await page.evaluate(() => window.innerWidth));
   await mobileNavigation.getByRole('link', { name: 'Inicio' }).click();
+  await mobileNavigation.getByRole('link', { name: 'Asistente IA' }).click();
+  await expect(page.getByRole('heading', { name: 'Asistente IA' })).toBeVisible();
+  await expect(page.getByRole('navigation', { name: 'Navegación principal' }).getByRole('link', { name: 'Asistente IA' }))
+    .toHaveCSS('color', 'rgb(5, 150, 105)');
+  await page.screenshot({ path: 'test-results/capturas/asistente-ia-movil.png', fullPage: true });
+  await mobileNavigation.getByRole('link', { name: 'Inicio' }).click();
+  await page.setViewportSize({ width: 390, height: 844 });
+  const mobileRecentHeader = page.getByRole('region', { name: 'Últimos movimientos' });
+  await expect(mobileRecentHeader.getByRole('heading', { name: 'Últimos movimientos' })).toBeVisible();
+  await expect(mobileRecentHeader.getByRole('button', { name: 'Ver más' })).toBeVisible();
+  const mobileRecentTitleBounds = await mobileRecentHeader.getByRole('heading', { name: 'Últimos movimientos' }).boundingBox();
+  const mobileViewMoreBounds = await mobileRecentHeader.getByRole('button', { name: 'Ver más' }).boundingBox();
+  expect(mobileRecentTitleBounds).not.toBeNull();
+  expect(mobileViewMoreBounds).not.toBeNull();
+  expect(Math.abs(mobileRecentTitleBounds!.y + mobileRecentTitleBounds!.height / 2 - (mobileViewMoreBounds!.y + mobileViewMoreBounds!.height / 2)))
+    .toBeLessThanOrEqual(2);
+  await page.screenshot({ path: 'test-results/capturas/dashboard-transacciones-recientes-movil.png', fullPage: true });
   await page.setViewportSize({ width: 768, height: 1024 });
   await expect(mobileNavigation).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth))
@@ -279,7 +337,8 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   await page.getByRole('button', { name: 'Guardar' }).click();
   await expect(page.getByRole('heading', { name: 'E2E Pruebas' })).toBeVisible();
 
-  await page.getByRole('link', { name: 'Movimientos' }).click();
+  await page.getByRole('link', { name: 'Panel General' }).click();
+  await page.getByRole('button', { name: 'Ver más' }).click();
   await page.setViewportSize({ width: 390, height: 844 });
   const mobileFilters = page.getByRole('button', { name: 'Filtros avanzados' });
   await expect(mobileFilters).toHaveAttribute('aria-expanded', 'false');
@@ -318,6 +377,11 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
     .toBe('rgb(30, 41, 59)');
   await quickCategoryEditor.getByLabel('Nombre').fill('E2E categoría rápida');
   await quickCategoryEditor.getByRole('button', { name: 'Guardar categoría' }).click();
+  const darkToast = page.locator('.toast-notification').filter({ hasText: 'Categoría creada.' }).last();
+  await expect(darkToast).toBeVisible();
+  await expect(darkToast).toHaveCSS('background-color', 'rgba(30, 41, 59, 0.98)');
+  await expect(darkToast.locator('.toast-notification__title')).toHaveCSS('color', 'rgb(248, 250, 252)');
+  await expect(darkToast.locator('.toast-notification__message')).toHaveCSS('color', 'rgb(203, 213, 225)');
   await page.evaluate(() => document.documentElement.classList.remove('dark'));
   await selectCategory(page, 'E2E categoría rápida');
   await page.getByRole('button', { name: 'Editar', exact: true }).click();
@@ -348,6 +412,8 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   await page.setViewportSize({ width: 390, height: 844 });
   const mobileExpenseCard = page.locator('app-movimiento-mobile-card').filter({ hasText: 'E2E gasto MXN' }).first();
   await expect(mobileExpenseCard).toBeVisible();
+  await expect(mobileExpenseCard.getByLabel('Fecha y tipo de movimiento'))
+    .toContainText(/\d{1,2} [a-záéíóúñ]+\.? \d{4}/i);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   const mobileEditAction = mobileExpenseCard.locator('button[aria-label="Editar movimiento E2E Pruebas"]');
   await expect(mobileEditAction).toBeDisabled();
@@ -384,8 +450,13 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   await mobileExpenseCard.getByRole('button', { name: 'Mostrar acciones para E2E Pruebas' }).click();
   await mobileExpenseCard.getByRole('button', { name: 'Eliminar movimiento E2E Pruebas' }).click();
   const mobileDeleteDialog = page.getByRole('dialog');
+  await page.evaluate(() => document.documentElement.classList.add('dark'));
   await expect(mobileDeleteDialog).toBeVisible();
+  await expect(mobileDeleteDialog).toHaveCSS('background-color', 'rgb(30, 41, 59)');
+  await expect(mobileDeleteDialog.locator('.confirm-dialog-card__message'))
+    .toHaveCSS('color', 'rgb(203, 213, 225)');
   await mobileDeleteDialog.getByRole('button', { name: 'Cancelar' }).click();
+  await page.evaluate(() => document.documentElement.classList.remove('dark'));
   await expect(movementText(page, 'E2E gasto MXN')).toBeVisible();
   await page.setViewportSize({ width: 1280, height: 900 });
   const expenseRow = page.getByRole('row').filter({ hasText: 'E2E gasto MXN' });
@@ -410,26 +481,30 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
     .toHaveCSS('background-image', /linear-gradient/);
   await expect(page.locator('#dashboard-analytics-content')).toHaveCSS('display', 'none');
   await expect(page.getByRole('button', { name: 'Analítica financiera' })).toHaveAttribute('aria-expanded', 'false');
-  await expect(page.getByLabel('Lista de últimos movimientos').getByText('E2E gasto MXN')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Ver más' })).toBeVisible();
+  await expect(page.getByLabel('Lista de últimos movimientos')).toBeVisible();
   const navBounds = await mobileNavigation.boundingBox();
   const toastBounds = await page.locator('app-toast-container > div').boundingBox();
   expect(navBounds).not.toBeNull();
   expect(toastBounds).not.toBeNull();
   expect(toastBounds!.y + toastBounds!.height).toBeLessThanOrEqual(navBounds!.y);
-  await page.screenshot({ path: 'test-results/kaptal-mobile-dashboard.png' });
+  await page.screenshot({ path: 'test-results/capturas/kaptal-mobile-dashboard.png', fullPage: true });
   await page.getByRole('button', { name: 'Analítica financiera' }).click();
   await expect(page.locator('#dashboard-analytics-content')).toBeVisible();
-  const dashboardExpense = page.getByRole('row').filter({ hasText: 'E2E gasto MXN' });
+  await page.getByRole('button', { name: 'Ver más' }).click();
+  await expect(page).toHaveURL(/\/transacciones$/);
   await page.setViewportSize({ width: 1280, height: 900 });
-  await dashboardExpense.getByRole('button', { name: 'Editar movimiento E2E Pruebas' }).click();
-  await expect(page).toHaveURL(/\/transacciones\?editar=/);
+  await page.getByRole('row').filter({ hasText: 'E2E gasto MXN' })
+    .getByRole('button', { name: 'Editar movimiento E2E Pruebas' }).click();
+  await expect(page).toHaveURL(/\/transacciones$/);
   await expect(page.getByRole('heading', { name: 'Editar Movimiento' })).toBeVisible();
   await page.locator('#notas').fill('E2E gasto historial editado');
   await page.getByRole('button', { name: 'Guardar cambios' }).click();
   await expect(movementText(page, 'E2E gasto historial editado')).toBeVisible();
   await page.getByRole('link', { name: 'Panel General' }).click();
-  const editedDashboardExpense = page.getByRole('row').filter({ hasText: 'E2E gasto historial editado' });
-  await editedDashboardExpense.getByRole('button', { name: 'Editar movimiento E2E Pruebas' }).click();
+  await page.getByRole('button', { name: 'Ver más' }).click();
+  await page.getByRole('row').filter({ hasText: 'E2E gasto historial editado' })
+    .getByRole('button', { name: 'Editar movimiento E2E Pruebas' }).click();
   await expect(page.getByRole('heading', { name: 'Editar Movimiento' })).toBeVisible();
   await page.locator('#notas').fill('E2E gasto MXN');
   await page.getByRole('button', { name: 'Guardar cambios' }).click();
@@ -715,7 +790,8 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   await page.getByRole('button', { name: 'Activas', exact: true }).click();
   await expect(page.getByRole('article').filter({ hasText: 'E2E Ahorro USD' })).toBeVisible();
 
-  await page.getByRole('link', { name: 'Movimientos' }).click();
+  await page.getByRole('link', { name: 'Panel General' }).click();
+  await page.getByRole('button', { name: 'Ver más' }).click();
   await page.getByRole('button', { name: 'Gastos', exact: true }).click();
   await expect(movementText(page, 'E2E gasto MXN')).toBeVisible();
   await expect(movementText(page, 'E2E ingreso USD')).toHaveCount(0);
@@ -765,7 +841,8 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   const cashbackAccountCard = page.getByRole('article').filter({ hasText: 'E2E Cashback' });
   await expect(cashbackAccountCard).toContainText('Cashback 2%');
 
-  await page.getByRole('link', { name: 'Movimientos' }).click();
+  await page.getByRole('link', { name: 'Panel General' }).click();
+  await page.getByRole('button', { name: 'Ver más' }).click();
   await page.getByRole('button', { name: 'Nuevo Movimiento' }).click();
   await page.getByLabel('Monto').fill('80');
   await selectOptionContaining(page.locator('#cuentaId'), 'E2E Cashback');

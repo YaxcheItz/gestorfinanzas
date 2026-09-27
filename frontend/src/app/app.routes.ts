@@ -25,6 +25,12 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'asistente',
+    loadComponent: () => import('./features/asistente/asistente.component')
+      .then(module => module.AsistenteComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: 'presupuestos',
     loadComponent: () => import('./features/presupuestos/presupuestos.component')
       .then(module => module.PresupuestosComponent),
