@@ -5,10 +5,12 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { FinanzasService } from '../../core/services/finanzas.service';
 import { ToastService } from '../../core/services/toast.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
+import { CategoriaSelectorComponent } from '../../shared/components/categoria-selector/categoria-selector.component';
 import { MovimientoMobileCardComponent } from '../../shared/components/movimiento-mobile-card/movimiento-mobile-card.component';
 import {
   Categoria,
   Cuenta,
+  FrecuenciaRecurrencia,
   PageResponse,
   TipoTransaccion,
   Transaccion,
@@ -19,7 +21,7 @@ import {
 @Component({
   selector: 'app-transacciones',
   standalone: true,
-  imports: [CommonModule, FormsModule, MovimientoMobileCardComponent],
+  imports: [CommonModule, FormsModule, CategoriaSelectorComponent, MovimientoMobileCardComponent],
   template: `
     <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-5 sm:space-y-6">
 
@@ -87,7 +89,7 @@ import {
               type="text"
               [ngModel]="filtroBusqueda()"
               (ngModelChange)="onBusquedaChange($event)"
-              placeholder="Buscar por concepto o notas..."
+              placeholder="Buscar por categoría o notas..."
               class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
             />
           </div>
@@ -268,11 +270,10 @@ import {
           </div>
         } @else {
           <div class="hidden overflow-x-auto sm:block" role="region" aria-label="Movimientos; desliza horizontalmente para ver más columnas" tabindex="0">
-            <table class="w-full min-w-[720px] text-left text-sm text-slate-600">
+            <table class="w-full min-w-[620px] text-left text-sm text-slate-600">
               <thead class="bg-slate-50 text-[11px] uppercase font-semibold text-slate-400 tracking-wider">
                 <tr>
-                  <th class="px-6 py-3.5">Concepto</th>
-                  <th class="px-6 py-3.5">Categoría</th>
+                  <th class="px-6 py-3.5">Movimiento</th>
                   <th class="px-6 py-3.5">Cuenta</th>
                   <th class="px-6 py-3.5">Fecha</th>
                   <th class="px-6 py-3.5 text-right">Monto</th>
@@ -301,22 +302,11 @@ import {
                         }
                       </div>
                       <div class="truncate max-w-xs sm:max-w-md">
-                        <span class="block truncate text-slate-900 font-semibold">{{ m.descripcion }}</span>
+                        <span class="block truncate text-slate-900 font-semibold">{{ m.categoriaNombre || m.descripcion }}</span>
                         @if (m.notas) {
                           <span class="block text-xs text-slate-400 font-normal truncate">{{ m.notas }}</span>
                         }
                       </div>
-                    </td>
-                    <td class="px-6 py-4">
-                      @if (m.categoriaNombre) {
-                        <span class="px-2.5 py-1 text-xs font-medium rounded-full bg-slate-100 text-slate-700 border border-slate-200">
-                          {{ m.categoriaNombre }}
-                        </span>
-                      } @else {
-                        <span class="text-xs text-slate-400 italic">
-                          {{ m.tipo === 'TRANSFERENCIA' ? 'Transferencia' : m.tipo === 'SALDO_INICIAL' ? 'Saldo inicial' : 'Sin categoría' }}
-                        </span>
-                      }
                     </td>
                     <td class="px-6 py-4 text-xs font-medium text-slate-600">
                       @if (m.tipo === 'TRANSFERENCIA') {
@@ -348,7 +338,7 @@ import {
                           type="button"
                           (click)="abrirModalEditar(m)"
                           class="text-slate-500 hover:text-emerald-700 transition-colors p-1.5 rounded-lg hover:bg-emerald-50 cursor-pointer"
-                          [attr.aria-label]="'Editar movimiento ' + m.descripcion"
+                          [attr.aria-label]="'Editar movimiento ' + (m.categoriaNombre || m.descripcion)"
                           title="Editar movimiento">
                           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -494,33 +484,6 @@ import {
                 />
             </div>
 
-            <!-- Concepto / Descripción -->
-            <div>
-              <label for="descripcion" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                Concepto / Descripción
-              </label>
-              <input
-                id="descripcion"
-                type="text"
-                required
-                [(ngModel)]="formDescripcion"
-                name="descripcion"
-                placeholder="Ej. Supermercado, Pago de nómina, Gasolina..."
-                class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
-              />
-              <div class="mt-2 flex flex-wrap items-center gap-2" aria-label="Conceptos sugeridos">
-                <span class="w-full text-[11px] font-semibold uppercase tracking-wide text-slate-500">Sugerencias rápidas</span>
-                @for (concepto of conceptosSugeridos(); track concepto) {
-                  <button
-                    type="button"
-                    (click)="formDescripcion = concepto"
-                    class="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-800 hover:bg-emerald-100 focus:outline-hidden focus:ring-2 focus:ring-emerald-500">
-                    {{ concepto }}
-                  </button>
-                }
-              </div>
-            </div>
-
             <!-- Cuentas -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
@@ -580,21 +543,16 @@ import {
                   }
                 </div>
               } @else {
-                <div>
-                  <label for="categoriaId" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                    Categoría
-                  </label>
-                  <select
-                    id="categoriaId"
-                    [(ngModel)]="formCategoriaId"
-                    name="categoriaId"
-                    class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all cursor-pointer">
-                    <option [ngValue]="null">Sin categoría</option>
-                    @for (cat of categoriasModal(); track cat.id) {
-                      <option [value]="cat.id">{{ cat.nombre }}</option>
-                    }
-                  </select>
-                </div>
+                @defer (on immediate) {
+                  <app-categoria-selector
+                    [categorias]="categorias()"
+                    [tipo]="formTipo()"
+                    [selectedId]="formCategoriaId"
+                    (selectedIdChange)="formCategoriaId = $event"
+                    (categoriasChange)="categorias.set($event)" />
+                } @placeholder {
+                  <div class="h-20 animate-pulse rounded-xl bg-slate-100"></div>
+                }
               }
             </div>
 
@@ -609,25 +567,61 @@ import {
                   type="date"
                   required
                   [(ngModel)]="formFecha"
+                  (ngModelChange)="actualizarSiguienteFecha()"
                   name="fecha"
                   class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all cursor-pointer"
                 />
               </div>
 
-              <div>
+              <div class="sm:col-span-2">
                 <label for="notas" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Notas (Opcional)
+                  Notas adicionales (Opcional)
                 </label>
                 <input
                   id="notas"
                   type="text"
                   [(ngModel)]="formNotas"
                   name="notas"
-                  placeholder="Detalles adicionales..."
+                  placeholder="Agrega un detalle si lo necesitas..."
                   class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
                 />
               </div>
             </div>
+
+            @if (!modoEdicion() && formTipo() !== 'TRANSFERENCIA') {
+              <section class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <label class="flex min-h-10 cursor-pointer items-center gap-3">
+                  <input type="checkbox" name="movimientoRecurrente" [(ngModel)]="movimientoRecurrente"
+                         (ngModelChange)="actualizarSiguienteFecha()"
+                         class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" />
+                  <span>
+                    <span class="block text-sm font-semibold text-slate-800">Repetir este movimiento</span>
+                    <span class="block text-xs text-slate-500">Se guardará como plantilla; confirmarás cada cargo en su fecha.</span>
+                  </span>
+                </label>
+                @if (movimientoRecurrente) {
+                  <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <label class="block text-xs font-semibold text-slate-700">
+                      Frecuencia
+                      <select name="frecuenciaRecurrencia" [(ngModel)]="frecuenciaRecurrencia"
+                              (ngModelChange)="actualizarSiguienteFecha()"
+                              class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-normal">
+                        <option value="SEMANAL">Cada semana</option>
+                        <option value="QUINCENAL">Cada dos semanas</option>
+                        <option value="MENSUAL">Cada mes</option>
+                        <option value="ANUAL">Cada año</option>
+                      </select>
+                    </label>
+                    <label class="block text-xs font-semibold text-slate-700">
+                      Siguiente fecha
+                      <input id="siguienteFechaRecurrencia" name="siguienteFechaRecurrencia" type="date"
+                             [(ngModel)]="siguienteFechaRecurrencia" [min]="formFecha" required
+                             class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-normal" />
+                    </label>
+                  </div>
+                }
+              </section>
+            }
 
             <!-- Botones de Acción -->
             <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 pt-4 border-t border-slate-100">
@@ -695,29 +689,20 @@ export class TransaccionesComponent implements OnInit {
   readonly modalError = signal<string | null>(null);
 
   formMonto: number | null = null;
-  formDescripcion: string = '';
   formCuentaId: number | null = null;
   formCuentaDestinoId: number | null = null;
   formTasaCambio: number | null = null;
   formCategoriaId: number | null = null;
   formFecha: string = '';
   formNotas: string = '';
+  movimientoRecurrente = false;
+  frecuenciaRecurrencia: FrecuenciaRecurrencia = 'MENSUAL';
+  siguienteFechaRecurrencia = '';
 
   // Categorías filtradas por tipo para el modal
   readonly categoriasModal = computed(() => {
     return this.categorias().filter(c => c.tipo === this.formTipo());
   });
-  readonly conceptosSugeridos = computed(() => {
-    switch (this.formTipo()) {
-      case 'INGRESO':
-        return ['Salario', 'Freelance', 'Venta', 'Intereses', 'Reembolso', 'Bono'];
-      case 'TRANSFERENCIA':
-        return ['Ahorro', 'Traspaso entre cuentas', 'Pago de tarjeta'];
-      default:
-        return ['Supermercado', 'Restaurante', 'Transporte', 'Gasolina', 'Renta', 'Servicios', 'Salud', 'Entretenimiento', 'Pago de tarjeta'];
-    }
-  });
-
   monedaCuenta(id: number | null): string {
     return this.cuentas().find(cuenta => cuenta.id === id)?.moneda ?? 'MXN';
   }
@@ -958,8 +943,10 @@ export class TransaccionesComponent implements OnInit {
     this.transaccionEditando.set(null);
     this.formTipo.set(tipo);
     this.formMonto = null;
-    this.formDescripcion = '';
     this.formNotas = '';
+    this.movimientoRecurrente = false;
+    this.frecuenciaRecurrencia = 'MENSUAL';
+    this.siguienteFechaRecurrencia = '';
     this.formFecha = new Date().toISOString().split('T')[0];
     this.modalError.set(null);
 
@@ -983,7 +970,7 @@ export class TransaccionesComponent implements OnInit {
     this.transaccionEditando.set(transaccion);
     this.formTipo.set(transaccion.tipo);
     this.formMonto = transaccion.monto;
-    this.formDescripcion = transaccion.descripcion;
+    this.movimientoRecurrente = false;
     this.formCuentaId = transaccion.cuentaId;
     this.formCuentaDestinoId = transaccion.cuentaDestinoId ?? null;
     this.formTasaCambio = transaccion.tasaCambio ?? null;
@@ -1011,6 +998,7 @@ export class TransaccionesComponent implements OnInit {
 
   cambiarTipoModal(tipo: TipoTransaccion): void {
     this.formTipo.set(tipo);
+    if (tipo === 'TRANSFERENCIA') this.movimientoRecurrente = false;
     const cats = this.categoriasModal();
     this.formCategoriaId = cats.length > 0 ? cats[0].id : null;
     if (tipo === 'TRANSFERENCIA') {
@@ -1021,13 +1009,33 @@ export class TransaccionesComponent implements OnInit {
     }
   }
 
+  actualizarSiguienteFecha(): void {
+    if (!this.movimientoRecurrente || !this.formFecha) return;
+    const [anio, mes, dia] = this.formFecha.split('-').map(Number);
+    const fecha = new Date(anio, mes - 1, dia);
+    if (this.frecuenciaRecurrencia === 'SEMANAL') {
+      fecha.setDate(fecha.getDate() + 7);
+    } else if (this.frecuenciaRecurrencia === 'QUINCENAL') {
+      fecha.setDate(fecha.getDate() + 14);
+    } else if (this.frecuenciaRecurrencia === 'ANUAL') {
+      fecha.setFullYear(fecha.getFullYear() + 1);
+    } else {
+      const ultimoDiaMes = new Date(anio, mes, 0).getDate();
+      fecha.setDate(1);
+      fecha.setMonth(fecha.getMonth() + 1);
+      const ultimoDiaSiguienteMes = new Date(fecha.getFullYear(), fecha.getMonth() + 1, 0).getDate();
+      fecha.setDate(dia === ultimoDiaMes ? ultimoDiaSiguienteMes : Math.min(dia, ultimoDiaSiguienteMes));
+    }
+    this.siguienteFechaRecurrencia = [
+      fecha.getFullYear(),
+      String(fecha.getMonth() + 1).padStart(2, '0'),
+      String(fecha.getDate()).padStart(2, '0')
+    ].join('-');
+  }
+
   guardarMovimiento(): void {
     if (!this.formMonto || this.formMonto <= 0) {
       this.modalError.set('Ingresa un monto válido mayor a 0');
-      return;
-    }
-    if (!this.formDescripcion.trim()) {
-      this.modalError.set('Ingresa una descripción o concepto');
       return;
     }
     if (!this.formCuentaId) {
@@ -1061,8 +1069,9 @@ export class TransaccionesComponent implements OnInit {
         ? this.formTasaCambio
         : null,
       fecha: this.formFecha,
-      descripcion: this.formDescripcion.trim(),
-      notas: this.formNotas.trim() || null
+      notas: this.formNotas.trim() || null,
+      frecuenciaRecurrencia: this.movimientoRecurrente ? this.frecuenciaRecurrencia : null,
+      siguienteFechaRecurrencia: this.movimientoRecurrente ? this.siguienteFechaRecurrencia : null
     };
 
     this.submitting.set(true);

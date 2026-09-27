@@ -42,8 +42,12 @@ class CuentaServiceTest {
         });
 
         cuentaService.crearCuenta(7L, new CuentaRequest(
-                "Ahorro", TipoCuenta.AHORRO, new BigDecimal("1250.00"), "MXN", null
+                "Ahorro", TipoCuenta.AHORRO, "bbva", new BigDecimal("1250.00"), "MXN", null
         ));
+
+        ArgumentCaptor<Cuenta> cuentaCaptor = ArgumentCaptor.forClass(Cuenta.class);
+        verify(cuentaRepository).save(cuentaCaptor.capture());
+        assertEquals("bbva", cuentaCaptor.getValue().getInstitucionFinanciera());
 
         ArgumentCaptor<Transaccion> captor = ArgumentCaptor.forClass(Transaccion.class);
         verify(transaccionRepository).save(captor.capture());

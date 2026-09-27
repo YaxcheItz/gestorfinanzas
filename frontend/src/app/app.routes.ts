@@ -16,6 +16,12 @@ export const routes: Routes = [
   { path: 'presupuestos', component: PresupuestosComponent, canActivate: [authGuard] },
   { path: 'cuentas', component: CuentasComponent, canActivate: [authGuard] },
   { path: 'categorias', component: CategoriasComponent, canActivate: [authGuard] },
+  {
+    path: 'configuracion',
+    loadComponent: () => import('./features/configuracion/configuracion.component')
+      .then(module => module.ConfiguracionComponent),
+    canActivate: [authGuard]
+  },
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
   { path: '**', redirectTo: 'dashboard' }
 ];

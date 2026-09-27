@@ -1,5 +1,6 @@
 export type TipoCuenta = 'EFECTIVO' | 'DEBITO' | 'CREDITO' | 'AHORRO' | 'INVERSION';
 export type TipoTransaccion = 'INGRESO' | 'GASTO' | 'TRANSFERENCIA' | 'SALDO_INICIAL';
+export type FrecuenciaRecurrencia = 'SEMANAL' | 'QUINCENAL' | 'MENSUAL' | 'ANUAL';
 
 export const MONEDAS_DISPONIBLES = [
   { codigo: 'MXN', nombre: 'Peso mexicano' },
@@ -13,6 +14,7 @@ export interface Cuenta {
   id: number;
   nombre: string;
   tipo: TipoCuenta;
+  institucionFinanciera?: string | null;
   saldoActual: number;
   moneda: string;
   descripcion?: string;
@@ -23,6 +25,7 @@ export interface Cuenta {
 export interface CuentaPayload {
   nombre: string;
   tipo: TipoCuenta;
+  institucionFinanciera?: string;
   saldoInicial?: number;
   moneda?: string;
   descripcion?: string;
@@ -75,8 +78,25 @@ export interface TransaccionPayload {
   monto: number;
   tasaCambio?: number | null;
   fecha: string;
-  descripcion: string;
+  descripcion?: string;
   notas?: string | null;
+  frecuenciaRecurrencia?: FrecuenciaRecurrencia | null;
+  siguienteFechaRecurrencia?: string | null;
+}
+
+export interface PlantillaRecurrente {
+  id: number;
+  cuentaId: number;
+  cuentaNombre: string;
+  categoriaId: number | null;
+  categoriaNombre: string | null;
+  tipo: TipoTransaccion;
+  monto: number;
+  moneda: string;
+  notas: string | null;
+  frecuencia: FrecuenciaRecurrencia;
+  siguienteFecha: string;
+  activa: boolean;
 }
 
 export interface DashboardResumen {

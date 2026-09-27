@@ -17,6 +17,9 @@ public record CuentaRequest(
     @NotNull(message = "El tipo de cuenta es obligatorio")
     TipoCuenta tipo,
 
+    @Size(max = 60, message = "La institución financiera no puede superar 60 caracteres")
+    String institucionFinanciera,
+
     @DecimalMin(value = "0.00", message = "El saldo inicial no puede ser negativo")
     @Digits(integer = 13, fraction = 2, message = "El saldo inicial debe tener hasta 2 decimales")
     BigDecimal saldoInicial,

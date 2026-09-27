@@ -32,6 +32,9 @@ public class Cuenta {
     @Column(nullable = false, length = 100)
     private String nombre;
 
+    @Column(name = "institucion_financiera", length = 60)
+    private String institucionFinanciera;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private TipoCuenta tipo;

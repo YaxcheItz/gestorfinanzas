@@ -48,6 +48,11 @@ export class AuthService {
     this.router.navigate(['/login']);
   }
 
+  actualizarUsuario(usuario: Usuario): void {
+    localStorage.setItem(this.userKey, JSON.stringify(usuario));
+    this._currentUser.set(usuario);
+  }
+
   getToken(): string | null {
     return localStorage.getItem(this.tokenKey);
   }

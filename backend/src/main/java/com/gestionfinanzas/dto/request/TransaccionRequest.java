@@ -1,8 +1,8 @@
 package com.gestionfinanzas.dto.request;
 
 import com.gestionfinanzas.model.enums.TipoTransaccion;
+import com.gestionfinanzas.model.enums.FrecuenciaRecurrencia;
 import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.Digits;
@@ -33,10 +33,13 @@ public record TransaccionRequest(
     @NotNull(message = "La fecha es obligatoria")
     LocalDate fecha,
 
-    @NotBlank(message = "El concepto o descripción es obligatorio")
-    @Size(min = 2, max = 200, message = "La descripción debe tener entre 2 y 200 caracteres")
+    @Size(max = 200, message = "La descripción no puede superar los 200 caracteres")
     String descripcion,
 
     @Size(max = 500, message = "Las notas no pueden superar los 500 caracteres")
-    String notas
+    String notas,
+
+    FrecuenciaRecurrencia frecuenciaRecurrencia,
+
+    LocalDate siguienteFechaRecurrencia
 ) {}

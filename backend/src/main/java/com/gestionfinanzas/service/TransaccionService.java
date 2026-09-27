@@ -5,11 +5,14 @@ import com.gestionfinanzas.dto.request.TransaccionRequest;
 import com.gestionfinanzas.dto.response.TransaccionResponse;
 import com.gestionfinanzas.model.entity.Categoria;
 import com.gestionfinanzas.model.entity.Cuenta;
+import com.gestionfinanzas.model.entity.PlantillaRecurrente;
 import com.gestionfinanzas.model.entity.Transaccion;
 import com.gestionfinanzas.model.entity.Usuario;
+import com.gestionfinanzas.model.enums.FrecuenciaRecurrencia;
 import com.gestionfinanzas.model.enums.TipoTransaccion;
 import com.gestionfinanzas.repository.CategoriaRepository;
 import com.gestionfinanzas.repository.CuentaRepository;
+import com.gestionfinanzas.repository.PlantillaRecurrenteRepository;
 import com.gestionfinanzas.repository.TransaccionRepository;
 import com.gestionfinanzas.repository.UsuarioRepository;
 import com.gestionfinanzas.repository.specification.TransaccionSpecification;
@@ -34,10 +37,12 @@ public class TransaccionService {
     private final CuentaRepository cuentaRepository;
     private final CategoriaRepository categoriaRepository;
     private final UsuarioRepository usuarioRepository;
+    private final PlantillaRecurrenteRepository plantillaRepository;
 
     @Transactional
     public TransaccionResponse crearTransaccion(Long usuarioId, TransaccionRequest request) {
         DatosTransaccion datos = prepararTransaccion(usuarioId, request);
+        validarRecurrencia(request, datos.tipo());
         aplicarImpacto(datos.tipo(), datos.cuentaOrigen(), datos.cuentaDestino(),
                 request.monto(), datos.montoDestino(), 1);
 
@@ -51,11 +56,24 @@ public class TransaccionService {
                 .montoDestino(datos.montoDestino())
                 .tasaCambio(datos.tasaCambio())
                 .fecha(request.fecha())
-                .descripcion(request.descripcion().trim())
+                .descripcion(descripcionMovimiento(datos, request.descripcion()))
                 .notas(normalizarNotas(request.notas()))
                 .build();
 
-        return TransaccionResponse.fromEntity(transaccionRepository.save(transaccion));
+        Transaccion guardada = transaccionRepository.save(transaccion);
+        if (request.frecuenciaRecurrencia() != null) {
+            plantillaRepository.save(PlantillaRecurrente.builder()
+                    .usuario(datos.usuario())
+                    .cuenta(datos.cuentaOrigen())
+                    .categoria(datos.categoria())
+                    .tipo(datos.tipo())
+                    .monto(request.monto())
+                    .notas(normalizarNotas(request.notas()))
+                    .frecuencia(request.frecuenciaRecurrencia())
+                    .siguienteFecha(request.siguienteFechaRecurrencia())
+                    .build());
+        }
+        return TransaccionResponse.fromEntity(guardada);
     }
 
     @Transactional
@@ -80,7 +98,7 @@ public class TransaccionService {
         transaccion.setMontoDestino(datos.montoDestino());
         transaccion.setTasaCambio(datos.tasaCambio());
         transaccion.setFecha(request.fecha());
-        transaccion.setDescripcion(request.descripcion().trim());
+        transaccion.setDescripcion(descripcionMovimiento(datos, request.descripcion()));
         transaccion.setNotas(normalizarNotas(request.notas()));
 
         return TransaccionResponse.fromEntity(transaccionRepository.save(transaccion));
@@ -149,6 +167,27 @@ public class TransaccionService {
 
         return new DatosTransaccion(usuario, cuentaOrigen, cuentaDestino, categoria,
                 request.tipo(), montoDestino, tasaCambio);
+    }
+
+    private void validarRecurrencia(TransaccionRequest request, TipoTransaccion tipo) {
+        if ((request.frecuenciaRecurrencia() == null) != (request.siguienteFechaRecurrencia() == null)) {
+            throw new IllegalArgumentException("La frecuencia y la siguiente fecha recurrente deben indicarse juntas");
+        }
+        if (request.frecuenciaRecurrencia() == null) return;
+        if (tipo == TipoTransaccion.TRANSFERENCIA) {
+            throw new IllegalArgumentException("Las transferencias no se pueden programar como movimientos recurrentes");
+        }
+        if (!request.siguienteFechaRecurrencia().isAfter(request.fecha())) {
+            throw new IllegalArgumentException("La siguiente fecha debe ser posterior a la fecha del movimiento");
+        }
+    }
+
+    private String descripcionMovimiento(DatosTransaccion datos, String descripcionAnterior) {
+        if (datos.categoria() != null) return datos.categoria().getNombre();
+        if (datos.tipo() == TipoTransaccion.TRANSFERENCIA) return "Transferencia";
+        return descripcionAnterior != null && !descripcionAnterior.isBlank()
+                ? descripcionAnterior.trim()
+                : (datos.tipo() == TipoTransaccion.INGRESO ? "Ingreso sin categoría" : "Gasto sin categoría");
     }
 
     private void aplicarImpacto(
