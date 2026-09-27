@@ -56,6 +56,15 @@ function budgetCard(page: Page, category: string): Locator {
     .locator('xpath=ancestor::div[contains(@class, "bg-white")][1]');
 }
 
+function movementText(page: Page, text: string): Locator {
+  return page.locator(
+    '[role="region"][aria-label^="Movimientos"]:visible, ' +
+    '[role="region"][aria-label^="Últimos movimientos"]:visible, ' +
+    '[aria-label="Lista de movimientos"]:visible, ' +
+    '[aria-label="Lista de últimos movimientos"]:visible'
+  ).getByText(text);
+}
+
 test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analítica', async ({ page }) => {
   test.setTimeout(150_000);
   const pageErrors: string[] = [];
@@ -167,14 +176,57 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   expect(amountLayout.currencyBottom).toBeLessThanOrEqual(amountLayout.inputTop);
   await selectOptionContaining(page.locator('#categoriaId'), 'E2E Pruebas');
   await page.getByRole('button', { name: 'Registrar', exact: true }).click();
-  await expect(page.getByText('E2E gasto MXN')).toBeVisible();
+  await expect(movementText(page, 'E2E gasto MXN')).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  const mobileExpenseCard = page.locator('app-movimiento-mobile-card').filter({ hasText: 'E2E gasto MXN' }).first();
+  await expect(mobileExpenseCard).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  const mobileEditAction = mobileExpenseCard.locator('button[aria-label="Editar movimiento E2E gasto MXN"]');
+  await expect(mobileEditAction).toBeDisabled();
+  await mobileExpenseCard.getByRole('button', { name: 'Mostrar acciones para E2E gasto MXN' }).click();
+  await expect(mobileEditAction).toBeEnabled();
+  await mobileExpenseCard.getByRole('button', { name: 'Ocultar acciones para E2E gasto MXN' }).click();
+  await mobileExpenseCard.locator('.swipe-actions__content').evaluate(content => {
+    const host = content.closest('.swipe-actions') as HTMLElement;
+    Object.defineProperty(host, 'setPointerCapture', { value: () => {} });
+    const title = content.querySelector('h3')!;
+    title.dispatchEvent(new PointerEvent('pointerdown', {
+      bubbles: true, pointerId: 1, isPrimary: true, button: 0, clientX: 200, clientY: 200
+    }));
+    title.dispatchEvent(new PointerEvent('pointerup', {
+      bubbles: true, pointerId: 1, isPrimary: true, button: 0, clientX: 202, clientY: 275
+    }));
+  });
+  await expect(mobileEditAction).toBeDisabled();
+  await mobileExpenseCard.locator('.swipe-actions__content').evaluate(content => {
+    const host = content.closest('.swipe-actions') as HTMLElement;
+    const title = content.querySelector('h3')!;
+    title.dispatchEvent(new PointerEvent('pointerdown', {
+      bubbles: true, pointerId: 1, isPrimary: true, button: 0, clientX: 200, clientY: 200
+    }));
+    title.dispatchEvent(new PointerEvent('pointerup', {
+      bubbles: true, pointerId: 1, isPrimary: true, button: 0, clientX: 125, clientY: 202
+    }));
+  });
+  await expect(mobileEditAction).toBeEnabled();
+  await mobileEditAction.click();
+  await expect(page.getByRole('heading', { name: 'Editar Movimiento' })).toBeVisible();
+  await page.getByRole('button', { name: 'Guardar cambios' }).click();
+  await expect(movementText(page, 'E2E gasto MXN')).toBeVisible();
+  await mobileExpenseCard.getByRole('button', { name: 'Mostrar acciones para E2E gasto MXN' }).click();
+  await mobileExpenseCard.getByRole('button', { name: 'Eliminar movimiento E2E gasto MXN' }).click();
+  const mobileDeleteDialog = page.getByRole('dialog');
+  await expect(mobileDeleteDialog).toBeVisible();
+  await mobileDeleteDialog.getByRole('button', { name: 'Cancelar' }).click();
+  await expect(movementText(page, 'E2E gasto MXN')).toBeVisible();
+  await page.setViewportSize({ width: 1280, height: 900 });
   const expenseRow = page.getByRole('row').filter({ hasText: 'E2E gasto MXN' });
   await expenseRow.getByRole('button', { name: 'Editar movimiento E2E gasto MXN' }).click();
   await expect(page.getByRole('heading', { name: 'Editar Movimiento' })).toBeVisible();
   await page.locator('#monto').fill('18');
   await page.getByLabel('Concepto / Descripción').fill('E2E gasto corregido');
   await page.getByRole('button', { name: 'Guardar cambios' }).click();
-  await expect(page.getByText('E2E gasto corregido')).toBeVisible();
+  await expect(movementText(page, 'E2E gasto corregido')).toBeVisible();
   cuentas = await apiGet<Cuenta[]>(page, '/cuentas?incluirInactivas=true');
   expect(cuentas.find(cuenta => cuenta.nombre === 'E2E Cuenta MXN')?.saldoActual).toBe(32);
   await page.getByRole('row').filter({ hasText: 'E2E gasto corregido' })
@@ -182,7 +234,7 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   await page.locator('#monto').fill('15');
   await page.getByLabel('Concepto / Descripción').fill('E2E gasto MXN');
   await page.getByRole('button', { name: 'Guardar cambios' }).click();
-  await expect(page.getByText('E2E gasto MXN')).toBeVisible();
+  await expect(movementText(page, 'E2E gasto MXN')).toBeVisible();
   await page.getByRole('link', { name: 'Panel General' }).click();
   const dashboardExpense = page.getByRole('row').filter({ hasText: 'E2E gasto MXN' });
   await dashboardExpense.getByRole('button', { name: 'Editar movimiento E2E gasto MXN' }).click();
@@ -190,14 +242,14 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   await expect(page.getByRole('heading', { name: 'Editar Movimiento' })).toBeVisible();
   await page.getByLabel('Concepto / Descripción').fill('E2E gasto historial editado');
   await page.getByRole('button', { name: 'Guardar cambios' }).click();
-  await expect(page.getByText('E2E gasto historial editado')).toBeVisible();
+  await expect(movementText(page, 'E2E gasto historial editado')).toBeVisible();
   await page.getByRole('link', { name: 'Panel General' }).click();
   const editedDashboardExpense = page.getByRole('row').filter({ hasText: 'E2E gasto historial editado' });
   await editedDashboardExpense.getByRole('button', { name: 'Editar movimiento E2E gasto historial editado' }).click();
   await expect(page.getByRole('heading', { name: 'Editar Movimiento' })).toBeVisible();
   await page.getByLabel('Concepto / Descripción').fill('E2E gasto MXN');
   await page.getByRole('button', { name: 'Guardar cambios' }).click();
-  await expect(page.getByText('E2E gasto MXN')).toBeVisible();
+  await expect(movementText(page, 'E2E gasto MXN')).toBeVisible();
 
   await page.getByRole('button', { name: 'Nuevo Movimiento' }).click();
   await page.getByRole('button', { name: 'Ingreso', exact: true }).click();
@@ -207,7 +259,7 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   await expect(page.getByLabel('Monto')).toBeVisible();
   await selectOptionContaining(page.locator('#categoriaId'), 'Salario');
   await page.getByRole('button', { name: 'Registrar', exact: true }).click();
-  await expect(page.getByText('E2E ingreso USD')).toBeVisible();
+  await expect(movementText(page, 'E2E ingreso USD')).toBeVisible();
 
   await page.getByRole('button', { name: 'Nuevo Movimiento' }).click();
   await page.getByRole('button', { name: 'Transferencia', exact: true }).click();
@@ -219,13 +271,13 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   await expect(page.getByLabel(/Tasa de cambio/)).toBeVisible();
   await page.getByLabel(/Tasa de cambio/).fill('17.5');
   await page.getByRole('button', { name: 'Registrar', exact: true }).click();
-  await expect(page.getByText('E2E cambio USD a MXN')).toBeVisible();
+  await expect(movementText(page, 'E2E cambio USD a MXN')).toBeVisible();
   const editableTransferRow = page.getByRole('row').filter({ hasText: 'E2E cambio USD a MXN' });
   await editableTransferRow.getByRole('button', { name: 'Editar movimiento E2E cambio USD a MXN' }).click();
   await page.locator('#monto').fill('12');
   await page.getByLabel(/Tasa de cambio/).fill('17');
   await page.getByRole('button', { name: 'Guardar cambios' }).click();
-  await expect(page.getByText('E2E cambio USD a MXN')).toBeVisible();
+  await expect(movementText(page, 'E2E cambio USD a MXN')).toBeVisible();
   cuentas = await apiGet<Cuenta[]>(page, '/cuentas?incluirInactivas=true');
   expect(cuentas.find(cuenta => cuenta.nombre === 'E2E Ahorro USD')?.saldoActual).toBe(108);
   expect(cuentas.find(cuenta => cuenta.nombre === 'E2E Cuenta MXN')?.saldoActual).toBe(239);
@@ -234,7 +286,7 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   await page.locator('#monto').fill('10');
   await page.getByLabel(/Tasa de cambio/).fill('17.5');
   await page.getByRole('button', { name: 'Guardar cambios' }).click();
-  await expect(page.getByText('E2E cambio USD a MXN')).toBeVisible();
+  await expect(movementText(page, 'E2E cambio USD a MXN')).toBeVisible();
 
   await page.getByRole('button', { name: 'Nuevo Movimiento' }).click();
   await page.getByRole('button', { name: 'Transferencia', exact: true }).click();
@@ -244,7 +296,7 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   await selectOptionContaining(page.locator('#cuentaDestinoId'), 'Billetera / Efectivo');
   await expect(page.getByLabel(/Tasa de cambio/)).toHaveCount(0);
   await page.getByRole('button', { name: 'Registrar', exact: true }).click();
-  await expect(page.getByText('E2E transferencia misma moneda')).toBeVisible();
+  await expect(movementText(page, 'E2E transferencia misma moneda')).toBeVisible();
 
   const transacciones = await apiGet<Transaccion[]>(page, '/transacciones/recientes');
   const transferencia = transacciones.find(item => item.descripcion === 'E2E cambio USD a MXN');
@@ -271,8 +323,8 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   expect(cuentas.find(cuenta => cuenta.nombre === 'Billetera / Efectivo')?.saldoActual).toBe(5);
 
   await page.getByRole('button', { name: 'Gastos', exact: true }).click();
-  await expect(page.getByText('E2E gasto MXN')).toBeVisible();
-  await expect(page.getByText('E2E ingreso USD')).toHaveCount(0);
+  await expect(movementText(page, 'E2E gasto MXN')).toBeVisible();
+  await expect(movementText(page, 'E2E ingreso USD')).toHaveCount(0);
   const search = page.getByPlaceholder('Buscar por concepto o notas...');
   await search.fill('E2E gasto MXN');
   await expect(page.getByRole('row').filter({ hasText: 'E2E gasto MXN' })).toBeVisible();
@@ -467,19 +519,19 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
 
   await page.getByRole('link', { name: 'Movimientos' }).click();
   await page.getByRole('button', { name: 'Gastos', exact: true }).click();
-  await expect(page.getByText('E2E gasto MXN')).toBeVisible();
-  await expect(page.getByText('E2E ingreso USD')).toHaveCount(0);
+  await expect(movementText(page, 'E2E gasto MXN')).toBeVisible();
+  await expect(movementText(page, 'E2E ingreso USD')).toHaveCount(0);
   await page.getByRole('button', { name: 'Todos', exact: true }).click();
   await page.getByRole('button', { name: 'Transferencias' }).click();
   const transferRow = page.getByRole('row').filter({ hasText: 'E2E cambio USD a MXN' });
   await expect(transferRow).toBeVisible();
   await transferRow.getByTitle('Eliminar movimiento').click({ force: true });
   await page.getByRole('button', { name: 'Confirmar' }).click();
-  await expect(page.getByText('E2E cambio USD a MXN')).toHaveCount(0);
+  await expect(movementText(page, 'E2E cambio USD a MXN')).toHaveCount(0);
   const sameCurrencyRow = page.getByRole('row').filter({ hasText: 'E2E transferencia misma moneda' });
   await sameCurrencyRow.getByTitle('Eliminar movimiento').click({ force: true });
   await page.getByRole('button', { name: 'Confirmar' }).click();
-  await expect(page.getByText('E2E transferencia misma moneda')).toHaveCount(0);
+  await expect(movementText(page, 'E2E transferencia misma moneda')).toHaveCount(0);
 
   cuentas = await apiGet<Cuenta[]>(page, '/cuentas?incluirInactivas=true');
   expect(cuentas.find(cuenta => cuenta.nombre === 'E2E Ahorro USD')?.saldoActual).toBe(120);
@@ -491,7 +543,7 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   const incomeRow = page.getByRole('row').filter({ hasText: 'E2E ingreso USD' });
   await incomeRow.getByTitle('Eliminar movimiento').click({ force: true });
   await page.getByRole('button', { name: 'Confirmar' }).click();
-  await expect(page.getByText('E2E ingreso USD')).toHaveCount(0);
+  await expect(movementText(page, 'E2E ingreso USD')).toHaveCount(0);
   cuentas = await apiGet<Cuenta[]>(page, '/cuentas?incluirInactivas=true');
   expect(cuentas.find(cuenta => cuenta.nombre === 'E2E Ahorro USD')?.saldoActual).toBe(100);
 
