@@ -9,6 +9,7 @@ import {
   CuentaPayload,
   DashboardAnalitica,
   DashboardResumen,
+  PlantillaRecurrente,
   PageResponse,
   Presupuesto,
   PresupuestoPayload,
@@ -136,6 +137,26 @@ export class FinanzasService {
 
   getDashboardAnalitica(): Observable<ApiResponse<DashboardAnalitica>> {
     return this.http.get<ApiResponse<DashboardAnalitica>>(`${this.baseUrl}/dashboard/analitica`);
+  }
+
+  getPlantillasRecurrentes(): Observable<ApiResponse<PlantillaRecurrente[]>> {
+    return this.http.get<ApiResponse<PlantillaRecurrente[]>>(`${this.baseUrl}/recurrencias`);
+  }
+
+  registrarMovimientoRecurrente(id: number): Observable<ApiResponse<void>> {
+    return this.http.post<ApiResponse<void>>(`${this.baseUrl}/recurrencias/${id}/registrar`, {});
+  }
+
+  cambiarEstadoPlantillaRecurrente(id: number, activa: boolean): Observable<ApiResponse<PlantillaRecurrente>> {
+    return this.http.patch<ApiResponse<PlantillaRecurrente>>(
+      `${this.baseUrl}/recurrencias/${id}/estado`,
+      {},
+      { params: new HttpParams().set('activa', activa) }
+    );
+  }
+
+  eliminarPlantillaRecurrente(id: number): Observable<ApiResponse<void>> {
+    return this.http.delete<ApiResponse<void>>(`${this.baseUrl}/recurrencias/${id}`);
   }
 
   // --- Presupuestos ---

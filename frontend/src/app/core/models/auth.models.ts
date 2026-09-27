@@ -4,6 +4,26 @@ export interface Usuario {
   email: string;
 }
 
+export interface Perfil {
+  id: number;
+  nombre: string;
+  email: string;
+  tema: 'CLARO' | 'OSCURO';
+  monedaPredeterminada: string;
+}
+
+export interface PerfilActualizarPayload {
+  nombre: string;
+  email: string;
+  tema: 'CLARO' | 'OSCURO';
+  monedaPredeterminada: string;
+}
+
+export interface CambiarPasswordPayload {
+  passwordActual: string;
+  passwordNueva: string;
+}
+
 export interface AuthResponse {
   token: string;
   tokenType: string;

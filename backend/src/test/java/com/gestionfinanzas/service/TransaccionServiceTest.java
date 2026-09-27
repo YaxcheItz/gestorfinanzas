@@ -6,10 +6,13 @@ import com.gestionfinanzas.model.entity.Categoria;
 import com.gestionfinanzas.model.entity.Cuenta;
 import com.gestionfinanzas.model.entity.Transaccion;
 import com.gestionfinanzas.model.entity.Usuario;
+import com.gestionfinanzas.model.entity.PlantillaRecurrente;
 import com.gestionfinanzas.model.enums.TipoCuenta;
+import com.gestionfinanzas.model.enums.FrecuenciaRecurrencia;
 import com.gestionfinanzas.model.enums.TipoTransaccion;
 import com.gestionfinanzas.repository.CategoriaRepository;
 import com.gestionfinanzas.repository.CuentaRepository;
+import com.gestionfinanzas.repository.PlantillaRecurrenteRepository;
 import com.gestionfinanzas.repository.TransaccionRepository;
 import com.gestionfinanzas.repository.UsuarioRepository;
 import org.junit.jupiter.api.Test;
@@ -35,9 +38,10 @@ class TransaccionServiceTest {
     private final TransaccionRepository transaccionRepository = mock(TransaccionRepository.class);
     private final CuentaRepository cuentaRepository = mock(CuentaRepository.class);
     private final CategoriaRepository categoriaRepository = mock(CategoriaRepository.class);
+    private final PlantillaRecurrenteRepository plantillaRepository = mock(PlantillaRecurrenteRepository.class);
     private final UsuarioRepository usuarioRepository = mock(UsuarioRepository.class);
     private final TransaccionService transaccionService = new TransaccionService(
-            transaccionRepository, cuentaRepository, categoriaRepository, usuarioRepository
+            transaccionRepository, cuentaRepository, categoriaRepository, usuarioRepository, plantillaRepository
     );
 
     @Test
@@ -53,7 +57,7 @@ class TransaccionServiceTest {
 
         var response = transaccionService.crearTransaccion(7L, new TransaccionRequest(
                 1L, 2L, null, TipoTransaccion.TRANSFERENCIA, new BigDecimal("100.00"),
-                new BigDecimal("17.50"), LocalDate.now(), "Transferencia", null
+                new BigDecimal("17.50"), LocalDate.now(), "Transferencia", null, null, null
         ));
 
         assertEquals(new BigDecimal("400.00"), origen.getSaldoActual());
@@ -107,13 +111,13 @@ class TransaccionServiceTest {
 
         var response = transaccionService.actualizarTransaccion(7L, 11L, new TransaccionRequest(
                 1L, null, 4L, TipoTransaccion.GASTO, new BigDecimal("25.00"),
-                null, LocalDate.of(2026, 9, 26), "Gasto corregido", " nota "
+                null, LocalDate.of(2026, 9, 26), "Gasto corregido", " nota ", null, null
         ));
 
         assertEquals(11L, response.id());
         assertEquals(new BigDecimal("75.00"), cuenta.getSaldoActual());
         assertEquals(new BigDecimal("25.00"), response.monto());
-        assertEquals("Gasto corregido", response.descripcion());
+        assertEquals("Comida", response.descripcion());
         assertEquals("nota", response.notas());
         assertEquals(LocalDate.of(2026, 9, 26), response.fecha());
     }
@@ -137,7 +141,7 @@ class TransaccionServiceTest {
 
         transaccionService.actualizarTransaccion(7L, 11L, new TransaccionRequest(
                 1L, 2L, null, TipoTransaccion.TRANSFERENCIA, new BigDecimal("120.00"),
-                new BigDecimal("18.00"), LocalDate.now(), "Transferencia corregida", null
+                new BigDecimal("18.00"), LocalDate.now(), "Transferencia corregida", null, null, null
         ));
 
         assertEquals(new BigDecimal("380.00"), origen.getSaldoActual());
@@ -159,7 +163,7 @@ class TransaccionServiceTest {
         assertThrows(IllegalArgumentException.class, () -> transaccionService.actualizarTransaccion(
                 7L, 11L, new TransaccionRequest(
                         1L, null, null, TipoTransaccion.INGRESO, new BigDecimal("100.00"),
-                        null, LocalDate.now(), "Ingreso", null
+                        null, LocalDate.now(), "Ingreso", null, null, null
                 )
         ));
 
@@ -180,12 +184,38 @@ class TransaccionServiceTest {
         assertThrows(IllegalArgumentException.class, () -> transaccionService.crearTransaccion(
                 7L, new TransaccionRequest(
                         1L, null, 4L, TipoTransaccion.INGRESO, new BigDecimal("10.00"),
-                        null, LocalDate.now(), "Ingreso incompatible", null
+                        null, LocalDate.now(), "Ingreso incompatible", null, null, null
                 )
         ));
 
         assertEquals(new BigDecimal("100.00"), cuenta.getSaldoActual());
         verify(cuentaRepository, never()).save(any(Cuenta.class));
+    }
+
+    @Test
+    void crearGastoRecurrenteGuardaCategoriaComoConceptoYGeneraPlantilla() {
+        Usuario usuario = Usuario.builder().id(7L).build();
+        Cuenta cuenta = cuenta(1L, usuario, "MXN", "100.00");
+        Categoria categoria = Categoria.builder().id(4L).usuario(usuario).nombre("Renta")
+                .tipo(TipoTransaccion.GASTO).activo(true).build();
+        when(usuarioRepository.findById(7L)).thenReturn(Optional.of(usuario));
+        when(cuentaRepository.findByIdAndUsuarioId(1L, 7L)).thenReturn(Optional.of(cuenta));
+        when(categoriaRepository.findAccessibleById(4L, 7L)).thenReturn(Optional.of(categoria));
+        when(transaccionRepository.save(any(Transaccion.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(plantillaRepository.save(any(PlantillaRecurrente.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        var response = transaccionService.crearTransaccion(7L, new TransaccionRequest(
+                1L, null, 4L, TipoTransaccion.GASTO, new BigDecimal("15.00"),
+                null, LocalDate.of(2026, 9, 26), null, "Pago mensual",
+                FrecuenciaRecurrencia.MENSUAL, LocalDate.of(2026, 10, 26)
+        ));
+
+        assertEquals("Renta", response.descripcion());
+        assertEquals("Pago mensual", response.notas());
+        assertEquals(new BigDecimal("85.00"), cuenta.getSaldoActual());
+        verify(plantillaRepository).save(any(PlantillaRecurrente.class));
     }
 
     @Test

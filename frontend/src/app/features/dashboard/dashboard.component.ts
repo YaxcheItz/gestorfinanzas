@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -6,12 +6,15 @@ import { AuthService } from '../../core/services/auth.service';
 import { FinanzasService } from '../../core/services/finanzas.service';
 import { ToastService } from '../../core/services/toast.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
+import { PerfilService } from '../../core/services/perfil.service';
+import { CategoriaSelectorComponent } from '../../shared/components/categoria-selector/categoria-selector.component';
 import { MovimientoMobileCardComponent } from '../../shared/components/movimiento-mobile-card/movimiento-mobile-card.component';
 import {
   Categoria,
   Cuenta,
   DashboardAnalitica,
   DashboardResumen,
+  FrecuenciaRecurrencia,
   TipoTransaccion,
   TransaccionPayload
 } from '../../core/models/finanzas.models';
@@ -19,7 +22,7 @@ import {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, MovimientoMobileCardComponent],
+  imports: [CommonModule, FormsModule, CategoriaSelectorComponent, MovimientoMobileCardComponent],
   template: `
     <div class="max-w-7xl mx-auto flex flex-col px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-5 sm:space-y-8">
       
@@ -73,35 +76,71 @@ import {
         </div>
       }
 
-      <!-- Métricas separadas por moneda -->
-      <section class="order-2 space-y-3 sm:space-y-4 lg:order-3" aria-label="Resumen financiero por moneda">
-        @for (moneda of resumen()?.resumenPorMoneda ?? []; track moneda.moneda) {
-          <div>
-            <h2 class="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">{{ moneda.moneda }}</h2>
-            <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-5">
-              <article class="bg-white p-3 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs">
-                <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Balance total</p>
-                <p class="mt-1 sm:mt-3 text-base sm:text-2xl font-bold text-slate-900 break-words">{{ moneda.balanceTotal | currency:moneda.moneda:'symbol':'1.2-2' }}</p>
-                <p class="mt-1 text-[10px] sm:text-xs text-slate-500">{{ moneda.totalCuentas }} cuenta{{ moneda.totalCuentas === 1 ? '' : 's' }} activa{{ moneda.totalCuentas === 1 ? '' : 's' }}</p>
+      <section class="order-2 lg:order-3" aria-label="Resumen financiero por moneda">
+        @if (resumenMonedaSeleccionada(); as moneda) {
+          <div class="grid grid-cols-1 gap-3 lg:grid-cols-5 lg:gap-4">
+            <article class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-950 via-slate-900 to-slate-950 p-5 text-white shadow-lg shadow-emerald-950/10 sm:p-7 lg:col-span-3">
+              <div class="pointer-events-none absolute -right-10 -top-14 h-48 w-48 rounded-full border border-white/10"></div>
+              <div class="pointer-events-none absolute -right-2 -top-6 h-32 w-32 rounded-full border border-white/10"></div>
+              <div class="relative flex items-start justify-between gap-3">
+                <div>
+                  <p class="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-200/80">Patrimonio en cuentas</p>
+                  <p class="mt-1 text-xs text-slate-300">Balance total disponible</p>
+                </div>
+                <label class="sr-only" for="dashboard-currency">Moneda del resumen</label>
+                <select
+                  id="dashboard-currency"
+                  [ngModel]="monedaResumen()"
+                  (ngModelChange)="monedaResumen.set($event)"
+                  class="rounded-lg border border-white/20 bg-white/10 px-2.5 py-1.5 text-xs font-semibold text-white focus:outline-hidden focus:ring-2 focus:ring-emerald-300">
+                  @for (codigo of monedasResumen(); track codigo) {
+                    <option class="bg-slate-900 text-white" [value]="codigo">{{ codigo }}</option>
+                  }
+                </select>
+              </div>
+              <p class="relative mt-5 break-words text-3xl font-bold tracking-tight sm:text-4xl">
+                {{ moneda.balanceTotal | currency:moneda.moneda:'symbol':'1.2-2' }}
+              </p>
+              <div class="relative mt-6 grid grid-cols-2 gap-3 border-t border-white/15 pt-4">
+                <div>
+                  <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-300">Flujo neto del mes</p>
+                  <p class="mt-1 text-sm font-bold" [class.text-emerald-300]="moneda.balanceMes >= 0" [class.text-rose-300]="moneda.balanceMes < 0">
+                    {{ moneda.balanceMes | currency:moneda.moneda:'symbol':'1.2-2' }}
+                  </p>
+                </div>
+                <div class="text-right">
+                  <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-300">Cuentas activas</p>
+                  <p class="mt-1 text-sm font-bold text-white">{{ moneda.totalCuentas }}</p>
+                </div>
+              </div>
+            </article>
+
+            <div class="grid grid-cols-2 gap-3 lg:col-span-2 lg:grid-cols-1">
+              <article class="rounded-2xl border border-emerald-100 bg-white p-3 shadow-xs sm:p-5">
+                <div class="flex items-center gap-2">
+                  <span class="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-lg font-bold text-emerald-700">↗</span>
+                  <p class="text-xs font-semibold text-slate-500">Ingresos del mes</p>
+                </div>
+                <p class="mt-3 break-words text-base font-bold text-emerald-700 sm:text-2xl">
+                  {{ moneda.ingresosMes | currency:moneda.moneda:'symbol':'1.2-2' }}
+                </p>
               </article>
-              <article class="bg-white p-3 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs">
-                <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Ingresos del mes</p>
-                <p class="mt-1 sm:mt-3 text-base sm:text-2xl font-bold text-emerald-600 break-words">{{ moneda.ingresosMes | currency:moneda.moneda:'symbol':'1.2-2' }}</p>
-              </article>
-              <article class="bg-white p-3 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs">
-                <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Gastos del mes</p>
-                <p class="mt-1 sm:mt-3 text-base sm:text-2xl font-bold text-rose-600 break-words">{{ moneda.gastosMes | currency:moneda.moneda:'symbol':'1.2-2' }}</p>
-                <p class="mt-1 text-[10px] sm:text-xs text-slate-500">Neto: {{ moneda.balanceMes | currency:moneda.moneda:'symbol':'1.2-2' }}</p>
-              </article>
-              <article class="bg-white p-3 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs">
-                <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Tasa de ahorro</p>
-                <p class="mt-1 sm:mt-3 text-base sm:text-2xl font-bold text-violet-600">{{ moneda.tasaAhorro | number:'1.1-1' }}%</p>
-                <p class="mt-1 text-[10px] sm:text-xs text-slate-500">{{ moneda.tasaAhorro >= 20 ? 'Buen ritmo de ahorro' : 'Margen para optimizar' }}</p>
+              <article class="rounded-2xl border border-rose-100 bg-white p-3 shadow-xs sm:p-5">
+                <div class="flex items-center gap-2">
+                  <span class="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-50 text-lg font-bold text-rose-700">↘</span>
+                  <p class="text-xs font-semibold text-slate-500">Gastos del mes</p>
+                </div>
+                <p class="mt-3 break-words text-base font-bold text-rose-700 sm:text-2xl">
+                  {{ moneda.gastosMes | currency:moneda.moneda:'symbol':'1.2-2' }}
+                </p>
+                <p class="mt-1 text-[10px] text-slate-500">Ahorro: {{ moneda.tasaAhorro | number:'1.1-1' }}%</p>
               </article>
             </div>
           </div>
-        } @empty {
-          <p class="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500">Agrega una cuenta para ver tus métricas.</p>
+        } @else if (!loading()) {
+          <p class="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500">Agrega una cuenta para ver tu resumen financiero.</p>
+        } @else {
+          <div class="h-36 animate-pulse rounded-3xl bg-slate-200"></div>
         }
       </section>
 
@@ -290,11 +329,10 @@ import {
           </div>
         } @else {
           <div class="hidden overflow-x-auto sm:block" role="region" aria-label="Últimos movimientos; desliza horizontalmente para ver más columnas" tabindex="0">
-            <table class="w-full min-w-[640px] text-left text-sm text-slate-600">
+            <table class="w-full min-w-[600px] text-left text-sm text-slate-600">
               <thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-400 tracking-wider">
                 <tr>
-                  <th class="px-6 py-3.5">Concepto</th>
-                  <th class="px-6 py-3.5">Categoría</th>
+                  <th class="px-6 py-3.5">Movimiento</th>
                   <th class="px-6 py-3.5">Cuenta</th>
                   <th class="px-6 py-3.5">Fecha</th>
                   <th class="px-6 py-3.5 text-right">Monto</th>
@@ -323,22 +361,11 @@ import {
                         }
                       </div>
                       <div class="truncate max-w-xs">
-                        <span class="block truncate">{{ m.descripcion }}</span>
+                        <span class="block truncate">{{ m.categoriaNombre || m.descripcion }}</span>
                         @if (m.notas) {
                           <span class="block text-xs text-slate-400 font-normal truncate">{{ m.notas }}</span>
                         }
                       </div>
-                    </td>
-                    <td class="px-6 py-4">
-                      @if (m.categoriaNombre) {
-                        <span class="px-2.5 py-1 text-xs font-medium rounded-full bg-slate-100 text-slate-700 border border-slate-200">
-                          {{ m.categoriaNombre }}
-                        </span>
-                      } @else {
-                        <span class="text-xs text-slate-400 italic">
-                          {{ m.tipo === 'TRANSFERENCIA' ? 'Transferencia' : m.tipo === 'SALDO_INICIAL' ? 'Saldo inicial' : 'Sin categoría' }}
-                        </span>
-                      }
                     </td>
                     <td class="px-6 py-4 text-xs font-medium text-slate-600">
                       @if (m.tipo === 'TRANSFERENCIA') {
@@ -369,7 +396,7 @@ import {
                         <button
                           type="button"
                           (click)="editarMovimiento(m.id)"
-                          [attr.aria-label]="'Editar movimiento ' + m.descripcion"
+                          [attr.aria-label]="'Editar movimiento ' + (m.categoriaNombre || m.descripcion)"
                           title="Editar movimiento"
                           class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-emerald-50 hover:text-emerald-700 focus:outline-hidden focus:ring-2 focus:ring-emerald-500">
                           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -407,18 +434,18 @@ import {
 
     <!-- Modal Interactivo 'Nuevo Movimiento' -->
     @if (modalAbierto()) {
-      <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-        
-        <div class="bg-white rounded-3xl max-w-lg w-full border border-slate-200 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      <div class="fixed inset-0 z-50 flex items-end overflow-y-auto overscroll-contain bg-slate-900/60 px-0 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] backdrop-blur-xs sm:items-center sm:p-4">
+        <div role="dialog" aria-modal="true" aria-labelledby="dashboard-movement-title" class="flex max-h-full min-h-0 w-full flex-col overflow-hidden rounded-t-3xl border border-slate-200 bg-white shadow-2xl animate-in fade-in zoom-in-95 duration-150 sm:max-h-[min(90dvh,48rem)] sm:max-w-lg sm:rounded-3xl">
           
           <!-- Encabezado del Modal con Selector de Tipo -->
-          <div class="p-6 border-b border-slate-100">
-            <div class="flex items-center justify-between pb-4">
-              <h2 class="text-lg font-bold text-slate-900">Registrar Movimiento</h2>
+          <div class="shrink-0 border-b border-slate-100 p-4 sm:p-6">
+            <div class="flex items-center justify-between gap-3 pb-3 sm:pb-4">
+              <h2 id="dashboard-movement-title" class="text-base font-bold text-slate-900 sm:text-lg">Registrar Movimiento</h2>
               <button 
                 type="button"
                 (click)="cerrarModal()" 
-                class="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer">
+                aria-label="Cerrar formulario de movimiento"
+                class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors cursor-pointer">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -426,33 +453,33 @@ import {
             </div>
 
             <!-- Tabs de Tipo de Transacción -->
-            <div class="grid grid-cols-3 gap-2 p-1 bg-slate-100 rounded-xl text-xs font-semibold">
+            <div class="grid grid-cols-3 gap-1.5 rounded-xl bg-slate-100 p-1 text-[11px] font-semibold sm:gap-2 sm:text-xs">
               <button 
                 type="button"
                 (click)="cambiarTipo('GASTO')"
                 [class]="formTipo() === 'GASTO' ? 'bg-white text-rose-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'"
-                class="py-2 rounded-lg transition-all text-center cursor-pointer">
+                class="min-h-10 rounded-lg px-1 py-2 text-center transition-all cursor-pointer sm:min-h-11">
                 Gasto
               </button>
               <button 
                 type="button"
                 (click)="cambiarTipo('INGRESO')"
                 [class]="formTipo() === 'INGRESO' ? 'bg-white text-emerald-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'"
-                class="py-2 rounded-lg transition-all text-center cursor-pointer">
+                class="min-h-10 rounded-lg px-1 py-2 text-center transition-all cursor-pointer sm:min-h-11">
                 Ingreso
               </button>
               <button 
                 type="button"
                 (click)="cambiarTipo('TRANSFERENCIA')"
                 [class]="formTipo() === 'TRANSFERENCIA' ? 'bg-white text-blue-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'"
-                class="py-2 rounded-lg transition-all text-center cursor-pointer">
+                class="min-h-10 rounded-lg px-1 py-2 text-center transition-all cursor-pointer sm:min-h-11">
                 Transferencia
               </button>
             </div>
           </div>
 
           <!-- Formulario -->
-          <form (ngSubmit)="guardarMovimiento()" class="p-6 space-y-4">
+          <form (ngSubmit)="guardarMovimiento()" class="min-h-0 space-y-3 overflow-y-auto overscroll-contain p-4 sm:space-y-4 sm:p-6">
             
             @if (modalError()) {
               <div class="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs">
@@ -480,24 +507,8 @@ import {
                   [(ngModel)]="formMonto"
                   name="monto"
                   placeholder="0.00"
-                  class="w-full rounded-xl border-2 border-slate-300 bg-white px-4 py-3 text-lg font-bold text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20"
+                  class="min-h-12 w-full rounded-xl border-2 border-slate-300 bg-white px-4 py-3 text-lg font-bold text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20"
                 />
-            </div>
-
-            <!-- Concepto / Descripción -->
-            <div>
-              <label for="descripcion" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                Concepto / Descripción
-              </label>
-              <input
-                id="descripcion"
-                type="text"
-                required
-                [(ngModel)]="formDescripcion"
-                name="descripcion"
-                placeholder="Ej. Supermercado, Pago de nómina, Gasolina..."
-                class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
-              />
             </div>
 
             <!-- Cuentas (Origen y Destino si es transferencia) -->
@@ -565,21 +576,16 @@ import {
               } @else {
                 <!-- Categoría (solo para Gasto o Ingreso) -->
                 <div>
-                  <label for="categoriaId" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                    Categoría
-                  </label>
-                  <select
-                    id="categoriaId"
-                    [(ngModel)]="formCategoriaId"
-                    name="categoriaId"
-                    class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all cursor-pointer">
-                    <option [ngValue]="null">-- Sin categoría --</option>
-                    @for (cat of categoriasFiltradas(); track cat.id) {
-                      <option [ngValue]="cat.id">
-                        {{ cat.nombre }}
-                      </option>
-                    }
-                  </select>
+                  @defer (on immediate) {
+                    <app-categoria-selector
+                      [categorias]="categorias()"
+                      [tipo]="formTipo()"
+                      [selectedId]="formCategoriaId"
+                      (selectedIdChange)="formCategoriaId = $event"
+                      (categoriasChange)="categorias.set($event)" />
+                  } @placeholder {
+                    <div class="h-20 animate-pulse rounded-xl bg-slate-100"></div>
+                  }
                 </div>
               }
             </div>
@@ -594,6 +600,7 @@ import {
                 type="date"
                 required
                 [(ngModel)]="formFecha"
+                (ngModelChange)="actualizarSiguienteFecha()"
                 name="fecha"
                 class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
               />
@@ -609,24 +616,59 @@ import {
                 rows="2"
                 [(ngModel)]="formNotas"
                 name="notas"
-                placeholder="Detalles sobre el gasto o movimiento..."
+                placeholder="Agrega un detalle si lo necesitas..."
                 class="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all resize-none">
               </textarea>
             </div>
 
+            @if (formTipo() !== 'TRANSFERENCIA') {
+              <section class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <label class="flex min-h-10 cursor-pointer items-center gap-3">
+                  <input type="checkbox" name="movimientoRecurrente" [(ngModel)]="movimientoRecurrente"
+                         (ngModelChange)="actualizarSiguienteFecha()"
+                         class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" />
+                  <span>
+                    <span class="block text-sm font-semibold text-slate-800">Repetir este movimiento</span>
+                    <span class="block text-xs text-slate-500">Se guardará como plantilla; confirmarás cada cargo en su fecha.</span>
+                  </span>
+                </label>
+                @if (movimientoRecurrente) {
+                  <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <label class="block text-xs font-semibold text-slate-700">
+                      Frecuencia
+                      <select name="frecuenciaRecurrencia" [(ngModel)]="frecuenciaRecurrencia"
+                              (ngModelChange)="actualizarSiguienteFecha()"
+                              class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-normal">
+                        <option value="SEMANAL">Cada semana</option>
+                        <option value="QUINCENAL">Cada dos semanas</option>
+                        <option value="MENSUAL">Cada mes</option>
+                        <option value="ANUAL">Cada año</option>
+                      </select>
+                    </label>
+                    <label class="block text-xs font-semibold text-slate-700">
+                      Siguiente fecha
+                      <input id="siguienteFechaRecurrencia" name="siguienteFechaRecurrencia" type="date"
+                             [(ngModel)]="siguienteFechaRecurrencia" [min]="formFecha" required
+                             class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-normal" />
+                    </label>
+                  </div>
+                }
+              </section>
+            }
+
             <!-- Botones de Acción -->
-            <div class="pt-4 flex items-center justify-end space-x-3 border-t border-slate-100">
+            <div class="grid grid-cols-1 gap-2 border-t border-slate-100 bg-white pt-4 sm:flex sm:items-center sm:justify-end sm:space-x-3">
               <button
                 type="button"
                 (click)="cerrarModal()"
-                class="px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer">
+                class="min-h-11 w-full rounded-xl px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 cursor-pointer sm:w-auto">
                 Cancelar
               </button>
               
               <button
                 type="submit"
                 [disabled]="submitting()"
-                class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-50 text-white font-semibold text-sm rounded-xl shadow-md shadow-emerald-600/20 transition-all flex items-center space-x-2 cursor-pointer">
+                class="inline-flex min-h-11 w-full items-center justify-center space-x-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-600/20 transition-all hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-50 cursor-pointer sm:w-auto">
                 @if (submitting()) {
                   <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                   <span>Guardando...</span>
@@ -649,6 +691,8 @@ export class DashboardComponent implements OnInit {
   private readonly finanzasService = inject(FinanzasService);
   private readonly toastService = inject(ToastService);
   private readonly confirmDialog = inject(ConfirmDialogService);
+  private readonly perfilService = inject(PerfilService);
+  private monedaPreferidaAplicada = false;
 
   readonly anioActual = new Date().getFullYear();
 
@@ -660,7 +704,14 @@ export class DashboardComponent implements OnInit {
   analiticaError = signal<string | null>(null);
   analitica = signal<DashboardAnalitica | null>(null);
   readonly analiticaMovilAbierta = signal(false);
+  readonly monedaResumen = signal('MXN');
   monedaAnalitica = signal('MXN');
+  readonly monedasResumen = computed(() =>
+    (this.resumen()?.resumenPorMoneda ?? []).map(item => item.moneda).sort()
+  );
+  readonly resumenMonedaSeleccionada = computed(() =>
+    this.resumen()?.resumenPorMoneda.find(item => item.moneda === this.monedaResumen()) ?? null
+  );
 
   cuentas = signal<Cuenta[]>([]);
   categorias = signal<Categoria[]>([]);
@@ -673,17 +724,25 @@ export class DashboardComponent implements OnInit {
   // Campos del formulario
   formTipo = signal<TipoTransaccion>('GASTO');
   formMonto: number | null = null;
-  formDescripcion = '';
   formCuentaId: number | null = null;
   formCuentaDestinoId: number | null = null;
   formTasaCambio: number | null = null;
   formCategoriaId: number | null = null;
   formFecha = new Date().toISOString().split('T')[0];
   formNotas = '';
+  movimientoRecurrente = false;
+  frecuenciaRecurrencia: FrecuenciaRecurrencia = 'MENSUAL';
+  siguienteFechaRecurrencia = '';
 
   categoriasFiltradas = computed(() => {
     const tipo = this.formTipo();
     return this.categorias().filter(c => c.tipo === tipo);
+    effect(() => {
+      const perfil = this.perfilService.perfil();
+      if (this.monedaPreferidaAplicada || !perfil || !this.monedasResumen().includes(perfil.monedaPredeterminada)) return;
+      this.monedaResumen.set(perfil.monedaPredeterminada);
+      this.monedaPreferidaAplicada = true;
+    });
   });
 
   monedaCuenta(id: number | null): string {
@@ -736,6 +795,15 @@ export class DashboardComponent implements OnInit {
     return `conic-gradient(${segmentos.join(', ')})`;
   });
 
+  constructor() {
+    effect(() => {
+      const perfil = this.perfilService.perfil();
+      if (this.monedaPreferidaAplicada || !perfil || !this.monedasResumen().includes(perfil.monedaPredeterminada)) return;
+      this.monedaResumen.set(perfil.monedaPredeterminada);
+      this.monedaPreferidaAplicada = true;
+    });
+  }
+
   ngOnInit(): void {
     this.cargarDashboard();
     this.cargarCuentasYCategorias();
@@ -750,6 +818,13 @@ export class DashboardComponent implements OnInit {
       next: (res) => {
         if (res.success && res.data) {
           this.resumen.set(res.data);
+          if (!res.data.resumenPorMoneda.some(item => item.moneda === this.monedaResumen())) {
+            this.monedaResumen.set(
+              res.data.resumenPorMoneda.find(item => item.moneda === 'MXN')?.moneda
+                ?? res.data.resumenPorMoneda[0]?.moneda
+                ?? 'MXN'
+            );
+          }
         }
         this.loading.set(false);
       },
@@ -819,9 +894,11 @@ export class DashboardComponent implements OnInit {
     this.formTipo.set(tipo);
     this.modalError.set(null);
     this.formMonto = null;
-    this.formDescripcion = '';
     this.formNotas = '';
     this.formFecha = new Date().toISOString().split('T')[0];
+    this.movimientoRecurrente = false;
+    this.frecuenciaRecurrencia = 'MENSUAL';
+    this.siguienteFechaRecurrencia = '';
     this.formTasaCambio = null;
 
     const listaCuentas = this.cuentas();
@@ -845,18 +922,38 @@ export class DashboardComponent implements OnInit {
 
   cambiarTipo(tipo: TipoTransaccion): void {
     this.formTipo.set(tipo);
+    if (tipo === 'TRANSFERENCIA') this.movimientoRecurrente = false;
     const cats = this.categoriasFiltradas();
     this.formCategoriaId = cats.length > 0 ? cats[0].id : null;
+  }
+
+  actualizarSiguienteFecha(): void {
+    if (!this.movimientoRecurrente || !this.formFecha) return;
+    const [anio, mes, dia] = this.formFecha.split('-').map(Number);
+    const fecha = new Date(anio, mes - 1, dia);
+    if (this.frecuenciaRecurrencia === 'SEMANAL') {
+      fecha.setDate(fecha.getDate() + 7);
+    } else if (this.frecuenciaRecurrencia === 'QUINCENAL') {
+      fecha.setDate(fecha.getDate() + 14);
+    } else if (this.frecuenciaRecurrencia === 'ANUAL') {
+      fecha.setFullYear(fecha.getFullYear() + 1);
+    } else {
+      const ultimoDiaMes = new Date(anio, mes, 0).getDate();
+      fecha.setDate(1);
+      fecha.setMonth(fecha.getMonth() + 1);
+      const ultimoDiaSiguienteMes = new Date(fecha.getFullYear(), fecha.getMonth() + 1, 0).getDate();
+      fecha.setDate(dia === ultimoDiaMes ? ultimoDiaSiguienteMes : Math.min(dia, ultimoDiaSiguienteMes));
+    }
+    this.siguienteFechaRecurrencia = [
+      fecha.getFullYear(),
+      String(fecha.getMonth() + 1).padStart(2, '0'),
+      String(fecha.getDate()).padStart(2, '0')
+    ].join('-');
   }
 
   guardarMovimiento(): void {
     if (!this.formMonto || this.formMonto <= 0) {
       this.modalError.set('Ingresa un monto válido mayor a 0');
-      return;
-    }
-
-    if (!this.formDescripcion.trim()) {
-      this.modalError.set('Ingresa una descripción o concepto');
       return;
     }
 
@@ -892,8 +989,9 @@ export class DashboardComponent implements OnInit {
         ? this.formTasaCambio
         : null,
       fecha: this.formFecha,
-      descripcion: this.formDescripcion.trim(),
-      notas: this.formNotas.trim() || null
+      notas: this.formNotas.trim() || null,
+      frecuenciaRecurrencia: this.movimientoRecurrente ? this.frecuenciaRecurrencia : null,
+      siguienteFechaRecurrencia: this.movimientoRecurrente ? this.siguienteFechaRecurrencia : null
     };
 
     this.submitting.set(true);

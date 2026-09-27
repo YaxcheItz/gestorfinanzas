@@ -62,6 +62,7 @@ public class CuentaService {
                 .usuario(usuario)
                 .nombre(nombreTrim)
                 .tipo(request.tipo())
+                .institucionFinanciera(normalizarInstitucion(request.institucionFinanciera()))
                 .saldoActual(saldoInicial)
                 .moneda(moneda)
                 .descripcion(request.descripcion() != null ? request.descripcion().trim() : null)
@@ -101,11 +102,17 @@ public class CuentaService {
 
         cuenta.setNombre(nombreTrim);
         cuenta.setTipo(request.tipo());
+        cuenta.setInstitucionFinanciera(normalizarInstitucion(request.institucionFinanciera()));
         cuenta.setMoneda(nuevaMoneda);
         cuenta.setDescripcion(request.descripcion() != null ? request.descripcion().trim() : null);
 
         Cuenta actualizada = cuentaRepository.save(cuenta);
         return CuentaResponse.fromEntity(actualizada);
+    }
+
+    private String normalizarInstitucion(String institucionFinanciera) {
+        if (institucionFinanciera == null || institucionFinanciera.isBlank()) return null;
+        return institucionFinanciera.trim();
     }
 
     @Transactional

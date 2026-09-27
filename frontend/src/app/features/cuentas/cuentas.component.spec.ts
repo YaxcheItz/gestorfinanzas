@@ -49,6 +49,7 @@ describe('CuentasComponent', () => {
   it('creates an account with the optional opening balance', () => {
     component.nombre = '  Fondo  ';
     component.tipo = 'AHORRO';
+    component.institucionFinanciera = 'bbva';
     component.saldoInicial = 250;
 
     component.guardar();
@@ -56,9 +57,18 @@ describe('CuentasComponent', () => {
     expect(finanzasService.crearCuenta).toHaveBeenCalledWith({
       nombre: 'Fondo',
       tipo: 'AHORRO',
+      institucionFinanciera: 'bbva',
       moneda: 'MXN',
       saldoInicial: 250
     });
+  });
+
+  it('offers Mexican financial institutions and uses the selected institution name when blank', () => {
+    expect(component.instituciones.length).toBeGreaterThanOrEqual(10);
+    component.seleccionarInstitucion('nu');
+
+    expect(component.nombre).toBe('Nu México');
+    expect(component.institucionSeleccionada()).toMatchObject({ siglas: 'nu', color: '#820AD1' });
   });
 
   it('updates account details without allowing a manual balance change', () => {
