@@ -65,6 +65,9 @@ describe('CuentasComponent', () => {
 
   it('offers Mexican financial institutions and uses the selected institution name when blank', () => {
     expect(component.instituciones.length).toBeGreaterThanOrEqual(10);
+    expect(component.instituciones.map(institucion => institucion.nombre)).toEqual(
+      expect.arrayContaining(['Revolut', 'Sears', 'American Express'])
+    );
     component.seleccionarInstitucion('nu');
 
     expect(component.nombre).toBe('Nu México');

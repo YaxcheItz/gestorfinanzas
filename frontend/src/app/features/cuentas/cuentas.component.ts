@@ -296,7 +296,10 @@ export class CuentasComponent implements OnInit {
     { id: 'nu', nombre: 'Nu México', siglas: 'nu', color: '#820AD1' },
     { id: 'mercado-pago', nombre: 'Mercado Pago', siglas: 'MP', color: '#009EE3' },
     { id: 'klar', nombre: 'Klar', siglas: 'klar', color: '#6C36B0' },
-    { id: 'hey-banco', nombre: 'Hey Banco', siglas: 'HEY', color: '#00A9A5' }
+    { id: 'hey-banco', nombre: 'Hey Banco', siglas: 'HEY', color: '#00A9A5' },
+    { id: 'revolut', nombre: 'Revolut', siglas: 'R', color: '#191C1F' },
+    { id: 'sears', nombre: 'Sears', siglas: 'SEARS', color: '#003B71' },
+    { id: 'american-express', nombre: 'American Express', siglas: 'AMEX', color: '#006FCF' }
   ] as const;
   readonly monedasDisponibles = MONEDAS_DISPONIBLES;
 

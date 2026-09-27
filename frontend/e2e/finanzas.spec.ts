@@ -599,16 +599,17 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   await page.getByRole('button', { name: 'Editar E2E Categoría editada', exact: true }).click();
   const nombreLargo = 'CategoriaConNombreExtensoSinEspaciosParaProbarElDesbordamiento';
   await page.getByLabel('Nombre', { exact: true }).fill(nombreLargo);
-  await page.getByLabel('Icono o emoji (opcional)').fill('ICONO'.repeat(10));
+  await page.getByRole('button', { name: 'Icono Compras' }).click();
   await page.getByRole('button', { name: 'Guardar' }).click();
   const tarjetaCategoriaLarga = page.getByRole('article').filter({ hasText: nombreLargo });
   await expect(tarjetaCategoriaLarga).toBeVisible();
+  await expect(tarjetaCategoriaLarga.locator('app-categoria-icono svg')).toBeVisible();
   const desbordamiento = await tarjetaCategoriaLarga.evaluate(element => {
     const icono = element.querySelector('span')!;
     const nombre = element.querySelector('h2')!;
     const caja = element.getBoundingClientRect();
     return {
-      iconoRecortado: getComputedStyle(icono).overflowX === 'hidden' && icono.scrollWidth > icono.clientWidth,
+      iconoDentroDeTarjeta: icono.getBoundingClientRect().right <= caja.right,
       nombreRecortado: nombre.scrollWidth > nombre.clientWidth,
       contenidoDentroDeTarjeta: Array.from(element.children).every(child => {
         const contenido = child.getBoundingClientRect();
@@ -617,13 +618,13 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
     };
   });
   expect(desbordamiento).toEqual({
-    iconoRecortado: true,
+    iconoDentroDeTarjeta: true,
     nombreRecortado: true,
     contenidoDentroDeTarjeta: true
   });
   await tarjetaCategoriaLarga.getByRole('button', { name: `Editar ${nombreLargo}` }).click();
   await page.getByLabel('Nombre', { exact: true }).fill('E2E Categoría editada');
-  await page.getByLabel('Icono o emoji (opcional)').fill('');
+  await page.getByRole('button', { name: 'Icono Servicios' }).click();
   await page.getByRole('button', { name: 'Guardar' }).click();
   await expect(page.getByRole('heading', { name: 'E2E Categoría editada' })).toBeVisible();
   await page.getByRole('button', { name: 'Archivar E2E Categoría editada' }).click();

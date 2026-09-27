@@ -4,11 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { Categoria, CategoriaPayload } from '../../core/models/finanzas.models';
 import { FinanzasService } from '../../core/services/finanzas.service';
 import { ToastService } from '../../core/services/toast.service';
+import { CategoriaIconoComponent } from '../../shared/components/categoria-icono/categoria-icono.component';
+import { ICONOS_CATEGORIA, normalizarIconoCategoria } from '../../shared/components/categoria-icono/categoria-iconos';
 
 @Component({
   selector: 'app-categorias',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, CategoriaIconoComponent],
   template: `
     <main class="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-4 sm:space-y-6">
       <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
@@ -43,10 +45,10 @@ import { ToastService } from '../../core/services/toast.service';
         <section aria-label="Categorías personalizadas" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
           @for (categoria of categoriasVisibles(); track categoria.id) {
             <article class="min-w-0 bg-white p-3 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3 sm:gap-4" [class.opacity-70]="!categoria.activo">
-              <span class="w-11 h-11 rounded-xl flex items-center justify-center text-lg shrink-0 overflow-hidden whitespace-nowrap"
+              <span class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
                     [style.background-color]="categoria.color || '#10b981'"
                     [style.color]="contrasteColor(categoria.color)">
-                {{ categoria.icono || (categoria.tipo === 'GASTO' ? '−' : '+') }}
+                <app-categoria-icono [icono]="categoria.icono" [tipo]="categoria.tipo" clase="h-5 w-5" />
               </span>
               <div class="min-w-0 flex-1">
                 <h2 class="font-semibold text-slate-900 truncate">{{ categoria.nombre }}</h2>
@@ -88,15 +90,27 @@ import { ToastService } from '../../core/services/toast.service';
                 <option value="INGRESO">Ingreso</option>
               </select>
             </div>
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label for="categoria-icono" class="block text-xs font-semibold text-slate-700 mb-1.5">Icono o emoji (opcional)</label>
-                <input id="categoria-icono" name="icono" maxlength="50" [(ngModel)]="icono" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm" placeholder="🚌" />
+            <fieldset>
+              <legend class="mb-2 block text-xs font-semibold text-slate-700">Icono</legend>
+              <div class="grid grid-cols-4 gap-2 sm:grid-cols-6">
+                @for (opcion of iconosDisponibles; track opcion.codigo) {
+                  <button
+                    type="button"
+                    (click)="icono = opcion.codigo"
+                    [attr.aria-label]="'Icono ' + opcion.nombre"
+                    [attr.aria-pressed]="icono === opcion.codigo"
+                    [title]="opcion.nombre"
+                    [class]="icono === opcion.codigo ? 'border-emerald-500 bg-emerald-50 text-emerald-700 ring-1 ring-emerald-500' : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'"
+                    class="flex min-h-11 items-center justify-center rounded-xl border">
+                    <app-categoria-icono [icono]="opcion.codigo" [clase]="'h-5 w-5'" />
+                  </button>
+                }
               </div>
-              <div>
-                <label for="categoria-color" class="block text-xs font-semibold text-slate-700 mb-1.5">Color</label>
-                <input id="categoria-color" name="color" type="color" [(ngModel)]="color" class="w-full h-11 p-1 bg-slate-50 border border-slate-300 rounded-xl cursor-pointer" />
-              </div>
+              <p class="mt-1.5 text-xs text-slate-500">Elige un icono para mantener las categorías con un estilo uniforme.</p>
+            </fieldset>
+            <div>
+              <label for="categoria-color" class="block text-xs font-semibold text-slate-700 mb-1.5">Color</label>
+              <input id="categoria-color" name="color" type="color" [(ngModel)]="color" class="w-full h-11 p-1 bg-slate-50 border border-slate-300 rounded-xl cursor-pointer" />
             </div>
             <footer class="pt-3 border-t border-slate-100 flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3">
               <button type="button" (click)="cerrar()" class="w-full sm:w-auto px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-xl cursor-pointer">Cancelar</button>
@@ -115,6 +129,7 @@ export class CategoriasComponent implements OnInit {
   private readonly toastService = inject(ToastService);
 
   readonly categorias = signal<Categoria[]>([]);
+  readonly iconosDisponibles = ICONOS_CATEGORIA;
   readonly categoriasVisibles = () => this.categorias().filter(c => c.activo !== this.mostrarInactivas());
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -156,7 +171,7 @@ export class CategoriasComponent implements OnInit {
     this.editando.set(null);
     this.nombre = '';
     this.tipo = 'GASTO';
-    this.icono = '';
+    this.icono = 'receipt';
     this.color = '#10b981';
     this.modalError.set(null);
     this.modalAbierto.set(true);
@@ -166,7 +181,7 @@ export class CategoriasComponent implements OnInit {
     this.editando.set(categoria);
     this.nombre = categoria.nombre;
     this.tipo = categoria.tipo === 'INGRESO' ? 'INGRESO' : 'GASTO';
-    this.icono = categoria.icono ?? '';
+    this.icono = normalizarIconoCategoria(categoria.icono, categoria.tipo);
     this.color = categoria.color ?? '#10b981';
     this.modalError.set(null);
     this.modalAbierto.set(true);
