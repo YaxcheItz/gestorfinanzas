@@ -40,6 +40,7 @@ async function apiGet<T>(page: Page, path: string): Promise<T> {
 }
 
 async function selectOptionContaining(select: Locator, fragment: string): Promise<void> {
+  await expect(select.locator('option', { hasText: fragment }).first()).toBeAttached();
   const options = await select.locator('option').all();
   for (const option of options) {
     const text = (await option.textContent()) ?? '';
@@ -88,18 +89,20 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   await expect(page.getByRole('heading', { name: 'Resumen Financiero' })).toBeVisible();
   await expect(page.getByText('Hola, Usuario E2E.')).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
-  await expect(page.getByRole('button', { name: 'Abrir menú de navegación' })).toBeVisible();
+  const mobileNavigation = page.getByRole('navigation', { name: 'Navegación principal' });
+  await expect(mobileNavigation).toBeVisible();
+  await expect(mobileNavigation).toHaveCSS('position', 'fixed');
+  await expect(mobileNavigation.locator('svg use')).toHaveCount(5);
+  await expect(mobileNavigation.getByRole('link', { name: 'Inicio' })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth))
     .toBeLessThanOrEqual(await page.evaluate(() => window.innerWidth));
-  await page.getByRole('button', { name: 'Abrir menú de navegación' }).click();
-  await expect(page.getByRole('navigation', { name: 'Navegación principal' })).toBeVisible();
-  await page.getByRole('navigation', { name: 'Navegación principal' }).getByRole('link', { name: 'Cuentas' }).click();
+  await mobileNavigation.getByRole('link', { name: 'Cuentas' }).click();
   await expect(page.getByRole('heading', { name: 'Mis cuentas' })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth))
     .toBeLessThanOrEqual(await page.evaluate(() => window.innerWidth));
-  await page.getByRole('button', { name: 'Abrir menú de navegación' }).click();
-  await page.getByRole('navigation', { name: 'Navegación principal' }).getByRole('link', { name: 'Panel General' }).click();
+  await mobileNavigation.getByRole('link', { name: 'Inicio' }).click();
   await page.setViewportSize({ width: 768, height: 1024 });
+  await expect(mobileNavigation).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth))
     .toBeLessThanOrEqual(await page.evaluate(() => window.innerWidth));
   await page.setViewportSize({ width: 1280, height: 900 });
@@ -156,6 +159,13 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   await expect(page.getByRole('heading', { name: 'E2E Pruebas' })).toBeVisible();
 
   await page.getByRole('link', { name: 'Movimientos' }).click();
+  await page.setViewportSize({ width: 390, height: 844 });
+  const mobileFilters = page.getByRole('button', { name: 'Filtros avanzados' });
+  await expect(mobileFilters).toHaveAttribute('aria-expanded', 'false');
+  await mobileFilters.click();
+  await expect(page.locator('#filtros-avanzados-movimientos')).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  await page.setViewportSize({ width: 1280, height: 900 });
   await page.getByRole('button', { name: 'Nuevo Movimiento' }).click();
   await page.screenshot({ path: 'test-results/transaccion-sugerencias-monto.png' });
   await page.locator('#monto').fill('15');
@@ -236,7 +246,21 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   await page.getByRole('button', { name: 'Guardar cambios' }).click();
   await expect(movementText(page, 'E2E gasto MXN')).toBeVisible();
   await page.getByRole('link', { name: 'Panel General' }).click();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByRole('button', { name: 'Nuevo Movimiento' })).toBeVisible();
+  await expect(page.locator('#dashboard-analytics-content')).toHaveCSS('display', 'none');
+  await expect(page.getByRole('button', { name: 'Analítica financiera' })).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.getByLabel('Lista de últimos movimientos').getByText('E2E gasto MXN')).toBeVisible();
+  const navBounds = await mobileNavigation.boundingBox();
+  const toastBounds = await page.locator('app-toast-container > div').boundingBox();
+  expect(navBounds).not.toBeNull();
+  expect(toastBounds).not.toBeNull();
+  expect(toastBounds!.y + toastBounds!.height).toBeLessThanOrEqual(navBounds!.y);
+  await page.screenshot({ path: 'test-results/kaptal-mobile-dashboard.png' });
+  await page.getByRole('button', { name: 'Analítica financiera' }).click();
+  await expect(page.locator('#dashboard-analytics-content')).toBeVisible();
   const dashboardExpense = page.getByRole('row').filter({ hasText: 'E2E gasto MXN' });
+  await page.setViewportSize({ width: 1280, height: 900 });
   await dashboardExpense.getByRole('button', { name: 'Editar movimiento E2E gasto MXN' }).click();
   await expect(page).toHaveURL(/\/transacciones\?editar=/);
   await expect(page.getByRole('heading', { name: 'Editar Movimiento' })).toBeVisible();
@@ -412,7 +436,7 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
 
   await page.getByRole('link', { name: 'Presupuestos' }).click();
   await page.getByRole('button', { name: 'Fijar Presupuesto' }).click();
-  await selectOptionContaining(page.getByLabel('Categoría'), 'E2E Pruebas');
+  await selectOptionContaining(page.getByLabel('Categoría', { exact: true }), 'E2E Pruebas');
   await selectOptionContaining(page.getByLabel('Moneda del presupuesto'), 'MXN');
   await page.getByLabel(/Monto límite mensual/).fill('100');
   await page.getByRole('button', { name: 'Guardar Presupuesto' }).click();
@@ -439,7 +463,7 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
     return updated.presupuestos[0]?.montoLimite;
   }).toBe(120);
   await page.getByRole('button', { name: 'Fijar Presupuesto' }).click();
-  await page.getByLabel('Categoría').selectOption({ label: 'Transporte' });
+  await page.getByLabel('Categoría', { exact: true }).selectOption({ label: 'Transporte' });
   await selectOptionContaining(page.getByLabel('Moneda del presupuesto'), 'USD');
   await page.getByLabel(/Monto límite mensual/).fill('50');
   await page.getByRole('button', { name: 'Guardar Presupuesto' }).click();

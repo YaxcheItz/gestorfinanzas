@@ -17,13 +17,14 @@ import {
   TransaccionFiltro,
   TransaccionPayload
 } from '../models/finanzas.models';
+import { getApiBaseUrl } from './api-base-url';
 
 @Injectable({
   providedIn: 'root'
 })
 export class FinanzasService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = 'http://localhost:8080/api';
+  private readonly baseUrl = getApiBaseUrl();
 
   // --- Cuentas ---
   getCuentas(incluirInactivas = false): Observable<ApiResponse<Cuenta[]>> {
