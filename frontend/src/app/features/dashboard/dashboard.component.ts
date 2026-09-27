@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { FinanzasService } from '../../core/services/finanzas.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -348,10 +349,22 @@ import {
                       }
                     </td>
                     <td class="px-4 py-4 text-center">
+                      @if (m.tipo !== 'SALDO_INICIAL') {
+                        <button
+                          type="button"
+                          (click)="editarMovimiento(m.id)"
+                          [attr.aria-label]="'Editar movimiento ' + m.descripcion"
+                          title="Editar movimiento"
+                          class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-emerald-50 hover:text-emerald-700 focus:outline-hidden focus:ring-2 focus:ring-emerald-500">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                          </svg>
+                        </button>
+                      }
                       <button 
                         type="button"
                         (click)="eliminarMovimiento(m.id)"
-                        class="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-rose-600 transition-opacity p-1 rounded-md hover:bg-rose-50 cursor-pointer"
+                        class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:text-rose-600 transition-colors p-1 rounded-md hover:bg-rose-50 cursor-pointer"
                         title="Eliminar movimiento">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -424,15 +437,17 @@ import {
             }
 
             <!-- Monto -->
-            <div>
-              <label for="monto" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                Monto ({{ monedaCuenta(formCuentaId) }})
-              </label>
-              <div class="relative rounded-xl shadow-2xs">
-                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 font-bold">
+            <div class="space-y-2">
+              <div class="flex items-center justify-between gap-3">
+                <label for="monto" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                  Monto
+                </label>
+                <span class="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-800">
+                  <span class="text-[10px] font-semibold uppercase tracking-wide text-emerald-700">Moneda</span>
                   {{ monedaCuenta(formCuentaId) }}
-                </div>
-                <input
+                </span>
+              </div>
+              <input
                   id="monto"
                   type="number"
                   step="0.01"
@@ -441,9 +456,8 @@ import {
                   [(ngModel)]="formMonto"
                   name="monto"
                   placeholder="0.00"
-                  class="w-full pl-8 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 font-bold text-lg focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
+                  class="w-full rounded-xl border-2 border-slate-300 bg-white px-4 py-3 text-lg font-bold text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20"
                 />
-              </div>
             </div>
 
             <!-- Concepto / Descripción -->
@@ -607,6 +621,7 @@ import {
 })
 export class DashboardComponent implements OnInit {
   public readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
   private readonly finanzasService = inject(FinanzasService);
   private readonly toastService = inject(ToastService);
   private readonly confirmDialog = inject(ConfirmDialogService);
@@ -895,6 +910,10 @@ export class DashboardComponent implements OnInit {
         }
       });
     });
+  }
+
+  editarMovimiento(id: number): void {
+    this.router.navigate(['/transacciones'], { queryParams: { editar: id } });
   }
 
   nombreMesActual(): string {
