@@ -26,8 +26,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -61,6 +65,9 @@ public class TransaccionService {
                 .build();
 
         Transaccion guardada = transaccionRepository.save(transaccion);
+        if (guardada.getTipo() == TipoTransaccion.GASTO) {
+            recalcularCashbackMes(guardada.getCuenta(), guardada.getFecha());
+        }
         if (request.frecuenciaRecurrencia() != null) {
             plantillaRepository.save(PlantillaRecurrente.builder()
                     .usuario(datos.usuario())
@@ -83,7 +90,16 @@ public class TransaccionService {
         if (transaccion.getTipo() == TipoTransaccion.SALDO_INICIAL) {
             throw new IllegalArgumentException("El saldo inicial no se puede editar");
         }
+        if (transaccion.getCashbackOrigen() != null) {
+            throw new IllegalArgumentException("El cashback automático no se puede editar");
+        }
 
+        Cuenta cuentaAnterior = transaccion.getCuenta();
+        LocalDate fechaAnterior = transaccion.getFecha();
+        TipoTransaccion tipoAnterior = transaccion.getTipo();
+        if (tipoAnterior == TipoTransaccion.GASTO) {
+            eliminarCashbackGenerado(transaccion);
+        }
         DatosTransaccion datos = prepararTransaccion(usuarioId, request);
         aplicarImpacto(transaccion.getTipo(), transaccion.getCuenta(), transaccion.getCuentaDestino(),
                 transaccion.getMonto(), transaccion.getMontoDestino(), -1);
@@ -101,7 +117,19 @@ public class TransaccionService {
         transaccion.setDescripcion(descripcionMovimiento(datos, request.descripcion()));
         transaccion.setNotas(normalizarNotas(request.notas()));
 
-        return TransaccionResponse.fromEntity(transaccionRepository.save(transaccion));
+        Transaccion actualizada = transaccionRepository.save(transaccion);
+        if (tipoAnterior == TipoTransaccion.GASTO) {
+            recalcularCashbackMes(cuentaAnterior, fechaAnterior);
+        }
+        if (actualizada.getTipo() == TipoTransaccion.GASTO
+                && (!cuentaAnterior.getId().equals(actualizada.getCuenta().getId())
+                || !YearMonth.from(fechaAnterior).equals(YearMonth.from(actualizada.getFecha())))) {
+            recalcularCashbackMes(actualizada.getCuenta(), actualizada.getFecha());
+        } else if (tipoAnterior != TipoTransaccion.GASTO
+                && actualizada.getTipo() == TipoTransaccion.GASTO) {
+            recalcularCashbackMes(actualizada.getCuenta(), actualizada.getFecha());
+        }
+        return TransaccionResponse.fromEntity(actualizada);
     }
 
     private DatosTransaccion prepararTransaccion(Long usuarioId, TransaccionRequest request) {
@@ -213,6 +241,96 @@ public class TransaccionService {
         }
     }
 
+    private void recalcularCashbackMes(Cuenta cuenta, LocalDate fecha) {
+        BigDecimal porcentaje = cuenta.getCashbackPorcentaje();
+        if (porcentaje == null || porcentaje.compareTo(BigDecimal.ZERO) <= 0) return;
+
+        YearMonth mes = YearMonth.from(fecha);
+        List<Transaccion> gastos = transaccionRepository.findByCuentaIdAndTipoAndFechaBetweenOrderByFechaAscIdAsc(
+                cuenta.getId(), TipoTransaccion.GASTO, mes.atDay(1), mes.atEndOfMonth()
+        );
+        List<Transaccion> cashbackExistente =
+                transaccionRepository.findByCuentaIdAndCashbackOrigenIsNotNullAndFechaBetweenOrderByFechaAscIdAsc(
+                        cuenta.getId(), mes.atDay(1), mes.atEndOfMonth()
+                );
+        Map<Long, Transaccion> cashbackPorGasto = new HashMap<>();
+        for (Transaccion cashback : cashbackExistente) {
+            cashbackPorGasto.put(cashback.getCashbackOrigen().getId(), cashback);
+        }
+
+        BigDecimal cashbackAcumulado = BigDecimal.ZERO;
+        BigDecimal cambioSaldo = BigDecimal.ZERO;
+        for (Transaccion gasto : gastos) {
+            BigDecimal montoCashback = gasto.getMonto()
+                    .multiply(porcentaje)
+                    .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+            BigDecimal limiteMensual = cuenta.getCashbackLimiteMensual();
+            if (limiteMensual != null) {
+                BigDecimal restante = limiteMensual.subtract(cashbackAcumulado).max(BigDecimal.ZERO);
+                montoCashback = montoCashback.min(restante);
+            }
+
+            Transaccion cashback = cashbackPorGasto.remove(gasto.getId());
+            if (montoCashback.compareTo(BigDecimal.ZERO) == 0) {
+                if (cashback != null) {
+                    cambioSaldo = cambioSaldo.subtract(cashback.getMonto());
+                    transaccionRepository.delete(cashback);
+                }
+                continue;
+            }
+
+            cashbackAcumulado = cashbackAcumulado.add(montoCashback);
+            if (cashback == null) {
+                cashback = Transaccion.builder()
+                        .usuario(gasto.getUsuario())
+                        .cuenta(cuenta)
+                        .tipo(TipoTransaccion.INGRESO)
+                        .monto(montoCashback)
+                        .fecha(gasto.getFecha())
+                        .descripcion(descripcionCashback(gasto))
+                        .notas("Estimación automática según la tasa configurada en esta cuenta.")
+                        .cashbackOrigen(gasto)
+                        .build();
+                cambioSaldo = cambioSaldo.add(montoCashback);
+            } else {
+                cambioSaldo = cambioSaldo.add(montoCashback.subtract(cashback.getMonto()));
+                cashback.setMonto(montoCashback);
+                cashback.setFecha(gasto.getFecha());
+                cashback.setDescripcion(descripcionCashback(gasto));
+            }
+            transaccionRepository.save(cashback);
+        }
+
+        for (Transaccion cashbackObsoleto : cashbackPorGasto.values()) {
+            cambioSaldo = cambioSaldo.subtract(cashbackObsoleto.getMonto());
+            transaccionRepository.delete(cashbackObsoleto);
+        }
+
+        if (cambioSaldo.compareTo(BigDecimal.ZERO) != 0) {
+            cuenta.setSaldoActual(cuenta.getSaldoActual().add(cambioSaldo));
+            cuentaRepository.save(cuenta);
+        }
+    }
+
+    private void eliminarCashbackGenerado(Transaccion gasto) {
+        transaccionRepository.findByCashbackOrigenId(gasto.getId()).ifPresent(cashback -> {
+            Cuenta cuenta = cashback.getCuenta();
+            cuenta.setSaldoActual(cuenta.getSaldoActual().subtract(cashback.getMonto()));
+            cuentaRepository.save(cuenta);
+            transaccionRepository.delete(cashback);
+        });
+    }
+
+    private String descripcionCashback(Transaccion gasto) {
+        String prefijo = "Cashback · ";
+        String descripcionGasto = gasto.getDescripcion();
+        int maximoDescripcion = 200 - prefijo.length();
+        String concepto = descripcionGasto.length() > maximoDescripcion
+                ? descripcionGasto.substring(0, maximoDescripcion)
+                : descripcionGasto;
+        return prefijo + concepto;
+    }
+
     private String normalizarNotas(String notas) {
         return notas != null && !notas.isBlank() ? notas.trim() : null;
     }
@@ -308,8 +426,16 @@ public class TransaccionService {
     public void eliminarTransaccion(Long usuarioId, Long transaccionId) {
         Transaccion transaccion = transaccionRepository.findByIdAndUsuarioId(transaccionId, usuarioId)
                 .orElseThrow(() -> new IllegalArgumentException("Transacción no encontrada o no autorizada"));
+        if (transaccion.getCashbackOrigen() != null) {
+            throw new IllegalArgumentException("El cashback automático se elimina junto con el gasto que lo generó");
+        }
 
         Cuenta cuentaOrigen = transaccion.getCuenta();
+        LocalDate fechaGastoEliminado = transaccion.getFecha();
+        boolean eraGasto = transaccion.getTipo() == TipoTransaccion.GASTO;
+        if (eraGasto) {
+            eliminarCashbackGenerado(transaccion);
+        }
 
         // Revertir el impacto en los balances según el tipo original
         if (transaccion.getTipo() == TipoTransaccion.GASTO) {
@@ -338,5 +464,8 @@ public class TransaccionService {
         }
 
         transaccionRepository.delete(transaccion);
+        if (eraGasto) {
+            recalcularCashbackMes(cuentaOrigen, fechaGastoEliminado);
+        }
     }
 }

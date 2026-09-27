@@ -26,6 +26,7 @@ public record TransaccionResponse(
     LocalDate fecha,
     String descripcion,
     String notas,
+    boolean cashbackAutomatico,
     LocalDateTime fechaCreacion
 ) {
     public static TransaccionResponse fromEntity(Transaccion t) {
@@ -48,6 +49,7 @@ public record TransaccionResponse(
             t.getFecha(),
             t.getDescripcion(),
             t.getNotas(),
+            t.getCashbackOrigen() != null,
             t.getFechaCreacion()
         );
     }

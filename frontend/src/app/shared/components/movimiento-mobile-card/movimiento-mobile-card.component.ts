@@ -67,38 +67,40 @@ export class SwipeActionsDirective {
     <article
       appSwipeActions
       #actions="appSwipeActions"
-      [class.swipe-actions--no-edit]="movimiento.tipo === 'SALDO_INICIAL'"
+      [class.swipe-actions--no-edit]="movimiento.tipo === 'SALDO_INICIAL' || movimiento.cashbackAutomatico"
       class="swipe-actions relative rounded-2xl">
-      <div
-        class="swipe-actions__tray absolute inset-y-0 right-0 z-0 flex items-stretch gap-1 rounded-2xl bg-slate-100 p-1"
-        [attr.aria-hidden]="!actions.isOpen">
-        @if (movimiento.tipo !== 'SALDO_INICIAL') {
+      @if (!movimiento.cashbackAutomatico) {
+        <div
+          class="swipe-actions__tray absolute inset-y-0 right-0 z-0 flex items-stretch gap-1 rounded-2xl bg-slate-100 p-1"
+          [attr.aria-hidden]="!actions.isOpen">
+          @if (movimiento.tipo !== 'SALDO_INICIAL') {
+            <button
+              type="button"
+              (click)="actions.close(); editar.emit(movimiento)"
+              [disabled]="!actions.isOpen"
+              [attr.tabindex]="actions.isOpen ? 0 : -1"
+              [attr.aria-label]="'Editar movimiento ' + etiquetaMovimiento"
+              class="flex w-[4.5rem] flex-col items-center justify-center gap-1 rounded-xl bg-white text-xs font-semibold text-emerald-700 shadow-xs disabled:pointer-events-none disabled:opacity-0">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg>
+              Editar
+            </button>
+          }
           <button
             type="button"
-            (click)="actions.close(); editar.emit(movimiento)"
+            (click)="actions.close(); eliminar.emit(movimiento.id)"
             [disabled]="!actions.isOpen"
             [attr.tabindex]="actions.isOpen ? 0 : -1"
-            [attr.aria-label]="'Editar movimiento ' + etiquetaMovimiento"
-            class="flex w-[4.5rem] flex-col items-center justify-center gap-1 rounded-xl bg-white text-xs font-semibold text-emerald-700 shadow-xs disabled:pointer-events-none disabled:opacity-0">
+            [attr.aria-label]="'Eliminar movimiento ' + etiquetaMovimiento"
+            class="flex w-[4.5rem] flex-col items-center justify-center gap-1 rounded-xl bg-rose-600 text-xs font-semibold text-white shadow-xs disabled:pointer-events-none disabled:opacity-0">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
             </svg>
-            Editar
+            Eliminar
           </button>
-        }
-        <button
-          type="button"
-          (click)="actions.close(); eliminar.emit(movimiento.id)"
-          [disabled]="!actions.isOpen"
-          [attr.tabindex]="actions.isOpen ? 0 : -1"
-          [attr.aria-label]="'Eliminar movimiento ' + etiquetaMovimiento"
-          class="flex w-[4.5rem] flex-col items-center justify-center gap-1 rounded-xl bg-rose-600 text-xs font-semibold text-white shadow-xs disabled:pointer-events-none disabled:opacity-0">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-          </svg>
-          Eliminar
-        </button>
-      </div>
+        </div>
+      }
 
       <div class="swipe-actions__content relative z-10 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
         <div class="flex min-w-0 items-start gap-3">
@@ -125,6 +127,9 @@ export class SwipeActionsDirective {
               <div class="min-w-0">
                 <h3 class="truncate text-sm font-bold text-slate-900">{{ etiquetaMovimiento }}</h3>
                 <p class="mt-0.5 truncate text-xs text-slate-500">{{ movimiento.fecha }} · {{ tipoEtiqueta }}</p>
+                @if (movimiento.cashbackAutomatico) {
+                  <span class="mt-1 inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">Cashback automático</span>
+                }
               </div>
               <div class="shrink-0 text-right">
                 <p
@@ -146,16 +151,18 @@ export class SwipeActionsDirective {
               <p class="min-w-0 truncate text-xs text-slate-500">
                 {{ movimiento.cuentaNombre }}@if (movimiento.tipo === 'TRANSFERENCIA' && movimiento.cuentaDestinoNombre) { → {{ movimiento.cuentaDestinoNombre }}}
               </p>
-              <button
-                type="button"
-                (click)="actions.toggle()"
-                [attr.aria-expanded]="actions.isOpen"
-                [attr.aria-label]="(actions.isOpen ? 'Ocultar' : 'Mostrar') + ' acciones para ' + etiquetaMovimiento"
-                class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 focus:outline-hidden focus:ring-2 focus:ring-emerald-500">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                </svg>
-              </button>
+              @if (!movimiento.cashbackAutomatico) {
+                <button
+                  type="button"
+                  (click)="actions.toggle()"
+                  [attr.aria-expanded]="actions.isOpen"
+                  [attr.aria-label]="(actions.isOpen ? 'Ocultar' : 'Mostrar') + ' acciones para ' + etiquetaMovimiento"
+                  class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 focus:outline-hidden focus:ring-2 focus:ring-emerald-500">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                  </svg>
+                </button>
+              }
             </div>
             @if (movimiento.notas) {
               <p class="mt-2 line-clamp-2 text-xs text-slate-400">{{ movimiento.notas }}</p>

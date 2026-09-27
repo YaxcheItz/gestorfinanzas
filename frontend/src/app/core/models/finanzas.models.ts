@@ -15,6 +15,8 @@ export interface Cuenta {
   nombre: string;
   tipo: TipoCuenta;
   institucionFinanciera?: string | null;
+  cashbackPorcentaje?: number | null;
+  cashbackLimiteMensual?: number | null;
   saldoActual: number;
   moneda: string;
   descripcion?: string;
@@ -26,6 +28,8 @@ export interface CuentaPayload {
   nombre: string;
   tipo: TipoCuenta;
   institucionFinanciera?: string;
+  cashbackPorcentaje?: number;
+  cashbackLimiteMensual?: number;
   saldoInicial?: number;
   moneda?: string;
   descripcion?: string;
@@ -67,6 +71,7 @@ export interface Transaccion {
   fecha: string;
   descripcion: string;
   notas?: string | null;
+  cashbackAutomatico?: boolean;
   fechaCreacion: string;
 }
 

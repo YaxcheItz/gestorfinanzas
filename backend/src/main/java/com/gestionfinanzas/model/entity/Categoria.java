@@ -32,7 +32,7 @@ public class Categoria {
     @Column(length = 50)
     private String icono;
 
-    @Column(length = 20)
+    @Column(length = 7)
     private String color;
 
     @Column(nullable = false, columnDefinition = "boolean not null default true")

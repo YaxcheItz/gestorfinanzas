@@ -29,6 +29,16 @@ public interface TransaccionRepository extends JpaRepository<Transaccion, Long>,
 
     List<Transaccion> findTop10ByUsuarioIdOrderByFechaDescIdDesc(Long usuarioId);
 
+    List<Transaccion> findByCuentaIdAndTipoAndFechaBetweenOrderByFechaAscIdAsc(
+            Long cuentaId, TipoTransaccion tipo, LocalDate fechaInicio, LocalDate fechaFin
+    );
+
+    List<Transaccion> findByCuentaIdAndCashbackOrigenIsNotNullAndFechaBetweenOrderByFechaAscIdAsc(
+            Long cuentaId, LocalDate fechaInicio, LocalDate fechaFin
+    );
+
+    Optional<Transaccion> findByCashbackOrigenId(Long cashbackOrigenId);
+
     Page<Transaccion> findByUsuarioIdOrderByFechaDesc(Long usuarioId, Pageable pageable);
 
     List<Transaccion> findByUsuarioIdAndFechaBetweenOrderByFechaDesc(

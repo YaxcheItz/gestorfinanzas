@@ -35,6 +35,12 @@ public class Cuenta {
     @Column(name = "institucion_financiera", length = 60)
     private String institucionFinanciera;
 
+    @Column(name = "cashback_porcentaje", precision = 5, scale = 2)
+    private BigDecimal cashbackPorcentaje;
+
+    @Column(name = "cashback_limite_mensual", precision = 15, scale = 2)
+    private BigDecimal cashbackLimiteMensual;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private TipoCuenta tipo;

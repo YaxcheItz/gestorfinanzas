@@ -2,6 +2,7 @@ package com.gestionfinanzas.dto.request;
 
 import com.gestionfinanzas.model.enums.TipoCuenta;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -19,6 +20,15 @@ public record CuentaRequest(
 
     @Size(max = 60, message = "La institución financiera no puede superar 60 caracteres")
     String institucionFinanciera,
+
+    @DecimalMin(value = "0.00", message = "El porcentaje de cashback no puede ser negativo")
+    @DecimalMax(value = "100.00", message = "El porcentaje de cashback no puede superar 100")
+    @Digits(integer = 3, fraction = 2, message = "El cashback debe tener hasta 2 decimales")
+    BigDecimal cashbackPorcentaje,
+
+    @DecimalMin(value = "0.01", message = "El límite mensual debe ser mayor a 0")
+    @Digits(integer = 13, fraction = 2, message = "El límite mensual debe tener hasta 2 decimales")
+    BigDecimal cashbackLimiteMensual,
 
     @DecimalMin(value = "0.00", message = "El saldo inicial no puede ser negativo")
     @Digits(integer = 13, fraction = 2, message = "El saldo inicial debe tener hasta 2 decimales")

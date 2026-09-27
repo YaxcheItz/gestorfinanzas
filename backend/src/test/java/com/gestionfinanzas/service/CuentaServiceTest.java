@@ -42,12 +42,15 @@ class CuentaServiceTest {
         });
 
         cuentaService.crearCuenta(7L, new CuentaRequest(
-                "Ahorro", TipoCuenta.AHORRO, "bbva", new BigDecimal("1250.00"), "MXN", null
+                "Ahorro", TipoCuenta.AHORRO, "bbva", new BigDecimal("2.00"),
+                new BigDecimal("300.00"), new BigDecimal("1250.00"), "MXN", null
         ));
 
         ArgumentCaptor<Cuenta> cuentaCaptor = ArgumentCaptor.forClass(Cuenta.class);
         verify(cuentaRepository).save(cuentaCaptor.capture());
         assertEquals("bbva", cuentaCaptor.getValue().getInstitucionFinanciera());
+        assertEquals(new BigDecimal("2.00"), cuentaCaptor.getValue().getCashbackPorcentaje());
+        assertEquals(new BigDecimal("300.00"), cuentaCaptor.getValue().getCashbackLimiteMensual());
 
         ArgumentCaptor<Transaccion> captor = ArgumentCaptor.forClass(Transaccion.class);
         verify(transaccionRepository).save(captor.capture());

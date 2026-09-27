@@ -5,7 +5,7 @@ import { Categoria, CategoriaPayload } from '../../core/models/finanzas.models';
 import { FinanzasService } from '../../core/services/finanzas.service';
 import { ToastService } from '../../core/services/toast.service';
 import { CategoriaIconoComponent } from '../../shared/components/categoria-icono/categoria-icono.component';
-import { ICONOS_CATEGORIA, normalizarIconoCategoria } from '../../shared/components/categoria-icono/categoria-iconos';
+import { esEmojiCategoria, ICONOS_CATEGORIA, normalizarIconoCategoria } from '../../shared/components/categoria-icono/categoria-iconos';
 
 @Component({
   selector: 'app-categorias',
@@ -45,9 +45,7 @@ import { ICONOS_CATEGORIA, normalizarIconoCategoria } from '../../shared/compone
         <section aria-label="Categorías personalizadas" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
           @for (categoria of categoriasVisibles(); track categoria.id) {
             <article class="min-w-0 bg-white p-3 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3 sm:gap-4" [class.opacity-70]="!categoria.activo">
-              <span class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
-                    [style.background-color]="categoria.color || '#10b981'"
-                    [style.color]="contrasteColor(categoria.color)">
+              <span class="w-11 h-11 rounded-xl bg-slate-100 flex items-center justify-center shrink-0">
                 <app-categoria-icono [icono]="categoria.icono" [tipo]="categoria.tipo" clase="h-5 w-5" />
               </span>
               <div class="min-w-0 flex-1">
@@ -92,26 +90,33 @@ import { ICONOS_CATEGORIA, normalizarIconoCategoria } from '../../shared/compone
             </div>
             <fieldset>
               <legend class="mb-2 block text-xs font-semibold text-slate-700">Icono</legend>
-              <div class="grid grid-cols-4 gap-2 sm:grid-cols-6">
+              <div class="flex w-full min-w-0 flex-wrap gap-2">
                 @for (opcion of iconosDisponibles; track opcion.codigo) {
                   <button
                     type="button"
-                    (click)="icono = opcion.codigo"
+                    (click)="seleccionarIcono(opcion.codigo)"
                     [attr.aria-label]="'Icono ' + opcion.nombre"
                     [attr.aria-pressed]="icono === opcion.codigo"
                     [title]="opcion.nombre"
-                    [class]="icono === opcion.codigo ? 'border-emerald-500 bg-emerald-50 text-emerald-700 ring-1 ring-emerald-500' : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'"
-                    class="flex min-h-11 items-center justify-center rounded-xl border">
+                    [class.category-icon-option--selected]="icono === opcion.codigo"
+                    class="category-icon-option flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border">
                     <app-categoria-icono [icono]="opcion.codigo" [clase]="'h-5 w-5'" />
                   </button>
                 }
               </div>
-              <p class="mt-1.5 text-xs text-slate-500">Elige un icono para mantener las categorías con un estilo uniforme.</p>
+              <label class="mt-3 block text-xs font-medium text-slate-700">
+                Emoji personalizado (opcional)
+                <input
+                  [ngModel]="emojiPersonalizado"
+                  (ngModelChange)="seleccionarEmoji($event)"
+                  name="emojiPersonalizado"
+                  type="text"
+                  maxlength="16"
+                  class="mt-1 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-lg focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                  placeholder="Escribe o pega un emoji, por ejemplo 🏠" />
+              </label>
+              <p class="mt-1.5 text-xs text-slate-500">Los iconos tienen colores propios y un fondo uniforme; también puedes usar un emoji.</p>
             </fieldset>
-            <div>
-              <label for="categoria-color" class="block text-xs font-semibold text-slate-700 mb-1.5">Color</label>
-              <input id="categoria-color" name="color" type="color" [(ngModel)]="color" class="w-full h-11 p-1 bg-slate-50 border border-slate-300 rounded-xl cursor-pointer" />
-            </div>
             <footer class="pt-3 border-t border-slate-100 flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3">
               <button type="button" (click)="cerrar()" class="w-full sm:w-auto px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-xl cursor-pointer">Cancelar</button>
               <button type="submit" [disabled]="guardando()" class="w-full sm:w-auto px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-semibold rounded-xl cursor-pointer">
@@ -142,7 +147,7 @@ export class CategoriasComponent implements OnInit {
   nombre = '';
   tipo: 'INGRESO' | 'GASTO' = 'GASTO';
   icono = '';
-  color = '#10b981';
+  emojiPersonalizado = '';
 
   ngOnInit(): void {
     this.cargar();
@@ -172,7 +177,7 @@ export class CategoriasComponent implements OnInit {
     this.nombre = '';
     this.tipo = 'GASTO';
     this.icono = 'receipt';
-    this.color = '#10b981';
+    this.emojiPersonalizado = '';
     this.modalError.set(null);
     this.modalAbierto.set(true);
   }
@@ -182,7 +187,7 @@ export class CategoriasComponent implements OnInit {
     this.nombre = categoria.nombre;
     this.tipo = categoria.tipo === 'INGRESO' ? 'INGRESO' : 'GASTO';
     this.icono = normalizarIconoCategoria(categoria.icono, categoria.tipo);
-    this.color = categoria.color ?? '#10b981';
+    this.emojiPersonalizado = esEmojiCategoria(categoria.icono) ? categoria.icono ?? '' : '';
     this.modalError.set(null);
     this.modalAbierto.set(true);
   }
@@ -201,8 +206,7 @@ export class CategoriasComponent implements OnInit {
     const payload: CategoriaPayload = {
       nombre,
       tipo: this.tipo,
-      icono: this.icono.trim() || undefined,
-      color: this.color
+      icono: (this.emojiPersonalizado || this.icono).trim() || undefined
     };
     this.guardando.set(true);
     const categoria = this.editando();
@@ -241,12 +245,13 @@ export class CategoriasComponent implements OnInit {
     });
   }
 
-  contrasteColor(color: string | undefined): string {
-    if (!color || !/^#[0-9a-fA-F]{6}$/.test(color)) return '#ffffff';
-    const luminancia = Number.parseInt(color.slice(1), 16);
-    const rojo = (luminancia >> 16) & 255;
-    const verde = (luminancia >> 8) & 255;
-    const azul = luminancia & 255;
-    return (rojo * 299 + verde * 587 + azul * 114) / 1000 >= 150 ? '#1e293b' : '#ffffff';
+  seleccionarEmoji(valor: string): void {
+    this.emojiPersonalizado = valor;
+    if (valor.trim()) this.icono = valor.trim();
+  }
+
+  seleccionarIcono(codigo: string): void {
+    this.emojiPersonalizado = '';
+    this.icono = codigo;
   }
 }

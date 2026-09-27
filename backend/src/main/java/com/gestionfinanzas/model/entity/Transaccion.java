@@ -64,6 +64,10 @@ public class Transaccion {
     @Column(length = 500)
     private String notas;
 
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cashback_origen_id", unique = true)
+    private Transaccion cashbackOrigen;
+
     @CreationTimestamp
     @Column(name = "fecha_creacion", updatable = false)
     private LocalDateTime fechaCreacion;
