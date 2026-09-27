@@ -58,7 +58,20 @@ import {
       </div>
 
       <!-- Barra de Filtros Avanzados -->
-      <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs space-y-4">
+      <button
+        type="button"
+        (click)="filtrosMovilAbiertos.update(abiertos => !abiertos)"
+        [attr.aria-expanded]="filtrosMovilAbiertos()"
+        aria-controls="filtros-avanzados-movimientos"
+        class="mb-3 flex min-h-11 w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-xs sm:hidden">
+        <span>{{ tieneFiltrosActivos() ? 'Filtros activos' : 'Filtros avanzados' }}</span>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform" [class.rotate-180]="filtrosMovilAbiertos()" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      <div id="filtros-avanzados-movimientos"
+           [class.is-open]="filtrosMovilAbiertos()"
+           class="mobile-transaction-filters bg-white rounded-2xl border border-slate-200/80 p-3 sm:p-5 shadow-xs space-y-4">
         
         <!-- Fila 1: Buscador y Filtro por Tipo (Chips) -->
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -654,6 +667,7 @@ export class TransaccionesComponent implements OnInit {
 
   // Filtros Signals
   readonly filtroTipo = signal<TipoTransaccion | ''>('');
+  readonly filtrosMovilAbiertos = signal(false);
   readonly filtroCuentaId = signal<number | null>(null);
   readonly filtroCategoriaId = signal<number | null>(null);
   readonly filtroFechaInicio = signal<string>('');

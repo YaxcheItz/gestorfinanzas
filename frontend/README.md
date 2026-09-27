@@ -12,6 +12,18 @@ ng serve
 
 Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
 
+## Probar en un celular dentro de la red local
+
+Conecta la computadora y el celular a la misma red Wi-Fi. En Windows, ejecuta `ipconfig` y usa la dirección IPv4 del adaptador Wi-Fi (por ejemplo, `192.168.0.14`), no la de un adaptador virtual o desconectado.
+
+Conserva el backend ejecutándose en el puerto `8080` con sus variables de entorno habituales. Desde `frontend`, inicia Angular con:
+
+```bash
+npm run start:lan
+```
+
+Abre `http://192.168.0.14:4200` en el celular, reemplazando la IP por la dirección actual del adaptador Wi-Fi. Si Windows Firewall lo solicita, permite Node.js en redes privadas. Angular reenvía las llamadas del API al backend local en el puerto `8080`, por lo que no es necesario exponer ese puerto en la red.
+
 ## Code scaffolding
 
 Angular CLI includes powerful code scaffolding tools. To generate a new component, run:

@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { ApiResponse, AuthResponse, LoginPayload, RegistroPayload, Usuario } from '../models/auth.models';
 import { Router } from '@angular/router';
+import { getApiBaseUrl } from './api-base-url';
 
 @Injectable({
   providedIn: 'root'
@@ -10,7 +11,7 @@ import { Router } from '@angular/router';
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
-  private readonly apiUrl = 'http://localhost:8080/api/auth';
+  private readonly apiUrl = `${getApiBaseUrl()}/auth`;
 
   private readonly tokenKey = 'finanzas_token';
   private readonly userKey = 'finanzas_user';
