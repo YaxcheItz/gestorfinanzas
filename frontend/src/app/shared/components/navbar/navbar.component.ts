@@ -33,10 +33,6 @@ import { AuthService } from '../../../core/services/auth.service';
                  class="px-3 py-2 rounded-lg text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors">
                 Panel General
               </a>
-              <a routerLink="/transacciones" routerLinkActive="bg-slate-100 text-slate-900 font-semibold" 
-                 class="px-3 py-2 rounded-lg text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors">
-                Movimientos
-              </a>
               <a routerLink="/presupuestos" routerLinkActive="bg-slate-100 text-slate-900 font-semibold" 
                  class="px-3 py-2 rounded-lg text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors">
                 Presupuestos
@@ -44,6 +40,10 @@ import { AuthService } from '../../../core/services/auth.service';
               <a routerLink="/cuentas" routerLinkActive="bg-slate-100 text-slate-900 font-semibold"
                  class="px-3 py-2 rounded-lg text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors">
                 Cuentas
+              </a>
+              <a routerLink="/asistente" routerLinkActive="bg-slate-100 text-slate-900 font-semibold"
+                 class="px-3 py-2 rounded-lg text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors">
+                Asistente IA
               </a>
             </nav>
 
@@ -91,13 +91,6 @@ import { AuthService } from '../../../core/services/auth.service';
               </svg>
               <span>Inicio</span>
             </a>
-            <a routerLink="/transacciones" routerLinkActive="mobile-bottom-nav__link--active"
-               aria-label="Movimientos" class="mobile-bottom-nav__link">
-              <svg aria-hidden="true">
-                <use href="navigation-icons.svg#movements"></use>
-              </svg>
-              <span>Movimientos</span>
-            </a>
             <a routerLink="/presupuestos" routerLinkActive="mobile-bottom-nav__link--active"
                aria-label="Presupuestos" class="mobile-bottom-nav__link">
               <svg aria-hidden="true">
@@ -111,6 +104,13 @@ import { AuthService } from '../../../core/services/auth.service';
                 <use href="navigation-icons.svg#accounts"></use>
               </svg>
               <span>Cuentas</span>
+            </a>
+            <a routerLink="/asistente" routerLinkActive="mobile-bottom-nav__link--active"
+               aria-label="Asistente IA" class="mobile-bottom-nav__link">
+              <svg aria-hidden="true">
+                <use href="navigation-icons.svg#assistant"></use>
+              </svg>
+              <span>IA</span>
             </a>
           </nav>
         }

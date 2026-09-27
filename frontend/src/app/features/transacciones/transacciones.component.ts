@@ -29,10 +29,10 @@ import {
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
-            Historial de Movimientos
+            Transacciones recientes
           </h1>
           <p class="text-sm text-slate-500 mt-1">
-            Consulta, busca y filtra todos tus ingresos, gastos y transferencias.
+            Consulta, filtra, exporta y administra todos tus ingresos, gastos y transferencias.
           </p>
         </div>
 
