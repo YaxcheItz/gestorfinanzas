@@ -6,6 +6,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { FinanzasService } from '../../core/services/finanzas.service';
 import { ToastService } from '../../core/services/toast.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
+import { MovimientoMobileCardComponent } from '../../shared/components/movimiento-mobile-card/movimiento-mobile-card.component';
 import {
   Categoria,
   Cuenta,
@@ -18,7 +19,7 @@ import {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MovimientoMobileCardComponent],
   template: `
     <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-6 sm:space-y-8">
       
@@ -273,7 +274,7 @@ import {
             </button>
           </div>
         } @else {
-          <div class="overflow-x-auto" role="region" aria-label="Últimos movimientos; desliza horizontalmente para ver más columnas" tabindex="0">
+          <div class="hidden overflow-x-auto sm:block" role="region" aria-label="Últimos movimientos; desliza horizontalmente para ver más columnas" tabindex="0">
             <table class="w-full min-w-[640px] text-left text-sm text-slate-600">
               <thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-400 tracking-wider">
                 <tr>
@@ -375,6 +376,15 @@ import {
                 }
               </tbody>
             </table>
+          </div>
+          <div class="space-y-3 p-3 sm:hidden" aria-label="Lista de últimos movimientos">
+            <p class="px-1 text-xs text-slate-500">Desliza a la izquierda o toca ⋯ para editar o eliminar.</p>
+            @for (m of resumen()?.ultimosMovimientos; track m.id) {
+              <app-movimiento-mobile-card
+                [movimiento]="m"
+                (editar)="editarMovimiento($event.id)"
+                (eliminar)="eliminarMovimiento($event)" />
+            }
           </div>
         }
       </div>
