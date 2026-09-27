@@ -4,11 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { Categoria, CategoriaPayload, TipoTransaccion } from '../../../core/models/finanzas.models';
 import { FinanzasService } from '../../../core/services/finanzas.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { CategoriaIconoComponent } from '../categoria-icono/categoria-icono.component';
+import { ICONOS_CATEGORIA, normalizarIconoCategoria } from '../categoria-icono/categoria-iconos';
 
 @Component({
   selector: 'app-categoria-selector',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, CategoriaIconoComponent],
   template: `
     <div class="space-y-2">
       <div class="flex items-center justify-between gap-2">
@@ -63,23 +65,29 @@ import { ToastService } from '../../../core/services/toast.service';
               placeholder="Ej. Transporte" />
           </label>
 
-          <div class="grid grid-cols-[1fr_auto] items-end gap-3">
-            <label class="block min-w-0 text-xs font-medium text-slate-700">
-              Icono o emoji
-              <input
-                [(ngModel)]="icono"
-                [ngModelOptions]="{ standalone: true }"
-                maxlength="50"
-                class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-                placeholder="🚌" />
-            </label>
-            <label class="block text-xs font-medium text-slate-700">
+          <fieldset>
+            <legend class="mb-2 text-xs font-medium text-slate-700">Icono</legend>
+            <div class="grid grid-cols-6 gap-1.5">
+              @for (opcion of iconosDisponibles; track opcion.codigo) {
+                <button
+                  type="button"
+                  (click)="icono = opcion.codigo"
+                  [attr.aria-label]="'Icono ' + opcion.nombre"
+                  [attr.aria-pressed]="icono === opcion.codigo"
+                  [title]="opcion.nombre"
+                  [class]="icono === opcion.codigo ? 'border-emerald-500 bg-white text-emerald-700 ring-1 ring-emerald-500' : 'border-emerald-100 bg-white/70 text-slate-500 hover:bg-white'"
+                  class="flex min-h-10 items-center justify-center rounded-lg border">
+                  <app-categoria-icono [icono]="opcion.codigo" [clase]="'h-4 w-4'" />
+                </button>
+              }
+            </div>
+          </fieldset>
+          <div class="flex items-center justify-between gap-3">
+            <p class="text-xs text-slate-500">Iconos consistentes para todas tus categorías.</p>
+            <label class="shrink-0 text-xs font-medium text-slate-700">
               Color
-              <input
-                [(ngModel)]="color"
-                [ngModelOptions]="{ standalone: true }"
-                type="color"
-                class="mt-1 h-9 w-12 cursor-pointer rounded-lg border border-slate-300 bg-white p-1" />
+              <input [(ngModel)]="color" [ngModelOptions]="{ standalone: true }" type="color"
+                     class="ml-2 h-9 w-12 cursor-pointer rounded-lg border border-slate-300 bg-white p-1 align-middle" />
             </label>
           </div>
 
@@ -109,6 +117,7 @@ export class CategoriaSelectorComponent {
   readonly guardando = signal(false);
   readonly error = signal<string | null>(null);
   readonly editando = signal<Categoria | null>(null);
+  readonly iconosDisponibles = ICONOS_CATEGORIA;
   readonly categoriasFiltradas = (): Categoria[] =>
     this.categorias.filter(categoria => categoria.tipo === this.tipo && categoria.activo);
   readonly categoriaSeleccionada = (): Categoria | undefined =>
@@ -130,7 +139,7 @@ export class CategoriaSelectorComponent {
   abrirCrear(): void {
     this.editando.set(null);
     this.nombre = '';
-    this.icono = '';
+    this.icono = this.tipo === 'INGRESO' ? 'trending-up' : 'receipt';
     this.color = '#10b981';
     this.error.set(null);
     this.editorAbierto.set(true);
@@ -141,7 +150,7 @@ export class CategoriaSelectorComponent {
     if (!categoria?.esPersonalizada) return;
     this.editando.set(categoria);
     this.nombre = categoria.nombre;
-    this.icono = categoria.icono ?? '';
+    this.icono = normalizarIconoCategoria(categoria.icono, categoria.tipo);
     this.color = categoria.color ?? '#10b981';
     this.error.set(null);
     this.editorAbierto.set(true);
