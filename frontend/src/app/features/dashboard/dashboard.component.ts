@@ -32,23 +32,19 @@ import {
           <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
             Resumen Financiero
           </h1>
+          <p class="mt-1 inline-flex items-center gap-1.5 text-xs font-medium capitalize text-slate-500" aria-label="Fecha actual">
+            <svg aria-hidden="true" class="h-4 w-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="5" width="18" height="16" rx="2" />
+              <path d="M16 3v4M8 3v4M3 11h18" />
+            </svg>
+            {{ fechaActual }}
+          </p>
           <p class="hidden sm:block text-sm text-slate-500 mt-1">
             Hola, {{ authService.currentUser()?.nombre || 'Usuario' }}. Aquí tienes el estado consolidado de tus cuentas.
           </p>
         </div>
 
-        <div class="flex w-full sm:w-auto flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
-          <button
-            type="button"
-            (click)="cargarDashboard()" 
-            class="inline-flex items-center justify-center px-3 sm:px-4 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 transition-colors shadow-2xs cursor-pointer"
-            title="Actualizar datos">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-slate-400" [class.animate-spin]="loading()" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            {{ nombreMesActual() }} {{ resumen()?.anio || anioActual }}
-          </button>
-          
+        <div class="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-3">
           <button 
             type="button"
             (click)="abrirModal('GASTO')"
@@ -141,6 +137,46 @@ import {
           <p class="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500">Agrega una cuenta para ver tu resumen financiero.</p>
         } @else {
           <div class="h-36 animate-pulse rounded-3xl bg-slate-200"></div>
+        }
+      </section>
+
+      <section class="order-3 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs lg:order-6" aria-label="Últimos movimientos">
+        <div class="border-b border-slate-100 p-4 sm:p-6">
+          <div class="flex items-center justify-between gap-3">
+            <h2 class="min-w-0 text-base font-bold text-slate-900">Últimos movimientos</h2>
+            <button
+              type="button"
+              (click)="irATransacciones()"
+              class="inline-flex min-h-10 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-50 sm:gap-2 sm:px-4">
+              Ver más
+              <svg aria-hidden="true" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 010-1.06L10.94 10 7.21 6.29a.75.75 0 111.06-1.06l4.25 4.24a.75.75 0 010 1.06l-4.25 4.24a.75.75 0 01-1.06 0z" clip-rule="evenodd" />
+              </svg>
+            </button>
+          </div>
+          <p class="mt-0.5 hidden text-xs text-slate-500 sm:block">Tus transacciones más recientes</p>
+        </div>
+        @if (loading()) {
+          <div class="flex items-center justify-center gap-2 p-8 text-sm text-slate-400">
+            <span class="h-5 w-5 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent"></span>
+            Cargando movimientos...
+          </div>
+        } @else if ((resumen()?.ultimosMovimientos?.length || 0) === 0) {
+          <div class="space-y-3 p-8 text-center text-sm text-slate-500">
+            <p>Aún no tienes movimientos registrados.</p>
+            <button type="button" (click)="abrirModal('GASTO')" class="font-semibold text-emerald-700 hover:underline">
+              Registrar tu primer movimiento
+            </button>
+          </div>
+        } @else {
+          <div class="space-y-3 p-3 sm:p-5" aria-label="Lista de últimos movimientos">
+            @for (m of resumen()?.ultimosMovimientos; track m.id) {
+              <app-movimiento-mobile-card
+                [movimiento]="m"
+                (editar)="editarMovimiento($event.id)"
+                (eliminar)="eliminarMovimiento($event)" />
+            }
+          </div>
         }
       </section>
 
@@ -271,168 +307,25 @@ import {
       </section>
 
       <!-- Banner de Inteligencia Artificial (Spring AI) -->
-      <div class="hidden lg:order-5 lg:flex bg-linear-to-r from-emerald-900 to-slate-900 text-white p-4 sm:p-6 rounded-2xl shadow-lg relative overflow-hidden flex-col md:flex-row md:items-center justify-between gap-4">
+      <div class="hidden lg:order-5 lg:flex flex-col justify-between gap-4 overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-900 to-slate-900 p-4 text-white shadow-lg md:flex-row md:items-center sm:p-6">
         <div class="space-y-1 relative z-10">
           <div class="flex items-center space-x-2">
             <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-              Spring AI Ready ✨
+              En preparación
             </span>
-            <span class="text-xs text-slate-400">Módulo Inteligente</span>
+            <span class="text-xs text-slate-300">Kaptal inteligente</span>
           </div>
-          <h2 class="text-lg font-bold">Asistente y Clasificador Inteligente</h2>
+          <h2 class="text-lg font-bold text-white">Asistente IA</h2>
           <p class="text-xs text-slate-300 max-w-xl">
-            Tu backend está preparado para conectar modelos de lenguaje para clasificar recibos, sugerir presupuestos y responder preguntas sobre tus balances.
+            Estamos preparando un espacio para consultar tus finanzas y registrar movimientos con ayuda de inteligencia artificial.
           </p>
         </div>
-        <button 
+        <button
           type="button"
-          class="shrink-0 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-xs rounded-xl transition-all cursor-pointer self-start md:self-center">
-          Próximamente
+          (click)="irAAsistente()"
+          class="min-h-10 shrink-0 self-start rounded-xl bg-emerald-400 px-4 py-2 text-xs font-semibold text-slate-950 transition-colors hover:bg-emerald-300 md:self-center">
+          Ver asistente
         </button>
-      </div>
-
-      <!-- Tabla de Transacciones Recientes -->
-      <div class="order-3 bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden lg:order-6">
-        <div class="p-4 sm:p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h2 class="text-base font-bold text-slate-900">Últimos Movimientos</h2>
-            <p class="hidden sm:block text-xs text-slate-500 mt-0.5">Historial registrado en tiempo real en la base de datos</p>
-          </div>
-          <button 
-            type="button"
-            (click)="abrirModal('GASTO')"
-            class="text-xs font-semibold text-emerald-600 hover:text-emerald-700 hover:underline cursor-pointer">
-            + Registrar movimiento
-          </button>
-        </div>
-
-        @if (loading()) {
-          <div class="p-12 text-center text-slate-400 text-sm flex items-center justify-center space-x-2">
-            <div class="w-5 h-5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
-            <span>Cargando movimientos...</span>
-          </div>
-        } @else if ((resumen()?.ultimosMovimientos?.length || 0) === 0) {
-          <div class="p-12 text-center text-slate-400 text-sm space-y-3">
-            <div class="w-12 h-12 bg-slate-100 text-slate-400 rounded-2xl mx-auto flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-            </div>
-            <p class="font-medium text-slate-600">Aún no tienes movimientos registrados</p>
-            <p class="text-xs text-slate-400">Haz clic en "Nuevo Movimiento" para registrar tu primer gasto, ingreso o transferencia.</p>
-            <button 
-              type="button"
-              (click)="abrirModal('GASTO')"
-              class="inline-flex items-center px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg text-xs font-semibold transition-colors cursor-pointer">
-              Crear mi primer movimiento
-            </button>
-          </div>
-        } @else {
-          <div class="hidden overflow-x-auto sm:block" role="region" aria-label="Últimos movimientos; desliza horizontalmente para ver más columnas" tabindex="0">
-            <table class="w-full min-w-[600px] text-left text-sm text-slate-600">
-              <thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-400 tracking-wider">
-                <tr>
-                  <th class="px-6 py-3.5">Movimiento</th>
-                  <th class="px-6 py-3.5">Cuenta</th>
-                  <th class="px-6 py-3.5">Fecha</th>
-                  <th class="px-6 py-3.5 text-right">Monto</th>
-                  <th class="px-4 py-3.5 text-center w-12"></th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-100">
-                @for (m of resumen()?.ultimosMovimientos; track m.id) {
-                  <tr class="hover:bg-slate-50/80 transition-colors group">
-                    <td class="px-6 py-4 font-medium text-slate-900 flex items-center space-x-3">
-                      <div 
-                        [class]="m.tipo === 'INGRESO' ? 'bg-emerald-100 text-emerald-700' : (m.tipo === 'GASTO' ? 'bg-rose-100 text-rose-700' : 'bg-blue-100 text-blue-700')"
-                        class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0">
-                        @if (m.tipo === 'INGRESO') {
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12" />
-                          </svg>
-                        } @else if (m.tipo === 'GASTO') {
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 13l-5 5m0 0l-5-5m5 5V6" />
-                          </svg>
-                        } @else {
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                          </svg>
-                        }
-                      </div>
-                      <div class="truncate max-w-xs">
-                        <span class="block truncate">{{ m.categoriaNombre || m.descripcion }}</span>
-                        @if (m.cashbackAutomatico) {
-                          <span class="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">Cashback automático</span>
-                        }
-                        @if (m.notas) {
-                          <span class="block text-xs text-slate-400 font-normal truncate">{{ m.notas }}</span>
-                        }
-                      </div>
-                    </td>
-                    <td class="px-6 py-4 text-xs font-medium text-slate-600">
-                      @if (m.tipo === 'TRANSFERENCIA') {
-                        <span>{{ m.cuentaNombre }} &rarr; {{ m.cuentaDestinoNombre }}</span>
-                      } @else {
-                        <span>{{ m.cuentaNombre }}</span>
-                      }
-                    </td>
-                    <td class="px-6 py-4 text-xs text-slate-500 whitespace-nowrap">
-                      {{ m.fecha }}
-                    </td>
-                    <td class="px-6 py-4 text-right font-bold whitespace-nowrap"
-                        [class.text-emerald-600]="m.tipo === 'INGRESO'"
-                        [class.text-rose-600]="m.tipo === 'GASTO'"
-                        [class.text-blue-600]="m.tipo === 'TRANSFERENCIA'"
-                        [class.text-emerald-600]="m.tipo === 'SALDO_INICIAL'">
-                      @if (m.tipo === 'TRANSFERENCIA') {
-                        -{{ m.monto | currency:m.moneda:'symbol':'1.2-2' }}
-                        <span class="block text-xs font-medium text-slate-500">
-                          +{{ (m.montoDestino ?? m.monto) | currency:(m.monedaDestino ?? m.moneda):'symbol':'1.2-2' }}
-                        </span>
-                      } @else {
-                        {{ m.tipo === 'INGRESO' || m.tipo === 'SALDO_INICIAL' ? '+' : '-' }}{{ m.monto | currency:m.moneda:'symbol':'1.2-2' }}
-                      }
-                    </td>
-                    <td class="px-4 py-4 text-center">
-                      @if (m.tipo !== 'SALDO_INICIAL' && !m.cashbackAutomatico) {
-                        <button
-                          type="button"
-                          (click)="editarMovimiento(m.id)"
-                          [attr.aria-label]="'Editar movimiento ' + (m.categoriaNombre || m.descripcion)"
-                          title="Editar movimiento"
-                          class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-emerald-50 hover:text-emerald-700 focus:outline-hidden focus:ring-2 focus:ring-emerald-500">
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                          </svg>
-                        </button>
-                      }
-                      @if (!m.cashbackAutomatico) {
-                        <button
-                          type="button"
-                          (click)="eliminarMovimiento(m.id)"
-                          class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:text-rose-600 transition-colors p-1 rounded-md hover:bg-rose-50 cursor-pointer"
-                          title="Eliminar movimiento">
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      }
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-          <div class="space-y-3 p-3 sm:hidden" aria-label="Lista de últimos movimientos">
-            @for (m of resumen()?.ultimosMovimientos; track m.id) {
-              <app-movimiento-mobile-card
-                [movimiento]="m"
-                (editar)="editarMovimiento($event.id)"
-                (eliminar)="eliminarMovimiento($event)" />
-            }
-          </div>
-        }
       </div>
 
     </div>
@@ -701,7 +594,11 @@ export class DashboardComponent implements OnInit {
   private readonly perfilService = inject(PerfilService);
   private monedaPreferidaAplicada = false;
 
-  readonly anioActual = new Date().getFullYear();
+  readonly fechaActual = new Intl.DateTimeFormat('es-MX', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  }).format(new Date());
 
   // Estados reactivos con Signals
   loading = signal<boolean>(true);
@@ -1020,6 +917,14 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  irATransacciones(): void {
+    this.router.navigate(['/transacciones']);
+  }
+
+  irAAsistente(): void {
+    this.router.navigate(['/asistente']);
+  }
+
   eliminarMovimiento(id: number): void {
     this.confirmDialog.confirm({
       title: 'Eliminar movimiento',
@@ -1035,9 +940,7 @@ export class DashboardComponent implements OnInit {
           this.cargarDashboard();
           this.cargarCuentasYCategorias();
         },
-        error: (err) => {
-          this.toastService.error(err.error?.message || 'No se pudo eliminar el movimiento.');
-        }
+        error: err => this.toastService.error(err.error?.message || 'No se pudo eliminar el movimiento.')
       });
     });
   }
@@ -1046,12 +949,4 @@ export class DashboardComponent implements OnInit {
     this.router.navigate(['/transacciones'], { queryParams: { editar: id } });
   }
 
-  nombreMesActual(): string {
-    const meses = [
-      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-    ];
-    const mesIndex = (this.resumen()?.mes ? this.resumen()!.mes - 1 : new Date().getMonth());
-    return meses[mesIndex];
-  }
 }

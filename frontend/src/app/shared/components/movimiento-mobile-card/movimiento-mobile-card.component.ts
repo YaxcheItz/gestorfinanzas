@@ -126,7 +126,9 @@ export class SwipeActionsDirective {
             <div class="flex items-start justify-between gap-2">
               <div class="min-w-0">
                 <h3 class="truncate text-sm font-bold text-slate-900">{{ etiquetaMovimiento }}</h3>
-                <p class="mt-0.5 truncate text-xs text-slate-500">{{ movimiento.fecha }} · {{ tipoEtiqueta }}</p>
+                <p class="mt-0.5 truncate text-xs text-slate-500" aria-label="Fecha y tipo de movimiento">
+                  {{ fechaFormateada }} · {{ tipoEtiqueta }}
+                </p>
                 @if (movimiento.cashbackAutomatico) {
                   <span class="mt-1 inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">Cashback automático</span>
                 }
@@ -177,6 +179,16 @@ export class MovimientoMobileCardComponent {
   @Input({ required: true }) movimiento!: Transaccion;
   @Output() editar = new EventEmitter<Transaccion>();
   @Output() eliminar = new EventEmitter<number>();
+
+  get fechaFormateada(): string {
+    const fecha = new Date(`${this.movimiento.fecha}T00:00:00Z`);
+    return new Intl.DateTimeFormat('es-MX', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      timeZone: 'UTC'
+    }).format(fecha);
+  }
 
   get tipoEtiqueta(): string {
     switch (this.movimiento.tipo) {

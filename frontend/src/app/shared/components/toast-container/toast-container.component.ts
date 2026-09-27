@@ -10,7 +10,7 @@ import { ToastService, ToastMessage } from '../../../core/services/toast.service
     <div class="mobile-toast-container fixed bottom-5 left-3 right-3 sm:left-auto sm:right-5 sm:top-5 sm:bottom-auto z-50 flex flex-col space-y-2.5 max-w-sm w-auto sm:w-full px-0 pointer-events-none">
       @for (toast of toastService.toasts(); track toast.id) {
         <div 
-          class="pointer-events-auto flex items-start p-4 rounded-2xl bg-white/95 backdrop-blur-md shadow-xl border transition-all duration-300 transform translate-y-0 opacity-100"
+          class="toast-notification pointer-events-auto flex items-start p-4 rounded-2xl bg-white/95 backdrop-blur-md shadow-xl border transition-all duration-300 transform translate-y-0 opacity-100"
           [ngClass]="getToastBorderClass(toast.type)">
           
           <!-- Icono según tipo -->
@@ -45,16 +45,16 @@ import { ToastService, ToastMessage } from '../../../core/services/toast.service
           <!-- Mensaje y Título -->
           <div class="flex-1 min-w-0 pr-2">
             @if (toast.title) {
-              <h4 class="text-xs font-bold text-slate-900">{{ toast.title }}</h4>
+              <h4 class="toast-notification__title text-xs font-bold text-slate-900">{{ toast.title }}</h4>
             }
-            <p class="text-xs text-slate-600 mt-0.5 leading-relaxed break-words">{{ toast.message }}</p>
+            <p class="toast-notification__message text-xs text-slate-600 mt-0.5 leading-relaxed break-words">{{ toast.message }}</p>
           </div>
 
           <!-- Botón Cerrar -->
           <button 
             type="button"
             (click)="toastService.remove(toast.id)"
-            class="shrink-0 text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer">
+            class="toast-notification__dismiss shrink-0 text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -70,13 +70,13 @@ export class ToastContainerComponent {
   getToastBorderClass(type: string): string {
     switch (type) {
       case 'success':
-        return 'border-emerald-200/80 shadow-emerald-500/5';
+        return 'toast-notification--success border-emerald-200/80 shadow-emerald-500/5';
       case 'error':
-        return 'border-rose-200/80 shadow-rose-500/5';
+        return 'toast-notification--error border-rose-200/80 shadow-rose-500/5';
       case 'warning':
-        return 'border-amber-200/80 shadow-amber-500/5';
+        return 'toast-notification--warning border-amber-200/80 shadow-amber-500/5';
       default:
-        return 'border-blue-200/80 shadow-blue-500/5';
+        return 'toast-notification--info border-blue-200/80 shadow-blue-500/5';
     }
   }
 }

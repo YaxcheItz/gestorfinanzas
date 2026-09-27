@@ -18,7 +18,7 @@ import { ConfirmDialogService } from '../../../core/services/confirm-dialog.serv
           role="dialog"
           aria-modal="true"
           aria-labelledby="confirm-dialog-title"
-          class="bg-white rounded-2xl sm:rounded-3xl w-full max-w-sm max-h-[calc(100dvh-1rem)] overflow-y-auto shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150"
+          class="confirm-dialog-card bg-white rounded-2xl sm:rounded-3xl w-full max-w-sm max-h-[calc(100dvh-1rem)] overflow-y-auto shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150"
           (click)="$event.stopPropagation()">
           
           <!-- Icono + Encabezado -->
@@ -43,7 +43,7 @@ import { ConfirmDialogService } from '../../../core/services/confirm-dialog.serv
             <h3 id="confirm-dialog-title" class="text-base font-bold text-slate-900 mb-1">
               {{ dialogService.options().title }}
             </h3>
-            <p class="text-xs text-slate-500 leading-relaxed">
+            <p class="confirm-dialog-card__message text-xs text-slate-500 leading-relaxed">
               {{ dialogService.options().message }}
             </p>
           </div>
