@@ -15,6 +15,9 @@ import { ConfirmDialogService } from '../../../core/services/confirm-dialog.serv
         
         <!-- Modal Card -->
         <div 
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="confirm-dialog-title"
           class="bg-white rounded-2xl sm:rounded-3xl w-full max-w-sm max-h-[calc(100dvh-1rem)] overflow-y-auto shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150"
           (click)="$event.stopPropagation()">
           
@@ -37,7 +40,7 @@ import { ConfirmDialogService } from '../../../core/services/confirm-dialog.serv
                 </svg>
               }
             </div>
-            <h3 class="text-base font-bold text-slate-900 mb-1">
+            <h3 id="confirm-dialog-title" class="text-base font-bold text-slate-900 mb-1">
               {{ dialogService.options().title }}
             </h3>
             <p class="text-xs text-slate-500 leading-relaxed">

@@ -37,6 +37,56 @@ public class TransaccionService {
 
     @Transactional
     public TransaccionResponse crearTransaccion(Long usuarioId, TransaccionRequest request) {
+        DatosTransaccion datos = prepararTransaccion(usuarioId, request);
+        aplicarImpacto(datos.tipo(), datos.cuentaOrigen(), datos.cuentaDestino(),
+                request.monto(), datos.montoDestino(), 1);
+
+        Transaccion transaccion = Transaccion.builder()
+                .usuario(datos.usuario())
+                .cuenta(datos.cuentaOrigen())
+                .cuentaDestino(datos.cuentaDestino())
+                .categoria(datos.categoria())
+                .tipo(request.tipo())
+                .monto(request.monto())
+                .montoDestino(datos.montoDestino())
+                .tasaCambio(datos.tasaCambio())
+                .fecha(request.fecha())
+                .descripcion(request.descripcion().trim())
+                .notas(normalizarNotas(request.notas()))
+                .build();
+
+        return TransaccionResponse.fromEntity(transaccionRepository.save(transaccion));
+    }
+
+    @Transactional
+    public TransaccionResponse actualizarTransaccion(Long usuarioId, Long transaccionId, TransaccionRequest request) {
+        Transaccion transaccion = transaccionRepository.findByIdAndUsuarioId(transaccionId, usuarioId)
+                .orElseThrow(() -> new IllegalArgumentException("Transacción no encontrada o no autorizada"));
+        if (transaccion.getTipo() == TipoTransaccion.SALDO_INICIAL) {
+            throw new IllegalArgumentException("El saldo inicial no se puede editar");
+        }
+
+        DatosTransaccion datos = prepararTransaccion(usuarioId, request);
+        aplicarImpacto(transaccion.getTipo(), transaccion.getCuenta(), transaccion.getCuentaDestino(),
+                transaccion.getMonto(), transaccion.getMontoDestino(), -1);
+        aplicarImpacto(datos.tipo(), datos.cuentaOrigen(), datos.cuentaDestino(),
+                request.monto(), datos.montoDestino(), 1);
+
+        transaccion.setCuenta(datos.cuentaOrigen());
+        transaccion.setCuentaDestino(datos.cuentaDestino());
+        transaccion.setCategoria(datos.categoria());
+        transaccion.setTipo(request.tipo());
+        transaccion.setMonto(request.monto());
+        transaccion.setMontoDestino(datos.montoDestino());
+        transaccion.setTasaCambio(datos.tasaCambio());
+        transaccion.setFecha(request.fecha());
+        transaccion.setDescripcion(request.descripcion().trim());
+        transaccion.setNotas(normalizarNotas(request.notas()));
+
+        return TransaccionResponse.fromEntity(transaccionRepository.save(transaccion));
+    }
+
+    private DatosTransaccion prepararTransaccion(Long usuarioId, TransaccionRequest request) {
         if (request.tipo() == TipoTransaccion.SALDO_INICIAL) {
             throw new IllegalArgumentException("El saldo inicial solo se crea al registrar una cuenta");
         }
@@ -95,38 +145,48 @@ public class TransaccionService {
                 }
             }
 
-            // Aplicar matemática de balance para transferencia
-            cuentaOrigen.setSaldoActual(cuentaOrigen.getSaldoActual().subtract(request.monto()));
-            cuentaDestino.setSaldoActual(cuentaDestino.getSaldoActual().add(montoDestino));
-            cuentaRepository.save(cuentaOrigen);
-            cuentaRepository.save(cuentaDestino);
-
-        } else if (request.tipo() == TipoTransaccion.GASTO) {
-            cuentaOrigen.setSaldoActual(cuentaOrigen.getSaldoActual().subtract(request.monto()));
-            cuentaRepository.save(cuentaOrigen);
-
-        } else if (request.tipo() == TipoTransaccion.INGRESO) {
-            cuentaOrigen.setSaldoActual(cuentaOrigen.getSaldoActual().add(request.monto()));
-            cuentaRepository.save(cuentaOrigen);
         }
 
-        Transaccion transaccion = Transaccion.builder()
-                .usuario(usuario)
-                .cuenta(cuentaOrigen)
-                .cuentaDestino(cuentaDestino)
-                .categoria(categoria)
-                .tipo(request.tipo())
-                .monto(request.monto())
-                .montoDestino(montoDestino)
-                .tasaCambio(tasaCambio)
-                .fecha(request.fecha())
-                .descripcion(request.descripcion().trim())
-                .notas(request.notas() != null && !request.notas().isBlank() ? request.notas().trim() : null)
-                .build();
-
-        Transaccion guardada = transaccionRepository.save(transaccion);
-        return TransaccionResponse.fromEntity(guardada);
+        return new DatosTransaccion(usuario, cuentaOrigen, cuentaDestino, categoria,
+                request.tipo(), montoDestino, tasaCambio);
     }
+
+    private void aplicarImpacto(
+            TipoTransaccion tipo,
+            Cuenta cuentaOrigen,
+            Cuenta cuentaDestino,
+            BigDecimal monto,
+            BigDecimal montoDestino,
+            int factor
+    ) {
+        if (tipo == TipoTransaccion.GASTO) {
+            cuentaOrigen.setSaldoActual(cuentaOrigen.getSaldoActual().subtract(monto.multiply(BigDecimal.valueOf(factor))));
+            cuentaRepository.save(cuentaOrigen);
+        } else if (tipo == TipoTransaccion.INGRESO) {
+            cuentaOrigen.setSaldoActual(cuentaOrigen.getSaldoActual().add(monto.multiply(BigDecimal.valueOf(factor))));
+            cuentaRepository.save(cuentaOrigen);
+        } else if (tipo == TipoTransaccion.TRANSFERENCIA) {
+            cuentaOrigen.setSaldoActual(cuentaOrigen.getSaldoActual().subtract(monto.multiply(BigDecimal.valueOf(factor))));
+            cuentaDestino.setSaldoActual(cuentaDestino.getSaldoActual()
+                    .add(montoDestino.multiply(BigDecimal.valueOf(factor))));
+            cuentaRepository.save(cuentaOrigen);
+            cuentaRepository.save(cuentaDestino);
+        }
+    }
+
+    private String normalizarNotas(String notas) {
+        return notas != null && !notas.isBlank() ? notas.trim() : null;
+    }
+
+    private record DatosTransaccion(
+            Usuario usuario,
+            Cuenta cuentaOrigen,
+            Cuenta cuentaDestino,
+            Categoria categoria,
+            TipoTransaccion tipo,
+            BigDecimal montoDestino,
+            BigDecimal tasaCambio
+    ) {}
 
     @Transactional(readOnly = true)
     public List<TransaccionResponse> listarRecientes(Long usuarioId) {

@@ -113,6 +113,14 @@ export class FinanzasService {
     return this.http.post<ApiResponse<Transaccion>>(`${this.baseUrl}/transacciones`, payload);
   }
 
+  getTransaccion(id: number): Observable<ApiResponse<Transaccion>> {
+    return this.http.get<ApiResponse<Transaccion>>(`${this.baseUrl}/transacciones/${id}`);
+  }
+
+  actualizarTransaccion(id: number, payload: TransaccionPayload): Observable<ApiResponse<Transaccion>> {
+    return this.http.put<ApiResponse<Transaccion>>(`${this.baseUrl}/transacciones/${id}`, payload);
+  }
+
   eliminarTransaccion(id: number): Observable<ApiResponse<void>> {
     return this.http.delete<ApiResponse<void>>(`${this.baseUrl}/transacciones/${id}`);
   }
