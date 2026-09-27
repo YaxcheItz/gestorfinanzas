@@ -7,3 +7,28 @@
     @apply bg-slate-50 text-slate-900 antialiased font-sans min-h-screen dark:bg-slate-950 dark:text-slate-100;
   }
 }
+
+.swipe-actions {
+  touch-action: pan-y;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.swipe-actions__content {
+  transition: transform 180ms ease-out;
+  will-change: transform;
+}
+
+.swipe-actions-open .swipe-actions__content {
+  transform: translateX(-9.75rem);
+}
+
+.swipe-actions--no-edit.swipe-actions-open .swipe-actions__content {
+  transform: translateX(-5rem);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .swipe-actions__content {
+    transition: none;
+  }
+}
