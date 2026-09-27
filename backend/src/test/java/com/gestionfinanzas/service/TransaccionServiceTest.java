@@ -1,6 +1,7 @@
 package com.gestionfinanzas.service;
 
 import com.gestionfinanzas.dto.request.TransaccionRequest;
+import com.gestionfinanzas.dto.request.TransaccionFiltroRequest;
 import com.gestionfinanzas.model.entity.Categoria;
 import com.gestionfinanzas.model.entity.Cuenta;
 import com.gestionfinanzas.model.entity.Transaccion;
@@ -12,13 +13,17 @@ import com.gestionfinanzas.repository.CuentaRepository;
 import com.gestionfinanzas.repository.TransaccionRepository;
 import com.gestionfinanzas.repository.UsuarioRepository;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -102,6 +107,45 @@ class TransaccionServiceTest {
 
         assertEquals(new BigDecimal("100.00"), cuenta.getSaldoActual());
         verify(cuentaRepository, never()).save(any(Cuenta.class));
+    }
+
+    @Test
+    void exportarCsvEscapaCeldasYNeutralizaFormulas() {
+        Usuario usuario = Usuario.builder().id(7L).build();
+        Cuenta cuenta = cuenta(1L, usuario, "MXN", "100.00");
+        cuenta.setNombre("Cuenta, \"Principal\"");
+        Categoria categoria = Categoria.builder().id(4L).usuario(usuario).nombre("Comida").build();
+        Transaccion transaccion = Transaccion.builder()
+                .id(9L)
+                .usuario(usuario)
+                .cuenta(cuenta)
+                .categoria(categoria)
+                .tipo(TipoTransaccion.GASTO)
+                .monto(new BigDecimal("15.00"))
+                .fecha(LocalDate.of(2026, 9, 26))
+                .descripcion("=HYPERLINK(\"https://example.test\",\"abrir\")")
+                .notas("Primera línea,\nsegunda línea")
+                .build();
+        when(transaccionRepository.findAll(any(Specification.class), any(Sort.class)))
+                .thenReturn(List.of(transaccion));
+
+        String csv = transaccionService.exportarCsv(7L, null);
+
+        assertTrue(csv.startsWith("\uFEFFID,Fecha,Tipo,Descripción"));
+        assertTrue(csv.contains("\"'=HYPERLINK(\"\"https://example.test\"\",\"\"abrir\"\")\""));
+        assertTrue(csv.contains("\"Cuenta, \"\"Principal\"\"\""));
+        assertTrue(csv.contains("\"Primera línea,\nsegunda línea\""));
+    }
+
+    @Test
+    void exportarCsvRechazaRangoDeFechasInvertido() {
+        var filtro = new TransaccionFiltroRequest(
+                null, null, null, LocalDate.of(2026, 9, 27), LocalDate.of(2026, 9, 26), null
+        );
+
+        assertThrows(IllegalArgumentException.class, () -> transaccionService.exportarCsv(7L, filtro));
+
+        verify(transaccionRepository, never()).findAll(any(Specification.class), any(Sort.class));
     }
 
     private Cuenta cuenta(Long id, Usuario usuario, String moneda, String saldo) {
