@@ -13,17 +13,14 @@ import { AuthService } from '../../../core/services/auth.service';
         <div class="flex justify-between h-16 items-center">
           
           <!-- Logo & Brand -->
-          <div class="flex min-w-0 items-center space-x-2 sm:space-x-3">
-            <div class="w-10 h-10 rounded-xl bg-linear-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white font-bold shadow-md shadow-emerald-500/20">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div>
-              <span class="whitespace-nowrap text-lg sm:text-xl font-bold tracking-tight text-slate-900">Finanzas<span class="text-emerald-600">Pro</span></span>
+          <a routerLink="/dashboard" aria-label="Kaptal - ir al inicio"
+             class="flex min-w-0 items-center space-x-2 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-emerald-500 sm:space-x-3">
+            <img src="kaptal.svg" alt="" class="h-10 w-10 shrink-0 rounded-xl shadow-md shadow-emerald-900/10">
+            <div class="flex items-center">
+              <span class="whitespace-nowrap text-lg font-bold tracking-tight text-slate-900 sm:text-xl">Kaptal</span>
               <span class="hidden sm:inline-block ml-2 text-xs font-semibold px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-200">Personal</span>
             </div>
-          </div>
+          </a>
 
           <!-- Navigation Links (if authenticated) -->
           @if (authService.isAuthenticated()) {
