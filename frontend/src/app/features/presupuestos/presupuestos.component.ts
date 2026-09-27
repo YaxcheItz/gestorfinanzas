@@ -17,10 +17,10 @@ import {
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-6 sm:space-y-8">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-5 sm:space-y-8">
       
       <!-- Encabezado y Navegación de Período -->
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
           <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
             Control de Presupuestos
@@ -85,11 +85,11 @@ import {
         @for (moneda of resumen()?.resumenPorMoneda ?? []; track moneda.moneda) {
           <article class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs">
             <h2 class="mb-4 text-xs font-bold uppercase tracking-wider text-slate-500">{{ moneda.moneda }}</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div><p class="text-xs text-slate-500">Presupuestado</p><p class="mt-1 text-xl font-bold text-slate-900">{{ moneda.totalPresupuestado | currency:moneda.moneda:'symbol':'1.2-2' }}</p></div>
-              <div><p class="text-xs text-slate-500">Gastado</p><p class="mt-1 text-xl font-bold text-rose-600">{{ moneda.totalGastado | currency:moneda.moneda:'symbol':'1.2-2' }}</p></div>
-              <div><p class="text-xs text-slate-500">Disponible</p><p class="mt-1 text-xl font-bold" [class.text-emerald-600]="moneda.totalDisponible >= 0" [class.text-rose-600]="moneda.totalDisponible < 0">{{ moneda.totalDisponible | currency:moneda.moneda:'symbol':'1.2-2' }}</p></div>
-              <div><p class="text-xs text-slate-500">Consumo</p><p class="mt-1 text-xl font-bold text-violet-600">{{ moneda.porcentajeConsumido | number:'1.1-1' }}%</p></div>
+            <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              <div><p class="text-xs text-slate-500">Presupuestado</p><p class="mt-1 text-base sm:text-xl font-bold text-slate-900 break-words">{{ moneda.totalPresupuestado | currency:moneda.moneda:'symbol':'1.2-2' }}</p></div>
+              <div><p class="text-xs text-slate-500">Gastado</p><p class="mt-1 text-base sm:text-xl font-bold text-rose-600 break-words">{{ moneda.totalGastado | currency:moneda.moneda:'symbol':'1.2-2' }}</p></div>
+              <div><p class="text-xs text-slate-500">Disponible</p><p class="mt-1 text-base sm:text-xl font-bold break-words" [class.text-emerald-600]="moneda.totalDisponible >= 0" [class.text-rose-600]="moneda.totalDisponible < 0">{{ moneda.totalDisponible | currency:moneda.moneda:'symbol':'1.2-2' }}</p></div>
+              <div><p class="text-xs text-slate-500">Consumo</p><p class="mt-1 text-base sm:text-xl font-bold text-violet-600">{{ moneda.porcentajeConsumido | number:'1.1-1' }}%</p></div>
             </div>
           </article>
         } @empty {
@@ -137,9 +137,9 @@ import {
           </div>
         } @else {
           <!-- Grid de Tarjetas de Presupuesto -->
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
             @for (p of resumen()?.presupuestos; track p.id) {
-              <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs hover:border-slate-300 transition-all flex flex-col justify-between space-y-4">
+              <div class="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 shadow-xs hover:border-slate-300 transition-all flex flex-col justify-between space-y-4">
                 
                 <!-- Encabezado de la Tarjeta -->
                 <div class="flex items-start justify-between">
@@ -167,7 +167,7 @@ import {
                     <button 
                       type="button"
                       (click)="abrirModalEditar(p)"
-                      class="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+                      class="h-10 w-10 inline-flex items-center justify-center text-slate-500 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
                       title="Modificar límite">
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -176,7 +176,7 @@ import {
                     <button 
                       type="button"
                       (click)="eliminarPresupuesto(p.id)"
-                      class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer"
+                      class="h-10 w-10 inline-flex items-center justify-center text-slate-500 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer"
                       title="Eliminar meta de presupuesto">
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
