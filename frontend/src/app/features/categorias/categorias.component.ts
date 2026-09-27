@@ -10,13 +10,13 @@ import { ToastService } from '../../core/services/toast.service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <main class="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-5 sm:space-y-6">
-      <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <main class="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-4 sm:space-y-6">
+      <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
           <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">Mis categorías</h1>
           <p class="text-sm text-slate-500 mt-1">Organiza tus ingresos y gastos con categorías propias.</p>
         </div>
-        <button type="button" (click)="abrirCrear()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold cursor-pointer">
+        <button type="button" (click)="abrirCrear()" class="min-h-11 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold cursor-pointer">
           + Nueva categoría
         </button>
       </header>
@@ -40,9 +40,9 @@ import { ToastService } from '../../core/services/toast.service';
           {{ mostrarInactivas() ? 'No hay categorías archivadas.' : 'Aún no has creado categorías personalizadas.' }}
         </p>
       } @else {
-        <section aria-label="Categorías personalizadas" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+        <section aria-label="Categorías personalizadas" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
           @for (categoria of categoriasVisibles(); track categoria.id) {
-            <article class="min-w-0 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-4" [class.opacity-70]="!categoria.activo">
+            <article class="min-w-0 bg-white p-3 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3 sm:gap-4" [class.opacity-70]="!categoria.activo">
               <span class="w-11 h-11 rounded-xl flex items-center justify-center text-lg shrink-0 overflow-hidden whitespace-nowrap"
                     [style.background-color]="categoria.color || '#10b981'"
                     [style.color]="contrasteColor(categoria.color)">
@@ -54,11 +54,11 @@ import { ToastService } from '../../core/services/toast.service';
               </div>
               @if (categoria.activo) {
                 <div class="flex shrink-0 flex-col sm:flex-row">
-                  <button type="button" (click)="abrirEditar(categoria)" class="p-2 text-slate-500 hover:text-slate-900 rounded-lg cursor-pointer" [attr.aria-label]="'Editar ' + categoria.nombre">Editar</button>
-                  <button type="button" (click)="cambiarEstado(categoria, false)" class="p-2 text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer" [attr.aria-label]="'Archivar ' + categoria.nombre">Archivar</button>
+                  <button type="button" (click)="abrirEditar(categoria)" class="min-h-10 px-2 text-slate-500 hover:text-slate-900 rounded-lg cursor-pointer" [attr.aria-label]="'Editar ' + categoria.nombre">Editar</button>
+                  <button type="button" (click)="cambiarEstado(categoria, false)" class="min-h-10 px-2 text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer" [attr.aria-label]="'Archivar ' + categoria.nombre">Archivar</button>
                 </div>
               } @else {
-                <button type="button" (click)="cambiarEstado(categoria, true)" class="px-3 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 rounded-lg cursor-pointer">Restaurar</button>
+                <button type="button" (click)="cambiarEstado(categoria, true)" class="min-h-10 px-3 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 rounded-lg cursor-pointer">Restaurar</button>
               }
             </article>
           }

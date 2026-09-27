@@ -11,8 +11,8 @@ import { ToastService } from '../../core/services/toast.service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <main class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-5 sm:space-y-6">
-      <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <main class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-4 sm:space-y-6">
+      <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
           <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">Mis cuentas</h1>
           <p class="text-sm text-slate-500 mt-1">Administra tus cuentas y saldos financieros.</p>
@@ -20,7 +20,7 @@ import { ToastService } from '../../core/services/toast.service';
         <button
           type="button"
           (click)="abrirCrear()"
-          class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-sm cursor-pointer">
+          class="min-h-11 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-sm cursor-pointer">
           + Agregar cuenta
         </button>
       </header>
@@ -67,7 +67,7 @@ import { ToastService } from '../../core/services/toast.service';
           }
         </section>
       } @else {
-        <section [attr.aria-label]="filtroEstado() === 'ACTIVAS' ? 'Cuentas activas' : 'Cuentas inactivas'" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        <section [attr.aria-label]="filtroEstado() === 'ACTIVAS' ? 'Cuentas activas' : 'Cuentas inactivas'" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-5">
           @for (cuenta of cuentasVisibles(); track cuenta.id) {
             <article class="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-xs" [class.opacity-75]="!cuenta.activo">
               <div class="flex items-start justify-between gap-4">
@@ -87,30 +87,30 @@ import { ToastService } from '../../core/services/toast.service';
                 </span>
               </div>
 
-              <p class="mt-6 text-xs font-semibold uppercase tracking-wider text-slate-400">Saldo actual</p>
-              <p class="mt-1 text-2xl font-bold text-slate-900">
+              <p class="mt-4 sm:mt-6 text-xs font-semibold uppercase tracking-wider text-slate-400">Saldo actual</p>
+              <p class="mt-1 text-xl sm:text-2xl font-bold text-slate-900">
                 {{ cuenta.saldoActual | currency:cuenta.moneda:'symbol':'1.2-2' }}
               </p>
 
-              <div class="mt-5 pt-4 border-t border-slate-100 flex items-center justify-end gap-2">
+              <div class="mt-4 sm:mt-5 pt-3 sm:pt-4 border-t border-slate-100 flex items-center justify-end gap-2">
                 <button
                   type="button"
                   (click)="abrirEditar(cuenta)"
-                  class="px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 rounded-lg cursor-pointer">
+                  class="min-h-10 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 rounded-lg cursor-pointer">
                   Editar
                 </button>
                 @if (cuenta.activo) {
                   <button
                     type="button"
                     (click)="desactivar(cuenta)"
-                    class="px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-50 rounded-lg cursor-pointer">
+                    class="min-h-10 px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-50 rounded-lg cursor-pointer">
                     Desactivar
                   </button>
                 } @else {
                   <button
                     type="button"
                     (click)="reactivar(cuenta)"
-                    class="px-3 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 rounded-lg cursor-pointer">
+                    class="min-h-10 px-3 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 rounded-lg cursor-pointer">
                     Reactivar
                   </button>
                 }

@@ -21,15 +21,15 @@ import {
   standalone: true,
   imports: [CommonModule, FormsModule, MovimientoMobileCardComponent],
   template: `
-    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-6 sm:space-y-8">
+    <div class="max-w-7xl mx-auto flex flex-col px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-5 sm:space-y-8">
       
       <!-- Encabezado y Saludo -->
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div class="order-1 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
           <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
             Resumen Financiero
           </h1>
-          <p class="text-sm text-slate-500 mt-1">
+          <p class="hidden sm:block text-sm text-slate-500 mt-1">
             Hola, {{ authService.currentUser()?.nombre || 'Usuario' }}. Aquí tienes el estado consolidado de tus cuentas.
           </p>
         </div>
@@ -60,7 +60,7 @@ import {
 
       <!-- Alertas o Mensaje de Error si la API falla -->
       @if (error()) {
-        <div class="bg-rose-50 border border-rose-200 text-rose-700 text-sm px-4 py-3 rounded-2xl flex items-center justify-between">
+        <div class="order-2 bg-rose-50 border border-rose-200 text-rose-700 text-sm px-4 py-3 rounded-2xl flex items-center justify-between">
           <div class="flex items-center space-x-2">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-rose-500 shrink-0" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
@@ -74,29 +74,29 @@ import {
       }
 
       <!-- Métricas separadas por moneda -->
-      <section class="space-y-4" aria-label="Resumen financiero por moneda">
+      <section class="order-2 space-y-3 sm:space-y-4 lg:order-3" aria-label="Resumen financiero por moneda">
         @for (moneda of resumen()?.resumenPorMoneda ?? []; track moneda.moneda) {
           <div>
             <h2 class="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">{{ moneda.moneda }}</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              <article class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+            <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-5">
+              <article class="bg-white p-3 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs">
                 <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Balance total</p>
-                <p class="mt-3 text-2xl font-bold text-slate-900">{{ moneda.balanceTotal | currency:moneda.moneda:'symbol':'1.2-2' }}</p>
-                <p class="mt-1 text-xs text-slate-500">{{ moneda.totalCuentas }} cuenta{{ moneda.totalCuentas === 1 ? '' : 's' }} activa{{ moneda.totalCuentas === 1 ? '' : 's' }}</p>
+                <p class="mt-1 sm:mt-3 text-base sm:text-2xl font-bold text-slate-900 break-words">{{ moneda.balanceTotal | currency:moneda.moneda:'symbol':'1.2-2' }}</p>
+                <p class="mt-1 text-[10px] sm:text-xs text-slate-500">{{ moneda.totalCuentas }} cuenta{{ moneda.totalCuentas === 1 ? '' : 's' }} activa{{ moneda.totalCuentas === 1 ? '' : 's' }}</p>
               </article>
-              <article class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+              <article class="bg-white p-3 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs">
                 <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Ingresos del mes</p>
-                <p class="mt-3 text-2xl font-bold text-emerald-600">{{ moneda.ingresosMes | currency:moneda.moneda:'symbol':'1.2-2' }}</p>
+                <p class="mt-1 sm:mt-3 text-base sm:text-2xl font-bold text-emerald-600 break-words">{{ moneda.ingresosMes | currency:moneda.moneda:'symbol':'1.2-2' }}</p>
               </article>
-              <article class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+              <article class="bg-white p-3 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs">
                 <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Gastos del mes</p>
-                <p class="mt-3 text-2xl font-bold text-rose-600">{{ moneda.gastosMes | currency:moneda.moneda:'symbol':'1.2-2' }}</p>
-                <p class="mt-1 text-xs text-slate-500">Balance mensual: {{ moneda.balanceMes | currency:moneda.moneda:'symbol':'1.2-2' }}</p>
+                <p class="mt-1 sm:mt-3 text-base sm:text-2xl font-bold text-rose-600 break-words">{{ moneda.gastosMes | currency:moneda.moneda:'symbol':'1.2-2' }}</p>
+                <p class="mt-1 text-[10px] sm:text-xs text-slate-500">Neto: {{ moneda.balanceMes | currency:moneda.moneda:'symbol':'1.2-2' }}</p>
               </article>
-              <article class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+              <article class="bg-white p-3 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs">
                 <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Tasa de ahorro</p>
-                <p class="mt-3 text-2xl font-bold text-violet-600">{{ moneda.tasaAhorro | number:'1.1-1' }}%</p>
-                <p class="mt-1 text-xs text-slate-500">{{ moneda.tasaAhorro >= 20 ? 'Excelente ritmo de ahorro' : 'Margen para optimizar' }}</p>
+                <p class="mt-1 sm:mt-3 text-base sm:text-2xl font-bold text-violet-600">{{ moneda.tasaAhorro | number:'1.1-1' }}%</p>
+                <p class="mt-1 text-[10px] sm:text-xs text-slate-500">{{ moneda.tasaAhorro >= 20 ? 'Buen ritmo de ahorro' : 'Margen para optimizar' }}</p>
               </article>
             </div>
           </div>
@@ -106,7 +106,20 @@ import {
       </section>
 
       <!-- Analítica de gastos e ingresos -->
-      <section aria-label="Analítica financiera" class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <section aria-label="Analítica financiera" class="order-5 space-y-3 lg:order-4">
+        <button
+          type="button"
+          (click)="analiticaMovilAbierta.update(abierta => !abierta)"
+          [attr.aria-expanded]="analiticaMovilAbierta()"
+          aria-controls="dashboard-analytics-content"
+          class="flex min-h-11 w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-xs lg:hidden">
+          <span>Analítica financiera</span>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform" [class.rotate-180]="analiticaMovilAbierta()" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        <div id="dashboard-analytics-content" class="dashboard-analytics-content" [class.is-open]="analiticaMovilAbierta()">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <article class="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200/80 shadow-xs">
           <div class="mb-6">
             <h2 class="text-base font-bold text-slate-900">Gastos por categoría</h2>
@@ -214,10 +227,12 @@ import {
             </div>
           }
         </article>
+          </div>
+        </div>
       </section>
 
       <!-- Banner de Inteligencia Artificial (Spring AI) -->
-      <div class="bg-linear-to-r from-emerald-900 to-slate-900 text-white p-4 sm:p-6 rounded-2xl shadow-lg relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div class="hidden lg:order-5 lg:flex bg-linear-to-r from-emerald-900 to-slate-900 text-white p-4 sm:p-6 rounded-2xl shadow-lg relative overflow-hidden flex-col md:flex-row md:items-center justify-between gap-4">
         <div class="space-y-1 relative z-10">
           <div class="flex items-center space-x-2">
             <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
@@ -238,11 +253,11 @@ import {
       </div>
 
       <!-- Tabla de Transacciones Recientes -->
-      <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+      <div class="order-3 bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden lg:order-6">
         <div class="p-4 sm:p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h2 class="text-base font-bold text-slate-900">Últimos Movimientos</h2>
-            <p class="text-xs text-slate-500 mt-0.5">Historial registrado en tiempo real en la base de datos</p>
+            <p class="hidden sm:block text-xs text-slate-500 mt-0.5">Historial registrado en tiempo real en la base de datos</p>
           </div>
           <button 
             type="button"
@@ -378,7 +393,6 @@ import {
             </table>
           </div>
           <div class="space-y-3 p-3 sm:hidden" aria-label="Lista de últimos movimientos">
-            <p class="px-1 text-xs text-slate-500">Desliza a la izquierda o toca ⋯ para editar o eliminar.</p>
             @for (m of resumen()?.ultimosMovimientos; track m.id) {
               <app-movimiento-mobile-card
                 [movimiento]="m"
@@ -645,6 +659,7 @@ export class DashboardComponent implements OnInit {
   analiticaLoading = signal<boolean>(true);
   analiticaError = signal<string | null>(null);
   analitica = signal<DashboardAnalitica | null>(null);
+  readonly analiticaMovilAbierta = signal(false);
   monedaAnalitica = signal('MXN');
 
   cuentas = signal<Cuenta[]>([]);

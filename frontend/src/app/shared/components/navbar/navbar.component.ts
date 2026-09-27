@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
@@ -60,23 +60,6 @@ import { AuthService } from '../../../core/services/auth.service';
                 </svg>
                 <span class="hidden sm:inline">Salir</span>
               </button>
-              <button
-                type="button"
-                (click)="menuMovilAbierto.update(abierto => !abierto)"
-                [attr.aria-expanded]="menuMovilAbierto()"
-                aria-controls="navegacion-movil"
-                [attr.aria-label]="menuMovilAbierto() ? 'Cerrar menú de navegación' : 'Abrir menú de navegación'"
-                class="inline-flex lg:hidden items-center justify-center w-10 h-10 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 focus:outline-hidden focus:ring-2 focus:ring-emerald-500">
-                @if (menuMovilAbierto()) {
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                } @else {
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                  </svg>
-                }
-              </button>
             </div>
           } @else {
             <div class="flex items-center space-x-3">
@@ -92,13 +75,43 @@ import { AuthService } from '../../../core/services/auth.service';
           }
 
         </div>
-        @if (authService.isAuthenticated() && menuMovilAbierto()) {
-          <nav id="navegacion-movil" aria-label="Navegación principal" class="lg:hidden border-t border-slate-100 py-2">
-            <a routerLink="/dashboard" routerLinkActive="bg-emerald-50 text-emerald-800 font-semibold" (click)="cerrarMenuMovil()" class="block rounded-lg px-3 py-2.5 text-sm text-slate-700">Panel General</a>
-            <a routerLink="/transacciones" routerLinkActive="bg-emerald-50 text-emerald-800 font-semibold" (click)="cerrarMenuMovil()" class="block rounded-lg px-3 py-2.5 text-sm text-slate-700">Movimientos</a>
-            <a routerLink="/presupuestos" routerLinkActive="bg-emerald-50 text-emerald-800 font-semibold" (click)="cerrarMenuMovil()" class="block rounded-lg px-3 py-2.5 text-sm text-slate-700">Presupuestos</a>
-            <a routerLink="/cuentas" routerLinkActive="bg-emerald-50 text-emerald-800 font-semibold" (click)="cerrarMenuMovil()" class="block rounded-lg px-3 py-2.5 text-sm text-slate-700">Cuentas</a>
-            <a routerLink="/categorias" routerLinkActive="bg-emerald-50 text-emerald-800 font-semibold" (click)="cerrarMenuMovil()" class="block rounded-lg px-3 py-2.5 text-sm text-slate-700">Categorías</a>
+        @if (authService.isAuthenticated()) {
+          <nav aria-label="Navegación principal" class="mobile-bottom-nav lg:hidden">
+            <a routerLink="/dashboard" routerLinkActive="mobile-bottom-nav__link--active" [routerLinkActiveOptions]="{ exact: true }"
+               aria-label="Inicio" class="mobile-bottom-nav__link">
+              <svg aria-hidden="true">
+                <use href="navigation-icons.svg#home"></use>
+              </svg>
+              <span>Inicio</span>
+            </a>
+            <a routerLink="/transacciones" routerLinkActive="mobile-bottom-nav__link--active"
+               aria-label="Movimientos" class="mobile-bottom-nav__link">
+              <svg aria-hidden="true">
+                <use href="navigation-icons.svg#movements"></use>
+              </svg>
+              <span>Movimientos</span>
+            </a>
+            <a routerLink="/presupuestos" routerLinkActive="mobile-bottom-nav__link--active"
+               aria-label="Presupuestos" class="mobile-bottom-nav__link">
+              <svg aria-hidden="true">
+                <use href="navigation-icons.svg#budgets"></use>
+              </svg>
+              <span>Presupuestos</span>
+            </a>
+            <a routerLink="/cuentas" routerLinkActive="mobile-bottom-nav__link--active"
+               aria-label="Cuentas" class="mobile-bottom-nav__link">
+              <svg aria-hidden="true">
+                <use href="navigation-icons.svg#accounts"></use>
+              </svg>
+              <span>Cuentas</span>
+            </a>
+            <a routerLink="/categorias" routerLinkActive="mobile-bottom-nav__link--active"
+               aria-label="Categorías" class="mobile-bottom-nav__link">
+              <svg aria-hidden="true">
+                <use href="navigation-icons.svg#categories"></use>
+              </svg>
+              <span>Categorías</span>
+            </a>
           </nav>
         }
       </div>
@@ -107,9 +120,4 @@ import { AuthService } from '../../../core/services/auth.service';
 })
 export class NavbarComponent {
   public readonly authService = inject(AuthService);
-  readonly menuMovilAbierto = signal(false);
-
-  cerrarMenuMovil(): void {
-    this.menuMovilAbierto.set(false);
-  }
 }
