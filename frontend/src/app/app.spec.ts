@@ -17,10 +17,12 @@ describe('App', () => {
     expect(app).toBeTruthy();
   });
 
-  it('should render the navigation brand', async () => {
+  it('should render the Kaptal brand linked to the home dashboard', async () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('app-navbar')?.textContent).toContain('FinanzasPro');
+    const brandLink = compiled.querySelector('app-navbar a[aria-label="Kaptal - ir al inicio"]');
+    expect(brandLink?.textContent).toContain('Kaptal');
+    expect(brandLink?.getAttribute('href')).toBe('/dashboard');
   });
 });
