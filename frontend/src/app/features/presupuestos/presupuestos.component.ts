@@ -144,10 +144,7 @@ import {
                 <!-- Encabezado de la Tarjeta -->
                 <div class="flex items-start justify-between">
                   <div class="flex items-center space-x-3">
-                    <div 
-                      [style.backgroundColor]="(p.categoriaColor || '#10b981') + '15'"
-                      [style.color]="p.categoriaColor || '#10b981'"
-                      class="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-emerald-700 font-bold text-sm dark:bg-slate-700 dark:text-emerald-300">
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                       </svg>

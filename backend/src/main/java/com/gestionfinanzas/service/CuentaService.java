@@ -63,6 +63,8 @@ public class CuentaService {
                 .nombre(nombreTrim)
                 .tipo(request.tipo())
                 .institucionFinanciera(normalizarInstitucion(request.institucionFinanciera()))
+                .cashbackPorcentaje(request.cashbackPorcentaje())
+                .cashbackLimiteMensual(request.cashbackLimiteMensual())
                 .saldoActual(saldoInicial)
                 .moneda(moneda)
                 .descripcion(request.descripcion() != null ? request.descripcion().trim() : null)
@@ -103,6 +105,8 @@ public class CuentaService {
         cuenta.setNombre(nombreTrim);
         cuenta.setTipo(request.tipo());
         cuenta.setInstitucionFinanciera(normalizarInstitucion(request.institucionFinanciera()));
+        cuenta.setCashbackPorcentaje(request.cashbackPorcentaje());
+        cuenta.setCashbackLimiteMensual(request.cashbackLimiteMensual());
         cuenta.setMoneda(nuevaMoneda);
         cuenta.setDescripcion(request.descripcion() != null ? request.descripcion().trim() : null);
 

@@ -65,6 +65,8 @@ describe('CuentasComponent', () => {
 
   it('offers Mexican financial institutions and uses the selected institution name when blank', () => {
     expect(component.instituciones.length).toBeGreaterThanOrEqual(10);
+    expect(component.tiposCuenta.map(tipo => tipo.valor)).not.toContain('DEBITO');
+    expect(component.tiposCuenta.map(tipo => tipo.valor)).toContain('INVERSION');
     expect(component.instituciones.map(institucion => institucion.nombre)).toEqual(
       expect.arrayContaining(['Revolut', 'Sears', 'American Express'])
     );
@@ -77,16 +79,36 @@ describe('CuentasComponent', () => {
   it('updates account details without allowing a manual balance change', () => {
     component.abrirEditar(cuenta);
     component.nombre = 'Ahorro actualizado';
-    component.saldoInicial = 9999;
+    component.cashbackPorcentaje = 2.5;
+    component.cashbackLimiteMensual = 300;
 
     component.guardar();
 
     expect(finanzasService.actualizarCuenta).toHaveBeenCalledWith(3, {
       nombre: 'Ahorro actualizado',
       tipo: 'AHORRO',
+      cashbackPorcentaje: 2.5,
+      cashbackLimiteMensual: 300,
       moneda: 'MXN',
       descripcion: 'Fondo'
     });
+  });
+
+  it('treats existing debit accounts as investments when editing', () => {
+    component.abrirEditar({ ...cuenta, tipo: 'DEBITO' });
+
+    expect(component.tipo).toBe('INVERSION');
+    expect(component.tipoCuentaLabel('DEBITO')).toBe('Inversión');
+  });
+
+  it('rejects a cashback limit without an active cashback percentage', () => {
+    component.nombre = 'Ahorro';
+    component.cashbackLimiteMensual = 100;
+
+    component.guardar();
+
+    expect(component.modalError()).toContain('porcentaje de cashback');
+    expect(finanzasService.crearCuenta).not.toHaveBeenCalled();
   });
 
   it('rejects a negative opening balance without calling the API', () => {

@@ -303,6 +303,9 @@ import {
                       </div>
                       <div class="truncate max-w-xs sm:max-w-md">
                         <span class="block truncate text-slate-900 font-semibold">{{ m.categoriaNombre || m.descripcion }}</span>
+                        @if (m.cashbackAutomatico) {
+                          <span class="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">Cashback automático</span>
+                        }
                         @if (m.notas) {
                           <span class="block text-xs text-slate-400 font-normal truncate">{{ m.notas }}</span>
                         }
@@ -333,7 +336,7 @@ import {
                       }
                     </td>
                     <td class="px-4 py-4 text-center">
-                      @if (m.tipo !== 'SALDO_INICIAL') {
+                      @if (m.tipo !== 'SALDO_INICIAL' && !m.cashbackAutomatico) {
                         <button
                           type="button"
                           (click)="abrirModalEditar(m)"
@@ -345,15 +348,17 @@ import {
                           </svg>
                         </button>
                       }
-                      <button 
-                        type="button"
-                        (click)="eliminarMovimiento(m.id)"
-                        class="text-slate-500 hover:text-rose-600 transition-colors p-1.5 rounded-lg hover:bg-rose-50 cursor-pointer"
-                        title="Eliminar movimiento">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
+                      @if (!m.cashbackAutomatico) {
+                        <button
+                          type="button"
+                          (click)="eliminarMovimiento(m.id)"
+                          class="text-slate-500 hover:text-rose-600 transition-colors p-1.5 rounded-lg hover:bg-rose-50 cursor-pointer"
+                          title="Eliminar movimiento">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      }
                     </td>
                   </tr>
                 }
@@ -410,11 +415,11 @@ import {
     @if (modalAbierto()) {
       <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-2 sm:p-4">
         
-        <div class="bg-white rounded-2xl sm:rounded-3xl max-w-lg w-full max-h-[calc(100dvh-1rem)] overflow-y-auto border border-slate-200 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+        <div role="dialog" aria-modal="true" aria-labelledby="transacciones-modal-titulo" class="flex max-h-[calc(100dvh-1rem)] min-h-0 w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl animate-in fade-in zoom-in-95 duration-150 sm:rounded-3xl">
           
-          <div class="p-4 sm:p-6 border-b border-slate-100">
+          <div class="shrink-0 border-b border-slate-100 p-4 sm:p-6">
             <div class="flex items-center justify-between pb-4">
-              <h2 class="text-lg font-bold text-slate-900">{{ modoEdicion() ? 'Editar Movimiento' : 'Registrar Movimiento' }}</h2>
+              <h2 id="transacciones-modal-titulo" class="text-lg font-bold text-slate-900">{{ modoEdicion() ? 'Editar Movimiento' : 'Registrar Movimiento' }}</h2>
               <button 
                 type="button"
                 (click)="cerrarModal()" 
@@ -452,7 +457,7 @@ import {
           </div>
 
           <!-- Formulario -->
-          <form (ngSubmit)="guardarMovimiento()" class="p-4 sm:p-6 space-y-4">
+          <form (ngSubmit)="guardarMovimiento()" class="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain rounded-b-2xl p-4 pb-[max(2rem,env(safe-area-inset-bottom))] sm:p-6 sm:pb-8">
             
             @if (modalError()) {
               <div class="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs">
@@ -484,8 +489,23 @@ import {
                 />
             </div>
 
+            @if (formTipo() !== 'TRANSFERENCIA') {
+              <div>
+                @defer (on immediate) {
+                  <app-categoria-selector
+                    [categorias]="categorias()"
+                    [tipo]="formTipo()"
+                    [selectedId]="formCategoriaId"
+                    (selectedIdChange)="formCategoriaId = $event"
+                    (categoriasChange)="categorias.set($event)" />
+                } @placeholder {
+                  <div class="h-20 animate-pulse rounded-xl bg-slate-100"></div>
+                }
+              </div>
+            }
+
             <!-- Cuentas -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label for="cuentaId" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
                   {{ formTipo() === 'TRANSFERENCIA' ? 'Cuenta Origen' : 'Cuenta' }}
@@ -542,17 +562,6 @@ import {
                     </div>
                   }
                 </div>
-              } @else {
-                @defer (on immediate) {
-                  <app-categoria-selector
-                    [categorias]="categorias()"
-                    [tipo]="formTipo()"
-                    [selectedId]="formCategoriaId"
-                    (selectedIdChange)="formCategoriaId = $event"
-                    (categoriasChange)="categorias.set($event)" />
-                } @placeholder {
-                  <div class="h-20 animate-pulse rounded-xl bg-slate-100"></div>
-                }
               }
             </div>
 
@@ -573,7 +582,7 @@ import {
                 />
               </div>
 
-              <div class="sm:col-span-2">
+              <div>
                 <label for="notas" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
                   Notas adicionales (Opcional)
                 </label>

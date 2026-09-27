@@ -248,3 +248,33 @@ html.dark textarea {
 html.dark input[type='color'] {
   color-scheme: light;
 }
+
+html.dark .cashback-benefit-panel,
+html.dark .quick-category-editor {
+  border-color: rgb(51 65 85);
+  background-color: rgb(30 41 59);
+}
+
+html.dark .cashback-benefit-panel input,
+html.dark .quick-category-editor input:not([type='color']) {
+  border-color: rgb(71 85 105);
+  background-color: rgb(15 23 42);
+  color: rgb(241 245 249);
+}
+
+html.dark .cashback-badge {
+  background-color: rgb(6 78 59 / 0.7);
+  color: rgb(167 243 208);
+}
+
+html.dark .quick-category-icon {
+  border-color: rgb(71 85 105);
+  background-color: rgb(51 65 85);
+  color: rgb(203 213 225);
+}
+
+html.dark .quick-category-icon--selected {
+  border-color: rgb(5 150 105);
+  background-color: rgb(6 78 59);
+  color: rgb(167 243 208);
+}

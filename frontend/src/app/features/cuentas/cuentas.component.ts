@@ -100,6 +100,14 @@ import { ToastService } from '../../core/services/toast.service';
               <p class="mt-1 text-xl sm:text-2xl font-bold text-slate-900">
                 {{ cuenta.saldoActual | currency:cuenta.moneda:'symbol':'1.2-2' }}
               </p>
+              @if (cuenta.cashbackPorcentaje && cuenta.cashbackPorcentaje > 0) {
+                <p class="cashback-badge mt-2 inline-flex rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+                  Cashback {{ cuenta.cashbackPorcentaje }}%
+                  @if (cuenta.cashbackLimiteMensual) {
+                    · hasta {{ cuenta.cashbackLimiteMensual | currency:cuenta.moneda:'symbol':'1.0-2' }}/mes
+                  }
+                </p>
+              }
 
               <div class="mt-4 sm:mt-5 pt-3 sm:pt-4 border-t border-slate-100 flex items-center justify-end gap-2">
                 <button
@@ -211,6 +219,49 @@ import { ToastService } from '../../core/services/toast.service';
               </select>
             </div>
 
+            <p class="text-xs leading-relaxed text-slate-500">
+              El tipo clasifica la cuenta; los gastos se restan del saldo registrado y el cashback se suma como ingreso estimado.
+              Kaptal aún no calcula deuda, crédito disponible ni fechas de corte o pago de tarjetas.
+            </p>
+
+            <section class="cashback-benefit-panel rounded-xl border border-emerald-200 bg-emerald-50 p-3.5 space-y-3">
+              <div>
+                <h3 class="text-sm font-semibold text-slate-800">Beneficio de cashback</h3>
+                <p class="mt-1 text-xs leading-relaxed text-slate-600">
+                  Kaptal estimará el cashback en cada gasto de esta cuenta y lo registrará como ingreso automático.
+                  Es un cálculo de seguimiento, no una confirmación del banco.
+                </p>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label for="cuenta-cashback-porcentaje" class="block text-xs font-semibold text-slate-700 mb-1.5">Cashback (%)</label>
+                  <input
+                    id="cuenta-cashback-porcentaje"
+                    name="cashbackPorcentaje"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    [(ngModel)]="cashbackPorcentaje"
+                    class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-900"
+                    placeholder="Ej. 2" />
+                </div>
+                <div>
+                  <label for="cuenta-cashback-limite" class="block text-xs font-semibold text-slate-700 mb-1.5">Límite mensual (opcional)</label>
+                  <input
+                    id="cuenta-cashback-limite"
+                    name="cashbackLimiteMensual"
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    [(ngModel)]="cashbackLimiteMensual"
+                    class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-900"
+                    placeholder="Sin límite" />
+                </div>
+              </div>
+              <p class="text-[11px] text-slate-600 dark:text-slate-300">Se aplica a todos los gastos registrados con esta cuenta; el límite se reinicia cada mes.</p>
+            </section>
+
             @if (!cuentaEditando()) {
               <div>
                 <label for="cuenta-saldo" class="block text-xs font-semibold text-slate-700 mb-1.5">Saldo inicial</label>
@@ -279,9 +330,8 @@ export class CuentasComponent implements OnInit {
 
   readonly tiposCuenta: { valor: TipoCuenta; etiqueta: string }[] = [
     { valor: 'EFECTIVO', etiqueta: 'Efectivo' },
-    { valor: 'DEBITO', etiqueta: 'Débito' },
-    { valor: 'CREDITO', etiqueta: 'Crédito' },
-    { valor: 'AHORRO', etiqueta: 'Ahorro' },
+    { valor: 'CREDITO', etiqueta: 'Tarjeta de Crédito' },
+    { valor: 'AHORRO', etiqueta: 'Cuenta de Ahorro' },
     { valor: 'INVERSION', etiqueta: 'Inversión' }
   ];
   readonly instituciones = [
@@ -317,6 +367,8 @@ export class CuentasComponent implements OnInit {
   nombre = '';
   tipo: TipoCuenta = 'EFECTIVO';
   institucionFinanciera = '';
+  cashbackPorcentaje: number | null = null;
+  cashbackLimiteMensual: number | null = null;
   saldoInicial: number | null = null;
   moneda = 'MXN';
   descripcion = '';
@@ -349,6 +401,8 @@ export class CuentasComponent implements OnInit {
     this.nombre = '';
     this.tipo = 'EFECTIVO';
     this.institucionFinanciera = '';
+    this.cashbackPorcentaje = null;
+    this.cashbackLimiteMensual = null;
     this.saldoInicial = null;
     this.moneda = 'MXN';
     this.descripcion = '';
@@ -359,8 +413,10 @@ export class CuentasComponent implements OnInit {
   abrirEditar(cuenta: Cuenta): void {
     this.cuentaEditando.set(cuenta);
     this.nombre = cuenta.nombre;
-    this.tipo = cuenta.tipo;
+    this.tipo = cuenta.tipo === 'DEBITO' ? 'INVERSION' : cuenta.tipo;
     this.institucionFinanciera = cuenta.institucionFinanciera ?? '';
+    this.cashbackPorcentaje = cuenta.cashbackPorcentaje ?? null;
+    this.cashbackLimiteMensual = cuenta.cashbackLimiteMensual ?? null;
     this.saldoInicial = null;
     this.moneda = cuenta.moneda;
     this.descripcion = cuenta.descripcion ?? '';
@@ -390,11 +446,27 @@ export class CuentasComponent implements OnInit {
       this.modalError.set('El saldo inicial no puede ser negativo.');
       return;
     }
+    if (this.cashbackPorcentaje != null
+        && (!Number.isFinite(this.cashbackPorcentaje) || this.cashbackPorcentaje < 0 || this.cashbackPorcentaje > 100)) {
+      this.modalError.set('El porcentaje de cashback debe estar entre 0 y 100.');
+      return;
+    }
+    if (this.cashbackLimiteMensual != null
+        && (!Number.isFinite(this.cashbackLimiteMensual) || this.cashbackLimiteMensual <= 0)) {
+      this.modalError.set('El límite mensual debe ser mayor a 0.');
+      return;
+    }
+    if (this.cashbackLimiteMensual != null && (!this.cashbackPorcentaje || this.cashbackPorcentaje <= 0)) {
+      this.modalError.set('Indica un porcentaje de cashback mayor a 0 para configurar un límite.');
+      return;
+    }
 
     const payload: CuentaPayload = {
       nombre,
       tipo: this.tipo,
       ...(this.institucionFinanciera ? { institucionFinanciera: this.institucionFinanciera } : {}),
+      ...(this.cashbackPorcentaje != null ? { cashbackPorcentaje: this.cashbackPorcentaje } : {}),
+      ...(this.cashbackLimiteMensual != null ? { cashbackLimiteMensual: this.cashbackLimiteMensual } : {}),
       moneda: codigoMoneda,
       descripcion: this.descripcion.trim() || undefined
     };
@@ -465,6 +537,7 @@ export class CuentasComponent implements OnInit {
   }
 
   tipoCuentaLabel(tipo: TipoCuenta): string {
+    if (tipo === 'DEBITO') return 'Inversión';
     return this.tiposCuenta.find(opcion => opcion.valor === tipo)?.etiqueta ?? tipo;
   }
 

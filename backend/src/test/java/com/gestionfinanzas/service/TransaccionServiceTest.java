@@ -21,6 +21,7 @@ import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -216,6 +217,44 @@ class TransaccionServiceTest {
         assertEquals("Pago mensual", response.notas());
         assertEquals(new BigDecimal("85.00"), cuenta.getSaldoActual());
         verify(plantillaRepository).save(any(PlantillaRecurrente.class));
+    }
+
+    @Test
+    void crearGastoRegistraCashbackVinculadoYRespetaLimiteMensual() {
+        Usuario usuario = Usuario.builder().id(7L).build();
+        Cuenta cuenta = cuenta(1L, usuario, "MXN", "100.00");
+        cuenta.setCashbackPorcentaje(new BigDecimal("2.00"));
+        cuenta.setCashbackLimiteMensual(new BigDecimal("1.00"));
+        List<Transaccion> gastosDelMes = new ArrayList<>();
+        when(usuarioRepository.findById(7L)).thenReturn(Optional.of(usuario));
+        when(cuentaRepository.findByIdAndUsuarioId(1L, 7L)).thenReturn(Optional.of(cuenta));
+        when(transaccionRepository.save(any(Transaccion.class))).thenAnswer(invocation -> {
+            Transaccion guardada = invocation.getArgument(0);
+            guardada.setId(guardada.getCashbackOrigen() == null ? 11L : 12L);
+            if (guardada.getCashbackOrigen() == null) gastosDelMes.add(guardada);
+            return guardada;
+        });
+        when(transaccionRepository.findByCuentaIdAndTipoAndFechaBetweenOrderByFechaAscIdAsc(
+                1L, TipoTransaccion.GASTO, LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 30)
+        )).thenReturn(gastosDelMes);
+        when(transaccionRepository.findByCuentaIdAndCashbackOrigenIsNotNullAndFechaBetweenOrderByFechaAscIdAsc(
+                1L, LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 30)
+        )).thenReturn(List.of());
+
+        var response = transaccionService.crearTransaccion(7L, new TransaccionRequest(
+                1L, null, null, TipoTransaccion.GASTO, new BigDecimal("80.00"),
+                null, LocalDate.of(2026, 9, 26), null, "Compra", null, null
+        ));
+
+        assertEquals(new BigDecimal("21.00"), cuenta.getSaldoActual());
+        assertEquals(11L, response.id());
+        org.mockito.ArgumentCaptor<Transaccion> captor = org.mockito.ArgumentCaptor.forClass(Transaccion.class);
+        verify(transaccionRepository, org.mockito.Mockito.times(2)).save(captor.capture());
+        Transaccion cashback = captor.getAllValues().get(1);
+        assertEquals(TipoTransaccion.INGRESO, cashback.getTipo());
+        assertEquals(new BigDecimal("1.00"), cashback.getMonto());
+        assertEquals(11L, cashback.getCashbackOrigen().getId());
+        assertEquals("Cashback · Gasto sin categoría", cashback.getDescripcion());
     }
 
     @Test

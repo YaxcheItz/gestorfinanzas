@@ -12,6 +12,8 @@ type Cuenta = {
   saldoActual: number;
   moneda: string;
   activo: boolean;
+  cashbackPorcentaje?: number | null;
+  cashbackLimiteMensual?: number | null;
 };
 
 type Transaccion = {
@@ -26,6 +28,7 @@ type Transaccion = {
   monedaDestino: string | null;
   descripcion: string;
   notas: string | null;
+  cashbackAutomatico?: boolean;
 };
 
 async function apiGet<T>(page: Page, path: string): Promise<T> {
@@ -40,6 +43,15 @@ async function apiGet<T>(page: Page, path: string): Promise<T> {
   return body.data;
 }
 
+async function apiDelete(page: Page, path: string): Promise<number> {
+  const token = await page.evaluate(() => localStorage.getItem('finanzas_token'));
+  expect(token).not.toBeNull();
+  const response = await page.request.delete(`http://localhost:18080/api${path}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return response.status();
+}
+
 async function selectOptionContaining(select: Locator, fragment: string): Promise<void> {
   await expect(select.locator('option', { hasText: fragment }).first()).toBeAttached();
   const options = await select.locator('option').all();
@@ -51,6 +63,16 @@ async function selectOptionContaining(select: Locator, fragment: string): Promis
     }
   }
   throw new Error(`No option containing "${fragment}" was found.`);
+}
+
+async function selectCategory(page: Page, name: string): Promise<void> {
+  const selector = page.locator('#categoriaId');
+  await selector.click();
+  const option = page.getByRole('listbox', { name: 'Categorías disponibles' })
+    .getByRole('option', { name, exact: true });
+  await expect(option.locator('app-categoria-icono')).toBeVisible();
+  await option.click();
+  await expect(selector.locator('app-categoria-icono')).toBeVisible();
 }
 
 function budgetCard(page: Page, category: string): Locator {
@@ -199,6 +221,11 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
 
   await page.getByRole('link', { name: 'Cuentas' }).click();
   await page.getByRole('button', { name: '+ Agregar cuenta' }).click();
+  await expect(page.getByLabel('Tipo de cuenta').locator('option')).toContainText([
+    'Tarjeta de Crédito',
+    'Cuenta de Ahorro'
+  ]);
+  await expect(page.getByLabel('Tipo de cuenta').locator('option', { hasText: 'Débito' })).toHaveCount(0);
   await page.getByLabel('Banco o institución (opcional)').selectOption('bbva');
   await expect(page.getByLabel('Nombre')).toHaveValue('BBVA México');
   await expect(page.getByText('Identificador BBVA incluido en la tarjeta de cuenta.')).toBeVisible();
@@ -213,7 +240,7 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
 
   await page.getByRole('button', { name: '+ Agregar cuenta' }).click();
   await page.getByLabel('Nombre').fill('E2E Cuenta MXN');
-  await selectOptionContaining(page.getByLabel('Tipo de cuenta'), 'Débito');
+  await selectOptionContaining(page.getByLabel('Tipo de cuenta'), 'Inversión');
   await page.getByLabel('Saldo inicial').fill('50');
   await selectOptionContaining(page.getByLabel('Moneda'), 'MXN');
   await page.getByRole('button', { name: 'Crear cuenta' }).click();
@@ -261,17 +288,48 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.getByRole('button', { name: 'Nuevo Movimiento' }).click();
-  await page.getByRole('button', { name: '+ Nueva', exact: true }).click();
+  await page.getByRole('button', { name: 'Nueva', exact: true }).click();
   const quickCategoryEditor = page.getByRole('region', { name: 'Editar categoría' });
+  const movementDialogContent = page.getByRole('dialog', { name: 'Registrar Movimiento' });
+  await expect(page.locator('#categoriaId')).toHaveCount(1);
+  const categoryEditorBounds = await quickCategoryEditor.boundingBox();
+  const movementDialogContentBounds = await movementDialogContent.boundingBox();
+  expect(categoryEditorBounds).not.toBeNull();
+  expect(movementDialogContentBounds).not.toBeNull();
+  expect(categoryEditorBounds!.x).toBeGreaterThanOrEqual(movementDialogContentBounds!.x);
+  expect(categoryEditorBounds!.x + categoryEditorBounds!.width)
+    .toBeLessThanOrEqual(movementDialogContentBounds!.x + movementDialogContentBounds!.width);
+  const categoryIconButton = quickCategoryEditor.getByRole('button', { name: 'Icono Alimentación' });
+  await expect(categoryIconButton).toHaveCSS('width', '40px');
+  expect(await categoryIconButton.evaluate(element => getComputedStyle(element.parentElement!).columnGap))
+    .toBe('8px');
+  await page.setViewportSize({ width: 390, height: 844 });
+  const customEmojiField = quickCategoryEditor.getByLabel('Emoji personalizado (opcional)');
+  await customEmojiField.scrollIntoViewIfNeeded();
+  await expect(customEmojiField).toBeVisible();
+  const emojiBounds = await customEmojiField.boundingBox();
+  const mobileDialogBounds = await movementDialogContent.boundingBox();
+  expect(emojiBounds).not.toBeNull();
+  expect(mobileDialogBounds).not.toBeNull();
+  expect(emojiBounds!.y + emojiBounds!.height).toBeLessThanOrEqual(mobileDialogBounds!.y + mobileDialogBounds!.height - 8);
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.evaluate(() => document.documentElement.classList.add('dark'));
+  expect(await quickCategoryEditor.evaluate(element => getComputedStyle(element).backgroundColor))
+    .toBe('rgb(30, 41, 59)');
   await quickCategoryEditor.getByLabel('Nombre').fill('E2E categoría rápida');
   await quickCategoryEditor.getByRole('button', { name: 'Guardar categoría' }).click();
-  await expect(page.locator('#categoriaId option', { hasText: 'E2E categoría rápida' })).toHaveCount(1);
-  await page.locator('#categoriaId').selectOption({ label: 'E2E categoría rápida' });
+  await page.evaluate(() => document.documentElement.classList.remove('dark'));
+  await selectCategory(page, 'E2E categoría rápida');
   await page.getByRole('button', { name: 'Editar', exact: true }).click();
   await quickCategoryEditor.getByLabel('Nombre').fill('E2E movimiento categoría editada');
   await quickCategoryEditor.getByRole('button', { name: 'Guardar categoría' }).click();
-  await expect(page.locator('#categoriaId option', { hasText: 'E2E movimiento categoría editada' })).toHaveCount(1);
-  await page.locator('#categoriaId').selectOption({ label: 'E2E Pruebas' });
+  await selectCategory(page, 'E2E movimiento categoría editada');
+  await selectCategory(page, 'E2E Pruebas');
+  const categoryPosition = await page.locator('#categoriaId').boundingBox();
+  const accountPosition = await page.locator('#cuentaId').boundingBox();
+  expect(categoryPosition).not.toBeNull();
+  expect(accountPosition).not.toBeNull();
+  expect(categoryPosition!.y).toBeLessThan(accountPosition!.y);
   await page.screenshot({ path: 'test-results/transaccion-categoria-monto.png' });
   await page.locator('#monto').fill('15');
   await selectOptionContaining(page.locator('#cuentaId'), 'E2E Cuenta MXN');
@@ -283,7 +341,7 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
     return { currencyBottom: currencyBadge.bottom, inputTop: field.top };
   });
   expect(amountLayout.currencyBottom).toBeLessThanOrEqual(amountLayout.inputTop);
-  await selectOptionContaining(page.locator('#categoriaId'), 'E2E Pruebas');
+  await selectCategory(page, 'E2E Pruebas');
   await page.locator('#notas').fill('E2E gasto MXN');
   await page.getByRole('button', { name: 'Registrar', exact: true }).click();
   await expect(movementText(page, 'E2E gasto MXN')).toBeVisible();
@@ -382,7 +440,7 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   await page.locator('#monto').fill('20');
   await selectOptionContaining(page.locator('#cuentaId'), 'E2E Ahorro USD');
   await expect(page.getByLabel('Monto')).toBeVisible();
-  await selectOptionContaining(page.locator('#categoriaId'), 'Salario');
+  await selectCategory(page, 'Salario');
   await page.locator('#notas').fill('E2E ingreso USD');
   await page.getByRole('button', { name: 'Registrar', exact: true }).click();
   await expect(movementText(page, 'E2E ingreso USD')).toBeVisible();
@@ -530,6 +588,13 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
 
   await page.getByRole('link', { name: 'Panel General' }).click();
   await expect(page.getByRole('img', { name: /Distribución de gastos en MXN/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Nuevo Movimiento' }).click();
+  const dashboardMovementDialog = page.getByRole('dialog', { name: 'Registrar Movimiento' });
+  const dashboardDialogBounds = await dashboardMovementDialog.boundingBox();
+  expect(dashboardDialogBounds).not.toBeNull();
+  expect(Math.abs(dashboardDialogBounds!.x + dashboardDialogBounds!.width / 2 - 640)).toBeLessThan(2);
+  await page.getByRole('button', { name: 'Cerrar formulario de movimiento' }).click();
+  await expect(dashboardMovementDialog).toBeHidden();
   await page.getByLabel('Moneda de la analítica').selectOption('USD');
   await expect(page.getByText('No hay gastos registrados este mes.')).toBeVisible();
   await page.getByLabel('Moneda de la analítica').selectOption('MXN');
@@ -604,6 +669,11 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   const tarjetaCategoriaLarga = page.getByRole('article').filter({ hasText: nombreLargo });
   await expect(tarjetaCategoriaLarga).toBeVisible();
   await expect(tarjetaCategoriaLarga.locator('app-categoria-icono svg')).toBeVisible();
+  await expect(tarjetaCategoriaLarga.locator('app-categoria-icono use'))
+    .toHaveAttribute('href', 'category-icons.svg#shopping-cart');
+  const spriteResponse = await page.request.get(new URL('category-icons.svg', page.url()).href);
+  expect(spriteResponse.ok()).toBeTruthy();
+  expect(await spriteResponse.text()).toContain('id="shopping-cart"');
   const desbordamiento = await tarjetaCategoriaLarga.evaluate(element => {
     const icono = element.querySelector('span')!;
     const nombre = element.querySelector('h2')!;
@@ -679,6 +749,74 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   await budgetCard(page, 'E2E Categoría editada').getByTitle('Eliminar meta de presupuesto').click();
   await page.getByRole('button', { name: 'Confirmar' }).click();
   await expect(page.getByRole('heading', { name: 'E2E Categoría editada', exact: true })).toHaveCount(0);
+
+  await page.getByRole('link', { name: 'Cuentas' }).click();
+  await page.getByRole('button', { name: '+ Agregar cuenta' }).click();
+  await page.evaluate(() => document.documentElement.classList.add('dark'));
+  const cashbackSettings = page.locator('.cashback-benefit-panel');
+  expect(await cashbackSettings.evaluate(element => getComputedStyle(element).backgroundColor))
+    .toBe('rgb(30, 41, 59)');
+  await page.getByLabel('Nombre').fill('E2E Cashback');
+  await selectOptionContaining(page.getByLabel('Tipo de cuenta'), 'Crédito');
+  await page.getByLabel('Saldo inicial').fill('100');
+  await page.getByLabel('Cashback (%)').fill('2');
+  await page.getByLabel('Límite mensual (opcional)').fill('1');
+  await page.getByRole('button', { name: 'Crear cuenta' }).click();
+  const cashbackAccountCard = page.getByRole('article').filter({ hasText: 'E2E Cashback' });
+  await expect(cashbackAccountCard).toContainText('Cashback 2%');
+
+  await page.getByRole('link', { name: 'Movimientos' }).click();
+  await page.getByRole('button', { name: 'Nuevo Movimiento' }).click();
+  await page.getByLabel('Monto').fill('80');
+  await selectOptionContaining(page.locator('#cuentaId'), 'E2E Cashback');
+  await page.getByLabel('Notas adicionales (Opcional)').fill('E2E cashback compra');
+  await page.getByRole('button', { name: 'Registrar', exact: true }).click();
+  await expect(movementText(page, 'E2E cashback compra')).toBeVisible();
+
+  let cashbackMovements = await apiGet<Transaccion[]>(page, '/transacciones/recientes');
+  const cashback = cashbackMovements.find(movement => movement.cashbackAutomatico);
+  expect(cashback).toMatchObject({
+    tipo: 'INGRESO',
+    monto: 1,
+    cashbackAutomatico: true
+  });
+  expect(cashback?.descripcion).toMatch(/^Cashback · /);
+  const cashbackExpense = cashbackMovements.find(movement => movement.notas === 'E2E cashback compra');
+  expect(cashbackExpense).toMatchObject({ tipo: 'GASTO', cashbackAutomatico: false });
+  const cashbackRow = page.getByRole('row').filter({ hasText: cashback!.descripcion });
+  await expect(cashbackRow).toBeVisible();
+  await expect(cashbackRow.getByTitle('Eliminar movimiento')).toHaveCount(0);
+  await page.setViewportSize({ width: 390, height: 844 });
+  const cashbackMobileCard = page.locator('app-movimiento-mobile-card').filter({ hasText: cashback!.descripcion });
+  await expect(cashbackMobileCard).toBeVisible();
+  await expect(cashbackMobileCard.getByRole('button', { name: /acciones para/ })).toHaveCount(0);
+  await page.setViewportSize({ width: 1280, height: 900 });
+  expect(await apiDelete(page, `/transacciones/${cashback!.id}`)).toBe(400);
+  await page.getByRole('button', { name: 'Nuevo Movimiento' }).click();
+  await page.getByLabel('Monto').fill('20');
+  await selectOptionContaining(page.locator('#cuentaId'), 'E2E Cashback');
+  await page.getByLabel('Notas adicionales (Opcional)').fill('E2E cashback segundo');
+  await page.getByRole('button', { name: 'Registrar', exact: true }).click();
+  await expect(movementText(page, 'E2E cashback segundo')).toBeVisible();
+  cashbackMovements = await apiGet<Transaccion[]>(page, '/transacciones/recientes');
+  expect(cashbackMovements.filter(movement => movement.cashbackAutomatico)).toHaveLength(1);
+  cuentas = await apiGet<Cuenta[]>(page, '/cuentas?incluirInactivas=true');
+  expect(cuentas.find(cuenta => cuenta.nombre === 'E2E Cashback')?.saldoActual).toBe(1);
+
+  const cashbackExpenseRow = page.getByRole('row').filter({ hasText: 'E2E cashback compra' });
+  await cashbackExpenseRow.getByTitle('Eliminar movimiento').click({ force: true });
+  await page.getByRole('button', { name: 'Confirmar' }).click();
+  cashbackMovements = await apiGet<Transaccion[]>(page, '/transacciones/recientes');
+  const cashbackLiberado = cashbackMovements.find(movement => movement.cashbackAutomatico);
+  expect(cashbackLiberado).toMatchObject({ monto: 0.4, tipo: 'INGRESO' });
+  expect(cashbackMovements.some(movement => movement.notas === 'E2E cashback compra')).toBeFalsy();
+  const cashbackExpenseSecondRow = page.getByRole('row').filter({ hasText: 'E2E cashback segundo' });
+  await cashbackExpenseSecondRow.getByTitle('Eliminar movimiento').click({ force: true });
+  await page.getByRole('button', { name: 'Confirmar' }).click();
+  cashbackMovements = await apiGet<Transaccion[]>(page, '/transacciones/recientes');
+  expect(cashbackMovements.some(movement => movement.cashbackAutomatico)).toBeFalsy();
+  cuentas = await apiGet<Cuenta[]>(page, '/cuentas?incluirInactivas=true');
+  expect(cuentas.find(cuenta => cuenta.nombre === 'E2E Cashback')?.saldoActual).toBe(100);
 
   await page.getByRole('button', { name: 'Salir' }).click();
   await expect(page).toHaveURL(/\/login$/);

@@ -38,7 +38,7 @@ import {
         </div>
 
         <div class="flex w-full sm:w-auto flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
-          <button 
+          <button
             type="button"
             (click)="cargarDashboard()" 
             class="inline-flex items-center justify-center px-3 sm:px-4 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 transition-colors shadow-2xs cursor-pointer"
@@ -362,6 +362,9 @@ import {
                       </div>
                       <div class="truncate max-w-xs">
                         <span class="block truncate">{{ m.categoriaNombre || m.descripcion }}</span>
+                        @if (m.cashbackAutomatico) {
+                          <span class="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">Cashback automático</span>
+                        }
                         @if (m.notas) {
                           <span class="block text-xs text-slate-400 font-normal truncate">{{ m.notas }}</span>
                         }
@@ -392,7 +395,7 @@ import {
                       }
                     </td>
                     <td class="px-4 py-4 text-center">
-                      @if (m.tipo !== 'SALDO_INICIAL') {
+                      @if (m.tipo !== 'SALDO_INICIAL' && !m.cashbackAutomatico) {
                         <button
                           type="button"
                           (click)="editarMovimiento(m.id)"
@@ -404,15 +407,17 @@ import {
                           </svg>
                         </button>
                       }
-                      <button 
-                        type="button"
-                        (click)="eliminarMovimiento(m.id)"
-                        class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:text-rose-600 transition-colors p-1 rounded-md hover:bg-rose-50 cursor-pointer"
-                        title="Eliminar movimiento">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
+                      @if (!m.cashbackAutomatico) {
+                        <button
+                          type="button"
+                          (click)="eliminarMovimiento(m.id)"
+                          class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:text-rose-600 transition-colors p-1 rounded-md hover:bg-rose-50 cursor-pointer"
+                          title="Eliminar movimiento">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      }
                     </td>
                   </tr>
                 }
@@ -434,7 +439,7 @@ import {
 
     <!-- Modal Interactivo 'Nuevo Movimiento' -->
     @if (modalAbierto()) {
-      <div class="fixed inset-0 z-50 flex items-end overflow-y-auto overscroll-contain bg-slate-900/60 px-0 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] backdrop-blur-xs sm:items-center sm:p-4">
+      <div class="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto overscroll-contain bg-slate-900/60 px-0 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] backdrop-blur-xs sm:items-center sm:p-4">
         <div role="dialog" aria-modal="true" aria-labelledby="dashboard-movement-title" class="flex max-h-full min-h-0 w-full flex-col overflow-hidden rounded-t-3xl border border-slate-200 bg-white shadow-2xl animate-in fade-in zoom-in-95 duration-150 sm:max-h-[min(90dvh,48rem)] sm:max-w-lg sm:rounded-3xl">
           
           <!-- Encabezado del Modal con Selector de Tipo -->
@@ -479,7 +484,7 @@ import {
           </div>
 
           <!-- Formulario -->
-          <form (ngSubmit)="guardarMovimiento()" class="min-h-0 space-y-3 overflow-y-auto overscroll-contain p-4 sm:space-y-4 sm:p-6">
+          <form (ngSubmit)="guardarMovimiento()" class="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain p-4 pb-[max(2rem,env(safe-area-inset-bottom))] sm:space-y-4 sm:p-6 sm:pb-8">
             
             @if (modalError()) {
               <div class="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs">
@@ -510,6 +515,21 @@ import {
                   class="min-h-12 w-full rounded-xl border-2 border-slate-300 bg-white px-4 py-3 text-lg font-bold text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20"
                 />
             </div>
+
+            @if (formTipo() !== 'TRANSFERENCIA') {
+              <div>
+                @defer (on immediate) {
+                  <app-categoria-selector
+                    [categorias]="categorias()"
+                    [tipo]="formTipo()"
+                    [selectedId]="formCategoriaId"
+                    (selectedIdChange)="formCategoriaId = $event"
+                    (categoriasChange)="categorias.set($event)" />
+                } @placeholder {
+                  <div class="h-20 animate-pulse rounded-xl bg-slate-100"></div>
+                }
+              </div>
+            }
 
             <!-- Cuentas (Origen y Destino si es transferencia) -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -573,52 +593,39 @@ import {
                     </div>
                   }
                 </div>
-              } @else {
-                <!-- Categoría (solo para Gasto o Ingreso) -->
-                <div>
-                  @defer (on immediate) {
-                    <app-categoria-selector
-                      [categorias]="categorias()"
-                      [tipo]="formTipo()"
-                      [selectedId]="formCategoriaId"
-                      (selectedIdChange)="formCategoriaId = $event"
-                      (categoriasChange)="categorias.set($event)" />
-                  } @placeholder {
-                    <div class="h-20 animate-pulse rounded-xl bg-slate-100"></div>
-                  }
-                </div>
               }
             </div>
 
-            <!-- Fecha -->
-            <div>
-              <label for="fecha" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                Fecha
-              </label>
-              <input
-                id="fecha"
-                type="date"
-                required
-                [(ngModel)]="formFecha"
-                (ngModelChange)="actualizarSiguienteFecha()"
-                name="fecha"
-                class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
-              />
-            </div>
+            <!-- Fecha y notas -->
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label for="fecha" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Fecha
+                </label>
+                <input
+                  id="fecha"
+                  type="date"
+                  required
+                  [(ngModel)]="formFecha"
+                  (ngModelChange)="actualizarSiguienteFecha()"
+                  name="fecha"
+                  class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
+                />
+              </div>
 
-            <!-- Notas (opcional) -->
-            <div>
-              <label for="notas" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                Notas adicionales (opcional)
-              </label>
-              <textarea
-                id="notas"
-                rows="2"
-                [(ngModel)]="formNotas"
-                name="notas"
-                placeholder="Agrega un detalle si lo necesitas..."
-                class="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all resize-none">
-              </textarea>
+              <div>
+                <label for="notas" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Notas adicionales (opcional)
+                </label>
+                <textarea
+                  id="notas"
+                  rows="2"
+                  [(ngModel)]="formNotas"
+                  name="notas"
+                  placeholder="Agrega un detalle si lo necesitas..."
+                  class="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all resize-none">
+                </textarea>
+              </div>
             </div>
 
             @if (formTipo() !== 'TRANSFERENCIA') {
