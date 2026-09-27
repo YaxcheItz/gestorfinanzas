@@ -44,11 +44,8 @@ async function selectOptionContaining(select: Locator, fragment: string): Promis
   for (const option of options) {
     const text = (await option.textContent()) ?? '';
     if (text.includes(fragment)) {
-      const value = await option.getAttribute('value');
-      if (value !== null) {
-        await select.selectOption(value);
-        return;
-      }
+      await select.selectOption({ label: text });
+      return;
     }
   }
   throw new Error(`No option containing "${fragment}" was found.`);
@@ -239,6 +236,41 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   await page.locator('select').nth(1).selectOption({ label: 'E2E Pruebas' });
   await expect(page.getByRole('row').filter({ hasText: 'E2E gasto MXN' })).toBeVisible();
   await expect(page.getByRole('row').filter({ hasText: 'E2E ingreso USD' })).toHaveCount(0);
+  const categoriasExportables = await apiGet<Array<{ id: number; nombre: string }>>(page, '/categorias/mias');
+  const exportCategoryId = categoriasExportables.find(categoria => categoria.nombre === 'E2E Pruebas')?.id;
+  expect(exportCategoryId).toBeDefined();
+  const exportToken = await page.evaluate(() => localStorage.getItem('finanzas_token'));
+  if (!exportToken) {
+    throw new Error('An authenticated session is required to test the CSV export endpoint.');
+  }
+  const csvResponse = await page.request.get(
+    `http://localhost:18080/api/transacciones/exportar?categoriaId=${exportCategoryId}`,
+    { headers: { Authorization: `Bearer ${exportToken}` } }
+  );
+  expect(csvResponse.ok(), `CSV export returned ${csvResponse.status()}: ${await csvResponse.text()}`).toBeTruthy();
+  expect(csvResponse.headers()['content-type']).toContain('text/csv');
+  expect(csvResponse.headers()['content-disposition']).toContain('attachment; filename=');
+  const csvContent = await csvResponse.text();
+  expect(csvContent).toContain('\uFEFFID,Fecha,Tipo,Descripción');
+  expect(csvContent).toContain('E2E gasto MXN');
+  expect(csvContent).not.toContain('E2E ingreso USD');
+  const exportDate = new Date().toISOString().slice(0, 10);
+  await page.locator('input[type="date"]').nth(0).fill(exportDate);
+  await page.locator('input[type="date"]').nth(1).fill(exportDate);
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Exportar CSV' }).click();
+  const csvDownload = await downloadPromise;
+  expect(csvDownload.suggestedFilename()).toBe(`movimientos_${exportDate}_a_${exportDate}.csv`);
+  const invalidDateRange = await page.request.get(
+    'http://localhost:18080/api/transacciones/exportar?fechaInicio=2026-09-27&fechaFin=2026-09-26',
+    { headers: { Authorization: `Bearer ${exportToken}` } }
+  );
+  expect(invalidDateRange.status()).toBe(400);
+  const invalidCategory = await page.request.get(
+    'http://localhost:18080/api/transacciones/exportar?categoriaId=no-es-numero',
+    { headers: { Authorization: `Bearer ${exportToken}` } }
+  );
+  expect(invalidCategory.status()).toBe(400);
   await page.getByRole('button', { name: 'Limpiar filtros' }).click();
 
   let summary = await apiGet<{

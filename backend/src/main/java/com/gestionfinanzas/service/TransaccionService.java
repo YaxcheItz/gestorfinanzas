@@ -16,12 +16,14 @@ import com.gestionfinanzas.repository.specification.TransaccionSpecification;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -144,6 +146,56 @@ public class TransaccionService {
         Specification<Transaccion> spec = TransaccionSpecification.conFiltros(usuarioId, filtro);
         return transaccionRepository.findAll(spec, pageable)
                 .map(TransaccionResponse::fromEntity);
+    }
+
+    @Transactional(readOnly = true)
+    public String exportarCsv(Long usuarioId, TransaccionFiltroRequest filtro) {
+        if (filtro != null && filtro.fechaInicio() != null && filtro.fechaFin() != null
+                && filtro.fechaInicio().isAfter(filtro.fechaFin())) {
+            throw new IllegalArgumentException("La fecha inicial no puede ser posterior a la fecha final");
+        }
+
+        Specification<Transaccion> spec = TransaccionSpecification.conFiltros(usuarioId, filtro);
+        List<Transaccion> transacciones = transaccionRepository.findAll(
+                spec, Sort.by(Sort.Direction.DESC, "fecha", "id")
+        );
+        StringBuilder csv = new StringBuilder("\uFEFF");
+        csv.append("ID,Fecha,Tipo,Descripción,Categoría,Cuenta origen,Moneda origen,Monto origen,")
+                .append("Cuenta destino,Moneda destino,Monto destino,Tasa de cambio,Notas\r\n");
+
+        for (Transaccion transaccion : transacciones) {
+            List<String> campos = new ArrayList<>(13);
+            campos.add(transaccion.getId().toString());
+            campos.add(transaccion.getFecha().toString());
+            campos.add(transaccion.getTipo().name());
+            campos.add(transaccion.getDescripcion());
+            campos.add(transaccion.getCategoria() != null ? transaccion.getCategoria().getNombre() : "");
+            campos.add(transaccion.getCuenta().getNombre());
+            campos.add(transaccion.getCuenta().getMoneda());
+            campos.add(transaccion.getMonto().toPlainString());
+            campos.add(transaccion.getCuentaDestino() != null ? transaccion.getCuentaDestino().getNombre() : "");
+            campos.add(transaccion.getCuentaDestino() != null ? transaccion.getCuentaDestino().getMoneda() : "");
+            campos.add(transaccion.getMontoDestino() != null ? transaccion.getMontoDestino().toPlainString() : "");
+            campos.add(transaccion.getTasaCambio() != null ? transaccion.getTasaCambio().toPlainString() : "");
+            campos.add(transaccion.getNotas() != null ? transaccion.getNotas() : "");
+            csv.append(campos.stream().map(TransaccionService::campoCsv).collect(java.util.stream.Collectors.joining(",")))
+                    .append("\r\n");
+        }
+        return csv.toString();
+    }
+
+    private static String campoCsv(String valor) {
+        String seguro = valor == null ? "" : valor;
+        int primerCaracter = 0;
+        while (primerCaracter < seguro.length()
+                && (Character.isWhitespace(seguro.charAt(primerCaracter))
+                || Character.isISOControl(seguro.charAt(primerCaracter)))) {
+            primerCaracter++;
+        }
+        if (primerCaracter < seguro.length() && "=+-@".indexOf(seguro.charAt(primerCaracter)) >= 0) {
+            seguro = "'" + seguro;
+        }
+        return "\"" + seguro.replace("\"", "\"\"") + "\"";
     }
 
     @Transactional(readOnly = true)

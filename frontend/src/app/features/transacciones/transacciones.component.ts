@@ -32,15 +32,27 @@ import {
           </p>
         </div>
 
-        <button 
-          type="button"
-          (click)="abrirModal('GASTO')"
-          class="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-xl text-sm font-semibold shadow-md shadow-emerald-600/20 transition-all cursor-pointer">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
-          Nuevo Movimiento
-        </button>
+        <div class="flex flex-col sm:flex-row gap-2">
+          <button
+            type="button"
+            (click)="exportarCsv()"
+            [disabled]="exportando()"
+            class="inline-flex items-center justify-center px-4 py-2 border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-50 text-slate-700 rounded-xl text-sm font-semibold transition-all cursor-pointer">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1M7 10l5 5m0 0l5-5m-5 5V3" />
+            </svg>
+            {{ exportando() ? 'Preparando...' : 'Exportar CSV' }}
+          </button>
+          <button
+            type="button"
+            (click)="abrirModal('GASTO')"
+            class="inline-flex items-center justify-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-xl text-sm font-semibold shadow-md shadow-emerald-600/20 transition-all cursor-pointer">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Nuevo Movimiento
+          </button>
+        </div>
       </div>
 
       <!-- Barra de Filtros Avanzados -->
@@ -616,6 +628,7 @@ export class TransaccionesComponent implements OnInit {
   readonly tamanioPagina = signal<number>(15);
   readonly pageData = signal<PageResponse<Transaccion> | null>(null);
   readonly loading = signal<boolean>(false);
+  readonly exportando = signal(false);
   readonly error = signal<string | null>(null);
 
   // Auxiliares
@@ -795,6 +808,39 @@ export class TransaccionesComponent implements OnInit {
     this.filtroBusqueda.set('');
     this.paginaActual.set(0);
     this.cargarTransacciones();
+  }
+
+  exportarCsv(): void {
+    const filtros: TransaccionFiltro = {
+      tipo: this.filtroTipo(),
+      cuentaId: this.filtroCuentaId(),
+      categoriaId: this.filtroCategoriaId(),
+      fechaInicio: this.filtroFechaInicio() || null,
+      fechaFin: this.filtroFechaFin() || null,
+      busqueda: this.filtroBusqueda()
+    };
+    this.exportando.set(true);
+    this.finanzasService.exportarTransaccionesCsv(filtros).subscribe({
+      next: respuesta => {
+        this.exportando.set(false);
+        if (!respuesta.body) {
+          this.toastService.error('El servidor devolvió un archivo CSV vacío.');
+          return;
+        }
+        const disposition = respuesta.headers.get('Content-Disposition');
+        const filename = disposition?.match(/filename="?([^";]+)"?/i)?.[1] ?? 'movimientos.csv';
+        const url = URL.createObjectURL(respuesta.body);
+        const enlace = document.createElement('a');
+        enlace.href = url;
+        enlace.download = filename;
+        enlace.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      },
+      error: err => {
+        this.exportando.set(false);
+        this.toastService.error(err.error?.message || 'No se pudieron exportar los movimientos.');
+      }
+    });
   }
 
   irAPagina(nuevaPagina: number): void {

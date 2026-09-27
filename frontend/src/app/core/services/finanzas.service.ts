@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ApiResponse } from '../models/auth.models';
 import {
@@ -90,6 +90,23 @@ export class FinanzasService {
     }
 
     return this.http.get<ApiResponse<PageResponse<Transaccion>>>(`${this.baseUrl}/transacciones`, { params });
+  }
+
+  exportarTransaccionesCsv(filtros?: TransaccionFiltro): Observable<HttpResponse<Blob>> {
+    let params = new HttpParams();
+    if (filtros) {
+      if (filtros.tipo) params = params.set('tipo', filtros.tipo);
+      if (filtros.cuentaId != null) params = params.set('cuentaId', filtros.cuentaId.toString());
+      if (filtros.categoriaId != null) params = params.set('categoriaId', filtros.categoriaId.toString());
+      if (filtros.fechaInicio) params = params.set('fechaInicio', filtros.fechaInicio);
+      if (filtros.fechaFin) params = params.set('fechaFin', filtros.fechaFin);
+      if (filtros.busqueda?.trim()) params = params.set('busqueda', filtros.busqueda.trim());
+    }
+    return this.http.get(`${this.baseUrl}/transacciones/exportar`, {
+      params,
+      observe: 'response',
+      responseType: 'blob'
+    });
   }
 
   crearTransaccion(payload: TransaccionPayload): Observable<ApiResponse<Transaccion>> {
