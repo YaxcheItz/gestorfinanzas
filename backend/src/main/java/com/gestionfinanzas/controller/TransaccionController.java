@@ -13,12 +13,15 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @RestController
@@ -62,6 +65,28 @@ public class TransaccionController {
         TransaccionFiltroRequest filtro = new TransaccionFiltroRequest(tipo, cuentaId, categoriaId, fechaInicio, fechaFin, busqueda);
         Page<TransaccionResponse> resultado = transaccionService.listarConFiltros(userDetails.getId(), filtro, pageRequest);
         return ResponseEntity.ok(ApiResponse.ok("Transacciones obtenidas correctamente", resultado));
+    }
+
+    @GetMapping(value = "/exportar", produces = "text/csv")
+    public ResponseEntity<String> exportarCsv(
+            @RequestParam(required = false) TipoTransaccion tipo,
+            @RequestParam(required = false) Long cuentaId,
+            @RequestParam(required = false) Long categoriaId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+            @RequestParam(required = false) String busqueda,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        TransaccionFiltroRequest filtro = new TransaccionFiltroRequest(
+                tipo, cuentaId, categoriaId, fechaInicio, fechaFin, busqueda
+        );
+        String filename = fechaInicio != null && fechaFin != null
+                ? "movimientos_" + fechaInicio + "_a_" + fechaFin + ".csv"
+                : "movimientos.csv";
+        return ResponseEntity.ok()
+                .contentType(new MediaType("text", "csv", StandardCharsets.UTF_8))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .body(transaccionService.exportarCsv(userDetails.getId(), filtro));
     }
 
     @GetMapping("/{id}")
