@@ -41,6 +41,16 @@ public class TransaccionController {
                 .body(ApiResponse.ok("Movimiento registrado exitosamente", transaccion));
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<TransaccionResponse>> actualizarTransaccion(
+            @PathVariable Long id,
+            @Valid @RequestBody TransaccionRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        TransaccionResponse transaccion = transaccionService.actualizarTransaccion(userDetails.getId(), id, request);
+        return ResponseEntity.ok(ApiResponse.ok("Movimiento actualizado exitosamente", transaccion));
+    }
+
     @GetMapping("/recientes")
     public ResponseEntity<ApiResponse<List<TransaccionResponse>>> listarRecientes(
             @AuthenticationPrincipal CustomUserDetails userDetails

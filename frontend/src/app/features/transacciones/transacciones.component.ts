@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FinanzasService } from '../../core/services/finanzas.service';
 import { ToastService } from '../../core/services/toast.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
@@ -328,10 +329,22 @@ import {
                       }
                     </td>
                     <td class="px-4 py-4 text-center">
+                      @if (m.tipo !== 'SALDO_INICIAL') {
+                        <button
+                          type="button"
+                          (click)="abrirModalEditar(m)"
+                          class="text-slate-500 hover:text-emerald-700 transition-colors p-1.5 rounded-lg hover:bg-emerald-50 cursor-pointer"
+                          [attr.aria-label]="'Editar movimiento ' + m.descripcion"
+                          title="Editar movimiento">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                          </svg>
+                        </button>
+                      }
                       <button 
                         type="button"
                         (click)="eliminarMovimiento(m.id)"
-                        class="text-slate-400 hover:text-rose-600 transition-opacity p-1.5 rounded-lg hover:bg-rose-50 cursor-pointer sm:opacity-0 sm:group-hover:opacity-100"
+                        class="text-slate-500 hover:text-rose-600 transition-colors p-1.5 rounded-lg hover:bg-rose-50 cursor-pointer"
                         title="Eliminar movimiento">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -388,7 +401,7 @@ import {
           
           <div class="p-4 sm:p-6 border-b border-slate-100">
             <div class="flex items-center justify-between pb-4">
-              <h2 class="text-lg font-bold text-slate-900">Registrar Movimiento</h2>
+              <h2 class="text-lg font-bold text-slate-900">{{ modoEdicion() ? 'Editar Movimiento' : 'Registrar Movimiento' }}</h2>
               <button 
                 type="button"
                 (click)="cerrarModal()" 
@@ -435,15 +448,17 @@ import {
             }
 
             <!-- Monto -->
-            <div>
-              <label for="monto" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                Monto ({{ monedaCuenta(formCuentaId) }})
-              </label>
-              <div class="relative rounded-xl shadow-2xs">
-                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 font-bold">
+            <div class="space-y-2">
+              <div class="flex items-center justify-between gap-3">
+                <label for="monto" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                  Monto
+                </label>
+                <span class="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-800">
+                  <span class="text-[10px] font-semibold uppercase tracking-wide text-emerald-700">Moneda</span>
                   {{ monedaCuenta(formCuentaId) }}
-                </div>
-                <input
+                </span>
+              </div>
+              <input
                   id="monto"
                   type="number"
                   step="0.01"
@@ -452,9 +467,8 @@ import {
                   [(ngModel)]="formMonto"
                   name="monto"
                   placeholder="0.00"
-                  class="w-full pl-8 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 font-bold text-lg focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
+                  class="w-full rounded-xl border-2 border-slate-300 bg-white px-4 py-3 text-lg font-bold text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20"
                 />
-              </div>
             </div>
 
             <!-- Concepto / Descripción -->
@@ -471,6 +485,17 @@ import {
                 placeholder="Ej. Supermercado, Pago de nómina, Gasolina..."
                 class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
               />
+              <div class="mt-2 flex flex-wrap items-center gap-2" aria-label="Conceptos sugeridos">
+                <span class="w-full text-[11px] font-semibold uppercase tracking-wide text-slate-500">Sugerencias rápidas</span>
+                @for (concepto of conceptosSugeridos(); track concepto) {
+                  <button
+                    type="button"
+                    (click)="formDescripcion = concepto"
+                    class="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-800 hover:bg-emerald-100 focus:outline-hidden focus:ring-2 focus:ring-emerald-500">
+                    {{ concepto }}
+                  </button>
+                }
+              </div>
             </div>
 
             <!-- Cuentas -->
@@ -598,7 +623,7 @@ import {
                   <div class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
                   <span>Guardando...</span>
                 } @else {
-                  <span>Registrar</span>
+                  <span>{{ modoEdicion() ? 'Guardar cambios' : 'Registrar' }}</span>
                 }
               </button>
             </div>
@@ -611,6 +636,8 @@ import {
   `
 })
 export class TransaccionesComponent implements OnInit {
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly finanzasService = inject(FinanzasService);
   private readonly toastService = inject(ToastService);
   private readonly confirmDialogService = inject(ConfirmDialogService);
@@ -638,6 +665,8 @@ export class TransaccionesComponent implements OnInit {
   // Modal Signals
   readonly modalAbierto = signal<boolean>(false);
   readonly formTipo = signal<TipoTransaccion>('GASTO');
+  readonly modoEdicion = signal(false);
+  readonly transaccionEditando = signal<Transaccion | null>(null);
   readonly submitting = signal<boolean>(false);
   readonly modalError = signal<string | null>(null);
 
@@ -653,6 +682,16 @@ export class TransaccionesComponent implements OnInit {
   // Categorías filtradas por tipo para el modal
   readonly categoriasModal = computed(() => {
     return this.categorias().filter(c => c.tipo === this.formTipo());
+  });
+  readonly conceptosSugeridos = computed(() => {
+    switch (this.formTipo()) {
+      case 'INGRESO':
+        return ['Salario', 'Freelance', 'Venta', 'Intereses', 'Reembolso', 'Bono'];
+      case 'TRANSFERENCIA':
+        return ['Ahorro', 'Traspaso entre cuentas', 'Pago de tarjeta'];
+      default:
+        return ['Supermercado', 'Restaurante', 'Transporte', 'Gasolina', 'Renta', 'Servicios', 'Salud', 'Entretenimiento', 'Pago de tarjeta'];
+    }
   });
 
   monedaCuenta(id: number | null): string {
@@ -690,6 +729,19 @@ export class TransaccionesComponent implements OnInit {
   ngOnInit(): void {
     this.cargarCuentasYCategorias();
     this.cargarTransacciones();
+    const transaccionId = Number(this.route.snapshot.queryParamMap.get('editar'));
+    if (Number.isSafeInteger(transaccionId) && transaccionId > 0) {
+      this.finanzasService.getTransaccion(transaccionId).subscribe({
+        next: response => {
+          if (!response.success || !response.data) {
+            this.toastService.error(response.message || 'No se pudo abrir el movimiento para editar.');
+            return;
+          }
+          this.abrirModalEditar(response.data);
+        },
+        error: err => this.toastService.error(err.error?.message || 'No se pudo abrir el movimiento para editar.')
+      });
+    }
   }
 
   cargarCuentasYCategorias(): void {
@@ -878,6 +930,8 @@ export class TransaccionesComponent implements OnInit {
 
   // --- Modal Logic ---
   abrirModal(tipo: TipoTransaccion): void {
+    this.modoEdicion.set(false);
+    this.transaccionEditando.set(null);
     this.formTipo.set(tipo);
     this.formMonto = null;
     this.formDescripcion = '';
@@ -899,15 +953,48 @@ export class TransaccionesComponent implements OnInit {
     this.modalAbierto.set(true);
   }
 
+  abrirModalEditar(transaccion: Transaccion): void {
+    if (transaccion.tipo === 'SALDO_INICIAL') return;
+    this.modoEdicion.set(true);
+    this.transaccionEditando.set(transaccion);
+    this.formTipo.set(transaccion.tipo);
+    this.formMonto = transaccion.monto;
+    this.formDescripcion = transaccion.descripcion;
+    this.formCuentaId = transaccion.cuentaId;
+    this.formCuentaDestinoId = transaccion.cuentaDestinoId ?? null;
+    this.formTasaCambio = transaccion.tasaCambio ?? null;
+    this.formCategoriaId = transaccion.categoriaId ?? null;
+    this.formFecha = transaccion.fecha;
+    this.formNotas = transaccion.notas ?? '';
+    this.modalError.set(null);
+    this.modalAbierto.set(true);
+  }
+
   cerrarModal(): void {
     this.modalAbierto.set(false);
     this.modalError.set(null);
+    this.modoEdicion.set(false);
+    this.transaccionEditando.set(null);
+    if (this.route.snapshot.queryParamMap.has('editar')) {
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { editar: null },
+        queryParamsHandling: 'merge',
+        replaceUrl: true
+      });
+    }
   }
 
   cambiarTipoModal(tipo: TipoTransaccion): void {
     this.formTipo.set(tipo);
     const cats = this.categoriasModal();
     this.formCategoriaId = cats.length > 0 ? cats[0].id : null;
+    if (tipo === 'TRANSFERENCIA') {
+      this.formCuentaDestinoId = this.cuentas().find(cuenta => cuenta.id !== this.formCuentaId)?.id ?? null;
+    } else {
+      this.formCuentaDestinoId = null;
+      this.formTasaCambio = null;
+    }
   }
 
   guardarMovimiento(): void {
@@ -957,12 +1044,17 @@ export class TransaccionesComponent implements OnInit {
     this.submitting.set(true);
     this.modalError.set(null);
 
-    this.finanzasService.crearTransaccion(payload).subscribe({
+    const transaccion = this.transaccionEditando();
+    const request = transaccion
+      ? this.finanzasService.actualizarTransaccion(transaccion.id, payload)
+      : this.finanzasService.crearTransaccion(payload);
+    request.subscribe({
       next: () => {
         this.submitting.set(false);
         this.cerrarModal();
         this.cargarTransacciones();
         this.cargarCuentasYCategorias();
+        this.toastService.success(transaccion ? 'Movimiento actualizado correctamente.' : 'Movimiento registrado correctamente.');
       },
       error: (err) => {
         this.submitting.set(false);

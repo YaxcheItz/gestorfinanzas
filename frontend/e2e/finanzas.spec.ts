@@ -57,7 +57,7 @@ function budgetCard(page: Page, category: string): Locator {
 }
 
 test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analítica', async ({ page }) => {
-  test.setTimeout(90_000);
+  test.setTimeout(150_000);
   const pageErrors: string[] = [];
   page.on('pageerror', error => pageErrors.push(error.message));
   await page.route('http://localhost:8080/api/**', async route => {
@@ -148,39 +148,97 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
 
   await page.getByRole('link', { name: 'Movimientos' }).click();
   await page.getByRole('button', { name: 'Nuevo Movimiento' }).click();
-  await page.getByLabel(/Monto \(/).fill('15');
+  await page.screenshot({ path: 'test-results/transaccion-sugerencias-monto.png' });
+  await page.locator('#monto').fill('15');
+  await page.getByLabel('Concepto / Descripción').fill('E2E gasto MXN');
+  const suggestedConcept = page.getByRole('button', { name: 'Supermercado', exact: true });
+  await expect(suggestedConcept).toBeVisible();
+  await suggestedConcept.click();
+  await expect(page.getByLabel('Concepto / Descripción')).toHaveValue('Supermercado');
   await page.getByLabel('Concepto / Descripción').fill('E2E gasto MXN');
   await selectOptionContaining(page.locator('#cuentaId'), 'E2E Cuenta MXN');
-  await expect(page.getByLabel('Monto (MXN)')).toBeVisible();
+  await expect(page.getByLabel('Monto')).toBeVisible();
+  const amountLayout = await page.locator('#monto').evaluate(input => {
+    const container = input.parentElement!;
+    const currencyBadge = container.querySelector('span.inline-flex')!.getBoundingClientRect();
+    const field = input.getBoundingClientRect();
+    return { currencyBottom: currencyBadge.bottom, inputTop: field.top };
+  });
+  expect(amountLayout.currencyBottom).toBeLessThanOrEqual(amountLayout.inputTop);
   await selectOptionContaining(page.locator('#categoriaId'), 'E2E Pruebas');
   await page.getByRole('button', { name: 'Registrar', exact: true }).click();
+  await expect(page.getByText('E2E gasto MXN')).toBeVisible();
+  const expenseRow = page.getByRole('row').filter({ hasText: 'E2E gasto MXN' });
+  await expenseRow.getByRole('button', { name: 'Editar movimiento E2E gasto MXN' }).click();
+  await expect(page.getByRole('heading', { name: 'Editar Movimiento' })).toBeVisible();
+  await page.locator('#monto').fill('18');
+  await page.getByLabel('Concepto / Descripción').fill('E2E gasto corregido');
+  await page.getByRole('button', { name: 'Guardar cambios' }).click();
+  await expect(page.getByText('E2E gasto corregido')).toBeVisible();
+  cuentas = await apiGet<Cuenta[]>(page, '/cuentas?incluirInactivas=true');
+  expect(cuentas.find(cuenta => cuenta.nombre === 'E2E Cuenta MXN')?.saldoActual).toBe(32);
+  await page.getByRole('row').filter({ hasText: 'E2E gasto corregido' })
+    .getByRole('button', { name: 'Editar movimiento E2E gasto corregido' }).click();
+  await page.locator('#monto').fill('15');
+  await page.getByLabel('Concepto / Descripción').fill('E2E gasto MXN');
+  await page.getByRole('button', { name: 'Guardar cambios' }).click();
+  await expect(page.getByText('E2E gasto MXN')).toBeVisible();
+  await page.getByRole('link', { name: 'Panel General' }).click();
+  const dashboardExpense = page.getByRole('row').filter({ hasText: 'E2E gasto MXN' });
+  await dashboardExpense.getByRole('button', { name: 'Editar movimiento E2E gasto MXN' }).click();
+  await expect(page).toHaveURL(/\/transacciones\?editar=/);
+  await expect(page.getByRole('heading', { name: 'Editar Movimiento' })).toBeVisible();
+  await page.getByLabel('Concepto / Descripción').fill('E2E gasto historial editado');
+  await page.getByRole('button', { name: 'Guardar cambios' }).click();
+  await expect(page.getByText('E2E gasto historial editado')).toBeVisible();
+  await page.getByRole('link', { name: 'Panel General' }).click();
+  const editedDashboardExpense = page.getByRole('row').filter({ hasText: 'E2E gasto historial editado' });
+  await editedDashboardExpense.getByRole('button', { name: 'Editar movimiento E2E gasto historial editado' }).click();
+  await expect(page.getByRole('heading', { name: 'Editar Movimiento' })).toBeVisible();
+  await page.getByLabel('Concepto / Descripción').fill('E2E gasto MXN');
+  await page.getByRole('button', { name: 'Guardar cambios' }).click();
   await expect(page.getByText('E2E gasto MXN')).toBeVisible();
 
   await page.getByRole('button', { name: 'Nuevo Movimiento' }).click();
   await page.getByRole('button', { name: 'Ingreso', exact: true }).click();
-  await page.getByLabel(/Monto \(/).fill('20');
+  await page.locator('#monto').fill('20');
   await page.getByLabel('Concepto / Descripción').fill('E2E ingreso USD');
   await selectOptionContaining(page.locator('#cuentaId'), 'E2E Ahorro USD');
-  await expect(page.getByLabel('Monto (USD)')).toBeVisible();
+  await expect(page.getByLabel('Monto')).toBeVisible();
   await selectOptionContaining(page.locator('#categoriaId'), 'Salario');
   await page.getByRole('button', { name: 'Registrar', exact: true }).click();
   await expect(page.getByText('E2E ingreso USD')).toBeVisible();
 
   await page.getByRole('button', { name: 'Nuevo Movimiento' }).click();
   await page.getByRole('button', { name: 'Transferencia', exact: true }).click();
-  await page.getByLabel(/Monto \(/).fill('10');
+  await page.locator('#monto').fill('10');
   await page.getByLabel('Concepto / Descripción').fill('E2E cambio USD a MXN');
   await selectOptionContaining(page.locator('#cuentaId'), 'E2E Ahorro USD');
-  await expect(page.getByLabel('Monto (USD)')).toBeVisible();
+  await expect(page.getByLabel('Monto')).toBeVisible();
   await selectOptionContaining(page.locator('#cuentaDestinoId'), 'E2E Cuenta MXN');
   await expect(page.getByLabel(/Tasa de cambio/)).toBeVisible();
   await page.getByLabel(/Tasa de cambio/).fill('17.5');
   await page.getByRole('button', { name: 'Registrar', exact: true }).click();
   await expect(page.getByText('E2E cambio USD a MXN')).toBeVisible();
+  const editableTransferRow = page.getByRole('row').filter({ hasText: 'E2E cambio USD a MXN' });
+  await editableTransferRow.getByRole('button', { name: 'Editar movimiento E2E cambio USD a MXN' }).click();
+  await page.locator('#monto').fill('12');
+  await page.getByLabel(/Tasa de cambio/).fill('17');
+  await page.getByRole('button', { name: 'Guardar cambios' }).click();
+  await expect(page.getByText('E2E cambio USD a MXN')).toBeVisible();
+  cuentas = await apiGet<Cuenta[]>(page, '/cuentas?incluirInactivas=true');
+  expect(cuentas.find(cuenta => cuenta.nombre === 'E2E Ahorro USD')?.saldoActual).toBe(108);
+  expect(cuentas.find(cuenta => cuenta.nombre === 'E2E Cuenta MXN')?.saldoActual).toBe(239);
+  await page.getByRole('row').filter({ hasText: 'E2E cambio USD a MXN' })
+    .getByRole('button', { name: 'Editar movimiento E2E cambio USD a MXN' }).click();
+  await page.locator('#monto').fill('10');
+  await page.getByLabel(/Tasa de cambio/).fill('17.5');
+  await page.getByRole('button', { name: 'Guardar cambios' }).click();
+  await expect(page.getByText('E2E cambio USD a MXN')).toBeVisible();
 
   await page.getByRole('button', { name: 'Nuevo Movimiento' }).click();
   await page.getByRole('button', { name: 'Transferencia', exact: true }).click();
-  await page.getByLabel(/Monto \(/).fill('5');
+  await page.locator('#monto').fill('5');
   await page.getByLabel('Concepto / Descripción').fill('E2E transferencia misma moneda');
   await selectOptionContaining(page.locator('#cuentaId'), 'E2E Cuenta MXN');
   await selectOptionContaining(page.locator('#cuentaDestinoId'), 'Billetera / Efectivo');
@@ -399,7 +457,7 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   await page.getByRole('link', { name: 'Cuentas' }).click();
   const inactiveAccountCard = page.getByRole('article').filter({ hasText: 'E2E Ahorro USD' });
   await inactiveAccountCard.getByRole('button', { name: 'Desactivar' }).click();
-  await page.getByRole('button', { name: 'Desactivar', exact: true }).last().click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Desactivar', exact: true }).click();
   await page.getByRole('button', { name: 'Inactivas' }).click();
   const archivedAccount = page.getByRole('article').filter({ hasText: 'E2E Ahorro USD' });
   await expect(archivedAccount).toBeVisible();
