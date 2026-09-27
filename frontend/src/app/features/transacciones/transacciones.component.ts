@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { FinanzasService } from '../../core/services/finanzas.service';
 import { ToastService } from '../../core/services/toast.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
+import { MovimientoMobileCardComponent } from '../../shared/components/movimiento-mobile-card/movimiento-mobile-card.component';
 import {
   Categoria,
   Cuenta,
@@ -18,7 +19,7 @@ import {
 @Component({
   selector: 'app-transacciones',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MovimientoMobileCardComponent],
   template: `
     <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-5 sm:space-y-6">
 
@@ -253,7 +254,7 @@ import {
             }
           </div>
         } @else {
-          <div class="overflow-x-auto" role="region" aria-label="Movimientos; desliza horizontalmente para ver más columnas" tabindex="0">
+          <div class="hidden overflow-x-auto sm:block" role="region" aria-label="Movimientos; desliza horizontalmente para ver más columnas" tabindex="0">
             <table class="w-full min-w-[720px] text-left text-sm text-slate-600">
               <thead class="bg-slate-50 text-[11px] uppercase font-semibold text-slate-400 tracking-wider">
                 <tr>
@@ -355,6 +356,15 @@ import {
                 }
               </tbody>
             </table>
+          </div>
+          <div class="space-y-3 p-3 sm:hidden" aria-label="Lista de movimientos">
+            <p class="px-1 text-xs text-slate-500">Desliza a la izquierda o toca ⋯ para editar o eliminar.</p>
+            @for (m of pageData()!.content; track m.id) {
+              <app-movimiento-mobile-card
+                [movimiento]="m"
+                (editar)="abrirModalEditar($event)"
+                (eliminar)="eliminarMovimiento($event)" />
+            }
           </div>
 
           <!-- Barra de Paginación -->
