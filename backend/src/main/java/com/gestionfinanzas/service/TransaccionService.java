@@ -44,6 +44,7 @@ public class TransaccionService {
     private final UsuarioRepository usuarioRepository;
     private final PlantillaRecurrenteRepository plantillaRepository;
     private final AuditoriaTransaccionService auditoriaService;
+    private final LibroDiarioService libroDiarioService;
 
     @Transactional
     public TransaccionResponse crearTransaccion(Long usuarioId, TransaccionRequest request) {
@@ -72,6 +73,7 @@ public class TransaccionService {
                 .build();
 
         Transaccion guardada = transaccionRepository.save(transaccion);
+        libroDiarioService.registrarCreacion(usuarioId, TransaccionResponse.fromEntity(guardada));
         auditoriaService.registrar(usuarioId, guardada.getId(), "CREAR", null,
                 TransaccionResponse.fromEntity(guardada));
         if (guardada.getTipo() == TipoTransaccion.GASTO) {
@@ -137,6 +139,9 @@ public class TransaccionService {
         transaccion.setNotas(normalizarNotas(request.notas()));
 
         Transaccion actualizada = transaccionRepository.save(transaccion);
+        libroDiarioService.registrarActualizacion(
+                usuarioId, antes, TransaccionResponse.fromEntity(actualizada)
+        );
         auditoriaService.registrar(usuarioId, actualizada.getId(), "ACTUALIZAR", antes,
                 TransaccionResponse.fromEntity(actualizada));
         if (tipoAnterior == TipoTransaccion.GASTO) {
@@ -346,6 +351,9 @@ public class TransaccionService {
             if (montoCashback.compareTo(BigDecimal.ZERO) == 0) {
                 if (cashback != null) {
                     cambioSaldo = cambioSaldo.subtract(cashback.getMonto());
+                    libroDiarioService.registrarEliminacion(
+                            cashback.getUsuario().getId(), TransaccionResponse.fromEntity(cashback)
+                    );
                     auditoriaService.registrar(gasto.getUsuario().getId(), cashback.getId(), "ELIMINAR",
                             TransaccionResponse.fromEntity(cashback), null);
                     transaccionRepository.delete(cashback);
@@ -367,6 +375,9 @@ public class TransaccionService {
                         .build();
                 cambioSaldo = cambioSaldo.add(montoCashback);
                 cashback = transaccionRepository.save(cashback);
+                libroDiarioService.registrarCreacion(
+                        gasto.getUsuario().getId(), TransaccionResponse.fromEntity(cashback)
+                );
                 auditoriaService.registrar(gasto.getUsuario().getId(), cashback.getId(), "CREAR", null,
                         TransaccionResponse.fromEntity(cashback));
             } else {
@@ -376,6 +387,9 @@ public class TransaccionService {
                 cashback.setFecha(gasto.getFecha());
                 cashback.setDescripcion(descripcionCashback(gasto));
                 Transaccion guardado = transaccionRepository.save(cashback);
+                libroDiarioService.registrarActualizacion(
+                        gasto.getUsuario().getId(), antes, TransaccionResponse.fromEntity(guardado)
+                );
                 auditoriaService.registrar(gasto.getUsuario().getId(), guardado.getId(), "ACTUALIZAR", antes,
                         TransaccionResponse.fromEntity(guardado));
             }
@@ -383,6 +397,9 @@ public class TransaccionService {
 
         for (Transaccion cashbackObsoleto : cashbackPorGasto.values()) {
             cambioSaldo = cambioSaldo.subtract(cashbackObsoleto.getMonto());
+            libroDiarioService.registrarEliminacion(
+                    cashbackObsoleto.getUsuario().getId(), TransaccionResponse.fromEntity(cashbackObsoleto)
+            );
             auditoriaService.registrar(cashbackObsoleto.getUsuario().getId(), cashbackObsoleto.getId(), "ELIMINAR",
                     TransaccionResponse.fromEntity(cashbackObsoleto), null);
             transaccionRepository.delete(cashbackObsoleto);
@@ -399,6 +416,9 @@ public class TransaccionService {
             Cuenta cuenta = cashback.getCuenta();
             cuenta.setSaldoActual(cuenta.getSaldoActual().subtract(cashback.getMonto()));
             cuentaRepository.save(cuenta);
+            libroDiarioService.registrarEliminacion(
+                    cashback.getUsuario().getId(), TransaccionResponse.fromEntity(cashback)
+            );
             auditoriaService.registrar(cashback.getUsuario().getId(), cashback.getId(), "ELIMINAR",
                     TransaccionResponse.fromEntity(cashback), null);
             transaccionRepository.delete(cashback);
@@ -576,6 +596,7 @@ public class TransaccionService {
             cuentaRepository.save(cuentaOrigen);
         }
 
+        libroDiarioService.registrarEliminacion(usuarioId, antes);
         auditoriaService.registrar(usuarioId, transaccion.getId(), "ELIMINAR", antes, null);
         transaccionRepository.delete(transaccion);
         if (eraGasto) {
