@@ -6,6 +6,7 @@ import com.gestionfinanzas.model.entity.Categoria;
 import com.gestionfinanzas.model.entity.Cuenta;
 import com.gestionfinanzas.model.entity.Transaccion;
 import com.gestionfinanzas.model.entity.Usuario;
+import com.gestionfinanzas.dto.response.TransaccionResponse;
 import com.gestionfinanzas.model.entity.PlantillaRecurrente;
 import com.gestionfinanzas.model.enums.TipoCuenta;
 import com.gestionfinanzas.model.enums.FrecuenciaRecurrencia;
@@ -29,6 +30,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -41,8 +44,10 @@ class TransaccionServiceTest {
     private final CategoriaRepository categoriaRepository = mock(CategoriaRepository.class);
     private final PlantillaRecurrenteRepository plantillaRepository = mock(PlantillaRecurrenteRepository.class);
     private final UsuarioRepository usuarioRepository = mock(UsuarioRepository.class);
+    private final AuditoriaTransaccionService auditoriaService = mock(AuditoriaTransaccionService.class);
     private final TransaccionService transaccionService = new TransaccionService(
-            transaccionRepository, cuentaRepository, categoriaRepository, usuarioRepository, plantillaRepository
+            transaccionRepository, cuentaRepository, categoriaRepository, usuarioRepository, plantillaRepository,
+            auditoriaService
     );
 
     @Test
@@ -67,6 +72,9 @@ class TransaccionServiceTest {
         assertEquals(new BigDecimal("17.50"), response.tasaCambio());
         assertEquals("USD", response.moneda());
         assertEquals("MXN", response.monedaDestino());
+        verify(auditoriaService).registrar(
+                eq(7L), isNull(), eq("CREAR"), isNull(), any(TransaccionResponse.class)
+        );
     }
 
     @Test

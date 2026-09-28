@@ -140,8 +140,20 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   await page.getByLabel(/Contraseña/).fill('Pruebas123');
   await page.getByRole('button', { name: 'Crear mi Cuenta' }).click();
   await expect(page).toHaveURL(/\/dashboard$/);
-  await page.setViewportSize({ width: 1280, height: 900 });
   await expect(page.getByRole('heading', { name: 'Resumen Financiero' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Comparación de gastos' })).toBeVisible();
+  const mobileDashboardSummary = page.getByRole('region', { name: 'Resumen financiero por moneda' });
+  const mobileDashboardIncomeCard = mobileDashboardSummary.getByText('Ingresos del mes').locator('xpath=ancestor::article[1]');
+  const mobileDashboardExpenseCard = mobileDashboardSummary.getByText('Gastos del mes').locator('xpath=ancestor::article[1]');
+  const [mobileIncomeBounds, mobileExpenseBounds] = await Promise.all([
+    mobileDashboardIncomeCard.boundingBox(),
+    mobileDashboardExpenseCard.boundingBox()
+  ]);
+  expect(mobileIncomeBounds).not.toBeNull();
+  expect(mobileExpenseBounds).not.toBeNull();
+  expect(mobileExpenseBounds!.y).toBeGreaterThan(mobileIncomeBounds!.y + mobileIncomeBounds!.height);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+  await page.setViewportSize({ width: 1280, height: 900 });
   await expect(page.getByText('Hola, Usuario E2E.')).toBeVisible();
   const dashboardDate = page.getByLabel('Fecha actual');
   await expect(dashboardDate).toBeVisible();
@@ -155,7 +167,7 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   const desktopNavigation = page.getByRole('navigation', { name: 'Navegación de escritorio' });
   await expect(desktopNavigation.getByRole('link', { name: 'Movimientos' })).toHaveCount(0);
   await expect(desktopNavigation.getByRole('link', { name: 'Asistente IA' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Ver asistente' })).toBeVisible();
+  await expect(page.getByText(/Consulta tus finanzas y solicita movimientos o presupuestos/)).toHaveCount(0);
   const recentTransactionsSection = page.getByRole('region', { name: 'Últimos movimientos' });
   const recentHeadingBounds = await recentTransactionsSection.getByRole('heading', { name: 'Últimos movimientos' }).boundingBox();
   const viewMoreBounds = await recentTransactionsSection.getByRole('button', { name: 'Ver más' }).boundingBox();
@@ -164,9 +176,14 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   expect(Math.abs(recentHeadingBounds!.y + recentHeadingBounds!.height / 2 - (viewMoreBounds!.y + viewMoreBounds!.height / 2)))
     .toBeLessThanOrEqual(2);
   await page.screenshot({ path: 'test-results/capturas/dashboard-transacciones-recientes.png', fullPage: true });
-  await page.getByRole('button', { name: 'Ver asistente' }).click();
+  await expect(page.getByText('Disponible', { exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Ver asistente' })).toHaveCount(0);
+  await desktopNavigation.getByRole('link', { name: 'Asistente IA' }).click();
   await expect(page.getByRole('heading', { name: 'Asistente IA' })).toBeVisible();
-  await expect(page.getByText('En preparación')).toBeVisible();
+  await expect(page.getByRole('status')).not.toContainText('Conectando con Gemini');
+  await expect(page.getByRole('status')).toContainText(
+    /Gemini está listo|No se pudo verificar Gemini|Gemini no está configurado/
+  );
   await page.screenshot({ path: 'test-results/capturas/asistente-ia-escritorio.png', fullPage: true });
   await page.getByRole('link', { name: 'Panel General' }).click();
   await page.getByRole('button', { name: 'Ver más' }).click();
@@ -188,9 +205,14 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   expect(profileBounds!.y).toBe(logoutBounds!.y);
   expect(profileBounds!.x).toBeGreaterThan(brandBounds!.x + brandBounds!.width / 2);
   expect(profileBounds!.y).toBeLessThan(80);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.getByRole('button', { name: 'Nuevo Movimiento' }).click();
   const movementDialog = page.getByRole('dialog', { name: 'Registrar Movimiento' });
   await expect(movementDialog).toBeVisible();
+  await expect.poll(() => movementDialog.evaluate(element => getComputedStyle(element).animationName))
+    .toBe('none');
+  await expect.poll(() => movementDialog.getByRole('button', { name: 'Cancelar' })
+    .evaluate(element => getComputedStyle(element).transitionDuration)).toBe('0s');
   const movementDialogBounds = await movementDialog.boundingBox();
   expect(movementDialogBounds).not.toBeNull();
   expect(movementDialogBounds!.x).toBeGreaterThanOrEqual(0);
@@ -203,6 +225,7 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   expect(Math.abs(cancelButtonBounds!.width - saveButtonBounds!.width)).toBeLessThan(1);
   await movementDialog.getByRole('button', { name: 'Cerrar formulario de movimiento' }).click();
   await expect(movementDialog).toBeHidden();
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
   const mobileNavigation = page.getByRole('navigation', { name: 'Navegación principal' });
   await expect(mobileNavigation).toBeVisible();
   await expect(mobileNavigation).toHaveCSS('position', 'fixed');
@@ -254,6 +277,8 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
 
   await page.getByRole('link', { name: 'Perfil', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Configuración', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Respaldo de tus datos' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Descargar respaldo' })).toBeVisible();
   await page.setViewportSize({ width: 320, height: 740 });
   await expect(page.getByLabel('Nombre', { exact: true })).toBeVisible();
   await expect(page.getByLabel('Correo electrónico')).toBeVisible();
@@ -335,6 +360,29 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   }));
 
   await page.getByRole('link', { name: 'Perfil', exact: true }).click();
+  const historialSection = page.getByRole('region', { name: 'Historial de movimientos' });
+  await expect(historialSection.locator('article').first()).toBeVisible();
+  await expect(historialSection.getByText('Creado', { exact: true }).first()).toBeVisible();
+  const sessionToken = await page.evaluate(() => localStorage.getItem('finanzas_token'));
+  expect(sessionToken).not.toBeNull();
+  const respaldoResponse = await page.request.get('http://localhost:18080/api/perfil/respaldo', {
+    headers: { Authorization: `Bearer ${sessionToken}` }
+  });
+  expect(respaldoResponse.ok()).toBeTruthy();
+  expect(respaldoResponse.headers()['cache-control']).toContain('no-store');
+  const respaldo = await respaldoResponse.json() as {
+    perfil: Record<string, unknown>;
+    transacciones: Transaccion[];
+    historialMovimientos: Array<{ accion: string }>;
+  };
+  expect(respaldo.transacciones.length).toBeGreaterThan(0);
+  expect(respaldo.historialMovimientos.length).toBeGreaterThan(0);
+  expect(JSON.stringify(respaldo.perfil)).not.toContain('password');
+  const [respaldoDescargado] = await Promise.all([
+    page.waitForEvent('download'),
+    page.getByRole('button', { name: 'Descargar respaldo' }).click()
+  ]);
+  expect(respaldoDescargado.suggestedFilename()).toMatch(/^kaptal-respaldo-\d{4}-\d{2}-\d{2}\.json$/);
   await page.getByRole('link', { name: 'Administrar categorías' }).click();
   await page.getByRole('button', { name: '+ Nueva categoría' }).click();
   await page.getByLabel('Nombre', { exact: true }).fill('E2E Pruebas');
@@ -678,7 +726,10 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   await page.getByLabel('Moneda de la analítica').selectOption('USD');
   await expect(page.getByText('No hay gastos registrados este mes.')).toBeVisible();
   await page.getByLabel('Moneda de la analítica').selectOption('MXN');
-  await expect(page.locator('[aria-label*="ingresos"]')).toHaveCount(6);
+  const monthlyAnalyticsTable = page.getByRole('table', {
+    name: /Ingresos y gastos de los últimos seis meses/
+  });
+  await expect(monthlyAnalyticsTable.getByRole('row')).toHaveCount(7);
   await page.screenshot({ path: 'test-results/capturas/dashboard-analitica.png', fullPage: true });
 
   await page.getByRole('link', { name: 'Presupuestos' }).click();
@@ -833,16 +884,16 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
 
   await page.getByRole('link', { name: 'Cuentas' }).click();
   await page.getByRole('button', { name: '+ Agregar cuenta' }).click();
+  await selectOptionContaining(page.getByLabel('Tipo de cuenta'), 'Crédito');
   await page.evaluate(() => document.documentElement.classList.add('dark'));
   const cashbackSettings = page.locator('.cashback-benefit-panel');
   expect(await cashbackSettings.evaluate(element => getComputedStyle(element).backgroundColor))
     .toBe('rgb(30, 41, 59)');
   await page.getByLabel('Nombre').fill('E2E Cashback');
   await selectOptionContaining(page.getByLabel('Banco o institución (opcional)'), 'Santander');
-  await selectOptionContaining(page.getByLabel('Tipo de cuenta'), 'Crédito');
   const creditCardSettings = page.locator('.credit-card-settings');
   expect(await creditCardSettings.evaluate(element => getComputedStyle(element).backgroundColor))
-    .toBe('rgb(30, 41, 59)');
+    .toBe('rgb(12, 35, 58)');
   await page.getByLabel('Límite de crédito').fill('1000');
   await page.getByLabel('Deuda actual').fill('0');
   await page.getByLabel('Día de corte').fill('10');

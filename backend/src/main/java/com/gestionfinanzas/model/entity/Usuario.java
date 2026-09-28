@@ -40,6 +40,10 @@ public class Usuario {
     @Builder.Default
     private boolean activo = true;
 
+    @Column(name = "token_version", nullable = false, columnDefinition = "integer not null default 0")
+    @Builder.Default
+    private int tokenVersion = 0;
+
     @Column(name = "tema_preferido", nullable = false, length = 10, columnDefinition = "varchar(10) not null default 'CLARO'")
     @Builder.Default
     private String temaPreferido = "CLARO";

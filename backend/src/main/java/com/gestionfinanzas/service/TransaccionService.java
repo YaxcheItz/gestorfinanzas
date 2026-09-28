@@ -43,6 +43,7 @@ public class TransaccionService {
     private final CategoriaRepository categoriaRepository;
     private final UsuarioRepository usuarioRepository;
     private final PlantillaRecurrenteRepository plantillaRepository;
+    private final AuditoriaTransaccionService auditoriaService;
 
     @Transactional
     public TransaccionResponse crearTransaccion(Long usuarioId, TransaccionRequest request) {
@@ -71,6 +72,8 @@ public class TransaccionService {
                 .build();
 
         Transaccion guardada = transaccionRepository.save(transaccion);
+        auditoriaService.registrar(usuarioId, guardada.getId(), "CREAR", null,
+                TransaccionResponse.fromEntity(guardada));
         if (guardada.getTipo() == TipoTransaccion.GASTO) {
             recalcularCashbackMes(guardada.getCuenta(), guardada.getFecha());
         }
@@ -104,6 +107,7 @@ public class TransaccionService {
             throw new IllegalArgumentException("No se puede editar un movimiento cuyo historial pertenece a una cuenta eliminada");
         }
 
+        TransaccionResponse antes = TransaccionResponse.fromEntity(transaccion);
         Cuenta cuentaAnterior = transaccion.getCuenta();
         LocalDate fechaAnterior = transaccion.getFecha();
         TipoTransaccion tipoAnterior = transaccion.getTipo();
@@ -133,6 +137,8 @@ public class TransaccionService {
         transaccion.setNotas(normalizarNotas(request.notas()));
 
         Transaccion actualizada = transaccionRepository.save(transaccion);
+        auditoriaService.registrar(usuarioId, actualizada.getId(), "ACTUALIZAR", antes,
+                TransaccionResponse.fromEntity(actualizada));
         if (tipoAnterior == TipoTransaccion.GASTO) {
             recalcularCashbackMes(cuentaAnterior, fechaAnterior);
         }
@@ -340,6 +346,8 @@ public class TransaccionService {
             if (montoCashback.compareTo(BigDecimal.ZERO) == 0) {
                 if (cashback != null) {
                     cambioSaldo = cambioSaldo.subtract(cashback.getMonto());
+                    auditoriaService.registrar(gasto.getUsuario().getId(), cashback.getId(), "ELIMINAR",
+                            TransaccionResponse.fromEntity(cashback), null);
                     transaccionRepository.delete(cashback);
                 }
                 continue;
@@ -358,17 +366,25 @@ public class TransaccionService {
                         .cashbackOrigen(gasto)
                         .build();
                 cambioSaldo = cambioSaldo.add(montoCashback);
+                cashback = transaccionRepository.save(cashback);
+                auditoriaService.registrar(gasto.getUsuario().getId(), cashback.getId(), "CREAR", null,
+                        TransaccionResponse.fromEntity(cashback));
             } else {
+                TransaccionResponse antes = TransaccionResponse.fromEntity(cashback);
                 cambioSaldo = cambioSaldo.add(montoCashback.subtract(cashback.getMonto()));
                 cashback.setMonto(montoCashback);
                 cashback.setFecha(gasto.getFecha());
                 cashback.setDescripcion(descripcionCashback(gasto));
+                Transaccion guardado = transaccionRepository.save(cashback);
+                auditoriaService.registrar(gasto.getUsuario().getId(), guardado.getId(), "ACTUALIZAR", antes,
+                        TransaccionResponse.fromEntity(guardado));
             }
-            transaccionRepository.save(cashback);
         }
 
         for (Transaccion cashbackObsoleto : cashbackPorGasto.values()) {
             cambioSaldo = cambioSaldo.subtract(cashbackObsoleto.getMonto());
+            auditoriaService.registrar(cashbackObsoleto.getUsuario().getId(), cashbackObsoleto.getId(), "ELIMINAR",
+                    TransaccionResponse.fromEntity(cashbackObsoleto), null);
             transaccionRepository.delete(cashbackObsoleto);
         }
 
@@ -383,6 +399,8 @@ public class TransaccionService {
             Cuenta cuenta = cashback.getCuenta();
             cuenta.setSaldoActual(cuenta.getSaldoActual().subtract(cashback.getMonto()));
             cuentaRepository.save(cuenta);
+            auditoriaService.registrar(cashback.getUsuario().getId(), cashback.getId(), "ELIMINAR",
+                    TransaccionResponse.fromEntity(cashback), null);
             transaccionRepository.delete(cashback);
         });
     }
@@ -516,6 +534,7 @@ public class TransaccionService {
     public void eliminarTransaccion(Long usuarioId, Long transaccionId) {
         Transaccion transaccion = transaccionRepository.findByIdAndUsuarioId(transaccionId, usuarioId)
                 .orElseThrow(() -> new IllegalArgumentException("Transacción no encontrada o no autorizada"));
+        TransaccionResponse antes = TransaccionResponse.fromEntity(transaccion);
         if (transaccion.getCashbackOrigen() != null) {
             throw new IllegalArgumentException("El cashback automático se elimina junto con el gasto que lo generó");
         }
@@ -557,6 +576,7 @@ public class TransaccionService {
             cuentaRepository.save(cuentaOrigen);
         }
 
+        auditoriaService.registrar(usuarioId, transaccion.getId(), "ELIMINAR", antes, null);
         transaccionRepository.delete(transaccion);
         if (eraGasto) {
             recalcularCashbackMes(cuentaOrigen, fechaGastoEliminado);
