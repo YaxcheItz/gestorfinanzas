@@ -3,6 +3,12 @@ import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ApiResponse } from '../models/auth.models';
 import {
+  AiChatMessage,
+  AiChatResponse,
+  AiConnectionStatus,
+  AiVerificationResult
+} from '../models/ai.models';
+import {
   Categoria,
   CategoriaPayload,
   Cuenta,
@@ -26,6 +32,25 @@ import { getApiBaseUrl } from './api-base-url';
 export class FinanzasService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = getApiBaseUrl();
+
+  getAiConnectionStatus(): Observable<ApiResponse<AiConnectionStatus>> {
+    return this.http.get<ApiResponse<AiConnectionStatus>>(`${this.baseUrl}/asistente/estado`);
+  }
+
+  verifyAiConnection(): Observable<ApiResponse<AiVerificationResult>> {
+    return this.http.post<ApiResponse<AiVerificationResult>>(`${this.baseUrl}/asistente/verificar`, {});
+  }
+
+  chatWithAi(messages: AiChatMessage[]): Observable<ApiResponse<AiChatResponse>> {
+    return this.http.post<ApiResponse<AiChatResponse>>(`${this.baseUrl}/asistente/chat`, { messages });
+  }
+
+  confirmAiAction(proposalId: string): Observable<ApiResponse<{ completed: boolean }>> {
+    return this.http.post<ApiResponse<{ completed: boolean }>>(
+      `${this.baseUrl}/asistente/acciones/${encodeURIComponent(proposalId)}/confirmar`,
+      {}
+    );
+  }
 
   // --- Cuentas ---
   getCuentas(incluirInactivas = false): Observable<ApiResponse<Cuenta[]>> {
