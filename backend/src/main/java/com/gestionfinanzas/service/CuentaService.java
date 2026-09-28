@@ -5,7 +5,6 @@ import com.gestionfinanzas.dto.response.CuentaResponse;
 import com.gestionfinanzas.dto.response.TransaccionResponse;
 import com.gestionfinanzas.model.entity.Cuenta;
 import com.gestionfinanzas.model.entity.Transaccion;
-import com.gestionfinanzas.model.entity.Transaccion;
 import com.gestionfinanzas.model.entity.Usuario;
 import com.gestionfinanzas.model.enums.TipoCuenta;
 import com.gestionfinanzas.model.enums.TipoTransaccion;
@@ -32,6 +31,7 @@ public class CuentaService {
     private final TransaccionRepository transaccionRepository;
     private final PlantillaRecurrenteRepository plantillaRepository;
     private final AuditoriaTransaccionService auditoriaService;
+    private final LibroDiarioService libroDiarioService;
 
     private static final Set<String> MONEDAS_DISPONIBLES = Set.of("MXN", "USD", "CAD", "EUR", "GBP");
 
@@ -94,8 +94,12 @@ public class CuentaService {
                     .fecha(LocalDate.now())
                     .descripcion("Saldo inicial")
                     .build());
+            var movimientoInicial = TransaccionResponse.fromEntity(saldoInicialRegistrado);
+            libroDiarioService.registrarSaldoInicial(
+                    usuarioId, movimientoInicial, guardada.getSaldoActual().signum() < 0
+            );
             auditoriaService.registrar(usuarioId, saldoInicialRegistrado.getId(), "CREAR", null,
-                    TransaccionResponse.fromEntity(saldoInicialRegistrado));
+                    movimientoInicial);
         }
         return CuentaResponse.fromEntity(guardada);
     }

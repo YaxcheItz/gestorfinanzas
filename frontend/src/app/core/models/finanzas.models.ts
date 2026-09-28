@@ -90,6 +90,30 @@ export interface AuditoriaTransaccion {
   fechaEvento: string;
 }
 
+export type LadoContable = 'DEBE' | 'HABER';
+
+export interface LineaAsientoContable {
+  id: number;
+  codigoCuenta: string;
+  nombreCuenta: string;
+  monto: number;
+  moneda: string;
+  lado: LadoContable;
+  cuentaFinancieraId: number | null;
+  categoriaId: number | null;
+}
+
+export interface AsientoContable {
+  id: number;
+  transaccionOrigenId: number;
+  tipoEvento: 'CREACION' | 'SALDO_INICIAL' | 'ACTUALIZACION' | 'ELIMINACION';
+  fechaOperacion: string;
+  descripcion: string;
+  tasaCambio: number | null;
+  fechaCreacion: string;
+  lineas: LineaAsientoContable[];
+}
+
 export interface TransaccionPayload {
   cuentaId: number;
   cuentaDestinoId?: number | null;
