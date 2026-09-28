@@ -173,6 +173,28 @@ class TransaccionServiceTest {
     }
 
     @Test
+    void exportaNombreHistoricoDeCuentaEliminada() {
+        Usuario usuario = Usuario.builder().id(7L).build();
+        Transaccion transaccion = Transaccion.builder()
+                .id(21L)
+                .usuario(usuario)
+                .cuenta(null)
+                .cuentaNombreHistorico("Ahorro universidad")
+                .cuentaMonedaHistorica("MXN")
+                .tipo(TipoTransaccion.GASTO)
+                .monto(new BigDecimal("25.00"))
+                .fecha(LocalDate.of(2026, 9, 26))
+                .descripcion("Libros")
+                .build();
+        when(transaccionRepository.findAll(any(Specification.class), any(Sort.class)))
+                .thenReturn(List.of(transaccion));
+
+        String csv = transaccionService.exportarCsv(7L, null);
+
+        assertTrue(csv.contains("\"Ahorro universidad\",\"MXN\""));
+    }
+
+    @Test
     void categoriaDebeCoincidirConTipoAntesDeActualizarSaldo() {
         Usuario usuario = Usuario.builder().id(7L).build();
         Cuenta cuenta = cuenta(1L, usuario, "MXN", "100.00");
@@ -255,6 +277,144 @@ class TransaccionServiceTest {
         assertEquals(new BigDecimal("1.00"), cashback.getMonto());
         assertEquals(11L, cashback.getCashbackOrigen().getId());
         assertEquals("Cashback · Gasto sin categoría", cashback.getDescripcion());
+    }
+
+    @Test
+    void gastoEnTarjetaDeCreditoReduceSaldoYNoExcedeDisponible() {
+        Usuario usuario = Usuario.builder().id(7L).build();
+        Cuenta tarjeta = cuenta(1L, usuario, "MXN", "0.00");
+        tarjeta.setTipo(TipoCuenta.CREDITO);
+        tarjeta.setLimiteCredito(new BigDecimal("1000.00"));
+        when(usuarioRepository.findById(7L)).thenReturn(Optional.of(usuario));
+        when(cuentaRepository.findByIdAndUsuarioId(1L, 7L)).thenReturn(Optional.of(tarjeta));
+        when(transaccionRepository.save(any(Transaccion.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        transaccionService.crearTransaccion(7L, new TransaccionRequest(
+                1L, null, null, TipoTransaccion.GASTO, new BigDecimal("750.00"),
+                null, LocalDate.now(), "Compra", null, null, null
+        ));
+
+        assertEquals(new BigDecimal("-750.00"), tarjeta.getSaldoActual());
+    }
+
+    @Test
+    void ingresosYGastosAjustanSaldosDeDebitoAhorroEInversion() {
+        Usuario usuario = Usuario.builder().id(7L).build();
+        Cuenta debito = cuenta(1L, usuario, "MXN", "100.00");
+        Cuenta ahorro = cuenta(2L, usuario, "MXN", "200.00");
+        ahorro.setTipo(TipoCuenta.AHORRO);
+        Cuenta inversion = cuenta(3L, usuario, "MXN", "300.00");
+        inversion.setTipo(TipoCuenta.INVERSION);
+        when(usuarioRepository.findById(7L)).thenReturn(Optional.of(usuario));
+        when(cuentaRepository.findByIdAndUsuarioId(1L, 7L)).thenReturn(Optional.of(debito));
+        when(cuentaRepository.findByIdAndUsuarioId(2L, 7L)).thenReturn(Optional.of(ahorro));
+        when(cuentaRepository.findByIdAndUsuarioId(3L, 7L)).thenReturn(Optional.of(inversion));
+        when(transaccionRepository.save(any(Transaccion.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        transaccionService.crearTransaccion(7L, new TransaccionRequest(
+                1L, null, null, TipoTransaccion.GASTO, new BigDecimal("25.00"),
+                null, LocalDate.now(), "Gasto débito", null, null, null
+        ));
+        transaccionService.crearTransaccion(7L, new TransaccionRequest(
+                1L, null, null, TipoTransaccion.INGRESO, new BigDecimal("50.00"),
+                null, LocalDate.now(), "Ingreso débito", null, null, null
+        ));
+        transaccionService.crearTransaccion(7L, new TransaccionRequest(
+                2L, null, null, TipoTransaccion.GASTO, new BigDecimal("30.00"),
+                null, LocalDate.now(), "Gasto ahorro", null, null, null
+        ));
+        transaccionService.crearTransaccion(7L, new TransaccionRequest(
+                2L, null, null, TipoTransaccion.INGRESO, new BigDecimal("20.00"),
+                null, LocalDate.now(), "Ingreso ahorro", null, null, null
+        ));
+        transaccionService.crearTransaccion(7L, new TransaccionRequest(
+                3L, null, null, TipoTransaccion.GASTO, new BigDecimal("100.00"),
+                null, LocalDate.now(), "Gasto inversión", null, null, null
+        ));
+        transaccionService.crearTransaccion(7L, new TransaccionRequest(
+                3L, null, null, TipoTransaccion.INGRESO, new BigDecimal("75.00"),
+                null, LocalDate.now(), "Ingreso inversión", null, null, null
+        ));
+
+        assertEquals(new BigDecimal("125.00"), debito.getSaldoActual());
+        assertEquals(new BigDecimal("190.00"), ahorro.getSaldoActual());
+        assertEquals(new BigDecimal("275.00"), inversion.getSaldoActual());
+        verify(cuentaRepository, org.mockito.Mockito.atLeast(6)).save(any(Cuenta.class));
+    }
+
+    @Test
+    void ingresoEnTarjetaReduceLaDeudaDespuesDeUnGasto() {
+        Usuario usuario = Usuario.builder().id(7L).build();
+        Cuenta tarjeta = cuenta(1L, usuario, "MXN", "-250.00");
+        tarjeta.setTipo(TipoCuenta.CREDITO);
+        tarjeta.setLimiteCredito(new BigDecimal("1000.00"));
+        when(usuarioRepository.findById(7L)).thenReturn(Optional.of(usuario));
+        when(cuentaRepository.findByIdAndUsuarioId(1L, 7L)).thenReturn(Optional.of(tarjeta));
+        when(transaccionRepository.save(any(Transaccion.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        transaccionService.crearTransaccion(7L, new TransaccionRequest(
+                1L, null, null, TipoTransaccion.GASTO, new BigDecimal("400.00"),
+                null, LocalDate.now(), "Compra", null, null, null
+        ));
+        assertEquals(new BigDecimal("-650.00"), tarjeta.getSaldoActual());
+
+        transaccionService.crearTransaccion(7L, new TransaccionRequest(
+                1L, null, null, TipoTransaccion.INGRESO, new BigDecimal("250.00"),
+                null, LocalDate.now(), "Pago de tarjeta", null, null, null
+        ));
+
+        assertEquals(new BigDecimal("-400.00"), tarjeta.getSaldoActual());
+    }
+
+    @Test
+    void gastoQueExcedeCreditoDisponibleSeRechazaAntesDeGuardar() {
+        Usuario usuario = Usuario.builder().id(7L).build();
+        Cuenta tarjeta = cuenta(1L, usuario, "MXN", "-900.00");
+        tarjeta.setTipo(TipoCuenta.CREDITO);
+        tarjeta.setLimiteCredito(new BigDecimal("1000.00"));
+        when(usuarioRepository.findById(7L)).thenReturn(Optional.of(usuario));
+        when(cuentaRepository.findByIdAndUsuarioId(1L, 7L)).thenReturn(Optional.of(tarjeta));
+
+        assertEquals("El movimiento supera el crédito disponible de la tarjeta (100.00)",
+                assertThrows(IllegalArgumentException.class, () -> transaccionService.crearTransaccion(
+                        7L, new TransaccionRequest(
+                                1L, null, null, TipoTransaccion.GASTO, new BigDecimal("100.01"),
+                                null, LocalDate.now(), "Compra", null, null, null
+                        )
+                )).getMessage());
+
+        assertEquals(new BigDecimal("-900.00"), tarjeta.getSaldoActual());
+        verify(transaccionRepository, never()).save(any(Transaccion.class));
+        verify(cuentaRepository, never()).save(any(Cuenta.class));
+    }
+
+    @Test
+    void editarGastoValidaDisponibleTrasRevertirElGastoAnterior() {
+        Usuario usuario = Usuario.builder().id(7L).build();
+        Cuenta tarjeta = cuenta(1L, usuario, "MXN", "-900.00");
+        tarjeta.setTipo(TipoCuenta.CREDITO);
+        tarjeta.setLimiteCredito(new BigDecimal("1000.00"));
+        Transaccion gasto = Transaccion.builder()
+                .id(15L).usuario(usuario).cuenta(tarjeta)
+                .tipo(TipoTransaccion.GASTO).monto(new BigDecimal("900.00"))
+                .fecha(LocalDate.now()).descripcion("Compra original").build();
+        when(transaccionRepository.findByIdAndUsuarioId(15L, 7L)).thenReturn(Optional.of(gasto));
+        when(usuarioRepository.findById(7L)).thenReturn(Optional.of(usuario));
+        when(cuentaRepository.findByIdAndUsuarioId(1L, 7L)).thenReturn(Optional.of(tarjeta));
+
+        assertThrows(IllegalArgumentException.class, () -> transaccionService.actualizarTransaccion(
+                7L, 15L, new TransaccionRequest(
+                        1L, null, null, TipoTransaccion.GASTO, new BigDecimal("1000.01"),
+                        null, LocalDate.now(), "Compra corregida", null, null, null
+                )
+        ));
+
+        assertEquals(new BigDecimal("-900.00"), tarjeta.getSaldoActual());
+        verify(transaccionRepository, never()).save(any(Transaccion.class));
+        verify(cuentaRepository, never()).save(any(Cuenta.class));
     }
 
     @Test

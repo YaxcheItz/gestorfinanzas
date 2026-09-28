@@ -3,16 +3,21 @@ package com.gestionfinanzas.service;
 import com.gestionfinanzas.dto.response.DashboardGastoCategoriaResponse;
 import com.gestionfinanzas.dto.response.DashboardMesTipoTotal;
 import com.gestionfinanzas.dto.response.DashboardMonedaTotales;
+import com.gestionfinanzas.model.entity.Cuenta;
+import com.gestionfinanzas.model.enums.TipoCuenta;
 import com.gestionfinanzas.model.enums.TipoTransaccion;
 import com.gestionfinanzas.repository.CuentaRepository;
 import com.gestionfinanzas.repository.TransaccionRepository;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -22,6 +27,29 @@ class DashboardServiceTest {
     private final CuentaRepository cuentaRepository = mock(CuentaRepository.class);
     private final TransaccionRepository transaccionRepository = mock(TransaccionRepository.class);
     private final DashboardService dashboardService = new DashboardService(cuentaRepository, transaccionRepository);
+
+    @Test
+    void balanceTotalSumaSaldosActivosDeDebitoAhorroInversionYDeudaDeCreditoPorMoneda() {
+        Cuenta debito = cuenta(1L, TipoCuenta.DEBITO, "MXN", "1000.00");
+        Cuenta ahorro = cuenta(2L, TipoCuenta.AHORRO, "MXN", "2500.00");
+        Cuenta inversion = cuenta(3L, TipoCuenta.INVERSION, "MXN", "3000.00");
+        Cuenta tarjeta = cuenta(4L, TipoCuenta.CREDITO, "MXN", "-750.00");
+        when(cuentaRepository.findByUsuarioIdAndActivoTrue(7L))
+                .thenReturn(List.of(debito, ahorro, inversion, tarjeta));
+        when(transaccionRepository.findTotalesMensualesPorMoneda(
+                eq(7L), any(LocalDate.class), any(LocalDate.class)
+        )).thenReturn(List.of(
+                new DashboardMonedaTotales("MXN", BigDecimal.ZERO, BigDecimal.ZERO)
+        ));
+        when(transaccionRepository.findTop10ByUsuarioIdOrderByFechaDescIdDesc(7L)).thenReturn(List.of());
+
+        var resumen = dashboardService.obtenerResumen(7L, null, null);
+
+        assertEquals(new BigDecimal("5750.00"), resumen.balanceTotal());
+        assertEquals(4, resumen.totalCuentas());
+        assertEquals(new BigDecimal("5750.00"), resumen.resumenPorMoneda().get(0).balanceTotal());
+        assertEquals(4, resumen.resumenPorMoneda().get(0).totalCuentas());
+    }
 
     @Test
     void obtenerAnaliticaRetornaSeisMesesEnOrdenIncluyendoMesesSinMovimientos() {
@@ -69,5 +97,16 @@ class DashboardServiceTest {
         verify(transaccionRepository).findGastosPorCategoria(
                 usuarioId, TipoTransaccion.GASTO, mesActual.atDay(1), mesActual.atEndOfMonth()
         );
+    }
+
+    private Cuenta cuenta(Long id, TipoCuenta tipo, String moneda, String saldo) {
+        return Cuenta.builder()
+                .id(id)
+                .nombre("Cuenta " + id)
+                .tipo(tipo)
+                .moneda(moneda)
+                .saldoActual(new BigDecimal(saldo))
+                .activo(true)
+                .build();
     }
 }

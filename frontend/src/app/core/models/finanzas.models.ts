@@ -17,6 +17,9 @@ export interface Cuenta {
   institucionFinanciera?: string | null;
   cashbackPorcentaje?: number | null;
   cashbackLimiteMensual?: number | null;
+  limiteCredito?: number | null;
+  diaCorte?: number | null;
+  diaPago?: number | null;
   saldoActual: number;
   moneda: string;
   descripcion?: string;
@@ -30,6 +33,9 @@ export interface CuentaPayload {
   institucionFinanciera?: string;
   cashbackPorcentaje?: number;
   cashbackLimiteMensual?: number;
+  limiteCredito?: number;
+  diaCorte?: number;
+  diaPago?: number;
   saldoInicial?: number;
   moneda?: string;
   descripcion?: string;
@@ -54,7 +60,7 @@ export interface CategoriaPayload {
 
 export interface Transaccion {
   id: number;
-  cuentaId: number;
+  cuentaId: number | null;
   cuentaNombre: string;
   cuentaDestinoId?: number | null;
   cuentaDestinoNombre?: string | null;
