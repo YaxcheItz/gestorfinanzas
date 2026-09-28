@@ -47,6 +47,7 @@ public class PerfilService {
             throw new IllegalArgumentException("La nueva contraseña debe ser distinta a la actual");
         }
         usuario.setPasswordHash(passwordEncoder.encode(request.passwordNueva()));
+        usuario.setTokenVersion(usuario.getTokenVersion() + 1);
         usuarioRepository.save(usuario);
     }
 

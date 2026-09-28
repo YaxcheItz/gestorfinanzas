@@ -2,6 +2,8 @@ package com.gestionfinanzas.service;
 
 import com.gestionfinanzas.dto.response.DashboardResumenResponse;
 import com.gestionfinanzas.dto.response.DashboardAnaliticaResponse;
+import com.gestionfinanzas.dto.response.DashboardComparacionMonedaResponse;
+import com.gestionfinanzas.dto.response.DashboardComparacionResponse;
 import com.gestionfinanzas.dto.response.DashboardGastoCategoriaResponse;
 import com.gestionfinanzas.dto.response.DashboardMesResponse;
 import com.gestionfinanzas.dto.response.DashboardMesTipoTotal;
@@ -162,5 +164,65 @@ public class DashboardService {
         }
 
         return new DashboardAnaliticaResponse(gastosPorCategoria, ultimosSeisMeses);
+    }
+
+    @Transactional(readOnly = true)
+    public DashboardComparacionResponse obtenerComparacion(Long usuarioId, Integer mes, Integer anio) {
+        LocalDate hoy = LocalDate.now();
+        int mesConsulta = mes == null ? hoy.getMonthValue() : mes;
+        int anioConsulta = anio == null ? hoy.getYear() : anio;
+        if (mesConsulta < 1 || mesConsulta > 12 || anioConsulta < 2000 || anioConsulta > 2100) {
+            throw new IllegalArgumentException("El periodo solicitado no es válido");
+        }
+
+        YearMonth periodo = YearMonth.of(anioConsulta, mesConsulta);
+        YearMonth periodoAnterior = periodo.minusMonths(1);
+        Map<String, DashboardMonedaTotales> actuales = indexarTotales(
+                transaccionRepository.findTotalesMensualesPorMoneda(
+                        usuarioId, periodo.atDay(1), periodo.atEndOfMonth()
+                )
+        );
+        Map<String, DashboardMonedaTotales> anteriores = indexarTotales(
+                transaccionRepository.findTotalesMensualesPorMoneda(
+                        usuarioId, periodoAnterior.atDay(1), periodoAnterior.atEndOfMonth()
+                )
+        );
+
+        Set<String> monedas = new TreeSet<>(actuales.keySet());
+        monedas.addAll(anteriores.keySet());
+        cuentaRepository.findByUsuarioIdAndActivoTrue(usuarioId)
+                .forEach(cuenta -> monedas.add(cuenta.getMoneda()));
+
+        List<DashboardComparacionMonedaResponse> comparaciones = monedas.stream()
+                .map(moneda -> {
+                    DashboardMonedaTotales actual = actuales.get(moneda);
+                    DashboardMonedaTotales anterior = anteriores.get(moneda);
+                    BigDecimal ingresosActuales = actual == null ? BigDecimal.ZERO : actual.ingresos();
+                    BigDecimal gastosActuales = actual == null ? BigDecimal.ZERO : actual.gastos();
+                    BigDecimal ingresosAnteriores = anterior == null ? BigDecimal.ZERO : anterior.ingresos();
+                    BigDecimal gastosAnteriores = anterior == null ? BigDecimal.ZERO : anterior.gastos();
+                    BigDecimal variacion = gastosActuales.subtract(gastosAnteriores);
+                    BigDecimal porcentaje = gastosAnteriores.signum() == 0
+                            ? (gastosActuales.signum() == 0 ? BigDecimal.ZERO : null)
+                            : variacion.multiply(BigDecimal.valueOf(100))
+                                    .divide(gastosAnteriores, 2, RoundingMode.HALF_UP);
+                    return new DashboardComparacionMonedaResponse(
+                            moneda, ingresosActuales, gastosActuales, ingresosAnteriores,
+                            gastosAnteriores, variacion, porcentaje
+                    );
+                })
+                .toList();
+
+        return new DashboardComparacionResponse(
+                periodo.getMonthValue(), periodo.getYear(),
+                periodoAnterior.getMonthValue(), periodoAnterior.getYear(),
+                comparaciones
+        );
+    }
+
+    private Map<String, DashboardMonedaTotales> indexarTotales(List<DashboardMonedaTotales> totales) {
+        Map<String, DashboardMonedaTotales> porMoneda = new HashMap<>();
+        totales.forEach(total -> porMoneda.put(total.moneda(), total));
+        return porMoneda;
     }
 }

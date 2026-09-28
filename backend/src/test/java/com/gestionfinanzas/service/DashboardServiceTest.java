@@ -16,6 +16,8 @@ import java.time.YearMonth;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -97,6 +99,52 @@ class DashboardServiceTest {
         verify(transaccionRepository).findGastosPorCategoria(
                 usuarioId, TipoTransaccion.GASTO, mesActual.atDay(1), mesActual.atEndOfMonth()
         );
+    }
+
+    @Test
+    void comparaMesConAnteriorSinMezclarMonedasNiDividirEntreCero() {
+        when(transaccionRepository.findTotalesMensualesPorMoneda(
+                7L, LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 31)
+        )).thenReturn(List.of(new DashboardMonedaTotales(
+                "MXN", new BigDecimal("1000.00"), new BigDecimal("600.00")
+        )));
+        when(transaccionRepository.findTotalesMensualesPorMoneda(
+                7L, LocalDate.of(2024, 12, 1), LocalDate.of(2024, 12, 31)
+        )).thenReturn(List.of(new DashboardMonedaTotales(
+                "MXN", new BigDecimal("900.00"), new BigDecimal("500.00")
+        )));
+
+        var resultado = dashboardService.obtenerComparacion(7L, 1, 2025);
+
+        assertEquals(12, resultado.mesAnterior());
+        assertEquals(2024, resultado.anioAnterior());
+        var comparacion = resultado.porMoneda().get(0);
+        assertEquals("MXN", comparacion.moneda());
+        assertEquals(new BigDecimal("100.00"), comparacion.variacionGastos());
+        assertEquals(new BigDecimal("20.00"), comparacion.variacionGastosPorcentaje());
+    }
+
+    @Test
+    void noCalculaPorcentajeSiElPeriodoAnteriorNoTieneGastos() {
+        when(transaccionRepository.findTotalesMensualesPorMoneda(
+                7L, LocalDate.of(2025, 2, 1), LocalDate.of(2025, 2, 28)
+        )).thenReturn(List.of(new DashboardMonedaTotales(
+                "MXN", BigDecimal.ZERO, new BigDecimal("25.00")
+        )));
+        when(transaccionRepository.findTotalesMensualesPorMoneda(
+                7L, LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 31)
+        )).thenReturn(List.of());
+
+        var resultado = dashboardService.obtenerComparacion(7L, 2, 2025);
+
+        assertNull(resultado.porMoneda().get(0).variacionGastosPorcentaje());
+    }
+
+    @Test
+    void rechazaPeriodoInvalidoAntesDeConsultarMovimientos() {
+        assertThrows(IllegalArgumentException.class,
+                () -> dashboardService.obtenerComparacion(7L, 13, 2025));
+        org.mockito.Mockito.verifyNoInteractions(transaccionRepository);
     }
 
     private Cuenta cuenta(Long id, TipoCuenta tipo, String moneda, String saldo) {
