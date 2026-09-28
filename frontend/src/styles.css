@@ -255,6 +255,17 @@ html.dark .quick-category-editor {
   background-color: rgb(30 41 59);
 }
 
+html.dark .credit-card-settings {
+  border-color: rgb(3 105 161 / 0.7);
+  background-color: rgb(12 35 58);
+}
+
+html.dark .credit-card-settings input {
+  border-color: rgb(71 85 105);
+  background-color: rgb(15 23 42);
+  color: rgb(241 245 249);
+}
+
 html.dark .cashback-benefit-panel input,
 html.dark .quick-category-editor input:not([type='color']) {
   border-color: rgb(71 85 105);

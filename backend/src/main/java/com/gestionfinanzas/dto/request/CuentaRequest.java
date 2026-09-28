@@ -4,6 +4,8 @@ import com.gestionfinanzas.model.enums.TipoCuenta;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -29,6 +31,18 @@ public record CuentaRequest(
     @DecimalMin(value = "0.01", message = "El límite mensual debe ser mayor a 0")
     @Digits(integer = 13, fraction = 2, message = "El límite mensual debe tener hasta 2 decimales")
     BigDecimal cashbackLimiteMensual,
+
+    @DecimalMin(value = "0.01", message = "El límite de crédito debe ser mayor a 0")
+    @Digits(integer = 13, fraction = 2, message = "El límite de crédito debe tener hasta 2 decimales")
+    BigDecimal limiteCredito,
+
+    @Min(value = 1, message = "El día de corte debe estar entre 1 y 31")
+    @Max(value = 31, message = "El día de corte debe estar entre 1 y 31")
+    Integer diaCorte,
+
+    @Min(value = 1, message = "El día de pago debe estar entre 1 y 31")
+    @Max(value = 31, message = "El día de pago debe estar entre 1 y 31")
+    Integer diaPago,
 
     @DecimalMin(value = "0.00", message = "El saldo inicial no puede ser negativo")
     @Digits(integer = 13, fraction = 2, message = "El saldo inicial debe tener hasta 2 decimales")

@@ -60,6 +60,15 @@ public class CuentaController {
     }
 
     @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> eliminarCuenta(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        cuentaService.eliminarCuenta(userDetails.getId(), id);
+        return ResponseEntity.ok(ApiResponse.ok("Cuenta eliminada correctamente. El historial de movimientos se conservó", null));
+    }
+
+    @PatchMapping("/{id}/desactivar")
     public ResponseEntity<ApiResponse<Void>> desactivarCuenta(
             @PathVariable Long id,
             @AuthenticationPrincipal CustomUserDetails userDetails
