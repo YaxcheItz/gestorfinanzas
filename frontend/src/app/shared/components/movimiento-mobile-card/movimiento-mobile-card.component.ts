@@ -67,9 +67,9 @@ export class SwipeActionsDirective {
     <article
       appSwipeActions
       #actions="appSwipeActions"
-      [class.swipe-actions--no-edit]="movimiento.tipo === 'SALDO_INICIAL' || movimiento.cashbackAutomatico"
+      [class.swipe-actions--no-edit]="!puedeAdministrarse"
       class="swipe-actions relative rounded-2xl">
-      @if (!movimiento.cashbackAutomatico) {
+      @if (puedeAdministrarse) {
         <div
           class="swipe-actions__tray absolute inset-y-0 right-0 z-0 flex items-stretch gap-1 rounded-2xl bg-slate-100 p-1"
           [attr.aria-hidden]="!actions.isOpen">
@@ -151,9 +151,9 @@ export class SwipeActionsDirective {
 
             <div class="mt-3 flex items-center justify-between gap-2 border-t border-slate-100 pt-2">
               <p class="min-w-0 truncate text-xs text-slate-500">
-                {{ movimiento.cuentaNombre }}@if (movimiento.tipo === 'TRANSFERENCIA' && movimiento.cuentaDestinoNombre) { → {{ movimiento.cuentaDestinoNombre }}}
+                {{ movimiento.cuentaNombre }}@if (movimiento.cuentaId === null) { (cuenta eliminada) }@if (movimiento.tipo === 'TRANSFERENCIA' && movimiento.cuentaDestinoNombre) { → {{ movimiento.cuentaDestinoNombre }}@if (movimiento.cuentaDestinoId === null) { (eliminada) }}
               </p>
-              @if (!movimiento.cashbackAutomatico) {
+              @if (puedeAdministrarse) {
                 <button
                   type="button"
                   (click)="actions.toggle()"
@@ -179,6 +179,13 @@ export class MovimientoMobileCardComponent {
   @Input({ required: true }) movimiento!: Transaccion;
   @Output() editar = new EventEmitter<Transaccion>();
   @Output() eliminar = new EventEmitter<number>();
+
+  get puedeAdministrarse(): boolean {
+    return this.movimiento.cuentaId !== null
+      && (this.movimiento.tipo !== 'TRANSFERENCIA' || this.movimiento.cuentaDestinoId != null)
+      && this.movimiento.tipo !== 'SALDO_INICIAL'
+      && !this.movimiento.cashbackAutomatico;
+  }
 
   get fechaFormateada(): string {
     const fecha = new Date(`${this.movimiento.fecha}T00:00:00Z`);

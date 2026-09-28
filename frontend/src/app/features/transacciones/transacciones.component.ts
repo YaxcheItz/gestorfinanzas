@@ -7,6 +7,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { CategoriaSelectorComponent } from '../../shared/components/categoria-selector/categoria-selector.component';
 import { MovimientoMobileCardComponent } from '../../shared/components/movimiento-mobile-card/movimiento-mobile-card.component';
+import { resumenCuentaSelector } from '../../core/utils/cuenta-financiera';
 import {
   Categoria,
   Cuenta,
@@ -313,9 +314,9 @@ import {
                     </td>
                     <td class="px-6 py-4 text-xs font-medium text-slate-600">
                       @if (m.tipo === 'TRANSFERENCIA') {
-                        <span>{{ m.cuentaNombre }} &rarr; {{ m.cuentaDestinoNombre }}</span>
+                        <span>{{ m.cuentaNombre }}@if (m.cuentaId === null) { (cuenta eliminada) } &rarr; {{ m.cuentaDestinoNombre }}@if (m.cuentaDestinoId === null) { (eliminada) }</span>
                       } @else {
-                        <span>{{ m.cuentaNombre }}</span>
+                        <span>{{ m.cuentaNombre }}@if (m.cuentaId === null) { (cuenta eliminada) }</span>
                       }
                     </td>
                     <td class="px-6 py-4 text-xs text-slate-500 whitespace-nowrap">
@@ -336,7 +337,7 @@ import {
                       }
                     </td>
                     <td class="px-4 py-4 text-center">
-                      @if (m.tipo !== 'SALDO_INICIAL' && !m.cashbackAutomatico) {
+                      @if (m.cuentaId !== null && (m.tipo !== 'TRANSFERENCIA' || m.cuentaDestinoId != null) && m.tipo !== 'SALDO_INICIAL' && !m.cashbackAutomatico) {
                         <button
                           type="button"
                           (click)="abrirModalEditar(m)"
@@ -348,7 +349,7 @@ import {
                           </svg>
                         </button>
                       }
-                      @if (!m.cashbackAutomatico) {
+                      @if (m.cuentaId !== null && (m.tipo !== 'TRANSFERENCIA' || m.cuentaDestinoId != null) && !m.cashbackAutomatico) {
                         <button
                           type="button"
                           (click)="eliminarMovimiento(m.id)"
@@ -517,7 +518,7 @@ import {
                   name="cuentaId"
                   class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all cursor-pointer">
                   @for (c of cuentas(); track c.id) {
-                    <option [ngValue]="c.id">{{ c.nombre }} ({{ c.saldoActual | currency:c.moneda:'symbol':'1.2-2' }})</option>
+                    <option [ngValue]="c.id">{{ c.nombre }} ({{ resumenCuentaSelector(c) }})</option>
                   }
                 </select>
               </div>
@@ -535,7 +536,7 @@ import {
                     class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all cursor-pointer">
                     @for (c of cuentas(); track c.id) {
                       @if (c.id !== formCuentaId) {
-                        <option [ngValue]="c.id">{{ c.nombre }} ({{ c.saldoActual | currency:c.moneda:'symbol':'1.2-2' }})</option>
+                        <option [ngValue]="c.id">{{ c.nombre }} ({{ resumenCuentaSelector(c) }})</option>
                       }
                     }
                   </select>
@@ -667,6 +668,7 @@ export class TransaccionesComponent implements OnInit {
   private readonly finanzasService = inject(FinanzasService);
   private readonly toastService = inject(ToastService);
   private readonly confirmDialogService = inject(ConfirmDialogService);
+  readonly resumenCuentaSelector = resumenCuentaSelector;
 
   // Filtros Signals
   readonly filtroTipo = signal<TipoTransaccion | ''>('');
@@ -974,6 +976,12 @@ export class TransaccionesComponent implements OnInit {
   }
 
   abrirModalEditar(transaccion: Transaccion): void {
+    if (transaccion.cuentaId == null
+        || (transaccion.tipo === 'TRANSFERENCIA' && transaccion.cuentaDestinoId == null)) {
+      this.toastService.error('No se puede editar un movimiento cuyo historial pertenece a una cuenta eliminada.');
+      return;
+    }
+
     if (transaccion.tipo === 'SALDO_INICIAL') return;
     this.modoEdicion.set(true);
     this.transaccionEditando.set(transaccion);

@@ -9,6 +9,7 @@ import { ConfirmDialogService } from '../../core/services/confirm-dialog.service
 import { PerfilService } from '../../core/services/perfil.service';
 import { CategoriaSelectorComponent } from '../../shared/components/categoria-selector/categoria-selector.component';
 import { MovimientoMobileCardComponent } from '../../shared/components/movimiento-mobile-card/movimiento-mobile-card.component';
+import { resumenCuentaSelector } from '../../core/utils/cuenta-financiera';
 import {
   Categoria,
   Cuenta,
@@ -438,7 +439,7 @@ import {
                   class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all cursor-pointer">
                   @for (c of cuentas(); track c.id) {
                     <option [ngValue]="c.id">
-                      {{ c.nombre }} ({{ c.saldoActual | currency:c.moneda:'symbol':'1.2-2' }})
+                      {{ c.nombre }} ({{ resumenCuentaSelector(c) }})
                     </option>
                   }
                 </select>
@@ -458,7 +459,7 @@ import {
                     @for (c of cuentas(); track c.id) {
                       @if (c.id !== formCuentaId) {
                         <option [ngValue]="c.id">
-                          {{ c.nombre }} ({{ c.saldoActual | currency:c.moneda:'symbol':'1.2-2' }})
+                          {{ c.nombre }} ({{ resumenCuentaSelector(c) }})
                         </option>
                       }
                     }
@@ -592,6 +593,7 @@ export class DashboardComponent implements OnInit {
   private readonly toastService = inject(ToastService);
   private readonly confirmDialog = inject(ConfirmDialogService);
   private readonly perfilService = inject(PerfilService);
+  readonly resumenCuentaSelector = resumenCuentaSelector;
   private monedaPreferidaAplicada = false;
 
   readonly fechaActual = new Intl.DateTimeFormat('es-MX', {

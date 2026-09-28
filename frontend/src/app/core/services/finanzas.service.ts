@@ -42,6 +42,10 @@ export class FinanzasService {
   }
 
   desactivarCuenta(id: number): Observable<ApiResponse<void>> {
+    return this.http.patch<ApiResponse<void>>(`${this.baseUrl}/cuentas/${id}/desactivar`, {});
+  }
+
+  eliminarCuenta(id: number): Observable<ApiResponse<void>> {
     return this.http.delete<ApiResponse<void>>(`${this.baseUrl}/cuentas/${id}`);
   }
 

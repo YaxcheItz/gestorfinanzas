@@ -30,13 +30,25 @@ public class Transaccion {
     private Usuario usuario;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cuenta_id", nullable = false)
+    @JoinColumn(name = "cuenta_id")
     private Cuenta cuenta;
 
     // Solo se utiliza si tipo == TRANSFERENCIA (cuenta hacia donde va el dinero)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cuenta_destino_id")
     private Cuenta cuentaDestino;
+
+    @Column(name = "cuenta_nombre_historico", length = 100)
+    private String cuentaNombreHistorico;
+
+    @Column(name = "cuenta_moneda_historica", length = 10)
+    private String cuentaMonedaHistorica;
+
+    @Column(name = "cuenta_destino_nombre_historico", length = 100)
+    private String cuentaDestinoNombreHistorico;
+
+    @Column(name = "cuenta_destino_moneda_historica", length = 10)
+    private String cuentaDestinoMonedaHistorica;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "categoria_id")

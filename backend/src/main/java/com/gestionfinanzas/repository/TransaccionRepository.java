@@ -23,6 +23,8 @@ public interface TransaccionRepository extends JpaRepository<Transaccion, Long>,
 
     Optional<Transaccion> findByIdAndUsuarioId(Long id, Long usuarioId);
 
+    List<Transaccion> findByCuentaIdOrCuentaDestinoId(Long cuentaId, Long cuentaDestinoId);
+
     boolean existsByCuentaIdOrCuentaDestinoId(Long cuentaId, Long cuentaDestinoId);
 
     boolean existsByCategoriaId(Long categoriaId);
@@ -55,9 +57,10 @@ public interface TransaccionRepository extends JpaRepository<Transaccion, Long>,
     );
 
     @Query("SELECT COALESCE(SUM(t.monto), 0) FROM Transaccion t " +
+           "LEFT JOIN t.cuenta cuenta " +
            "WHERE t.usuario.id = :usuarioId AND t.categoria.id = :categoriaId " +
            "AND t.tipo = com.gestionfinanzas.model.enums.TipoTransaccion.GASTO " +
-           "AND t.cuenta.moneda = :moneda " +
+           "AND COALESCE(cuenta.moneda, t.cuentaMonedaHistorica) = :moneda " +
            "AND t.fecha BETWEEN :inicio AND :fin")
     BigDecimal sumGastosPorUsuarioYCategoriaYPeriodo(
             @Param("usuarioId") Long usuarioId,
@@ -68,11 +71,11 @@ public interface TransaccionRepository extends JpaRepository<Transaccion, Long>,
     );
 
     @Query("SELECT new com.gestionfinanzas.dto.response.DashboardGastoCategoriaResponse(" +
-           "c.id, COALESCE(c.nombre, 'Sin categoría'), c.color, SUM(t.monto), cuenta.moneda) " +
-           "FROM Transaccion t LEFT JOIN t.categoria c JOIN t.cuenta cuenta " +
+    "c.id, COALESCE(c.nombre, 'Sin categoría'), c.color, SUM(t.monto), COALESCE(cuenta.moneda, t.cuentaMonedaHistorica)) " +
+    "FROM Transaccion t LEFT JOIN t.categoria c LEFT JOIN t.cuenta cuenta " +
            "WHERE t.usuario.id = :usuarioId AND t.tipo = :tipo " +
            "AND t.fecha BETWEEN :inicio AND :fin " +
-           "GROUP BY c.id, c.nombre, c.color, cuenta.moneda ORDER BY SUM(t.monto) DESC")
+    "GROUP BY c.id, c.nombre, c.color, COALESCE(cuenta.moneda, t.cuentaMonedaHistorica) ORDER BY SUM(t.monto) DESC")
     List<DashboardGastoCategoriaResponse> findGastosPorCategoria(
             @Param("usuarioId") Long usuarioId,
             @Param("tipo") TipoTransaccion tipo,
@@ -81,11 +84,11 @@ public interface TransaccionRepository extends JpaRepository<Transaccion, Long>,
     );
 
     @Query("SELECT new com.gestionfinanzas.dto.response.DashboardMesTipoTotal(" +
-           "YEAR(t.fecha), MONTH(t.fecha), t.tipo, SUM(t.monto), cuenta.moneda) " +
-           "FROM Transaccion t JOIN t.cuenta cuenta " +
+    "YEAR(t.fecha), MONTH(t.fecha), t.tipo, SUM(t.monto), COALESCE(cuenta.moneda, t.cuentaMonedaHistorica)) " +
+    "FROM Transaccion t LEFT JOIN t.cuenta cuenta " +
            "WHERE t.usuario.id = :usuarioId AND t.tipo IN :tipos " +
            "AND t.fecha BETWEEN :inicio AND :fin " +
-           "GROUP BY YEAR(t.fecha), MONTH(t.fecha), t.tipo, cuenta.moneda")
+    "GROUP BY YEAR(t.fecha), MONTH(t.fecha), t.tipo, COALESCE(cuenta.moneda, t.cuentaMonedaHistorica)")
     List<DashboardMesTipoTotal> sumMontosPorUsuarioYTipoAgrupadosPorMes(
             @Param("usuarioId") Long usuarioId,
             @Param("tipos") List<TipoTransaccion> tipos,
@@ -94,13 +97,13 @@ public interface TransaccionRepository extends JpaRepository<Transaccion, Long>,
     );
 
     @Query("SELECT new com.gestionfinanzas.dto.response.DashboardMonedaTotales(" +
-           "cuenta.moneda, " +
+           "COALESCE(cuenta.moneda, t.cuentaMonedaHistorica), " +
            "COALESCE(SUM(CASE WHEN t.tipo = com.gestionfinanzas.model.enums.TipoTransaccion.INGRESO THEN t.monto ELSE 0 END), 0), " +
            "COALESCE(SUM(CASE WHEN t.tipo = com.gestionfinanzas.model.enums.TipoTransaccion.GASTO THEN t.monto ELSE 0 END), 0)) " +
-           "FROM Transaccion t JOIN t.cuenta cuenta " +
+           "FROM Transaccion t LEFT JOIN t.cuenta cuenta " +
            "WHERE t.usuario.id = :usuarioId AND t.fecha BETWEEN :inicio AND :fin " +
            "AND t.tipo IN (com.gestionfinanzas.model.enums.TipoTransaccion.INGRESO, com.gestionfinanzas.model.enums.TipoTransaccion.GASTO) " +
-           "GROUP BY cuenta.moneda")
+           "GROUP BY COALESCE(cuenta.moneda, t.cuentaMonedaHistorica)")
     List<DashboardMonedaTotales> findTotalesMensualesPorMoneda(
             @Param("usuarioId") Long usuarioId,
             @Param("inicio") LocalDate inicio,

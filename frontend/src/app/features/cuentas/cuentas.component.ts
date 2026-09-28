@@ -5,6 +5,7 @@ import { Cuenta, CuentaPayload, MONEDAS_DISPONIBLES, TipoCuenta } from '../../co
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { FinanzasService } from '../../core/services/finanzas.service';
 import { ToastService } from '../../core/services/toast.service';
+import { creditoDisponibleCuenta, deudaActualCuenta } from '../../core/utils/cuenta-financiera';
 
 @Component({
   selector: 'app-cuentas',
@@ -96,10 +97,39 @@ import { ToastService } from '../../core/services/toast.service';
                 }
               </div>
 
-              <p class="mt-4 sm:mt-6 text-xs font-semibold uppercase tracking-wider text-slate-400">Saldo actual</p>
-              <p class="mt-1 text-xl sm:text-2xl font-bold text-slate-900">
-                {{ cuenta.saldoActual | currency:cuenta.moneda:'symbol':'1.2-2' }}
-              </p>
+              @if (cuenta.tipo === 'CREDITO') {
+                <div class="mt-4 sm:mt-6 grid grid-cols-2 gap-3">
+                  <div>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Deuda actual</p>
+                    <p class="mt-1 text-lg font-bold text-slate-900">
+                      {{ deudaActualCuenta(cuenta) | currency:cuenta.moneda:'symbol':'1.2-2' }}
+                    </p>
+                  </div>
+                  <div class="text-right">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Disponible</p>
+                    @if (cuenta.limiteCredito != null) {
+                      <p class="mt-1 text-lg font-bold text-emerald-700">
+                        {{ creditoDisponibleCuenta(cuenta) ?? 0 | currency:cuenta.moneda:'symbol':'1.2-2' }}
+                      </p>
+                    } @else {
+                      <p class="mt-1 text-xs font-semibold text-amber-700">Configura el límite</p>
+                    }
+                  </div>
+                </div>
+                @if (cuenta.limiteCredito != null) {
+                  <p class="mt-2 text-xs text-slate-500">
+                    Límite {{ cuenta.limiteCredito | currency:cuenta.moneda:'symbol':'1.2-2' }}
+                    @if (cuenta.diaCorte != null && cuenta.diaPago != null) {
+                      · Corte día {{ cuenta.diaCorte }} · Pago día {{ cuenta.diaPago }}
+                    }
+                  </p>
+                }
+              } @else {
+                <p class="mt-4 sm:mt-6 text-xs font-semibold uppercase tracking-wider text-slate-400">Saldo actual</p>
+                <p class="mt-1 text-xl sm:text-2xl font-bold text-slate-900">
+                  {{ cuenta.saldoActual | currency:cuenta.moneda:'symbol':'1.2-2' }}
+                </p>
+              }
               @if (cuenta.cashbackPorcentaje && cuenta.cashbackPorcentaje > 0) {
                 <p class="cashback-badge mt-2 inline-flex rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
                   Cashback {{ cuenta.cashbackPorcentaje }}%
@@ -131,6 +161,12 @@ import { ToastService } from '../../core/services/toast.service';
                     Reactivar
                   </button>
                 }
+                <button
+                  type="button"
+                  (click)="eliminarDefinitivamente(cuenta)"
+                  class="min-h-10 px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-50 rounded-lg cursor-pointer">
+                  Eliminar
+                </button>
               </div>
             </article>
           }
@@ -166,30 +202,47 @@ import { ToastService } from '../../core/services/toast.service';
               <p role="alert" class="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-sm">{{ modalError() }}</p>
             }
 
-            <div>
-              <label for="cuenta-institucion" class="block text-xs font-semibold text-slate-700 mb-1.5">Banco o institución (opcional)</label>
-              <div class="flex items-center gap-2">
-                <span class="flex h-11 w-12 shrink-0 items-center justify-center rounded-xl px-1 text-[10px] font-extrabold tracking-tight text-white"
-                      [style.background-color]="institucionSeleccionada()?.color ?? '#64748b'"
-                      aria-hidden="true">
-                  {{ institucionSeleccionada()?.siglas ?? 'OTRA' }}
-                </span>
-                <select
-                  id="cuenta-institucion"
-                  name="institucionFinanciera"
-                  [(ngModel)]="institucionFinanciera"
-                  (ngModelChange)="seleccionarInstitucion($event)"
-                  class="min-h-11 min-w-0 flex-1 rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500">
-                  <option value="">Efectivo / Otra institución</option>
-                  @for (institucion of instituciones; track institucion.id) {
-                    <option [value]="institucion.id">{{ institucion.nombre }}</option>
-                  }
-                </select>
+            @if (cuentaEditando()) {
+              <div>
+                <p class="block text-xs font-semibold text-slate-700 mb-1.5">Banco o institución</p>
+                <div class="flex items-center gap-2">
+                  <span class="flex h-11 w-12 shrink-0 items-center justify-center rounded-xl px-1 text-[10px] font-extrabold tracking-tight text-white"
+                        [style.background-color]="institucionSeleccionada()?.color ?? '#64748b'"
+                        aria-hidden="true">
+                    {{ institucionSeleccionada()?.siglas ?? (institucionFinanciera ? 'OTRA' : '—') }}
+                  </span>
+                  <p class="text-sm text-slate-700">
+                    {{ institucionSeleccionada()?.nombre ?? (institucionFinanciera || 'Efectivo / Otra institución') }}
+                  </p>
+                </div>
+                <p class="mt-1.5 text-xs text-slate-500">La institución no se puede cambiar después de crear la cuenta.</p>
               </div>
-              @if (institucionSeleccionada(); as institucion) {
-                <p class="mt-1.5 text-xs text-slate-500">Identificador {{ institucion.siglas }} incluido en la tarjeta de cuenta.</p>
-              }
-            </div>
+            } @else {
+              <div>
+                <label for="cuenta-institucion" class="block text-xs font-semibold text-slate-700 mb-1.5">Banco o institución (opcional)</label>
+                <div class="flex items-center gap-2">
+                  <span class="flex h-11 w-12 shrink-0 items-center justify-center rounded-xl px-1 text-[10px] font-extrabold tracking-tight text-white"
+                        [style.background-color]="institucionSeleccionada()?.color ?? '#64748b'"
+                        aria-hidden="true">
+                    {{ institucionSeleccionada()?.siglas ?? 'OTRA' }}
+                  </span>
+                  <select
+                    id="cuenta-institucion"
+                    name="institucionFinanciera"
+                    [(ngModel)]="institucionFinanciera"
+                    (ngModelChange)="seleccionarInstitucion($event)"
+                    class="min-h-11 min-w-0 flex-1 rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500">
+                    <option value="">Efectivo / Otra institución</option>
+                    @for (institucion of instituciones; track institucion.id) {
+                      <option [value]="institucion.id">{{ institucion.nombre }}</option>
+                    }
+                  </select>
+                </div>
+                @if (institucionSeleccionada(); as institucion) {
+                  <p class="mt-1.5 text-xs text-slate-500">Identificador {{ institucion.siglas }} incluido en la tarjeta de cuenta.</p>
+                }
+              </div>
+            }
 
             <div>
               <label for="cuenta-nombre" class="block text-xs font-semibold text-slate-700 mb-1.5">Nombre</label>
@@ -203,68 +256,140 @@ import { ToastService } from '../../core/services/toast.service';
                 [(ngModel)]="nombre"
                 class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white"
                 placeholder="Ej. Cuenta principal" />
+              <p class="mt-1 text-[11px] text-slate-500">El nombre debe ser único; puedes registrar varias cuentas del mismo banco con nombres distintos.</p>
             </div>
 
-            <div>
-              <label for="cuenta-tipo" class="block text-xs font-semibold text-slate-700 mb-1.5">Tipo de cuenta</label>
-              <select
-                id="cuenta-tipo"
-                name="tipo"
-                required
-                [(ngModel)]="tipo"
-                class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500">
-                @for (opcion of tiposCuenta; track opcion.valor) {
-                  <option [ngValue]="opcion.valor">{{ opcion.etiqueta }}</option>
-                }
-              </select>
-            </div>
+            @if (cuentaEditando()) {
+              <div>
+                <p class="block text-xs font-semibold text-slate-700 mb-1.5">Tipo de cuenta</p>
+                <p class="text-sm text-slate-700">{{ tipoCuentaLabel(tipo) }}</p>
+                <p class="mt-1 text-xs text-slate-500">El tipo no se puede cambiar después de crear la cuenta.</p>
+              </div>
+            } @else {
+              <div>
+                <label for="cuenta-tipo" class="block text-xs font-semibold text-slate-700 mb-1.5">Tipo de cuenta</label>
+                <select
+                  id="cuenta-tipo"
+                  name="tipo"
+                  required
+                  [(ngModel)]="tipo"
+                  (ngModelChange)="tipoCuentaCambio($event)"
+                  class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500">
+                  @for (opcion of tiposCuenta; track opcion.valor) {
+                    <option [ngValue]="opcion.valor">{{ opcion.etiqueta }}</option>
+                  }
+                </select>
+              </div>
+            }
 
             <p class="text-xs leading-relaxed text-slate-500">
               El tipo clasifica la cuenta; los gastos se restan del saldo registrado y el cashback se suma como ingreso estimado.
-              Kaptal aún no calcula deuda, crédito disponible ni fechas de corte o pago de tarjetas.
             </p>
 
-            <section class="cashback-benefit-panel rounded-xl border border-emerald-200 bg-emerald-50 p-3.5 space-y-3">
-              <div>
-                <h3 class="text-sm font-semibold text-slate-800">Beneficio de cashback</h3>
-                <p class="mt-1 text-xs leading-relaxed text-slate-600">
-                  Kaptal estimará el cashback en cada gasto de esta cuenta y lo registrará como ingreso automático.
-                  Es un cálculo de seguimiento, no una confirmación del banco.
-                </p>
-              </div>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            @if (tipo === 'CREDITO') {
+              <section class="credit-card-settings rounded-xl border border-sky-200 bg-sky-50 p-3.5 space-y-3">
                 <div>
-                  <label for="cuenta-cashback-porcentaje" class="block text-xs font-semibold text-slate-700 mb-1.5">Cashback (%)</label>
-                  <input
-                    id="cuenta-cashback-porcentaje"
-                    name="cashbackPorcentaje"
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.01"
-                    [(ngModel)]="cashbackPorcentaje"
-                    class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-900"
-                    placeholder="Ej. 2" />
+                  <h3 class="text-sm font-semibold text-slate-800">Datos de la tarjeta</h3>
+                  <p class="mt-1 text-xs leading-relaxed text-slate-600">
+                    Las compras generan deuda y reducen el crédito disponible. Los pagos o transferencias a esta cuenta reducen la deuda.
+                    Se bloquearán compras y transferencias salientes mayores al crédito disponible.
+                  </p>
                 </div>
                 <div>
-                  <label for="cuenta-cashback-limite" class="block text-xs font-semibold text-slate-700 mb-1.5">Límite mensual (opcional)</label>
+                  <label for="cuenta-limite-credito" class="block text-xs font-semibold text-slate-700 mb-1.5">Límite de crédito <span class="text-rose-600">*</span></label>
                   <input
-                    id="cuenta-cashback-limite"
-                    name="cashbackLimiteMensual"
+                    id="cuenta-limite-credito"
+                    name="limiteCredito"
                     type="number"
                     min="0.01"
                     step="0.01"
-                    [(ngModel)]="cashbackLimiteMensual"
-                    class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-900"
-                    placeholder="Sin límite" />
+                    required
+                    [(ngModel)]="limiteCredito"
+                    class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                    placeholder="Ej. 25000" />
                 </div>
-              </div>
-              <p class="text-[11px] text-slate-600 dark:text-slate-300">Se aplica a todos los gastos registrados con esta cuenta; el límite se reinicia cada mes.</p>
-            </section>
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label for="cuenta-dia-corte" class="block text-xs font-semibold text-slate-700 mb-1.5">Día de corte <span class="text-rose-600">*</span></label>
+                    <input
+                      id="cuenta-dia-corte"
+                      name="diaCorte"
+                      type="number"
+                      min="1"
+                      max="31"
+                      step="1"
+                      required
+                      [(ngModel)]="diaCorte"
+                      class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                      placeholder="1–31" />
+                  </div>
+                  <div>
+                    <label for="cuenta-dia-pago" class="block text-xs font-semibold text-slate-700 mb-1.5">Día de pago <span class="text-rose-600">*</span></label>
+                    <input
+                      id="cuenta-dia-pago"
+                      name="diaPago"
+                      type="number"
+                      min="1"
+                      max="31"
+                      step="1"
+                      required
+                      [(ngModel)]="diaPago"
+                      class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                      placeholder="1–31" />
+                  </div>
+                </div>
+                <p class="text-[11px] leading-relaxed text-slate-600">
+                  Las fechas se guardan como información; Kaptal aún no envía recordatorios automáticos.
+                </p>
+              </section>
+            }
+
+            @if (tipo === 'CREDITO') {
+              <section class="cashback-benefit-panel rounded-xl border border-emerald-200 bg-emerald-50 p-3.5 space-y-3">
+                <div>
+                  <h3 class="text-sm font-semibold text-slate-800">Beneficio de cashback</h3>
+                  <p class="mt-1 text-xs leading-relaxed text-slate-600">
+                    Kaptal estimará el cashback en cada gasto de esta tarjeta y lo registrará como ingreso automático.
+                    Es un cálculo de seguimiento, no una confirmación del banco.
+                  </p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label for="cuenta-cashback-porcentaje" class="block text-xs font-semibold text-slate-700 mb-1.5">Cashback (%) <span class="text-rose-600">*</span></label>
+                    <input
+                      id="cuenta-cashback-porcentaje"
+                      name="cashbackPorcentaje"
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.01"
+                      required
+                      [(ngModel)]="cashbackPorcentaje"
+                      class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-900"
+                      placeholder="Ej. 2" />
+                  </div>
+                  <div>
+                    <label for="cuenta-cashback-limite" class="block text-xs font-semibold text-slate-700 mb-1.5">Límite mensual (opcional)</label>
+                    <input
+                      id="cuenta-cashback-limite"
+                      name="cashbackLimiteMensual"
+                      type="number"
+                      min="0.01"
+                      step="0.01"
+                      [(ngModel)]="cashbackLimiteMensual"
+                      class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-900"
+                      placeholder="Sin límite" />
+                  </div>
+                </div>
+                <p class="text-[11px] text-slate-600 dark:text-slate-300">Se aplica a los gastos registrados con esta tarjeta; el límite se reinicia cada mes.</p>
+              </section>
+            }
 
             @if (!cuentaEditando()) {
               <div>
-                <label for="cuenta-saldo" class="block text-xs font-semibold text-slate-700 mb-1.5">Saldo inicial</label>
+                <label for="cuenta-saldo" class="block text-xs font-semibold text-slate-700 mb-1.5">
+                  {{ tipo === 'CREDITO' ? 'Deuda actual' : 'Saldo inicial' }}
+                </label>
                 <input
                   id="cuenta-saldo"
                   name="saldoInicial"
@@ -273,7 +398,10 @@ import { ToastService } from '../../core/services/toast.service';
                   step="0.01"
                   [(ngModel)]="saldoInicial"
                   class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white"
-                  placeholder="0.00" />
+                  [placeholder]="tipo === 'CREDITO' ? 'Ej. 5000.00' : '0.00'" />
+                @if (tipo === 'CREDITO') {
+                  <p class="mt-1 text-[11px] text-slate-500">Ingresa la deuda en positivo; se registrará como saldo negativo de la tarjeta.</p>
+                }
               </div>
             }
 
@@ -367,8 +495,11 @@ export class CuentasComponent implements OnInit {
   nombre = '';
   tipo: TipoCuenta = 'EFECTIVO';
   institucionFinanciera = '';
-  cashbackPorcentaje: number | null = null;
+  cashbackPorcentaje: number | null = 0;
   cashbackLimiteMensual: number | null = null;
+  limiteCredito: number | null = null;
+  diaCorte: number | null = null;
+  diaPago: number | null = null;
   saldoInicial: number | null = null;
   moneda = 'MXN';
   descripcion = '';
@@ -401,8 +532,11 @@ export class CuentasComponent implements OnInit {
     this.nombre = '';
     this.tipo = 'EFECTIVO';
     this.institucionFinanciera = '';
-    this.cashbackPorcentaje = null;
+    this.cashbackPorcentaje = 0;
     this.cashbackLimiteMensual = null;
+    this.limiteCredito = null;
+    this.diaCorte = null;
+    this.diaPago = null;
     this.saldoInicial = null;
     this.moneda = 'MXN';
     this.descripcion = '';
@@ -413,10 +547,13 @@ export class CuentasComponent implements OnInit {
   abrirEditar(cuenta: Cuenta): void {
     this.cuentaEditando.set(cuenta);
     this.nombre = cuenta.nombre;
-    this.tipo = cuenta.tipo === 'DEBITO' ? 'INVERSION' : cuenta.tipo;
+    this.tipo = cuenta.tipo;
     this.institucionFinanciera = cuenta.institucionFinanciera ?? '';
-    this.cashbackPorcentaje = cuenta.cashbackPorcentaje ?? null;
+    this.cashbackPorcentaje = cuenta.tipo === 'CREDITO' ? cuenta.cashbackPorcentaje ?? 0 : null;
     this.cashbackLimiteMensual = cuenta.cashbackLimiteMensual ?? null;
+    this.limiteCredito = cuenta.limiteCredito ?? null;
+    this.diaCorte = cuenta.diaCorte ?? null;
+    this.diaPago = cuenta.diaPago ?? null;
     this.saldoInicial = null;
     this.moneda = cuenta.moneda;
     this.descripcion = cuenta.descripcion ?? '';
@@ -446,27 +583,55 @@ export class CuentasComponent implements OnInit {
       this.modalError.set('El saldo inicial no puede ser negativo.');
       return;
     }
-    if (this.cashbackPorcentaje != null
-        && (!Number.isFinite(this.cashbackPorcentaje) || this.cashbackPorcentaje < 0 || this.cashbackPorcentaje > 100)) {
+    if (this.tipo === 'CREDITO' && (this.cashbackPorcentaje == null
+        || !Number.isFinite(this.cashbackPorcentaje) || this.cashbackPorcentaje < 0 || this.cashbackPorcentaje > 100)) {
       this.modalError.set('El porcentaje de cashback debe estar entre 0 y 100.');
       return;
     }
-    if (this.cashbackLimiteMensual != null
+    if (this.tipo === 'CREDITO' && this.cashbackLimiteMensual != null
         && (!Number.isFinite(this.cashbackLimiteMensual) || this.cashbackLimiteMensual <= 0)) {
       this.modalError.set('El límite mensual debe ser mayor a 0.');
       return;
     }
-    if (this.cashbackLimiteMensual != null && (!this.cashbackPorcentaje || this.cashbackPorcentaje <= 0)) {
+    if (this.tipo === 'CREDITO' && this.cashbackLimiteMensual != null && (!this.cashbackPorcentaje || this.cashbackPorcentaje <= 0)) {
       this.modalError.set('Indica un porcentaje de cashback mayor a 0 para configurar un límite.');
       return;
     }
+    if (this.tipo === 'CREDITO' && (this.limiteCredito == null
+        || !Number.isFinite(this.limiteCredito) || this.limiteCredito <= 0)) {
+      this.modalError.set('Indica un límite de crédito mayor a 0.');
+      return;
+    }
+    if (this.tipo === 'CREDITO' && (this.diaCorte == null || !this.diaValido(this.diaCorte))) {
+      this.modalError.set('Indica el día de corte entre 1 y 31.');
+      return;
+    }
+    if (this.tipo === 'CREDITO' && (this.diaPago == null || !this.diaValido(this.diaPago))) {
+      this.modalError.set('Indica el día de pago entre 1 y 31.');
+      return;
+    }
+    if (this.tipo === 'CREDITO' && this.limiteCredito != null) {
+      const cuentaBase = this.cuentaEditando();
+      const deudaActual = cuentaBase?.tipo === 'CREDITO'
+        ? deudaActualCuenta(cuentaBase)
+        : !cuentaBase ? this.saldoInicial ?? 0 : 0;
+      if (this.limiteCredito < deudaActual) {
+        this.modalError.set('El límite de crédito no puede ser menor que la deuda actual.');
+        return;
+      }
+    }
+
+    const porcentajeCashback = this.tipo === 'CREDITO' ? this.cashbackPorcentaje ?? 0 : null;
 
     const payload: CuentaPayload = {
       nombre,
       tipo: this.tipo,
       ...(this.institucionFinanciera ? { institucionFinanciera: this.institucionFinanciera } : {}),
-      ...(this.cashbackPorcentaje != null ? { cashbackPorcentaje: this.cashbackPorcentaje } : {}),
-      ...(this.cashbackLimiteMensual != null ? { cashbackLimiteMensual: this.cashbackLimiteMensual } : {}),
+      ...(porcentajeCashback != null ? { cashbackPorcentaje: porcentajeCashback } : {}),
+      ...(this.tipo === 'CREDITO' && this.cashbackLimiteMensual != null ? { cashbackLimiteMensual: this.cashbackLimiteMensual } : {}),
+      ...(this.tipo === 'CREDITO' && this.limiteCredito != null ? { limiteCredito: this.limiteCredito } : {}),
+      ...(this.tipo === 'CREDITO' && this.diaCorte != null ? { diaCorte: this.diaCorte } : {}),
+      ...(this.tipo === 'CREDITO' && this.diaPago != null ? { diaPago: this.diaPago } : {}),
       moneda: codigoMoneda,
       descripcion: this.descripcion.trim() || undefined
     };
@@ -502,7 +667,7 @@ export class CuentasComponent implements OnInit {
   async desactivar(cuenta: Cuenta): Promise<void> {
     const confirmado = await this.confirmDialog.confirm({
       title: 'Desactivar cuenta',
-      message: `Se ocultará "${cuenta.nombre}" de las cuentas activas y no podrás registrar nuevos movimientos en ella. Su saldo actual (${cuenta.saldoActual} ${cuenta.moneda}) dejará de incluirse en el balance total. El historial se conservará. ¿Deseas continuar?`,
+      message: `Se ocultará "${cuenta.nombre}" de las cuentas activas y no podrás registrar nuevos movimientos en ella. Su saldo actual (${cuenta.saldoActual} ${cuenta.moneda}) dejará de incluirse en el balance total. El historial se conservará y podrás reactivarla desde “Inactivas”. ¿Deseas continuar?`,
       confirmText: 'Desactivar',
       cancelText: 'Cancelar',
       type: 'warning'
@@ -519,6 +684,34 @@ export class CuentasComponent implements OnInit {
         this.cargarCuentas();
       },
       error: err => this.toastService.error(err.error?.message || 'No se pudo desactivar la cuenta.')
+    });
+  }
+
+  async eliminarDefinitivamente(cuenta: Cuenta): Promise<void> {
+    if (cuenta.saldoActual !== 0) {
+      this.toastService.error('No puedes eliminar esta cuenta mientras tenga saldo o deuda. Transfiere el dinero o liquida la tarjeta primero.');
+      return;
+    }
+
+    const confirmado = await this.confirmDialog.confirm({
+      title: 'Eliminar cuenta definitivamente',
+      message: `Solo se puede eliminar si el saldo y la deuda son exactamente $0.00. Los movimientos se conservarán en el historial con el nombre “${cuenta.nombre}”; las plantillas recurrentes asociadas se eliminarán. ¿Deseas continuar?`,
+      confirmText: 'Eliminar definitivamente',
+      cancelText: 'Cancelar',
+      type: 'danger'
+    });
+    if (!confirmado) return;
+
+    this.finanzasService.eliminarCuenta(cuenta.id).subscribe({
+      next: response => {
+        if (!response.success) {
+          this.toastService.error(response.message || 'No se pudo eliminar la cuenta.');
+          return;
+        }
+        this.toastService.success('Cuenta eliminada. Su historial de movimientos se conservó.');
+        this.cargarCuentas();
+      },
+      error: err => this.toastService.error(err.error?.message || 'No se pudo eliminar la cuenta.')
     });
   }
 
@@ -539,6 +732,20 @@ export class CuentasComponent implements OnInit {
   tipoCuentaLabel(tipo: TipoCuenta): string {
     if (tipo === 'DEBITO') return 'Inversión';
     return this.tiposCuenta.find(opcion => opcion.valor === tipo)?.etiqueta ?? tipo;
+  }
+
+  tipoCuentaCambio(tipo: TipoCuenta): void {
+    this.tipo = tipo;
+    if (tipo === 'CREDITO' && this.cashbackPorcentaje == null) {
+      this.cashbackPorcentaje = 0;
+    }
+  }
+
+  readonly deudaActualCuenta = deudaActualCuenta;
+  readonly creditoDisponibleCuenta = creditoDisponibleCuenta;
+
+  private diaValido(dia: number | null): boolean {
+    return dia != null && Number.isInteger(dia) && dia >= 1 && dia <= 31;
   }
 
   institucionDe(id: string | null | undefined) {
