@@ -1,15 +1,16 @@
 package com.gestionfinanzas.service;
 
 import com.gestionfinanzas.dto.request.TransaccionFiltroRequest;
+import com.gestionfinanzas.dto.response.AuditoriaTransaccionResponse;
+import com.gestionfinanzas.dto.response.AsientoContableResponse;
 import com.gestionfinanzas.dto.response.CategoriaResponse;
 import com.gestionfinanzas.dto.response.CuentaResponse;
-import com.gestionfinanzas.dto.response.AuditoriaTransaccionResponse;
+import com.gestionfinanzas.dto.response.AsientoContableResponse;
 import com.gestionfinanzas.dto.response.PerfilResponse;
 import com.gestionfinanzas.dto.response.PlantillaRecurrenteResponse;
 import com.gestionfinanzas.dto.response.RespaldoFinancieroResponse;
 import com.gestionfinanzas.dto.response.TransaccionResponse;
 import com.gestionfinanzas.model.entity.Presupuesto;
-import com.gestionfinanzas.model.entity.Transaccion;
 import com.gestionfinanzas.repository.CategoriaRepository;
 import com.gestionfinanzas.repository.CuentaRepository;
 import com.gestionfinanzas.repository.PlantillaRecurrenteRepository;
@@ -35,6 +36,7 @@ public class RespaldoFinancieroService {
     private final PlantillaRecurrenteRepository plantillaRepository;
     private final TransaccionRepository transaccionRepository;
     private final AuditoriaTransaccionService auditoriaService;
+    private final LibroDiarioService libroDiarioService;
 
     @Transactional(readOnly = true)
     public RespaldoFinancieroResponse generar(Long usuarioId) {
@@ -70,6 +72,7 @@ public class RespaldoFinancieroService {
                 presupuestos,
                 recurrencias,
                 auditoriaService.listarParaRespaldo(usuarioId),
+                libroDiarioService.listarParaRespaldo(usuarioId),
                 transacciones
         );
     }

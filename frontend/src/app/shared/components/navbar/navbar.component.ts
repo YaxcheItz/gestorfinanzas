@@ -41,6 +41,10 @@ import { AuthService } from '../../../core/services/auth.service';
                  class="px-3 py-2 rounded-lg text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors">
                 Cuentas
               </a>
+              <a routerLink="/libro-diario" routerLinkActive="bg-slate-100 text-slate-900 font-semibold"
+                 class="px-3 py-2 rounded-lg text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors">
+                Libro diario
+              </a>
               <a routerLink="/asistente" routerLinkActive="bg-slate-100 text-slate-900 font-semibold"
                  class="px-3 py-2 rounded-lg text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors">
                 Asistente IA
@@ -104,6 +108,13 @@ import { AuthService } from '../../../core/services/auth.service';
                 <use href="navigation-icons.svg#accounts"></use>
               </svg>
               <span>Cuentas</span>
+            </a>
+            <a routerLink="/libro-diario" routerLinkActive="mobile-bottom-nav__link--active"
+               aria-label="Libro diario" class="mobile-bottom-nav__link">
+              <svg aria-hidden="true">
+                <use href="navigation-icons.svg#ledger"></use>
+              </svg>
+              <span>Libro</span>
             </a>
             <a routerLink="/asistente" routerLinkActive="mobile-bottom-nav__link--active"
                aria-label="Asistente IA" class="mobile-bottom-nav__link">

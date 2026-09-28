@@ -25,6 +25,12 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'libro-diario',
+    loadComponent: () => import('./features/libro-diario/libro-diario.component')
+      .then(module => module.LibroDiarioComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: 'asistente',
     loadComponent: () => import('./features/asistente/asistente.component')
       .then(module => module.AsistenteComponent),

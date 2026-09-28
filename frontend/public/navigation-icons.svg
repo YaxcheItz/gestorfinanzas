@@ -11,6 +11,10 @@
   <symbol id="accounts" viewBox="0 0 24 24">
     <path d="M3 7h18v13H3zM3 11h18M7 16h4"/>
   </symbol>
+  <symbol id="ledger" viewBox="0 0 24 24">
+    <path d="M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/>
+    <path d="M8 7h8M8 12h3m3 0h2M8 17h3m3 0h2"/>
+  </symbol>
   <symbol id="assistant" viewBox="0 0 24 24">
     <path d="m12 3 1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3Z"/>
     <path d="m19 15 .9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9L19 15Z"/>
