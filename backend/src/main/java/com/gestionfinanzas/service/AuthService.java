@@ -53,7 +53,7 @@ public class AuthService {
         // Sembrar cuenta predeterminada para evitar que el usuario quede sin cuentas iniciales
         cuentaService.crearCuentaPredeterminada(guardado);
 
-        String token = jwtUtil.generarToken(guardado.getEmail(), guardado.getId());
+        String token = jwtUtil.generarToken(guardado.getEmail(), guardado.getId(), guardado.getTokenVersion());
         return AuthResponse.of(token, guardado.getId(), guardado.getNombre(), guardado.getEmail());
     }
 
@@ -72,7 +72,7 @@ public class AuthService {
         Usuario usuario = usuarioRepository.findByEmail(request.email().trim().toLowerCase())
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
 
-        String token = jwtUtil.generarToken(usuario.getEmail(), usuario.getId());
+        String token = jwtUtil.generarToken(usuario.getEmail(), usuario.getId(), usuario.getTokenVersion());
         return AuthResponse.of(token, usuario.getId(), usuario.getNombre(), usuario.getEmail());
     }
 

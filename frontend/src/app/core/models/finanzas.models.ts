@@ -81,6 +81,15 @@ export interface Transaccion {
   fechaCreacion: string;
 }
 
+export interface AuditoriaTransaccion {
+  id: number;
+  transaccionId: number;
+  accion: 'CREAR' | 'ACTUALIZAR' | 'ELIMINAR';
+  antes: Transaccion | null;
+  despues: Transaccion | null;
+  fechaEvento: string;
+}
+
 export interface TransaccionPayload {
   cuentaId: number;
   cuentaDestinoId?: number | null;
@@ -131,6 +140,24 @@ export interface DashboardMonedaResumen {
   balanceMes: number;
   tasaAhorro: number;
   totalCuentas: number;
+}
+
+export interface DashboardComparacionMoneda {
+  moneda: string;
+  ingresosActuales: number;
+  gastosActuales: number;
+  ingresosAnteriores: number;
+  gastosAnteriores: number;
+  variacionGastos: number;
+  variacionGastosPorcentaje: number | null;
+}
+
+export interface DashboardComparacion {
+  mes: number;
+  anio: number;
+  mesAnterior: number;
+  anioAnterior: number;
+  porMoneda: DashboardComparacionMoneda[];
 }
 
 export interface DashboardGastoCategoria {

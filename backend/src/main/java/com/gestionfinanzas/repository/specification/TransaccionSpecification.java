@@ -10,6 +10,10 @@ import java.util.List;
 
 public class TransaccionSpecification {
 
+    public static Specification<Transaccion> soloUsuario(Long usuarioId) {
+        return (root, query, cb) -> cb.equal(root.get("usuario").get("id"), usuarioId);
+    }
+
     public static Specification<Transaccion> conFiltros(Long usuarioId, TransaccionFiltroRequest filtro) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();

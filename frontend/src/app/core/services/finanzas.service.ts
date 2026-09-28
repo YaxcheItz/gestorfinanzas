@@ -9,10 +9,12 @@ import {
   AiVerificationResult
 } from '../models/ai.models';
 import {
+  AuditoriaTransaccion,
   Categoria,
   CategoriaPayload,
   Cuenta,
   CuentaPayload,
+  DashboardComparacion,
   DashboardAnalitica,
   DashboardResumen,
   PlantillaRecurrente,
@@ -168,8 +170,30 @@ export class FinanzasService {
     return this.http.get<ApiResponse<DashboardAnalitica>>(`${this.baseUrl}/dashboard/analitica`);
   }
 
+  getDashboardComparacion(mes?: number, anio?: number): Observable<ApiResponse<DashboardComparacion>> {
+    let params = new HttpParams();
+    if (mes) params = params.set('mes', mes);
+    if (anio) params = params.set('anio', anio);
+    return this.http.get<ApiResponse<DashboardComparacion>>(`${this.baseUrl}/dashboard/comparacion`, { params });
+  }
+
   getPlantillasRecurrentes(): Observable<ApiResponse<PlantillaRecurrente[]>> {
     return this.http.get<ApiResponse<PlantillaRecurrente[]>>(`${this.baseUrl}/recurrencias`);
+  }
+
+  descargarRespaldo(): Observable<HttpResponse<Blob>> {
+    return this.http.get(`${this.baseUrl}/perfil/respaldo`, {
+      observe: 'response',
+      responseType: 'blob'
+    });
+  }
+
+  getHistorialTransacciones(page = 0, size = 20): Observable<ApiResponse<PageResponse<AuditoriaTransaccion>>> {
+    const params = new HttpParams().set('page', page).set('size', size);
+    return this.http.get<ApiResponse<PageResponse<AuditoriaTransaccion>>>(
+      `${this.baseUrl}/perfil/historial`,
+      { params }
+    );
   }
 
   registrarMovimientoRecurrente(id: number): Observable<ApiResponse<void>> {

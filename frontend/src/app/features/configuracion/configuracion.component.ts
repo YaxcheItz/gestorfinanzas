@@ -7,7 +7,11 @@ import { ConfirmDialogService } from '../../core/services/confirm-dialog.service
 import { FinanzasService } from '../../core/services/finanzas.service';
 import { PerfilService } from '../../core/services/perfil.service';
 import { ToastService } from '../../core/services/toast.service';
-import { MONEDAS_DISPONIBLES, PlantillaRecurrente } from '../../core/models/finanzas.models';
+import {
+  AuditoriaTransaccion,
+  MONEDAS_DISPONIBLES,
+  PlantillaRecurrente
+} from '../../core/models/finanzas.models';
 
 @Component({
   selector: 'app-configuracion',
@@ -145,6 +149,94 @@ import { MONEDAS_DISPONIBLES, PlantillaRecurrente } from '../../core/models/fina
       </section>
 
       <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div class="min-w-0">
+            <h2 class="text-base font-bold text-slate-900">Respaldo de tus datos</h2>
+            <p class="mt-1 text-sm text-slate-600">
+              Descarga un archivo JSON con tu perfil, cuentas, categorías personalizadas, presupuestos,
+              recurrencias y movimientos. No incluye tu contraseña.
+            </p>
+            <p class="mt-2 text-xs text-amber-800">
+              El archivo contiene información financiera privada; guárdalo en un lugar seguro.
+            </p>
+          </div>
+          <button
+            type="button"
+            (click)="descargarRespaldo()"
+            [disabled]="descargandoRespaldo()"
+            class="min-h-11 shrink-0 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">
+            {{ descargandoRespaldo() ? 'Preparando respaldo...' : 'Descargar respaldo' }}
+          </button>
+        </div>
+      </section>
+
+      <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6" aria-labelledby="transaction-history-heading">
+        <div class="mb-4">
+          <h2 id="transaction-history-heading" class="text-base font-bold text-slate-900">Historial de movimientos</h2>
+          <p class="mt-1 text-sm text-slate-600">Consulta creaciones, cambios y eliminaciones. Este historial se conserva mientras exista tu cuenta.</p>
+        </div>
+        @if (historialError()) {
+          <div role="alert" class="flex flex-col gap-2 rounded-xl bg-rose-50 p-3 text-sm text-rose-700 sm:flex-row sm:items-center sm:justify-between">
+            <span>{{ historialError() }}</span>
+            <button type="button" (click)="cargarHistorial(true)" class="self-start font-semibold underline sm:self-auto">Reintentar</button>
+          </div>
+        } @else if (historial().length === 0 && cargandoHistorial()) {
+          <p role="status" class="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">Cargando historial...</p>
+        } @else if (historial().length === 0) {
+          <p class="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">Aún no hay cambios registrados en tus movimientos.</p>
+        } @else {
+          <div class="space-y-3">
+            @for (evento of historial(); track evento.id) {
+              <article class="rounded-xl border border-slate-200 p-3 sm:p-4">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                  <span
+                    [class]="evento.accion === 'ELIMINAR' ? 'bg-rose-50 text-rose-700' : evento.accion === 'ACTUALIZAR' ? 'bg-amber-50 text-amber-800' : 'bg-emerald-50 text-emerald-700'"
+                    class="rounded-full px-2.5 py-1 text-xs font-semibold">
+                    {{ accionHistorial(evento.accion) }}
+                  </span>
+                  <time class="text-xs text-slate-500" [attr.datetime]="evento.fechaEvento">
+                    {{ evento.fechaEvento | date:'medium' }}
+                  </time>
+                </div>
+                <p class="mt-2 break-words text-sm font-semibold text-slate-900">
+                  {{ (evento.despues ?? evento.antes)?.descripcion || 'Movimiento' }}
+                </p>
+                @if (evento.accion === 'ACTUALIZAR' && evento.antes && evento.despues) {
+                  <div class="mt-3 grid gap-2 text-xs sm:grid-cols-2">
+                    <div class="rounded-lg bg-slate-50 p-3">
+                      <p class="font-semibold text-slate-500">Antes</p>
+                      <p class="mt-1 break-words text-slate-800">{{ evento.antes.descripcion }}</p>
+                      <p class="mt-1 break-words text-slate-700">{{ evento.antes.monto | currency:evento.antes.moneda:'symbol':'1.2-2' }} · {{ evento.antes.fecha }}</p>
+                    </div>
+                    <div class="rounded-lg bg-emerald-50 p-3">
+                      <p class="font-semibold text-emerald-700">Después</p>
+                      <p class="mt-1 break-words text-slate-800">{{ evento.despues.descripcion }}</p>
+                      <p class="mt-1 break-words text-slate-700">{{ evento.despues.monto | currency:evento.despues.moneda:'symbol':'1.2-2' }} · {{ evento.despues.fecha }}</p>
+                    </div>
+                  </div>
+                } @else {
+                  @if (evento.despues ?? evento.antes; as movimiento) {
+                    <p class="mt-1 text-xs text-slate-600">
+                      {{ movimiento.monto | currency:movimiento.moneda:'symbol':'1.2-2' }} · {{ movimiento.fecha }}
+                    </p>
+                  }
+                }
+              </article>
+            }
+          </div>
+          @if (!historialFin()) {
+            <button
+              type="button"
+              (click)="cargarHistorial()"
+              [disabled]="cargandoHistorial()"
+              class="mt-4 min-h-10 w-full rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">
+              {{ cargandoHistorial() ? 'Cargando...' : 'Cargar más historial' }}
+            </button>
+          }
+        }
+      </section>
+
+      <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 class="text-base font-bold text-slate-900">Categorías</h2>
@@ -222,6 +314,11 @@ export class ConfiguracionComponent implements OnInit {
   readonly monedas = MONEDAS_DISPONIBLES;
   readonly guardandoPerfil = signal(false);
   readonly guardandoPassword = signal(false);
+  readonly descargandoRespaldo = signal(false);
+  readonly historial = signal<AuditoriaTransaccion[]>([]);
+  readonly cargandoHistorial = signal(false);
+  readonly historialError = signal<string | null>(null);
+  readonly historialFin = signal(true);
   readonly plantillas = signal<PlantillaRecurrente[]>([]);
   readonly cargandoPlantillas = signal(true);
   readonly errorPlantillas = signal<string | null>(null);
@@ -235,6 +332,7 @@ export class ConfiguracionComponent implements OnInit {
   passwordActual = '';
   passwordNueva = '';
   private readonly perfilInicializado = new Set<number>();
+  private paginaHistorial = 0;
 
   private readonly authService = inject(AuthService);
   readonly perfilService = inject(PerfilService);
@@ -256,6 +354,7 @@ export class ConfiguracionComponent implements OnInit {
 
   ngOnInit(): void {
     this.cargarPlantillas();
+    this.cargarHistorial(true);
   }
 
   recargarPerfil(): void {
@@ -306,13 +405,74 @@ export class ConfiguracionComponent implements OnInit {
         }
         this.passwordActual = '';
         this.passwordNueva = '';
-        this.toastService.success('Contraseña actualizada.');
+        this.toastService.success('Contraseña actualizada. Vuelve a iniciar sesión para continuar.');
+        this.authService.logout();
       },
       error: err => {
         this.guardandoPassword.set(false);
         this.toastService.error(err.error?.message || 'No se pudo cambiar la contraseña.');
       }
     });
+  }
+
+  descargarRespaldo(): void {
+    if (this.descargandoRespaldo()) return;
+    this.descargandoRespaldo.set(true);
+    this.finanzasService.descargarRespaldo().subscribe({
+      next: response => {
+        this.descargandoRespaldo.set(false);
+        if (!response.body) {
+          this.toastService.error('El servidor devolvió un respaldo vacío.');
+          return;
+        }
+        const url = URL.createObjectURL(response.body);
+        const enlace = document.createElement('a');
+        enlace.href = url;
+        enlace.download = `kaptal-respaldo-${new Date().toISOString().slice(0, 10)}.json`;
+        enlace.click();
+        URL.revokeObjectURL(url);
+        this.toastService.success('Respaldo descargado. Guárdalo en un lugar seguro.');
+      },
+      error: err => {
+        this.descargandoRespaldo.set(false);
+        this.toastService.error(err.error?.message || 'No se pudo descargar el respaldo.');
+      }
+    });
+  }
+
+  cargarHistorial(reiniciar = false): void {
+    if (this.cargandoHistorial()) return;
+    if (reiniciar) {
+      this.paginaHistorial = 0;
+      this.historial.set([]);
+      this.historialFin.set(false);
+    }
+    this.cargandoHistorial.set(true);
+    this.historialError.set(null);
+    this.finanzasService.getHistorialTransacciones(this.paginaHistorial).subscribe({
+      next: response => {
+        this.cargandoHistorial.set(false);
+        if (!response.success || !response.data) {
+          this.historialError.set(response.message || 'No se pudo cargar el historial.');
+          return;
+        }
+        this.historial.update(actual => [...actual, ...response.data.content]);
+        this.historialFin.set(response.data.last);
+        this.paginaHistorial = response.data.number + 1;
+      },
+      error: err => {
+        this.cargandoHistorial.set(false);
+        this.historialError.set(err.error?.message || 'No se pudo cargar el historial.');
+      }
+    });
+  }
+
+  accionHistorial(accion: AuditoriaTransaccion['accion']): string {
+    switch (accion) {
+      case 'CREAR': return 'Creado';
+      case 'ACTUALIZAR': return 'Modificado';
+      case 'ELIMINAR': return 'Eliminado';
+    }
   }
 
   cargarPlantillas(): void {

@@ -2,6 +2,7 @@ package com.gestionfinanzas.service;
 
 import com.gestionfinanzas.dto.request.CuentaRequest;
 import com.gestionfinanzas.dto.response.CuentaResponse;
+import com.gestionfinanzas.dto.response.TransaccionResponse;
 import com.gestionfinanzas.model.entity.Cuenta;
 import com.gestionfinanzas.model.entity.Transaccion;
 import com.gestionfinanzas.model.entity.Transaccion;
@@ -30,6 +31,7 @@ public class CuentaService {
     private final UsuarioRepository usuarioRepository;
     private final TransaccionRepository transaccionRepository;
     private final PlantillaRecurrenteRepository plantillaRepository;
+    private final AuditoriaTransaccionService auditoriaService;
 
     private static final Set<String> MONEDAS_DISPONIBLES = Set.of("MXN", "USD", "CAD", "EUR", "GBP");
 
@@ -84,7 +86,7 @@ public class CuentaService {
 
         Cuenta guardada = cuentaRepository.save(cuenta);
         if (saldoInicial.abs().compareTo(BigDecimal.ZERO) > 0) {
-            transaccionRepository.save(Transaccion.builder()
+            Transaccion saldoInicialRegistrado = transaccionRepository.save(Transaccion.builder()
                     .usuario(usuario)
                     .cuenta(guardada)
                     .tipo(TipoTransaccion.SALDO_INICIAL)
@@ -92,6 +94,8 @@ public class CuentaService {
                     .fecha(LocalDate.now())
                     .descripcion("Saldo inicial")
                     .build());
+            auditoriaService.registrar(usuarioId, saldoInicialRegistrado.getId(), "CREAR", null,
+                    TransaccionResponse.fromEntity(saldoInicialRegistrado));
         }
         return CuentaResponse.fromEntity(guardada);
     }

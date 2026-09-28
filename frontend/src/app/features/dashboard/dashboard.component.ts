@@ -24,8 +24,10 @@ import {
   Categoria,
   Cuenta,
   DashboardAnalitica,
+  DashboardComparacion,
   DashboardResumen,
   FrecuenciaRecurrencia,
+  PlantillaRecurrente,
   TipoTransaccion,
   TransaccionPayload
 } from '../../core/models/finanzas.models';
@@ -35,7 +37,7 @@ import {
   standalone: true,
   imports: [CommonModule, FormsModule, CategoriaSelectorComponent, MovimientoMobileCardComponent],
   template: `
-    <div class="max-w-7xl mx-auto flex flex-col px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-5 sm:space-y-8">
+    <div class="dashboard-motion-scope max-w-7xl mx-auto flex flex-col px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-5 sm:space-y-8">
       
       <!-- Encabezado y Saludo -->
       <div class="order-1 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
@@ -105,30 +107,30 @@ import {
                   }
                 </select>
               </div>
-              <p class="relative mt-5 break-words text-3xl font-bold tracking-tight sm:text-4xl">
+              <p class="dashboard-summary-amount relative mt-5 min-w-0 break-words text-2xl font-bold tracking-tight sm:text-4xl">
                 {{ moneda.balanceTotal | currency:moneda.moneda:'symbol':'1.2-2' }}
               </p>
               <div class="relative mt-6 grid grid-cols-2 gap-3 border-t border-white/15 pt-4">
                 <div>
-                  <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-300">Flujo neto del mes</p>
-                  <p class="mt-1 text-sm font-bold" [class.text-emerald-300]="moneda.balanceMes >= 0" [class.text-rose-300]="moneda.balanceMes < 0">
+                  <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-300">Flujo neto del mes</p>
+                  <p class="dashboard-summary-amount mt-1 min-w-0 break-words text-sm font-bold" [class.text-emerald-300]="moneda.balanceMes >= 0" [class.text-rose-300]="moneda.balanceMes < 0">
                     {{ moneda.balanceMes | currency:moneda.moneda:'symbol':'1.2-2' }}
                   </p>
                 </div>
                 <div class="text-right">
-                  <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-300">Cuentas activas</p>
+                  <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-300">Cuentas activas</p>
                   <p class="mt-1 text-sm font-bold text-white">{{ moneda.totalCuentas }}</p>
                 </div>
               </div>
             </article>
 
-            <div class="grid grid-cols-2 gap-3 lg:col-span-2 lg:grid-cols-1">
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:col-span-2 lg:grid-cols-1">
               <article class="rounded-2xl border border-emerald-100 bg-white p-3 shadow-xs sm:p-5">
                 <div class="flex items-center gap-2">
                   <span class="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-lg font-bold text-emerald-700">↗</span>
                   <p class="text-xs font-semibold text-slate-500">Ingresos del mes</p>
                 </div>
-                <p class="mt-3 break-words text-base font-bold text-emerald-700 sm:text-2xl">
+                <p class="dashboard-summary-amount mt-3 min-w-0 break-words text-base font-bold text-emerald-700 sm:text-2xl">
                   {{ moneda.ingresosMes | currency:moneda.moneda:'symbol':'1.2-2' }}
                 </p>
               </article>
@@ -137,19 +139,117 @@ import {
                   <span class="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-50 text-lg font-bold text-rose-700">↘</span>
                   <p class="text-xs font-semibold text-slate-500">Gastos del mes</p>
                 </div>
-                <p class="mt-3 break-words text-base font-bold text-rose-700 sm:text-2xl">
+                <p class="dashboard-summary-amount mt-3 min-w-0 break-words text-base font-bold text-rose-700 sm:text-2xl">
                   {{ moneda.gastosMes | currency:moneda.moneda:'symbol':'1.2-2' }}
                 </p>
-                <p class="mt-1 text-[10px] text-slate-500">Ahorro: {{ moneda.tasaAhorro | number:'1.1-1' }}%</p>
+                <p class="mt-1 text-xs text-slate-500">Ahorro: {{ moneda.tasaAhorro | number:'1.1-1' }}%</p>
               </article>
             </div>
           </div>
+          <article class="mt-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:mt-4 sm:p-5" aria-live="polite">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h2 class="text-sm font-bold text-slate-900">Comparación de gastos</h2>
+                @if (comparacion()) {
+                  <p class="mt-1 text-xs text-slate-500">
+                    {{ periodoTexto(comparacion()!.mes, comparacion()!.anio) }}
+                    frente a {{ periodoTexto(comparacion()!.mesAnterior, comparacion()!.anioAnterior) }}
+                    · {{ moneda.moneda }}
+                  </p>
+                }
+              </div>
+              @if (comparacionCargando()) {
+                <p role="status" class="text-xs text-slate-500">Cargando comparación...</p>
+              } @else if (comparacionError()) {
+                <div class="flex items-center gap-2 text-xs text-rose-700">
+                  <span role="alert">{{ comparacionError() }}</span>
+                  <button type="button" (click)="cargarComparacion()" class="font-semibold underline">Reintentar</button>
+                </div>
+              } @else if (comparacionMonedaSeleccionada(); as comparacionMoneda) {
+                <div class="grid grid-cols-2 gap-4 sm:min-w-80">
+                  <div>
+                    <p class="text-xs font-medium text-slate-500">Mes anterior</p>
+                    <p class="mt-1 text-sm font-bold text-slate-800">
+                      {{ comparacionMoneda.gastosAnteriores | currency:moneda.moneda:'symbol':'1.2-2' }}
+                    </p>
+                  </div>
+                  <div>
+                    <p class="text-xs font-medium text-slate-500">Mes actual</p>
+                    <p class="mt-1 text-sm font-bold text-slate-800">
+                      {{ comparacionMoneda.gastosActuales | currency:moneda.moneda:'symbol':'1.2-2' }}
+                    </p>
+                  </div>
+                  <p class="col-span-2 text-xs font-semibold"
+                     [class.text-rose-700]="comparacionMoneda.variacionGastos > 0"
+                     [class.text-emerald-700]="comparacionMoneda.variacionGastos <= 0">
+                    @if (comparacionMoneda.variacionGastos > 0) {
+                      Gastaste {{ comparacionMoneda.variacionGastos | currency:moneda.moneda:'symbol':'1.2-2' }} más
+                    } @else if (comparacionMoneda.variacionGastos < 0) {
+                      Gastaste {{ -comparacionMoneda.variacionGastos | currency:moneda.moneda:'symbol':'1.2-2' }} menos
+                    } @else {
+                      Tus gastos se mantuvieron iguales
+                    }
+                    @if (comparacionMoneda.variacionGastosPorcentaje !== null) {
+                      ({{ comparacionMoneda.variacionGastosPorcentaje | number:'1.0-1' }}%)
+                    } @else {
+                      (sin base previa para calcular porcentaje)
+                    }
+                  </p>
+                </div>
+              }
+            </div>
+          </article>
         } @else if (!loading()) {
           <p class="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500">Agrega una cuenta para ver tu resumen financiero.</p>
         } @else {
           <div class="h-36 animate-pulse rounded-3xl bg-slate-200"></div>
         }
       </section>
+
+      @if (errorRecurrencias()) {
+        <div role="alert" class="order-3 flex flex-col gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 sm:flex-row sm:items-center sm:justify-between">
+          <span>{{ errorRecurrencias() }}</span>
+          <button type="button" (click)="cargarRecurrencias()" class="self-start font-semibold underline sm:self-auto">Reintentar</button>
+        </div>
+      } @else if (plantillasPorAtender().length > 0) {
+        <section class="order-3 space-y-3" aria-label="Recordatorios de movimientos recurrentes">
+          <div class="flex flex-wrap items-end justify-between gap-2">
+            <div>
+              <h2 class="text-base font-bold text-slate-900">Próximos movimientos</h2>
+              <p class="mt-1 text-xs text-slate-500">Te avisamos aquí; Kaptal no registra cargos automáticamente.</p>
+            </div>
+            <button type="button" (click)="irAConfiguracion()" class="min-h-10 rounded-lg px-3 text-sm font-semibold text-emerald-700 hover:bg-emerald-50">
+              Ver recurrencias
+            </button>
+          </div>
+          <div class="grid gap-2 sm:grid-cols-2">
+            @for (plantilla of plantillasPorAtender(); track plantilla.id) {
+              <article class="flex min-w-0 flex-col justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 sm:flex-row sm:items-center">
+                <div class="min-w-0">
+                  <p class="break-words text-sm font-semibold text-slate-900">
+                    {{ plantilla.categoriaNombre || (plantilla.tipo === 'INGRESO' ? 'Ingreso recurrente' : 'Gasto recurrente') }}
+                  </p>
+                  <p class="mt-1 text-sm font-bold text-slate-800">
+                    {{ plantilla.monto | currency:plantilla.moneda:'symbol':'1.2-2' }} · {{ plantilla.cuentaNombre }}
+                  </p>
+                  <p class="mt-1 text-xs font-medium text-amber-900">
+                    {{ plantilla.siguienteFecha <= fechaHoy() ? 'Pendiente de confirmar' : 'Próximo movimiento' }} · {{ plantilla.siguienteFecha }}
+                  </p>
+                </div>
+                @if (plantilla.siguienteFecha <= fechaHoy()) {
+                  <button
+                    type="button"
+                    (click)="registrarRecurrente(plantilla)"
+                    [disabled]="registrandoRecurrenciaId() === plantilla.id"
+                    class="min-h-10 shrink-0 rounded-lg bg-emerald-700 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-800 disabled:opacity-50">
+                    {{ registrandoRecurrenciaId() === plantilla.id ? 'Registrando...' : 'Confirmar movimiento' }}
+                  </button>
+                }
+              </article>
+            }
+          </div>
+        </section>
+      }
 
       <section class="order-3 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs lg:order-6" aria-label="Últimos movimientos">
         <div class="border-b border-slate-100 p-4 sm:p-6">
@@ -193,6 +293,12 @@ import {
 
       <!-- Analítica de gastos e ingresos -->
       <section aria-label="Analítica financiera" class="order-5 space-y-3 lg:order-4">
+        <p role="status" aria-live="polite" aria-atomic="true" class="sr-only">
+          {{ analiticaLoading() ? 'Cargando analítica financiera.' : '' }}
+        </p>
+        <p role="alert" aria-live="assertive" aria-atomic="true" class="sr-only">
+          {{ analiticaError() || '' }}
+        </p>
         <button
           type="button"
           (click)="analiticaMovilAbierta.update(abierta => !abierta)"
@@ -224,13 +330,13 @@ import {
           </div>
 
           @if (analiticaLoading()) {
-            <div class="h-52 flex items-center justify-center text-sm text-slate-400">
+            <div aria-hidden="true" class="h-52 flex items-center justify-center text-sm text-slate-400">
               <div class="w-5 h-5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin mr-2"></div>
               Cargando analítica...
             </div>
           } @else if (analiticaError()) {
             <div class="h-52 flex flex-col items-center justify-center gap-2 text-center">
-              <p class="text-sm text-rose-600">{{ analiticaError() }}</p>
+              <p aria-hidden="true" class="text-sm text-rose-600">{{ analiticaError() }}</p>
               <button type="button" (click)="cargarAnalitica()" class="text-xs font-semibold text-emerald-700 hover:underline cursor-pointer">
                 Reintentar
               </button>
@@ -247,15 +353,15 @@ import {
                 [attr.aria-label]="'Distribución de gastos en ' + monedaAnalitica() + '. Total: ' + (gastosTotales() | currency:monedaAnalitica():'symbol':'1.2-2')"
                 [style.background]="donutGradient()">
                 <div class="w-28 h-28 rounded-full bg-white flex flex-col items-center justify-center text-center">
-                  <span class="text-[10px] uppercase tracking-wide text-slate-400">Total</span>
+                  <span class="text-[11px] uppercase tracking-wide text-slate-400">Total</span>
                   <span class="text-sm font-bold text-slate-900">{{ gastosTotales() | currency:monedaAnalitica():'symbol':'1.0-0' }}</span>
                 </div>
               </div>
-              <ul class="w-full space-y-3">
+              <ul aria-label="Gastos por categoría e importe" class="w-full space-y-3">
                 @for (categoria of gastosPorCategoria(); track categoria.categoriaId ?? categoria.categoriaNombre; let i = $index) {
                   <li class="flex items-center justify-between gap-3 text-xs">
                     <span class="flex items-center gap-2 min-w-0 text-slate-600">
-                      <span class="w-2.5 h-2.5 rounded-full shrink-0" [style.background-color]="colorCategoria(categoria, i)"></span>
+                      <span aria-hidden="true" class="w-2.5 h-2.5 rounded-full shrink-0" [style.background-color]="colorCategoria(categoria, i)"></span>
                       <span class="truncate">{{ categoria.categoriaNombre }}</span>
                     </span>
                     <span class="font-semibold text-slate-800 whitespace-nowrap">
@@ -276,25 +382,25 @@ import {
           </div>
 
           @if (analiticaLoading()) {
-            <div class="h-52 flex items-center justify-center text-sm text-slate-400">
+            <div aria-hidden="true" class="h-52 flex items-center justify-center text-sm text-slate-400">
               <div class="w-5 h-5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin mr-2"></div>
               Cargando analítica...
             </div>
           } @else if (analiticaError()) {
             <div class="h-52 flex flex-col items-center justify-center gap-2 text-center">
-              <p class="text-sm text-rose-600">{{ analiticaError() }}</p>
+              <p aria-hidden="true" class="text-sm text-rose-600">{{ analiticaError() }}</p>
               <button type="button" (click)="cargarAnalitica()" class="text-xs font-semibold text-emerald-700 hover:underline cursor-pointer">
                 Reintentar
               </button>
             </div>
           } @else {
-            <div class="flex items-center justify-center gap-5 text-xs text-slate-500 mb-3">
+            <div aria-hidden="true" class="flex items-center justify-center gap-5 text-xs text-slate-500 mb-3">
               <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-sm bg-emerald-500"></span>Ingresos</span>
               <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-sm bg-rose-500"></span>Gastos</span>
             </div>
-            <div class="h-44 flex items-end justify-around gap-2 border-b border-slate-100 px-1">
+            <div aria-hidden="true" class="h-44 flex items-end justify-around gap-2 border-b border-slate-100 px-1">
               @for (mes of barrasMensuales(); track mes.anio + '-' + mes.mes) {
-                <div class="flex-1 h-full flex flex-col justify-end items-center min-w-0" [attr.aria-label]="mes.etiqueta + ': ingresos ' + mes.ingresos + ' ' + monedaAnalitica() + ', gastos ' + mes.gastos + ' ' + monedaAnalitica()">
+                <div class="flex-1 h-full flex flex-col justify-end items-center min-w-0">
                   <div class="w-full max-w-12 flex items-end justify-center gap-1 h-full">
                     <div
                       class="w-3 sm:w-4 bg-emerald-500 rounded-t-sm transition-[height]"
@@ -307,44 +413,41 @@ import {
                       [title]="'Gastos: ' + (mes.gastos | number:'1.2-2') + ' ' + monedaAnalitica()">
                     </div>
                   </div>
-                  <span class="mt-2 text-[10px] sm:text-xs text-slate-500 capitalize">{{ mes.etiqueta }}</span>
+                  <span class="mt-2 text-[11px] sm:text-xs text-slate-500 capitalize">{{ mes.etiqueta }}</span>
                 </div>
               }
             </div>
+            <table class="sr-only">
+              <caption>Ingresos y gastos de los últimos seis meses, en {{ monedaAnalitica() }}</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Mes</th>
+                  <th scope="col">Ingresos</th>
+                  <th scope="col">Gastos</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (mes of barrasMensuales(); track mes.anio + '-' + mes.mes) {
+                  <tr>
+                    <th scope="row">{{ mes.etiqueta }} {{ mes.anio }}</th>
+                    <td>{{ mes.ingresos | currency:monedaAnalitica():'symbol':'1.2-2' }}</td>
+                    <td>{{ mes.gastos | currency:monedaAnalitica():'symbol':'1.2-2' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
           }
         </article>
           </div>
         </div>
       </section>
 
-      <!-- Banner de Inteligencia Artificial (Spring AI) -->
-      <div class="hidden lg:order-5 lg:flex flex-col justify-between gap-4 overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-900 to-slate-900 p-4 text-white shadow-lg md:flex-row md:items-center sm:p-6">
-        <div class="space-y-1 relative z-10">
-          <div class="flex items-center space-x-2">
-            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-              En preparación
-            </span>
-            <span class="text-xs text-slate-300">Kaptal inteligente</span>
-          </div>
-          <h2 class="text-lg font-bold text-white">Asistente IA</h2>
-          <p class="text-xs text-slate-300 max-w-xl">
-            Estamos preparando un espacio para consultar tus finanzas y registrar movimientos con ayuda de inteligencia artificial.
-          </p>
-        </div>
-        <button
-          type="button"
-          (click)="irAAsistente()"
-          class="min-h-10 shrink-0 self-start rounded-xl bg-emerald-400 px-4 py-2 text-xs font-semibold text-slate-950 transition-colors hover:bg-emerald-300 md:self-center">
-          Ver asistente
-        </button>
-      </div>
-
     </div>
 
     <!-- Modal Interactivo 'Nuevo Movimiento' -->
     @if (modalAbierto()) {
       <div class="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto overscroll-contain bg-slate-900/60 px-0 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] backdrop-blur-xs sm:items-center sm:p-4">
-        <div #movementDialog tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="dashboard-movement-title" class="dashboard-movement-dialog flex max-h-full min-h-0 w-full flex-col overflow-hidden rounded-t-3xl border border-slate-200 bg-white shadow-2xl animate-in fade-in zoom-in-95 duration-150 sm:max-h-[min(90dvh,48rem)] sm:max-w-lg sm:rounded-3xl">
+        <div #movementDialog tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="dashboard-movement-title" class="dashboard-motion-scope dashboard-movement-dialog flex max-h-full min-h-0 w-full flex-col overflow-hidden rounded-t-3xl border border-slate-200 bg-white shadow-2xl animate-in fade-in zoom-in-95 duration-150 sm:max-h-[min(90dvh,48rem)] sm:max-w-lg sm:rounded-3xl">
           
           <!-- Encabezado del Modal con Selector de Tipo -->
           <div class="shrink-0 border-b border-slate-100 p-4 sm:p-6">
@@ -642,6 +745,14 @@ export class DashboardComponent implements OnInit {
   analiticaLoading = signal<boolean>(true);
   analiticaError = signal<string | null>(null);
   analitica = signal<DashboardAnalitica | null>(null);
+  comparacion = signal<DashboardComparacion | null>(null);
+  comparacionCargando = signal(false);
+  comparacionError = signal<string | null>(null);
+  readonly plantillasRecurrentes = signal<PlantillaRecurrente[]>([]);
+  readonly errorRecurrencias = signal<string | null>(null);
+  readonly registrandoRecurrenciaId = signal<number | null>(null);
+  readonly fechaHoy = signal(this.fechaLocal(new Date()));
+  readonly fechaLimiteRecurrencias = computed(() => this.agregarDias(this.fechaHoy(), 7));
   readonly analiticaMovilAbierta = signal(false);
   readonly monedaResumen = signal('MXN');
   monedaAnalitica = signal('MXN');
@@ -650,6 +761,16 @@ export class DashboardComponent implements OnInit {
   );
   readonly resumenMonedaSeleccionada = computed(() =>
     this.resumen()?.resumenPorMoneda.find(item => item.moneda === this.monedaResumen()) ?? null
+  );
+  readonly comparacionMonedaSeleccionada = computed(() =>
+    this.comparacion()?.porMoneda.find(item => item.moneda === this.monedaResumen()) ?? null
+  );
+  readonly plantillasPorAtender = computed(() =>
+    this.plantillasRecurrentes().filter(plantilla =>
+      plantilla.activa
+      && plantilla.siguienteFecha >= this.fechaHoy()
+      && plantilla.siguienteFecha <= this.fechaLimiteRecurrencias()
+    )
   );
 
   cuentas = signal<Cuenta[]>([]);
@@ -752,6 +873,8 @@ export class DashboardComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
     this.cargarAnalitica();
+    this.cargarComparacion();
+    this.cargarRecurrencias();
 
     this.finanzasService.getDashboardResumen().subscribe({
       next: (res) => {
@@ -799,6 +922,82 @@ export class DashboardComponent implements OnInit {
         this.analiticaLoading.set(false);
       }
     });
+  }
+
+  cargarComparacion(): void {
+    this.comparacionCargando.set(true);
+    this.comparacionError.set(null);
+    this.finanzasService.getDashboardComparacion().subscribe({
+      next: response => {
+        this.comparacionCargando.set(false);
+        if (!response.success || !response.data) {
+          this.comparacionError.set(response.message || 'No se pudo cargar la comparación.');
+          return;
+        }
+        this.comparacion.set(response.data);
+      },
+      error: () => {
+        this.comparacionCargando.set(false);
+        this.comparacionError.set('No se pudo cargar la comparación de gastos.');
+      }
+    });
+  }
+
+  periodoTexto(mes: number, anio: number): string {
+    return new Date(anio, mes - 1, 1).toLocaleDateString('es-MX', { month: 'long', year: 'numeric' });
+  }
+
+  cargarRecurrencias(): void {
+    this.errorRecurrencias.set(null);
+    this.finanzasService.getPlantillasRecurrentes().subscribe({
+      next: response => {
+        if (!response.success || !response.data) {
+          this.errorRecurrencias.set(response.message || 'No se pudieron cargar los próximos movimientos.');
+          return;
+        }
+        this.plantillasRecurrentes.set(response.data);
+      },
+      error: err => {
+        this.errorRecurrencias.set(err.error?.message || 'No se pudieron cargar los próximos movimientos.');
+      }
+    });
+  }
+
+  registrarRecurrente(plantilla: PlantillaRecurrente): void {
+    if (this.registrandoRecurrenciaId() !== null) return;
+    this.registrandoRecurrenciaId.set(plantilla.id);
+    this.finanzasService.registrarMovimientoRecurrente(plantilla.id).subscribe({
+      next: response => {
+        this.registrandoRecurrenciaId.set(null);
+        if (!response.success) {
+          this.toastService.error(response.message || 'No se pudo confirmar el movimiento recurrente.');
+          return;
+        }
+        this.toastService.success('Movimiento recurrente confirmado y registrado.');
+        this.cargarDashboard();
+        this.cargarCuentasYCategorias();
+      },
+      error: err => {
+        this.registrandoRecurrenciaId.set(null);
+        this.toastService.error(err.error?.message || 'No se pudo confirmar el movimiento recurrente.');
+      }
+    });
+  }
+
+  irAConfiguracion(): void {
+    this.router.navigate(['/configuracion']);
+  }
+
+  private fechaLocal(fecha: Date): string {
+    const anio = fecha.getFullYear();
+    const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+    const dia = String(fecha.getDate()).padStart(2, '0');
+    return `${anio}-${mes}-${dia}`;
+  }
+
+  private agregarDias(fechaISO: string, dias: number): string {
+    const [anio, mes, dia] = fechaISO.split('-').map(Number);
+    return this.fechaLocal(new Date(anio, mes - 1, dia + dias));
   }
 
   colorCategoria(categoria: DashboardAnalitica['gastosPorCategoria'][number], indice: number): string {
@@ -996,10 +1195,6 @@ export class DashboardComponent implements OnInit {
 
   irATransacciones(): void {
     this.router.navigate(['/transacciones']);
-  }
-
-  irAAsistente(): void {
-    this.router.navigate(['/asistente']);
   }
 
   eliminarMovimiento(id: number): void {
