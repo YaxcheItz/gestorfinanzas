@@ -9,6 +9,7 @@ import com.gestionfinanzas.model.entity.PlantillaRecurrente;
 import com.gestionfinanzas.model.entity.Transaccion;
 import com.gestionfinanzas.model.entity.Usuario;
 import com.gestionfinanzas.model.enums.FrecuenciaRecurrencia;
+import com.gestionfinanzas.model.enums.TipoCuenta;
 import com.gestionfinanzas.model.enums.TipoTransaccion;
 import com.gestionfinanzas.repository.CategoriaRepository;
 import com.gestionfinanzas.repository.CuentaRepository;
@@ -47,6 +48,7 @@ public class TransaccionService {
     public TransaccionResponse crearTransaccion(Long usuarioId, TransaccionRequest request) {
         DatosTransaccion datos = prepararTransaccion(usuarioId, request);
         validarRecurrencia(request, datos.tipo());
+        validarLimiteCredito(datos.cuentaOrigen(), datos.tipo(), request.monto(), null);
         aplicarImpacto(datos.tipo(), datos.cuentaOrigen(), datos.cuentaDestino(),
                 request.monto(), datos.montoDestino(), 1);
 
@@ -54,6 +56,10 @@ public class TransaccionService {
                 .usuario(datos.usuario())
                 .cuenta(datos.cuentaOrigen())
                 .cuentaDestino(datos.cuentaDestino())
+                .cuentaNombreHistorico(datos.cuentaOrigen().getNombre())
+                .cuentaMonedaHistorica(datos.cuentaOrigen().getMoneda())
+                .cuentaDestinoNombreHistorico(datos.cuentaDestino() != null ? datos.cuentaDestino().getNombre() : null)
+                .cuentaDestinoMonedaHistorica(datos.cuentaDestino() != null ? datos.cuentaDestino().getMoneda() : null)
                 .categoria(datos.categoria())
                 .tipo(request.tipo())
                 .monto(request.monto())
@@ -93,14 +99,19 @@ public class TransaccionService {
         if (transaccion.getCashbackOrigen() != null) {
             throw new IllegalArgumentException("El cashback automático no se puede editar");
         }
+        if (transaccion.getCuenta() == null
+                || (transaccion.getTipo() == TipoTransaccion.TRANSFERENCIA && transaccion.getCuentaDestino() == null)) {
+            throw new IllegalArgumentException("No se puede editar un movimiento cuyo historial pertenece a una cuenta eliminada");
+        }
 
         Cuenta cuentaAnterior = transaccion.getCuenta();
         LocalDate fechaAnterior = transaccion.getFecha();
         TipoTransaccion tipoAnterior = transaccion.getTipo();
+        DatosTransaccion datos = prepararTransaccion(usuarioId, request);
+        validarLimiteCredito(datos.cuentaOrigen(), datos.tipo(), request.monto(), transaccion);
         if (tipoAnterior == TipoTransaccion.GASTO) {
             eliminarCashbackGenerado(transaccion);
         }
-        DatosTransaccion datos = prepararTransaccion(usuarioId, request);
         aplicarImpacto(transaccion.getTipo(), transaccion.getCuenta(), transaccion.getCuentaDestino(),
                 transaccion.getMonto(), transaccion.getMontoDestino(), -1);
         aplicarImpacto(datos.tipo(), datos.cuentaOrigen(), datos.cuentaDestino(),
@@ -108,6 +119,10 @@ public class TransaccionService {
 
         transaccion.setCuenta(datos.cuentaOrigen());
         transaccion.setCuentaDestino(datos.cuentaDestino());
+        transaccion.setCuentaNombreHistorico(datos.cuentaOrigen().getNombre());
+        transaccion.setCuentaMonedaHistorica(datos.cuentaOrigen().getMoneda());
+        transaccion.setCuentaDestinoNombreHistorico(datos.cuentaDestino() != null ? datos.cuentaDestino().getNombre() : null);
+        transaccion.setCuentaDestinoMonedaHistorica(datos.cuentaDestino() != null ? datos.cuentaDestino().getMoneda() : null);
         transaccion.setCategoria(datos.categoria());
         transaccion.setTipo(request.tipo());
         transaccion.setMonto(request.monto());
@@ -130,6 +145,57 @@ public class TransaccionService {
             recalcularCashbackMes(actualizada.getCuenta(), actualizada.getFecha());
         }
         return TransaccionResponse.fromEntity(actualizada);
+    }
+
+    private void validarLimiteCredito(
+            Cuenta cuenta,
+            TipoTransaccion tipo,
+            BigDecimal monto,
+            Transaccion transaccionAnterior
+    ) {
+        if ((tipo != TipoTransaccion.GASTO && tipo != TipoTransaccion.TRANSFERENCIA)
+                || cuenta.getTipo() != TipoCuenta.CREDITO) {
+            return;
+        }
+
+        BigDecimal limite = cuenta.getLimiteCredito();
+        if (limite == null || limite.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Configura un límite de crédito válido antes de registrar gastos con esta tarjeta");
+        }
+
+        BigDecimal saldoProyectado = cuenta.getSaldoActual();
+        if (transaccionAnterior != null) {
+            if (transaccionAnterior.getCuenta().getId().equals(cuenta.getId())) {
+                switch (transaccionAnterior.getTipo()) {
+                    case GASTO, TRANSFERENCIA ->
+                            saldoProyectado = saldoProyectado.add(transaccionAnterior.getMonto());
+                    case INGRESO ->
+                            saldoProyectado = saldoProyectado.subtract(transaccionAnterior.getMonto());
+                    default -> {
+                    }
+                }
+            }
+            if (transaccionAnterior.getTipo() == TipoTransaccion.TRANSFERENCIA
+                    && transaccionAnterior.getCuentaDestino() != null
+                    && transaccionAnterior.getCuentaDestino().getId().equals(cuenta.getId())) {
+                BigDecimal montoDestino = transaccionAnterior.getMontoDestino() != null
+                        ? transaccionAnterior.getMontoDestino()
+                        : transaccionAnterior.getMonto();
+                saldoProyectado = saldoProyectado.subtract(montoDestino);
+            }
+            if (transaccionAnterior.getTipo() == TipoTransaccion.GASTO) {
+                var cashback = transaccionRepository.findByCashbackOrigenId(transaccionAnterior.getId())
+                        .filter(cashbackTransaccion -> cashbackTransaccion.getCuenta().getId().equals(cuenta.getId()));
+                if (cashback.isPresent()) {
+                    saldoProyectado = saldoProyectado.subtract(cashback.get().getMonto());
+                }
+            }
+        }
+
+        BigDecimal disponible = limite.add(saldoProyectado).max(BigDecimal.ZERO).min(limite);
+        if (monto.compareTo(disponible) > 0) {
+            throw new IllegalArgumentException("El movimiento supera el crédito disponible de la tarjeta (" + disponible + ")");
+        }
     }
 
     private DatosTransaccion prepararTransaccion(Long usuarioId, TransaccionRequest request) {
@@ -387,11 +453,11 @@ public class TransaccionService {
             campos.add(transaccion.getTipo().name());
             campos.add(transaccion.getDescripcion());
             campos.add(transaccion.getCategoria() != null ? transaccion.getCategoria().getNombre() : "");
-            campos.add(transaccion.getCuenta().getNombre());
-            campos.add(transaccion.getCuenta().getMoneda());
+            campos.add(nombreCuentaOrigen(transaccion));
+            campos.add(monedaCuentaOrigen(transaccion));
             campos.add(transaccion.getMonto().toPlainString());
-            campos.add(transaccion.getCuentaDestino() != null ? transaccion.getCuentaDestino().getNombre() : "");
-            campos.add(transaccion.getCuentaDestino() != null ? transaccion.getCuentaDestino().getMoneda() : "");
+            campos.add(nombreCuentaDestino(transaccion));
+            campos.add(monedaCuentaDestino(transaccion));
             campos.add(transaccion.getMontoDestino() != null ? transaccion.getMontoDestino().toPlainString() : "");
             campos.add(transaccion.getTasaCambio() != null ? transaccion.getTasaCambio().toPlainString() : "");
             campos.add(transaccion.getNotas() != null ? transaccion.getNotas() : "");
@@ -415,6 +481,30 @@ public class TransaccionService {
         return "\"" + seguro.replace("\"", "\"\"") + "\"";
     }
 
+    private String nombreCuentaOrigen(Transaccion transaccion) {
+        return transaccion.getCuenta() != null
+                ? transaccion.getCuenta().getNombre()
+                : transaccion.getCuentaNombreHistorico();
+    }
+
+    private String monedaCuentaOrigen(Transaccion transaccion) {
+        return transaccion.getCuenta() != null
+                ? transaccion.getCuenta().getMoneda()
+                : transaccion.getCuentaMonedaHistorica();
+    }
+
+    private String nombreCuentaDestino(Transaccion transaccion) {
+        return transaccion.getCuentaDestino() != null
+                ? transaccion.getCuentaDestino().getNombre()
+                : transaccion.getCuentaDestinoNombreHistorico();
+    }
+
+    private String monedaCuentaDestino(Transaccion transaccion) {
+        return transaccion.getCuentaDestino() != null
+                ? transaccion.getCuentaDestino().getMoneda()
+                : transaccion.getCuentaDestinoMonedaHistorica();
+    }
+
     @Transactional(readOnly = true)
     public TransaccionResponse obtenerPorId(Long usuarioId, Long transaccionId) {
         Transaccion transaccion = transaccionRepository.findByIdAndUsuarioId(transaccionId, usuarioId)
@@ -428,6 +518,10 @@ public class TransaccionService {
                 .orElseThrow(() -> new IllegalArgumentException("Transacción no encontrada o no autorizada"));
         if (transaccion.getCashbackOrigen() != null) {
             throw new IllegalArgumentException("El cashback automático se elimina junto con el gasto que lo generó");
+        }
+        if (transaccion.getCuenta() == null
+                || (transaccion.getTipo() == TipoTransaccion.TRANSFERENCIA && transaccion.getCuentaDestino() == null)) {
+            throw new IllegalArgumentException("No se puede eliminar un movimiento cuyo historial pertenece a una cuenta eliminada");
         }
 
         Cuenta cuentaOrigen = transaccion.getCuenta();

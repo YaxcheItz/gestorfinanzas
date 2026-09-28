@@ -9,4 +9,5 @@ import java.util.Optional;
 public interface PlantillaRecurrenteRepository extends JpaRepository<PlantillaRecurrente, Long> {
     List<PlantillaRecurrente> findAllByUsuarioIdOrderBySiguienteFechaAsc(Long usuarioId);
     Optional<PlantillaRecurrente> findByIdAndUsuarioId(Long id, Long usuarioId);
+    void deleteByCuentaId(Long cuentaId);
 }

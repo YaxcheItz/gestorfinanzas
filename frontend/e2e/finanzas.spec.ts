@@ -9,16 +9,21 @@ type ApiResponse<T> = {
 type Cuenta = {
   id: number;
   nombre: string;
+  tipo: string;
   saldoActual: number;
   moneda: string;
   activo: boolean;
+  institucionFinanciera?: string | null;
   cashbackPorcentaje?: number | null;
   cashbackLimiteMensual?: number | null;
+  limiteCredito?: number | null;
+  diaCorte?: number | null;
+  diaPago?: number | null;
 };
 
 type Transaccion = {
   id: number;
-  cuentaId: number;
+  cuentaId: number | null;
   cuentaDestinoId: number | null;
   tipo: string;
   monto: number;
@@ -833,13 +838,52 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   expect(await cashbackSettings.evaluate(element => getComputedStyle(element).backgroundColor))
     .toBe('rgb(30, 41, 59)');
   await page.getByLabel('Nombre').fill('E2E Cashback');
+  await selectOptionContaining(page.getByLabel('Banco o institución (opcional)'), 'Santander');
   await selectOptionContaining(page.getByLabel('Tipo de cuenta'), 'Crédito');
-  await page.getByLabel('Saldo inicial').fill('100');
+  const creditCardSettings = page.locator('.credit-card-settings');
+  expect(await creditCardSettings.evaluate(element => getComputedStyle(element).backgroundColor))
+    .toBe('rgb(30, 41, 59)');
+  await page.getByLabel('Límite de crédito').fill('1000');
+  await page.getByLabel('Deuda actual').fill('0');
+  await page.getByLabel('Día de corte').fill('10');
+  await page.getByLabel('Día de pago').fill('1');
   await page.getByLabel('Cashback (%)').fill('2');
   await page.getByLabel('Límite mensual (opcional)').fill('1');
   await page.getByRole('button', { name: 'Crear cuenta' }).click();
   const cashbackAccountCard = page.getByRole('article').filter({ hasText: 'E2E Cashback' });
   await expect(cashbackAccountCard).toContainText('Cashback 2%');
+  await expect(cashbackAccountCard).toContainText('Límite');
+  await expect(cashbackAccountCard).toContainText('Corte día 10 · Pago día 1');
+  const creditAccount = (await apiGet<Cuenta[]>(page, '/cuentas?incluirInactivas=true'))
+    .find(cuenta => cuenta.nombre === 'E2E Cashback');
+  expect(creditAccount).toMatchObject({
+    tipo: 'CREDITO',
+    institucionFinanciera: 'santander',
+    cashbackPorcentaje: 2,
+    cashbackLimiteMensual: 1,
+    limiteCredito: 1000,
+    diaCorte: 10,
+    diaPago: 1,
+    saldoActual: 0
+  });
+
+  await cashbackAccountCard.getByRole('button', { name: 'Editar' }).click();
+  await expect(page.getByLabel('Cashback (%)')).toHaveValue('2');
+  await expect(page.getByLabel('Límite mensual (opcional)')).toHaveValue('1');
+  await expect(page.getByLabel('Límite de crédito')).toHaveValue('1000');
+  await expect(page.getByLabel('Día de corte')).toHaveValue('10');
+  await expect(page.getByLabel('Día de pago')).toHaveValue('1');
+  await page.getByRole('button', { name: 'Guardar cambios' }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  const updatedCreditAccount = (await apiGet<Cuenta[]>(page, '/cuentas?incluirInactivas=true'))
+    .find(cuenta => cuenta.nombre === 'E2E Cashback');
+  expect(updatedCreditAccount).toMatchObject({
+    cashbackPorcentaje: 2,
+    cashbackLimiteMensual: 1,
+    limiteCredito: 1000,
+    diaCorte: 10,
+    diaPago: 1
+  });
 
   await page.getByRole('link', { name: 'Panel General' }).click();
   await page.getByRole('button', { name: 'Ver más' }).click();
@@ -878,7 +922,7 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   cashbackMovements = await apiGet<Transaccion[]>(page, '/transacciones/recientes');
   expect(cashbackMovements.filter(movement => movement.cashbackAutomatico)).toHaveLength(1);
   cuentas = await apiGet<Cuenta[]>(page, '/cuentas?incluirInactivas=true');
-  expect(cuentas.find(cuenta => cuenta.nombre === 'E2E Cashback')?.saldoActual).toBe(1);
+  expect(cuentas.find(cuenta => cuenta.nombre === 'E2E Cashback')?.saldoActual).toBe(-99);
 
   const cashbackExpenseRow = page.getByRole('row').filter({ hasText: 'E2E cashback compra' });
   await cashbackExpenseRow.getByTitle('Eliminar movimiento').click({ force: true });
@@ -893,7 +937,7 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   cashbackMovements = await apiGet<Transaccion[]>(page, '/transacciones/recientes');
   expect(cashbackMovements.some(movement => movement.cashbackAutomatico)).toBeFalsy();
   cuentas = await apiGet<Cuenta[]>(page, '/cuentas?incluirInactivas=true');
-  expect(cuentas.find(cuenta => cuenta.nombre === 'E2E Cashback')?.saldoActual).toBe(100);
+  expect(cuentas.find(cuenta => cuenta.nombre === 'E2E Cashback')?.saldoActual).toBe(0);
 
   await page.getByRole('button', { name: 'Salir' }).click();
   await expect(page).toHaveURL(/\/login$/);

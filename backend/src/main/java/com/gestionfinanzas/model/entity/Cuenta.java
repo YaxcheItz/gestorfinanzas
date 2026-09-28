@@ -41,6 +41,15 @@ public class Cuenta {
     @Column(name = "cashback_limite_mensual", precision = 15, scale = 2)
     private BigDecimal cashbackLimiteMensual;
 
+    @Column(name = "limite_credito", precision = 15, scale = 2)
+    private BigDecimal limiteCredito;
+
+    @Column(name = "dia_corte")
+    private Integer diaCorte;
+
+    @Column(name = "dia_pago")
+    private Integer diaPago;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private TipoCuenta tipo;
