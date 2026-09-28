@@ -1,6 +1,8 @@
 package com.gestionfinanzas.exception;
 
 import com.gestionfinanzas.dto.response.ApiResponse;
+import com.gestionfinanzas.ai.AiConfigurationException;
+import com.gestionfinanzas.ai.AiProviderException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
@@ -39,6 +41,18 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleOptimisticLockingFailure(OptimisticLockingFailureException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(ApiResponse.error("La cuenta fue modificada por otra operación. Actualiza los datos e inténtalo nuevamente."));
+    }
+
+    @ExceptionHandler(AiConfigurationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAiConfiguration(AiConfigurationException ex) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(AiProviderException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAiProvider(AiProviderException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                .body(ApiResponse.error(ex.getMessage()));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

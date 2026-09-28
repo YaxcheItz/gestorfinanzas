@@ -24,6 +24,18 @@ npm run start:lan
 
 Abre `http://192.168.0.14:4200` en el celular, reemplazando la IP por la dirección actual del adaptador Wi-Fi. Si Windows Firewall lo solicita, permite Node.js en redes privadas. Angular reenvía las llamadas del API al backend local en el puerto `8080`, por lo que no es necesario exponer ese puerto en la red.
 
+## Configurar la conexión del asistente IA
+
+El proveedor Gemini se configura únicamente en el backend. Copia `backend/.env.example` como `backend/.env`, agrega tu clave en `GEMINI_API_KEY` y no compartas ni subas ese archivo a Git. También puedes definir la variable de entorno en la terminal del backend antes de iniciarlo:
+
+```powershell
+$env:GEMINI_API_KEY="tu-clave"
+```
+
+Al entrar en **Asistente IA**, Kaptal consulta el estado del proveedor y prueba la conexión automáticamente. No hay un botón de prueba manual. El modelo principal predeterminado es `gemini-2.5-flash`; si responde con límite de solicitudes (HTTP 429), el backend intenta automáticamente `gemini-flash-lite-latest`. Puedes cambiar los modelos con `AI_MODEL` y `AI_FALLBACK_MODEL`; el respaldo debe estar disponible y tener cuota en tu proyecto de Google AI Studio. Si ambos modelos alcanzan su límite, Kaptal muestra un error para intentar más tarde. Cada mensaje y el historial reciente se envían a Gemini junto con un resumen financiero y opciones para identificar cuentas, categorías, movimientos recientes, presupuestos y plantillas recurrentes. Gemini puede proponer consultas o acciones sobre movimientos, cuentas, categorías, presupuestos y recurrencias; las acciones se muestran en el mismo chat y requieren confirmación explícita antes de ejecutarse. Los borrados requieren una segunda confirmación. El backend vuelve a validar cada operación con las reglas y permisos normales de Kaptal. Las propuestas pendientes expiran después de diez minutos y las conversaciones se conservan solo en memoria del frontend mientras permanezca abierta la pantalla.
+
+No escribas datos que no quieras enviar al proveedor Gemini configurado. La clave de Gemini permanece exclusivamente en el backend; los datos financieros se envían al proveedor para responder a la conversación y preparar acciones, pero no se manda la clave al navegador.
+
 ## Code scaffolding
 
 Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
