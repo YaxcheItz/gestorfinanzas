@@ -45,9 +45,10 @@ class TransaccionServiceTest {
     private final PlantillaRecurrenteRepository plantillaRepository = mock(PlantillaRecurrenteRepository.class);
     private final UsuarioRepository usuarioRepository = mock(UsuarioRepository.class);
     private final AuditoriaTransaccionService auditoriaService = mock(AuditoriaTransaccionService.class);
+    private final LibroDiarioService libroDiarioService = mock(LibroDiarioService.class);
     private final TransaccionService transaccionService = new TransaccionService(
             transaccionRepository, cuentaRepository, categoriaRepository, usuarioRepository, plantillaRepository,
-            auditoriaService
+            auditoriaService, libroDiarioService
     );
 
     @Test

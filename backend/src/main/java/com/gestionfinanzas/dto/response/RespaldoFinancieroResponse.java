@@ -14,6 +14,7 @@ public record RespaldoFinancieroResponse(
         List<PresupuestoRespaldo> presupuestos,
         List<PlantillaRecurrenteResponse> recurrencias,
         List<AuditoriaTransaccionResponse> historialMovimientos,
+        List<AsientoContableResponse> libroDiario,
         List<TransaccionResponse> transacciones
 ) {
     public record PresupuestoRespaldo(

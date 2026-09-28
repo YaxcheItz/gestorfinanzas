@@ -10,6 +10,7 @@ import {
 } from '../models/ai.models';
 import {
   AuditoriaTransaccion,
+  AsientoContable,
   Categoria,
   CategoriaPayload,
   Cuenta,
@@ -192,6 +193,14 @@ export class FinanzasService {
     const params = new HttpParams().set('page', page).set('size', size);
     return this.http.get<ApiResponse<PageResponse<AuditoriaTransaccion>>>(
       `${this.baseUrl}/perfil/historial`,
+      { params }
+    );
+  }
+
+  getLibroDiario(page = 0, size = 20): Observable<ApiResponse<PageResponse<AsientoContable>>> {
+    const params = new HttpParams().set('page', page).set('size', size);
+    return this.http.get<ApiResponse<PageResponse<AsientoContable>>>(
+      `${this.baseUrl}/libro-diario`,
       { params }
     );
   }

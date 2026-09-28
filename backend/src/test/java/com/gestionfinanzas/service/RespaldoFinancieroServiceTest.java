@@ -25,6 +25,7 @@ class RespaldoFinancieroServiceTest {
     private final PlantillaRecurrenteRepository plantillaRepository = mock(PlantillaRecurrenteRepository.class);
     private final TransaccionRepository transaccionRepository = mock(TransaccionRepository.class);
     private final AuditoriaTransaccionService auditoriaService = mock(AuditoriaTransaccionService.class);
+    private final LibroDiarioService libroDiarioService = mock(LibroDiarioService.class);
     private final RespaldoFinancieroService respaldoService = new RespaldoFinancieroService(
             perfilService,
             cuentaRepository,
@@ -32,7 +33,8 @@ class RespaldoFinancieroServiceTest {
             presupuestoRepository,
             plantillaRepository,
             transaccionRepository,
-            auditoriaService
+            auditoriaService,
+            libroDiarioService
     );
 
     @Test

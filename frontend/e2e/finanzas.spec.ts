@@ -142,6 +142,8 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   await expect(page).toHaveURL(/\/dashboard$/);
   await expect(page.getByRole('heading', { name: 'Resumen Financiero' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Comparación de gastos' })).toBeVisible();
+  const mobileNav = page.getByRole('navigation', { name: 'Navegación principal' });
+  await expect(mobileNav.getByRole('link', { name: 'Libro diario' })).toBeVisible();
   const mobileDashboardSummary = page.getByRole('region', { name: 'Resumen financiero por moneda' });
   const mobileDashboardIncomeCard = mobileDashboardSummary.getByText('Ingresos del mes').locator('xpath=ancestor::article[1]');
   const mobileDashboardExpenseCard = mobileDashboardSummary.getByText('Gastos del mes').locator('xpath=ancestor::article[1]');
@@ -165,6 +167,7 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   await expect(page.getByRole('button', { name: 'Salir' })).toBeVisible();
   await expect(page.getByText('Conectado como')).toBeVisible();
   const desktopNavigation = page.getByRole('navigation', { name: 'Navegación de escritorio' });
+  await expect(desktopNavigation.getByRole('link', { name: 'Libro diario' })).toBeVisible();
   await expect(desktopNavigation.getByRole('link', { name: 'Movimientos' })).toHaveCount(0);
   await expect(desktopNavigation.getByRole('link', { name: 'Asistente IA' })).toBeVisible();
   await expect(page.getByText(/Consulta tus finanzas y solicita movimientos o presupuestos/)).toHaveCount(0);
@@ -229,7 +232,7 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   const mobileNavigation = page.getByRole('navigation', { name: 'Navegación principal' });
   await expect(mobileNavigation).toBeVisible();
   await expect(mobileNavigation).toHaveCSS('position', 'fixed');
-  await expect(mobileNavigation.locator('svg use')).toHaveCount(4);
+  await expect(mobileNavigation.locator('svg use')).toHaveCount(5);
   await expect(mobileNavigation.getByRole('link', { name: 'Inicio' })).toBeVisible();
   await expect(mobileNavigation.getByRole('link', { name: 'Movimientos' })).toHaveCount(0);
   await expect(mobileNavigation.getByRole('link', { name: 'Asistente IA' })).toBeVisible();
@@ -240,11 +243,12 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
       return { left: bounds.left, right: bounds.right, width: bounds.width };
     })
   );
-  expect(mobileNavLinks).toHaveLength(4);
+  expect(mobileNavLinks).toHaveLength(5);
   expect(mobileNavLinks.every(link => link.width > 0 && link.left >= 0 && link.right <= 390)).toBeTruthy();
   expect(mobileNavLinks[0].left).toBeLessThan(mobileNavLinks[1].left);
   expect(mobileNavLinks[1].left).toBeLessThan(mobileNavLinks[2].left);
   expect(mobileNavLinks[2].left).toBeLessThan(mobileNavLinks[3].left);
+  expect(mobileNavLinks[3].left).toBeLessThan(mobileNavLinks[4].left);
   expect(await page.evaluate(() => document.documentElement.scrollWidth))
     .toBeLessThanOrEqual(await page.evaluate(() => window.innerWidth));
   await mobileNavigation.getByRole('link', { name: 'Cuentas' }).click();
@@ -374,15 +378,23 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
     perfil: Record<string, unknown>;
     transacciones: Transaccion[];
     historialMovimientos: Array<{ accion: string }>;
+    libroDiario: Array<{ tipoEvento: string; lineas: Array<{ moneda: string; lado: string }> }>;
   };
   expect(respaldo.transacciones.length).toBeGreaterThan(0);
   expect(respaldo.historialMovimientos.length).toBeGreaterThan(0);
+  expect(respaldo.libroDiario.length).toBeGreaterThan(0);
+  expect(respaldo.libroDiario[0].lineas.length).toBeGreaterThanOrEqual(2);
   expect(JSON.stringify(respaldo.perfil)).not.toContain('password');
   const [respaldoDescargado] = await Promise.all([
     page.waitForEvent('download'),
     page.getByRole('button', { name: 'Descargar respaldo' }).click()
   ]);
   expect(respaldoDescargado.suggestedFilename()).toMatch(/^kaptal-respaldo-\d{4}-\d{2}-\d{2}\.json$/);
+  await page.getByRole('link', { name: 'Libro diario', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Libro diario', exact: true })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Asientos contables' })).toContainText('Saldo inicial');
+  await expect(page.getByRole('table').first().getByRole('columnheader', { name: 'Debe' })).toBeVisible();
+  await page.getByRole('link', { name: 'Perfil', exact: true }).click();
   await page.getByRole('link', { name: 'Administrar categorías' }).click();
   await page.getByRole('button', { name: '+ Nueva categoría' }).click();
   await page.getByLabel('Nombre', { exact: true }).fill('E2E Pruebas');
