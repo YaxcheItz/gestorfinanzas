@@ -19,6 +19,8 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -30,8 +32,9 @@ class CuentaServiceTest {
     private final TransaccionRepository transaccionRepository = mock(TransaccionRepository.class);
     private final UsuarioRepository usuarioRepository = mock(UsuarioRepository.class);
     private final PlantillaRecurrenteRepository plantillaRepository = mock(PlantillaRecurrenteRepository.class);
+    private final AuditoriaTransaccionService auditoriaService = mock(AuditoriaTransaccionService.class);
     private final CuentaService cuentaService = new CuentaService(
-            cuentaRepository, usuarioRepository, transaccionRepository, plantillaRepository
+            cuentaRepository, usuarioRepository, transaccionRepository, plantillaRepository, auditoriaService
     );
 
     @Test
@@ -44,6 +47,8 @@ class CuentaServiceTest {
             cuenta.setId(3L);
             return cuenta;
         });
+        when(transaccionRepository.save(any(Transaccion.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         cuentaService.crearCuenta(7L, new CuentaRequest(
                 "Ahorro", TipoCuenta.AHORRO, "bbva", new BigDecimal("2.00"),
@@ -63,6 +68,7 @@ class CuentaServiceTest {
         assertEquals(new BigDecimal("1250.00"), captor.getValue().getMonto());
         assertEquals(3L, captor.getValue().getCuenta().getId());
         assertEquals(usuario, captor.getValue().getUsuario());
+        verify(auditoriaService).registrar(eq(7L), isNull(), eq("CREAR"), isNull(), any());
     }
 
     @Test
@@ -112,6 +118,8 @@ class CuentaServiceTest {
             cuenta.setId(4L);
             return cuenta;
         });
+        when(transaccionRepository.save(any(Transaccion.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         cuentaService.crearCuenta(7L, new CuentaRequest(
                 "Santander", TipoCuenta.CREDITO, "santander",
