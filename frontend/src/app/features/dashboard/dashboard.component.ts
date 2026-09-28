@@ -1,5 +1,15 @@
-import { Component, OnInit, inject, signal, computed, effect } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import {
+  Component,
+  ElementRef,
+  HostListener,
+  OnInit,
+  ViewChild,
+  inject,
+  signal,
+  computed,
+  effect
+} from '@angular/core';
+import { CommonModule, DOCUMENT } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
@@ -334,7 +344,7 @@ import {
     <!-- Modal Interactivo 'Nuevo Movimiento' -->
     @if (modalAbierto()) {
       <div class="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto overscroll-contain bg-slate-900/60 px-0 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] backdrop-blur-xs sm:items-center sm:p-4">
-        <div role="dialog" aria-modal="true" aria-labelledby="dashboard-movement-title" class="flex max-h-full min-h-0 w-full flex-col overflow-hidden rounded-t-3xl border border-slate-200 bg-white shadow-2xl animate-in fade-in zoom-in-95 duration-150 sm:max-h-[min(90dvh,48rem)] sm:max-w-lg sm:rounded-3xl">
+        <div #movementDialog tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="dashboard-movement-title" class="dashboard-movement-dialog flex max-h-full min-h-0 w-full flex-col overflow-hidden rounded-t-3xl border border-slate-200 bg-white shadow-2xl animate-in fade-in zoom-in-95 duration-150 sm:max-h-[min(90dvh,48rem)] sm:max-w-lg sm:rounded-3xl">
           
           <!-- Encabezado del Modal con Selector de Tipo -->
           <div class="shrink-0 border-b border-slate-100 p-4 sm:p-6">
@@ -344,7 +354,7 @@ import {
                 type="button"
                 (click)="cerrarModal()" 
                 aria-label="Cerrar formulario de movimiento"
-                class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors cursor-pointer">
+                class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 cursor-pointer">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -352,26 +362,29 @@ import {
             </div>
 
             <!-- Tabs de Tipo de Transacción -->
-            <div class="grid grid-cols-3 gap-1.5 rounded-xl bg-slate-100 p-1 text-[11px] font-semibold sm:gap-2 sm:text-xs">
+            <div role="group" aria-label="Tipo de movimiento" class="grid grid-cols-3 gap-1.5 rounded-xl bg-slate-100 p-1 text-[11px] font-semibold sm:gap-2 sm:text-xs">
               <button 
                 type="button"
                 (click)="cambiarTipo('GASTO')"
+                [attr.aria-pressed]="formTipo() === 'GASTO'"
                 [class]="formTipo() === 'GASTO' ? 'bg-white text-rose-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'"
-                class="min-h-10 rounded-lg px-1 py-2 text-center transition-all cursor-pointer sm:min-h-11">
+                class="min-h-10 rounded-lg px-1 py-2 text-center transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 cursor-pointer sm:min-h-11">
                 Gasto
               </button>
               <button 
                 type="button"
                 (click)="cambiarTipo('INGRESO')"
+                [attr.aria-pressed]="formTipo() === 'INGRESO'"
                 [class]="formTipo() === 'INGRESO' ? 'bg-white text-emerald-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'"
-                class="min-h-10 rounded-lg px-1 py-2 text-center transition-all cursor-pointer sm:min-h-11">
+                class="min-h-10 rounded-lg px-1 py-2 text-center transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 cursor-pointer sm:min-h-11">
                 Ingreso
               </button>
               <button 
                 type="button"
                 (click)="cambiarTipo('TRANSFERENCIA')"
+                [attr.aria-pressed]="formTipo() === 'TRANSFERENCIA'"
                 [class]="formTipo() === 'TRANSFERENCIA' ? 'bg-white text-blue-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'"
-                class="min-h-10 rounded-lg px-1 py-2 text-center transition-all cursor-pointer sm:min-h-11">
+                class="min-h-10 rounded-lg px-1 py-2 text-center transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 cursor-pointer sm:min-h-11">
                 Transferencia
               </button>
             </div>
@@ -381,7 +394,7 @@ import {
           <form (ngSubmit)="guardarMovimiento()" class="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain p-4 pb-[max(2rem,env(safe-area-inset-bottom))] sm:space-y-4 sm:p-6 sm:pb-8">
             
             @if (modalError()) {
-              <div class="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs">
+              <div role="alert" class="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs">
                 {{ modalError() }}
               </div>
             }
@@ -562,14 +575,14 @@ import {
               <button
                 type="button"
                 (click)="cerrarModal()"
-                class="min-h-11 w-full rounded-xl px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 cursor-pointer sm:w-auto">
+                class="min-h-11 w-full rounded-xl px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 cursor-pointer sm:w-auto">
                 Cancelar
               </button>
               
               <button
                 type="submit"
                 [disabled]="submitting()"
-                class="inline-flex min-h-11 w-full items-center justify-center space-x-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-600/20 transition-all hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-50 cursor-pointer sm:w-auto">
+                class="inline-flex min-h-11 w-full items-center justify-center space-x-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-600/20 transition-all hover:bg-emerald-700 active:bg-emerald-800 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:opacity-50 cursor-pointer sm:w-auto">
                 @if (submitting()) {
                   <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                   <span>Guardando...</span>
@@ -593,8 +606,28 @@ export class DashboardComponent implements OnInit {
   private readonly toastService = inject(ToastService);
   private readonly confirmDialog = inject(ConfirmDialogService);
   private readonly perfilService = inject(PerfilService);
+  private readonly document = inject(DOCUMENT);
   readonly resumenCuentaSelector = resumenCuentaSelector;
   private monedaPreferidaAplicada = false;
+  private elementoConFocoPrevio: HTMLElement | null = null;
+  private elementoDialogo: HTMLDivElement | null = null;
+
+  @ViewChild('movementDialog')
+  set movementDialog(element: ElementRef<HTMLDivElement> | undefined) {
+    if (element) {
+      this.elementoDialogo = element.nativeElement;
+      const monto = element.nativeElement.querySelector<HTMLElement>('#monto');
+      (monto ?? element.nativeElement).focus();
+      return;
+    }
+
+    this.elementoDialogo = null;
+    if (!this.modalAbierto()) {
+      const previousFocus = this.elementoConFocoPrevio;
+      this.elementoConFocoPrevio = null;
+      if (previousFocus?.isConnected) previousFocus.focus();
+    }
+  }
 
   readonly fechaActual = new Intl.DateTimeFormat('es-MX', {
     day: 'numeric',
@@ -797,6 +830,10 @@ export class DashboardComponent implements OnInit {
   }
 
   abrirModal(tipo: TipoTransaccion = 'GASTO'): void {
+    const activeElement = this.document.activeElement;
+    this.elementoConFocoPrevio = activeElement && typeof (activeElement as HTMLElement).focus === 'function'
+      ? activeElement as HTMLElement
+      : null;
     this.formTipo.set(tipo);
     this.modalError.set(null);
     this.formMonto = null;
@@ -824,6 +861,44 @@ export class DashboardComponent implements OnInit {
   cerrarModal(): void {
     this.modalAbierto.set(false);
     this.modalError.set(null);
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  manejarTecladoModal(event: KeyboardEvent): void {
+    const dialog = this.elementoDialogo;
+    if (!this.modalAbierto() || !dialog) return;
+
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      this.cerrarModal();
+      return;
+    }
+    if (event.key !== 'Tab') return;
+
+    const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(
+      'a[href], button, input:not([type="hidden"]), select, textarea, [tabindex]'
+    )).filter(element =>
+      !('disabled' in element && element.disabled)
+      && element.tabIndex >= 0
+      && !element.closest('[hidden], [aria-hidden="true"]')
+    );
+
+    if (focusable.length === 0) {
+      event.preventDefault();
+      dialog.focus();
+      return;
+    }
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const activeElement = this.document.activeElement;
+    if (event.shiftKey && (activeElement === first || !dialog.contains(activeElement))) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && (activeElement === last || !dialog.contains(activeElement))) {
+      event.preventDefault();
+      first.focus();
+    }
   }
 
   cambiarTipo(tipo: TipoTransaccion): void {
