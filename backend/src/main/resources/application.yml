@@ -46,6 +46,7 @@ jwt:
 app:
   mail:
     enabled: ${MAIL_ENABLED:false}
+    provider: ${MAIL_PROVIDER:smtp}
     from: ${MAIL_FROM:no-reply@kaptal.app}
   frontend-url: ${FRONTEND_URL:http://localhost:4200}
   cors:
@@ -57,3 +58,6 @@ app:
     gemini:
       api-key: ${GEMINI_API_KEY:}
       base-url: ${GEMINI_API_URL:https://generativelanguage.googleapis.com/v1beta}
+
+resend:
+  api-key: ${RESEND_API_KEY:}

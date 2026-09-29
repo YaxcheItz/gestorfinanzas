@@ -6,9 +6,13 @@ status: in_progress
 
 # Contexto
 
-El proyecto nunca se ha desplegado. No hay CI/CD, ni Dockerfile, ni configuracion
-de hosting. `main` estaba en el commit inicial y `develop` va 61 commits por
-delante. La base de datos si vive en Supabase, en el esquema `finanzas`.
+El proyecto nunca se ha desplegado. No habia CI/CD, ni Dockerfile, ni
+configuracion de hosting. `main` estaba en el commit inicial. La base de datos
+si vive en Supabase, en el esquema `finanzas`.
+
+Decision tomada: plan gratuito. Render para el backend, Vercel para el
+frontend, Resend para el correo. Costo $0, a cambio de un arranque en frio de
+~1 minuto que se mitiga con un ping periodico.
 
 Bloqueadores de despliegue encontrados:
 
@@ -34,6 +38,22 @@ queda prevenida en CI: el job de backend falla si aparece `nativeQuery = true`.
 - [x] `frontend/nginx.conf` con fallback de SPA, cache y headers
 - [x] `.dockerignore` en backend y frontend
 - [x] `DEPLOY.md` con variables de entorno y orden de despliegue
+- [x] `render.yaml` con el servicio backend en plan gratuito
+- [x] `vercel.json` con build de Angular, fallback SPA y cache de runtime-config
+- [x] `.github/workflows/keep-warm.yml` para evitar el arranque en frio
+- [x] Resend como proveedor de correo, porque Render free bloquea SMTP
+- [x] Interfaz `EnvioCorreo` con implementaciones SMTP y Resend
+- [x] Recuperar `ci.yml`, que se habia quedado solo en la rama del fix
+
+## 2b. Desplegar (todo pendiente, requiere cuentas)
+
+- [ ] Crear cuenta en Resend y verificar el dominio remitente
+- [ ] Desplegar backend en Render desde `render.yaml`
+- [ ] Configurar `KAPTAL_API_URL` en GitHub Actions
+- [ ] Desplegar frontend en Vercel, apuntando `dist/frontend/browser`
+- [ ] Ajustar `CORS_ORIGINS` y `FRONTEND_URL` con los dominios reales
+- [ ] Activar `MAIL_ENABLED=true` y probar la recuperacion de contrasena
+- [ ] Verificar `/api/health` y el login desde el dominio publico
 
 ## 2. Verificar
 
@@ -53,11 +73,7 @@ migraciones perderia el esquema existente de Supabase.
 
 ## 4. Primer despliegue
 
-- [ ] Elegir host del backend: Render, Railway o Fly.io
-- [ ] Configurar las variables de entorno documentadas en `DEPLOY.md`
-- [ ] Verificar healthcheck en `/api/health`
-- [ ] Configurar dominio y HTTPS
-- [ ] Confirmar CORS con el origen real del frontend
+Ver la seccion 2b. Todo lo de infraestructura ya esta escrito en el repo.
 
 # Fuera de alcance
 

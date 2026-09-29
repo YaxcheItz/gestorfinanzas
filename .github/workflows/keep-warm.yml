@@ -1,0 +1,54 @@
+name: Keep warm
+
+# ---------------------------------------------------------------------------
+# ADVERTENCIAS. Lee esto antes de confiar en este workflow.
+#
+# 1. GitHub desactiva los workflows programados tras 60 dias sin actividad en
+#    el repositorio. Cuando pase, este ping deja de correr en silencio y el
+#    servicio de Render se duerme. El historial mostrara ejecuciones antiguas
+#    en verde, asi que no sirve para saber si sigue activo. La unica senal
+#    fiable es que la app tarde al abrirse.
+#
+# 2. Las 750 horas gratis de Render son por cuenta, no por servicio. Un mes son
+#    730 horas. Mantener UN servicio vivo 24/7 consume practicamente el limite
+#    completo. Si despliegas un segundo servicio y tambien lo mantienes vivo,
+#    Render suspende el que se pase hasta el mes siguiente. Si necesitas dos,
+#    cambia el backend al plan Starter de $7.
+#
+# 3. El job falla en rojo si la API no responde, para que una caida se vea en
+#    lugar de pasar desapercibida. Aun asi, este workflow no puede reportar su
+#    propia muerte: si deja de correr, no hay ejecucion que se ponga roja.
+# ---------------------------------------------------------------------------
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: keep-warm
+  cancel-in-progress: false
+
+jobs:
+  ping:
+    name: Ping API
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Comprobar API
+        env:
+          API_URL: ${{ vars.KAPTAL_API_URL }}
+        run: |
+          if [ -z "$API_URL" ]; then
+            echo "::error::KAPTAL_API_URL no esta definida. Anadela en Settings > Secrets and variables > Actions > Variables."
+            exit 1
+          fi
+          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 90 "$API_URL/api/health")
+          if [ "$code" != "200" ]; then
+            echo "::error::La API respondio $code. Puede ser un arranque en frio o una caida real."
+            exit 1
+          fi
+          echo "API responde 200. Despierta: $API_URL"

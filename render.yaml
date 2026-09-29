@@ -1,0 +1,43 @@
+# Blueprint de Render: backend Kaptal
+#
+# Dashboard: New > Blueprint, apuntando a este repositorio.
+#
+# IMPORTANTE: el plan Free duerme el servicio tras 15 minutos sin trafico y
+# tarda ~1 minuto en despertar. El workflow .github/workflows/keep-warm.yml
+# lo mantiene despierto. Lee DEPLOY.md antes de tocar los limites de abajo.
+
+services:
+  - type: web
+    name: kaptal-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    region: oregon
+    healthCheckPath: /api/health
+    # El plan Free no abre puertos reservados.
+    envVars:
+      - key: SPRING_JPA_PROPERTIES_HIBERNATE_DEFAULT_SCHEMA
+        value: finanzas
+      - key: MAIL_ENABLED
+        value: "false"
+      - key: MAIL_PROVIDER
+        value: resend
+      - key: JWT_SECRET
+        generateValue: true
+      - key: SPRING_DATASOURCE_URL
+        sync: false
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: MAIL_FROM
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
