@@ -9,5 +9,7 @@ public record DashboardMonedaResumenResponse(
     BigDecimal gastosMes,
     BigDecimal balanceMes,
     BigDecimal tasaAhorro,
-    int totalCuentas
+    int totalCuentas,
+    BigDecimal dineroDisponible,
+    BigDecimal deudaTarjetas
 ) {}

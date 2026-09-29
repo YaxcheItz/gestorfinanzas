@@ -42,6 +42,8 @@ import { AuthService } from '../../../core/services/auth.service';
               type="text"
               autocomplete="name"
               required
+              minlength="2"
+              maxlength="100"
               [(ngModel)]="nombre"
               placeholder="Juan Pérez"
               class="min-h-11 w-full min-w-0 px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
@@ -58,15 +60,24 @@ import { AuthService } from '../../../core/services/auth.service';
               type="email"
               autocomplete="email"
               required
+              maxlength="150"
+              [attr.aria-invalid]="email.length > 0 && !emailCumpleRequisitos()"
+              [attr.aria-describedby]="email.length > 0 && !emailCumpleRequisitos() ? 'email-ayuda email-error' : 'email-ayuda'"
               [(ngModel)]="email"
               placeholder="tu@correo.com"
               class="min-h-11 w-full min-w-0 px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
             />
+            <p id="email-ayuda" class="mt-1.5 text-xs leading-relaxed text-slate-500">Usa un formato como nombre@dominio.com.</p>
+            @if (email.length > 0 && !emailCumpleRequisitos()) {
+              <p id="email-error" role="alert" class="mt-1 text-xs font-medium text-rose-700">
+                Escribe un correo válido con @ y un dominio, por ejemplo nombre@dominio.com.
+              </p>
+            }
           </div>
 
           <div>
             <label for="password" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-              Contraseña (mínimo 6 caracteres)
+              Contraseña
             </label>
             <div class="relative">
             <input
@@ -75,7 +86,10 @@ import { AuthService } from '../../../core/services/auth.service';
               [type]="mostrarPassword() ? 'text' : 'password'"
               autocomplete="new-password"
               required
-              minlength="6"
+              minlength="8"
+              maxlength="20"
+              [attr.aria-invalid]="password.length > 0 && !passwordCumpleRequisitos()"
+              [attr.aria-describedby]="password.length > 0 && !passwordCumpleRequisitos() ? 'password-ayuda password-error' : 'password-ayuda'"
               [(ngModel)]="password"
               placeholder="••••••••"
               class="min-h-11 w-full min-w-0 px-3.5 py-2.5 pr-14 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
@@ -84,6 +98,14 @@ import { AuthService } from '../../../core/services/auth.service';
               <svg aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
             </button>
             </div>
+            <p id="password-ayuda" class="mt-1.5 text-xs leading-relaxed text-slate-500">
+              Usa entre 8 y 20 caracteres. Puedes incluir símbolos.
+            </p>
+            @if (password.length > 0 && !passwordCumpleRequisitos()) {
+              <p id="password-error" role="alert" class="mt-1 text-xs font-medium text-rose-700">
+                La contraseña debe tener entre 8 y 20 caracteres.
+              </p>
+            }
           </div>
 
           <button
@@ -126,21 +148,43 @@ export class RegistroComponent {
     this.mostrarPassword.update(visible => !visible);
   }
 
+  passwordCumpleRequisitos(): boolean {
+    return this.password.length >= 8 && this.password.length <= 20;
+  }
+
+  emailCumpleRequisitos(): boolean {
+    const email = this.email.trim();
+    return email.length <= 150 && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
+  }
+
   onSubmit(): void {
-    if (!this.nombre || !this.email || !this.password) {
+    if (!this.nombre.trim() || !this.email.trim() || !this.password) {
       this.errorMessage.set('Por favor completa todos los campos.');
       return;
     }
 
-    if (this.password.length < 6) {
-      this.errorMessage.set('La contraseña debe tener al menos 6 caracteres.');
+    if (this.nombre.trim().length < 2 || this.nombre.trim().length > 100) {
+      this.errorMessage.set('El nombre debe tener entre 2 y 100 caracteres.');
+      document.getElementById('nombre')?.focus();
+      return;
+    }
+
+    if (!this.emailCumpleRequisitos()) {
+      this.errorMessage.set('Escribe un correo válido con @ y un dominio, por ejemplo nombre@dominio.com.');
+      document.getElementById('email')?.focus();
+      return;
+    }
+
+    if (!this.passwordCumpleRequisitos()) {
+      this.errorMessage.set('La contraseña debe tener entre 8 y 20 caracteres.');
+      document.getElementById('password')?.focus();
       return;
     }
 
     this.loading.set(true);
     this.errorMessage.set(null);
 
-    this.authService.registro({ nombre: this.nombre, email: this.email, password: this.password }).subscribe({
+    this.authService.registro({ nombre: this.nombre.trim(), email: this.email.trim(), password: this.password }).subscribe({
       next: () => {
         this.loading.set(false);
         this.router.navigate(['/dashboard']);

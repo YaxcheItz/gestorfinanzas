@@ -57,6 +57,16 @@ async function apiDelete(page: Page, path: string): Promise<number> {
   return response.status();
 }
 
+async function apiPost(page: Page, path: string, data: unknown): Promise<number> {
+  const token = await page.evaluate(() => localStorage.getItem('finanzas_token'));
+  expect(token).not.toBeNull();
+  const response = await page.request.post(`http://localhost:18080/api${path}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    data
+  });
+  return response.status();
+}
+
 async function selectOptionContaining(select: Locator, fragment: string): Promise<void> {
   await expect(select.locator('option', { hasText: fragment }).first()).toBeAttached();
   const options = await select.locator('option').all();
@@ -136,8 +146,12 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
   const email = `e2e-${Date.now()}@example.test`;
   await page.getByLabel('Nombre Completo').fill('Usuario E2E');
+  await page.locator('#email').fill('correo-invalido');
+  await page.locator('#password').fill('A!23456');
+  await expect(page.getByText(/correo v.lido con @/)).toBeVisible();
+  await expect(page.getByText(/debe tener entre 8 y 20 caracteres/)).toBeVisible();
   await page.getByLabel('Correo Electrónico').fill(email);
-  await page.getByLabel(/Contraseña/).fill('Pruebas123');
+  await page.getByLabel(/Contraseña/).fill('A!234567');
   await page.getByRole('button', { name: 'Crear mi Cuenta' }).click();
   await expect(page).toHaveURL(/\/dashboard$/);
   await expect(page.getByRole('heading', { name: 'Resumen Financiero' })).toBeVisible();
@@ -311,7 +325,7 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   await expect(page).toHaveURL(/\/login$/);
   await expect(page.locator('html')).not.toHaveClass(/dark/);
   await page.getByLabel('Correo Electrónico').fill(email);
-  await page.getByLabel('Contraseña', { exact: true }).fill('Pruebas123');
+  await page.getByLabel('Contraseña', { exact: true }).fill('A!234567');
   await page.getByRole('button', { name: 'Iniciar Sesión', exact: true }).click();
   await expect(page).toHaveURL(/\/dashboard$/);
   await expect(page.locator('html')).toHaveClass(/dark/);
@@ -992,6 +1006,34 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
     diaPago: 1
   });
 
+  const secondCreditAccountStatus = await apiPost(page, '/cuentas', {
+    nombre: 'E2E Credito destino',
+    tipo: 'CREDITO',
+    limiteCredito: 1000,
+    saldoInicial: 0,
+    diaCorte: 10,
+    diaPago: 20,
+    moneda: 'MXN'
+  });
+  expect(secondCreditAccountStatus).toBe(201);
+  await page.getByRole('link', { name: 'Panel General' }).click();
+  await page.getByRole('button', { name: 'Nuevo Movimiento' }).click();
+  await page.getByRole('button', { name: 'Transferencia', exact: true }).click();
+  await selectOptionContaining(page.locator('#cuentaId'), 'E2E Cashback');
+  await expect(page.locator('#cuentaDestinoId option', { hasText: 'E2E Credito destino' })).toHaveCount(0);
+  const creditAccounts = await apiGet<Cuenta[]>(page, '/cuentas?incluirInactivas=true');
+  const creditSource = creditAccounts.find(cuenta => cuenta.nombre === 'E2E Cashback')!;
+  const creditDestination = creditAccounts.find(cuenta => cuenta.nombre === 'E2E Credito destino')!;
+  expect(await apiPost(page, '/transacciones', {
+    cuentaId: creditSource.id,
+    cuentaDestinoId: creditDestination.id,
+    tipo: 'TRANSFERENCIA',
+    monto: 10,
+    fecha: new Date().toISOString().slice(0, 10),
+    descripcion: 'Transferencia inválida entre créditos'
+  })).toBe(400);
+  await page.getByRole('button', { name: 'Cancelar' }).click();
+
   await page.getByRole('link', { name: 'Panel General' }).click();
   await page.getByRole('button', { name: 'Ver más' }).click();
   await page.getByRole('button', { name: 'Nuevo Movimiento' }).click();
@@ -1000,6 +1042,11 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   await page.getByLabel('Notas adicionales (Opcional)').fill('E2E cashback compra');
   await page.getByRole('button', { name: 'Registrar', exact: true }).click();
   await expect(movementText(page, 'E2E cashback compra')).toBeVisible();
+
+  await page.getByRole('link', { name: 'Panel General' }).click();
+  const cardDebtSummary = page.getByText('Deuda en tarjetas', { exact: true }).locator('xpath=ancestor::article[1]');
+  await expect(cardDebtSummary).toContainText('79');
+  await page.goto('/transacciones');
 
   let cashbackMovements = await apiGet<Transaccion[]>(page, '/transacciones/recientes');
   const cashback = cashbackMovements.find(movement => movement.cashbackAutomatico);
@@ -1051,7 +1098,7 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   await page.getByRole('button', { name: 'Salir' }).click();
   await expect(page).toHaveURL(/\/login$/);
   await page.getByLabel('Correo Electrónico').fill(email);
-  await page.getByRole('textbox', { name: 'Contraseña' }).fill('Pruebas123');
+  await page.getByRole('textbox', { name: 'Contraseña' }).fill('A!234567');
   await page.getByRole('button', { name: 'Iniciar Sesión' }).click();
   await expect(page).toHaveURL(/\/dashboard$/);
   await expect(page.getByText('Hola, Usuario E2E.')).toBeVisible();

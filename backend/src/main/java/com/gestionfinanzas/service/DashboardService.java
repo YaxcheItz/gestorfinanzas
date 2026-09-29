@@ -12,6 +12,7 @@ import com.gestionfinanzas.dto.response.DashboardMonedaTotales;
 import com.gestionfinanzas.dto.response.TransaccionResponse;
 import com.gestionfinanzas.model.entity.Cuenta;
 import com.gestionfinanzas.model.enums.TipoTransaccion;
+import com.gestionfinanzas.model.enums.TipoCuenta;
 import com.gestionfinanzas.repository.CuentaRepository;
 import com.gestionfinanzas.repository.TransaccionRepository;
 import lombok.RequiredArgsConstructor;
@@ -47,10 +48,19 @@ public class DashboardService {
 
         List<Cuenta> cuentasActivas = cuentaRepository.findByUsuarioIdAndActivoTrue(usuarioId);
         Map<String, BigDecimal> balancesPorMoneda = new HashMap<>();
+        Map<String, BigDecimal> dineroDisponiblePorMoneda = new HashMap<>();
+        Map<String, BigDecimal> deudaTarjetasPorMoneda = new HashMap<>();
         Map<String, Integer> cuentasPorMoneda = new HashMap<>();
         for (Cuenta cuenta : cuentasActivas) {
             balancesPorMoneda.merge(cuenta.getMoneda(), cuenta.getSaldoActual(), BigDecimal::add);
             cuentasPorMoneda.merge(cuenta.getMoneda(), 1, Integer::sum);
+            if (cuenta.getTipo() == TipoCuenta.CREDITO) {
+                deudaTarjetasPorMoneda.merge(
+                        cuenta.getMoneda(), cuenta.getSaldoActual().negate().max(BigDecimal.ZERO), BigDecimal::add
+                );
+            } else {
+                dineroDisponiblePorMoneda.merge(cuenta.getMoneda(), cuenta.getSaldoActual(), BigDecimal::add);
+            }
         }
         List<DashboardMonedaTotales> totalesMensuales =
                 transaccionRepository.findTotalesMensualesPorMoneda(usuarioId, inicioPeriodo, finPeriodo);
@@ -71,7 +81,9 @@ public class DashboardService {
                             : BigDecimal.ZERO;
                     return new DashboardMonedaResumenResponse(
                             moneda, balance, ingresos, gastos, balanceMes, tasaAhorro,
-                            cuentasPorMoneda.getOrDefault(moneda, 0)
+                            cuentasPorMoneda.getOrDefault(moneda, 0),
+                            dineroDisponiblePorMoneda.getOrDefault(moneda, BigDecimal.ZERO),
+                            deudaTarjetasPorMoneda.getOrDefault(moneda, BigDecimal.ZERO)
                     );
                 })
                 .toList();
@@ -80,7 +92,7 @@ public class DashboardService {
                 .findFirst()
                 .orElse(new DashboardMonedaResumenResponse(
                         "MXN", BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO,
-                        BigDecimal.ZERO, BigDecimal.ZERO, 0
+                        BigDecimal.ZERO, BigDecimal.ZERO, 0, BigDecimal.ZERO, BigDecimal.ZERO
                 ));
 
         List<TransaccionResponse> ultimosMovimientos = transaccionRepository
