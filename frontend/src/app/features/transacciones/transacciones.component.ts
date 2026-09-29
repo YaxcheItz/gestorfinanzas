@@ -7,6 +7,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { CategoriaSelectorComponent } from '../../shared/components/categoria-selector/categoria-selector.component';
 import { MovimientoMobileCardComponent } from '../../shared/components/movimiento-mobile-card/movimiento-mobile-card.component';
+import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive';
 import { resumenCuentaSelector } from '../../core/utils/cuenta-financiera';
 import {
   Categoria,
@@ -22,7 +23,7 @@ import {
 @Component({
   selector: 'app-transacciones',
   standalone: true,
-  imports: [CommonModule, FormsModule, CategoriaSelectorComponent, MovimientoMobileCardComponent],
+  imports: [CommonModule, FormsModule, CategoriaSelectorComponent, MovimientoMobileCardComponent, FocusTrapDirective],
   template: `
     <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-5 sm:space-y-6">
 
@@ -416,7 +417,7 @@ import {
     @if (modalAbierto()) {
       <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-2 sm:p-4">
         
-        <div role="dialog" aria-modal="true" aria-labelledby="transacciones-modal-titulo" class="flex max-h-[calc(100dvh-1rem)] min-h-0 w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl animate-in fade-in zoom-in-95 duration-150 sm:rounded-3xl">
+        <div appFocusTrap (focusTrapEscape)="cerrarModal()" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="transacciones-modal-titulo" class="flex max-h-[calc(100dvh-1rem)] min-h-0 w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl animate-in fade-in zoom-in-95 duration-150 sm:rounded-3xl">
           
           <div class="shrink-0 border-b border-slate-100 p-4 sm:p-6">
             <div class="flex items-center justify-between pb-4">
@@ -424,7 +425,8 @@ import {
               <button 
                 type="button"
                 (click)="cerrarModal()" 
-                class="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer">
+                aria-label="Cerrar formulario de movimiento"
+                class="inline-flex min-h-11 min-w-11 items-center justify-center text-slate-600 hover:text-slate-900 p-1 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -437,21 +439,21 @@ import {
                 type="button"
                 (click)="cambiarTipoModal('GASTO')"
                 [class]="formTipo() === 'GASTO' ? 'bg-white text-rose-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'"
-                class="py-2 rounded-lg transition-all text-center cursor-pointer">
+                class="min-h-11 rounded-lg transition-all text-center cursor-pointer">
                 Gasto
               </button>
               <button 
                 type="button"
                 (click)="cambiarTipoModal('INGRESO')"
                 [class]="formTipo() === 'INGRESO' ? 'bg-white text-emerald-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'"
-                class="py-2 rounded-lg transition-all text-center cursor-pointer">
+                class="min-h-11 rounded-lg transition-all text-center cursor-pointer">
                 Ingreso
               </button>
               <button 
                 type="button"
                 (click)="cambiarTipoModal('TRANSFERENCIA')"
                 [class]="formTipo() === 'TRANSFERENCIA' ? 'bg-white text-blue-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'"
-                class="py-2 rounded-lg transition-all text-center cursor-pointer">
+                class="min-h-11 rounded-lg transition-all text-center cursor-pointer">
                 Transferencia
               </button>
             </div>

@@ -143,7 +143,9 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   await expect(page.getByRole('heading', { name: 'Resumen Financiero' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Comparación de gastos' })).toBeVisible();
   const mobileNav = page.getByRole('navigation', { name: 'Navegación principal' });
-  await expect(mobileNav.getByRole('link', { name: 'Libro diario' })).toBeVisible();
+  await mobileNav.getByRole('button', { name: 'Más destinos' }).click();
+  await expect(page.getByRole('navigation', { name: 'Más destinos' }).getByRole('link', { name: 'Libro diario' })).toBeVisible();
+  await mobileNav.getByRole('button', { name: 'Más destinos' }).click();
   const mobileDashboardSummary = page.getByRole('region', { name: 'Resumen financiero por moneda' });
   const mobileDashboardIncomeCard = mobileDashboardSummary.getByText('Ingresos del mes').locator('xpath=ancestor::article[1]');
   const mobileDashboardExpenseCard = mobileDashboardSummary.getByText('Gastos del mes').locator('xpath=ancestor::article[1]');
@@ -167,8 +169,9 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   await expect(page.getByRole('button', { name: 'Salir' })).toBeVisible();
   await expect(page.getByText('Conectado como')).toBeVisible();
   const desktopNavigation = page.getByRole('navigation', { name: 'Navegación de escritorio' });
+  await expect(desktopNavigation.getByRole('link', { name: 'Transacciones' })).toBeVisible();
+  await desktopNavigation.getByRole('button', { name: 'Más' }).click();
   await expect(desktopNavigation.getByRole('link', { name: 'Libro diario' })).toBeVisible();
-  await expect(desktopNavigation.getByRole('link', { name: 'Movimientos' })).toHaveCount(0);
   await expect(desktopNavigation.getByRole('link', { name: 'Asistente IA' })).toBeVisible();
   await expect(page.getByText(/Consulta tus finanzas y solicita movimientos o presupuestos/)).toHaveCount(0);
   const recentTransactionsSection = page.getByRole('region', { name: 'Últimos movimientos' });
@@ -234,10 +237,10 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   await expect(mobileNavigation).toHaveCSS('position', 'fixed');
   await expect(mobileNavigation.locator('svg use')).toHaveCount(5);
   await expect(mobileNavigation.getByRole('link', { name: 'Inicio' })).toBeVisible();
-  await expect(mobileNavigation.getByRole('link', { name: 'Movimientos' })).toHaveCount(0);
-  await expect(mobileNavigation.getByRole('link', { name: 'Asistente IA' })).toBeVisible();
+  await expect(mobileNavigation.getByRole('link', { name: 'Movimientos' })).toBeVisible();
+  await expect(mobileNavigation.getByRole('button', { name: 'Más destinos' })).toBeVisible();
   await expect(mobileNavigation.getByRole('link', { name: 'Categorías' })).toHaveCount(0);
-  const mobileNavLinks = await mobileNavigation.locator('a').evaluateAll(links =>
+  const mobileNavLinks = await mobileNavigation.locator('a, button').evaluateAll(links =>
     links.map(link => {
       const bounds = link.getBoundingClientRect();
       return { left: bounds.left, right: bounds.right, width: bounds.width };
@@ -256,9 +259,10 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   expect(await page.evaluate(() => document.documentElement.scrollWidth))
     .toBeLessThanOrEqual(await page.evaluate(() => window.innerWidth));
   await mobileNavigation.getByRole('link', { name: 'Inicio' }).click();
-  await mobileNavigation.getByRole('link', { name: 'Asistente IA' }).click();
+  await mobileNavigation.getByRole('button', { name: 'Más destinos' }).click();
+  await page.getByRole('navigation', { name: 'Más destinos' }).getByRole('link', { name: 'Asistente IA' }).click();
   await expect(page.getByRole('heading', { name: 'Asistente IA' })).toBeVisible();
-  await expect(page.getByRole('navigation', { name: 'Navegación principal' }).getByRole('link', { name: 'Asistente IA' }))
+  await expect(mobileNavigation.getByRole('button', { name: 'Más destinos' }))
     .toHaveCSS('color', 'rgb(5, 150, 105)');
   await page.screenshot({ path: 'test-results/capturas/asistente-ia-movil.png', fullPage: true });
   await mobileNavigation.getByRole('link', { name: 'Inicio' }).click();
@@ -289,21 +293,21 @@ test('auth, cuentas, monedas, movimientos, presupuestos, categorías y analític
   expect(await page.evaluate(() => document.documentElement.scrollWidth))
     .toBeLessThanOrEqual(await page.evaluate(() => window.innerWidth));
   await page.setViewportSize({ width: 1280, height: 900 });
-  await page.getByRole('button', { name: '🌙 Oscuro' }).click();
+  await page.getByRole('button', { name: 'Oscuro' }).click();
   await page.getByRole('button', { name: 'Guardar preferencias' }).click();
   await expect(page.locator('html')).toHaveClass(/dark/);
   await page.getByRole('link', { name: 'Administrar categorías' }).click();
   await expect(page.locator('html')).toHaveClass(/dark/);
   await page.getByRole('button', { name: 'Salir' }).click();
   await expect(page).toHaveURL(/\/login$/);
-  await expect(page.locator('html')).toHaveClass(/dark/);
+  await expect(page.locator('html')).not.toHaveClass(/dark/);
   await page.getByLabel('Correo Electrónico').fill(email);
   await page.getByLabel('Contraseña', { exact: true }).fill('Pruebas123');
   await page.getByRole('button', { name: 'Iniciar Sesión', exact: true }).click();
   await expect(page).toHaveURL(/\/dashboard$/);
   await expect(page.locator('html')).toHaveClass(/dark/);
   await page.getByRole('link', { name: 'Perfil', exact: true }).click();
-  await page.getByRole('button', { name: '☀️ Claro' }).click();
+  await page.getByRole('button', { name: 'Claro' }).click();
   await page.getByRole('button', { name: 'Guardar preferencias' }).click();
   await expect(page.locator('html')).not.toHaveClass(/dark/);
   await page.getByRole('link', { name: 'Panel General' }).click();

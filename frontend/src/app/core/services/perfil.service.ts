@@ -57,6 +57,7 @@ export class PerfilService {
     this.perfil.set(null);
     this.cargando.set(false);
     this.error.set(null);
+    this.aplicarTema('CLARO');
   }
 
   private aplicarPerfil(perfil: Perfil): void {
