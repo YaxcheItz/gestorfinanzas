@@ -1,7 +1,15 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
-import { ApiResponse, AuthResponse, LoginPayload, RegistroPayload, Usuario } from '../models/auth.models';
+import {
+  ApiResponse,
+  AuthResponse,
+  LoginPayload,
+  RegistroPayload,
+  RestablecerPasswordPayload,
+  SolicitudRecuperacionPayload,
+  Usuario
+} from '../models/auth.models';
 import { Router } from '@angular/router';
 import { getApiBaseUrl } from './api-base-url';
 
@@ -39,6 +47,14 @@ export class AuthService {
         }
       })
     );
+  }
+
+  solicitarRecuperacion(payload: SolicitudRecuperacionPayload): Observable<ApiResponse<boolean>> {
+    return this.http.post<ApiResponse<boolean>>(`${this.apiUrl}/recuperacion`, payload);
+  }
+
+  restablecerPassword(payload: RestablecerPasswordPayload): Observable<ApiResponse<void>> {
+    return this.http.post<ApiResponse<void>>(`${this.apiUrl}/recuperacion/confirmar`, payload);
   }
 
   logout(): void {

@@ -92,6 +92,12 @@ import { AuthService } from '../../../core/services/auth.service';
           </button>
         </form>
 
+        <div class="text-center -mt-2">
+          <a routerLink="/recuperar-cuenta" class="rounded text-sm font-semibold text-emerald-700 hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600">
+            ¿Olvidaste tu contraseña?
+          </a>
+        </div>
+
         <div class="text-center pt-2 border-t border-slate-100 text-xs text-slate-500">
           ¿No tienes una cuenta aún?
           <a routerLink="/registro" class="text-emerald-600 font-semibold hover:underline ml-1">
