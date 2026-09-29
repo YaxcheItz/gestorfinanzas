@@ -56,11 +56,18 @@ public class RespaldoFinancieroService {
                 .findAllByUsuarioIdOrderBySiguienteFechaAsc(usuarioId).stream()
                 .map(PlantillaRecurrenteResponse::fromEntity)
                 .toList();
-        List<TransaccionResponse> transacciones = transaccionRepository.findAll(
+        List<com.gestionfinanzas.model.entity.Transaccion> entidadesTransacciones = transaccionRepository.findAll(
                         TransaccionSpecification.soloUsuario(usuarioId),
                         Sort.by(Sort.Direction.ASC, "fecha", "id")
-                ).stream()
+                );
+        List<TransaccionResponse> transacciones = entidadesTransacciones.stream()
                 .map(TransaccionResponse::fromEntity)
+                .toList();
+        List<RespaldoFinancieroResponse.CashbackRespaldo> relacionesCashback = entidadesTransacciones.stream()
+                .filter(transaccion -> transaccion.getCashbackOrigen() != null)
+                .map(transaccion -> new RespaldoFinancieroResponse.CashbackRespaldo(
+                        transaccion.getId(), transaccion.getCashbackOrigen().getId()
+                ))
                 .toList();
 
         return new RespaldoFinancieroResponse(
@@ -73,7 +80,8 @@ public class RespaldoFinancieroService {
                 recurrencias,
                 auditoriaService.listarParaRespaldo(usuarioId),
                 libroDiarioService.listarParaRespaldo(usuarioId),
-                transacciones
+                transacciones,
+                relacionesCashback
         );
     }
 
