@@ -64,7 +64,7 @@ class TransaccionServiceTest {
 
         var response = transaccionService.crearTransaccion(7L, new TransaccionRequest(
                 1L, 2L, null, TipoTransaccion.TRANSFERENCIA, new BigDecimal("100.00"),
-                new BigDecimal("17.50"), LocalDate.now(), "Transferencia", null, null, null
+                new BigDecimal("17.50"), LocalDate.now(), "Transferencia", null, null, null, null
         ));
 
         assertEquals(new BigDecimal("400.00"), origen.getSaldoActual());
@@ -121,7 +121,7 @@ class TransaccionServiceTest {
 
         var response = transaccionService.actualizarTransaccion(7L, 11L, new TransaccionRequest(
                 1L, null, 4L, TipoTransaccion.GASTO, new BigDecimal("25.00"),
-                null, LocalDate.of(2026, 9, 26), "Gasto corregido", " nota ", null, null
+                null, LocalDate.of(2026, 9, 26), "Gasto corregido", " nota ", null, null, null
         ));
 
         assertEquals(11L, response.id());
@@ -151,7 +151,7 @@ class TransaccionServiceTest {
 
         transaccionService.actualizarTransaccion(7L, 11L, new TransaccionRequest(
                 1L, 2L, null, TipoTransaccion.TRANSFERENCIA, new BigDecimal("120.00"),
-                new BigDecimal("18.00"), LocalDate.now(), "Transferencia corregida", null, null, null
+                new BigDecimal("18.00"), LocalDate.now(), "Transferencia corregida", null, null, null, null
         ));
 
         assertEquals(new BigDecimal("380.00"), origen.getSaldoActual());
@@ -173,8 +173,7 @@ class TransaccionServiceTest {
         assertThrows(IllegalArgumentException.class, () -> transaccionService.actualizarTransaccion(
                 7L, 11L, new TransaccionRequest(
                         1L, null, null, TipoTransaccion.INGRESO, new BigDecimal("100.00"),
-                        null, LocalDate.now(), "Ingreso", null, null, null
-                )
+                        null, LocalDate.now(), "Ingreso", null, null, null, null)
         ));
 
         assertEquals(new BigDecimal("100.00"), cuenta.getSaldoActual());
@@ -216,7 +215,7 @@ class TransaccionServiceTest {
         assertThrows(IllegalArgumentException.class, () -> transaccionService.crearTransaccion(
                 7L, new TransaccionRequest(
                         1L, null, 4L, TipoTransaccion.INGRESO, new BigDecimal("10.00"),
-                        null, LocalDate.now(), "Ingreso incompatible", null, null, null
+                        null, LocalDate.now(), "Ingreso incompatible", null, null, null, null
                 )
         ));
 
@@ -241,7 +240,7 @@ class TransaccionServiceTest {
         var response = transaccionService.crearTransaccion(7L, new TransaccionRequest(
                 1L, null, 4L, TipoTransaccion.GASTO, new BigDecimal("15.00"),
                 null, LocalDate.of(2026, 9, 26), null, "Pago mensual",
-                FrecuenciaRecurrencia.MENSUAL, LocalDate.of(2026, 10, 26)
+                FrecuenciaRecurrencia.MENSUAL, LocalDate.of(2026, 10, 26), null
         ));
 
         assertEquals("Renta", response.descripcion());
@@ -274,7 +273,7 @@ class TransaccionServiceTest {
 
         var response = transaccionService.crearTransaccion(7L, new TransaccionRequest(
                 1L, null, null, TipoTransaccion.GASTO, new BigDecimal("80.00"),
-                null, LocalDate.of(2026, 9, 26), null, "Compra", null, null
+                null, LocalDate.of(2026, 9, 26), null, "Compra", null, null, null
         ));
 
         assertEquals(new BigDecimal("21.00"), cuenta.getSaldoActual());
@@ -301,8 +300,7 @@ class TransaccionServiceTest {
 
         transaccionService.crearTransaccion(7L, new TransaccionRequest(
                 1L, null, null, TipoTransaccion.GASTO, new BigDecimal("750.00"),
-                null, LocalDate.now(), "Compra", null, null, null
-        ));
+                null, LocalDate.now(), "Compra", null, null, null, null));
 
         assertEquals(new BigDecimal("-750.00"), tarjeta.getSaldoActual());
     }
@@ -324,28 +322,22 @@ class TransaccionServiceTest {
 
         transaccionService.crearTransaccion(7L, new TransaccionRequest(
                 1L, null, null, TipoTransaccion.GASTO, new BigDecimal("25.00"),
-                null, LocalDate.now(), "Gasto débito", null, null, null
-        ));
+                null, LocalDate.now(), "Gasto débito", null, null, null, null));
         transaccionService.crearTransaccion(7L, new TransaccionRequest(
                 1L, null, null, TipoTransaccion.INGRESO, new BigDecimal("50.00"),
-                null, LocalDate.now(), "Ingreso débito", null, null, null
-        ));
+                null, LocalDate.now(), "Ingreso débito", null, null, null, null));
         transaccionService.crearTransaccion(7L, new TransaccionRequest(
                 2L, null, null, TipoTransaccion.GASTO, new BigDecimal("30.00"),
-                null, LocalDate.now(), "Gasto ahorro", null, null, null
-        ));
+                null, LocalDate.now(), "Gasto ahorro", null, null, null, null));
         transaccionService.crearTransaccion(7L, new TransaccionRequest(
                 2L, null, null, TipoTransaccion.INGRESO, new BigDecimal("20.00"),
-                null, LocalDate.now(), "Ingreso ahorro", null, null, null
-        ));
+                null, LocalDate.now(), "Ingreso ahorro", null, null, null, null));
         transaccionService.crearTransaccion(7L, new TransaccionRequest(
                 3L, null, null, TipoTransaccion.GASTO, new BigDecimal("100.00"),
-                null, LocalDate.now(), "Gasto inversión", null, null, null
-        ));
+                null, LocalDate.now(), "Gasto inversión", null, null, null, null));
         transaccionService.crearTransaccion(7L, new TransaccionRequest(
                 3L, null, null, TipoTransaccion.INGRESO, new BigDecimal("75.00"),
-                null, LocalDate.now(), "Ingreso inversión", null, null, null
-        ));
+                null, LocalDate.now(), "Ingreso inversión", null, null, null, null));
 
         assertEquals(new BigDecimal("125.00"), debito.getSaldoActual());
         assertEquals(new BigDecimal("190.00"), ahorro.getSaldoActual());
@@ -366,14 +358,12 @@ class TransaccionServiceTest {
 
         transaccionService.crearTransaccion(7L, new TransaccionRequest(
                 1L, null, null, TipoTransaccion.GASTO, new BigDecimal("400.00"),
-                null, LocalDate.now(), "Compra", null, null, null
-        ));
+                null, LocalDate.now(), "Compra", null, null, null, null));
         assertEquals(new BigDecimal("-650.00"), tarjeta.getSaldoActual());
 
         transaccionService.crearTransaccion(7L, new TransaccionRequest(
                 1L, null, null, TipoTransaccion.INGRESO, new BigDecimal("250.00"),
-                null, LocalDate.now(), "Pago de tarjeta", null, null, null
-        ));
+                null, LocalDate.now(), "Pago de tarjeta", null, null, null, null));
 
         assertEquals(new BigDecimal("-400.00"), tarjeta.getSaldoActual());
     }
@@ -391,8 +381,7 @@ class TransaccionServiceTest {
                 assertThrows(IllegalArgumentException.class, () -> transaccionService.crearTransaccion(
                         7L, new TransaccionRequest(
                                 1L, null, null, TipoTransaccion.GASTO, new BigDecimal("100.01"),
-                                null, LocalDate.now(), "Compra", null, null, null
-                        )
+                                null, LocalDate.now(), "Compra", null, null, null, null)
                 )).getMessage());
 
         assertEquals(new BigDecimal("-900.00"), tarjeta.getSaldoActual());
@@ -417,8 +406,7 @@ class TransaccionServiceTest {
         assertThrows(IllegalArgumentException.class, () -> transaccionService.actualizarTransaccion(
                 7L, 15L, new TransaccionRequest(
                         1L, null, null, TipoTransaccion.GASTO, new BigDecimal("1000.01"),
-                        null, LocalDate.now(), "Compra corregida", null, null, null
-                )
+                        null, LocalDate.now(), "Compra corregida", null, null, null, null)
         ));
 
         assertEquals(new BigDecimal("-900.00"), tarjeta.getSaldoActual());
@@ -477,3 +465,4 @@ class TransaccionServiceTest {
                 .build();
     }
 }
+
