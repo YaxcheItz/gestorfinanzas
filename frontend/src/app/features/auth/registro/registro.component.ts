@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { mensajeDeError } from '../../../core/utils/mensaje-error';
 
 @Component({
   selector: 'app-registro',
@@ -191,8 +192,9 @@ export class RegistroComponent {
       },
       error: (err) => {
         this.loading.set(false);
-        const msg = err.error?.message || 'Error al registrar la cuenta. Revisa los datos ingresados.';
-        this.errorMessage.set(msg);
+        this.errorMessage.set(
+          mensajeDeError(err, 'Error al registrar la cuenta. Revisa los datos ingresados.')
+        );
       }
     });
   }

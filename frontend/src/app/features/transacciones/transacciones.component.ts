@@ -1,8 +1,9 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+﻿import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FinanzasService } from '../../core/services/finanzas.service';
+import { mensajeDeError } from '../../core/utils/mensaje-error';
 import { ToastService } from '../../core/services/toast.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { CategoriaSelectorComponent } from '../../shared/components/categoria-selector/categoria-selector.component';
@@ -778,7 +779,7 @@ export class TransaccionesComponent implements OnInit {
           }
           this.abrirModalEditar(response.data);
         },
-        error: err => this.toastService.error(err.error?.message || 'No se pudo abrir el movimiento para editar.')
+        error: err => this.toastService.error(mensajeDeError(err, 'No se pudo abrir el movimiento para editar.'))
       });
     }
   }
@@ -824,7 +825,7 @@ export class TransaccionesComponent implements OnInit {
       },
       error: (err) => {
         this.loading.set(false);
-        this.error.set(err.error?.message || 'Error al obtener transacciones');
+        this.error.set(mensajeDeError(err, 'Error al obtener transacciones'));
       }
     });
   }
@@ -939,7 +940,7 @@ export class TransaccionesComponent implements OnInit {
       },
       error: err => {
         this.exportando.set(false);
-        this.toastService.error(err.error?.message || 'No se pudieron exportar los movimientos.');
+        this.toastService.error(mensajeDeError(err, 'No se pudieron exportar los movimientos.'));
       }
     });
   }
@@ -971,7 +972,7 @@ export class TransaccionesComponent implements OnInit {
           this.toastService.success('Movimiento eliminado correctamente');
         },
         error: (err) => {
-          this.toastService.error('Error al eliminar: ' + (err.error?.message || 'Desconocido'));
+          this.toastService.error('Error al eliminar: ' + (mensajeDeError(err, 'Desconocido')));
         }
       });
     }
@@ -1137,7 +1138,7 @@ export class TransaccionesComponent implements OnInit {
       },
       error: (err) => {
         this.submitting.set(false);
-        this.modalError.set(err.error?.message || 'Error al guardar la transacción');
+        this.modalError.set(mensajeDeError(err, 'Error al guardar la transacción'));
       }
     });
   }

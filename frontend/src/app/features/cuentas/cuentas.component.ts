@@ -1,10 +1,11 @@
-import { CommonModule } from '@angular/common';
+﻿import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Cuenta, CuentaPayload, MONEDAS_DISPONIBLES, TipoCuenta } from '../../core/models/finanzas.models';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { FinanzasService } from '../../core/services/finanzas.service';
+import { mensajeDeError } from '../../core/utils/mensaje-error';
 import { ToastService } from '../../core/services/toast.service';
 import { creditoDisponibleCuenta, deudaActualCuenta } from '../../core/utils/cuenta-financiera';
 import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive';
@@ -533,7 +534,7 @@ export class CuentasComponent implements OnInit {
         this.loading.set(false);
       },
       error: err => {
-        this.error.set(err.error?.message || 'No se pudieron cargar las cuentas.');
+        this.error.set(mensajeDeError(err, 'No se pudieron cargar las cuentas.'));
         this.loading.set(false);
       }
     });
@@ -671,7 +672,7 @@ export class CuentasComponent implements OnInit {
       },
       error: err => {
         this.guardando.set(false);
-        this.modalError.set(err.error?.message || 'No se pudo guardar la cuenta.');
+        this.modalError.set(mensajeDeError(err, 'No se pudo guardar la cuenta.'));
       }
     });
   }
@@ -695,7 +696,7 @@ export class CuentasComponent implements OnInit {
         this.toastService.success('Cuenta desactivada correctamente.');
         this.cargarCuentas();
       },
-      error: err => this.toastService.error(err.error?.message || 'No se pudo desactivar la cuenta.')
+      error: err => this.toastService.error(mensajeDeError(err, 'No se pudo desactivar la cuenta.'))
     });
   }
 
@@ -723,7 +724,7 @@ export class CuentasComponent implements OnInit {
         this.toastService.success('Cuenta eliminada. Su historial de movimientos se conservó.');
         this.cargarCuentas();
       },
-      error: err => this.toastService.error(err.error?.message || 'No se pudo eliminar la cuenta.')
+      error: err => this.toastService.error(mensajeDeError(err, 'No se pudo eliminar la cuenta.'))
     });
   }
 
@@ -737,7 +738,7 @@ export class CuentasComponent implements OnInit {
         this.toastService.success('Cuenta reactivada correctamente.');
         this.cargarCuentas();
       },
-      error: err => this.toastService.error(err.error?.message || 'No se pudo reactivar la cuenta.')
+      error: err => this.toastService.error(mensajeDeError(err, 'No se pudo reactivar la cuenta.'))
     });
   }
 

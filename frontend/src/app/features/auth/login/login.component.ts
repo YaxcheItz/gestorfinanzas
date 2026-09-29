@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { mensajeDeError } from '../../../core/utils/mensaje-error';
 
 @Component({
   selector: 'app-login',
@@ -151,8 +152,9 @@ export class LoginComponent {
       },
       error: (err) => {
         this.loading.set(false);
-        const msg = err.error?.message || 'Error de conexión con el backend o credenciales incorrectas.';
-        this.errorMessage.set(msg);
+        this.errorMessage.set(
+          mensajeDeError(err, 'Error de conexión con el backend o credenciales incorrectas.')
+        );
       }
     });
   }

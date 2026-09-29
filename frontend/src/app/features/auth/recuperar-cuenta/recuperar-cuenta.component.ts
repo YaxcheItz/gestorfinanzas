@@ -3,6 +3,7 @@ import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { mensajeDeError } from '../../../core/utils/mensaje-error';
 
 @Component({
   selector: 'app-recuperar-cuenta',
@@ -145,7 +146,9 @@ export class RecuperarCuentaComponent {
       },
       error: error => {
         this.cargando.set(false);
-        this.error.set(error.error?.message || 'El enlace no es válido o ya expiró. Solicita uno nuevo.');
+        this.error.set(
+          mensajeDeError(error, 'El enlace no es válido o ya expiró. Solicita uno nuevo.')
+        );
       }
     });
   }

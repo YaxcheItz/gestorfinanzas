@@ -1,8 +1,9 @@
-import { CommonModule } from '@angular/common';
+﻿import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Categoria, CategoriaPayload } from '../../core/models/finanzas.models';
 import { FinanzasService } from '../../core/services/finanzas.service';
+import { mensajeDeError } from '../../core/utils/mensaje-error';
 import { ToastService } from '../../core/services/toast.service';
 import { CategoriaIconoComponent } from '../../shared/components/categoria-icono/categoria-icono.component';
 import { esEmojiCategoria, ICONOS_CATEGORIA, normalizarIconoCategoria } from '../../shared/components/categoria-icono/categoria-iconos';
@@ -169,7 +170,7 @@ export class CategoriasComponent implements OnInit {
         this.loading.set(false);
       },
       error: err => {
-        this.error.set(err.error?.message || 'No se pudieron cargar las categorías.');
+        this.error.set(mensajeDeError(err, 'No se pudieron cargar las categorías.'));
         this.loading.set(false);
       }
     });
@@ -229,7 +230,7 @@ export class CategoriasComponent implements OnInit {
       },
       error: err => {
         this.guardando.set(false);
-        this.modalError.set(err.error?.message || 'No se pudo guardar la categoría.');
+        this.modalError.set(mensajeDeError(err, 'No se pudo guardar la categoría.'));
       }
     });
   }
@@ -244,7 +245,7 @@ export class CategoriasComponent implements OnInit {
         this.toastService.success(activa ? 'Categoría restaurada.' : 'Categoría archivada.');
         this.cargar();
       },
-      error: err => this.toastService.error(err.error?.message || 'No se pudo actualizar la categoría.')
+      error: err => this.toastService.error(mensajeDeError(err, 'No se pudo actualizar la categoría.'))
     });
   }
 
