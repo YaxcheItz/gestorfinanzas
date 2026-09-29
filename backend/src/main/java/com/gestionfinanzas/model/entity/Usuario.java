@@ -52,6 +52,13 @@ public class Usuario {
     @Builder.Default
     private String monedaPreferida = "MXN";
 
+    @Column(length = 30)
+    private String telefono;
+
+    @Column(name = "notificaciones_whatsapp", nullable = false, columnDefinition = "boolean not null default false")
+    @Builder.Default
+    private boolean notificacionesWhatsapp = false;
+
     @CreationTimestamp
     @Column(name = "fecha_creacion", updatable = false)
     private LocalDateTime fechaCreacion;

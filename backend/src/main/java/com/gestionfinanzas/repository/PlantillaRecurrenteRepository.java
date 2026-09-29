@@ -8,6 +8,7 @@ import java.util.Optional;
 
 public interface PlantillaRecurrenteRepository extends JpaRepository<PlantillaRecurrente, Long> {
     List<PlantillaRecurrente> findAllByUsuarioIdOrderBySiguienteFechaAsc(Long usuarioId);
+    List<PlantillaRecurrente> findByActivaTrueAndSiguienteFecha(java.time.LocalDate siguienteFecha);
     Optional<PlantillaRecurrente> findByIdAndUsuarioId(Long id, Long usuarioId);
     void deleteByCuentaId(Long cuentaId);
 }

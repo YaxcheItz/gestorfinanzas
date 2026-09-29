@@ -40,7 +40,7 @@ jobs:
     steps:
       - name: Comprobar API
         env:
-          API_URL: ${{ vars.KAPTAL_API_URL }}
+          API_URL: ${{ vars.KAPTAL_API_URL || 'https://kaptal-api-0xbn.onrender.com' }}
         run: |
           if [ -z "$API_URL" ]; then
             echo "::error::KAPTAL_API_URL no esta definida. Anadela en Settings > Secrets and variables > Actions > Variables."

@@ -21,5 +21,10 @@ public record PerfilActualizarRequest(
 
         @NotBlank(message = "La moneda predeterminada es obligatoria")
         @Pattern(regexp = "MXN|USD|CAD|EUR|GBP", message = "La moneda predeterminada no está disponible")
-        String monedaPredeterminada
+        String monedaPredeterminada,
+
+        @Size(max = 30, message = "El teléfono no puede superar 30 caracteres")
+        String telefono,
+
+        Boolean notificacionesWhatsapp
 ) {}

@@ -46,7 +46,7 @@ public class SecurityConfig {
                 })
             )
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**", "/api/health", "/api/notificaciones/test-whatsapp", "/error").permitAll()
+                .requestMatchers("/api/auth/**", "/api/health", "/api/notificaciones/**", "/error").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

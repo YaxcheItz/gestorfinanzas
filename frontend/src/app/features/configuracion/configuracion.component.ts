@@ -126,6 +126,16 @@ import {
               Correo electrónico
               <input name="email" [(ngModel)]="email" required type="email" maxlength="150" autocomplete="email" class="mt-1.5 min-h-11 w-full min-w-0 rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm font-normal text-slate-900" />
             </label>
+                        <label class="block min-w-0 text-xs font-semibold text-slate-700">
+              Tel&eacute;fono WhatsApp (Recordatorios)
+              <input name="telefono" [(ngModel)]="telefono" maxlength="25" placeholder="Ej. 5219515791240" class="mt-1.5 min-h-11 w-full min-w-0 rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm font-normal text-slate-900" />
+            </label>
+            <div class="flex items-center min-h-11 md:mt-6 gap-3">
+              <input id="notif-wa" type="checkbox" name="notificacionesWhatsapp" [(ngModel)]="notificacionesWhatsapp" class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" />
+              <label for="notif-wa" class="text-xs font-semibold text-slate-700 cursor-pointer">
+                Recibir recordatorios por WhatsApp (D&iacute;a de corte, fecha de pago y cuotas MSI)
+              </label>
+            </div>
             <div class="flex md:col-span-2 md:justify-end">
               <button type="submit" [disabled]="guardandoPerfil() || !perfilService.perfil()" class="min-h-11 w-full rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50 md:w-auto">
                 {{ guardandoPerfil() ? 'Guardando...' : 'Guardar perfil' }}
@@ -324,6 +334,8 @@ export class ConfiguracionComponent implements OnInit {
   email = '';
   tema: 'CLARO' | 'OSCURO' = 'CLARO';
   monedaPredeterminada = 'MXN';
+  telefono = '';
+  notificacionesWhatsapp = false;
   passwordActual = '';
   passwordNueva = '';
   confirmarRestauracion = false;
@@ -346,6 +358,8 @@ export class ConfiguracionComponent implements OnInit {
       this.email = perfil.email;
       this.tema = perfil.tema;
       this.monedaPredeterminada = perfil.monedaPredeterminada;
+      this.telefono = perfil.telefono ?? '';
+      this.notificacionesWhatsapp = perfil.notificacionesWhatsapp ?? false;
     });
   }
 

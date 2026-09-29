@@ -2,6 +2,7 @@ package com.gestionfinanzas.controller;
 
 import com.gestionfinanzas.dto.response.ApiResponse;
 import com.gestionfinanzas.service.NotificacionWhatsAppService;
+import com.gestionfinanzas.service.RecordatorioNotificacionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 public class NotificacionController {
 
     private final NotificacionWhatsAppService notificacionService;
+    private final RecordatorioNotificacionService recordatorioService;
 
     @PostMapping("/test-whatsapp")
     public ResponseEntity<ApiResponse<String>> testWhatsApp(@RequestParam String telefono) {
@@ -25,5 +27,11 @@ public class NotificacionController {
         } else {
             return ResponseEntity.badRequest().body(ApiResponse.error(resultado));
         }
+    }
+
+    @PostMapping("/ejecutar-recordatorios")
+    public ResponseEntity<ApiResponse<String>> ejecutarRecordatorios() {
+        int total = recordatorioService.ejecutarRecordatoriosDiarios();
+        return ResponseEntity.ok(ApiResponse.ok("Recordatorios ejecutados correctamente. Notificaciones enviadas: " + total, null));
     }
 }

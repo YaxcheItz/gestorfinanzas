@@ -7,7 +7,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import org.springframework.scheduling.annotation.EnableScheduling;
+
 @SpringBootApplication
+@EnableScheduling
 public class BackendApplication {
 
     public static void main(String[] args) {

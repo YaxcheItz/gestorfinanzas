@@ -11,6 +11,7 @@ import java.util.Optional;
 public interface CuentaRepository extends JpaRepository<Cuenta, Long> {
     List<Cuenta> findByUsuarioIdAndActivoTrue(Long usuarioId);
     List<Cuenta> findByUsuarioIdOrderByActivoDescNombreAsc(Long usuarioId);
+    List<Cuenta> findByActivoTrueAndTipo(com.gestionfinanzas.model.enums.TipoCuenta tipo);
     Optional<Cuenta> findByIdAndUsuarioId(Long id, Long usuarioId);
     boolean existsByUsuarioIdAndNombreIgnoreCase(Long usuarioId, String nombre);
     boolean existsByUsuarioIdAndTipo(Long usuarioId, com.gestionfinanzas.model.enums.TipoCuenta tipo);

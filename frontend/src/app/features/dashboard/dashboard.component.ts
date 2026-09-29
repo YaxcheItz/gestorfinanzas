@@ -690,6 +690,36 @@ import {
               </section>
             }
 
+                        @if (formTipo() === 'GASTO' && esCuentaCredito()) {
+              <section class="rounded-xl border border-slate-200 bg-slate-50 p-3 mt-3">
+                <label class="flex min-h-10 cursor-pointer items-center gap-3">
+                  <input type="checkbox" name="dashboardEsCompraMsi" [(ngModel)]="esCompraMsi"
+                         class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" />
+                  <span>
+                    <span class="block text-sm font-semibold text-slate-800">Compra a Meses Sin Intereses (MSI)</span>
+                    <span class="block text-xs text-slate-500">Retiene el total de tu l&iacute;mite y difiere los cargos en mensualidades.</span>
+                  </span>
+                </label>
+                @if (esCompraMsi) {
+                  <div class="mt-3">
+                    <label class="block text-xs font-semibold text-slate-700">
+                      Plazo en meses
+                      <select name="dashboardFormMsi" [(ngModel)]="formMsi" required
+                              class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-normal">
+                        <option [ngValue]="null" disabled>Selecciona el plazo</option>
+                        <option [ngValue]="3">3 meses sin intereses</option>
+                        <option [ngValue]="6">6 meses sin intereses</option>
+                        <option [ngValue]="9">9 meses sin intereses</option>
+                        <option [ngValue]="12">12 meses sin intereses</option>
+                        <option [ngValue]="18">18 meses sin intereses</option>
+                        <option [ngValue]="24">24 meses sin intereses</option>
+                      </select>
+                    </label>
+                  </div>
+                }
+              </section>
+            }
+
             <!-- Botones de Acción -->
             <div class="grid grid-cols-1 gap-2 border-t border-slate-100 bg-white pt-4 sm:flex sm:items-center sm:justify-end sm:space-x-3">
               <button
@@ -814,6 +844,8 @@ export class DashboardComponent implements OnInit {
   formFecha = new Date().toISOString().split('T')[0];
   formNotas = '';
   movimientoRecurrente = false;
+  esCompraMsi = false;
+  formMsi: number | null = null;
   frecuenciaRecurrencia: FrecuenciaRecurrencia = 'MENSUAL';
   siguienteFechaRecurrencia = '';
 
@@ -827,6 +859,10 @@ export class DashboardComponent implements OnInit {
       this.monedaPreferidaAplicada = true;
     });
   });
+
+  esCuentaCredito(): boolean {
+    return this.cuentas().find(cuenta => cuenta.id === this.formCuentaId)?.tipo === 'CREDITO';
+  }
 
   monedaCuenta(id: number | null): string {
     return this.cuentas().find(cuenta => cuenta.id === id)?.moneda ?? 'MXN';
@@ -1082,6 +1118,8 @@ export class DashboardComponent implements OnInit {
     this.formNotas = '';
     this.formFecha = new Date().toISOString().split('T')[0];
     this.movimientoRecurrente = false;
+    this.esCompraMsi = false;
+    this.formMsi = null;
     this.frecuenciaRecurrencia = 'MENSUAL';
     this.siguienteFechaRecurrencia = '';
     this.formTasaCambio = null;
@@ -1203,6 +1241,11 @@ export class DashboardComponent implements OnInit {
         this.modalError.set('Ingresa una tasa de cambio mayor a 0 para transferir entre monedas distintas');
         return;
       }
+    }
+
+    if (this.esCompraMsi && (!this.formMsi || this.formMsi < 2)) {
+      this.modalError.set('Selecciona los meses sin intereses');
+      return;
     }
 
     const payload: TransaccionPayload = {

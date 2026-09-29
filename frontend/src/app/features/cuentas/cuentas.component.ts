@@ -58,7 +58,7 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
       } @else if (cuentasVisibles().length === 0) {
         <section class="bg-white p-10 rounded-2xl border border-slate-200 text-center">
           @if (filtroEstado() === 'ACTIVAS') {
-            <h2 class="text-lg font-semibold text-slate-800">Aún no tienes cuentas activas</h2>
+            <h2 class="text-lg font-semibold text-slate-800">AÃºn no tienes cuentas activas</h2>
             <p class="text-sm text-slate-500 mt-2">Agrega una cuenta para registrar movimientos y consultar tu balance.</p>
             <button
               type="button"
@@ -118,15 +118,15 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
                         {{ creditoDisponibleCuenta(cuenta) ?? 0 | currency:cuenta.moneda:'symbol':'1.2-2' }}
                       </p>
                     } @else {
-                      <p class="mt-1 text-xs font-semibold text-amber-700">Configura el límite</p>
+                      <p class="mt-1 text-xs font-semibold text-amber-700">Configura el lÃ­mite</p>
                     }
                   </div>
                 </div>
                 @if (cuenta.limiteCredito != null) {
                   <p class="mt-2 text-xs text-slate-500">
-                    Límite {{ cuenta.limiteCredito | currency:cuenta.moneda:'symbol':'1.2-2' }}
+                    LÃ­mite {{ cuenta.limiteCredito | currency:cuenta.moneda:'symbol':'1.2-2' }}
                     @if (cuenta.diaCorte != null && cuenta.diaPago != null) {
-                      · Corte día {{ cuenta.diaCorte }} · Pago día {{ cuenta.diaPago }}
+                      &bull; Corte dÃ­a {{ cuenta.diaCorte }} &bull; Pago dÃ­a {{ cuenta.diaPago }}
                     }
                   </p>
                 }
@@ -140,13 +140,13 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
                 <p class="cashback-badge mt-2 flex w-fit max-w-full flex-wrap items-center gap-x-1.5 gap-y-0.5 rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-semibold leading-relaxed text-emerald-700">
                   <span>Cashback {{ cuenta.cashbackPorcentaje }}%</span>
                   @if (cuenta.cashbackLimiteMensual) {
-                    <span>· hasta {{ cuenta.cashbackLimiteMensual | currency:cuenta.moneda:'symbol':'1.0-2' }}/mes</span>
+                    <span>&bull; hasta {{ cuenta.cashbackLimiteMensual | currency:cuenta.moneda:'symbol':'1.0-2' }}/mes</span>
                   }
                 </p>
               }
 
               <p class="pointer-events-none relative mt-3 inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-emerald-700 dark:text-emerald-300">
-                Ver transacciones <span aria-hidden="true">?</span>
+                Ver transacciones <span aria-hidden="true">&rarr;</span>
               </p>
 
               <div class="relative z-20 pointer-events-none mt-4 flex items-center justify-end gap-2 border-t border-slate-100 pt-3 sm:mt-5 sm:pt-4">
@@ -217,22 +217,22 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
 
             @if (cuentaEditando()) {
               <div>
-                <p class="block text-xs font-semibold text-slate-700 mb-1.5">Banco o institución</p>
+                <p class="block text-xs font-semibold text-slate-700 mb-1.5">Banco o instituciÃ³n</p>
                 <div class="flex items-center gap-2">
                   <span class="flex h-11 w-12 shrink-0 items-center justify-center rounded-xl px-1 text-[10px] font-extrabold tracking-tight text-white"
                         [style.background-color]="institucionSeleccionada()?.color ?? '#64748b'"
                         aria-hidden="true">
-                    {{ institucionSeleccionada()?.siglas ?? (institucionFinanciera ? 'OTRA' : '—') }}
+                    {{ institucionSeleccionada()?.siglas ?? (institucionFinanciera ? 'OTRA' : '-') }}
                   </span>
                   <p class="text-sm text-slate-700">
-                    {{ institucionSeleccionada()?.nombre ?? (institucionFinanciera || 'Efectivo / Otra institución') }}
+                    {{ institucionSeleccionada()?.nombre ?? (institucionFinanciera || 'Efectivo / Otra instituciÃ³n') }}
                   </p>
                 </div>
-                <p class="mt-1.5 text-xs text-slate-500">La institución no se puede cambiar después de crear la cuenta.</p>
+                <p class="mt-1.5 text-xs text-slate-500">La instituciÃ³n no se puede cambiar despuÃ©s de crear la cuenta.</p>
               </div>
             } @else {
               <div>
-                <label for="cuenta-institucion" class="block text-xs font-semibold text-slate-700 mb-1.5">Banco o institución (opcional)</label>
+                <label for="cuenta-institucion" class="block text-xs font-semibold text-slate-700 mb-1.5">Banco o instituciÃ³n (opcional)</label>
                 <div class="flex items-center gap-2">
                   <span class="flex h-11 w-12 shrink-0 items-center justify-center rounded-xl px-1 text-[10px] font-extrabold tracking-tight text-white"
                         [style.background-color]="institucionSeleccionada()?.color ?? '#64748b'"
@@ -245,7 +245,7 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
                     [(ngModel)]="institucionFinanciera"
                     (ngModelChange)="seleccionarInstitucion($event)"
                     class="min-h-11 min-w-0 flex-1 rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500">
-                    <option value="">Efectivo / Otra institución</option>
+                    <option value="">Efectivo / Otra instituciÃ³n</option>
                     @for (institucion of instituciones; track institucion.id) {
                       <option [value]="institucion.id">{{ institucion.nombre }}</option>
                     }
@@ -269,14 +269,14 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
                 [(ngModel)]="nombre"
                 class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white"
                 placeholder="Ej. Cuenta principal" />
-              <p class="mt-1 text-[11px] text-slate-500">El nombre debe ser único; puedes registrar varias cuentas del mismo banco con nombres distintos.</p>
+              <p class="mt-1 text-[11px] text-slate-500">El nombre debe ser Ãºnico; puedes registrar varias cuentas del mismo banco con nombres distintos.</p>
             </div>
 
             @if (cuentaEditando()) {
               <div>
                 <p class="block text-xs font-semibold text-slate-700 mb-1.5">Tipo de cuenta</p>
                 <p class="text-sm text-slate-700">{{ tipoCuentaLabel(tipo) }}</p>
-                <p class="mt-1 text-xs text-slate-500">El tipo no se puede cambiar después de crear la cuenta.</p>
+                <p class="mt-1 text-xs text-slate-500">El tipo no se puede cambiar despuÃ©s de crear la cuenta.</p>
               </div>
             } @else {
               <div>
@@ -304,12 +304,12 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
                 <div>
                   <h3 class="text-sm font-semibold text-slate-800">Datos de la tarjeta</h3>
                   <p class="mt-1 text-xs leading-relaxed text-slate-600">
-                    Las compras generan deuda y reducen el crédito disponible. Los pagos o transferencias a esta cuenta reducen la deuda.
-                    Se bloquearán compras y transferencias salientes mayores al crédito disponible.
+                    Las compras generan deuda y reducen el crÃ©dito disponible. Los pagos o transferencias a esta cuenta reducen la deuda.
+                    Se bloquearÃ¡n compras y transferencias salientes mayores al crÃ©dito disponible.
                   </p>
                 </div>
                 <div>
-                  <label for="cuenta-limite-credito" class="block text-xs font-semibold text-slate-700 mb-1.5">Límite de crédito <span class="text-rose-600">*</span></label>
+                  <label for="cuenta-limite-credito" class="block text-xs font-semibold text-slate-700 mb-1.5">LÃ­mite de crÃ©dito <span class="text-rose-600">*</span></label>
                   <input
                     id="cuenta-limite-credito"
                     name="limiteCredito"
@@ -323,7 +323,7 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                   <div>
-                    <label for="cuenta-dia-corte" class="block text-xs font-semibold text-slate-700 mb-1.5">Día de corte <span class="text-rose-600">*</span></label>
+                    <label for="cuenta-dia-corte" class="block text-xs font-semibold text-slate-700 mb-1.5">DÃ­a de corte <span class="text-rose-600">*</span></label>
                     <input
                       id="cuenta-dia-corte"
                       name="diaCorte"
@@ -334,10 +334,10 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
                       required
                       [(ngModel)]="diaCorte"
                       class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
-                      placeholder="1–31" />
+                      placeholder="1-31" />
                   </div>
                   <div>
-                    <label for="cuenta-dia-pago" class="block text-xs font-semibold text-slate-700 mb-1.5">Día de pago <span class="text-rose-600">*</span></label>
+                    <label for="cuenta-dia-pago" class="block text-xs font-semibold text-slate-700 mb-1.5">DÃ­a de pago <span class="text-rose-600">*</span></label>
                     <input
                       id="cuenta-dia-pago"
                       name="diaPago"
@@ -348,11 +348,11 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
                       required
                       [(ngModel)]="diaPago"
                       class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
-                      placeholder="1–31" />
+                      placeholder="1-31" />
                   </div>
                 </div>
                 <p class="text-[11px] leading-relaxed text-slate-600">
-                  Las fechas se guardan como información; Kaptal aún no envía recordatorios automáticos.
+                  Las fechas se guardan para programar tus recordatorios automÃ¡ticos de pago y corte.
                 </p>
               </section>
             }
@@ -362,8 +362,8 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
                 <div>
                   <h3 class="text-sm font-semibold text-slate-800">Beneficio de cashback</h3>
                   <p class="mt-1 text-xs leading-relaxed text-slate-600">
-                    Kaptal estimará el cashback en cada gasto de esta tarjeta y lo registrará como ingreso automático.
-                    Es un cálculo de seguimiento, no una confirmación del banco.
+                    Kaptal estimarÃ¡ el cashback en cada gasto de esta tarjeta y lo registrarÃ¡ como ingreso automÃ¡tico.
+                    Es un cÃ¡lculo de seguimiento, no una confirmaciÃ³n del banco.
                   </p>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -382,7 +382,7 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
                       placeholder="Ej. 2" />
                   </div>
                   <div>
-                    <label for="cuenta-cashback-limite" class="block text-xs font-semibold text-slate-700 mb-1.5">Límite mensual (opcional)</label>
+                    <label for="cuenta-cashback-limite" class="block text-xs font-semibold text-slate-700 mb-1.5">LÃ­mite mensual (opcional)</label>
                     <input
                       id="cuenta-cashback-limite"
                       name="cashbackLimiteMensual"
@@ -391,10 +391,10 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
                       step="0.01"
                       [(ngModel)]="cashbackLimiteMensual"
                       class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-900"
-                      placeholder="Sin límite" />
+                      placeholder="Sin lÃ­mite" />
                   </div>
                 </div>
-                <p class="text-[11px] text-slate-600 dark:text-slate-300">Se aplica a los gastos registrados con esta tarjeta; el límite se reinicia cada mes.</p>
+                <p class="text-[11px] text-slate-600 dark:text-slate-300">Se aplica a los gastos registrados con esta tarjeta; el lÃ­mite se reinicia cada mes.</p>
               </section>
             }
 
@@ -413,7 +413,7 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
                   class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white"
                   [placeholder]="tipo === 'CREDITO' ? 'Ej. 5000.00' : '0.00'" />
                 @if (tipo === 'CREDITO') {
-                  <p class="mt-1 text-[11px] text-slate-500">Ingresa la deuda en positivo; se registrará como saldo negativo de la tarjeta.</p>
+                  <p class="mt-1 text-[11px] text-slate-500">Ingresa la deuda en positivo; se registrarÃ¡ como saldo negativo de la tarjeta.</p>
                 }
               </div>
             }
@@ -427,7 +427,7 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
                 [(ngModel)]="moneda"
                 class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm uppercase focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white">
                 @for (opcion of monedasDisponibles; track opcion.codigo) {
-                  <option [ngValue]="opcion.codigo">{{ opcion.codigo }} — {{ opcion.nombre }}</option>
+                  <option [ngValue]="opcion.codigo">{{ opcion.codigo }} - {{ opcion.nombre }}</option>
                 }
               </select>
               @if (cuentaEditando() && cuentaEditando()!.moneda !== moneda) {
@@ -436,7 +436,7 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
             </div>
 
             <div>
-              <label for="cuenta-descripcion" class="block text-xs font-semibold text-slate-700 mb-1.5">Descripción (opcional)</label>
+              <label for="cuenta-descripcion" class="block text-xs font-semibold text-slate-700 mb-1.5">DescripciÃ³n (opcional)</label>
               <textarea
                 id="cuenta-descripcion"
                 name="descripcion"
@@ -473,15 +473,15 @@ export class CuentasComponent implements OnInit {
 
   readonly tiposCuentaDisponibles = computed(() => { const tiene = this.cuentas().some(c => c.tipo === 'EFECTIVO'); if (this.cuentaEditando() != null) return this.tiposCuenta; return this.tiposCuenta.filter(t => t.valor !== 'EFECTIVO' || !tiene); });
   readonly instituciones = [
-    { id: 'bbva', nombre: 'BBVA México', siglas: 'BBVA', color: '#004481' },
+    { id: 'bbva', nombre: 'BBVA MÃ©xico', siglas: 'BBVA', color: '#004481' },
     { id: 'banorte', nombre: 'Banorte', siglas: 'B', color: '#EB0029' },
     { id: 'santander', nombre: 'Santander', siglas: 'S', color: '#EC0000' },
     { id: 'citibanamex', nombre: 'Citibanamex', siglas: 'CITI', color: '#056DAE' },
-    { id: 'hsbc', nombre: 'HSBC México', siglas: 'HSBC', color: '#DB0011' },
+    { id: 'hsbc', nombre: 'HSBC MÃ©xico', siglas: 'HSBC', color: '#DB0011' },
     { id: 'scotiabank', nombre: 'Scotiabank', siglas: 'S', color: '#E31837' },
     { id: 'inbursa', nombre: 'Inbursa', siglas: 'INB', color: '#006341' },
     { id: 'banco-azteca', nombre: 'Banco Azteca', siglas: 'AZTECA', color: '#008A3B' },
-    { id: 'nu', nombre: 'Nu México', siglas: 'nu', color: '#820AD1' },
+    { id: 'nu', nombre: 'Nu MÃ©xico', siglas: 'nu', color: '#820AD1' },
     { id: 'mercado-pago', nombre: 'Mercado Pago', siglas: 'MP', color: '#009EE3' },
     { id: 'klar', nombre: 'Klar', siglas: 'klar', color: '#6C36B0' },
     { id: 'hey-banco', nombre: 'Hey Banco', siglas: 'HEY', color: '#00A9A5' },
@@ -586,7 +586,7 @@ export class CuentasComponent implements OnInit {
       return;
     }
     if (codigoMoneda.length < 3 || codigoMoneda.length > 10) {
-      this.modalError.set('El código de moneda debe tener entre 3 y 10 caracteres.');
+      this.modalError.set('El cÃ³digo de moneda debe tener entre 3 y 10 caracteres.');
       return;
     }
     if (!this.cuentaEditando() && this.saldoInicial != null && (!Number.isFinite(this.saldoInicial) || this.saldoInicial < 0)) {
@@ -600,24 +600,24 @@ export class CuentasComponent implements OnInit {
     }
     if (this.tipo === 'CREDITO' && this.cashbackLimiteMensual != null
         && (!Number.isFinite(this.cashbackLimiteMensual) || this.cashbackLimiteMensual <= 0)) {
-      this.modalError.set('El límite mensual debe ser mayor a 0.');
+      this.modalError.set('El lÃ­mite mensual debe ser mayor a 0.');
       return;
     }
     if (this.tipo === 'CREDITO' && this.cashbackLimiteMensual != null && (!this.cashbackPorcentaje || this.cashbackPorcentaje <= 0)) {
-      this.modalError.set('Indica un porcentaje de cashback mayor a 0 para configurar un límite.');
+      this.modalError.set('Indica un porcentaje de cashback mayor a 0 para configurar un lÃ­mite.');
       return;
     }
     if (this.tipo === 'CREDITO' && (this.limiteCredito == null
         || !Number.isFinite(this.limiteCredito) || this.limiteCredito <= 0)) {
-      this.modalError.set('Indica un límite de crédito mayor a 0.');
+      this.modalError.set('Indica un lÃ­mite de crÃ©dito mayor a 0.');
       return;
     }
     if (this.tipo === 'CREDITO' && (this.diaCorte == null || !this.diaValido(this.diaCorte))) {
-      this.modalError.set('Indica el día de corte entre 1 y 31.');
+      this.modalError.set('Indica el dÃ­a de corte entre 1 y 31.');
       return;
     }
     if (this.tipo === 'CREDITO' && (this.diaPago == null || !this.diaValido(this.diaPago))) {
-      this.modalError.set('Indica el día de pago entre 1 y 31.');
+      this.modalError.set('Indica el dÃ­a de pago entre 1 y 31.');
       return;
     }
     if (this.tipo === 'CREDITO' && this.limiteCredito != null) {
@@ -626,7 +626,7 @@ export class CuentasComponent implements OnInit {
         ? deudaActualCuenta(cuentaBase)
         : !cuentaBase ? this.saldoInicial ?? 0 : 0;
       if (this.limiteCredito < deudaActual) {
-        this.modalError.set('El límite de crédito no puede ser menor que la deuda actual.');
+        this.modalError.set('El lÃ­mite de crÃ©dito no puede ser menor que la deuda actual.');
         return;
       }
     }
@@ -677,7 +677,7 @@ export class CuentasComponent implements OnInit {
   async desactivar(cuenta: Cuenta): Promise<void> {
     const confirmado = await this.confirmDialog.confirm({
       title: 'Desactivar cuenta',
-      message: `Se ocultará "${cuenta.nombre}" de las cuentas activas y no podrás registrar nuevos movimientos en ella. Su saldo actual (${cuenta.saldoActual} ${cuenta.moneda}) dejará de incluirse en el balance total. El historial se conservará y podrás reactivarla desde “Inactivas”. ¿Deseas continuar?`,
+      message: `Se ocultarÃ¡ "${cuenta.nombre}" de las cuentas activas y no podrÃ¡s registrar nuevos movimientos en ella. Su saldo actual (${cuenta.saldoActual} ${cuenta.moneda}) dejarÃ¡ de incluirse en el balance total. El historial se conservarÃ¡ y podrÃ¡s reactivarla desde "Inactivas". Â¿Deseas continuar?`,
       confirmText: 'Desactivar',
       cancelText: 'Cancelar',
       type: 'warning'
@@ -705,7 +705,7 @@ export class CuentasComponent implements OnInit {
 
     const confirmado = await this.confirmDialog.confirm({
       title: 'Eliminar cuenta definitivamente',
-      message: `Solo se puede eliminar si el saldo y la deuda son exactamente $0.00. Los movimientos se conservarán en el historial con el nombre “${cuenta.nombre}”; las plantillas recurrentes asociadas se eliminarán. ¿Deseas continuar?`,
+      message: `Solo se puede eliminar si el saldo y la deuda son exactamente $0.00. Los movimientos se conservarÃ¡n en el historial con el nombre "${cuenta.nombre}"; las plantillas recurrentes asociadas se eliminarÃ¡n. Â¿Deseas continuar?`,
       confirmText: 'Eliminar definitivamente',
       cancelText: 'Cancelar',
       type: 'danger'
@@ -718,7 +718,7 @@ export class CuentasComponent implements OnInit {
           this.toastService.error(response.message || 'No se pudo eliminar la cuenta.');
           return;
         }
-        this.toastService.success('Cuenta eliminada. Su historial de movimientos se conservó.');
+        this.toastService.success('Cuenta eliminada. Su historial de movimientos se conservÃ³.');
         this.cargarCuentas();
       },
       error: err => this.toastService.error(mensajeDeError(err, 'No se pudo eliminar la cuenta.'))
@@ -740,7 +740,7 @@ export class CuentasComponent implements OnInit {
   }
 
   tipoCuentaLabel(tipo: TipoCuenta): string {
-    if (tipo === 'DEBITO') return 'Inversión';
+    if (tipo === 'DEBITO') return 'InversiÃ³n';
     return this.tiposCuenta.find(opcion => opcion.valor === tipo)?.etiqueta ?? tipo;
   }
 

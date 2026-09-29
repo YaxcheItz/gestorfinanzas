@@ -34,6 +34,12 @@ public class PerfilService {
         usuario.setEmail(email);
         usuario.setTemaPreferido(request.tema());
         usuario.setMonedaPreferida(request.monedaPredeterminada());
+        if (request.telefono() != null) {
+            usuario.setTelefono(request.telefono().trim());
+        }
+        if (request.notificacionesWhatsapp() != null) {
+            usuario.setNotificacionesWhatsapp(request.notificacionesWhatsapp());
+        }
         return PerfilResponse.fromEntity(usuarioRepository.save(usuario));
     }
 

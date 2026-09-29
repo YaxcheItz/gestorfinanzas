@@ -10,6 +10,8 @@ export interface Perfil {
   email: string;
   tema: 'CLARO' | 'OSCURO';
   monedaPredeterminada: string;
+  telefono?: string | null;
+  notificacionesWhatsapp?: boolean;
 }
 
 export interface PerfilActualizarPayload {
@@ -17,6 +19,8 @@ export interface PerfilActualizarPayload {
   email: string;
   tema: 'CLARO' | 'OSCURO';
   monedaPredeterminada: string;
+  telefono?: string | null;
+  notificacionesWhatsapp?: boolean;
 }
 
 export interface CambiarPasswordPayload {
