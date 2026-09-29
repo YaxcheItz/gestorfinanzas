@@ -24,6 +24,15 @@ export interface CambiarPasswordPayload {
   passwordNueva: string;
 }
 
+export interface SolicitudRecuperacionPayload {
+  email: string;
+}
+
+export interface RestablecerPasswordPayload {
+  token: string;
+  passwordNueva: string;
+}
+
 export interface AuthResponse {
   token: string;
   tokenType: string;
