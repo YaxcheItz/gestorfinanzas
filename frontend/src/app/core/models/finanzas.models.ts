@@ -195,6 +195,8 @@ export interface DashboardResumen {
 export interface DashboardMonedaResumen {
   moneda: string;
   balanceTotal: number;
+  dineroDisponible?: number;
+  deudaTarjetas?: number;
   ingresosMes: number;
   gastosMes: number;
   balanceMes: number;

@@ -247,6 +247,10 @@ public class TransaccionService {
             cuentaDestino = cuentaRepository.findByIdAndUsuarioId(request.cuentaDestinoId(), usuarioId)
                     .orElseThrow(() -> new IllegalArgumentException("La cuenta de destino no existe o no pertenece al usuario"));
 
+            if (cuentaOrigen.getTipo() == TipoCuenta.CREDITO && cuentaDestino.getTipo() == TipoCuenta.CREDITO) {
+                throw new IllegalArgumentException("No se permiten transferencias entre tarjetas de crédito");
+            }
+
             if (!cuentaDestino.isActivo()) {
                 throw new IllegalArgumentException("La cuenta de destino se encuentra inactiva");
             }

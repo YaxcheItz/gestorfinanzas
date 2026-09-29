@@ -93,8 +93,8 @@ import {
               <div class="pointer-events-none absolute -right-2 -top-6 h-32 w-32 rounded-full border border-white/10"></div>
               <div class="relative flex items-start justify-between gap-3">
                 <div>
-                  <p class="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-200/80">Patrimonio en cuentas</p>
-                  <p class="mt-1 text-xs text-slate-300">Balance total disponible</p>
+                  <p class="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-200/80">Dinero en cuentas</p>
+                  <p class="mt-1 text-xs text-slate-300">Sin descontar deuda de tarjetas</p>
                 </div>
                 <label class="sr-only" for="dashboard-currency">Moneda del resumen</label>
                 <select
@@ -108,13 +108,13 @@ import {
                 </select>
               </div>
               <p class="dashboard-summary-amount relative mt-5 min-w-0 break-words text-2xl font-bold tracking-tight sm:text-4xl">
-                {{ moneda.balanceTotal | currency:moneda.moneda:'symbol':'1.2-2' }}
+                {{ (moneda.dineroDisponible ?? moneda.balanceTotal) | currency:moneda.moneda:'symbol':'1.2-2' }}
               </p>
               <div class="relative mt-6 grid grid-cols-2 gap-3 border-t border-white/15 pt-4">
                 <div>
-                  <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-300">Flujo neto del mes</p>
-                  <p class="dashboard-summary-amount mt-1 min-w-0 break-words text-sm font-bold" [class.text-emerald-300]="moneda.balanceMes >= 0" [class.text-rose-300]="moneda.balanceMes < 0">
-                    {{ moneda.balanceMes | currency:moneda.moneda:'symbol':'1.2-2' }}
+                  <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-300">Patrimonio neto</p>
+                  <p class="dashboard-summary-amount mt-1 min-w-0 break-words text-sm font-bold" [class.text-emerald-300]="moneda.balanceTotal >= 0" [class.text-rose-300]="moneda.balanceTotal < 0">
+                    {{ moneda.balanceTotal | currency:moneda.moneda:'symbol':'1.2-2' }}
                   </p>
                 </div>
                 <div class="text-right">
@@ -143,6 +143,15 @@ import {
                   {{ moneda.gastosMes | currency:moneda.moneda:'symbol':'1.2-2' }}
                 </p>
                 <p class="mt-1 text-xs text-slate-500">Ahorro: {{ moneda.tasaAhorro | number:'1.1-1' }}%</p>
+              </article>
+              <article class="rounded-2xl border border-amber-100 bg-white p-3 shadow-xs sm:p-5">
+                <div class="flex items-center gap-2">
+                  <span class="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-50 text-lg font-bold text-amber-700" aria-hidden="true">−</span>
+                  <p class="text-xs font-semibold text-slate-500">Deuda en tarjetas</p>
+                </div>
+                <p class="dashboard-summary-amount mt-3 min-w-0 break-words text-base font-bold text-amber-700 sm:text-2xl">
+                  {{ deudaTarjetasActual() | currency:moneda.moneda:'symbol':'1.2-2' }}
+                </p>
               </article>
             </div>
           </div>
@@ -551,6 +560,7 @@ import {
                   id="cuentaId"
                   required
                   [(ngModel)]="formCuentaId"
+                  (ngModelChange)="cambiarCuentaOrigen($event)"
                   name="cuentaId"
                   class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all cursor-pointer">
                   @for (c of cuentas(); track c.id) {
@@ -569,17 +579,24 @@ import {
                   <select
                     id="cuentaDestinoId"
                     required
+                    [disabled]="cuentasDestinoDisponibles().length === 0"
                     [(ngModel)]="formCuentaDestinoId"
                     name="cuentaDestinoId"
                     class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all cursor-pointer">
-                    @for (c of cuentas(); track c.id) {
-                      @if (c.id !== formCuentaId) {
-                        <option [ngValue]="c.id">
-                          {{ c.nombre }} ({{ resumenCuentaSelector(c) }})
-                        </option>
-                      }
+                    @if (cuentasDestinoDisponibles().length === 0) {
+                      <option [ngValue]="null" disabled>No hay una cuenta destino válida</option>
+                    }
+                    @for (c of cuentasDestinoDisponibles(); track c.id) {
+                      <option [ngValue]="c.id">
+                        {{ c.nombre }} ({{ resumenCuentaSelector(c) }})
+                      </option>
                     }
                   </select>
+                  @if (cuentasDestinoDisponibles().length === 0) {
+                    <p class="mt-1.5 text-xs leading-relaxed text-amber-700">
+                      No puedes transferir entre dos tarjetas de crédito. Elige una cuenta que no sea de crédito.
+                    </p>
+                  }
                   @if (monedaCuenta(formCuentaId) !== monedaCuenta(formCuentaDestinoId)) {
                     <div class="mt-4">
                       <label for="dashboard-tasa-cambio" class="block text-xs font-semibold text-slate-700 mb-1.5">
@@ -775,6 +792,12 @@ export class DashboardComponent implements OnInit {
 
   cuentas = signal<Cuenta[]>([]);
   categorias = signal<Categoria[]>([]);
+  readonly deudaTarjetasActual = computed(() => {
+    const moneda = this.monedaResumen();
+    return this.cuentas()
+      .filter(cuenta => cuenta.activo && cuenta.tipo === 'CREDITO' && cuenta.moneda === moneda)
+      .reduce((total, cuenta) => total + Math.max(0, -cuenta.saldoActual), 0);
+  });
 
   // Estados del modal
   modalAbierto = signal<boolean>(false);
@@ -807,6 +830,22 @@ export class DashboardComponent implements OnInit {
 
   monedaCuenta(id: number | null): string {
     return this.cuentas().find(cuenta => cuenta.id === id)?.moneda ?? 'MXN';
+  }
+
+  cuentasDestinoDisponibles(): Cuenta[] {
+    const cuentaOrigen = this.cuentas().find(cuenta => cuenta.id === this.formCuentaId);
+    return this.cuentas().filter(cuenta =>
+      cuenta.id !== this.formCuentaId
+      && !(cuentaOrigen?.tipo === 'CREDITO' && cuenta.tipo === 'CREDITO')
+    );
+  }
+
+  cambiarCuentaOrigen(cuentaId: number | null): void {
+    this.formCuentaId = cuentaId;
+    const destinos = this.cuentasDestinoDisponibles();
+    if (!destinos.some(cuenta => cuenta.id === this.formCuentaDestinoId)) {
+      this.formCuentaDestinoId = destinos[0]?.id ?? null;
+    }
   }
 
   gastosTotales = computed(() =>
@@ -1012,8 +1051,12 @@ export class DashboardComponent implements OnInit {
       next: (res) => {
         if (res.success && res.data) {
           this.cuentas.set(res.data);
-          if (res.data.length > 0 && !this.formCuentaId) {
+          if (res.data.length > 0 && !res.data.some(cuenta => cuenta.id === this.formCuentaId)) {
             this.formCuentaId = res.data[0].id;
+          }
+          const destinos = this.cuentasDestinoDisponibles();
+          if (!destinos.some(cuenta => cuenta.id === this.formCuentaDestinoId)) {
+            this.formCuentaDestinoId = destinos[0]?.id ?? null;
           }
         }
       }
@@ -1046,9 +1089,7 @@ export class DashboardComponent implements OnInit {
     const listaCuentas = this.cuentas();
     if (listaCuentas.length > 0) {
       this.formCuentaId = listaCuentas[0].id;
-      if (listaCuentas.length > 1) {
-        this.formCuentaDestinoId = listaCuentas[1].id;
-      }
+      this.formCuentaDestinoId = this.cuentasDestinoDisponibles()[0]?.id ?? null;
     }
 
     const cats = this.categoriasFiltradas();
@@ -1149,6 +1190,12 @@ export class DashboardComponent implements OnInit {
       }
       if (this.formCuentaDestinoId === this.formCuentaId) {
         this.modalError.set('La cuenta origen y destino deben ser distintas');
+        return;
+      }
+      const origen = this.cuentas().find(cuenta => cuenta.id === this.formCuentaId);
+      const destino = this.cuentas().find(cuenta => cuenta.id === this.formCuentaDestinoId);
+      if (origen?.tipo === 'CREDITO' && destino?.tipo === 'CREDITO') {
+        this.modalError.set('No se permiten transferencias entre tarjetas de crédito.');
         return;
       }
       if (this.monedaCuenta(this.formCuentaDestinoId) !== this.monedaCuenta(this.formCuentaId)
