@@ -31,6 +31,10 @@ public class Presupuesto {
     @Column(name = "monto_limite", nullable = false, precision = 15, scale = 2)
     private BigDecimal montoLimite;
 
+    @Column(nullable = false, length = 3, columnDefinition = "varchar(3) not null default 'MXN'")
+    @Builder.Default
+    private String moneda = "MXN";
+
     @Column(nullable = false)
     private int mes;
 

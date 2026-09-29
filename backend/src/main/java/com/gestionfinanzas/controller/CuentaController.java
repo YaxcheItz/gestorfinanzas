@@ -23,9 +23,10 @@ public class CuentaController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<CuentaResponse>>> listarCuentas(
+            @RequestParam(defaultValue = "false") boolean incluirInactivas,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        List<CuentaResponse> cuentas = cuentaService.listarCuentas(userDetails.getId());
+        List<CuentaResponse> cuentas = cuentaService.listarCuentas(userDetails.getId(), incluirInactivas);
         return ResponseEntity.ok(ApiResponse.ok("Cuentas obtenidas correctamente", cuentas));
     }
 
@@ -59,11 +60,29 @@ public class CuentaController {
     }
 
     @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> eliminarCuenta(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        cuentaService.eliminarCuenta(userDetails.getId(), id);
+        return ResponseEntity.ok(ApiResponse.ok("Cuenta eliminada correctamente. El historial de movimientos se conservó", null));
+    }
+
+    @PatchMapping("/{id}/desactivar")
     public ResponseEntity<ApiResponse<Void>> desactivarCuenta(
             @PathVariable Long id,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         cuentaService.desactivarCuenta(userDetails.getId(), id);
         return ResponseEntity.ok(ApiResponse.ok("Cuenta desactivada correctamente", null));
+    }
+
+    @PatchMapping("/{id}/reactivar")
+    public ResponseEntity<ApiResponse<Void>> reactivarCuenta(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        cuentaService.reactivarCuenta(userDetails.getId(), id);
+        return ResponseEntity.ok(ApiResponse.ok("Cuenta reactivada correctamente", null));
     }
 }

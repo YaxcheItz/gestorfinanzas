@@ -17,6 +17,7 @@ public class CustomUserDetails implements UserDetails {
     private final String email;
     private final String password;
     private final boolean activo;
+    private final int tokenVersion;
     private final Collection<? extends GrantedAuthority> authorities;
 
     public CustomUserDetails(Usuario usuario) {
@@ -25,6 +26,7 @@ public class CustomUserDetails implements UserDetails {
         this.email = usuario.getEmail();
         this.password = usuario.getPasswordHash();
         this.activo = usuario.isActivo();
+        this.tokenVersion = usuario.getTokenVersion();
         this.authorities = List.of(new SimpleGrantedAuthority(usuario.getRol().name()));
     }
 

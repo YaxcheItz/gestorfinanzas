@@ -27,10 +27,33 @@ spring:
         format_sql: false
     show-sql: false
 
+  mail:
+    host: ${MAIL_HOST:}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${MAIL_SMTP_AUTH:false}
+          starttls:
+            enable: ${MAIL_SMTP_STARTTLS:true}
+
 jwt:
   secret: ${JWT_SECRET}
   expiration-ms: 86400000 # 24 horas
 
 app:
+  mail:
+    enabled: ${MAIL_ENABLED:false}
+    from: ${MAIL_FROM:no-reply@kaptal.app}
+  frontend-url: ${FRONTEND_URL:http://localhost:4200}
   cors:
     allowed-origins: ${CORS_ORIGINS}
+  ai:
+    provider: ${AI_PROVIDER:gemini}
+    model: ${AI_MODEL:gemini-2.5-flash}
+    fallback-model: ${AI_FALLBACK_MODEL:gemini-flash-lite-latest}
+    gemini:
+      api-key: ${GEMINI_API_KEY:}
+      base-url: ${GEMINI_API_URL:https://generativelanguage.googleapis.com/v1beta}

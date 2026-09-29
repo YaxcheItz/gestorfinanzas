@@ -1,6 +1,8 @@
 package com.gestionfinanzas.controller;
 
 import com.gestionfinanzas.dto.response.ApiResponse;
+import com.gestionfinanzas.dto.response.DashboardAnaliticaResponse;
+import com.gestionfinanzas.dto.response.DashboardComparacionResponse;
 import com.gestionfinanzas.dto.response.DashboardResumenResponse;
 import com.gestionfinanzas.security.CustomUserDetails;
 import com.gestionfinanzas.service.DashboardService;
@@ -27,5 +29,24 @@ public class DashboardController {
     ) {
         DashboardResumenResponse resumen = dashboardService.obtenerResumen(userDetails.getId(), mes, anio);
         return ResponseEntity.ok(ApiResponse.ok("Resumen del dashboard obtenido correctamente", resumen));
+    }
+
+    @GetMapping("/analitica")
+    public ResponseEntity<ApiResponse<DashboardAnaliticaResponse>> obtenerAnalitica(
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        DashboardAnaliticaResponse analitica = dashboardService.obtenerAnalitica(userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.ok("Analítica del dashboard obtenida correctamente", analitica));
+    }
+
+    @GetMapping("/comparacion")
+    public ResponseEntity<ApiResponse<DashboardComparacionResponse>> obtenerComparacion(
+            @RequestParam(required = false) Integer mes,
+            @RequestParam(required = false) Integer anio,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        DashboardComparacionResponse comparacion =
+                dashboardService.obtenerComparacion(userDetails.getId(), mes, anio);
+        return ResponseEntity.ok(ApiResponse.ok("Comparación de periodos obtenida correctamente", comparacion));
     }
 }

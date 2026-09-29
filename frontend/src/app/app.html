@@ -1,6 +1,10 @@
 <div class="min-h-screen flex flex-col bg-slate-50 text-slate-900">
   <app-navbar />
-  <main class="flex-1">
+  <main class="flex-1" [class.app-content-with-bottom-nav]="authService.isAuthenticated()">
     <router-outlet />
   </main>
 </div>
+
+<!-- Global UI Layer: Toasts y Diálogos de Confirmación -->
+<app-toast-container />
+<app-confirm-dialog />

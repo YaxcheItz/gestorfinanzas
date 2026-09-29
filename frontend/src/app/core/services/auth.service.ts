@@ -1,8 +1,17 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
-import { ApiResponse, AuthResponse, LoginPayload, RegistroPayload, Usuario } from '../models/auth.models';
+import {
+  ApiResponse,
+  AuthResponse,
+  LoginPayload,
+  RegistroPayload,
+  RestablecerPasswordPayload,
+  SolicitudRecuperacionPayload,
+  Usuario
+} from '../models/auth.models';
 import { Router } from '@angular/router';
+import { getApiBaseUrl } from './api-base-url';
 
 @Injectable({
   providedIn: 'root'
@@ -10,7 +19,7 @@ import { Router } from '@angular/router';
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
-  private readonly apiUrl = 'http://localhost:8080/api/auth';
+  private readonly apiUrl = `${getApiBaseUrl()}/auth`;
 
   private readonly tokenKey = 'finanzas_token';
   private readonly userKey = 'finanzas_user';
@@ -40,11 +49,24 @@ export class AuthService {
     );
   }
 
+  solicitarRecuperacion(payload: SolicitudRecuperacionPayload): Observable<ApiResponse<boolean>> {
+    return this.http.post<ApiResponse<boolean>>(`${this.apiUrl}/recuperacion`, payload);
+  }
+
+  restablecerPassword(payload: RestablecerPasswordPayload): Observable<ApiResponse<void>> {
+    return this.http.post<ApiResponse<void>>(`${this.apiUrl}/recuperacion/confirmar`, payload);
+  }
+
   logout(): void {
     localStorage.removeItem(this.tokenKey);
     localStorage.removeItem(this.userKey);
     this._currentUser.set(null);
     this.router.navigate(['/login']);
+  }
+
+  actualizarUsuario(usuario: Usuario): void {
+    localStorage.setItem(this.userKey, JSON.stringify(usuario));
+    this._currentUser.set(usuario);
   }
 
   getToken(): string | null {

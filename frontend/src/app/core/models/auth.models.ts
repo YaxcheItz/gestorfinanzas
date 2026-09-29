@@ -4,6 +4,50 @@ export interface Usuario {
   email: string;
 }
 
+export interface Perfil {
+  id: number;
+  nombre: string;
+  email: string;
+  tema: 'CLARO' | 'OSCURO';
+  monedaPredeterminada: string;
+}
+
+export interface PerfilActualizarPayload {
+  nombre: string;
+  email: string;
+  tema: 'CLARO' | 'OSCURO';
+  monedaPredeterminada: string;
+}
+
+export interface CambiarPasswordPayload {
+  passwordActual: string;
+  passwordNueva: string;
+}
+
+export interface SolicitudRecuperacionPayload {
+  email: string;
+}
+
+export interface RestablecerPasswordPayload {
+  token: string;
+  passwordNueva: string;
+}
+
+export interface RestauracionRespaldoPreview {
+  version: number;
+  generadoEn: string;
+  cuentas: number;
+  categorias: number;
+  presupuestos: number;
+  recurrencias: number;
+  transacciones: number;
+  eventosHistorial: number;
+  asientosContables: number;
+  destinoVacio: boolean;
+  puedeRestaurar: boolean;
+  advertencias: string[];
+}
+
 export interface AuthResponse {
   token: string;
   tokenType: string;

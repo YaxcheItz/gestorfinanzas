@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg">
+  <symbol id="home" viewBox="0 0 24 24">
+    <path d="M3 10.5 12 3l9 7.5M5.5 9v11h13V9M9 20v-6h6v6"/>
+  </symbol>
+  <symbol id="movements" viewBox="0 0 24 24">
+    <path d="M8 7h12m0 0-4-4m4 4-4 4M16 17H4m0 0 4 4m-4-4 4-4"/>
+  </symbol>
+  <symbol id="more" viewBox="0 0 24 24">
+    <circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>
+  </symbol>
+  <symbol id="budgets" viewBox="0 0 24 24">
+    <path d="M4 19V5m0 14h16M8 15v-4m4 4V7m4 8V9m4 6v-3"/>
+  </symbol>
+  <symbol id="accounts" viewBox="0 0 24 24">
+    <path d="M3 7h18v13H3zM3 11h18M7 16h4"/>
+  </symbol>
+  <symbol id="ledger" viewBox="0 0 24 24">
+    <path d="M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/>
+    <path d="M8 7h8M8 12h3m3 0h2M8 17h3m3 0h2"/>
+  </symbol>
+  <symbol id="assistant" viewBox="0 0 24 24">
+    <path d="m12 3 1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3Z"/>
+    <path d="m19 15 .9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9L19 15Z"/>
+    <path d="m5 16 .6 1.4L7 18l-1.4.6L5 20l-.6-1.4L3 18l1.4-.6L5 16Z"/>
+  </symbol>
+  <symbol id="categories" viewBox="0 0 24 24">
+    <path d="m20 13-7 7L3 10V3h7l10 10zm-12.5-5.5h.01"/>
+  </symbol>
+</svg>

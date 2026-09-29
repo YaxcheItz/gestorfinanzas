@@ -40,6 +40,18 @@ public class Usuario {
     @Builder.Default
     private boolean activo = true;
 
+    @Column(name = "token_version", nullable = false, columnDefinition = "integer not null default 0")
+    @Builder.Default
+    private int tokenVersion = 0;
+
+    @Column(name = "tema_preferido", nullable = false, length = 10, columnDefinition = "varchar(10) not null default 'CLARO'")
+    @Builder.Default
+    private String temaPreferido = "CLARO";
+
+    @Column(name = "moneda_preferida", nullable = false, length = 3, columnDefinition = "varchar(3) not null default 'MXN'")
+    @Builder.Default
+    private String monedaPreferida = "MXN";
+
     @CreationTimestamp
     @Column(name = "fecha_creacion", updatable = false)
     private LocalDateTime fechaCreacion;

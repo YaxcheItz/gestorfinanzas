@@ -1,13 +1,70 @@
 import { Routes } from '@angular/router';
-import { LoginComponent } from './features/auth/login/login.component';
-import { RegistroComponent } from './features/auth/registro/registro.component';
-import { DashboardComponent } from './features/dashboard/dashboard.component';
 import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
-  { path: 'login', component: LoginComponent },
-  { path: 'registro', component: RegistroComponent },
-  { path: 'dashboard', component: DashboardComponent, canActivate: [authGuard] },
+  {
+    path: 'login',
+    loadComponent: () => import('./features/auth/login/login.component')
+      .then(module => module.LoginComponent)
+  },
+  {
+    path: 'registro',
+    loadComponent: () => import('./features/auth/registro/registro.component')
+      .then(module => module.RegistroComponent)
+  },
+  {
+    path: 'recuperar-cuenta',
+    loadComponent: () => import('./features/auth/recuperar-cuenta/recuperar-cuenta.component')
+      .then(module => module.RecuperarCuentaComponent)
+  },
+  {
+    path: 'dashboard',
+    loadComponent: () => import('./features/dashboard/dashboard.component')
+      .then(module => module.DashboardComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'transacciones',
+    loadComponent: () => import('./features/transacciones/transacciones.component')
+      .then(module => module.TransaccionesComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'libro-diario',
+    loadComponent: () => import('./features/libro-diario/libro-diario.component')
+      .then(module => module.LibroDiarioComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'asistente',
+    loadComponent: () => import('./features/asistente/asistente.component')
+      .then(module => module.AsistenteComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'presupuestos',
+    loadComponent: () => import('./features/presupuestos/presupuestos.component')
+      .then(module => module.PresupuestosComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'cuentas',
+    loadComponent: () => import('./features/cuentas/cuentas.component')
+      .then(module => module.CuentasComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'categorias',
+    loadComponent: () => import('./features/categorias/categorias.component')
+      .then(module => module.CategoriasComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'configuracion',
+    loadComponent: () => import('./features/configuracion/configuracion.component')
+      .then(module => module.ConfiguracionComponent),
+    canActivate: [authGuard]
+  },
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
   { path: '**', redirectTo: 'dashboard' }
 ];
