@@ -118,6 +118,12 @@ consecuencias:
   Resuélvelas con JPQL. CI rechaza `nativeQuery = true` por esto.
 - `ddl-auto: update` crea y altera tablas en ese esquema al arrancar. Antes de
   tener usuarios reales, migra a Flyway y `validate`.
+- `ddl-auto: update` **no** crea ni corrige `CHECK` constraints, y las pruebas
+  corren contra H2, que tampoco los tiene. Un CHECK desalineado con un enum
+  Java solo revienta en produccion y solo en el camino de codigo que lo usa.
+  Por eso los cambios manuales de esquema van en `database/patches/`.
+  Alerta real: `TipoTransaccion` tiene 4 valores y `transacciones_tipo_check`
+  aceptaba 3, con lo que crear una cuenta con saldo inicial devolvia 500.
 
 ## Healthcheck
 
