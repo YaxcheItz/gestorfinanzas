@@ -23,7 +23,6 @@ spring:
     properties:
       hibernate:
         default_schema: ${SPRING_JPA_PROPERTIES_HIBERNATE_DEFAULT_SCHEMA}
-        dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: false
     show-sql: false
 
