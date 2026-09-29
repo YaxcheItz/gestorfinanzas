@@ -30,6 +30,10 @@ public class TransaccionSpecification {
                 predicates.add(cb.equal(root.get("tipo"), filtro.tipo()));
             }
 
+            if (filtro.id() != null) {
+                predicates.add(cb.equal(root.get("id"), filtro.id()));
+            }
+
             // 3. Filtro por Cuenta (Origen o Destino si es transferencia)
             if (filtro.cuentaId() != null) {
                 Predicate esOrigen = cb.equal(root.get("cuenta").get("id"), filtro.cuentaId());

@@ -10,6 +10,7 @@ import com.gestionfinanzas.model.entity.LineaAsiento;
 import com.gestionfinanzas.model.entity.Transaccion;
 import com.gestionfinanzas.model.enums.TipoCuenta;
 import com.gestionfinanzas.model.enums.LadoContable;
+import com.gestionfinanzas.model.enums.TipoTransaccion;
 import com.gestionfinanzas.repository.AsientoContableRepository;
 import com.gestionfinanzas.repository.CuentaRepository;
 import com.gestionfinanzas.repository.TransaccionRepository;
@@ -27,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.LinkedHashMap;
 import java.util.TreeMap;
+import java.time.LocalDate;
 
 @Service
 @RequiredArgsConstructor
@@ -62,9 +64,17 @@ public class LibroDiarioService {
     }
 
     @Transactional(readOnly = true)
-    public Page<AsientoContableResponse> listar(Long usuarioId, Pageable pageable) {
-        return asientoRepository.findByUsuarioIdOrderByFechaOperacionDescIdDesc(usuarioId, pageable)
-                .map(AsientoContableResponse::fromEntity);
+    public Page<AsientoContableResponse> listar(Long usuarioId, Pageable pageable, LocalDate desde,
+                                                LocalDate hasta, String tipoEvento,
+                                                TipoTransaccion tipoMovimiento, Long cuentaId) {
+        Page<AsientoContable> page = asientoRepository.buscarConFiltros(
+                usuarioId, desde, hasta, tipoEvento, tipoMovimiento, cuentaId, pageable);
+        Map<Long, TipoTransaccion> tipoPorMovimiento = new HashMap<>();
+        transaccionRepository.findAllById(page.getContent().stream()
+                        .map(AsientoContable::getTransaccionOrigenId).distinct().toList())
+                .forEach(transaccion -> tipoPorMovimiento.put(transaccion.getId(), transaccion.getTipo()));
+        return page.map(asiento -> AsientoContableResponse.fromEntity(
+                asiento, tipoPorMovimiento.get(asiento.getTransaccionOrigenId())));
     }
 
     @Transactional(readOnly = true)
@@ -117,6 +127,7 @@ public class LibroDiarioService {
                 .usuario(usuarioRepository.getReferenceById(usuarioId))
                 .transaccionOrigenId(movimiento.id())
                 .tipoEvento(tipoEvento)
+                .tipoMovimiento(movimiento.tipo())
                 .fechaOperacion(movimiento.fecha())
                 .descripcion(limitar(movimiento.descripcion(), 200))
                 .tasaCambio(movimiento.tasaCambio())

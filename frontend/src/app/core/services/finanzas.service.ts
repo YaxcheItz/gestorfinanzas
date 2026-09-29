@@ -9,9 +9,10 @@ import {
   AiVerificationResult
 } from '../models/ai.models';
 import {
-  AuditoriaTransaccion,
-  AsientoContable,
-  BackfillLibroDiario,
+    AuditoriaTransaccion,
+    AsientoContable,
+    BackfillLibroDiario,
+    LibroDiarioFiltro,
   Categoria,
   CategoriaPayload,
   Cuenta,
@@ -116,6 +117,7 @@ export class FinanzasService {
       .set('size', size.toString());
 
     if (filtros) {
+      if (filtros.id != null) params = params.set('id', filtros.id.toString());
       if (filtros.tipo) params = params.set('tipo', filtros.tipo);
       if (filtros.cuentaId != null) params = params.set('cuentaId', filtros.cuentaId.toString());
       if (filtros.categoriaId != null) params = params.set('categoriaId', filtros.categoriaId.toString());
@@ -130,6 +132,7 @@ export class FinanzasService {
   exportarTransaccionesCsv(filtros?: TransaccionFiltro): Observable<HttpResponse<Blob>> {
     let params = new HttpParams();
     if (filtros) {
+      if (filtros.id != null) params = params.set('id', filtros.id.toString());
       if (filtros.tipo) params = params.set('tipo', filtros.tipo);
       if (filtros.cuentaId != null) params = params.set('cuentaId', filtros.cuentaId.toString());
       if (filtros.categoriaId != null) params = params.set('categoriaId', filtros.categoriaId.toString());
@@ -198,8 +201,13 @@ export class FinanzasService {
     );
   }
 
-  getLibroDiario(page = 0, size = 20): Observable<ApiResponse<PageResponse<AsientoContable>>> {
-    const params = new HttpParams().set('page', page).set('size', size);
+  getLibroDiario(page = 0, size = 20, filtros: LibroDiarioFiltro = {}): Observable<ApiResponse<PageResponse<AsientoContable>>> {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (filtros.desde) params = params.set('desde', filtros.desde);
+    if (filtros.hasta) params = params.set('hasta', filtros.hasta);
+    if (filtros.tipoEvento) params = params.set('tipoEvento', filtros.tipoEvento);
+    if (filtros.tipoMovimiento) params = params.set('tipoMovimiento', filtros.tipoMovimiento);
+    if (filtros.cuentaId != null) params = params.set('cuentaId', filtros.cuentaId);
     return this.http.get<ApiResponse<PageResponse<AsientoContable>>>(
       `${this.baseUrl}/libro-diario`,
       { params }

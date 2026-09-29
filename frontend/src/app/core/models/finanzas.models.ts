@@ -107,11 +107,20 @@ export interface AsientoContable {
   id: number;
   transaccionOrigenId: number;
   tipoEvento: 'CREACION' | 'SALDO_INICIAL' | 'ACTUALIZACION' | 'ELIMINACION' | 'BACKFILL';
+  tipoMovimiento: TipoTransaccion | null;
   fechaOperacion: string;
   descripcion: string;
   tasaCambio: number | null;
   fechaCreacion: string;
   lineas: LineaAsientoContable[];
+}
+
+export interface LibroDiarioFiltro {
+  desde?: string;
+  hasta?: string;
+  tipoEvento?: AsientoContable['tipoEvento'] | '';
+  tipoMovimiento?: TipoTransaccion | '';
+  cuentaId?: number | null;
 }
 
 export interface ConciliacionMoneda {
@@ -278,6 +287,7 @@ export interface PresupuestoMonedaResumen {
 }
 
 export interface TransaccionFiltro {
+  id?: number | null;
   tipo?: TipoTransaccion | '';
   cuentaId?: number | null;
   categoriaId?: number | null;
