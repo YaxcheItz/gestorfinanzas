@@ -3,11 +3,22 @@
 Backend Spring Boot 3.4 en Java 21. Frontend Angular 21. La base de datos es
 PostgreSQL en Supabase, fuera de este repositorio.
 
-## Ordem de despliegue
+## Orden de despliegue
 
 1. Backend primero, porque el healthcheck del frontend no depende de la API
    pero los usuarios sí la necesitan para cargar datos.
 2. Frontend después, con la URL de la API inyectada.
+
+## Ramas
+
+Producción despliega `main`. `develop` es integración: llega a producción antes
+de estar probado. El flujo es merge `develop` → `main`, nunca al revés.
+
+- Render: `render.yaml` fija `branch: main`. El campo es inmutable tras crear el
+  servicio, así que cambiarlo después exige borrarlo y crearlo de nuevo.
+- Vercel: la rama de producción se elige en Settings → Git → Production Branch.
+  Vercel no apunta a `main` por defecto, hay que seleccionarla.
+- CI corre en push y pull request hacia ambas ramas.
 
 ## Variables del backend
 
@@ -79,11 +90,21 @@ Ese archivo se versiona vacío a propósito. En el despliegue se reescribe sin
 recompilar, así que el mismo build sirve para varios entornos:
 
 ```
-window.__API_BASE_URL__ = 'https://api.tudominio.com/api';
+window.__API_BASE_URL__ = "https://api.tudominio.com/api";
 ```
 
-Por eso `index.html` lo carga antes de arrancar Angular, y nginx lo marca como
-`no-store` para que un cambio de URL no quede cacheado.
+Por eso `index.html` lo carga antes de arrancar Angular, y nginx y Vercel lo
+marcan como `no-store` para que un cambio de URL no quede cacheado.
+
+En Vercel la reescritura ya está en el `buildCommand` de `vercel.json`, que
+lee la variable de entorno `API_BASE_URL`. Añádela en Settings → Environment
+Variables, con la URL de la API incluida el sufijo `/api`. Si no la defines, el
+frontend cae a rutas relativas, que es lo correcto cuando el mismo dominio
+sirve el frontend y hace proxy de la API.
+
+El `installCommand` también vive en `vercel.json` (`cd frontend && npm ci`),
+porque Vercel busca `package.json` en la raíz del repo y aquí está en
+`frontend/`.
 
 Si no se define, el frontend usa rutas relativas a `/api`, que es lo correcto
 cuando el mismo dominio sirve el frontend y hace proxy de la API.

@@ -14,8 +14,11 @@ services:
     dockerContext: ./backend
     plan: free
     region: oregon
+    # Produccion despliega desde main. develop es integracion: llega aqui
+    # antes de estar probado. Este campo es inmutable tras la creacion, asi
+    # que cambiarlo despues exige borrar el servicio y crearlo de nuevo.
+    branch: main
     healthCheckPath: /api/health
-    # El plan Free no abre puertos reservados.
     envVars:
       - key: SPRING_JPA_PROPERTIES_HIBERNATE_DEFAULT_SCHEMA
         value: finanzas

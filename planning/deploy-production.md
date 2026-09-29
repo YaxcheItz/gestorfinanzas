@@ -50,6 +50,8 @@ queda prevenida en CI: el job de backend falla si aparece `nativeQuery = true`.
 - [ ] Crear cuenta en Resend y verificar el dominio remitente
 - [ ] Desplegar backend en Render desde `render.yaml`
 - [ ] Configurar `KAPTAL_API_URL` en GitHub Actions
+- [x] Vercel con `installCommand` y reescritura de `runtime-config.js` en build
+- [x] Produccion despliega `main` en Render; Vercel se configura en su panel
 - [ ] Desplegar frontend en Vercel, apuntando `dist/frontend/browser`
 - [ ] Ajustar `CORS_ORIGINS` y `FRONTEND_URL` con los dominios reales
 - [ ] Activar `MAIL_ENABLED=true` y probar la recuperacion de contrasena
