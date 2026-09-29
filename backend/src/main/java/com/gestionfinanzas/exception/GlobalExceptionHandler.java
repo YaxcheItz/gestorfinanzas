@@ -4,6 +4,7 @@ import com.gestionfinanzas.dto.response.ApiResponse;
 import com.gestionfinanzas.ai.AiConfigurationException;
 import com.gestionfinanzas.ai.AiProviderException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -65,6 +66,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleMethodArgumentTypeMismatch(MethodArgumentTypeMismatchException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.error("El parámetro '" + ex.getName() + "' tiene un formato inválido."));
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+        log.error("Conflicto de integridad de datos al procesar la solicitud", ex);
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiResponse.error("No se pudieron guardar los datos porque chocan con información ya existente. No se modificó ningún dato."));
     }
 
     @ExceptionHandler(Exception.class)
