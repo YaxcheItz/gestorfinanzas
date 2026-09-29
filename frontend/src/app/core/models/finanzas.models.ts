@@ -162,6 +162,7 @@ export interface TransaccionPayload {
   notas?: string | null;
   frecuenciaRecurrencia?: FrecuenciaRecurrencia | null;
   siguienteFechaRecurrencia?: string | null;
+  msi?: number | null;
 }
 
 export interface PlantillaRecurrente {
