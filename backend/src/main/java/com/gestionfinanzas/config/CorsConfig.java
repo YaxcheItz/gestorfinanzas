@@ -19,8 +19,8 @@ public class CorsConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        
-        List<String> origins = Arrays.asList(allowedOrigins.split(","));
+
+        List<String> origins = parseOrigins(allowedOrigins);
         configuration.setAllowedOrigins(origins);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "X-Requested-With"));
@@ -31,5 +31,20 @@ public class CorsConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
+    }
+
+    /**
+     * Un valor vacio o en blanco no puede convertirse en origen: "".split(",")
+     * produce [""], que no coincide con ningun origen real y rechazaria toda
+     * peticion del navegador. Se cae al origen de desarrollo en su lugar.
+     */
+    private List<String> parseOrigins(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return List.of("http://localhost:4200");
+        }
+        return Arrays.stream(raw.split(","))
+                .map(String::trim)
+                .filter(origin -> !origin.isEmpty())
+                .toList();
     }
 }
