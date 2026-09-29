@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { ApiResponse } from '../models/auth.models';
+import { ApiResponse, RestauracionRespaldoPreview } from '../models/auth.models';
 import {
   AiChatMessage,
   AiChatResponse,
@@ -191,6 +191,16 @@ export class FinanzasService {
       observe: 'response',
       responseType: 'blob'
     });
+  }
+
+  previsualizarRespaldo(respaldo: unknown): Observable<ApiResponse<RestauracionRespaldoPreview>> {
+    return this.http.post<ApiResponse<RestauracionRespaldoPreview>>(
+      `${this.baseUrl}/perfil/respaldo/previsualizar`, respaldo
+    );
+  }
+
+  restaurarRespaldo(respaldo: unknown): Observable<ApiResponse<void>> {
+    return this.http.post<ApiResponse<void>>(`${this.baseUrl}/perfil/respaldo/restaurar`, respaldo);
   }
 
   getHistorialTransacciones(page = 0, size = 20): Observable<ApiResponse<PageResponse<AuditoriaTransaccion>>> {

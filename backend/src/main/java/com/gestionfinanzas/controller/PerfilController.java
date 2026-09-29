@@ -5,11 +5,13 @@ import com.gestionfinanzas.dto.request.PerfilActualizarRequest;
 import com.gestionfinanzas.dto.response.ApiResponse;
 import com.gestionfinanzas.dto.response.PerfilResponse;
 import com.gestionfinanzas.dto.response.RespaldoFinancieroResponse;
+import com.gestionfinanzas.dto.response.RestauracionRespaldoPreviewResponse;
 import com.gestionfinanzas.dto.response.AuditoriaTransaccionResponse;
 import com.gestionfinanzas.security.CustomUserDetails;
 import com.gestionfinanzas.service.AuditoriaTransaccionService;
 import com.gestionfinanzas.service.PerfilService;
 import com.gestionfinanzas.service.RespaldoFinancieroService;
+import com.gestionfinanzas.service.RestauracionRespaldoService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -34,6 +36,7 @@ public class PerfilController {
 
     private final PerfilService perfilService;
     private final RespaldoFinancieroService respaldoService;
+    private final RestauracionRespaldoService restauracionRespaldoService;
     private final AuditoriaTransaccionService auditoriaService;
 
     @GetMapping
@@ -53,6 +56,24 @@ public class PerfilController {
                         "attachment; filename=\"kaptal-respaldo-" + LocalDate.now() + ".json\"")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(respaldoService.generar(userDetails.getId()));
+    }
+
+    @PostMapping(value = "/respaldo/previsualizar", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponse<RestauracionRespaldoPreviewResponse>> previsualizarRestauracion(
+            @RequestBody RespaldoFinancieroResponse respaldo,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        return ResponseEntity.ok(ApiResponse.ok("Respaldo validado correctamente",
+                restauracionRespaldoService.previsualizar(userDetails.getId(), respaldo)));
+    }
+
+    @PostMapping(value = "/respaldo/restaurar", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponse<Void>> restaurarRespaldo(
+            @RequestBody RespaldoFinancieroResponse respaldo,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        restauracionRespaldoService.restaurar(userDetails.getId(), respaldo);
+        return ResponseEntity.ok(ApiResponse.ok("Respaldo restaurado correctamente. Tu perfil y contraseña actuales se conservaron.", null));
     }
 
     @GetMapping("/historial")
