@@ -34,10 +34,13 @@ services:
         sync: false
       - key: SPRING_DATASOURCE_PASSWORD
         sync: false
+      # CORS y FRONTEND_URL se rellenan tras desplegar el frontend, cuando
+      # existe su dominio real. Dejarlos vacios ya no tumba el arranque: la
+      # aplicacion tiene valor por defecto para ambos.
       - key: CORS_ORIGINS
-        sync: false
+        value: ""
       - key: FRONTEND_URL
-        sync: false
+        value: ""
       - key: RESEND_API_KEY
         sync: false
       - key: MAIL_FROM

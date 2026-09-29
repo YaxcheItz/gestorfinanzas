@@ -50,7 +50,7 @@ app:
     from: ${MAIL_FROM:no-reply@kaptal.app}
   frontend-url: ${FRONTEND_URL:http://localhost:4200}
   cors:
-    allowed-origins: ${CORS_ORIGINS}
+    allowed-origins: ${CORS_ORIGINS:http://localhost:4200}
   ai:
     provider: ${AI_PROVIDER:gemini}
     model: ${AI_MODEL:gemini-2.5-flash}
