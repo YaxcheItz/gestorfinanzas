@@ -70,6 +70,10 @@ public class NotificacionWhatsAppService {
         if (!limpio.startsWith("+")) {
             limpio = "+" + limpio;
         }
+        // Soporte automático para México: WhatsApp exige +521 seguido de los 10 dígitos
+        if (limpio.startsWith("+52") && !limpio.startsWith("+521") && limpio.length() == 13) {
+            limpio = "+521" + limpio.substring(3);
+        }
         return limpio;
     }
 }
