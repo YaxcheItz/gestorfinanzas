@@ -3,8 +3,31 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    color-scheme: light;
+    --kaptal-canvas: #f8fafc;
+    --kaptal-surface: #ffffff;
+    --kaptal-surface-subtle: #f1f5f9;
+    --kaptal-content: #0f172a;
+    --kaptal-content-muted: #475569;
+    --kaptal-border: #e2e8f0;
+    --kaptal-brand: #047857;
+    --kaptal-focus: #059669;
+  }
+
   body {
-    @apply bg-slate-50 text-slate-900 antialiased font-sans min-h-screen dark:bg-slate-950 dark:text-slate-100;
+    @apply antialiased font-sans min-h-screen;
+    background-color: var(--kaptal-canvas);
+    color: var(--kaptal-content);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  :where(a, button, input, select, textarea):focus-visible {
+    outline: 2px solid var(--kaptal-focus);
+    outline-offset: 2px;
   }
 }
 
@@ -122,16 +145,19 @@
   display: block;
 }
 
-@media (min-width: 640px) {
+@media (min-width: 1280px) {
   .mobile-toast-container {
     bottom: auto;
   }
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 1280px) {
   .app-content-with-bottom-nav {
     padding-bottom: 0;
   }
+}
+
+@media (min-width: 1024px) {
 
   .dashboard-analytics-content {
     display: block;
@@ -150,46 +176,68 @@
 
 html.dark {
   color-scheme: dark;
+  --kaptal-canvas: #020617;
+  --kaptal-surface: #0f172a;
+  --kaptal-surface-subtle: #1e293b;
+  --kaptal-content: #f8fafc;
+  --kaptal-content-muted: #cbd5e1;
+  --kaptal-border: #334155;
+  --kaptal-brand: #34d399;
+  --kaptal-focus: #6ee7b7;
 }
 
 html.dark body {
-  background-color: rgb(2 6 23);
-  color: rgb(241 245 249);
+  background-color: var(--kaptal-canvas);
+  color: var(--kaptal-content);
 }
 
 html.dark .bg-white,
 html.dark .mobile-bottom-nav {
-  background-color: rgb(15 23 42);
+  background-color: var(--kaptal-surface);
 }
 
 html.dark .bg-slate-50 {
-  background-color: rgb(15 23 42);
+  background-color: var(--kaptal-surface);
 }
 
 html.dark .bg-slate-100 {
-  background-color: rgb(30 41 59);
+  background-color: var(--kaptal-surface-subtle);
 }
 
 html.dark .bg-slate-200 {
-  background-color: rgb(51 65 85);
+  background-color: var(--kaptal-border);
 }
 
 html.dark .text-slate-900 {
-  color: rgb(248 250 252);
+  color: var(--kaptal-content);
 }
 
 html.dark .text-slate-800 {
-  color: rgb(226 232 240);
+  color: var(--kaptal-content-muted);
 }
 
 html.dark .text-slate-700,
 html.dark .text-slate-600 {
-  color: rgb(203 213 225);
+  color: var(--kaptal-content-muted);
 }
 
 html.dark .text-slate-500,
 html.dark .text-slate-400 {
   color: rgb(148 163 184);
+}
+
+html:not(.dark) .text-slate-400 {
+  color: var(--kaptal-content-muted) !important;
+}
+
+html:not(.dark) ::placeholder {
+  color: #64748b;
+  opacity: 1;
+}
+
+html.dark ::placeholder {
+  color: #94a3b8;
+  opacity: 1;
 }
 
 html.dark .border-slate-100,
@@ -248,8 +296,41 @@ html.dark .bg-amber-50 {
   background-color: rgb(120 53 15 / 0.35);
 }
 
+html.dark .text-amber-950,
+html.dark .text-amber-800,
 html.dark .text-amber-700 {
   color: rgb(252 211 77);
+}
+
+html.dark .border-amber-200 {
+  border-color: rgb(180 83 9 / 0.75);
+}
+
+html.dark .bg-sky-50 {
+  background-color: rgb(12 74 110 / 0.4);
+}
+
+html.dark .text-sky-900 {
+  color: rgb(224 242 254);
+}
+
+html.dark .border-sky-200 {
+  border-color: rgb(3 105 161 / 0.7);
+}
+
+html.dark .bg-violet-50,
+html.dark .bg-purple-50 {
+  background-color: rgb(76 29 149 / 0.35);
+}
+
+html.dark .text-violet-700,
+html.dark .text-purple-700 {
+  color: rgb(221 214 254);
+}
+
+html.dark .border-violet-200,
+html.dark .border-purple-200 {
+  border-color: rgb(109 40 217 / 0.65);
 }
 
 html.dark .hover\:bg-slate-50:hover,
@@ -365,4 +446,10 @@ html.dark .confirm-dialog-card {
 
 html.dark .confirm-dialog-card__message {
   color: rgb(203 213 225);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }

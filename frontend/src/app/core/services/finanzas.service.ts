@@ -11,6 +11,7 @@ import {
 import {
   AuditoriaTransaccion,
   AsientoContable,
+  BackfillLibroDiario,
   Categoria,
   CategoriaPayload,
   Cuenta,
@@ -202,6 +203,16 @@ export class FinanzasService {
     return this.http.get<ApiResponse<PageResponse<AsientoContable>>>(
       `${this.baseUrl}/libro-diario`,
       { params }
+    );
+  }
+
+  getResumenBackfillLibroDiario(): Observable<ApiResponse<BackfillLibroDiario>> {
+    return this.http.get<ApiResponse<BackfillLibroDiario>>(`${this.baseUrl}/libro-diario/backfill`);
+  }
+
+  ejecutarBackfillLibroDiario(): Observable<ApiResponse<BackfillLibroDiario>> {
+    return this.http.post<ApiResponse<BackfillLibroDiario>>(
+      `${this.baseUrl}/libro-diario/backfill`, { confirmar: true }
     );
   }
 

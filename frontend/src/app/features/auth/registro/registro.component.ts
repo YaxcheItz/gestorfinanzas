@@ -23,7 +23,7 @@ import { AuthService } from '../../../core/services/auth.service';
         </div>
 
         @if (errorMessage()) {
-          <div class="break-words bg-rose-50 border border-rose-200 text-rose-700 text-sm px-4 py-3 rounded-xl flex items-start space-x-2">
+          <div role="alert" aria-live="assertive" class="break-words bg-rose-50 border border-rose-200 text-rose-700 text-sm px-4 py-3 rounded-xl flex items-start space-x-2">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0 text-rose-500 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
             </svg>
@@ -40,6 +40,7 @@ import { AuthService } from '../../../core/services/auth.service';
               id="nombre"
               name="nombre"
               type="text"
+              autocomplete="name"
               required
               [(ngModel)]="nombre"
               placeholder="Juan Pérez"
@@ -55,6 +56,7 @@ import { AuthService } from '../../../core/services/auth.service';
               id="email"
               name="email"
               type="email"
+              autocomplete="email"
               required
               [(ngModel)]="email"
               placeholder="tu@correo.com"
@@ -66,16 +68,22 @@ import { AuthService } from '../../../core/services/auth.service';
             <label for="password" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
               Contraseña (mínimo 6 caracteres)
             </label>
+            <div class="relative">
             <input
               id="password"
               name="password"
-              type="password"
+              [type]="mostrarPassword() ? 'text' : 'password'"
+              autocomplete="new-password"
               required
               minlength="6"
               [(ngModel)]="password"
               placeholder="••••••••"
-              class="min-h-11 w-full min-w-0 px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
+              class="min-h-11 w-full min-w-0 px-3.5 py-2.5 pr-14 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
             />
+            <button type="button" (click)="togglePasswordVisibility()" [attr.aria-pressed]="mostrarPassword()" [attr.aria-label]="mostrarPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'" class="absolute right-1 top-1 inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:text-slate-300 dark:hover:bg-slate-700">
+              <svg aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+            </div>
           </div>
 
           <button
@@ -110,8 +118,13 @@ export class RegistroComponent {
   nombre = '';
   email = '';
   password = '';
+  mostrarPassword = signal(false);
   loading = signal(false);
   errorMessage = signal<string | null>(null);
+
+  togglePasswordVisibility(): void {
+    this.mostrarPassword.update(visible => !visible);
+  }
 
   onSubmit(): void {
     if (!this.nombre || !this.email || !this.password) {
