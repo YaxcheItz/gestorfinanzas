@@ -19,6 +19,9 @@ backend/target/
 backend/.mvn/wrapper/maven-wrapper.jar
 backend/*.log
 
+# Runtime config (se reescribe en el despliegue)
+frontend/public/runtime-config.local.js
+
 # Frontend (Node & Angular)
 frontend/node_modules/
 frontend/dist/
