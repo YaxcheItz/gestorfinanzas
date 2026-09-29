@@ -11,11 +11,12 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public interface AsientoContableRepository extends JpaRepository<AsientoContable, Long> {
     @Modifying
-    @Query(value = "UPDATE asientos_contables SET fecha_creacion = :fecha WHERE id = :id", nativeQuery = true)
-    void restaurarFechaCreacion(@Param("id") Long id, @Param("fecha") java.time.LocalDateTime fecha);
+    @Query("UPDATE AsientoContable a SET a.fechaCreacion = :fecha WHERE a.id = :id")
+    void restaurarFechaCreacion(@Param("id") Long id, @Param("fecha") LocalDateTime fecha);
 
     boolean existsByUsuarioIdAndTransaccionOrigenId(Long usuarioId, Long transaccionOrigenId);
     @Query("SELECT DISTINCT a.transaccionOrigenId FROM AsientoContable a WHERE a.usuario.id = :usuarioId")
