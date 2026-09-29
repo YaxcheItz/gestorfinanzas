@@ -5,6 +5,8 @@ import com.gestionfinanzas.dto.response.DashboardMesTipoTotal;
 import com.gestionfinanzas.dto.response.DashboardMonedaTotales;
 import com.gestionfinanzas.model.entity.Transaccion;
 import com.gestionfinanzas.model.enums.TipoTransaccion;
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -22,6 +24,14 @@ import java.util.Optional;
 public interface TransaccionRepository extends JpaRepository<Transaccion, Long>, JpaSpecificationExecutor<Transaccion> {
 
     Optional<Transaccion> findByIdAndUsuarioId(Long id, Long usuarioId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT t FROM Transaccion t WHERE t.id = :id AND t.usuario.id = :usuarioId")
+    Optional<Transaccion> findByIdAndUsuarioIdForUpdate(
+            @Param("id") Long id, @Param("usuarioId") Long usuarioId
+    );
+
+    List<Transaccion> findAllByUsuarioIdOrderByFechaAscIdAsc(Long usuarioId);
 
     List<Transaccion> findByCuentaIdOrCuentaDestinoId(Long cuentaId, Long cuentaDestinoId);
 

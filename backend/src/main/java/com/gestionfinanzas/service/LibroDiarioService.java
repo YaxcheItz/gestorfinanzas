@@ -1,11 +1,18 @@
 package com.gestionfinanzas.service;
 
 import com.gestionfinanzas.dto.response.AsientoContableResponse;
+import com.gestionfinanzas.dto.response.BackfillLibroDiarioResponse;
+import com.gestionfinanzas.dto.response.ConciliacionMonedaResponse;
+import com.gestionfinanzas.dto.response.ConciliacionCuentaResponse;
 import com.gestionfinanzas.dto.response.TransaccionResponse;
 import com.gestionfinanzas.model.entity.AsientoContable;
 import com.gestionfinanzas.model.entity.LineaAsiento;
+import com.gestionfinanzas.model.entity.Transaccion;
+import com.gestionfinanzas.model.enums.TipoCuenta;
 import com.gestionfinanzas.model.enums.LadoContable;
 import com.gestionfinanzas.repository.AsientoContableRepository;
+import com.gestionfinanzas.repository.CuentaRepository;
+import com.gestionfinanzas.repository.TransaccionRepository;
 import com.gestionfinanzas.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -18,13 +25,19 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.LinkedHashMap;
+import java.util.TreeMap;
 
 @Service
 @RequiredArgsConstructor
 public class LibroDiarioService {
 
     private final AsientoContableRepository asientoRepository;
+    private final TransaccionRepository transaccionRepository;
+    private final CuentaRepository cuentaRepository;
     private final UsuarioRepository usuarioRepository;
+
+    private static final int MAXIMO_BACKFILL_POR_LOTE = 100;
 
     @Transactional
     public void registrarCreacion(Long usuarioId, TransaccionResponse movimiento) {
@@ -61,6 +74,39 @@ public class LibroDiarioService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public BackfillLibroDiarioResponse previsualizarBackfill(Long usuarioId) {
+        return resumirBackfill(usuarioId, 0);
+    }
+
+    /**
+     * Convierte el estado actual de los movimientos que todavía no tienen asientos.
+     * Solo escribe en el ledger; nunca recalcula ni actualiza saldos operativos.
+     */
+    @Transactional
+    public BackfillLibroDiarioResponse ejecutarBackfill(Long usuarioId) {
+        List<Transaccion> movimientos = transaccionRepository.findAllByUsuarioIdOrderByFechaAscIdAsc(usuarioId);
+        int procesados = 0;
+        for (Transaccion movimiento : movimientos) {
+            if (procesados >= MAXIMO_BACKFILL_POR_LOTE) break;
+            Transaccion bloqueado = transaccionRepository.findByIdAndUsuarioIdForUpdate(
+                    movimiento.getId(), usuarioId
+            ).orElse(null);
+            if (bloqueado == null || asientoRepository.existsByUsuarioIdAndTransaccionOrigenId(
+                    usuarioId, bloqueado.getId())) {
+                continue;
+            }
+            try {
+                List<LineaAsiento> lineas = lineasBackfill(bloqueado);
+                guardar(usuarioId, TransaccionResponse.fromEntity(bloqueado), "BACKFILL", lineas);
+                procesados++;
+            } catch (IllegalArgumentException | IllegalStateException ignorada) {
+                // El resumen identifica estos movimientos para que el usuario pueda corregirlos.
+            }
+        }
+        return resumirBackfill(usuarioId, procesados);
+    }
+
     private void guardar(Long usuarioId, TransaccionResponse movimiento, String tipoEvento,
                          List<LineaAsiento> lineas) {
         if (movimiento.id() == null || lineas.isEmpty()) {
@@ -87,6 +133,88 @@ public class LibroDiarioService {
             case SALDO_INICIAL -> contabilizarSaldoInicial(movimiento, false, false);
         };
         return invertir ? lineas.stream().map(this::invertir).toList() : lineas;
+    }
+
+    private List<LineaAsiento> lineasBackfill(Transaccion movimiento) {
+        TransaccionResponse respuesta = TransaccionResponse.fromEntity(movimiento);
+        if (movimiento.getTipo() == com.gestionfinanzas.model.enums.TipoTransaccion.SALDO_INICIAL) {
+            boolean deuda = movimiento.getCuenta() != null
+                    && movimiento.getCuenta().getTipo() == TipoCuenta.CREDITO;
+            return contabilizarSaldoInicial(respuesta, deuda, false);
+        }
+        return contabilizar(respuesta, false);
+    }
+
+    private BackfillLibroDiarioResponse resumirBackfill(Long usuarioId, int procesados) {
+        List<Transaccion> movimientos = transaccionRepository.findAllByUsuarioIdOrderByFechaAscIdAsc(usuarioId);
+        java.util.Set<Long> contabilizadas = asientoRepository.findTransaccionesContabilizadas(usuarioId);
+        int yaContabilizados = 0;
+        int pendientes = 0;
+        int omitidos = 0;
+        Map<String, Integer> motivos = new TreeMap<>();
+        Map<String, BigDecimal[]> totales = new TreeMap<>();
+
+        for (Transaccion movimiento : movimientos) {
+            if (contabilizadas.contains(movimiento.getId())) {
+                yaContabilizados++;
+                continue;
+            }
+            try {
+                List<LineaAsiento> lineas = lineasBackfill(movimiento);
+                validarBalance(lineas);
+                pendientes++;
+                for (LineaAsiento linea : lineas) {
+                    BigDecimal[] lados = totales.computeIfAbsent(linea.getMoneda(),
+                            ignorado -> new BigDecimal[] { BigDecimal.ZERO, BigDecimal.ZERO });
+                    int lado = linea.getLado() == LadoContable.DEBE ? 0 : 1;
+                    lados[lado] = lados[lado].add(linea.getMonto());
+                }
+            } catch (IllegalArgumentException | IllegalStateException ex) {
+                omitidos++;
+                motivos.merge(motivoOmitido(ex), 1, Integer::sum);
+            }
+        }
+
+        Map<String, ConciliacionMonedaResponse> conciliacion = new LinkedHashMap<>();
+        totales.forEach((moneda, lados) -> conciliacion.put(moneda,
+                new ConciliacionMonedaResponse(lados[0], lados[1], lados[0].subtract(lados[1]))));
+
+        Map<Long, BigDecimal> saldosLibro = new HashMap<>();
+        asientoRepository.findAllByUsuarioIdOrderByFechaOperacionAscIdAsc(usuarioId).stream()
+                .flatMap(asiento -> asiento.getLineas().stream())
+                .filter(linea -> linea.getCuentaFinancieraId() != null)
+                .forEach(linea -> sumarSaldoCuenta(saldosLibro, linea));
+        for (Transaccion movimiento : movimientos) {
+            if (contabilizadas.contains(movimiento.getId())) continue;
+            try {
+                for (LineaAsiento linea : lineasBackfill(movimiento)) {
+                    if (linea.getCuentaFinancieraId() != null) sumarSaldoCuenta(saldosLibro, linea);
+                }
+            } catch (IllegalArgumentException | IllegalStateException ignorada) {
+                // Movimientos omitidos no forman parte del saldo proyectado.
+            }
+        }
+        List<ConciliacionCuentaResponse> conciliacionCuentas = cuentaRepository
+                .findByUsuarioIdOrderByActivoDescNombreAsc(usuarioId).stream()
+                .map(cuenta -> {
+                    BigDecimal saldoLibro = saldosLibro.getOrDefault(cuenta.getId(), BigDecimal.ZERO);
+                    if (cuenta.getTipo() == TipoCuenta.CREDITO) saldoLibro = saldoLibro.negate();
+                    BigDecimal saldoOperativo = cuenta.getSaldoActual();
+                    return new ConciliacionCuentaResponse(cuenta.getId(), cuenta.getNombre(), cuenta.getMoneda(),
+                            saldoOperativo, saldoLibro, saldoLibro.subtract(saldoOperativo));
+                }).toList();
+        return new BackfillLibroDiarioResponse(movimientos.size(), yaContabilizados, pendientes,
+                omitidos, procesados, pendientes, conciliacion, conciliacionCuentas, motivos);
+    }
+
+    private void sumarSaldoCuenta(Map<Long, BigDecimal> saldosLibro, LineaAsiento linea) {
+        BigDecimal impacto = linea.getLado() == LadoContable.DEBE ? linea.getMonto() : linea.getMonto().negate();
+        saldosLibro.merge(linea.getCuentaFinancieraId(), impacto, BigDecimal::add);
+    }
+
+    private String motivoOmitido(RuntimeException error) {
+        String mensaje = error.getMessage();
+        return mensaje == null || mensaje.isBlank() ? "Movimiento no conciliable" : mensaje;
     }
 
     private List<LineaAsiento> contabilizarSaldoInicial(
