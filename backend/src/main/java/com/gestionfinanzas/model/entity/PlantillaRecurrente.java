@@ -63,6 +63,13 @@ public class PlantillaRecurrente {
     @Builder.Default
     private boolean activa = true;
 
+    @Column(name = "cuotas_totales")
+    private Integer cuotasTotales;
+
+    @Column(name = "cuotas_pagadas")
+    @Builder.Default
+    private Integer cuotasPagadas = 0;
+
     @CreationTimestamp
     @Column(name = "fecha_creacion", updatable = false)
     private LocalDateTime fechaCreacion;

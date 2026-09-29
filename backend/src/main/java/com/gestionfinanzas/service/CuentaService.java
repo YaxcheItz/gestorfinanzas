@@ -57,6 +57,10 @@ public class CuentaService {
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
 
+        if (request.tipo() == TipoCuenta.EFECTIVO && cuentaRepository.existsByUsuarioIdAndTipo(usuarioId, TipoCuenta.EFECTIVO)) {
+            throw new IllegalArgumentException("Ya tienes una cuenta de Efectivo, solo se permite una.");
+        }
+
         String nombreTrim = request.nombre().trim();
         if (cuentaRepository.existsByUsuarioIdAndNombreIgnoreCase(usuarioId, nombreTrim)) {
             throw new IllegalArgumentException("Ya existe una cuenta con el nombre '" + nombreTrim + "'");

@@ -41,5 +41,7 @@ public record TransaccionRequest(
 
     FrecuenciaRecurrencia frecuenciaRecurrencia,
 
-    LocalDate siguienteFechaRecurrencia
+    LocalDate siguienteFechaRecurrencia,
+
+    Integer msi
 ) {}

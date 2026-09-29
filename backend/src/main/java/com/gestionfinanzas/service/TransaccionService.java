@@ -51,8 +51,23 @@ public class TransaccionService {
         DatosTransaccion datos = prepararTransaccion(usuarioId, request);
         validarRecurrencia(request, datos.tipo());
         validarLimiteCredito(datos.cuentaOrigen(), datos.tipo(), request.monto(), null);
+
+        BigDecimal montoGuardar = request.monto();
+        boolean isMsi = request.msi() != null && request.msi() > 1;
+        if (isMsi) {
+            if (datos.tipo() != TipoTransaccion.GASTO || datos.cuentaOrigen().getTipo() != TipoCuenta.CREDITO) {
+                throw new IllegalArgumentException("Los MSI solo aplican a gastos con tarjeta de crédito");
+            }
+            montoGuardar = request.monto().divide(BigDecimal.valueOf(request.msi()), 2, RoundingMode.HALF_UP);
+            BigDecimal montoRetenido = request.monto().subtract(montoGuardar);
+            datos.cuentaOrigen().setLimiteRetenido(
+                    (datos.cuentaOrigen().getLimiteRetenido() != null ? datos.cuentaOrigen().getLimiteRetenido() : BigDecimal.ZERO).add(montoRetenido)
+            );
+            cuentaRepository.save(datos.cuentaOrigen());
+        }
+
         aplicarImpacto(datos.tipo(), datos.cuentaOrigen(), datos.cuentaDestino(),
-                request.monto(), datos.montoDestino(), 1);
+                montoGuardar, datos.montoDestino(), 1);
 
         Transaccion transaccion = Transaccion.builder()
                 .usuario(datos.usuario())
@@ -64,11 +79,11 @@ public class TransaccionService {
                 .cuentaDestinoMonedaHistorica(datos.cuentaDestino() != null ? datos.cuentaDestino().getMoneda() : null)
                 .categoria(datos.categoria())
                 .tipo(request.tipo())
-                .monto(request.monto())
+                .monto(montoGuardar)
                 .montoDestino(datos.montoDestino())
                 .tasaCambio(datos.tasaCambio())
                 .fecha(request.fecha())
-                .descripcion(descripcionMovimiento(datos, request.descripcion()))
+                .descripcion(descripcionMovimiento(datos, request.descripcion()) + (isMsi ? " (Cuota 1/" + request.msi() + ")" : ""))
                 .notas(normalizarNotas(request.notas()))
                 .build();
 
@@ -79,7 +94,21 @@ public class TransaccionService {
         if (guardada.getTipo() == TipoTransaccion.GASTO) {
             recalcularCashbackMes(guardada.getCuenta(), guardada.getFecha());
         }
-        if (request.frecuenciaRecurrencia() != null) {
+        
+        if (isMsi) {
+            plantillaRepository.save(PlantillaRecurrente.builder()
+                    .usuario(datos.usuario())
+                    .cuenta(datos.cuentaOrigen())
+                    .categoria(datos.categoria())
+                    .tipo(datos.tipo())
+                    .monto(montoGuardar)
+                    .notas(normalizarNotas(request.notas()))
+                    .frecuencia(FrecuenciaRecurrencia.MENSUAL)
+                    .siguienteFecha(request.fecha().plusMonths(1))
+                    .cuotasTotales(request.msi() - 1)
+                    .cuotasPagadas(0)
+                    .build());
+        } else if (request.frecuenciaRecurrencia() != null) {
             plantillaRepository.save(PlantillaRecurrente.builder()
                     .usuario(datos.usuario())
                     .cuenta(datos.cuentaOrigen())
@@ -203,7 +232,9 @@ public class TransaccionService {
             }
         }
 
-        BigDecimal disponible = limite.add(saldoProyectado).max(BigDecimal.ZERO).min(limite);
+        BigDecimal disponible = limite.add(saldoProyectado)
+                .subtract(cuenta.getLimiteRetenido() != null ? cuenta.getLimiteRetenido() : BigDecimal.ZERO)
+                .max(BigDecimal.ZERO).min(limite);
         if (monto.compareTo(disponible) > 0) {
             throw new IllegalArgumentException("El movimiento supera el crédito disponible de la tarjeta (" + disponible + ")");
         }

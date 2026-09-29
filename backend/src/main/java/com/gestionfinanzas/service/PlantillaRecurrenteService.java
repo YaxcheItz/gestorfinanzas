@@ -3,6 +3,7 @@ package com.gestionfinanzas.service;
 import com.gestionfinanzas.dto.request.TransaccionRequest;
 import com.gestionfinanzas.dto.response.PlantillaRecurrenteResponse;
 import com.gestionfinanzas.model.entity.PlantillaRecurrente;
+import com.gestionfinanzas.model.entity.Cuenta;
 import com.gestionfinanzas.model.enums.FrecuenciaRecurrencia;
 import com.gestionfinanzas.repository.PlantillaRecurrenteRepository;
 import lombok.RequiredArgsConstructor;
@@ -49,6 +50,20 @@ public class PlantillaRecurrenteService {
             throw new IllegalArgumentException("Este movimiento recurrente aún no vence");
         }
 
+        String descripcion = null;
+        if (plantilla.getCuotasTotales() != null) {
+            plantilla.setCuotasPagadas(plantilla.getCuotasPagadas() + 1);
+            descripcion = "Cuota " + (plantilla.getCuotasPagadas() + 1) + "/" + (plantilla.getCuotasTotales() + 1);
+            
+            Cuenta cuenta = plantilla.getCuenta();
+            java.math.BigDecimal retenido = cuenta.getLimiteRetenido() != null ? cuenta.getLimiteRetenido() : java.math.BigDecimal.ZERO;
+            cuenta.setLimiteRetenido(retenido.subtract(plantilla.getMonto()).max(java.math.BigDecimal.ZERO));
+            
+            if (plantilla.getCuotasPagadas() >= plantilla.getCuotasTotales()) {
+                plantilla.setActiva(false);
+            }
+        }
+
         transaccionService.crearTransaccion(usuarioId, new TransaccionRequest(
                 plantilla.getCuenta().getId(),
                 null,
@@ -57,8 +72,9 @@ public class PlantillaRecurrenteService {
                 plantilla.getMonto(),
                 null,
                 fecha,
-                null,
+                descripcion,
                 plantilla.getNotas(),
+                null,
                 null,
                 null
         ));
@@ -86,3 +102,4 @@ public class PlantillaRecurrenteService {
         };
     }
 }
+

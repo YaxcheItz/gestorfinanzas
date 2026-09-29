@@ -44,6 +44,10 @@ public class Cuenta {
     @Column(name = "limite_credito", precision = 15, scale = 2)
     private BigDecimal limiteCredito;
 
+    @Column(name = "limite_retenido", precision = 15, scale = 2)
+    @Builder.Default
+    private BigDecimal limiteRetenido = BigDecimal.ZERO;
+
     @Column(name = "dia_corte")
     private Integer diaCorte;
 
