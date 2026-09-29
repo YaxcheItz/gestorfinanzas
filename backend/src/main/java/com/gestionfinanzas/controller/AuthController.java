@@ -1,10 +1,13 @@
 package com.gestionfinanzas.controller;
 
 import com.gestionfinanzas.dto.request.LoginRequest;
+import com.gestionfinanzas.dto.request.RestablecerPasswordRequest;
 import com.gestionfinanzas.dto.request.RegistroRequest;
+import com.gestionfinanzas.dto.request.SolicitudRecuperacionRequest;
 import com.gestionfinanzas.dto.response.ApiResponse;
 import com.gestionfinanzas.dto.response.AuthResponse;
 import com.gestionfinanzas.service.AuthService;
+import com.gestionfinanzas.service.RecuperacionCuentaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -17,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final RecuperacionCuentaService recuperacionCuentaService;
 
     @PostMapping("/registro")
     public ResponseEntity<ApiResponse<AuthResponse>> registrar(@Valid @RequestBody RegistroRequest request) {
@@ -29,5 +33,26 @@ public class AuthController {
     public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest request) {
         AuthResponse response = authService.login(request);
         return ResponseEntity.ok(ApiResponse.ok("Inicio de sesión exitoso", response));
+    }
+
+    @PostMapping("/recuperacion")
+    public ResponseEntity<ApiResponse<Boolean>> solicitarRecuperacion(
+            @Valid @RequestBody SolicitudRecuperacionRequest request
+    ) {
+        boolean correoConfigurado = recuperacionCuentaService.solicitarRecuperacion(request.email());
+        String mensaje = correoConfigurado
+                ? "Si existe una cuenta con ese correo, enviaremos un enlace para cambiar la contraseña."
+                : "La recuperación por correo todavía no está configurada en el servidor.";
+        return ResponseEntity.ok(ApiResponse.ok(mensaje, correoConfigurado));
+    }
+
+    @PostMapping("/recuperacion/confirmar")
+    public ResponseEntity<ApiResponse<Void>> confirmarRecuperacion(
+            @Valid @RequestBody RestablecerPasswordRequest request
+    ) {
+        recuperacionCuentaService.restablecerPassword(request.token(), request.passwordNueva());
+        return ResponseEntity.ok(ApiResponse.ok(
+                "La contraseña se actualizó. Inicia sesión con tu nueva contraseña.", null
+        ));
     }
 }
