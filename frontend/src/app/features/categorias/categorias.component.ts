@@ -6,11 +6,12 @@ import { FinanzasService } from '../../core/services/finanzas.service';
 import { ToastService } from '../../core/services/toast.service';
 import { CategoriaIconoComponent } from '../../shared/components/categoria-icono/categoria-icono.component';
 import { esEmojiCategoria, ICONOS_CATEGORIA, normalizarIconoCategoria } from '../../shared/components/categoria-icono/categoria-iconos';
+import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive';
 
 @Component({
   selector: 'app-categorias',
   standalone: true,
-  imports: [CommonModule, FormsModule, CategoriaIconoComponent],
+  imports: [CommonModule, FormsModule, CategoriaIconoComponent, FocusTrapDirective],
   template: `
     <main class="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-4 sm:space-y-6">
       <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
@@ -68,10 +69,12 @@ import { esEmojiCategoria, ICONOS_CATEGORIA, normalizarIconoCategoria } from '..
 
     @if (modalAbierto()) {
       <div class="fixed inset-0 z-40 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-2 sm:p-4">
-        <section role="dialog" aria-modal="true" aria-labelledby="categoria-titulo" class="bg-white rounded-2xl max-w-lg w-full max-h-[calc(100dvh-1rem)] overflow-y-auto border border-slate-200 shadow-2xl">
+        <section appFocusTrap (focusTrapEscape)="cerrar()" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="categoria-titulo" class="bg-white rounded-2xl max-w-lg w-full max-h-[calc(100dvh-1rem)] overflow-y-auto border border-slate-200 shadow-2xl">
           <header class="p-4 sm:p-6 border-b border-slate-100 flex items-center justify-between">
             <h2 id="categoria-titulo" class="text-lg font-bold text-slate-900">{{ editando() ? 'Editar categoría' : 'Nueva categoría' }}</h2>
-            <button type="button" (click)="cerrar()" class="p-2 text-slate-400 hover:text-slate-700 cursor-pointer" aria-label="Cerrar">✕</button>
+            <button type="button" (click)="cerrar()" class="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600" aria-label="Cerrar">
+              <svg aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg>
+            </button>
           </header>
           <form (ngSubmit)="guardar()" class="p-4 sm:p-6 space-y-4">
             @if (modalError()) {

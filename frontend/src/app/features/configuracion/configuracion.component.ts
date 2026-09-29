@@ -33,6 +33,16 @@ import {
         </div>
       </header>
 
+      <nav aria-label="Secciones de configuración" class="-mx-3 flex gap-2 overflow-x-auto px-3 pb-1 sm:mx-0 sm:px-0">
+        <a href="#appearance" class="inline-flex min-h-11 shrink-0 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Apariencia</a>
+        <a href="#profile" class="inline-flex min-h-11 shrink-0 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Perfil</a>
+        <a href="#security" class="inline-flex min-h-11 shrink-0 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Seguridad</a>
+        <a href="#backup" class="inline-flex min-h-11 shrink-0 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Respaldo</a>
+        <a href="#history" class="inline-flex min-h-11 shrink-0 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Historial</a>
+        <a href="#categories" class="inline-flex min-h-11 shrink-0 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Categorías</a>
+        <a href="#recurring" class="inline-flex min-h-11 shrink-0 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Recurrentes</a>
+      </nav>
+
       @if (perfilService.error()) {
         <div role="alert" class="flex flex-col gap-3 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 sm:flex-row sm:items-center sm:justify-between">
           <span class="min-w-0 break-words">{{ perfilService.error() }}</span>
@@ -40,7 +50,7 @@ import {
         </div>
       }
 
-      <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6">
+      <section id="appearance" class="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6">
         <div class="mb-5">
           <h2 class="text-base font-bold text-slate-900">Apariencia y visualización</h2>
           <p class="mt-1 text-xs text-slate-500">Estas preferencias se sincronizan al iniciar sesión en otro dispositivo.</p>
@@ -55,7 +65,7 @@ import {
                 [attr.aria-pressed]="tema === 'CLARO'"
                 [class]="tema === 'CLARO' ? 'border-emerald-500 bg-emerald-50 text-emerald-800 ring-1 ring-emerald-500' : 'border-slate-200 bg-white text-slate-700'"
                 class="min-h-12 rounded-xl border px-3 text-sm font-semibold">
-                ☀️ Claro
+                <svg aria-hidden="true" class="mr-2 inline h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg>Claro
               </button>
               <button
                 type="button"
@@ -63,7 +73,7 @@ import {
                 [attr.aria-pressed]="tema === 'OSCURO'"
                 [class]="tema === 'OSCURO' ? 'border-emerald-500 bg-emerald-50 text-emerald-800 ring-1 ring-emerald-500' : 'border-slate-200 bg-white text-slate-700'"
                 class="min-h-12 rounded-xl border px-3 text-sm font-semibold">
-                🌙 Oscuro
+                <svg aria-hidden="true" class="mr-2 inline h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.9 13A8.5 8.5 0 0 1 11 3.1 8.5 8.5 0 1 0 20.9 13Z"/></svg>Oscuro
               </button>
             </div>
           </fieldset>
@@ -88,7 +98,7 @@ import {
         </form>
       </section>
 
-      <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6">
+      <section id="profile" class="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6">
         <div class="mb-5">
           <div class="flex items-center gap-3">
             <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
@@ -126,7 +136,7 @@ import {
         }
       </section>
 
-      <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6">
+      <section id="security" class="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6">
         <div class="mb-5">
           <h2 class="text-base font-bold text-slate-900">Seguridad</h2>
           <p class="mt-1 text-xs text-slate-500">Usa una contraseña única de al menos 8 caracteres.</p>
@@ -148,7 +158,7 @@ import {
         </form>
       </section>
 
-      <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6">
+      <section id="backup" class="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6">
         <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div class="min-w-0">
             <h2 class="text-base font-bold text-slate-900">Respaldo de tus datos</h2>
@@ -170,7 +180,7 @@ import {
         </div>
       </section>
 
-      <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6" aria-labelledby="transaction-history-heading">
+      <section id="history" class="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6" aria-labelledby="transaction-history-heading">
         <div class="mb-4">
           <h2 id="transaction-history-heading" class="text-base font-bold text-slate-900">Historial de movimientos</h2>
           <p class="mt-1 text-sm text-slate-600">Consulta creaciones, cambios y eliminaciones. Este historial se conserva mientras exista tu cuenta.</p>
@@ -236,7 +246,7 @@ import {
         }
       </section>
 
-      <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6">
+      <section id="categories" class="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 class="text-base font-bold text-slate-900">Categorías</h2>
@@ -248,7 +258,7 @@ import {
         </div>
       </section>
 
-      <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6">
+      <section id="recurring" class="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6">
         <div class="mb-4 flex items-start justify-between gap-3">
           <div>
             <h2 class="text-base font-bold text-slate-900">Movimientos recurrentes</h2>

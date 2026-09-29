@@ -54,7 +54,7 @@ import { ToastService, ToastMessage } from '../../../core/services/toast.service
           <button 
             type="button"
             (click)="toastService.remove(toast.id)"
-            class="toast-notification__dismiss shrink-0 text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer">
+            class="toast-notification__dismiss inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center text-slate-500 hover:text-slate-700 p-1 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>

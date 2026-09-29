@@ -5,6 +5,9 @@
   <symbol id="movements" viewBox="0 0 24 24">
     <path d="M8 7h12m0 0-4-4m4 4-4 4M16 17H4m0 0 4 4m-4-4 4-4"/>
   </symbol>
+  <symbol id="more" viewBox="0 0 24 24">
+    <circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>
+  </symbol>
   <symbol id="budgets" viewBox="0 0 24 24">
     <path d="M4 19V5m0 14h16M8 15v-4m4 4V7m4 8V9m4 6v-3"/>
   </symbol>

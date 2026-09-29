@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { AsientoContable, PageResponse } from '../../core/models/finanzas.models';
+import { AsientoContable, BackfillLibroDiario, PageResponse } from '../../core/models/finanzas.models';
 import { FinanzasService } from '../../core/services/finanzas.service';
 
 @Component({
@@ -19,10 +19,104 @@ import { FinanzasService } from '../../core/services/finanzas.service';
         </p>
       </header>
 
-      <aside class="rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm leading-6 text-sky-900">
-        Este ledger empieza con los movimientos registrados después de activar esta versión.
-        El historial anterior se conserva en Transacciones y en tus respaldos; no se migró ni modificó.
+      <aside class="rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm leading-6 text-sky-900 dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-100">
+        Los movimientos nuevos se registran automáticamente. Puedes revisar e incorporar los movimientos antiguos disponibles abajo; el proceso no cambia los saldos operativos.
       </aside>
+
+      <details class="rounded-2xl border border-slate-200 bg-white shadow-xs dark:border-slate-700 dark:bg-slate-900">
+        <summary class="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 rounded-2xl px-4 py-3 font-semibold text-slate-800 marker:hidden hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:text-slate-100 dark:hover:bg-slate-800 sm:px-5">
+          <span>Historial anterior</span>
+          <span class="text-xs font-medium text-slate-500">Revisar y conciliar</span>
+        </summary>
+      <section aria-labelledby="historial-title" class="border-t border-slate-200 p-4 dark:border-slate-700 sm:p-5">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h2 id="historial-title" class="text-base font-bold text-slate-900">Incorporar movimientos disponibles</h2>
+            <p class="mt-1 max-w-2xl text-sm leading-6 text-slate-600">
+              Revisa los movimientos antiguos que todavía existen y agrega sus asientos en lotes de hasta 100.
+              Esto no cambia los saldos de tus cuentas.
+            </p>
+          </div>
+          <button type="button" (click)="revisarBackfill()" [attr.aria-busy]="cargandoBackfill()" [disabled]="cargandoBackfill() || procesandoBackfill()"
+            class="min-h-11 shrink-0 rounded-xl border border-emerald-700 px-4 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-50 disabled:opacity-50">
+            {{ cargandoBackfill() ? 'Revisando...' : (backfill() ? 'Actualizar revisión' : 'Revisar historial') }}
+          </button>
+        </div>
+
+        @if (errorBackfill()) {
+          <p role="alert" class="mt-4 rounded-lg bg-rose-50 p-3 text-sm text-rose-700">{{ errorBackfill() }}</p>
+        }
+
+        @if (backfill(); as resumen) {
+          <div class="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <div class="rounded-lg bg-slate-50 p-3"><p class="text-xs text-slate-500">Disponibles</p><p class="mt-1 font-bold text-slate-900">{{ resumen.movimientosEncontrados }}</p></div>
+            <div class="rounded-lg bg-emerald-50 p-3"><p class="text-xs text-emerald-800">Pendientes</p><p class="mt-1 font-bold text-emerald-900">{{ resumen.pendientes }}</p></div>
+            <div class="rounded-lg bg-slate-50 p-3"><p class="text-xs text-slate-500">Ya contabilizados</p><p class="mt-1 font-bold text-slate-900">{{ resumen.yaContabilizados }}</p></div>
+            <div class="rounded-lg bg-amber-50 p-3"><p class="text-xs text-amber-800">Omitidos</p><p class="mt-1 font-bold text-amber-900">{{ resumen.omitidos }}</p></div>
+          </div>
+
+          @if (resumen.pendientes > 0) {
+            <div class="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950">
+              <p class="font-semibold">Antes de continuar</p>
+              <p class="mt-1">Se registrará el estado actual de cada movimiento disponible. Este proceso no reconstruye ediciones anteriores ni movimientos eliminados. Los nuevos asientos aparecerán como “Historial incorporado”.</p>
+              <label class="mt-3 flex min-h-11 cursor-pointer items-start gap-3">
+                <input type="checkbox" [checked]="confirmarBackfill()" (change)="confirmarBackfill.set($any($event.target).checked)"
+                  class="mt-1 size-4 accent-emerald-700" />
+                <span>Entiendo que se añadirán asientos al libro y que los saldos operativos no cambiarán.</span>
+              </label>
+              <button type="button" (click)="procesarBackfill()" [attr.aria-busy]="procesandoBackfill()"
+                [disabled]="!confirmarBackfill() || procesandoBackfill()"
+                class="mt-3 min-h-11 rounded-xl bg-emerald-800 px-4 py-2 font-semibold text-white hover:bg-emerald-900 disabled:cursor-not-allowed disabled:opacity-50">
+                {{ procesandoBackfill() ? 'Agregando lote...' : 'Agregar hasta 100 movimientos' }}
+              </button>
+              @if (resumen.procesados > 0) {
+                <p role="status" class="mt-3 font-medium">Se agregaron {{ resumen.procesados }} asientos. Quedan {{ resumen.pendientesDespues }} pendientes compatibles.</p>
+              }
+            </div>
+          } @else if (resumen.omitidos === 0) {
+            <p role="status" class="mt-4 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-900">Todo el historial disponible ya está incorporado al libro diario.</p>
+          }
+
+          @if (Object.keys(resumen.conciliacion).length > 0) {
+            <div class="mt-4 overflow-x-auto">
+              <table class="w-full min-w-[26rem] text-left text-sm">
+                <caption class="pb-2 text-left font-semibold text-slate-800">Conciliación de los movimientos pendientes por moneda</caption>
+                <thead class="text-xs uppercase text-slate-500"><tr><th scope="col" class="py-2">Moneda</th><th scope="col" class="py-2 text-right">Debe</th><th scope="col" class="py-2 text-right">Haber</th><th scope="col" class="py-2 text-right">Diferencia</th></tr></thead>
+                <tbody class="divide-y divide-slate-100">
+                  @for (moneda of Object.keys(resumen.conciliacion); track moneda) {
+                    <tr><th scope="row" class="py-2 font-medium">{{ moneda }}</th><td class="py-2 text-right tabular-nums">{{ resumen.conciliacion[moneda].debe | currency:moneda:'symbol':'1.2-2' }}</td><td class="py-2 text-right tabular-nums">{{ resumen.conciliacion[moneda].haber | currency:moneda:'symbol':'1.2-2' }}</td><td class="py-2 text-right font-semibold tabular-nums">{{ resumen.conciliacion[moneda].diferencia | currency:moneda:'symbol':'1.2-2' }}</td></tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+          @if (resumen.conciliacionCuentas.length > 0) {
+            <div class="mt-4 overflow-x-auto">
+              <table class="w-full min-w-[34rem] text-left text-sm">
+                <caption class="pb-2 text-left font-semibold text-slate-800">Saldo del libro proyectado frente al saldo operativo</caption>
+                <thead class="text-xs uppercase text-slate-500"><tr><th scope="col" class="py-2">Cuenta</th><th scope="col" class="py-2 text-right">Operativo</th><th scope="col" class="py-2 text-right">Libro proyectado</th><th scope="col" class="py-2 text-right">Diferencia</th></tr></thead>
+                <tbody class="divide-y divide-slate-100">
+                  @for (cuenta of resumen.conciliacionCuentas; track cuenta.cuentaId) {
+                    <tr><th scope="row" class="py-2 font-medium">{{ cuenta.cuentaNombre }} <span class="font-normal text-slate-500">· {{ cuenta.moneda }}</span></th><td class="py-2 text-right tabular-nums">{{ cuenta.saldoOperativo | currency:cuenta.moneda:'symbol':'1.2-2' }}</td><td class="py-2 text-right tabular-nums">{{ cuenta.saldoLibroProyectado | currency:cuenta.moneda:'symbol':'1.2-2' }}</td><td class="py-2 text-right font-semibold tabular-nums" [class.text-rose-700]="cuenta.diferencia !== 0" [class.text-emerald-700]="cuenta.diferencia === 0">{{ cuenta.diferencia | currency:cuenta.moneda:'symbol':'1.2-2' }}</td></tr>
+                  }
+                </tbody>
+              </table>
+              <p class="mt-2 text-xs leading-5 text-slate-500">La proyección combina los asientos actuales y los movimientos compatibles pendientes. Las diferencias se muestran para revisión; este proceso no ajusta saldos ni crea partidas de conciliación automáticamente.</p>
+            </div>
+          }
+          @if (resumen.omitidos > 0) {
+            <details class="mt-3 rounded-lg border border-slate-200 p-3 text-sm">
+              <summary class="min-h-8 cursor-pointer font-semibold text-slate-800">Ver motivos de omisión ({{ resumen.omitidos }})</summary>
+              <ul class="mt-2 list-inside list-disc space-y-1 text-slate-600">
+                @for (motivo of Object.keys(resumen.motivosOmitidos); track motivo) {
+                  <li>{{ motivo }}: {{ resumen.motivosOmitidos[motivo] }}</li>
+                }
+              </ul>
+            </details>
+          }
+        }
+      </section>
+      </details>
 
       @if (error()) {
         <div role="alert" class="flex flex-col gap-3 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 sm:flex-row sm:items-center sm:justify-between">
@@ -121,6 +215,12 @@ export class LibroDiarioComponent implements OnInit {
   readonly pagina = signal<PageResponse<AsientoContable> | null>(null);
   readonly cargando = signal(false);
   readonly error = signal<string | null>(null);
+  readonly backfill = signal<BackfillLibroDiario | null>(null);
+  readonly cargandoBackfill = signal(false);
+  readonly procesandoBackfill = signal(false);
+  readonly confirmarBackfill = signal(false);
+  readonly errorBackfill = signal<string | null>(null);
+  readonly Object = Object;
   private paginaSolicitada = 0;
 
   ngOnInit(): void {
@@ -147,6 +247,51 @@ export class LibroDiarioComponent implements OnInit {
     });
   }
 
+  revisarBackfill(): void {
+    if (this.cargandoBackfill() || this.procesandoBackfill()) return;
+    this.cargandoBackfill.set(true);
+    this.errorBackfill.set(null);
+    this.finanzasService.getResumenBackfillLibroDiario().subscribe({
+      next: response => {
+        this.cargandoBackfill.set(false);
+        if (!response.success || !response.data) {
+          this.errorBackfill.set(response.message || 'No se pudo revisar el historial.');
+          return;
+        }
+        this.backfill.set(response.data);
+        this.confirmarBackfill.set(false);
+      },
+      error: err => {
+        this.cargandoBackfill.set(false);
+        this.errorBackfill.set(err.error?.message || 'No se pudo revisar el historial.');
+      }
+    });
+  }
+
+  procesarBackfill(): void {
+    if (!this.confirmarBackfill() || this.procesandoBackfill()) return;
+    this.procesandoBackfill.set(true);
+    this.errorBackfill.set(null);
+    this.finanzasService.ejecutarBackfillLibroDiario().subscribe({
+      next: response => {
+        this.procesandoBackfill.set(false);
+        if (!response.success || !response.data) {
+          this.errorBackfill.set(response.message || 'No se pudo agregar el historial.');
+          return;
+        }
+        this.backfill.set(response.data);
+        this.confirmarBackfill.set(false);
+        this.paginaSolicitada = 0;
+        this.pagina.set(null);
+        this.cargar();
+      },
+      error: err => {
+        this.procesandoBackfill.set(false);
+        this.errorBackfill.set(err.error?.message || 'No se pudo agregar el historial.');
+      }
+    });
+  }
+
   cambiarPagina(cambio: number): void {
     const siguiente = this.paginaSolicitada + cambio;
     if (siguiente < 0 || siguiente >= (this.pagina()?.totalPages ?? 0)) return;
@@ -160,6 +305,7 @@ export class LibroDiarioComponent implements OnInit {
       case 'SALDO_INICIAL': return 'Saldo inicial';
       case 'ACTUALIZACION': return 'Corrección';
       case 'ELIMINACION': return 'Reversión';
+      case 'BACKFILL': return 'Historial incorporado';
     }
   }
 

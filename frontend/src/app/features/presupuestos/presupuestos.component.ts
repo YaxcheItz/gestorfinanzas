@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { FinanzasService } from '../../core/services/finanzas.service';
 import { ToastService } from '../../core/services/toast.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
+import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive';
 import {
   Categoria,
   MONEDAS_DISPONIBLES,
@@ -15,7 +16,7 @@ import {
 @Component({
   selector: 'app-presupuestos',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, FocusTrapDirective],
   template: `
     <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-5 sm:space-y-8">
       
@@ -220,16 +221,17 @@ import {
     @if (modalAbierto()) {
       <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-2 sm:p-4">
         
-        <div class="bg-white rounded-2xl sm:rounded-3xl max-w-md w-full max-h-[calc(100dvh-1rem)] overflow-y-auto border border-slate-200 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+        <div appFocusTrap (focusTrapEscape)="cerrarModal()" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="presupuesto-modal-titulo" class="bg-white rounded-2xl sm:rounded-3xl max-w-md w-full max-h-[calc(100dvh-1rem)] overflow-y-auto border border-slate-200 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
           
           <div class="p-4 sm:p-6 border-b border-slate-100 flex items-center justify-between">
-            <h2 class="text-lg font-bold text-slate-900">
+            <h2 id="presupuesto-modal-titulo" class="text-lg font-bold text-slate-900">
               {{ modoEdicion() ? 'Editar Presupuesto' : 'Fijar Presupuesto' }}
             </h2>
             <button 
               type="button"
               (click)="cerrarModal()" 
-              class="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer">
+              aria-label="Cerrar formulario de presupuesto"
+              class="inline-flex min-h-11 min-w-11 items-center justify-center text-slate-600 hover:text-slate-900 p-1 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>

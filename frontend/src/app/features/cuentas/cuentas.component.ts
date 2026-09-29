@@ -6,11 +6,12 @@ import { ConfirmDialogService } from '../../core/services/confirm-dialog.service
 import { FinanzasService } from '../../core/services/finanzas.service';
 import { ToastService } from '../../core/services/toast.service';
 import { creditoDisponibleCuenta, deudaActualCuenta } from '../../core/utils/cuenta-financiera';
+import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive';
 
 @Component({
   selector: 'app-cuentas',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, FocusTrapDirective],
   template: `
     <main class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-4 sm:space-y-6">
       <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
@@ -177,6 +178,9 @@ import { creditoDisponibleCuenta, deudaActualCuenta } from '../../core/utils/cue
     @if (modalAbierto()) {
       <div class="fixed inset-0 z-40 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-2 sm:p-4">
         <section
+          appFocusTrap
+          (focusTrapEscape)="cerrarModal()"
+          tabindex="-1"
           role="dialog"
           aria-modal="true"
           aria-labelledby="cuenta-modal-titulo"
@@ -190,7 +194,7 @@ import { creditoDisponibleCuenta, deudaActualCuenta } from '../../core/utils/cue
                 {{ cuentaEditando() ? 'El saldo cambia al registrar movimientos.' : 'El saldo inicial es opcional.' }}
               </p>
             </div>
-            <button type="button" (click)="cerrarModal()" class="p-2 text-slate-400 hover:text-slate-700 rounded-lg cursor-pointer" aria-label="Cerrar">
+            <button type="button" (click)="cerrarModal()" class="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600" aria-label="Cerrar">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>

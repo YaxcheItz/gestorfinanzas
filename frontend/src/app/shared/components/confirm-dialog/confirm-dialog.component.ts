@@ -1,11 +1,12 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
+import { FocusTrapDirective } from '../../directives/focus-trap.directive';
 
 @Component({
   selector: 'app-confirm-dialog',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FocusTrapDirective],
   template: `
     @if (dialogService.isOpen()) {
       <!-- Overlay -->
@@ -15,6 +16,9 @@ import { ConfirmDialogService } from '../../../core/services/confirm-dialog.serv
         
         <!-- Modal Card -->
         <div 
+          appFocusTrap
+          (focusTrapEscape)="dialogService.handleCancel()"
+          tabindex="-1"
           role="dialog"
           aria-modal="true"
           aria-labelledby="confirm-dialog-title"
@@ -54,7 +58,7 @@ import { ConfirmDialogService } from '../../../core/services/confirm-dialog.serv
             <button 
               type="button"
               (click)="dialogService.handleCancel()"
-              class="flex-1 px-4 py-2.5 border border-slate-300 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
+              class="min-h-11 flex-1 px-4 py-2.5 border border-slate-300 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600">
               {{ dialogService.options().cancelText || 'Cancelar' }}
             </button>
 
@@ -63,7 +67,7 @@ import { ConfirmDialogService } from '../../../core/services/confirm-dialog.serv
               type="button"
               (click)="dialogService.handleConfirm()"
               [ngClass]="getConfirmButtonClass()"
-              class="flex-1 px-4 py-2.5 rounded-xl text-xs font-semibold text-white transition-all cursor-pointer shadow-md">
+              class="min-h-11 flex-1 px-4 py-2.5 rounded-xl text-xs font-semibold text-white transition-all cursor-pointer shadow-md focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600">
               {{ dialogService.options().confirmText || 'Confirmar' }}
             </button>
           </div>

@@ -106,12 +106,39 @@ export interface LineaAsientoContable {
 export interface AsientoContable {
   id: number;
   transaccionOrigenId: number;
-  tipoEvento: 'CREACION' | 'SALDO_INICIAL' | 'ACTUALIZACION' | 'ELIMINACION';
+  tipoEvento: 'CREACION' | 'SALDO_INICIAL' | 'ACTUALIZACION' | 'ELIMINACION' | 'BACKFILL';
   fechaOperacion: string;
   descripcion: string;
   tasaCambio: number | null;
   fechaCreacion: string;
   lineas: LineaAsientoContable[];
+}
+
+export interface ConciliacionMoneda {
+  debe: number;
+  haber: number;
+  diferencia: number;
+}
+
+export interface ConciliacionCuenta {
+  cuentaId: number;
+  cuentaNombre: string;
+  moneda: string;
+  saldoOperativo: number;
+  saldoLibroProyectado: number;
+  diferencia: number;
+}
+
+export interface BackfillLibroDiario {
+  movimientosEncontrados: number;
+  yaContabilizados: number;
+  pendientes: number;
+  omitidos: number;
+  procesados: number;
+  pendientesDespues: number;
+  conciliacion: Record<string, ConciliacionMoneda>;
+  conciliacionCuentas: ConciliacionCuenta[];
+  motivosOmitidos: Record<string, number>;
 }
 
 export interface TransaccionPayload {
