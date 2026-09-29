@@ -9,6 +9,7 @@ import org.hibernate.annotations.OnDeleteAction;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import com.gestionfinanzas.model.enums.TipoTransaccion;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,6 +37,10 @@ public class AsientoContable {
 
     @Column(name = "tipo_evento", nullable = false, length = 24)
     private String tipoEvento;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo_movimiento", length = 30)
+    private TipoTransaccion tipoMovimiento;
 
     @Column(name = "fecha_operacion", nullable = false)
     private LocalDate fechaOperacion;

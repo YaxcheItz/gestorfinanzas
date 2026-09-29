@@ -5,6 +5,8 @@ import com.gestionfinanzas.model.entity.AsientoContable;
 import com.gestionfinanzas.model.enums.LadoContable;
 import com.gestionfinanzas.model.enums.TipoTransaccion;
 import com.gestionfinanzas.repository.AsientoContableRepository;
+import com.gestionfinanzas.repository.CuentaRepository;
+import com.gestionfinanzas.repository.TransaccionRepository;
 import com.gestionfinanzas.repository.UsuarioRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.PageRequest;
@@ -24,9 +26,11 @@ import static org.mockito.Mockito.verify;
 class LibroDiarioServiceTest {
 
     private final AsientoContableRepository asientoRepository = mock(AsientoContableRepository.class);
+    private final TransaccionRepository transaccionRepository = mock(TransaccionRepository.class);
+    private final CuentaRepository cuentaRepository = mock(CuentaRepository.class);
     private final UsuarioRepository usuarioRepository = mock(UsuarioRepository.class);
     private final LibroDiarioService libroDiarioService =
-            new LibroDiarioService(asientoRepository, usuarioRepository);
+            new LibroDiarioService(asientoRepository, transaccionRepository, cuentaRepository, usuarioRepository);
 
     @Test
     void registraGastoConDebeYHaberEnLaMonedaDelMovimiento() {
@@ -36,6 +40,7 @@ class LibroDiarioServiceTest {
 
         AsientoContable asiento = guardarCapturado();
         assertEquals("CREACION", asiento.getTipoEvento());
+        assertEquals(TipoTransaccion.GASTO, asiento.getTipoMovimiento());
         assertEquals(2, asiento.getLineas().size());
         assertPartida(asiento, "GASTO:4", "125.50", "MXN", LadoContable.DEBE);
         assertPartida(asiento, "CUENTA:2", "125.50", "MXN", LadoContable.HABER);

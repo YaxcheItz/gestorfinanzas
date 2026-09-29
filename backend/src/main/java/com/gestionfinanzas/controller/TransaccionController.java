@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import jakarta.validation.constraints.Min;
 
 @RestController
 @RequestMapping("/api/transacciones")
@@ -69,10 +70,11 @@ public class TransaccionController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
             @RequestParam(required = false) String busqueda,
+            @RequestParam(required = false) @Min(1) Long id,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "fecha", "id"));
-        TransaccionFiltroRequest filtro = new TransaccionFiltroRequest(tipo, cuentaId, categoriaId, fechaInicio, fechaFin, busqueda);
+        TransaccionFiltroRequest filtro = new TransaccionFiltroRequest(tipo, cuentaId, categoriaId, fechaInicio, fechaFin, busqueda, id);
         Page<TransaccionResponse> resultado = transaccionService.listarConFiltros(userDetails.getId(), filtro, pageRequest);
         return ResponseEntity.ok(ApiResponse.ok("Transacciones obtenidas correctamente", resultado));
     }
@@ -85,10 +87,11 @@ public class TransaccionController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
             @RequestParam(required = false) String busqueda,
+            @RequestParam(required = false) @Min(1) Long id,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         TransaccionFiltroRequest filtro = new TransaccionFiltroRequest(
-                tipo, cuentaId, categoriaId, fechaInicio, fechaFin, busqueda
+                tipo, cuentaId, categoriaId, fechaInicio, fechaFin, busqueda, id
         );
         String filename = fechaInicio != null && fechaFin != null
                 ? "movimientos_" + fechaInicio + "_a_" + fechaFin + ".csv"
