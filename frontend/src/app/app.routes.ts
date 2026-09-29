@@ -13,6 +13,11 @@ export const routes: Routes = [
       .then(module => module.RegistroComponent)
   },
   {
+    path: 'recuperar-cuenta',
+    loadComponent: () => import('./features/auth/recuperar-cuenta/recuperar-cuenta.component')
+      .then(module => module.RecuperarCuentaComponent)
+  },
+  {
     path: 'dashboard',
     loadComponent: () => import('./features/dashboard/dashboard.component')
       .then(module => module.DashboardComponent),
