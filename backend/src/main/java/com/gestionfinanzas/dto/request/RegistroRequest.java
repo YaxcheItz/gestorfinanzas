@@ -11,9 +11,10 @@ public record RegistroRequest(
 
     @NotBlank(message = "El email es obligatorio")
     @Email(message = "El formato de email no es válido")
+    @Size(max = 150, message = "El correo no puede superar 150 caracteres")
     String email,
 
     @NotBlank(message = "La contraseña es obligatoria")
-    @Size(min = 6, max = 50, message = "La contraseña debe tener al menos 6 caracteres")
+    @Size(min = 8, max = 20, message = "La contraseña debe tener entre 8 y 20 caracteres")
     String password
 ) {}
