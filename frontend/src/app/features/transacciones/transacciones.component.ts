@@ -209,6 +209,13 @@ import {
 
       </div>
 
+      @if (filtroMovimientoId() !== null) {
+        <div role="status" class="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900 dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-100">
+          <span>Movimiento del libro diario <strong>#{{ filtroMovimientoId() }}</strong></span>
+          <button type="button" (click)="limpiarFiltros()" class="min-h-10 rounded-lg px-3 font-semibold underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600">Quitar filtro</button>
+        </div>
+      }
+
       <!-- Resumen de Totales del Filtro Actual, separado por moneda -->
       <div class="space-y-3">
         @for (resumen of resumenPaginaPorMoneda(); track resumen.moneda) {
@@ -680,6 +687,7 @@ export class TransaccionesComponent implements OnInit {
   readonly filtroFechaInicio = signal<string>('');
   readonly filtroFechaFin = signal<string>('');
   readonly filtroBusqueda = signal<string>('');
+  readonly filtroMovimientoId = signal<number | null>(null);
 
   // Paginación y Datos Signals
   readonly paginaActual = signal<number>(0);
@@ -744,12 +752,21 @@ export class TransaccionesComponent implements OnInit {
       this.filtroCategoriaId() !== null ||
       this.filtroFechaInicio() !== '' ||
       this.filtroFechaFin() !== '' ||
-      this.filtroBusqueda().trim() !== ''
+      this.filtroBusqueda().trim() !== '' ||
+      this.filtroMovimientoId() !== null
     );
   });
 
   ngOnInit(): void {
     this.cargarCuentasYCategorias();
+    const cuentaId = Number(this.route.snapshot.queryParamMap.get('cuentaId'));
+    if (Number.isSafeInteger(cuentaId) && cuentaId > 0) {
+      this.filtroCuentaId.set(cuentaId);
+    }
+    const movimientoId = Number(this.route.snapshot.queryParamMap.get('movimientoId'));
+    if (Number.isSafeInteger(movimientoId) && movimientoId > 0) {
+      this.filtroMovimientoId.set(movimientoId);
+    }
     this.cargarTransacciones();
     const transaccionId = Number(this.route.snapshot.queryParamMap.get('editar'));
     if (Number.isSafeInteger(transaccionId) && transaccionId > 0) {
@@ -794,7 +811,8 @@ export class TransaccionesComponent implements OnInit {
       categoriaId: this.filtroCategoriaId(),
       fechaInicio: this.filtroFechaInicio() || null,
       fechaFin: this.filtroFechaFin() || null,
-      busqueda: this.filtroBusqueda()
+      busqueda: this.filtroBusqueda(),
+      id: this.filtroMovimientoId()
     };
 
     this.finanzasService.getTransaccionesPaginadas(filtros, this.paginaActual(), this.tamanioPagina()).subscribe({
@@ -880,7 +898,16 @@ export class TransaccionesComponent implements OnInit {
     this.filtroFechaInicio.set('');
     this.filtroFechaFin.set('');
     this.filtroBusqueda.set('');
+    this.filtroMovimientoId.set(null);
     this.paginaActual.set(0);
+    if (this.route.snapshot.queryParamMap.has('movimientoId') || this.route.snapshot.queryParamMap.has('cuentaId')) {
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { movimientoId: null, cuentaId: null },
+        queryParamsHandling: 'merge',
+        replaceUrl: true
+      });
+    }
     this.cargarTransacciones();
   }
 

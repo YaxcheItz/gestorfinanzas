@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { Cuenta, CuentaPayload, MONEDAS_DISPONIBLES, TipoCuenta } from '../../core/models/finanzas.models';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { FinanzasService } from '../../core/services/finanzas.service';
@@ -11,7 +12,7 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
 @Component({
   selector: 'app-cuentas',
   standalone: true,
-  imports: [CommonModule, FormsModule, FocusTrapDirective],
+  imports: [CommonModule, FormsModule, RouterLink, FocusTrapDirective],
   template: `
     <main class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-4 sm:space-y-6">
       <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
@@ -72,7 +73,7 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
         <section [attr.aria-label]="filtroEstado() === 'ACTIVAS' ? 'Cuentas activas' : 'Cuentas inactivas'" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-5">
           @for (cuenta of cuentasVisibles(); track cuenta.id) {
             <article class="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-xs" [class.opacity-75]="!cuenta.activo">
-              <div class="flex items-start justify-between gap-4">
+              <a [routerLink]="['/transacciones']" [queryParams]="{ cuentaId: cuenta.id }" [attr.aria-label]="'Ver transacciones de ' + cuenta.nombre" class="flex min-h-11 items-start justify-between gap-4 rounded-xl focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600">
                 <div class="min-w-0">
                   <span class="inline-flex px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-semibold uppercase tracking-wide">
                     {{ tipoCuentaLabel(cuenta.tipo) }}
@@ -96,7 +97,7 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
                     </svg>
                   </span>
                 }
-              </div>
+              </a>
 
               @if (cuenta.tipo === 'CREDITO') {
                 <div class="mt-4 sm:mt-6 grid grid-cols-2 gap-3">
@@ -139,6 +140,10 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
                   }
                 </p>
               }
+
+              <a [routerLink]="['/transacciones']" [queryParams]="{ cuentaId: cuenta.id }" class="mt-3 inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-emerald-700 hover:text-emerald-900 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:text-emerald-300 dark:hover:text-emerald-100">
+                Ver transacciones <span aria-hidden="true">→</span>
+              </a>
 
               <div class="mt-4 sm:mt-5 pt-3 sm:pt-4 border-t border-slate-100 flex items-center justify-end gap-2">
                 <button

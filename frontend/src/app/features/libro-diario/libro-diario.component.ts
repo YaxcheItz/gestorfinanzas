@@ -1,13 +1,14 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { AsientoContable, BackfillLibroDiario, PageResponse } from '../../core/models/finanzas.models';
+import { AsientoContable, BackfillLibroDiario, ConciliacionCuenta, Cuenta, PageResponse, TipoTransaccion } from '../../core/models/finanzas.models';
 import { FinanzasService } from '../../core/services/finanzas.service';
 
 @Component({
   selector: 'app-libro-diario',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink],
   template: `
     <main class="mx-auto max-w-5xl space-y-5 px-3 py-5 sm:space-y-7 sm:px-6 sm:py-8">
       <header>
@@ -22,6 +23,41 @@ import { FinanzasService } from '../../core/services/finanzas.service';
       <aside class="rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm leading-6 text-sky-900 dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-100">
         Los movimientos nuevos se registran automáticamente. Puedes revisar e incorporar los movimientos antiguos disponibles abajo; el proceso no cambia los saldos operativos.
       </aside>
+
+      <form (ngSubmit)="aplicarFiltros()" class="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs dark:border-slate-700 dark:bg-slate-900 sm:p-5">
+        <div class="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+          <h2 class="text-sm font-bold text-slate-900 dark:text-white">Buscar asientos</h2>
+          <span class="text-xs text-slate-500">Los filtros se aplican también al cambiar de página.</span>
+        </div>
+        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-200">Desde
+            <input type="date" name="desde" [ngModel]="filtroDesde()" (ngModelChange)="filtroDesde.set($event)" class="mt-1 block min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-normal text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
+          </label>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-200">Hasta
+            <input type="date" name="hasta" [ngModel]="filtroHasta()" (ngModelChange)="filtroHasta.set($event)" class="mt-1 block min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-normal text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
+          </label>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-200">Movimiento
+            <select name="tipoMovimiento" [ngModel]="filtroTipoMovimiento()" (ngModelChange)="filtroTipoMovimiento.set($event)" class="mt-1 block min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-normal text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+              <option value="">Todos</option><option value="INGRESO">Ingreso</option><option value="GASTO">Gasto</option><option value="TRANSFERENCIA">Transferencia</option><option value="SALDO_INICIAL">Saldo inicial</option>
+            </select>
+          </label>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-200">Evento contable
+            <select name="tipoEvento" [ngModel]="filtroTipoEvento()" (ngModelChange)="filtroTipoEvento.set($event)" class="mt-1 block min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-normal text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+              <option value="">Todos</option><option value="CREACION">Registro</option><option value="SALDO_INICIAL">Saldo inicial</option><option value="ACTUALIZACION">Corrección</option><option value="ELIMINACION">Reversión</option><option value="BACKFILL">Historial incorporado</option>
+            </select>
+          </label>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-200">Cuenta
+            <select name="cuentaId" [ngModel]="filtroCuentaId()?.toString() ?? ''" (ngModelChange)="onCuentaFiltroChange($event)" class="mt-1 block min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-normal text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+              <option value="">Todas</option>
+              @for (cuenta of cuentas(); track cuenta.id) { <option [value]="cuenta.id">{{ cuenta.nombre }} · {{ cuenta.moneda }}</option> }
+            </select>
+          </label>
+        </div>
+        <div class="mt-3 flex flex-wrap justify-end gap-2">
+          @if (tieneFiltros()) { <button type="button" (click)="limpiarFiltros()" class="min-h-11 rounded-lg px-4 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800">Limpiar</button> }
+          <button type="submit" [disabled]="cargando()" class="min-h-11 rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-50">{{ cargando() ? 'Buscando…' : 'Aplicar filtros' }}</button>
+        </div>
+      </form>
 
       <details class="rounded-2xl border border-slate-200 bg-white shadow-xs dark:border-slate-700 dark:bg-slate-900">
         <summary class="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 rounded-2xl px-4 py-3 font-semibold text-slate-800 marker:hidden hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:text-slate-100 dark:hover:bg-slate-800 sm:px-5">
@@ -93,11 +129,11 @@ import { FinanzasService } from '../../core/services/finanzas.service';
           @if (resumen.conciliacionCuentas.length > 0) {
             <div class="mt-4 overflow-x-auto">
               <table class="w-full min-w-[34rem] text-left text-sm">
-                <caption class="pb-2 text-left font-semibold text-slate-800">Saldo del libro proyectado frente al saldo operativo</caption>
-                <thead class="text-xs uppercase text-slate-500"><tr><th scope="col" class="py-2">Cuenta</th><th scope="col" class="py-2 text-right">Operativo</th><th scope="col" class="py-2 text-right">Libro proyectado</th><th scope="col" class="py-2 text-right">Diferencia</th></tr></thead>
+                <caption class="pb-2 text-left font-semibold text-slate-800">Conciliación guiada por cuenta · revisa movimientos y marca las diferencias atendidas; el marcador es temporal</caption>
+                <thead class="text-xs uppercase text-slate-500"><tr><th scope="col" class="py-2">Cuenta</th><th scope="col" class="py-2 text-right">Operativo</th><th scope="col" class="py-2 text-right">Libro proyectado</th><th scope="col" class="py-2 text-right">Diferencia</th><th scope="col" class="py-2 text-right">Revisión</th></tr></thead>
                 <tbody class="divide-y divide-slate-100">
                   @for (cuenta of resumen.conciliacionCuentas; track cuenta.cuentaId) {
-                    <tr><th scope="row" class="py-2 font-medium">{{ cuenta.cuentaNombre }} <span class="font-normal text-slate-500">· {{ cuenta.moneda }}</span></th><td class="py-2 text-right tabular-nums">{{ cuenta.saldoOperativo | currency:cuenta.moneda:'symbol':'1.2-2' }}</td><td class="py-2 text-right tabular-nums">{{ cuenta.saldoLibroProyectado | currency:cuenta.moneda:'symbol':'1.2-2' }}</td><td class="py-2 text-right font-semibold tabular-nums" [class.text-rose-700]="cuenta.diferencia !== 0" [class.text-emerald-700]="cuenta.diferencia === 0">{{ cuenta.diferencia | currency:cuenta.moneda:'symbol':'1.2-2' }}</td></tr>
+                    <tr><th scope="row" class="py-2 font-medium">{{ cuenta.cuentaNombre }} <span class="font-normal text-slate-500">· {{ cuenta.moneda }}</span></th><td class="py-2 text-right tabular-nums">{{ cuenta.saldoOperativo | currency:cuenta.moneda:'symbol':'1.2-2' }}</td><td class="py-2 text-right tabular-nums">{{ cuenta.saldoLibroProyectado | currency:cuenta.moneda:'symbol':'1.2-2' }}</td><td class="py-2 text-right font-semibold tabular-nums" [class.text-rose-700]="cuenta.diferencia !== 0" [class.text-emerald-700]="cuenta.diferencia === 0">{{ cuenta.diferencia | currency:cuenta.moneda:'symbol':'1.2-2' }}</td><td class="py-2 text-right">@if (cuenta.diferencia === 0) { <span class="text-xs font-semibold text-emerald-700">Conciliada</span> } @else { <div class="flex min-w-44 flex-col items-end gap-1"><a routerLink="/transacciones" [queryParams]="{ cuentaId: cuenta.cuentaId }" class="inline-flex min-h-10 items-center rounded-lg px-2 text-xs font-semibold text-emerald-800 underline hover:bg-emerald-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:text-emerald-300">Revisar movimientos</a><button type="button" [attr.aria-pressed]="cuentaRevisada(cuenta)" [attr.aria-label]="(cuentaRevisada(cuenta) ? 'Desmarcar revisión de ' : 'Marcar como revisada: ') + cuenta.cuentaNombre" (click)="alternarRevisionCuenta(cuenta)" class="min-h-10 rounded-lg px-2 text-xs font-semibold focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600" [class.text-emerald-800]="cuentaRevisada(cuenta)" [class.text-slate-600]="!cuentaRevisada(cuenta)">{{ cuentaRevisada(cuenta) ? 'Revisada · quitar marca' : 'Marcar revisada' }}</button></div> }</td></tr>
                   }
                 </tbody>
               </table>
@@ -145,6 +181,7 @@ import { FinanzasService } from '../../core/services/finanzas.service';
                 <div class="min-w-0">
                   <div class="flex flex-wrap items-center gap-2">
                     <h2 class="break-words text-sm font-bold text-slate-900">{{ asiento.descripcion }}</h2>
+                    @if (asiento.tipoMovimiento) { <span class="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-700 dark:bg-slate-700 dark:text-slate-100">{{ etiquetaMovimiento(asiento.tipoMovimiento) }}</span> }
                     <span [class]="claseEvento(asiento.tipoEvento)" class="rounded-full px-2 py-1 text-[11px] font-semibold">
                       {{ etiquetaEvento(asiento.tipoEvento) }}
                     </span>
@@ -152,6 +189,11 @@ import { FinanzasService } from '../../core/services/finanzas.service';
                   <p class="mt-1 text-xs text-slate-500">
                     Movimiento #{{ asiento.transaccionOrigenId }} · {{ asiento.fechaOperacion | date:'longDate' }}
                   </p>
+                  @if (asiento.tipoMovimiento !== 'SALDO_INICIAL' && asiento.tipoEvento !== 'ELIMINACION') {
+                    <a routerLink="/transacciones" [queryParams]="{ movimientoId: asiento.transaccionOrigenId }" class="mt-2 inline-flex min-h-10 items-center rounded-lg px-2 text-xs font-semibold text-emerald-800 underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:text-emerald-300">Ver movimiento original</a>
+                  } @else if (asiento.tipoEvento === 'ELIMINACION') {
+                    <span class="mt-2 inline-block text-xs text-slate-500">El movimiento fue eliminado; este asiento conserva su reversión.</span>
+                  }
                 </div>
                 @if (asiento.tasaCambio) {
                   <p class="shrink-0 text-xs text-slate-600">Tipo de cambio: {{ asiento.tasaCambio | number:'1.0-8' }}</p>
@@ -221,9 +263,72 @@ export class LibroDiarioComponent implements OnInit {
   readonly confirmarBackfill = signal(false);
   readonly errorBackfill = signal<string | null>(null);
   readonly Object = Object;
+  readonly cuentas = signal<Cuenta[]>([]);
+  readonly filtroDesde = signal('');
+  readonly filtroHasta = signal('');
+  readonly filtroTipoEvento = signal<AsientoContable['tipoEvento'] | ''>('');
+  readonly filtroTipoMovimiento = signal<TipoTransaccion | ''>('');
+  readonly filtroCuentaId = signal<number | null>(null);
+  readonly revisionesCuenta = signal<Record<string, string>>({});
   private paginaSolicitada = 0;
 
   ngOnInit(): void {
+    this.finanzasService.getCuentas(true).subscribe({
+      next: response => { if (response.success && response.data) this.cuentas.set(response.data); }
+    });
+    this.cargar();
+  }
+
+  tieneFiltros(): boolean {
+    return !!(this.filtroDesde() || this.filtroHasta() || this.filtroTipoEvento()
+      || this.filtroTipoMovimiento() || this.filtroCuentaId() != null);
+  }
+
+  onCuentaFiltroChange(valor: string): void {
+    this.filtroCuentaId.set(valor ? Number(valor) : null);
+  }
+
+  cuentaRevisada(cuenta: ConciliacionCuenta): boolean {
+    return this.revisionesCuenta()[this.claveCuenta(cuenta)] === this.huellaCuenta(cuenta);
+  }
+
+  alternarRevisionCuenta(cuenta: ConciliacionCuenta): void {
+    const clave = this.claveCuenta(cuenta);
+    const huella = this.huellaCuenta(cuenta);
+    this.revisionesCuenta.update(revisiones => {
+      const actualizadas = { ...revisiones };
+      if (actualizadas[clave] === huella) delete actualizadas[clave];
+      else actualizadas[clave] = huella;
+      return actualizadas;
+    });
+  }
+
+  private claveCuenta(cuenta: ConciliacionCuenta): string {
+    return `${cuenta.cuentaId}:${cuenta.moneda}`;
+  }
+
+  private huellaCuenta(cuenta: ConciliacionCuenta): string {
+    return `${cuenta.saldoOperativo}|${cuenta.saldoLibroProyectado}|${cuenta.diferencia}`;
+  }
+
+  aplicarFiltros(): void {
+    if (this.filtroDesde() && this.filtroHasta() && this.filtroDesde() > this.filtroHasta()) {
+      this.error.set('La fecha inicial no puede ser posterior a la fecha final.');
+      return;
+    }
+    this.paginaSolicitada = 0;
+    this.pagina.set(null);
+    this.cargar();
+  }
+
+  limpiarFiltros(): void {
+    this.filtroDesde.set('');
+    this.filtroHasta.set('');
+    this.filtroTipoEvento.set('');
+    this.filtroTipoMovimiento.set('');
+    this.filtroCuentaId.set(null);
+    this.paginaSolicitada = 0;
+    this.pagina.set(null);
     this.cargar();
   }
 
@@ -231,7 +336,13 @@ export class LibroDiarioComponent implements OnInit {
     if (this.cargando()) return;
     this.cargando.set(true);
     this.error.set(null);
-    this.finanzasService.getLibroDiario(this.paginaSolicitada).subscribe({
+    this.finanzasService.getLibroDiario(this.paginaSolicitada, 20, {
+      desde: this.filtroDesde(),
+      hasta: this.filtroHasta(),
+      tipoEvento: this.filtroTipoEvento(),
+      tipoMovimiento: this.filtroTipoMovimiento(),
+      cuentaId: this.filtroCuentaId()
+    }).subscribe({
       next: response => {
         this.cargando.set(false);
         if (!response.success || !response.data) {
@@ -306,6 +417,15 @@ export class LibroDiarioComponent implements OnInit {
       case 'ACTUALIZACION': return 'Corrección';
       case 'ELIMINACION': return 'Reversión';
       case 'BACKFILL': return 'Historial incorporado';
+    }
+  }
+
+  etiquetaMovimiento(tipo: TipoTransaccion): string {
+    switch (tipo) {
+      case 'INGRESO': return 'Ingreso';
+      case 'GASTO': return 'Gasto';
+      case 'TRANSFERENCIA': return 'Transferencia';
+      case 'SALDO_INICIAL': return 'Saldo inicial';
     }
   }
 

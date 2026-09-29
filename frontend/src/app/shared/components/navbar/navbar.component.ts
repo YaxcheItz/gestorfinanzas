@@ -24,7 +24,7 @@ import { AuthService } from '../../../core/services/auth.service';
           @if (authService.isAuthenticated()) {
             <nav aria-label="Navegación de escritorio" class="hidden min-w-0 flex-1 items-center justify-center gap-0.5 xl:flex">
               <a routerLink="/dashboard" routerLinkActive="bg-slate-100 text-slate-900 font-semibold dark:bg-slate-700 dark:text-white" [routerLinkActiveOptions]="{ exact: true }" [ariaCurrentWhenActive]="'page'" (click)="closeMore()" class="whitespace-nowrap rounded-lg px-2.5 py-2 text-sm text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white">Panel General</a>
-              <a routerLink="/transacciones" routerLinkActive="bg-slate-100 text-slate-900 font-semibold dark:bg-slate-700 dark:text-white" [ariaCurrentWhenActive]="'page'" (click)="closeMore()" class="whitespace-nowrap rounded-lg px-2.5 py-2 text-sm text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white">Transacciones</a>
+              <a routerLink="/asistente" routerLinkActive="bg-emerald-50 text-emerald-800 font-semibold dark:bg-emerald-950 dark:text-emerald-200" [ariaCurrentWhenActive]="'page'" (click)="closeMore()" class="whitespace-nowrap rounded-lg px-2.5 py-2 text-sm text-emerald-700 transition-colors hover:bg-emerald-50 hover:text-emerald-900 dark:text-emerald-300 dark:hover:bg-emerald-950 dark:hover:text-emerald-100">Asistente IA</a>
               <a routerLink="/presupuestos" routerLinkActive="bg-slate-100 text-slate-900 font-semibold dark:bg-slate-700 dark:text-white" [ariaCurrentWhenActive]="'page'" (click)="closeMore()" class="whitespace-nowrap rounded-lg px-2.5 py-2 text-sm text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white">Presupuestos</a>
               <a routerLink="/cuentas" routerLinkActive="bg-slate-100 text-slate-900 font-semibold dark:bg-slate-700 dark:text-white" [ariaCurrentWhenActive]="'page'" (click)="closeMore()" class="whitespace-nowrap rounded-lg px-2.5 py-2 text-sm text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white">Cuentas</a>
               <div class="relative" data-nav-more>
@@ -34,7 +34,7 @@ import { AuthService } from '../../../core/services/auth.service';
                 @if (moreOpen()) {
                   <div id="nav-more-menu-desktop" class="nav-more-menu absolute right-0 top-full z-50 mt-2 w-52 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl dark:border-slate-700 dark:bg-slate-900">
                     <a routerLink="/libro-diario" routerLinkActive="bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200" [ariaCurrentWhenActive]="'page'" (click)="closeMore()" class="block min-h-11 rounded-lg px-3 py-3 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800">Libro diario</a>
-                    <a routerLink="/asistente" routerLinkActive="bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200" [ariaCurrentWhenActive]="'page'" (click)="closeMore()" class="block min-h-11 rounded-lg px-3 py-3 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800">Asistente IA</a>
+                    <a routerLink="/transacciones" routerLinkActive="bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200" [ariaCurrentWhenActive]="'page'" (click)="closeMore()" class="block min-h-11 rounded-lg px-3 py-3 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800">Transacciones</a>
                   </div>
                 }
               </div>
@@ -55,8 +55,8 @@ import { AuthService } from '../../../core/services/auth.service';
             </div>
           } @else {
             <div class="hidden w-full grid-cols-2 gap-2 sm:grid sm:w-auto sm:min-w-56 lg:flex lg:items-center lg:gap-3">
-              <a routerLink="/login" class="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 px-3 py-2 text-center text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900 lg:min-h-12 lg:px-5 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800">Iniciar sesión</a>
-              <a routerLink="/registro" class="inline-flex min-h-11 items-center justify-center rounded-xl bg-emerald-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs transition-colors hover:bg-emerald-700 lg:min-h-12 lg:px-5">Crear cuenta</a>
+              <a routerLink="/login" class="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 px-3 py-2 text-center text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900 lg:min-h-12 lg:px-5 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800">Iniciar Sesión</a>
+              <a routerLink="/registro" class="inline-flex min-h-11 items-center justify-center rounded-xl bg-emerald-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-xs transition-colors hover:bg-emerald-700 lg:min-h-12 lg:px-5">Crear Cuenta</a>
             </div>
           }
         </div>
@@ -64,7 +64,7 @@ import { AuthService } from '../../../core/services/auth.service';
         @if (authService.isAuthenticated()) {
           <nav aria-label="Navegación principal" class="mobile-bottom-nav xl:hidden">
             <a routerLink="/dashboard" routerLinkActive="mobile-bottom-nav__link--active" [routerLinkActiveOptions]="{ exact: true }" [ariaCurrentWhenActive]="'page'" (click)="closeMore()" aria-label="Inicio" class="mobile-bottom-nav__link"><svg aria-hidden="true"><use href="navigation-icons.svg#home"></use></svg><span>Inicio</span></a>
-            <a routerLink="/transacciones" routerLinkActive="mobile-bottom-nav__link--active" [ariaCurrentWhenActive]="'page'" (click)="closeMore()" aria-label="Transacciones" class="mobile-bottom-nav__link"><svg aria-hidden="true"><use href="navigation-icons.svg#movements"></use></svg><span>Movimientos</span></a>
+            <a routerLink="/asistente" routerLinkActive="mobile-bottom-nav__link--active" [ariaCurrentWhenActive]="'page'" (click)="closeMore()" aria-label="Asistente IA" class="mobile-bottom-nav__link"><svg aria-hidden="true"><use href="navigation-icons.svg#assistant"></use></svg><span>Asistente IA</span></a>
             <a routerLink="/presupuestos" routerLinkActive="mobile-bottom-nav__link--active" [ariaCurrentWhenActive]="'page'" (click)="closeMore()" aria-label="Presupuestos" class="mobile-bottom-nav__link"><svg aria-hidden="true"><use href="navigation-icons.svg#budgets"></use></svg><span>Presupuestos</span></a>
             <a routerLink="/cuentas" routerLinkActive="mobile-bottom-nav__link--active" [ariaCurrentWhenActive]="'page'" (click)="closeMore()" aria-label="Cuentas" class="mobile-bottom-nav__link"><svg aria-hidden="true"><use href="navigation-icons.svg#accounts"></use></svg><span>Cuentas</span></a>
             <button type="button" [class.mobile-bottom-nav__link--active]="isMoreRoute()" class="mobile-bottom-nav__link" data-nav-more (click)="toggleMore()" aria-label="Más destinos" aria-controls="nav-more-menu-mobile" [attr.aria-expanded]="moreOpen()"><svg aria-hidden="true"><use href="navigation-icons.svg#more"></use></svg><span>Más</span></button>
@@ -72,7 +72,7 @@ import { AuthService } from '../../../core/services/auth.service';
           @if (moreOpen()) {
             <nav id="nav-more-menu-mobile" aria-label="Más destinos" class="nav-more-menu fixed inset-x-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-50 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl xl:hidden dark:border-slate-700 dark:bg-slate-900">
               <a routerLink="/libro-diario" routerLinkActive="bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200" [ariaCurrentWhenActive]="'page'" (click)="closeMore()" class="flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800"><svg aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><use href="navigation-icons.svg#ledger"/></svg>Libro diario</a>
-              <a routerLink="/asistente" routerLinkActive="bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200" [ariaCurrentWhenActive]="'page'" (click)="closeMore()" class="flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800"><svg aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><use href="navigation-icons.svg#assistant"/></svg>Asistente IA</a>
+              <a routerLink="/transacciones" routerLinkActive="bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200" [ariaCurrentWhenActive]="'page'" (click)="closeMore()" class="flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800"><svg aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><use href="navigation-icons.svg#movements"/></svg>Transacciones</a>
             </nav>
           }
         }
@@ -89,7 +89,7 @@ export class NavbarComponent {
   closeMore(): void { this.moreOpen.set(false); }
 
   isMoreRoute(): boolean {
-    return this.router.url.startsWith('/libro-diario') || this.router.url.startsWith('/asistente');
+    return this.router.url.startsWith('/libro-diario') || this.router.url.startsWith('/transacciones');
   }
 
   @HostListener('document:click', ['$event'])

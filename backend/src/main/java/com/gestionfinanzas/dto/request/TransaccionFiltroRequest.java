@@ -13,6 +13,7 @@ public record TransaccionFiltroRequest(
         LocalDate fechaInicio,
         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
         LocalDate fechaFin,
-        String busqueda
+        String busqueda,
+        Long id
 ) {
 }

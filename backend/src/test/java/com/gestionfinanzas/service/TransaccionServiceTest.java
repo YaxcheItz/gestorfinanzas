@@ -457,7 +457,7 @@ class TransaccionServiceTest {
     @Test
     void exportarCsvRechazaRangoDeFechasInvertido() {
         var filtro = new TransaccionFiltroRequest(
-                null, null, null, LocalDate.of(2026, 9, 27), LocalDate.of(2026, 9, 26), null
+                null, null, null, LocalDate.of(2026, 9, 27), LocalDate.of(2026, 9, 26), null, null
         );
 
         assertThrows(IllegalArgumentException.class, () -> transaccionService.exportarCsv(7L, filtro));
