@@ -9,7 +9,6 @@ import { PerfilService } from '../../core/services/perfil.service';
 import { ToastService } from '../../core/services/toast.service';
 import { RestauracionRespaldoPreview } from '../../core/models/auth.models';
 import {
-  AuditoriaTransaccion,
   MONEDAS_DISPONIBLES,
   PlantillaRecurrente
 } from '../../core/models/finanzas.models';
@@ -35,13 +34,12 @@ import {
       </header>
 
       <nav aria-label="Secciones de configuración" class="-mx-3 flex gap-2 overflow-x-auto px-3 pb-1 sm:mx-0 sm:px-0">
-        <a href="#appearance" class="inline-flex min-h-11 shrink-0 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Apariencia</a>
-        <a href="#profile" class="inline-flex min-h-11 shrink-0 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Perfil</a>
-        <a href="#security" class="inline-flex min-h-11 shrink-0 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Seguridad</a>
-        <a href="#backup" class="inline-flex min-h-11 shrink-0 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Respaldo</a>
-        <a href="#history" class="inline-flex min-h-11 shrink-0 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Historial</a>
-        <a href="#categories" class="inline-flex min-h-11 shrink-0 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Categorías</a>
-        <a href="#recurring" class="inline-flex min-h-11 shrink-0 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Recurrentes</a>
+        <a [routerLink]="[]" fragment="appearance" class="inline-flex min-h-11 shrink-0 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Apariencia</a>
+        <a [routerLink]="[]" fragment="profile" class="inline-flex min-h-11 shrink-0 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Perfil</a>
+        <a [routerLink]="[]" fragment="security" class="inline-flex min-h-11 shrink-0 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Seguridad</a>
+        <a [routerLink]="[]" fragment="backup" class="inline-flex min-h-11 shrink-0 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Respaldo</a>
+        <a [routerLink]="[]" fragment="categories" class="inline-flex min-h-11 shrink-0 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Categorías</a>
+        <a [routerLink]="[]" fragment="recurring" class="inline-flex min-h-11 shrink-0 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Recurrentes</a>
       </nav>
 
       @if (perfilService.error()) {
@@ -205,7 +203,7 @@ import {
                 <div><dt class="text-xs text-slate-500">Movimientos</dt><dd class="font-semibold text-slate-900">{{ preview.transacciones }}</dd></div>
                 <div><dt class="text-xs text-slate-500">Presupuestos</dt><dd class="font-semibold text-slate-900">{{ preview.presupuestos }}</dd></div>
                 <div><dt class="text-xs text-slate-500">Recurrentes</dt><dd class="font-semibold text-slate-900">{{ preview.recurrencias }}</dd></div>
-                <div><dt class="text-xs text-slate-500">Historial</dt><dd class="font-semibold text-slate-900">{{ preview.eventosHistorial }}</dd></div>
+                <div><dt class="text-xs text-slate-500">Registro de cambios</dt><dd class="font-semibold text-slate-900">{{ preview.eventosHistorial }}</dd></div>
                 <div><dt class="text-xs text-slate-500">Asientos contables</dt><dd class="font-semibold text-slate-900">{{ preview.asientosContables }}</dd></div>
               </dl>
               <ul class="mt-3 space-y-1 text-xs leading-relaxed text-amber-800">
@@ -232,71 +230,6 @@ import {
         </div>
       </section>
 
-      <section id="history" class="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6" aria-labelledby="transaction-history-heading">
-        <div class="mb-4">
-          <h2 id="transaction-history-heading" class="text-base font-bold text-slate-900">Historial de movimientos</h2>
-          <p class="mt-1 text-sm text-slate-600">Consulta creaciones, cambios y eliminaciones. Este historial se conserva mientras exista tu cuenta.</p>
-        </div>
-        @if (historialError()) {
-          <div role="alert" class="flex flex-col gap-2 rounded-xl bg-rose-50 p-3 text-sm text-rose-700 sm:flex-row sm:items-center sm:justify-between">
-            <span>{{ historialError() }}</span>
-            <button type="button" (click)="cargarHistorial(true)" class="self-start font-semibold underline sm:self-auto">Reintentar</button>
-          </div>
-        } @else if (historial().length === 0 && cargandoHistorial()) {
-          <p role="status" class="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">Cargando historial...</p>
-        } @else if (historial().length === 0) {
-          <p class="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">Aún no hay cambios registrados en tus movimientos.</p>
-        } @else {
-          <div class="space-y-3">
-            @for (evento of historial(); track evento.id) {
-              <article class="rounded-xl border border-slate-200 p-3 sm:p-4">
-                <div class="flex flex-wrap items-center justify-between gap-2">
-                  <span
-                    [class]="evento.accion === 'ELIMINAR' ? 'bg-rose-50 text-rose-700' : evento.accion === 'ACTUALIZAR' ? 'bg-amber-50 text-amber-800' : 'bg-emerald-50 text-emerald-700'"
-                    class="rounded-full px-2.5 py-1 text-xs font-semibold">
-                    {{ accionHistorial(evento.accion) }}
-                  </span>
-                  <time class="text-xs text-slate-500" [attr.datetime]="evento.fechaEvento">
-                    {{ evento.fechaEvento | date:'medium' }}
-                  </time>
-                </div>
-                <p class="mt-2 break-words text-sm font-semibold text-slate-900">
-                  {{ (evento.despues ?? evento.antes)?.descripcion || 'Movimiento' }}
-                </p>
-                @if (evento.accion === 'ACTUALIZAR' && evento.antes && evento.despues) {
-                  <div class="mt-3 grid gap-2 text-xs sm:grid-cols-2">
-                    <div class="rounded-lg bg-slate-50 p-3">
-                      <p class="font-semibold text-slate-500">Antes</p>
-                      <p class="mt-1 break-words text-slate-800">{{ evento.antes.descripcion }}</p>
-                      <p class="mt-1 break-words text-slate-700">{{ evento.antes.monto | currency:evento.antes.moneda:'symbol':'1.2-2' }} · {{ evento.antes.fecha }}</p>
-                    </div>
-                    <div class="rounded-lg bg-emerald-50 p-3">
-                      <p class="font-semibold text-emerald-700">Después</p>
-                      <p class="mt-1 break-words text-slate-800">{{ evento.despues.descripcion }}</p>
-                      <p class="mt-1 break-words text-slate-700">{{ evento.despues.monto | currency:evento.despues.moneda:'symbol':'1.2-2' }} · {{ evento.despues.fecha }}</p>
-                    </div>
-                  </div>
-                } @else {
-                  @if (evento.despues ?? evento.antes; as movimiento) {
-                    <p class="mt-1 text-xs text-slate-600">
-                      {{ movimiento.monto | currency:movimiento.moneda:'symbol':'1.2-2' }} · {{ movimiento.fecha }}
-                    </p>
-                  }
-                }
-              </article>
-            }
-          </div>
-          @if (!historialFin()) {
-            <button
-              type="button"
-              (click)="cargarHistorial()"
-              [disabled]="cargandoHistorial()"
-              class="mt-4 min-h-10 w-full rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">
-              {{ cargandoHistorial() ? 'Cargando...' : 'Cargar más historial' }}
-            </button>
-          }
-        }
-      </section>
 
       <section id="categories" class="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -381,10 +314,6 @@ export class ConfiguracionComponent implements OnInit {
   readonly restaurandoRespaldo = signal(false);
   readonly errorRespaldo = signal<string | null>(null);
   readonly previewRespaldo = signal<RestauracionRespaldoPreview | null>(null);
-  readonly historial = signal<AuditoriaTransaccion[]>([]);
-  readonly cargandoHistorial = signal(false);
-  readonly historialError = signal<string | null>(null);
-  readonly historialFin = signal(true);
   readonly plantillas = signal<PlantillaRecurrente[]>([]);
   readonly cargandoPlantillas = signal(true);
   readonly errorPlantillas = signal<string | null>(null);
@@ -400,7 +329,6 @@ export class ConfiguracionComponent implements OnInit {
   confirmarRestauracion = false;
   private datosRespaldoSeleccionado: unknown = null;
   private readonly perfilInicializado = new Set<number>();
-  private paginaHistorial = 0;
 
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
@@ -423,7 +351,6 @@ export class ConfiguracionComponent implements OnInit {
 
   ngOnInit(): void {
     this.cargarPlantillas();
-    this.cargarHistorial(true);
   }
 
   recargarPerfil(): void {
@@ -502,8 +429,11 @@ export class ConfiguracionComponent implements OnInit {
         const enlace = document.createElement('a');
         enlace.href = url;
         enlace.download = `kaptal-respaldo-${new Date().toISOString().slice(0, 10)}.json`;
+        enlace.hidden = true;
+        document.body.appendChild(enlace);
         enlace.click();
-        URL.revokeObjectURL(url);
+        enlace.remove();
+        window.setTimeout(() => URL.revokeObjectURL(url), 1000);
         this.toastService.success('Respaldo descargado. Guárdalo en un lugar seguro.');
       },
       error: err => {
@@ -550,7 +480,9 @@ export class ConfiguracionComponent implements OnInit {
       next: response => {
         this.validandoRespaldo.set(false);
         if (!response.success || !response.data) {
+          this.datosRespaldoSeleccionado = null;
           this.errorRespaldo.set(response.message || 'No se pudo validar el respaldo.');
+          input.value = '';
           return;
         }
         this.previewRespaldo.set(response.data);
@@ -559,6 +491,7 @@ export class ConfiguracionComponent implements OnInit {
         this.validandoRespaldo.set(false);
         this.datosRespaldoSeleccionado = null;
         this.errorRespaldo.set(error.error?.message || 'No se pudo validar el respaldo.');
+        input.value = '';
       }
     });
   }
@@ -586,41 +519,6 @@ export class ConfiguracionComponent implements OnInit {
         this.errorRespaldo.set(error.error?.message || 'No se pudo restaurar el respaldo.');
       }
     });
-  }
-
-  cargarHistorial(reiniciar = false): void {
-    if (this.cargandoHistorial()) return;
-    if (reiniciar) {
-      this.paginaHistorial = 0;
-      this.historial.set([]);
-      this.historialFin.set(false);
-    }
-    this.cargandoHistorial.set(true);
-    this.historialError.set(null);
-    this.finanzasService.getHistorialTransacciones(this.paginaHistorial).subscribe({
-      next: response => {
-        this.cargandoHistorial.set(false);
-        if (!response.success || !response.data) {
-          this.historialError.set(response.message || 'No se pudo cargar el historial.');
-          return;
-        }
-        this.historial.update(actual => [...actual, ...response.data.content]);
-        this.historialFin.set(response.data.last);
-        this.paginaHistorial = response.data.number + 1;
-      },
-      error: err => {
-        this.cargandoHistorial.set(false);
-        this.historialError.set(err.error?.message || 'No se pudo cargar el historial.');
-      }
-    });
-  }
-
-  accionHistorial(accion: AuditoriaTransaccion['accion']): string {
-    switch (accion) {
-      case 'CREAR': return 'Creado';
-      case 'ACTUALIZAR': return 'Modificado';
-      case 'ELIMINAR': return 'Eliminado';
-    }
   }
 
   cargarPlantillas(): void {
