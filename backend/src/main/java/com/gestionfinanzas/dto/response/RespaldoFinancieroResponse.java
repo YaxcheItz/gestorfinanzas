@@ -15,8 +15,11 @@ public record RespaldoFinancieroResponse(
         List<PlantillaRecurrenteResponse> recurrencias,
         List<AuditoriaTransaccionResponse> historialMovimientos,
         List<AsientoContableResponse> libroDiario,
-        List<TransaccionResponse> transacciones
+        List<TransaccionResponse> transacciones,
+        List<CashbackRespaldo> relacionesCashback
 ) {
+    public record CashbackRespaldo(Long transaccionId, Long origenId) {}
+
     public record PresupuestoRespaldo(
             Long id,
             Long categoriaId,

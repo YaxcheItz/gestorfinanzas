@@ -1,12 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { FinanzasService } from '../../core/services/finanzas.service';
 import { PerfilService } from '../../core/services/perfil.service';
 import { ToastService } from '../../core/services/toast.service';
+import { RestauracionRespaldoPreview } from '../../core/models/auth.models';
 import {
   AuditoriaTransaccion,
   MONEDAS_DISPONIBLES,
@@ -178,6 +179,57 @@ import {
             {{ descargandoRespaldo() ? 'Preparando respaldo...' : 'Descargar respaldo' }}
           </button>
         </div>
+        <div class="mt-5 border-t border-slate-200 pt-5">
+          <h3 class="text-sm font-bold text-slate-900">Restaurar desde un respaldo</h3>
+          <p class="mt-1 max-w-2xl text-sm leading-relaxed text-slate-600">
+            Primero revisaremos el archivo. Para evitar duplicados o cambios en tus saldos, solo se restaura en una cuenta sin datos financieros.
+            Tu correo, contraseña y preferencias actuales se conservarán.
+          </p>
+          <label for="backup-file" class="mt-4 block text-xs font-semibold text-slate-700">Archivo JSON de Kaptal (máximo 15 MB)</label>
+          <input id="backup-file" type="file" accept=".json,application/json" (change)="seleccionarArchivoRespaldo($event)"
+            [disabled]="validandoRespaldo() || restaurandoRespaldo()"
+            class="mt-1.5 block min-h-11 w-full max-w-xl rounded-xl border border-slate-300 bg-white text-sm text-slate-700 file:mr-3 file:min-h-11 file:border-0 file:bg-slate-100 file:px-3 file:font-semibold file:text-slate-700 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600" />
+          @if (errorRespaldo()) {
+            <p role="alert" class="mt-3 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">{{ errorRespaldo() }}</p>
+          }
+          @if (validandoRespaldo()) {
+            <p role="status" class="mt-3 text-sm text-slate-600">Validando archivo...</p>
+          }
+          @if (previewRespaldo(); as preview) {
+            <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4" aria-live="polite">
+              <h4 class="text-sm font-bold text-slate-900">Vista previa del respaldo</h4>
+              <p class="mt-1 text-xs text-slate-600">Generado: {{ preview.generadoEn | date:'medium' }} · Versión {{ preview.version }}</p>
+              <dl class="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-4">
+                <div><dt class="text-xs text-slate-500">Cuentas</dt><dd class="font-semibold text-slate-900">{{ preview.cuentas }}</dd></div>
+                <div><dt class="text-xs text-slate-500">Categorías</dt><dd class="font-semibold text-slate-900">{{ preview.categorias }}</dd></div>
+                <div><dt class="text-xs text-slate-500">Movimientos</dt><dd class="font-semibold text-slate-900">{{ preview.transacciones }}</dd></div>
+                <div><dt class="text-xs text-slate-500">Presupuestos</dt><dd class="font-semibold text-slate-900">{{ preview.presupuestos }}</dd></div>
+                <div><dt class="text-xs text-slate-500">Recurrentes</dt><dd class="font-semibold text-slate-900">{{ preview.recurrencias }}</dd></div>
+                <div><dt class="text-xs text-slate-500">Historial</dt><dd class="font-semibold text-slate-900">{{ preview.eventosHistorial }}</dd></div>
+                <div><dt class="text-xs text-slate-500">Asientos contables</dt><dd class="font-semibold text-slate-900">{{ preview.asientosContables }}</dd></div>
+              </dl>
+              <ul class="mt-3 space-y-1 text-xs leading-relaxed text-amber-800">
+                @for (advertencia of preview.advertencias; track advertencia) { <li>{{ advertencia }}</li> }
+              </ul>
+              @if (preview.puedeRestaurar) {
+                <label class="mt-4 flex cursor-pointer items-start gap-2 text-sm leading-relaxed text-slate-700">
+                  <input type="checkbox" [(ngModel)]="confirmarRestauracion" name="confirmarRestauracion"
+                    class="mt-0.5 h-4 w-4 shrink-0 accent-emerald-700" />
+                  <span>Confirmo restaurar estos datos en esta cuenta vacía. Entiendo que la operación solo se puede hacer una vez.</span>
+                </label>
+                <button type="button" (click)="restaurarRespaldo()"
+                  [disabled]="!confirmarRestauracion || restaurandoRespaldo()"
+                  class="mt-4 min-h-11 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50">
+                  {{ restaurandoRespaldo() ? 'Restaurando...' : 'Restaurar mis datos' }}
+                </button>
+              } @else {
+                <p class="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-medium text-amber-900">
+                  No se puede restaurar en esta cuenta porque ya contiene datos financieros.
+                </p>
+              }
+            </div>
+          }
+        </div>
       </section>
 
       <section id="history" class="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6" aria-labelledby="transaction-history-heading">
@@ -325,6 +377,10 @@ export class ConfiguracionComponent implements OnInit {
   readonly guardandoPerfil = signal(false);
   readonly guardandoPassword = signal(false);
   readonly descargandoRespaldo = signal(false);
+  readonly validandoRespaldo = signal(false);
+  readonly restaurandoRespaldo = signal(false);
+  readonly errorRespaldo = signal<string | null>(null);
+  readonly previewRespaldo = signal<RestauracionRespaldoPreview | null>(null);
   readonly historial = signal<AuditoriaTransaccion[]>([]);
   readonly cargandoHistorial = signal(false);
   readonly historialError = signal<string | null>(null);
@@ -341,10 +397,13 @@ export class ConfiguracionComponent implements OnInit {
   monedaPredeterminada = 'MXN';
   passwordActual = '';
   passwordNueva = '';
+  confirmarRestauracion = false;
+  private datosRespaldoSeleccionado: unknown = null;
   private readonly perfilInicializado = new Set<number>();
   private paginaHistorial = 0;
 
   private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
   readonly perfilService = inject(PerfilService);
   private readonly finanzasService = inject(FinanzasService);
   private readonly toastService = inject(ToastService);
@@ -450,6 +509,81 @@ export class ConfiguracionComponent implements OnInit {
       error: err => {
         this.descargandoRespaldo.set(false);
         this.toastService.error(err.error?.message || 'No se pudo descargar el respaldo.');
+      }
+    });
+  }
+
+  async seleccionarArchivoRespaldo(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const archivo = input.files?.[0];
+    this.previewRespaldo.set(null);
+    this.errorRespaldo.set(null);
+    this.datosRespaldoSeleccionado = null;
+    this.confirmarRestauracion = false;
+    if (!archivo) return;
+    if (!archivo.name.toLowerCase().endsWith('.json') || archivo.type && archivo.type !== 'application/json') {
+      this.errorRespaldo.set('Selecciona un archivo JSON de Kaptal.');
+      input.value = '';
+      return;
+    }
+    if (archivo.size === 0 || archivo.size > 15 * 1024 * 1024) {
+      this.errorRespaldo.set('El archivo debe tener contenido y no superar 15 MB.');
+      input.value = '';
+      return;
+    }
+
+    let contenido: unknown;
+    try {
+      contenido = JSON.parse(await archivo.text());
+      if (!contenido || typeof contenido !== 'object' || Array.isArray(contenido)) {
+        throw new Error('Formato JSON no válido.');
+      }
+    } catch {
+      this.errorRespaldo.set('No se pudo leer el archivo. Selecciona un respaldo JSON válido de Kaptal.');
+      input.value = '';
+      return;
+    }
+
+    this.datosRespaldoSeleccionado = contenido;
+    this.validandoRespaldo.set(true);
+    this.finanzasService.previsualizarRespaldo(contenido).subscribe({
+      next: response => {
+        this.validandoRespaldo.set(false);
+        if (!response.success || !response.data) {
+          this.errorRespaldo.set(response.message || 'No se pudo validar el respaldo.');
+          return;
+        }
+        this.previewRespaldo.set(response.data);
+      },
+      error: error => {
+        this.validandoRespaldo.set(false);
+        this.datosRespaldoSeleccionado = null;
+        this.errorRespaldo.set(error.error?.message || 'No se pudo validar el respaldo.');
+      }
+    });
+  }
+
+  restaurarRespaldo(): void {
+    if (!this.confirmarRestauracion || !this.previewRespaldo()?.puedeRestaurar
+        || !this.datosRespaldoSeleccionado || this.restaurandoRespaldo()) return;
+    this.restaurandoRespaldo.set(true);
+    this.errorRespaldo.set(null);
+    this.finanzasService.restaurarRespaldo(this.datosRespaldoSeleccionado).subscribe({
+      next: response => {
+        this.restaurandoRespaldo.set(false);
+        if (!response.success) {
+          this.errorRespaldo.set(response.message || 'No se pudo restaurar el respaldo.');
+          return;
+        }
+        this.datosRespaldoSeleccionado = null;
+        this.previewRespaldo.set(null);
+        this.confirmarRestauracion = false;
+        this.toastService.success('Respaldo restaurado. Se conservaron tu cuenta y contraseña actuales.');
+        this.router.navigateByUrl('/dashboard');
+      },
+      error: error => {
+        this.restaurandoRespaldo.set(false);
+        this.errorRespaldo.set(error.error?.message || 'No se pudo restaurar el respaldo.');
       }
     });
   }

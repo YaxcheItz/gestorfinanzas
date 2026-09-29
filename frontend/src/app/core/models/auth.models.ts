@@ -24,6 +24,21 @@ export interface CambiarPasswordPayload {
   passwordNueva: string;
 }
 
+export interface RestauracionRespaldoPreview {
+  version: number;
+  generadoEn: string;
+  cuentas: number;
+  categorias: number;
+  presupuestos: number;
+  recurrencias: number;
+  transacciones: number;
+  eventosHistorial: number;
+  asientosContables: number;
+  destinoVacio: boolean;
+  puedeRestaurar: boolean;
+  advertencias: string[];
+}
+
 export interface AuthResponse {
   token: string;
   tokenType: string;
