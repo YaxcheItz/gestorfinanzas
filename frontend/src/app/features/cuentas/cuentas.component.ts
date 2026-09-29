@@ -72,8 +72,11 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
       } @else {
         <section [attr.aria-label]="filtroEstado() === 'ACTIVAS' ? 'Cuentas activas' : 'Cuentas inactivas'" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-5">
           @for (cuenta of cuentasVisibles(); track cuenta.id) {
-            <article class="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-xs" [class.opacity-75]="!cuenta.activo">
-              <a [routerLink]="['/transacciones']" [queryParams]="{ cuentaId: cuenta.id }" [attr.aria-label]="'Ver transacciones de ' + cuenta.nombre" class="flex min-h-11 items-start justify-between gap-4 rounded-xl focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600">
+            <article class="group relative cursor-pointer rounded-2xl border border-slate-200 bg-white p-4 shadow-xs transition-colors duration-150 hover:border-emerald-300 hover:shadow-md sm:p-6" [class.opacity-75]="!cuenta.activo">
+              <a [routerLink]="['/transacciones']" [queryParams]="{ cuentaId: cuenta.id }" [attr.aria-label]="'Ver transacciones de ' + cuenta.nombre" class="absolute inset-0 z-10 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600">
+                <span class="sr-only">Ver todas las transacciones de {{ cuenta.nombre }}</span>
+              </a>
+              <div class="flex min-h-11 items-start justify-between gap-4">
                 <div class="min-w-0">
                   <span class="inline-flex px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-semibold uppercase tracking-wide">
                     {{ tipoCuentaLabel(cuenta.tipo) }}
@@ -97,7 +100,7 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
                     </svg>
                   </span>
                 }
-              </a>
+              </div>
 
               @if (cuenta.tipo === 'CREDITO') {
                 <div class="mt-4 sm:mt-6 grid grid-cols-2 gap-3">
@@ -133,44 +136,44 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
                 </p>
               }
               @if (cuenta.cashbackPorcentaje && cuenta.cashbackPorcentaje > 0) {
-                <p class="cashback-badge mt-2 inline-flex rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
-                  Cashback {{ cuenta.cashbackPorcentaje }}%
+                <p class="cashback-badge mt-2 flex w-fit max-w-full flex-wrap items-center gap-x-1.5 gap-y-0.5 rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-semibold leading-relaxed text-emerald-700">
+                  <span>Cashback {{ cuenta.cashbackPorcentaje }}%</span>
                   @if (cuenta.cashbackLimiteMensual) {
-                    · hasta {{ cuenta.cashbackLimiteMensual | currency:cuenta.moneda:'symbol':'1.0-2' }}/mes
+                    <span>· hasta {{ cuenta.cashbackLimiteMensual | currency:cuenta.moneda:'symbol':'1.0-2' }}/mes</span>
                   }
                 </p>
               }
 
-              <a [routerLink]="['/transacciones']" [queryParams]="{ cuentaId: cuenta.id }" class="mt-3 inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-emerald-700 hover:text-emerald-900 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:text-emerald-300 dark:hover:text-emerald-100">
+              <p class="pointer-events-none relative mt-3 inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-emerald-700 dark:text-emerald-300">
                 Ver transacciones <span aria-hidden="true">→</span>
-              </a>
+              </p>
 
-              <div class="mt-4 sm:mt-5 pt-3 sm:pt-4 border-t border-slate-100 flex items-center justify-end gap-2">
+              <div class="relative z-20 pointer-events-none mt-4 flex items-center justify-end gap-2 border-t border-slate-100 pt-3 sm:mt-5 sm:pt-4">
                 <button
                   type="button"
                   (click)="abrirEditar(cuenta)"
-                  class="min-h-10 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 rounded-lg cursor-pointer">
+                  class="pointer-events-auto min-h-10 rounded-lg px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 cursor-pointer">
                   Editar
                 </button>
                 @if (cuenta.activo) {
                   <button
                     type="button"
                     (click)="desactivar(cuenta)"
-                    class="min-h-10 px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-50 rounded-lg cursor-pointer">
+                    class="pointer-events-auto min-h-10 rounded-lg px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-rose-600 cursor-pointer">
                     Desactivar
                   </button>
                 } @else {
                   <button
                     type="button"
                     (click)="reactivar(cuenta)"
-                    class="min-h-10 px-3 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 rounded-lg cursor-pointer">
+                    class="pointer-events-auto min-h-10 rounded-lg px-3 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 cursor-pointer">
                     Reactivar
                   </button>
                 }
                 <button
                   type="button"
                   (click)="eliminarDefinitivamente(cuenta)"
-                  class="min-h-10 px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-50 rounded-lg cursor-pointer">
+                  class="pointer-events-auto min-h-10 rounded-lg px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-rose-600 cursor-pointer">
                   Eliminar
                 </button>
               </div>

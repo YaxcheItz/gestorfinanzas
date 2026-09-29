@@ -139,7 +139,7 @@ import {
       <section id="security" class="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6">
         <div class="mb-5">
           <h2 class="text-base font-bold text-slate-900">Seguridad</h2>
-          <p class="mt-1 text-xs text-slate-500">Usa una contraseña única de al menos 8 caracteres.</p>
+          <p class="mt-1 text-xs text-slate-500">Usa entre 8 y 20 caracteres. Puedes incluir símbolos.</p>
         </div>
         <form (ngSubmit)="cambiarPassword()" class="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <label class="block text-xs font-semibold text-slate-700">
@@ -148,7 +148,7 @@ import {
           </label>
           <label class="block text-xs font-semibold text-slate-700">
             Nueva contraseña
-            <input name="passwordNueva" [(ngModel)]="passwordNueva" required minlength="8" maxlength="72" type="password" autocomplete="new-password" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm font-normal text-slate-900" />
+            <input name="passwordNueva" [(ngModel)]="passwordNueva" required minlength="8" maxlength="20" type="password" autocomplete="new-password" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm font-normal text-slate-900" />
           </label>
           <div class="flex justify-end sm:col-span-2">
             <button type="submit" [disabled]="guardandoPassword()" class="min-h-11 rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">
@@ -402,6 +402,10 @@ export class ConfiguracionComponent implements OnInit {
   }
 
   cambiarPassword(): void {
+    if (this.passwordNueva.length < 8 || this.passwordNueva.length > 20) {
+      this.toastService.error('La nueva contraseña debe tener entre 8 y 20 caracteres.');
+      return;
+    }
     this.guardandoPassword.set(true);
     this.perfilService.cambiarPassword({
       passwordActual: this.passwordActual,
