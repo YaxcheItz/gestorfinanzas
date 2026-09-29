@@ -8,12 +8,13 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 
+import java.time.Instant;
 import java.util.List;
 
 public interface AuditoriaTransaccionRepository extends JpaRepository<AuditoriaTransaccion, Long> {
     @Modifying
-    @Query(value = "UPDATE auditoria_transacciones SET fecha_evento = :fecha WHERE id = :id", nativeQuery = true)
-    void restaurarFechaEvento(@Param("id") Long id, @Param("fecha") java.time.Instant fecha);
+    @Query("UPDATE AuditoriaTransaccion a SET a.fechaEvento = :fecha WHERE a.id = :id")
+    void restaurarFechaEvento(@Param("id") Long id, @Param("fecha") Instant fecha);
 
     Page<AuditoriaTransaccion> findByUsuarioIdOrderByFechaEventoDescIdDesc(Long usuarioId, Pageable pageable);
     List<AuditoriaTransaccion> findAllByUsuarioIdOrderByFechaEventoAscIdAsc(Long usuarioId);
