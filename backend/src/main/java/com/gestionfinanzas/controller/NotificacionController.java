@@ -15,7 +15,15 @@ public class NotificacionController {
 
     @PostMapping("/test-whatsapp")
     public ResponseEntity<ApiResponse<String>> testWhatsApp(@RequestParam String telefono) {
-        notificacionService.enviarRecordatorio(telefono, "Hola! Este es un recordatorio de prueba desde tu Gestor de Finanzas. Todo est funcionando correctamente! \uD83D\uDE80");
-        return ResponseEntity.ok(ApiResponse.ok("Mensaje de prueba enviado. Revisa tu WhatsApp (recuerda unirte al Sandbox primero).", null));
+        String resultado = notificacionService.enviarRecordatorio(
+            telefono,
+            "¡Hola! Este es un recordatorio de prueba desde tu Gestor de Finanzas. ¡Todo está funcionando correctamente! 🚀"
+        );
+        boolean exito = resultado.startsWith("Mensaje enviado exitosamente");
+        if (exito) {
+            return ResponseEntity.ok(ApiResponse.ok(resultado, null));
+        } else {
+            return ResponseEntity.badRequest().body(ApiResponse.error(resultado));
+        }
     }
 }

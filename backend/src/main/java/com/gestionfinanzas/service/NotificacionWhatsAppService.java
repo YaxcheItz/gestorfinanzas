@@ -29,25 +29,47 @@ public class NotificacionWhatsAppService {
             Twilio.init(accountSid, authToken);
             log.info("Twilio WhatsApp Service inicializado.");
         } else {
-            log.warn("Twilio no est configurado. Las notificaciones de WhatsApp estn desactivadas.");
+            log.warn("Twilio no está configurado. Las notificaciones de WhatsApp están desactivadas.");
         }
     }
 
-    public void enviarRecordatorio(String toPhoneNumber, String mensaje) {
-        if (accountSid.isEmpty() || authToken.isEmpty()) {
-            log.warn("Intento de enviar WhatsApp omitido porque Twilio no est configurado.");
-            return;
+    public String enviarRecordatorio(String toPhoneNumber, String mensaje) {
+        if (accountSid == null || accountSid.isBlank() || authToken == null || authToken.isBlank()) {
+            log.warn("Intento de enviar WhatsApp omitido: faltan credenciales de Twilio.");
+            return "Twilio no está configurado en las variables de entorno (falta TWILIO_ACCOUNT_SID o TWILIO_AUTH_TOKEN en Render).";
+        }
+
+        String destino = normalizarTelefono(toPhoneNumber);
+        String origen = normalizarTelefono(fromNumber);
+
+        if (destino.isBlank()) {
+            return "Número de teléfono de destino inválido.";
+        }
+        if (origen.isBlank()) {
+            return "Número de WhatsApp origen (TWILIO_WHATSAPP_NUMBER) no configurado.";
         }
 
         try {
             Message message = Message.creator(
-                    new PhoneNumber("whatsapp:" + toPhoneNumber),
-                    new PhoneNumber("whatsapp:" + fromNumber),
+                    new PhoneNumber("whatsapp:" + destino),
+                    new PhoneNumber("whatsapp:" + origen),
                     mensaje
             ).create();
-            log.info("Mensaje de WhatsApp enviado con xito. SID: {}", message.getSid());
+            log.info("Mensaje de WhatsApp enviado con éxito a {}. SID: {}", destino, message.getSid());
+            return "Mensaje enviado exitosamente a " + destino + ". SID: " + message.getSid();
         } catch (Exception e) {
-            log.error("Error enviangdo mensaje de WhatsApp: {}", e.getMessage());
+            log.error("Error enviando mensaje de WhatsApp a {}: {}", destino, e.getMessage());
+            return "Error al enviar mensaje vía Twilio: " + e.getMessage();
         }
+    }
+
+    private String normalizarTelefono(String telefono) {
+        if (telefono == null) return "";
+        String limpio = telefono.trim().replaceAll("[^0-9+]", "");
+        if (limpio.isEmpty()) return "";
+        if (!limpio.startsWith("+")) {
+            limpio = "+" + limpio;
+        }
+        return limpio;
     }
 }
