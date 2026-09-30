@@ -53,6 +53,10 @@ export interface RestauracionRespaldoPreview {
   transacciones: number;
   eventosHistorial: number;
   asientosContables: number;
+  parejas: number;
+  aportesPareja: number;
+  gastosPareja: number;
+  pagosPareja: number;
   destinoVacio: boolean;
   puedeRestaurar: boolean;
   advertencias: string[];

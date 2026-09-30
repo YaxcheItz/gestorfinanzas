@@ -1,27 +1,38 @@
 package com.gestionfinanzas.service;
 
 import com.gestionfinanzas.dto.request.EliminarUsuarioRequest;
+import com.gestionfinanzas.model.entity.AportacionPareja;
 import com.gestionfinanzas.model.entity.AsientoContable;
 import com.gestionfinanzas.model.entity.AuditoriaTransaccion;
 import com.gestionfinanzas.model.entity.Categoria;
 import com.gestionfinanzas.model.entity.Cuenta;
+import com.gestionfinanzas.model.entity.GastoPareja;
 import com.gestionfinanzas.model.entity.LineaAsiento;
+import com.gestionfinanzas.model.entity.PagoPareja;
+import com.gestionfinanzas.model.entity.Pareja;
 import com.gestionfinanzas.model.entity.PlantillaRecurrente;
 import com.gestionfinanzas.model.entity.Presupuesto;
+import com.gestionfinanzas.model.entity.RepartoGasto;
 import com.gestionfinanzas.model.entity.TokenRecuperacionPassword;
 import com.gestionfinanzas.model.entity.Transaccion;
 import com.gestionfinanzas.model.entity.Usuario;
 import com.gestionfinanzas.model.enums.FrecuenciaRecurrencia;
 import com.gestionfinanzas.model.enums.LadoContable;
 import com.gestionfinanzas.model.enums.TipoCuenta;
+import com.gestionfinanzas.model.enums.TipoReparto;
 import com.gestionfinanzas.model.enums.TipoTransaccion;
+import com.gestionfinanzas.repository.AportacionParejaRepository;
 import com.gestionfinanzas.repository.AsientoContableRepository;
 import com.gestionfinanzas.repository.AuditoriaTransaccionRepository;
 import com.gestionfinanzas.repository.CategoriaRepository;
 import com.gestionfinanzas.repository.CuentaRepository;
+import com.gestionfinanzas.repository.GastoParejaRepository;
 import com.gestionfinanzas.repository.LineaAsientoRepository;
+import com.gestionfinanzas.repository.PagoParejaRepository;
+import com.gestionfinanzas.repository.ParejaRepository;
 import com.gestionfinanzas.repository.PlantillaRecurrenteRepository;
 import com.gestionfinanzas.repository.PresupuestoRepository;
+import com.gestionfinanzas.repository.RepartoGastoRepository;
 import com.gestionfinanzas.repository.TokenRecuperacionPasswordRepository;
 import com.gestionfinanzas.repository.TransaccionRepository;
 import com.gestionfinanzas.repository.UsuarioRepository;
@@ -67,6 +78,11 @@ class UsuarioServiceBorradoIntegrationTest {
     @Autowired private TokenRecuperacionPasswordRepository tokenRecuperacionRepository;
     @Autowired private CategoriaRepository categoriaRepository;
     @Autowired private CuentaRepository cuentaRepository;
+    @Autowired private ParejaRepository parejaRepository;
+    @Autowired private AportacionParejaRepository aportacionRepository;
+    @Autowired private GastoParejaRepository gastoRepository;
+    @Autowired private RepartoGastoRepository repartoRepository;
+    @Autowired private PagoParejaRepository pagoRepository;
 
     @Test
     void eliminaLaCuentaYTodosSusDatosSinViolarLlavesForaneas() {
@@ -164,6 +180,41 @@ class UsuarioServiceBorradoIntegrationTest {
         assertTrue(cuentaRepository.findById(cuentaDeOtro.getId()).isPresent(),
                 "no se debe tocar la cuenta de otro usuario");
         assertTrue(usuarioRepository.findById(otro.getId()).isPresent());
+    }
+
+    @Test
+    void eliminaLosGastosCompartidosDeLaParejaSinViolarLlavesForaneas() {
+        Usuario ana = crearUsuario("ana@example.com");
+        Usuario luis = crearUsuario("luis@example.com");
+
+        Pareja pareja = parejaRepository.saveAndFlush(Pareja.builder()
+                .usuarioA(ana).usuarioB(luis).moneda("MXN").activa(true).build());
+        AportacionPareja aporte = aportacionRepository.saveAndFlush(AportacionPareja.builder()
+                .pareja(pareja).usuario(ana).monto(new BigDecimal("500.00"))
+                .moneda("MXN").fecha(LocalDate.now()).build());
+        GastoPareja gasto = gastoRepository.saveAndFlush(GastoPareja.builder()
+                .pareja(pareja).pagadoPor(ana).monto(new BigDecimal("300.00"))
+                .moneda("MXN").fecha(LocalDate.now()).descripcion("Cena").build());
+        repartoRepository.saveAndFlush(RepartoGasto.builder()
+                .gasto(gasto).usuario(ana).monto(new BigDecimal("150.00"))
+                .tipo(TipoReparto.IGUAL).porcentaje(new BigDecimal("50.00")).build());
+        repartoRepository.saveAndFlush(RepartoGasto.builder()
+                .gasto(gasto).usuario(luis).monto(new BigDecimal("150.00"))
+                .tipo(TipoReparto.IGUAL).porcentaje(new BigDecimal("50.00")).build());
+        pagoRepository.saveAndFlush(PagoPareja.builder()
+                .pareja(pareja).pagador(luis).beneficiario(ana).monto(new BigDecimal("150.00"))
+                .moneda("MXN").fecha(LocalDate.now()).build());
+
+        usuarioService.eliminarCuenta(ana.getId(), new EliminarUsuarioRequest(PASSWORD));
+
+        assertTrue(usuarioRepository.findById(ana.getId()).isEmpty());
+        assertEquals(0, parejaRepository.count(), "la pareja debe borrarse");
+        assertEquals(0, aportacionRepository.count());
+        assertEquals(0, gastoRepository.count());
+        assertEquals(0, repartoRepository.count());
+        assertEquals(0, pagoRepository.count());
+        assertTrue(usuarioRepository.findById(luis.getId()).isPresent(),
+                "la cuenta de la pareja sobrevive aunque el vinculo se borre");
     }
 
     @Test

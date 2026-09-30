@@ -12,25 +12,35 @@ import com.gestionfinanzas.dto.response.LineaAsientoResponse;
 import com.gestionfinanzas.dto.response.PerfilResponse;
 import com.gestionfinanzas.dto.response.PlantillaRecurrenteResponse;
 import com.gestionfinanzas.dto.response.RespaldoFinancieroResponse;
+import com.gestionfinanzas.dto.response.RestauracionRespaldoPreviewResponse;
 import com.gestionfinanzas.dto.response.TransaccionResponse;
 import com.gestionfinanzas.model.entity.AsientoContable;
 import com.gestionfinanzas.model.entity.AuditoriaTransaccion;
 import com.gestionfinanzas.model.entity.Categoria;
 import com.gestionfinanzas.model.entity.Cuenta;
+import com.gestionfinanzas.model.entity.GastoPareja;
+import com.gestionfinanzas.model.entity.Pareja;
 import com.gestionfinanzas.model.entity.PlantillaRecurrente;
 import com.gestionfinanzas.model.entity.Presupuesto;
+import com.gestionfinanzas.model.entity.RepartoGasto;
 import com.gestionfinanzas.model.entity.Transaccion;
 import com.gestionfinanzas.model.entity.Usuario;
 import com.gestionfinanzas.model.enums.FrecuenciaRecurrencia;
 import com.gestionfinanzas.model.enums.LadoContable;
 import com.gestionfinanzas.model.enums.TipoCuenta;
+import com.gestionfinanzas.model.enums.TipoReparto;
 import com.gestionfinanzas.model.enums.TipoTransaccion;
+import com.gestionfinanzas.repository.AportacionParejaRepository;
 import com.gestionfinanzas.repository.AsientoContableRepository;
 import com.gestionfinanzas.repository.AuditoriaTransaccionRepository;
 import com.gestionfinanzas.repository.CategoriaRepository;
 import com.gestionfinanzas.repository.CuentaRepository;
+import com.gestionfinanzas.repository.GastoParejaRepository;
+import com.gestionfinanzas.repository.PagoParejaRepository;
+import com.gestionfinanzas.repository.ParejaRepository;
 import com.gestionfinanzas.repository.PlantillaRecurrenteRepository;
 import com.gestionfinanzas.repository.PresupuestoRepository;
+import com.gestionfinanzas.repository.RepartoGastoRepository;
 import com.gestionfinanzas.repository.TransaccionRepository;
 import com.gestionfinanzas.repository.UsuarioRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -95,6 +105,21 @@ class RestauracionRespaldoServiceTest {
     @Autowired
     private AsientoContableRepository asientoRepository;
 
+    @Autowired
+    private ParejaRepository parejaRepository;
+
+    @Autowired
+    private AportacionParejaRepository aportacionRepository;
+
+    @Autowired
+    private GastoParejaRepository gastoRepository;
+
+    @Autowired
+    private RepartoGastoRepository repartoRepository;
+
+    @Autowired
+    private PagoParejaRepository pagoRepository;
+
     private ObjectMapper objectMapper;
     private RestauracionRespaldoService servicio;
 
@@ -119,6 +144,7 @@ class RestauracionRespaldoServiceTest {
         servicio = new RestauracionRespaldoService(
                 usuarios, cuentaRepository, categoriaRepository, presupuestoRepository,
                 plantillaRepository, transaccionRepository, auditoriaRepository, asientoRepository,
+                parejaRepository, aportacionRepository, gastoRepository, repartoRepository, pagoRepository,
                 objectMapper);
     }
 
@@ -489,6 +515,123 @@ class RestauracionRespaldoServiceTest {
                         + desviacion + "s contra un desplazamiento de zona horaria de " + desplazamientoZona + "s");
     }
 
+    // ------------------------------------------------------------ pareja
+
+    @Test
+    void restauraElHistorialDeGastosCompartidosSiLaParejaExiste() {
+        Usuario ana = crearUsuario();
+        Usuario luis = usuarioRepository.saveAndFlush(Usuario.builder()
+                .nombre("Luis").email("luis@example.com").passwordHash("hash").build());
+
+        servicio.restaurar(ana.getId(), archivoCompleto().conPareja(respaldoPareja("luis@example.com", "Luis", true)).build());
+
+        List<Pareja> parejas = parejaRepository.findTodasDeUsuario(ana.getId());
+        assertEquals(1, parejas.size());
+        Pareja pareja = parejas.get(0);
+        assertEquals(luis.getId(), pareja.getUsuarioB().getId());
+        assertEquals("MXN", pareja.getMoneda());
+        assertEquals(1, aportacionRepository.findByParejaIdOrderByFechaDescIdDesc(pareja.getId()).size());
+        assertEquals(1, gastoRepository.findByParejaIdOrderByFechaDescIdDesc(pareja.getId()).size());
+        assertEquals(1, pagoRepository.findByParejaIdOrderByFechaDescIdDesc(pareja.getId()).size());
+    }
+
+    @Test
+    void alRestaurarLasPartesQuedanAtadasALasPersonasCorrectas() {
+        Usuario ana = crearUsuario();
+        Usuario luis = usuarioRepository.saveAndFlush(Usuario.builder()
+                .nombre("Luis").email("luis@example.com").passwordHash("hash").build());
+
+        servicio.restaurar(ana.getId(), archivoCompleto().conPareja(respaldoPareja("luis@example.com", "Luis", true)).build());
+
+        Pareja pareja = parejaRepository.findTodasDeUsuario(ana.getId()).get(0);
+        List<RepartoGasto> repartos = repartoRepository.findByGastoIdOrderByIdAsc(
+                gastoRepository.findByParejaIdOrderByFechaDescIdDesc(pareja.getId()).get(0).getId());
+        assertEquals(2, repartos.size());
+        // En el archivo una parte va marcada como la del propietario, asi que no
+        // basta con confiar en el orden: hay que mirar quien quedo atado a cada una.
+        RepartoGasto deAna = repartos.stream()
+                .filter(parte -> parte.getUsuario().getId().equals(ana.getId())).findFirst().orElseThrow();
+        RepartoGasto deLuis = repartos.stream()
+                .filter(parte -> parte.getUsuario().getId().equals(luis.getId())).findFirst().orElseThrow();
+        assertEquals(new BigDecimal("150.00"), deAna.getMonto());
+        assertEquals(new BigDecimal("150.00"), deLuis.getMonto());
+        assertEquals(TipoReparto.IGUAL, deAna.getTipo());
+        assertEquals(TipoReparto.IGUAL, deLuis.getTipo());
+    }
+
+    @Test
+    void siLaCuentaDeLaParejaNoExisteRestauraElRestoYLoAvisa() {
+        Usuario ana = crearUsuario();
+        crearBilleteraInicial(ana);
+        Archivo archivo = archivoCompleto()
+                .conPareja(respaldoPareja("fantasma@example.com", "Luis fantasma", true));
+
+        RestauracionRespaldoPreviewResponse vista = servicio.previsualizar(ana.getId(), archivo.build());
+        assertEquals(1, vista.parejas());
+        assertEquals(1, vista.aportesPareja());
+        assertTrue(vista.advertencias().stream().anyMatch(aviso -> aviso.contains("Luis fantasma")),
+                "hay que avisar por nombre a quien no se le va a restaurar: " + vista.advertencias());
+
+        servicio.restaurar(ana.getId(), archivo.build());
+
+        assertEquals(0, parejaRepository.count());
+        assertEquals(1, transaccionRepository.count(), "el resto del respaldo si se restaura");
+    }
+
+    @Test
+    void unRespaldoViejoSinParejasSeRestauraYLoAvisa() {
+        Usuario ana = crearUsuario();
+        crearBilleteraInicial(ana);
+
+        RestauracionRespaldoPreviewResponse vista = servicio.previsualizar(ana.getId(), archivoCompleto().build());
+
+        assertEquals(0, vista.parejas());
+        assertTrue(vista.advertencias().stream().anyMatch(aviso -> aviso.contains("respaldo antiguo")),
+                "un v1 no tiene el bloque y hay que decirlo: " + vista.advertencias());
+    }
+
+    @Test
+    void rechazaUnGastoCuyasPartesNoSumanElTotal() {
+        Usuario ana = crearUsuario();
+        RespaldoFinancieroResponse.MiembroRespaldo anaMiembro =
+                new RespaldoFinancieroResponse.MiembroRespaldo("Ana", true);
+        RespaldoFinancieroResponse.MiembroRespaldo luisMiembro =
+                new RespaldoFinancieroResponse.MiembroRespaldo("Luis", false);
+
+        // El gasto vale 300 pero las partes suman 200: un saldo que nunca existio.
+        RespaldoFinancieroResponse.GastoRespaldo descuadrado = new RespaldoFinancieroResponse.GastoRespaldo(
+                1L, anaMiembro, new BigDecimal("300.00"), "MXN", LocalDate.of(2024, 2, 2), "Cena", "IGUAL",
+                List.of(new RespaldoFinancieroResponse.ParteRespaldo(
+                                anaMiembro, new BigDecimal("100.00"), new BigDecimal("50.00")),
+                        new RespaldoFinancieroResponse.ParteRespaldo(
+                                luisMiembro, new BigDecimal("100.00"), new BigDecimal("50.00"))),
+                LocalDateTime.now());
+        RespaldoFinancieroResponse.ParejaRespaldo pareja = new RespaldoFinancieroResponse.ParejaRespaldo(
+                1L, true, "MXN", LocalDateTime.now(), "Luis", "luis@example.com",
+                List.of(), List.of(descuadrado), List.of());
+
+        IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+                () -> servicio.previsualizar(ana.getId(), archivoCompleto().conPareja(pareja).build()));
+
+        assertTrue(error.getMessage().contains("no suman el total"), error::getMessage);
+    }
+
+    private RespaldoFinancieroResponse.ParejaRespaldo respaldoPareja(String email, String nombre, boolean activa) {
+        RespaldoFinancieroResponse.MiembroRespaldo ana = new RespaldoFinancieroResponse.MiembroRespaldo("Ana", true);
+        RespaldoFinancieroResponse.MiembroRespaldo otro = new RespaldoFinancieroResponse.MiembroRespaldo(nombre, false);
+        return new RespaldoFinancieroResponse.ParejaRespaldo(
+                1L, activa, "MXN", LocalDateTime.now(), nombre, email,
+                List.of(new RespaldoFinancieroResponse.AporteRespaldo(
+                        1L, ana, new BigDecimal("500.00"), "MXN", LocalDate.of(2024, 2, 1), null, LocalDateTime.now())),
+                List.of(new RespaldoFinancieroResponse.GastoRespaldo(
+                        1L, ana, new BigDecimal("300.00"), "MXN", LocalDate.of(2024, 2, 2), "Cena", "IGUAL",
+                        List.of(new RespaldoFinancieroResponse.ParteRespaldo(ana, new BigDecimal("150.00"), new BigDecimal("50.00")),
+                                new RespaldoFinancieroResponse.ParteRespaldo(otro, new BigDecimal("150.00"), new BigDecimal("50.00"))),
+                        LocalDateTime.now())),
+                List.of(new RespaldoFinancieroResponse.PagoRespaldo(
+                        1L, otro, ana, new BigDecimal("150.00"), "MXN", LocalDate.of(2024, 2, 3), null, LocalDateTime.now())));
+    }
+
     private Usuario crearUsuario() {
         return usuarioRepository.saveAndFlush(Usuario.builder()
                 .nombre("Ana").email("ana@example.com").passwordHash("hash").build());
@@ -574,6 +717,12 @@ class RestauracionRespaldoServiceTest {
         private final List<AuditoriaTransaccionResponse> historial = new ArrayList<>();
         private final List<AsientoContableResponse> asientos = new ArrayList<>();
         private List<RespaldoFinancieroResponse.CashbackRespaldo> cashback;
+        private List<RespaldoFinancieroResponse.ParejaRespaldo> parejas;
+
+        Archivo conPareja(RespaldoFinancieroResponse.ParejaRespaldo pareja) {
+            parejas = List.of(pareja);
+            return this;
+        }
 
         Archivo conCuenta(Long id, String nombre, TipoCuenta tipo, BigDecimal saldo) {
             cuentas.add(new CuentaResponse(id, nombre, tipo, "Banco", null, null, null, 10, 20, saldo, "MXN", null, true, null));
@@ -636,9 +785,12 @@ class RestauracionRespaldoServiceTest {
         }
 
         RespaldoFinancieroResponse build() {
+            // parejas se queda en null salvo que se agreguen con conPareja: emula un
+            // respaldo v1 anterior a los gastos compartidos, que debe seguir restaurando.
             return new RespaldoFinancieroResponse(version, Instant.parse("2024-04-01T12:00:00Z"),
                     new PerfilResponse(999L, "Nombre del respaldo", "respaldo@example.com", "CLARO", "MXN"),
-                    cuentas, categorias, presupuestos, recurrencias, historial, asientos, transacciones, cashback);
+                    cuentas, categorias, presupuestos, recurrencias, historial, asientos, transacciones,
+                    cashback, parejas);
         }
     }
 }

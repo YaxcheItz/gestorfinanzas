@@ -1,10 +1,15 @@
 package com.gestionfinanzas.service;
 
 import com.gestionfinanzas.dto.response.PerfilResponse;
+import com.gestionfinanzas.repository.AportacionParejaRepository;
 import com.gestionfinanzas.repository.CategoriaRepository;
 import com.gestionfinanzas.repository.CuentaRepository;
+import com.gestionfinanzas.repository.GastoParejaRepository;
+import com.gestionfinanzas.repository.PagoParejaRepository;
+import com.gestionfinanzas.repository.ParejaRepository;
 import com.gestionfinanzas.repository.PlantillaRecurrenteRepository;
 import com.gestionfinanzas.repository.PresupuestoRepository;
+import com.gestionfinanzas.repository.RepartoGastoRepository;
 import com.gestionfinanzas.repository.TransaccionRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Sort;
@@ -34,7 +39,12 @@ class RespaldoFinancieroServiceTest {
             plantillaRepository,
             transaccionRepository,
             auditoriaService,
-            libroDiarioService
+            libroDiarioService,
+            mock(ParejaRepository.class),
+            mock(AportacionParejaRepository.class),
+            mock(GastoParejaRepository.class),
+            mock(RepartoGastoRepository.class),
+            mock(PagoParejaRepository.class)
     );
 
     @Test

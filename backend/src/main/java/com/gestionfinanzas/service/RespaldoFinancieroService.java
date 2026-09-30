@@ -10,11 +10,22 @@ import com.gestionfinanzas.dto.response.PerfilResponse;
 import com.gestionfinanzas.dto.response.PlantillaRecurrenteResponse;
 import com.gestionfinanzas.dto.response.RespaldoFinancieroResponse;
 import com.gestionfinanzas.dto.response.TransaccionResponse;
+import com.gestionfinanzas.model.entity.AportacionPareja;
+import com.gestionfinanzas.model.entity.GastoPareja;
+import com.gestionfinanzas.model.entity.PagoPareja;
+import com.gestionfinanzas.model.entity.Pareja;
 import com.gestionfinanzas.model.entity.Presupuesto;
+import com.gestionfinanzas.model.entity.RepartoGasto;
+import com.gestionfinanzas.model.entity.Usuario;
+import com.gestionfinanzas.repository.AportacionParejaRepository;
 import com.gestionfinanzas.repository.CategoriaRepository;
 import com.gestionfinanzas.repository.CuentaRepository;
+import com.gestionfinanzas.repository.GastoParejaRepository;
+import com.gestionfinanzas.repository.PagoParejaRepository;
+import com.gestionfinanzas.repository.ParejaRepository;
 import com.gestionfinanzas.repository.PlantillaRecurrenteRepository;
 import com.gestionfinanzas.repository.PresupuestoRepository;
+import com.gestionfinanzas.repository.RepartoGastoRepository;
 import com.gestionfinanzas.repository.TransaccionRepository;
 import com.gestionfinanzas.repository.specification.TransaccionSpecification;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +34,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -37,6 +49,11 @@ public class RespaldoFinancieroService {
     private final TransaccionRepository transaccionRepository;
     private final AuditoriaTransaccionService auditoriaService;
     private final LibroDiarioService libroDiarioService;
+    private final ParejaRepository parejaRepository;
+    private final AportacionParejaRepository aportacionRepository;
+    private final GastoParejaRepository gastoRepository;
+    private final RepartoGastoRepository repartoRepository;
+    private final PagoParejaRepository pagoRepository;
 
     @Transactional(readOnly = true)
     public RespaldoFinancieroResponse generar(Long usuarioId) {
@@ -81,7 +98,71 @@ public class RespaldoFinancieroService {
                 auditoriaService.listarParaRespaldo(usuarioId),
                 libroDiarioService.listarParaRespaldo(usuarioId),
                 transacciones,
-                relacionesCashback
+                relacionesCashback,
+                mapearParejas(usuarioId)
+        );
+    }
+
+    /**
+     * Los gastos compartidos se exportan en su totalidad, no solo la parte de quien
+     * descarga el respaldo: el fondo común no tiene dueño y saldría descuadrado si se
+     * filtrara por usuario.
+     */
+    private List<RespaldoFinancieroResponse.ParejaRespaldo> mapearParejas(Long usuarioId) {
+        List<Pareja> parejas = parejaRepository.findTodasDeUsuario(usuarioId);
+        if (parejas.isEmpty()) {
+            return List.of();
+        }
+
+        List<RespaldoFinancieroResponse.ParejaRespaldo> resultado = new ArrayList<>();
+        for (Pareja pareja : parejas) {
+            Usuario yo = pareja.getUsuarioA().getId().equals(usuarioId) ? pareja.getUsuarioA() : pareja.getUsuarioB();
+            Usuario otro = yo == pareja.getUsuarioA() ? pareja.getUsuarioB() : pareja.getUsuarioA();
+
+            List<RespaldoFinancieroResponse.AporteRespaldo> aportes = aportacionRepository
+                    .findByParejaIdOrderByFechaDescIdDesc(pareja.getId()).stream()
+                    .map(aporte -> new RespaldoFinancieroResponse.AporteRespaldo(
+                            aporte.getId(), miembro(aporte.getUsuario(), usuarioId), aporte.getMonto(),
+                            aporte.getMoneda(), aporte.getFecha(), aporte.getNotas(), aporte.getFechaCreacion()
+                    ))
+                    .toList();
+
+            List<RespaldoFinancieroResponse.GastoRespaldo> gastos = new ArrayList<>();
+            for (GastoPareja gasto : gastoRepository.findByParejaIdOrderByFechaDescIdDesc(pareja.getId())) {
+                List<RepartoGasto> repartos = repartoRepository.findByGastoIdOrderByIdAsc(gasto.getId());
+                gastos.add(new RespaldoFinancieroResponse.GastoRespaldo(
+                        gasto.getId(), miembro(gasto.getPagadoPor(), usuarioId), gasto.getMonto(),
+                        gasto.getMoneda(), gasto.getFecha(), gasto.getDescripcion(),
+                        ParejaService.tipoRepartoDe(repartos) == null
+                                ? null : ParejaService.tipoRepartoDe(repartos).name(),
+                        repartos.stream()
+                                .map(parte -> new RespaldoFinancieroResponse.ParteRespaldo(
+                                        miembro(parte.getUsuario(), usuarioId), parte.getMonto(), parte.getPorcentaje()
+                                ))
+                                .toList(),
+                        gasto.getFechaCreacion()
+                ));
+            }
+
+            List<RespaldoFinancieroResponse.PagoRespaldo> pagos = pagoRepository
+                    .findByParejaIdOrderByFechaDescIdDesc(pareja.getId()).stream()
+                    .map(pago -> new RespaldoFinancieroResponse.PagoRespaldo(
+                            pago.getId(), miembro(pago.getPagador(), usuarioId), miembro(pago.getBeneficiario(), usuarioId),
+                            pago.getMonto(), pago.getMoneda(), pago.getFecha(), pago.getNotas(), pago.getFechaCreacion()
+                    ))
+                    .toList();
+
+            resultado.add(new RespaldoFinancieroResponse.ParejaRespaldo(
+                    pareja.getId(), pareja.isActiva(), pareja.getMoneda(), pareja.getFechaCreacion(),
+                    otro.getNombre(), otro.getEmail(), aportes, gastos, pagos
+            ));
+        }
+        return List.copyOf(resultado);
+    }
+
+    private RespaldoFinancieroResponse.MiembroRespaldo miembro(Usuario usuario, Long propietarioId) {
+        return new RespaldoFinancieroResponse.MiembroRespaldo(
+                usuario.getNombre(), usuario.getId().equals(propietarioId)
         );
     }
 

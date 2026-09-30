@@ -60,6 +60,12 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'pareja',
+    loadComponent: () => import('./features/pareja/pareja.component')
+      .then(module => module.ParejaComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: 'configuracion',
     loadComponent: () => import('./features/configuracion/configuracion.component')
       .then(module => module.ConfiguracionComponent),

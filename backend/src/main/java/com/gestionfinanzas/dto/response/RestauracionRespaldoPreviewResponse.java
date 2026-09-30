@@ -13,6 +13,10 @@ public record RestauracionRespaldoPreviewResponse(
         int transacciones,
         int eventosHistorial,
         int asientosContables,
+        int parejas,
+        int aportesPareja,
+        int gastosPareja,
+        int pagosPareja,
         boolean destinoVacio,
         boolean puedeRestaurar,
         List<String> advertencias
