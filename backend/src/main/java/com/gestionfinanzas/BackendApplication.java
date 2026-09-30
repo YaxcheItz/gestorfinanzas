@@ -1,11 +1,13 @@
 package com.gestionfinanzas;
 
+import jakarta.annotation.PostConstruct;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.TimeZone;
 
 import org.springframework.scheduling.annotation.EnableScheduling;
 
@@ -13,7 +15,10 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 public class BackendApplication {
 
+    public static final String ZONA_HORARIA = "America/Mexico_City";
+
     public static void main(String[] args) {
+        configurarZonaHoraria();
         boolean entornoE2E = Boolean.parseBoolean(System.getenv("FINANZAS_E2E"));
         boolean perfilDePruebas = "test".equals(System.getenv("SPRING_PROFILES_ACTIVE"))
                 || "test".equals(System.getProperty("spring.profiles.active"))
@@ -32,6 +37,23 @@ public class BackendApplication {
             cargarVariablesEnv();
         }
         SpringApplication.run(BackendApplication.class, args);
+    }
+
+    /**
+     * La JVM arranca en UTC (Render usa UTC), pero la app opera en horario de Ciudad de Mexico.
+     * El atributo {@code zone} de {@code @Scheduled} solo define cuando se dispara la alarma, no la
+     * fecha que devuelve {@code LocalDate.now()} dentro del metodo. Sin esto, entre las 18:00 y las
+     * 24:00 en Mexico la app ya cree que es el dia siguiente y los recordatorios de fecha de corte
+     * y fecha limite de pago se evaluan con el dia equivocado.
+     */
+    public static void configurarZonaHoraria() {
+        TimeZone.setDefault(TimeZone.getTimeZone(ZONA_HORARIA));
+    }
+
+    /** Cubre los contextos de prueba ({@code @SpringBootTest}), que no pasan por {@link #main}. */
+    @PostConstruct
+    void aplicarZonaHorariaEnTests() {
+        configurarZonaHoraria();
     }
 
     private static void cargarVariablesEnv() {
