@@ -312,6 +312,84 @@ import {
           </div>
         }
       </section>
+
+      <section id="danger" class="scroll-mt-24 rounded-2xl border border-rose-200 bg-white p-4 shadow-xs sm:p-6 dark:border-rose-900">
+        <div class="mb-5">
+          <h2 class="text-base font-bold text-rose-700">Eliminar cuenta</h2>
+          <p class="mt-1 text-sm text-slate-600">
+            Borra tu cuenta y todo lo que contiene. Esta acción es permanente y no se puede deshacer.
+          </p>
+        </div>
+        <ul class="mb-5 space-y-1.5 rounded-xl bg-rose-50 p-4 text-sm text-rose-900">
+          <li class="flex gap-2"><span aria-hidden="true">·</span><span>Cuentas, movimientos, presupuestos y recurrencias</span></li>
+          <li class="flex gap-2"><span aria-hidden="true">·</span><span>Categorías personalizadas</span></li>
+          <li class="flex gap-2"><span aria-hidden="true">·</span><span>Libro contable e historial de auditoría</span></li>
+          <li class="flex gap-2"><span aria-hidden="true">·</span><span>Tu usuario, correo y teléfono</span></li>
+        </ul>
+        <p class="mb-4 text-xs text-slate-600">
+          Si quieres conservar tu información, descarga antes el
+          <a [routerLink]="[]" fragment="backup" class="font-semibold text-emerald-700 underline">respaldo de tus datos</a>.
+        </p>
+        <button
+          type="button"
+          (click)="abrirConfirmacionBorrado()"
+          class="min-h-11 rounded-xl border border-rose-300 bg-white px-4 py-2.5 text-sm font-semibold text-rose-700 hover:bg-rose-50">
+          Eliminar mi cuenta
+        </button>
+      </section>
+
+      @if (modalBorradoAbierto()) {
+        <div class="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/60 p-3 sm:items-center" (click)="cerrarConfirmacionBorrado()">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="titulo-borrado"
+            (click)="$event.stopPropagation()"
+            class="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl sm:p-6">
+            <h3 id="titulo-borrado" class="text-lg font-bold text-slate-900">¿Eliminar tu cuenta definitivamente?</h3>
+            <p class="mt-2 text-sm text-slate-600">
+              Se borrarán tus cuentas, movimientos, libro contable y toda tu información personal.
+              No hay forma de recuperarlos.
+            </p>
+            <label class="mt-5 block text-xs font-semibold text-slate-700">
+              Escribe tu contraseña para confirmar
+              <input
+                name="passwordBorrado"
+                [(ngModel)]="passwordBorrado"
+                type="password"
+                autocomplete="current-password"
+                class="mt-1.5 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm font-normal text-slate-900" />
+            </label>
+            <label class="mt-4 flex items-start gap-2 text-sm text-slate-700">
+              <input
+                name="entiendoBorrado"
+                [(ngModel)]="entiendoBorrado"
+                type="checkbox"
+                class="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-rose-600 focus:ring-rose-500" />
+              <span>Entiendo que esta acción es permanente y elimina también el libro contable.</span>
+            </label>
+            @if (errorBorrado()) {
+              <p role="alert" class="mt-4 rounded-xl bg-rose-50 p-3 text-sm text-rose-700">{{ errorBorrado() }}</p>
+            }
+            <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                (click)="cerrarConfirmacionBorrado()"
+                [disabled]="eliminandoCuenta()"
+                class="min-h-11 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">
+                Cancelar
+              </button>
+              <button
+                type="button"
+                (click)="eliminarCuenta()"
+                [disabled]="eliminandoCuenta() || !entiendoBorrado || passwordBorrado.length < 8"
+                class="min-h-11 rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50">
+                {{ eliminandoCuenta() ? 'Eliminando...' : 'Sí, eliminar mi cuenta' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      }
     </main>
   `
 })
@@ -328,6 +406,9 @@ export class ConfiguracionComponent implements OnInit {
   readonly cargandoPlantillas = signal(true);
   readonly errorPlantillas = signal<string | null>(null);
   readonly accionId = signal<number | null>(null);
+  readonly modalBorradoAbierto = signal(false);
+  readonly eliminandoCuenta = signal(false);
+  readonly errorBorrado = signal<string | null>(null);
   readonly hoy = new Date().toISOString().slice(0, 10);
 
   nombre = '';
@@ -338,6 +419,8 @@ export class ConfiguracionComponent implements OnInit {
   notificacionesWhatsapp = false;
   passwordActual = '';
   passwordNueva = '';
+  passwordBorrado = '';
+  entiendoBorrado = false;
   confirmarRestauracion = false;
   private datosRespaldoSeleccionado: unknown = null;
   private readonly perfilInicializado = new Set<number>();
@@ -427,6 +510,45 @@ export class ConfiguracionComponent implements OnInit {
       error: err => {
         this.guardandoPassword.set(false);
         this.toastService.error(err.error?.message || 'No se pudo cambiar la contraseña.');
+      }
+    });
+  }
+
+  abrirConfirmacionBorrado(): void {
+    this.passwordBorrado = '';
+    this.entiendoBorrado = false;
+    this.errorBorrado.set(null);
+    this.modalBorradoAbierto.set(true);
+  }
+
+  cerrarConfirmacionBorrado(): void {
+    if (this.eliminandoCuenta()) return;
+    this.modalBorradoAbierto.set(false);
+    this.passwordBorrado = '';
+    this.entiendoBorrado = false;
+    this.errorBorrado.set(null);
+  }
+
+  eliminarCuenta(): void {
+    if (!this.entiendoBorrado || this.passwordBorrado.length < 8) return;
+    this.eliminandoCuenta.set(true);
+    this.errorBorrado.set(null);
+    this.perfilService.eliminarCuenta(this.passwordBorrado).subscribe({
+      next: response => {
+        this.eliminandoCuenta.set(false);
+        if (!response.success) {
+          this.errorBorrado.set(response.message || 'No se pudo eliminar la cuenta.');
+          return;
+        }
+        this.modalBorradoAbierto.set(false);
+        this.toastService.success('Tu cuenta fue eliminada.');
+        // El usuario ya no existe, asi que el token guardado no sirve: se cierra la sesion.
+        this.perfilService.limpiar();
+        this.authService.logout();
+      },
+      error: err => {
+        this.eliminandoCuenta.set(false);
+        this.errorBorrado.set(err.error?.message || 'No se pudo eliminar la cuenta.');
       }
     });
   }

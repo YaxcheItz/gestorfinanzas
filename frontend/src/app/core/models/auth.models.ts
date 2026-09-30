@@ -28,6 +28,10 @@ export interface CambiarPasswordPayload {
   passwordNueva: string;
 }
 
+export interface EliminarCuentaPayload {
+  password: string;
+}
+
 export interface SolicitudRecuperacionPayload {
   email: string;
 }

@@ -18,4 +18,8 @@ public interface AuditoriaTransaccionRepository extends JpaRepository<AuditoriaT
 
     Page<AuditoriaTransaccion> findByUsuarioIdOrderByFechaEventoDescIdDesc(Long usuarioId, Pageable pageable);
     List<AuditoriaTransaccion> findAllByUsuarioIdOrderByFechaEventoAscIdAsc(Long usuarioId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("DELETE FROM AuditoriaTransaccion a WHERE a.usuario.id = :usuarioId")
+    void deleteByUsuarioId(@Param("usuarioId") Long usuarioId);
 }

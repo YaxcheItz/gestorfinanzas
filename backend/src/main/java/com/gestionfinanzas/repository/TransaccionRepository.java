@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -50,6 +51,19 @@ public interface TransaccionRepository extends JpaRepository<Transaccion, Long>,
     );
 
     Optional<Transaccion> findByCashbackOrigenId(Long cashbackOrigenId);
+
+    /**
+     * Transaccion se referencia a si misma por cashbackOrigen. Hay que anular esa referencia
+     * antes del borrado en lote: si no, la llave foranea sigue apuntando a una fila existente
+     * y PostgreSQL rechaza el DELETE.
+     */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE Transaccion t SET t.cashbackOrigen = NULL WHERE t.usuario.id = :usuarioId")
+    void desvincularCashbackDe(@Param("usuarioId") Long usuarioId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("DELETE FROM Transaccion t WHERE t.usuario.id = :usuarioId")
+    void deleteByUsuarioId(@Param("usuarioId") Long usuarioId);
 
     Page<Transaccion> findByUsuarioIdOrderByFechaDesc(Long usuarioId, Pageable pageable);
 

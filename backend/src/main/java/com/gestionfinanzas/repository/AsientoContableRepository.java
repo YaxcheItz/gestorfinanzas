@@ -42,4 +42,8 @@ public interface AsientoContableRepository extends JpaRepository<AsientoContable
             Pageable pageable
     );
     List<AsientoContable> findAllByUsuarioIdOrderByFechaOperacionAscIdAsc(Long usuarioId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("DELETE FROM AsientoContable a WHERE a.usuario.id = :usuarioId")
+    void deleteByUsuarioId(@Param("usuarioId") Long usuarioId);
 }

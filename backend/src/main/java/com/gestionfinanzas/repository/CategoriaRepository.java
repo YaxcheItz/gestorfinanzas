@@ -3,6 +3,7 @@ package com.gestionfinanzas.repository;
 import com.gestionfinanzas.model.entity.Categoria;
 import com.gestionfinanzas.model.enums.TipoTransaccion;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -30,4 +31,8 @@ public interface CategoriaRepository extends JpaRepository<Categoria, Long> {
     );
 
     boolean existsByUsuarioIdAndTipoAndNombreIgnoreCase(Long usuarioId, TipoTransaccion tipo, String nombre);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("DELETE FROM Categoria c WHERE c.usuario.id = :usuarioId")
+    void deleteByUsuarioId(@Param("usuarioId") Long usuarioId);
 }

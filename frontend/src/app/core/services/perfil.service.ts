@@ -5,6 +5,7 @@ import { Observable, tap } from 'rxjs';
 import {
   ApiResponse,
   CambiarPasswordPayload,
+  EliminarCuentaPayload,
   Perfil,
   PerfilActualizarPayload
 } from '../models/auth.models';
@@ -51,6 +52,16 @@ export class PerfilService {
 
   cambiarPassword(payload: CambiarPasswordPayload): Observable<ApiResponse<void>> {
     return this.http.put<ApiResponse<void>>(`${this.baseUrl}/password`, payload);
+  }
+
+  /**
+   * Borra la cuenta y todos sus datos. Es irreversible, por eso el backend exige la
+   * contraseña actual. Al terminar hay que cerrar sesión: el token sigue siendo válido
+   * hasta que caduque, pero el usuario ya no existe.
+   */
+  eliminarCuenta(password: string): Observable<ApiResponse<void>> {
+    const payload: EliminarCuentaPayload = { password };
+    return this.http.delete<ApiResponse<void>>(`${getApiBaseUrl()}/usuarios/me`, { body: payload });
   }
 
   limpiar(): void {
