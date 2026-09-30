@@ -16,6 +16,15 @@ import { getApiBaseUrl } from './api-base-url';
 /** Necesario para que el navegador acepte y mande la cookie de refresh. */
 const CON_CREDENCIALES = { withCredentials: true } as const;
 
+/**
+ * La cookie va en SameSite=None porque el frontend (vercel.app) y la API (onrender.com) son
+ * sitios distintos, y así es lo único que cruza. El precio es que otra página podría lanzar un
+ * POST contra /refresh o /logout y el navegador añadiría la cookie sin preguntar. Esta cabecera
+ * lo evita: al no ser simple, la petición genera un preflight que el servidor solo concede a
+ * nuestros orígenes, de modo que la del atacante nunca llega a enviarse. El valor es irrelevante.
+ */
+const CABECERA_CSRF = { headers: { 'X-Gestion-Sesion': '1' } } as const;
+
 @Injectable({
   providedIn: 'root'
 })
@@ -82,7 +91,7 @@ export class AuthService {
   renovarSesion(): Observable<AuthResponse> {
     if (!this.refreshEnVuelo) {
       this.refreshEnVuelo =       this.http
-        .post<ApiResponse<AuthResponse>>(`${this.apiUrl}/refresh`, {}, CON_CREDENCIALES)
+        .post<ApiResponse<AuthResponse>>(`${this.apiUrl}/refresh`, {}, { ...CON_CREDENCIALES, ...CABECERA_CSRF })
         .pipe(
           map(res => {
             if (!res.success || !res.data) {
@@ -111,7 +120,7 @@ export class AuthService {
   }
 
   private cerrarSesionEnServidor(): Observable<unknown> {
-    return this.http.post(`${this.apiUrl}/logout`, {}, CON_CREDENCIALES);
+    return this.http.post(`${this.apiUrl}/logout`, {}, { ...CON_CREDENCIALES, ...CABECERA_CSRF });
   }
 
   private limpiarSesion(): void {

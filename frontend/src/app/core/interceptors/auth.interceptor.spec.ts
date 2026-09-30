@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpRequest } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { authInterceptor } from './auth.interceptor';
 
@@ -23,7 +24,10 @@ describe('authInterceptor', () => {
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(withInterceptors([authInterceptor])),
-        provideHttpClientTesting()
+        provideHttpClientTesting(),
+        // Cerrar la sesion navega al login; aqui no hay rutas y solo interesa el efecto
+        // sobre el almacenamiento, asi que se sustituye por un doble.
+        { provide: Router, useValue: { navigate: () => Promise.resolve(true) } }
       ]
     });
     http = TestBed.inject(HttpClient);
@@ -136,5 +140,30 @@ describe('authInterceptor', () => {
     authService.renovarSesion().subscribe();
 
     expect(backend.match(esRefresh).length).toBe(1);
+  });
+
+  it('el refresh lleva la cabecera anti-CSRF ademas de la cookie', () => {
+    // Sin esa cabecera el servidor responde 403: la cookie va en SameSite=None porque
+    // vercel.app y onrender.com son sitios distintos, y eso deja abierta la puerta a que otra
+    // pagina lance el POST por su cuenta.
+    const authService = TestBed.inject(AuthService);
+
+    authService.renovarSesion().subscribe({ error: () => undefined });
+
+    const refresh = backend.expectOne(esRefresh);
+    expect(refresh.request.headers.has('X-Gestion-Sesion')).toBe(true);
+    expect(refresh.request.withCredentials).toBe(true);
+    refresh.flush(sesionValida('token-nuevo'));
+  });
+
+  it('el logout tambien va protegido contra CSRF', () => {
+    const authService = TestBed.inject(AuthService);
+
+    authService.logout();
+
+    const logout = backend.expectOne(r => r.url.endsWith('/api/auth/logout'));
+    expect(logout.request.headers.has('X-Gestion-Sesion')).toBe(true);
+    expect(logout.request.withCredentials).toBe(true);
+    logout.flush({ message: 'ok' });
   });
 });

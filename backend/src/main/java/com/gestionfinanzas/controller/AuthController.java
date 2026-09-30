@@ -35,7 +35,7 @@ public class AuthController {
     @Value("${jwt.refresh.expiration-ms:2592000000}")
     private long refreshExpirationMs;
 
-    @Value("${jwt.refresh.same-site:Lax}")
+    @Value("${jwt.refresh.same-site:None}")
     private String sameSite;
 
     @Value("${jwt.refresh.secure:true}")

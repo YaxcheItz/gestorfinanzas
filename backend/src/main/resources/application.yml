@@ -44,14 +44,16 @@ jwt:
   # El frontend lo renueva solo con el refresh token, asi que el usuario nunca ve el login.
   expiration-ms: ${JWT_EXPIRATION_MS:900000} # 15 minutos
   refresh:
-    # Refresh token: la sesion que el usuario no nota. 30 dias renewing en cada uso, con
+    # Refresh token: la sesion que el usuario no nota. 30 dias renovandose en cada uso, con
     # rotacion, de modo que un token robado deja de servir en cuanto se usa legitimamente.
     expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:2592000000} # 30 dias
     cookie-name: ${JWT_REFRESH_COOKIE_NAME:finanzas_refresh}
-    # Lax basta mientras el frontend y la API compartan dominio (kaptal.app), porque el
-    # navegador no manda la cookie en peticiones de otro sitio. Si el frontend vive en otro
-    # dominio, hay que poner None y activar secure, y ahi si conviene un token CSRF.
-    same-site: ${JWT_REFRESH_SAME_SITE:Lax}
+    # El frontend vive en vercel.app y la API en onrender.com: son sitios distintos, asi que
+    # Lax no llegaria y el refresh fallaria siempre. None es lo unico que cruza, y a cambio
+    # obliga a proteger /refresh y /logout contra CSRF, que es lo que hace el filtro de
+    # cabecera propia. Si algun dia la API se sirve desde el mismo dominio que el frontend,
+    # conviene volver a Lax y retirar el filtro.
+    same-site: ${JWT_REFRESH_SAME_SITE:None}
     secure: ${JWT_REFRESH_SECURE:true}
 
 app:
