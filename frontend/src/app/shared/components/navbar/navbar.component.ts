@@ -37,6 +37,7 @@ import { PrivacidadService } from '../../../core/services/privacidad.service';
                   <div id="nav-more-menu-desktop" class="nav-more-menu absolute right-0 top-full z-50 mt-2 w-52 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl dark:border-slate-700 dark:bg-slate-900">
                     <a routerLink="/libro-diario" routerLinkActive="bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200" [ariaCurrentWhenActive]="'page'" (click)="closeMore()" class="block min-h-11 rounded-lg px-3 py-3 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800">Libro diario</a>
                     <a routerLink="/transacciones" routerLinkActive="bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200" [ariaCurrentWhenActive]="'page'" (click)="closeMore()" class="block min-h-11 rounded-lg px-3 py-3 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800">Transacciones</a>
+                    <a routerLink="/pareja" routerLinkActive="bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200" [ariaCurrentWhenActive]="'page'" (click)="closeMore()" class="block min-h-11 rounded-lg px-3 py-3 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800">Gastos en pareja</a>
                   </div>
                 }
               </div>
@@ -88,6 +89,7 @@ import { PrivacidadService } from '../../../core/services/privacidad.service';
             <nav id="nav-more-menu-mobile" aria-label="Más destinos" class="nav-more-menu fixed inset-x-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-50 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl xl:hidden dark:border-slate-700 dark:bg-slate-900">
               <a routerLink="/libro-diario" routerLinkActive="bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200" [ariaCurrentWhenActive]="'page'" (click)="closeMore()" class="flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800"><svg aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><use href="navigation-icons.svg#ledger"/></svg>Libro diario</a>
               <a routerLink="/transacciones" routerLinkActive="bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200" [ariaCurrentWhenActive]="'page'" (click)="closeMore()" class="flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800"><svg aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><use href="navigation-icons.svg#movements"/></svg>Transacciones</a>
+              <a routerLink="/pareja" routerLinkActive="bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200" [ariaCurrentWhenActive]="'page'" (click)="closeMore()" class="flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800"><svg aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><use href="navigation-icons.svg#pareja"/></svg>Gastos en pareja</a>
               <button type="button" (click)="alternarOcultarMontos(); closeMore()" class="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800">
                 @if (privacidad.ocultarMontos()) {
                   <svg aria-hidden="true" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/></svg>
@@ -117,7 +119,7 @@ export class NavbarComponent {
   closeMore(): void { this.moreOpen.set(false); }
 
   isMoreRoute(): boolean {
-    return this.router.url.startsWith('/libro-diario') || this.router.url.startsWith('/transacciones');
+    return this.router.url.startsWith('/libro-diario') || this.router.url.startsWith('/transacciones') || this.router.url.startsWith('/pareja');
   }
 
   @HostListener('document:click', ['$event'])

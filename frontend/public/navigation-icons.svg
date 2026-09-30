@@ -23,6 +23,11 @@
     <path d="m19 15 .9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9L19 15Z"/>
     <path d="m5 16 .6 1.4L7 18l-1.4.6L5 20l-.6-1.4L3 18l1.4-.6L5 16Z"/>
   </symbol>
+  <symbol id="pareja" viewBox="0 0 24 24">
+    <circle cx="9" cy="8" r="3.25"/>
+    <path d="M3 20v-1.5A4.5 4.5 0 0 1 7.5 14h3a4.5 4.5 0 0 1 4.5 4.5V20"/>
+    <path d="M16 5.2a3.25 3.25 0 0 1 0 5.6M17.5 14.2A4.5 4.5 0 0 1 21 18.6V20"/>
+  </symbol>
   <symbol id="categories" viewBox="0 0 24 24">
     <path d="m20 13-7 7L3 10V3h7l10 10zm-12.5-5.5h.01"/>
   </symbol>
