@@ -10,11 +10,13 @@ import {
   PerfilActualizarPayload
 } from '../models/auth.models';
 import { getApiBaseUrl } from './api-base-url';
+import { PrivacidadService } from './privacidad.service';
 
 @Injectable({ providedIn: 'root' })
 export class PerfilService {
   private readonly http = inject(HttpClient);
   private readonly document = inject(DOCUMENT);
+  private readonly privacidad = inject(PrivacidadService);
   private readonly baseUrl = `${getApiBaseUrl()}/perfil`;
 
   readonly perfil = signal<Perfil | null>(null);
@@ -24,6 +26,7 @@ export class PerfilService {
   cargar(usuarioId: number): void {
     const temaAlmacenado = this.document.defaultView?.localStorage.getItem(`kaptal_tema_${usuarioId}`);
     if (temaAlmacenado === 'CLARO' || temaAlmacenado === 'OSCURO') this.aplicarTema(temaAlmacenado);
+    this.privacidad.aplicarDesdeCache(usuarioId);
     this.cargando.set(true);
     this.error.set(null);
     this.http.get<ApiResponse<Perfil>>(this.baseUrl).subscribe({
@@ -55,6 +58,34 @@ export class PerfilService {
   }
 
   /**
+   * Da la vuelta a la preferencia de ocultar montos.
+   *
+   * El cambio se pinta antes de la respuesta porque es un control de pantalla:
+   * si alguien abre el portatil en publico, el monto tiene que desaparecer al
+   * primer clic y no cuando el servidor conteste. Si el guardado falla se
+   * revierte, que es senal suficiente de que no se aplico.
+   *
+   * El endpoint de perfil exige nombre, correo, tema y moneda, asi que se
+   * reenvian tal cual vienen del perfil actual y solo cambia el campo nuevo.
+   */
+  alternarOcultarMontos(): void {
+    const perfil = this.perfil();
+    if (!perfil) return;
+
+    const nuevoValor = !perfil.ocultarMontos;
+    this.privacidad.aplicar(perfil.id, nuevoValor);
+    this.actualizar({
+      nombre: perfil.nombre,
+      email: perfil.email,
+      tema: perfil.tema,
+      monedaPredeterminada: perfil.monedaPredeterminada,
+      telefono: perfil.telefono ?? null,
+      notificacionesWhatsapp: perfil.notificacionesWhatsapp ?? false,
+      ocultarMontos: nuevoValor
+    }).subscribe({ error: () => this.privacidad.aplicar(perfil.id, !nuevoValor) });
+  }
+
+  /**
    * Borra la cuenta y todos sus datos. Es irreversible, por eso el backend exige la
    * contraseña actual. Al terminar hay que cerrar sesión: el token sigue siendo válido
    * hasta que caduque, pero el usuario ya no existe.
@@ -69,12 +100,14 @@ export class PerfilService {
     this.cargando.set(false);
     this.error.set(null);
     this.aplicarTema('CLARO');
+    this.privacidad.limpiar();
   }
 
   private aplicarPerfil(perfil: Perfil): void {
     this.perfil.set(perfil);
     this.aplicarTema(perfil.tema);
     this.document.defaultView?.localStorage.setItem(`kaptal_tema_${perfil.id}`, perfil.tema);
+    this.privacidad.aplicar(perfil.id, !!perfil.ocultarMontos);
   }
 
   private aplicarTema(tema: Perfil['tema']): void {

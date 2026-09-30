@@ -1,6 +1,8 @@
 package com.gestionfinanzas.service;
 
 import com.gestionfinanzas.dto.request.CambiarPasswordRequest;
+import com.gestionfinanzas.dto.request.PerfilActualizarRequest;
+import com.gestionfinanzas.dto.response.PerfilResponse;
 import com.gestionfinanzas.model.entity.Usuario;
 import com.gestionfinanzas.repository.UsuarioRepository;
 import org.junit.jupiter.api.Test;
@@ -9,6 +11,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -39,5 +42,41 @@ class PerfilServiceTest {
         assertEquals(3, usuario.getTokenVersion());
         assertEquals("hash-nuevo", usuario.getPasswordHash());
         verify(usuarioRepository).save(any(Usuario.class));
+    }
+
+    @Test
+    void actualizarGuardaOcultarMontosCuandoVieneEnElRequest() {
+        Usuario usuario = Usuario.builder()
+                .id(17L)
+                .email("ana@example.com")
+                .nombre("Ana")
+                .ocultarMontos(false)
+                .build();
+        when(usuarioRepository.findById(17L)).thenReturn(Optional.of(usuario));
+        when(usuarioRepository.save(any(Usuario.class))).thenAnswer(i -> i.getArgument(0));
+
+        PerfilResponse response = perfilService.actualizar(17L, new PerfilActualizarRequest(
+                "Ana", "ana@example.com", "CLARO", "MXN", null, null, true));
+
+        assertTrue(usuario.isOcultarMontos());
+        assertTrue(response.ocultarMontos());
+    }
+
+    @Test
+    void actualizarNoApagaOcultarMontosCuandoElRequestLoOmite() {
+        Usuario usuario = Usuario.builder()
+                .id(17L)
+                .email("ana@example.com")
+                .nombre("Ana")
+                .ocultarMontos(true)
+                .build();
+        when(usuarioRepository.findById(17L)).thenReturn(Optional.of(usuario));
+        when(usuarioRepository.save(any(Usuario.class))).thenAnswer(i -> i.getArgument(0));
+
+        PerfilResponse response = perfilService.actualizar(17L, new PerfilActualizarRequest(
+                "Ana", "ana@example.com", "CLARO", "MXN", null, null, null));
+
+        assertTrue(usuario.isOcultarMontos(), "omitir la preferencia no debe apagarla");
+        assertTrue(response.ocultarMontos());
     }
 }

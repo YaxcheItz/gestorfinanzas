@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { FinanzasService } from '../../core/services/finanzas.service';
+import { PrivacidadService } from '../../core/services/privacidad.service';
 import { AsistenteComponent } from './asistente.component';
 
 describe('AsistenteComponent', () => {
@@ -56,6 +57,28 @@ describe('AsistenteComponent', () => {
     expect(finanzasService.verifyAiConnection).toHaveBeenCalledTimes(1);
     expect(fixture.nativeElement.textContent).toContain('Gemini está listo');
     expect(fixture.nativeElement.textContent).not.toContain('Probar conexión');
+  });
+
+  it('tapa solo los campos de dinero de la accion, no los identificadores', () => {
+    const privacidad = TestBed.inject(PrivacidadService);
+    const component = TestBed.createComponent(AsistenteComponent).componentInstance;
+
+    privacidad.aplicar(1, false);
+    expect(component.mostrarValor('monto', 250)).toBe('250');
+    expect(component.mostrarValor('transaccionId', 43)).toBe('43');
+
+    privacidad.aplicar(1, true);
+    expect(component.mostrarValor('monto', 250)).toBe('•••');
+    expect(component.mostrarValor('transaccionId', 43)).toBe('43');
+    expect(component.mostrarValor('descripcion', 'Comida')).toBe('Comida');
+  });
+
+  it('sigue informando la ausencia de un campo aunque este oculto', () => {
+    const privacidad = TestBed.inject(PrivacidadService);
+    privacidad.aplicar(1, true);
+    const component = TestBed.createComponent(AsistenteComponent).componentInstance;
+
+    expect(component.mostrarValor('monto', null)).toBe('Sin dato');
   });
 
   it('sends the message through the unified chat and shows the answer', () => {

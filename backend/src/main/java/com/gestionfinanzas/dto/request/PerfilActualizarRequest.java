@@ -26,5 +26,7 @@ public record PerfilActualizarRequest(
         @Size(max = 30, message = "El teléfono no puede superar 30 caracteres")
         String telefono,
 
-        Boolean notificacionesWhatsapp
+        Boolean notificacionesWhatsapp,
+
+        Boolean ocultarMontos
 ) {}

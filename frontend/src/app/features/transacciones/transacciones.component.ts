@@ -9,6 +9,8 @@ import { ConfirmDialogService } from '../../core/services/confirm-dialog.service
 import { CategoriaSelectorComponent } from '../../shared/components/categoria-selector/categoria-selector.component';
 import { MovimientoMobileCardComponent } from '../../shared/components/movimiento-mobile-card/movimiento-mobile-card.component';
 import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive';
+import { MontoPipe } from '../../core/pipes/monto.pipe';
+import { PrivacidadService } from '../../core/services/privacidad.service';
 import { resumenCuentaSelector } from '../../core/utils/cuenta-financiera';
 import {
   Categoria,
@@ -24,7 +26,7 @@ import {
 @Component({
   selector: 'app-transacciones',
   standalone: true,
-  imports: [CommonModule, FormsModule, CategoriaSelectorComponent, MovimientoMobileCardComponent, FocusTrapDirective],
+  imports: [CommonModule, FormsModule, CategoriaSelectorComponent, MovimientoMobileCardComponent, FocusTrapDirective, MontoPipe],
   template: `
     <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-5 sm:space-y-6">
 
@@ -225,11 +227,11 @@ import {
             <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div class="flex items-center justify-between">
                 <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Ingresos (Página)</span>
-                <span class="text-base font-bold text-emerald-600">+{{ resumen.ingresos | currency:resumen.moneda:'symbol':'1.2-2' }}</span>
+                <span class="text-base font-bold text-emerald-600">+{{ resumen.ingresos | monto:resumen.moneda:'symbol':'1.2-2' }}</span>
               </div>
               <div class="flex items-center justify-between">
                 <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Gastos (Página)</span>
-                <span class="text-base font-bold text-rose-600">-{{ resumen.gastos | currency:resumen.moneda:'symbol':'1.2-2' }}</span>
+                <span class="text-base font-bold text-rose-600">-{{ resumen.gastos | monto:resumen.moneda:'symbol':'1.2-2' }}</span>
               </div>
               <div class="flex items-center justify-between">
                 <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Balance Neto</span>
@@ -237,7 +239,7 @@ import {
                   [class.text-emerald-600]="resumen.balance >= 0"
                   [class.text-rose-600]="resumen.balance < 0"
                   class="text-base font-bold">
-                  {{ resumen.balance | currency:resumen.moneda:'symbol':'1.2-2' }}
+                  {{ resumen.balance | monto:resumen.moneda:'symbol':'1.2-2' }}
                 </span>
               </div>
             </div>
@@ -337,12 +339,12 @@ import {
                         [class.text-blue-600]="m.tipo === 'TRANSFERENCIA'"
                         [class.text-emerald-600]="m.tipo === 'SALDO_INICIAL'">
                       @if (m.tipo === 'TRANSFERENCIA') {
-                        -{{ m.monto | currency:m.moneda:'symbol':'1.2-2' }}
+                        -{{ m.monto | monto:m.moneda:'symbol':'1.2-2' }}
                         <span class="block text-xs font-medium text-slate-500">
-                          +{{ (m.montoDestino ?? m.monto) | currency:(m.monedaDestino ?? m.moneda):'symbol':'1.2-2' }}
+                          +{{ (m.montoDestino ?? m.monto) | monto:(m.monedaDestino ?? m.moneda):'symbol':'1.2-2' }}
                         </span>
                       } @else {
-                        {{ m.tipo === 'INGRESO' || m.tipo === 'SALDO_INICIAL' ? '+' : '-' }}{{ m.monto | currency:m.moneda:'symbol':'1.2-2' }}
+                        {{ m.tipo === 'INGRESO' || m.tipo === 'SALDO_INICIAL' ? '+' : '-' }}{{ m.monto | monto:m.moneda:'symbol':'1.2-2' }}
                       }
                     </td>
                     <td class="px-4 py-4 text-center">
@@ -567,7 +569,7 @@ import {
                         placeholder="Ej. 17.25" />
                       @if (formMonto && formTasaCambio && formTasaCambio > 0) {
                         <p class="mt-1 text-xs text-slate-500">
-                          Se depositarán {{ formMonto * formTasaCambio | currency:monedaCuenta(formCuentaDestinoId):'symbol':'1.2-2' }}.
+                          Se depositarán {{ formMonto * formTasaCambio | monto:monedaCuenta(formCuentaDestinoId):'symbol':'1.2-2' }}.
                         </p>
                       }
                     </div>
@@ -706,9 +708,10 @@ export class TransaccionesComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly finanzasService = inject(FinanzasService);
+  private readonly privacidad = inject(PrivacidadService);
   private readonly toastService = inject(ToastService);
   private readonly confirmDialogService = inject(ConfirmDialogService);
-  readonly resumenCuentaSelector = resumenCuentaSelector;
+  readonly resumenCuentaSelector = (cuenta: Cuenta) => resumenCuentaSelector(cuenta, this.privacidad.ocultarMontos());
 
   // Filtros Signals
   readonly filtroTipo = signal<TipoTransaccion | ''>('');

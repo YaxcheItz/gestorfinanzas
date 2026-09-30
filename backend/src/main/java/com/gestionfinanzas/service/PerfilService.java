@@ -40,6 +40,9 @@ public class PerfilService {
         if (request.notificacionesWhatsapp() != null) {
             usuario.setNotificacionesWhatsapp(request.notificacionesWhatsapp());
         }
+        if (request.ocultarMontos() != null) {
+            usuario.setOcultarMontos(request.ocultarMontos());
+        }
         return PerfilResponse.fromEntity(usuarioRepository.save(usuario));
     }
 

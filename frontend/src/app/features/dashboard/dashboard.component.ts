@@ -19,6 +19,8 @@ import { ConfirmDialogService } from '../../core/services/confirm-dialog.service
 import { PerfilService } from '../../core/services/perfil.service';
 import { CategoriaSelectorComponent } from '../../shared/components/categoria-selector/categoria-selector.component';
 import { MovimientoMobileCardComponent } from '../../shared/components/movimiento-mobile-card/movimiento-mobile-card.component';
+import { MontoPipe } from '../../core/pipes/monto.pipe';
+import { PrivacidadService } from '../../core/services/privacidad.service';
 import { resumenCuentaSelector } from '../../core/utils/cuenta-financiera';
 import {
   Categoria,
@@ -35,7 +37,7 @@ import {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, CategoriaSelectorComponent, MovimientoMobileCardComponent],
+  imports: [CommonModule, FormsModule, CategoriaSelectorComponent, MovimientoMobileCardComponent, MontoPipe],
   template: `
     <div class="dashboard-motion-scope max-w-7xl mx-auto flex flex-col px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-5 sm:space-y-8">
       
@@ -108,13 +110,13 @@ import {
                 </select>
               </div>
               <p class="dashboard-summary-amount relative mt-5 min-w-0 break-words text-2xl font-bold tracking-tight sm:text-4xl">
-                {{ (moneda.dineroDisponible ?? moneda.balanceTotal) | currency:moneda.moneda:'symbol':'1.2-2' }}
+                {{ (moneda.dineroDisponible ?? moneda.balanceTotal) | monto:moneda.moneda:'symbol':'1.2-2' }}
               </p>
               <div class="relative mt-6 grid grid-cols-2 gap-3 border-t border-white/15 pt-4">
                 <div>
                   <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-300">Patrimonio neto</p>
                   <p class="dashboard-summary-amount mt-1 min-w-0 break-words text-sm font-bold" [class.text-emerald-300]="moneda.balanceTotal >= 0" [class.text-rose-300]="moneda.balanceTotal < 0">
-                    {{ moneda.balanceTotal | currency:moneda.moneda:'symbol':'1.2-2' }}
+                    {{ moneda.balanceTotal | monto:moneda.moneda:'symbol':'1.2-2' }}
                   </p>
                 </div>
                 <div class="text-right">
@@ -131,7 +133,7 @@ import {
                   <p class="text-xs font-semibold text-slate-500">Ingresos del mes</p>
                 </div>
                 <p class="dashboard-summary-amount mt-3 min-w-0 break-words text-base font-bold text-emerald-700 sm:text-2xl">
-                  {{ moneda.ingresosMes | currency:moneda.moneda:'symbol':'1.2-2' }}
+                  {{ moneda.ingresosMes | monto:moneda.moneda:'symbol':'1.2-2' }}
                 </p>
               </article>
               <article class="rounded-2xl border border-rose-100 bg-white p-3 shadow-xs sm:p-5">
@@ -140,7 +142,7 @@ import {
                   <p class="text-xs font-semibold text-slate-500">Gastos del mes</p>
                 </div>
                 <p class="dashboard-summary-amount mt-3 min-w-0 break-words text-base font-bold text-rose-700 sm:text-2xl">
-                  {{ moneda.gastosMes | currency:moneda.moneda:'symbol':'1.2-2' }}
+                  {{ moneda.gastosMes | monto:moneda.moneda:'symbol':'1.2-2' }}
                 </p>
                 <p class="mt-1 text-xs text-slate-500">Ahorro: {{ moneda.tasaAhorro | number:'1.1-1' }}%</p>
               </article>
@@ -150,7 +152,7 @@ import {
                   <p class="text-xs font-semibold text-slate-500">Deuda en tarjetas</p>
                 </div>
                 <p class="dashboard-summary-amount mt-3 min-w-0 break-words text-base font-bold text-amber-700 sm:text-2xl">
-                  {{ deudaTarjetasActual() | currency:moneda.moneda:'symbol':'1.2-2' }}
+                  {{ deudaTarjetasActual() | monto:moneda.moneda:'symbol':'1.2-2' }}
                 </p>
               </article>
             </div>
@@ -179,22 +181,22 @@ import {
                   <div>
                     <p class="text-xs font-medium text-slate-500">Mes anterior</p>
                     <p class="mt-1 text-sm font-bold text-slate-800">
-                      {{ comparacionMoneda.gastosAnteriores | currency:moneda.moneda:'symbol':'1.2-2' }}
+                      {{ comparacionMoneda.gastosAnteriores | monto:moneda.moneda:'symbol':'1.2-2' }}
                     </p>
                   </div>
                   <div>
                     <p class="text-xs font-medium text-slate-500">Mes actual</p>
                     <p class="mt-1 text-sm font-bold text-slate-800">
-                      {{ comparacionMoneda.gastosActuales | currency:moneda.moneda:'symbol':'1.2-2' }}
+                      {{ comparacionMoneda.gastosActuales | monto:moneda.moneda:'symbol':'1.2-2' }}
                     </p>
                   </div>
                   <p class="col-span-2 text-xs font-semibold"
                      [class.text-rose-700]="comparacionMoneda.variacionGastos > 0"
                      [class.text-emerald-700]="comparacionMoneda.variacionGastos <= 0">
                     @if (comparacionMoneda.variacionGastos > 0) {
-                      Gastaste {{ comparacionMoneda.variacionGastos | currency:moneda.moneda:'symbol':'1.2-2' }} más
+                      Gastaste {{ comparacionMoneda.variacionGastos | monto:moneda.moneda:'symbol':'1.2-2' }} más
                     } @else if (comparacionMoneda.variacionGastos < 0) {
-                      Gastaste {{ -comparacionMoneda.variacionGastos | currency:moneda.moneda:'symbol':'1.2-2' }} menos
+                      Gastaste {{ -comparacionMoneda.variacionGastos | monto:moneda.moneda:'symbol':'1.2-2' }} menos
                     } @else {
                       Tus gastos se mantuvieron iguales
                     }
@@ -239,7 +241,7 @@ import {
                     {{ plantilla.categoriaNombre || (plantilla.tipo === 'INGRESO' ? 'Ingreso recurrente' : 'Gasto recurrente') }}
                   </p>
                   <p class="mt-1 text-sm font-bold text-slate-800">
-                    {{ plantilla.monto | currency:plantilla.moneda:'symbol':'1.2-2' }} · {{ plantilla.cuentaNombre }}
+                    {{ plantilla.monto | monto:plantilla.moneda:'symbol':'1.2-2' }} · {{ plantilla.cuentaNombre }}
                   </p>
                   <p class="mt-1 text-xs font-medium text-amber-900">
                     {{ plantilla.siguienteFecha <= fechaHoy() ? 'Pendiente de confirmar' : 'Próximo movimiento' }} · {{ plantilla.siguienteFecha }}
@@ -359,11 +361,11 @@ import {
               <div
                 class="w-44 h-44 rounded-full flex items-center justify-center shrink-0"
                 role="img"
-                [attr.aria-label]="'Distribución de gastos en ' + monedaAnalitica() + '. Total: ' + (gastosTotales() | currency:monedaAnalitica():'symbol':'1.2-2')"
+                [attr.aria-label]="'Distribución de gastos en ' + monedaAnalitica() + '. Total: ' + (gastosTotales() | monto:monedaAnalitica():'symbol':'1.2-2')"
                 [style.background]="donutGradient()">
                 <div class="w-28 h-28 rounded-full bg-white flex flex-col items-center justify-center text-center">
                   <span class="text-[11px] uppercase tracking-wide text-slate-400">Total</span>
-                  <span class="text-sm font-bold text-slate-900">{{ gastosTotales() | currency:monedaAnalitica():'symbol':'1.0-0' }}</span>
+                  <span class="text-sm font-bold text-slate-900">{{ gastosTotales() | monto:monedaAnalitica():'symbol':'1.0-0' }}</span>
                 </div>
               </div>
               <ul aria-label="Gastos por categoría e importe" class="w-full space-y-3">
@@ -374,7 +376,7 @@ import {
                       <span class="truncate">{{ categoria.categoriaNombre }}</span>
                     </span>
                     <span class="font-semibold text-slate-800 whitespace-nowrap">
-                      {{ categoria.monto | currency:monedaAnalitica():'symbol':'1.2-2' }}
+                      {{ categoria.monto | monto:monedaAnalitica():'symbol':'1.2-2' }}
                       <span class="font-normal text-slate-400">({{ categoria.monto / gastosTotales() | percent:'1.0-0' }})</span>
                     </span>
                   </li>
@@ -439,8 +441,8 @@ import {
                 @for (mes of barrasMensuales(); track mes.anio + '-' + mes.mes) {
                   <tr>
                     <th scope="row">{{ mes.etiqueta }} {{ mes.anio }}</th>
-                    <td>{{ mes.ingresos | currency:monedaAnalitica():'symbol':'1.2-2' }}</td>
-                    <td>{{ mes.gastos | currency:monedaAnalitica():'symbol':'1.2-2' }}</td>
+                    <td>{{ mes.ingresos | monto:monedaAnalitica():'symbol':'1.2-2' }}</td>
+                    <td>{{ mes.gastos | monto:monedaAnalitica():'symbol':'1.2-2' }}</td>
                   </tr>
                 }
               </tbody>
@@ -614,7 +616,7 @@ import {
                         placeholder="Ej. 17.25" />
                       @if (formMonto && formTasaCambio && formTasaCambio > 0) {
                         <p class="mt-1 text-xs text-slate-500">
-                          Se depositarán {{ formMonto * formTasaCambio | currency:monedaCuenta(formCuentaDestinoId):'symbol':'1.2-2' }}.
+                          Se depositarán {{ formMonto * formTasaCambio | monto:monedaCuenta(formCuentaDestinoId):'symbol':'1.2-2' }}.
                         </p>
                       }
                     </div>
@@ -756,8 +758,9 @@ export class DashboardComponent implements OnInit {
   private readonly toastService = inject(ToastService);
   private readonly confirmDialog = inject(ConfirmDialogService);
   private readonly perfilService = inject(PerfilService);
+  private readonly privacidad = inject(PrivacidadService);
   private readonly document = inject(DOCUMENT);
-  readonly resumenCuentaSelector = resumenCuentaSelector;
+  readonly resumenCuentaSelector = (cuenta: Cuenta) => resumenCuentaSelector(cuenta, this.privacidad.ocultarMontos());
   private monedaPreferidaAplicada = false;
   private elementoConFocoPrevio: HTMLElement | null = null;
   private elementoDialogo: HTMLDivElement | null = null;

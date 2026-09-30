@@ -3,6 +3,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AiActionProposal, AiChatMessage, AiConnectionStatus } from '../../core/models/ai.models';
 import { FinanzasService } from '../../core/services/finanzas.service';
+import { PrivacidadService } from '../../core/services/privacidad.service';
 
 interface ChatEntry extends AiChatMessage {
   action?: AiActionProposal;
@@ -72,7 +73,7 @@ interface ChatEntry extends AiChatMessage {
                         @for (field of action.data | keyvalue; track field.key) {
                           <div class="grid grid-cols-[minmax(0,1fr)_auto] gap-3">
                             <dt class="font-medium">{{ etiquetaCampo(field.key) }}</dt>
-                            <dd class="break-all text-right">{{ mostrarValor(field.value) }}</dd>
+                            <dd class="break-all text-right">{{ mostrarValor(field.key, field.value) }}</dd>
                           </div>
                         }
                       </dl>
@@ -138,6 +139,7 @@ interface ChatEntry extends AiChatMessage {
 })
 export class AsistenteComponent implements OnInit {
   private readonly finanzasService = inject(FinanzasService);
+  private readonly privacidad = inject(PrivacidadService);
   readonly estado = signal<AiConnectionStatus | null>(null);
   readonly conectado = signal(false);
   readonly cargando = signal(true);
@@ -293,8 +295,17 @@ export class AsistenteComponent implements OnInit {
       .replace(/^./, character => character.toUpperCase());
   }
 
-  mostrarValor(value: unknown): string {
+  /**
+   * Campos que el asistente propone y que son dinero. Se tapan por nombre y no
+   * por tipo de valor: las acciones tambien traen identificadores y fechas, y
+   * esos no son secretos que haya que esconder.
+   */
+  private static readonly CAMPOS_MONTO =
+    /^(monto|saldo|total|importe|precio|deuda|limite|disponible|ingresos|gastos|balance|patrimonio)/i;
+
+  mostrarValor(campo: string, value: unknown): string {
     if (value === null || value === undefined || value === '') return 'Sin dato';
+    if (this.privacidad.ocultarMontos() && AsistenteComponent.CAMPOS_MONTO.test(campo)) return '•••';
     if (typeof value === 'object') return JSON.stringify(value);
     return String(value);
   }

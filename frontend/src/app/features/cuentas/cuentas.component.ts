@@ -8,12 +8,14 @@ import { FinanzasService } from '../../core/services/finanzas.service';
 import { mensajeDeError } from '../../core/utils/mensaje-error';
 import { ToastService } from '../../core/services/toast.service';
 import { creditoDisponibleCuenta, deudaActualCuenta } from '../../core/utils/cuenta-financiera';
+import { MontoPipe } from '../../core/pipes/monto.pipe';
+import { PrivacidadService } from '../../core/services/privacidad.service';
 import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive';
 
 @Component({
   selector: 'app-cuentas',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, FocusTrapDirective],
+  imports: [CommonModule, FormsModule, RouterLink, FocusTrapDirective, MontoPipe],
   template: `
     <main class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-4 sm:space-y-6">
       <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
@@ -108,14 +110,14 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
                   <div>
                     <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Deuda actual</p>
                     <p class="mt-1 text-lg font-bold text-slate-900">
-                      {{ deudaActualCuenta(cuenta) | currency:cuenta.moneda:'symbol':'1.2-2' }}
+                      {{ deudaActualCuenta(cuenta) | monto:cuenta.moneda:'symbol':'1.2-2' }}
                     </p>
                   </div>
                   <div class="text-right">
                     <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Disponible</p>
                     @if (cuenta.limiteCredito != null) {
                       <p class="mt-1 text-lg font-bold text-emerald-700">
-                        {{ creditoDisponibleCuenta(cuenta) ?? 0 | currency:cuenta.moneda:'symbol':'1.2-2' }}
+                        {{ creditoDisponibleCuenta(cuenta) ?? 0 | monto:cuenta.moneda:'symbol':'1.2-2' }}
                       </p>
                     } @else {
                       <p class="mt-1 text-xs font-semibold text-amber-700">Configura el límite</p>
@@ -124,7 +126,7 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
                 </div>
                 @if (cuenta.limiteCredito != null) {
                   <p class="mt-2 text-xs text-slate-500">
-                    Límite {{ cuenta.limiteCredito | currency:cuenta.moneda:'symbol':'1.2-2' }}
+                    Límite {{ cuenta.limiteCredito | monto:cuenta.moneda:'symbol':'1.2-2' }}
                     @if (cuenta.diaCorte != null && cuenta.diaPago != null) {
                       &bull; Corte día {{ cuenta.diaCorte }} &bull; Pago día {{ cuenta.diaPago }}
                     }
@@ -133,14 +135,14 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
               } @else {
                 <p class="mt-4 sm:mt-6 text-xs font-semibold uppercase tracking-wider text-slate-400">Saldo actual</p>
                 <p class="mt-1 text-xl sm:text-2xl font-bold text-slate-900">
-                  {{ cuenta.saldoActual | currency:cuenta.moneda:'symbol':'1.2-2' }}
+                  {{ cuenta.saldoActual | monto:cuenta.moneda:'symbol':'1.2-2' }}
                 </p>
               }
               @if (cuenta.cashbackPorcentaje && cuenta.cashbackPorcentaje > 0) {
                 <p class="cashback-badge mt-2 flex w-fit max-w-full flex-wrap items-center gap-x-1.5 gap-y-0.5 rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-semibold leading-relaxed text-emerald-700">
                   <span>Cashback {{ cuenta.cashbackPorcentaje }}%</span>
                   @if (cuenta.cashbackLimiteMensual) {
-                    <span>&bull; hasta {{ cuenta.cashbackLimiteMensual | currency:cuenta.moneda:'symbol':'1.0-2' }}/mes</span>
+                    <span>&bull; hasta {{ cuenta.cashbackLimiteMensual | monto:cuenta.moneda:'symbol':'1.0-2' }}/mes</span>
                   }
                 </p>
               }
@@ -465,7 +467,17 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
   `
 })
 export class CuentasComponent implements OnInit {
+  /**
+   * El texto de confirmación se arma en TypeScript, fuera de las plantillas, asi
+   * que no puede pasar por el pipe y necesita el mismo trato de privacidad.
+   */
+  private saldoEnTexto(cuenta: Cuenta): string {
+    if (this.privacidad.ocultarMontos()) return 'oculto';
+    return `${cuenta.saldoActual} ${cuenta.moneda}`;
+  }
+
   private readonly finanzasService = inject(FinanzasService);
+  private readonly privacidad = inject(PrivacidadService);
   private readonly toastService = inject(ToastService);
   private readonly confirmDialog = inject(ConfirmDialogService);
 
@@ -677,7 +689,7 @@ export class CuentasComponent implements OnInit {
   async desactivar(cuenta: Cuenta): Promise<void> {
     const confirmado = await this.confirmDialog.confirm({
       title: 'Desactivar cuenta',
-      message: `Se ocultará "${cuenta.nombre}" de las cuentas activas y no podrás registrar nuevos movimientos en ella. Su saldo actual (${cuenta.saldoActual} ${cuenta.moneda}) dejará de incluirse en el balance total. El historial se conservará y podrás reactivarla desde "Inactivas". ¿Deseas continuar?`,
+      message: `Se ocultará "${cuenta.nombre}" de las cuentas activas y no podrás registrar nuevos movimientos en ella. Su saldo actual (${this.saldoEnTexto(cuenta)}) dejará de incluirse en el balance total. El historial se conservará y podrás reactivarla desde "Inactivas". ¿Deseas continuar?`,
       confirmText: 'Desactivar',
       cancelText: 'Cancelar',
       type: 'warning'

@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { Cuenta } from '../../core/models/finanzas.models';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
@@ -40,6 +41,9 @@ describe('CuentasComponent', () => {
     TestBed.configureTestingModule({
       imports: [CuentasComponent],
       providers: [
+        // El componente importa RouterLink, que necesita el router y la ruta
+        // activa aunque la prueba no navegue a ningun lado.
+        provideRouter([]),
         { provide: FinanzasService, useValue: finanzasService },
         { provide: ToastService, useValue: { success: vi.fn(), error: vi.fn() } },
         { provide: ConfirmDialogService, useValue: { confirm: vi.fn(() => Promise.resolve(true)) } }
@@ -235,6 +239,18 @@ describe('CuentasComponent', () => {
     expect(deudaActualCuenta(tarjeta)).toBe(750);
     expect(creditoDisponibleCuenta(tarjeta)).toBe(1250);
     expect(resumenCuentaSelector(tarjeta)).toContain('Disponible');
+  });
+
+  it('tapa el resumen de la cuenta cuando se pide privacidad', () => {
+    const tarjeta: Cuenta = {
+      ...cuenta,
+      tipo: 'CREDITO',
+      saldoActual: -750,
+      limiteCredito: 2000
+    };
+
+    expect(resumenCuentaSelector(tarjeta, true)).toBe('•••');
+    expect(resumenCuentaSelector(tarjeta, false)).toContain('1,250');
   });
 
   it('treats existing debit accounts as investments when editing', () => {

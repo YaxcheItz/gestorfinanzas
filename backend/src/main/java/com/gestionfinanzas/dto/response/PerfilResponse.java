@@ -9,10 +9,11 @@ public record PerfilResponse(
         String tema,
         String monedaPredeterminada,
         String telefono,
-        boolean notificacionesWhatsapp
+        boolean notificacionesWhatsapp,
+        boolean ocultarMontos
 ) {
     public PerfilResponse(Long id, String nombre, String email, String tema, String monedaPredeterminada) {
-        this(id, nombre, email, tema, monedaPredeterminada, null, false);
+        this(id, nombre, email, tema, monedaPredeterminada, null, false, false);
     }
 
     public static PerfilResponse fromEntity(Usuario usuario) {
@@ -23,7 +24,8 @@ public record PerfilResponse(
                 usuario.getTemaPreferido(),
                 usuario.getMonedaPreferida(),
                 usuario.getTelefono(),
-                usuario.isNotificacionesWhatsapp()
+                usuario.isNotificacionesWhatsapp(),
+                usuario.isOcultarMontos()
         );
     }
 }

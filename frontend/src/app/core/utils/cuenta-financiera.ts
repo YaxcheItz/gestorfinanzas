@@ -11,7 +11,16 @@ export function creditoDisponibleCuenta(
   return Math.min(cuenta.limiteCredito, Math.max(0, cuenta.limiteCredito + cuenta.saldoActual));
 }
 
-export function resumenCuentaSelector(cuenta: Cuenta): string {
+/**
+ * Resumen de una cuenta para los `<option>` de los selectores.
+ *
+ * Este archivo es puro y no puede inyectar `PrivacidadService`, asi que quien
+ * llama pasa el valor de la preferencia. Sin ese argumento el comportamiento es
+ * el de siempre, con las cifras a la vista.
+ */
+export function resumenCuentaSelector(cuenta: Cuenta, ocultarMontos = false): string {
+  if (ocultarMontos) return '•••';
+
   const formatoMoneda = new Intl.NumberFormat('es-MX', {
     style: 'currency',
     currency: cuenta.moneda,

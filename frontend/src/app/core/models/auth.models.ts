@@ -12,6 +12,7 @@ export interface Perfil {
   monedaPredeterminada: string;
   telefono?: string | null;
   notificacionesWhatsapp?: boolean;
+  ocultarMontos?: boolean;
 }
 
 export interface PerfilActualizarPayload {
@@ -21,6 +22,7 @@ export interface PerfilActualizarPayload {
   monedaPredeterminada: string;
   telefono?: string | null;
   notificacionesWhatsapp?: boolean;
+  ocultarMontos?: boolean;
 }
 
 export interface CambiarPasswordPayload {

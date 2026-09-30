@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AsientoContable, BackfillLibroDiario, ConciliacionCuenta, Cuenta, PageResponse, TipoTransaccion } from '../../core/models/finanzas.models';
 import { FinanzasService } from '../../core/services/finanzas.service';
+import { MontoPipe } from '../../core/pipes/monto.pipe';
 
 @Component({
   selector: 'app-libro-diario',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, MontoPipe],
   template: `
     <main class="mx-auto max-w-5xl space-y-5 px-3 py-5 sm:space-y-7 sm:px-6 sm:py-8">
       <header>
@@ -120,7 +121,7 @@ import { FinanzasService } from '../../core/services/finanzas.service';
                 <thead class="text-xs uppercase text-slate-500"><tr><th scope="col" class="py-2">Moneda</th><th scope="col" class="py-2 text-right">Debe</th><th scope="col" class="py-2 text-right">Haber</th><th scope="col" class="py-2 text-right">Diferencia</th></tr></thead>
                 <tbody class="divide-y divide-slate-100">
                   @for (moneda of Object.keys(resumen.conciliacion); track moneda) {
-                    <tr><th scope="row" class="py-2 font-medium">{{ moneda }}</th><td class="py-2 text-right tabular-nums">{{ resumen.conciliacion[moneda].debe | currency:moneda:'symbol':'1.2-2' }}</td><td class="py-2 text-right tabular-nums">{{ resumen.conciliacion[moneda].haber | currency:moneda:'symbol':'1.2-2' }}</td><td class="py-2 text-right font-semibold tabular-nums">{{ resumen.conciliacion[moneda].diferencia | currency:moneda:'symbol':'1.2-2' }}</td></tr>
+                    <tr><th scope="row" class="py-2 font-medium">{{ moneda }}</th><td class="py-2 text-right tabular-nums">{{ resumen.conciliacion[moneda].debe | monto:moneda:'symbol':'1.2-2' }}</td><td class="py-2 text-right tabular-nums">{{ resumen.conciliacion[moneda].haber | monto:moneda:'symbol':'1.2-2' }}</td><td class="py-2 text-right font-semibold tabular-nums">{{ resumen.conciliacion[moneda].diferencia | monto:moneda:'symbol':'1.2-2' }}</td></tr>
                   }
                 </tbody>
               </table>
@@ -133,7 +134,7 @@ import { FinanzasService } from '../../core/services/finanzas.service';
                 <thead class="text-xs uppercase text-slate-500"><tr><th scope="col" class="py-2">Cuenta</th><th scope="col" class="py-2 text-right">Operativo</th><th scope="col" class="py-2 text-right">Libro proyectado</th><th scope="col" class="py-2 text-right">Diferencia</th><th scope="col" class="py-2 text-right">Revisión</th></tr></thead>
                 <tbody class="divide-y divide-slate-100">
                   @for (cuenta of resumen.conciliacionCuentas; track cuenta.cuentaId) {
-                    <tr><th scope="row" class="py-2 font-medium">{{ cuenta.cuentaNombre }} <span class="font-normal text-slate-500">· {{ cuenta.moneda }}</span></th><td class="py-2 text-right tabular-nums">{{ cuenta.saldoOperativo | currency:cuenta.moneda:'symbol':'1.2-2' }}</td><td class="py-2 text-right tabular-nums">{{ cuenta.saldoLibroProyectado | currency:cuenta.moneda:'symbol':'1.2-2' }}</td><td class="py-2 text-right font-semibold tabular-nums" [class.text-rose-700]="cuenta.diferencia !== 0" [class.text-emerald-700]="cuenta.diferencia === 0">{{ cuenta.diferencia | currency:cuenta.moneda:'symbol':'1.2-2' }}</td><td class="py-2 text-right">@if (cuenta.diferencia === 0) { <span class="text-xs font-semibold text-emerald-700">Conciliada</span> } @else { <div class="flex min-w-44 flex-col items-end gap-1"><a routerLink="/transacciones" [queryParams]="{ cuentaId: cuenta.cuentaId }" class="inline-flex min-h-10 items-center rounded-lg px-2 text-xs font-semibold text-emerald-800 underline hover:bg-emerald-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:text-emerald-300">Revisar movimientos</a><button type="button" [attr.aria-pressed]="cuentaRevisada(cuenta)" [attr.aria-label]="(cuentaRevisada(cuenta) ? 'Desmarcar revisión de ' : 'Marcar como revisada: ') + cuenta.cuentaNombre" (click)="alternarRevisionCuenta(cuenta)" class="min-h-10 rounded-lg px-2 text-xs font-semibold focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600" [class.text-emerald-800]="cuentaRevisada(cuenta)" [class.text-slate-600]="!cuentaRevisada(cuenta)">{{ cuentaRevisada(cuenta) ? 'Revisada · quitar marca' : 'Marcar revisada' }}</button></div> }</td></tr>
+                    <tr><th scope="row" class="py-2 font-medium">{{ cuenta.cuentaNombre }} <span class="font-normal text-slate-500">· {{ cuenta.moneda }}</span></th><td class="py-2 text-right tabular-nums">{{ cuenta.saldoOperativo | monto:cuenta.moneda:'symbol':'1.2-2' }}</td><td class="py-2 text-right tabular-nums">{{ cuenta.saldoLibroProyectado | monto:cuenta.moneda:'symbol':'1.2-2' }}</td><td class="py-2 text-right font-semibold tabular-nums" [class.text-rose-700]="cuenta.diferencia !== 0" [class.text-emerald-700]="cuenta.diferencia === 0">{{ cuenta.diferencia | monto:cuenta.moneda:'symbol':'1.2-2' }}</td><td class="py-2 text-right">@if (cuenta.diferencia === 0) { <span class="text-xs font-semibold text-emerald-700">Conciliada</span> } @else { <div class="flex min-w-44 flex-col items-end gap-1"><a routerLink="/transacciones" [queryParams]="{ cuentaId: cuenta.cuentaId }" class="inline-flex min-h-10 items-center rounded-lg px-2 text-xs font-semibold text-emerald-800 underline hover:bg-emerald-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:text-emerald-300">Revisar movimientos</a><button type="button" [attr.aria-pressed]="cuentaRevisada(cuenta)" [attr.aria-label]="(cuentaRevisada(cuenta) ? 'Desmarcar revisión de ' : 'Marcar como revisada: ') + cuenta.cuentaNombre" (click)="alternarRevisionCuenta(cuenta)" class="min-h-10 rounded-lg px-2 text-xs font-semibold focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600" [class.text-emerald-800]="cuentaRevisada(cuenta)" [class.text-slate-600]="!cuentaRevisada(cuenta)">{{ cuentaRevisada(cuenta) ? 'Revisada · quitar marca' : 'Marcar revisada' }}</button></div> }</td></tr>
                   }
                 </tbody>
               </table>
@@ -220,10 +221,10 @@ import { FinanzasService } from '../../core/services/finanzas.service';
                           </span>
                         </th>
                         <td class="whitespace-nowrap px-4 py-3 text-right tabular-nums text-slate-800">
-                          {{ linea.lado === 'DEBE' ? (linea.monto | currency:linea.moneda:'symbol':'1.2-2') : '—' }}
+                          {{ linea.lado === 'DEBE' ? (linea.monto | monto:linea.moneda:'symbol':'1.2-2') : '—' }}
                         </td>
                         <td class="whitespace-nowrap px-4 py-3 text-right tabular-nums text-slate-800 sm:px-5">
-                          {{ linea.lado === 'HABER' ? (linea.monto | currency:linea.moneda:'symbol':'1.2-2') : '—' }}
+                          {{ linea.lado === 'HABER' ? (linea.monto | monto:linea.moneda:'symbol':'1.2-2') : '—' }}
                         </td>
                       </tr>
                     }

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { FinanzasService } from '../../core/services/finanzas.service';
 import { ToastService } from '../../core/services/toast.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
+import { MontoPipe } from '../../core/pipes/monto.pipe';
 import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive';
 import {
   Categoria,
@@ -16,7 +17,7 @@ import {
 @Component({
   selector: 'app-presupuestos',
   standalone: true,
-  imports: [CommonModule, FormsModule, FocusTrapDirective],
+  imports: [CommonModule, FormsModule, FocusTrapDirective, MontoPipe],
   template: `
     <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-5 sm:space-y-8">
       
@@ -87,9 +88,9 @@ import {
           <article class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs">
             <h2 class="mb-4 text-xs font-bold uppercase tracking-wider text-slate-500">{{ moneda.moneda }}</h2>
             <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-              <div><p class="text-xs text-slate-500">Presupuestado</p><p class="mt-1 text-base sm:text-xl font-bold text-slate-900 break-words">{{ moneda.totalPresupuestado | currency:moneda.moneda:'symbol':'1.2-2' }}</p></div>
-              <div><p class="text-xs text-slate-500">Gastado</p><p class="mt-1 text-base sm:text-xl font-bold text-rose-600 break-words">{{ moneda.totalGastado | currency:moneda.moneda:'symbol':'1.2-2' }}</p></div>
-              <div><p class="text-xs text-slate-500">Disponible</p><p class="mt-1 text-base sm:text-xl font-bold break-words" [class.text-emerald-600]="moneda.totalDisponible >= 0" [class.text-rose-600]="moneda.totalDisponible < 0">{{ moneda.totalDisponible | currency:moneda.moneda:'symbol':'1.2-2' }}</p></div>
+              <div><p class="text-xs text-slate-500">Presupuestado</p><p class="mt-1 text-base sm:text-xl font-bold text-slate-900 break-words">{{ moneda.totalPresupuestado | monto:moneda.moneda:'symbol':'1.2-2' }}</p></div>
+              <div><p class="text-xs text-slate-500">Gastado</p><p class="mt-1 text-base sm:text-xl font-bold text-rose-600 break-words">{{ moneda.totalGastado | monto:moneda.moneda:'symbol':'1.2-2' }}</p></div>
+              <div><p class="text-xs text-slate-500">Disponible</p><p class="mt-1 text-base sm:text-xl font-bold break-words" [class.text-emerald-600]="moneda.totalDisponible >= 0" [class.text-rose-600]="moneda.totalDisponible < 0">{{ moneda.totalDisponible | monto:moneda.moneda:'symbol':'1.2-2' }}</p></div>
               <div><p class="text-xs text-slate-500">Consumo</p><p class="mt-1 text-base sm:text-xl font-bold text-violet-600">{{ moneda.porcentajeConsumido | number:'1.1-1' }}%</p></div>
             </div>
           </article>
@@ -186,8 +187,8 @@ import {
                 <!-- Barra de Progreso y Montos -->
                 <div class="space-y-2">
                   <div class="flex items-center justify-between text-xs">
-                    <span class="text-slate-500 font-medium">Gastado: {{ p.montoGastado | currency:p.moneda:'symbol':'1.2-2' }}</span>
-                    <span class="font-bold text-slate-800">Meta: {{ p.montoLimite | currency:p.moneda:'symbol':'1.2-2' }}</span>
+                    <span class="text-slate-500 font-medium">Gastado: {{ p.montoGastado | monto:p.moneda:'symbol':'1.2-2' }}</span>
+                    <span class="font-bold text-slate-800">Meta: {{ p.montoLimite | monto:p.moneda:'symbol':'1.2-2' }}</span>
                   </div>
 
                   <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
@@ -201,7 +202,7 @@ import {
                   <div class="flex items-center justify-between text-xs pt-1">
                     <span 
                       [class]="p.montoDisponible >= 0 ? 'text-slate-500' : 'text-rose-600 font-bold'">
-                      {{ p.montoDisponible >= 0 ? 'Disponible: ' : 'Excedido por: ' }}{{ (p.montoDisponible >= 0 ? p.montoDisponible : -p.montoDisponible) | currency:p.moneda:'symbol':'1.2-2' }}
+                      {{ p.montoDisponible >= 0 ? 'Disponible: ' : 'Excedido por: ' }}{{ (p.montoDisponible >= 0 ? p.montoDisponible : -p.montoDisponible) | monto:p.moneda:'symbol':'1.2-2' }}
                     </span>
                     <span class="font-bold text-slate-700">
                       {{ p.porcentajeConsumido | number:'1.0-0' }}%

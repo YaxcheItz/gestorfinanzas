@@ -2,6 +2,8 @@
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { PerfilService } from '../../../core/services/perfil.service';
+import { PrivacidadService } from '../../../core/services/privacidad.service';
 
 @Component({
   selector: 'app-navbar',
@@ -41,6 +43,19 @@ import { AuthService } from '../../../core/services/auth.service';
             </nav>
 
             <div class="z-10 ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2 xl:ml-0">
+              <button
+                type="button"
+                (click)="alternarOcultarMontos()"
+                [attr.aria-pressed]="privacidad.ocultarMontos()"
+                [attr.aria-label]="privacidad.ocultarMontos() ? 'Mostrar montos' : 'Ocultar montos'"
+                [title]="privacidad.ocultarMontos() ? 'Mostrar montos' : 'Ocultar montos'"
+                class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-300 bg-white text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white">
+                @if (privacidad.ocultarMontos()) {
+                  <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/></svg>
+                } @else {
+                  <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                }
+              </button>
               <a routerLink="/configuracion" routerLinkActive="text-emerald-700 dark:text-emerald-300" [ariaCurrentWhenActive]="'page'" aria-label="Perfil" title="Perfil" class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-300 bg-white text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white">
                 <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="8" r="3.5" stroke-width="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 20a7 7 0 0114 0"/></svg>
               </a>
@@ -73,6 +88,15 @@ import { AuthService } from '../../../core/services/auth.service';
             <nav id="nav-more-menu-mobile" aria-label="Más destinos" class="nav-more-menu fixed inset-x-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-50 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl xl:hidden dark:border-slate-700 dark:bg-slate-900">
               <a routerLink="/libro-diario" routerLinkActive="bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200" [ariaCurrentWhenActive]="'page'" (click)="closeMore()" class="flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800"><svg aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><use href="navigation-icons.svg#ledger"/></svg>Libro diario</a>
               <a routerLink="/transacciones" routerLinkActive="bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200" [ariaCurrentWhenActive]="'page'" (click)="closeMore()" class="flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800"><svg aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><use href="navigation-icons.svg#movements"/></svg>Transacciones</a>
+              <button type="button" (click)="alternarOcultarMontos(); closeMore()" class="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800">
+                @if (privacidad.ocultarMontos()) {
+                  <svg aria-hidden="true" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/></svg>
+                  Mostrar montos
+                } @else {
+                  <svg aria-hidden="true" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  Ocultar montos
+                }
+              </button>
             </nav>
           }
         }
@@ -82,8 +106,12 @@ import { AuthService } from '../../../core/services/auth.service';
 })
 export class NavbarComponent {
   readonly authService = inject(AuthService);
+  readonly privacidad = inject(PrivacidadService);
+  private readonly perfilService = inject(PerfilService);
   private readonly router = inject(Router);
   readonly moreOpen = signal(false);
+
+  alternarOcultarMontos(): void { this.perfilService.alternarOcultarMontos(); }
 
   toggleMore(): void { this.moreOpen.update(open => !open); }
   closeMore(): void { this.moreOpen.set(false); }

@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, HostBinding, HostListener, Input, Output, Directive } from '@angular/core';
 import { Transaccion } from '../../../core/models/finanzas.models';
+import { MontoPipe } from '../../../core/pipes/monto.pipe';
 
 @Directive({
   selector: '[appSwipeActions]',
@@ -62,7 +63,7 @@ export class SwipeActionsDirective {
 @Component({
   selector: 'app-movimiento-mobile-card',
   standalone: true,
-  imports: [CommonModule, SwipeActionsDirective],
+  imports: [CommonModule, SwipeActionsDirective, MontoPipe],
   template: `
     <article
       appSwipeActions
@@ -139,11 +140,11 @@ export class SwipeActionsDirective {
                   [class.text-rose-600]="movimiento.tipo === 'GASTO'"
                   [class.text-blue-600]="movimiento.tipo === 'TRANSFERENCIA'"
                   class="text-sm font-bold">
-                  {{ movimiento.tipo === 'INGRESO' || movimiento.tipo === 'SALDO_INICIAL' ? '+' : movimiento.tipo === 'GASTO' ? '−' : '' }}{{ movimiento.monto | currency:movimiento.moneda:'symbol':'1.2-2' }}
+                  {{ movimiento.tipo === 'INGRESO' || movimiento.tipo === 'SALDO_INICIAL' ? '+' : movimiento.tipo === 'GASTO' ? '−' : '' }}{{ movimiento.monto | monto:movimiento.moneda:'symbol':'1.2-2' }}
                 </p>
                 @if (movimiento.tipo === 'TRANSFERENCIA') {
                   <p class="text-xs font-semibold text-blue-600">
-                    +{{ (movimiento.montoDestino ?? movimiento.monto) | currency:(movimiento.monedaDestino ?? movimiento.moneda):'symbol':'1.2-2' }}
+                    +{{ (movimiento.montoDestino ?? movimiento.monto) | monto:(movimiento.monedaDestino ?? movimiento.moneda):'symbol':'1.2-2' }}
                   </p>
                 }
               </div>

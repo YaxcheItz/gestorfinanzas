@@ -59,6 +59,10 @@ public class Usuario {
     @Builder.Default
     private boolean notificacionesWhatsapp = false;
 
+    @Column(name = "ocultar_montos", nullable = false, columnDefinition = "boolean not null default false")
+    @Builder.Default
+    private boolean ocultarMontos = false;
+
     @CreationTimestamp
     @Column(name = "fecha_creacion", updatable = false)
     private LocalDateTime fechaCreacion;

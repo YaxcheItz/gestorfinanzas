@@ -7,6 +7,7 @@ import { ConfirmDialogService } from '../../core/services/confirm-dialog.service
 import { FinanzasService } from '../../core/services/finanzas.service';
 import { PerfilService } from '../../core/services/perfil.service';
 import { ToastService } from '../../core/services/toast.service';
+import { MontoPipe } from '../../core/pipes/monto.pipe';
 import { RestauracionRespaldoPreview } from '../../core/models/auth.models';
 import {
   MONEDAS_DISPONIBLES,
@@ -16,7 +17,7 @@ import {
 @Component({
   selector: 'app-configuracion',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, MontoPipe],
   template: `
     <main class="mx-auto max-w-4xl space-y-5 px-3 py-5 sm:space-y-7 sm:px-6 sm:py-8">
       <header class="flex min-w-0 items-center gap-3 sm:gap-4">
@@ -88,6 +89,16 @@ import {
               }
             </select>
           </label>
+
+          <div class="flex items-center gap-3">
+            <input id="ocultar-montos" type="checkbox" name="ocultarMontos" [(ngModel)]="ocultarMontos" class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" />
+            <label for="ocultar-montos" class="cursor-pointer text-xs font-semibold text-slate-700">
+              Ocultar montos en toda la aplicaci&oacute;n
+              <span class="mt-0.5 block font-normal text-slate-500">
+                Sustituye las cifras por puntos suspensivos. &Uacute;til para mostrar la pantalla en p&uacute;blico. Los porcentajes de las gr&aacute;ficas siguen visibles.
+              </span>
+            </label>
+          </div>
 
           <div class="flex justify-end border-t border-slate-100 pt-4">
             <button type="submit" [disabled]="guardandoPerfil() || !perfilService.perfil()" class="min-h-11 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">
@@ -284,7 +295,7 @@ import {
                       </span>
                     </div>
                     <p class="mt-1 text-xs text-slate-500">
-                      {{ plantilla.monto | currency:plantilla.moneda:'symbol':'1.2-2' }} · {{ frecuenciaTexto(plantilla.frecuencia) }} · {{ plantilla.cuentaNombre }}
+                      {{ plantilla.monto | monto:plantilla.moneda:'symbol':'1.2-2' }} · {{ frecuenciaTexto(plantilla.frecuencia) }} · {{ plantilla.cuentaNombre }}
                     </p>
                     <p class="mt-1 text-xs font-medium" [class.text-amber-700]="plantilla.activa && plantilla.siguienteFecha <= hoy" [class.text-slate-500]="!plantilla.activa || plantilla.siguienteFecha > hoy">
                       {{ plantilla.siguienteFecha <= hoy && plantilla.activa ? 'Pendiente de confirmar' : 'Siguiente fecha' }}: {{ plantilla.siguienteFecha }}
@@ -417,6 +428,7 @@ export class ConfiguracionComponent implements OnInit {
   monedaPredeterminada = 'MXN';
   telefono = '';
   notificacionesWhatsapp = false;
+  ocultarMontos = false;
   passwordActual = '';
   passwordNueva = '';
   passwordBorrado = '';
@@ -443,6 +455,7 @@ export class ConfiguracionComponent implements OnInit {
       this.monedaPredeterminada = perfil.monedaPredeterminada;
       this.telefono = perfil.telefono ?? '';
       this.notificacionesWhatsapp = perfil.notificacionesWhatsapp ?? false;
+      this.ocultarMontos = perfil.ocultarMontos ?? false;
     });
   }
 
@@ -463,7 +476,8 @@ export class ConfiguracionComponent implements OnInit {
       tema: this.tema,
       monedaPredeterminada: this.monedaPredeterminada,
       telefono: this.telefono.trim() || null,
-      notificacionesWhatsapp: this.notificacionesWhatsapp
+      notificacionesWhatsapp: this.notificacionesWhatsapp,
+      ocultarMontos: this.ocultarMontos
     }).subscribe({
       next: response => {
         this.guardandoPerfil.set(false);
