@@ -107,7 +107,14 @@ export class PerfilService {
     this.perfil.set(perfil);
     this.aplicarTema(perfil.tema);
     this.document.defaultView?.localStorage.setItem(`kaptal_tema_${perfil.id}`, perfil.tema);
-    this.privacidad.aplicar(perfil.id, !!perfil.ocultarMontos);
+
+    // Solo se adopta la preferencia si el servidor la menciona. Un backend que
+    // todavia no la conoce devuelve el perfil sin el campo, y asumir false
+    // desharia el clic del usuario justo despues de aplicarlo, que es lo que
+    // se veía: los montos se tapaban y un segundo después volvían a salir.
+    if (perfil.ocultarMontos !== undefined) {
+      this.privacidad.aplicar(perfil.id, perfil.ocultarMontos);
+    }
   }
 
   private aplicarTema(tema: Perfil['tema']): void {
