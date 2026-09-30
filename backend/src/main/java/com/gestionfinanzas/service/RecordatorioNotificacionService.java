@@ -40,7 +40,7 @@ public class RecordatorioNotificacionService {
         int notificacionesEnviadas = 0;
 
         // 1. Tarjetas de crédito: Fecha de Corte y Fecha Límite de Pago
-        List<Cuenta> tarjetasCredito = cuentaRepository.findByActivoTrueAndTipo(TipoCuenta.CREDITO);
+        List<Cuenta> tarjetasCredito = cuentaRepository.findActivasConUsuarioPorTipo(TipoCuenta.CREDITO);
         for (Cuenta cuenta : tarjetasCredito) {
             Usuario usuario = cuenta.getUsuario();
             if (!usuarioAceptaWhatsApp(usuario)) {
