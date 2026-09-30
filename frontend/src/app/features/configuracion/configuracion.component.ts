@@ -378,7 +378,9 @@ export class ConfiguracionComponent implements OnInit {
       nombre: this.nombre.trim(),
       email: this.email.trim(),
       tema: this.tema,
-      monedaPredeterminada: this.monedaPredeterminada
+      monedaPredeterminada: this.monedaPredeterminada,
+      telefono: this.telefono.trim() || null,
+      notificacionesWhatsapp: this.notificacionesWhatsapp
     }).subscribe({
       next: response => {
         this.guardandoPerfil.set(false);
