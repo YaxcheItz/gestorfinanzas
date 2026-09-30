@@ -21,7 +21,8 @@ class PerfilServiceTest {
 
     private final UsuarioRepository usuarioRepository = mock(UsuarioRepository.class);
     private final PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
-    private final PerfilService perfilService = new PerfilService(usuarioRepository, passwordEncoder);
+    private final SesionService sesionService = mock(SesionService.class);
+    private final PerfilService perfilService = new PerfilService(usuarioRepository, passwordEncoder, sesionService);
 
     @Test
     void cambiarPasswordIncrementaLaVersionQueRevocaTokensPrevios() {
@@ -42,6 +43,8 @@ class PerfilServiceTest {
         assertEquals(3, usuario.getTokenVersion());
         assertEquals("hash-nuevo", usuario.getPasswordHash());
         verify(usuarioRepository).save(any(Usuario.class));
+        // El refresh token es de larga duracion: sin revoked, seguiria renovando la sesion.
+        verify(sesionService).revocarTodas(17L);
     }
 
     @Test

@@ -40,8 +40,9 @@ public class UsuarioService {
     private final ParejaRepository parejaRepository;
     private final AportacionParejaRepository aporteParejaRepository;
     private final GastoParejaRepository gastoParejaRepository;
-    private final RepartoGastoRepository repartoGastoRepository;
-    private final PagoParejaRepository pagoParejaRepository;
+private final RepartoGastoRepository repartoGastoRepository;
+private final PagoParejaRepository pagoParejaRepository;
+private final SesionService sesionService;
 
     /**
      * Elimina la cuenta y TODOS sus datos. No existe reversa ni copia: se pierde tambien
@@ -87,6 +88,9 @@ public class UsuarioService {
         plantillaRecurrenteRepository.deleteByUsuarioId(usuarioId);
         presupuestoRepository.deleteByUsuarioId(usuarioId);
         tokenRecuperacionPasswordRepository.deleteByUsuarioId(usuarioId);
+        // Antes de borrar el usuario: los refresh tokens lo apuntan sin cascada, asi que
+        // dejarlos convierte el borrado en un fallo de clave foranea.
+        sesionService.eliminarTodas(usuarioId);
 
         categoriaRepository.deleteByUsuarioId(usuarioId);
         cuentaRepository.deleteByUsuarioId(usuarioId);

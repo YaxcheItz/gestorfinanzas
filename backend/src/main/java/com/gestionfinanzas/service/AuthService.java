@@ -2,14 +2,12 @@ package com.gestionfinanzas.service;
 
 import com.gestionfinanzas.dto.request.LoginRequest;
 import com.gestionfinanzas.dto.request.RegistroRequest;
-import com.gestionfinanzas.dto.response.AuthResponse;
 import com.gestionfinanzas.model.entity.Categoria;
 import com.gestionfinanzas.model.entity.Usuario;
 import com.gestionfinanzas.model.enums.RolUsuario;
 import com.gestionfinanzas.model.enums.TipoTransaccion;
 import com.gestionfinanzas.repository.CategoriaRepository;
 import com.gestionfinanzas.repository.UsuarioRepository;
-import com.gestionfinanzas.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -28,11 +26,11 @@ public class AuthService {
     private final CategoriaRepository categoriaRepository;
     private final CuentaService cuentaService;
     private final PasswordEncoder passwordEncoder;
-    private final JwtUtil jwtUtil;
     private final AuthenticationManager authenticationManager;
+    private final SesionService sesionService;
 
     @Transactional
-    public AuthResponse registrar(RegistroRequest request) {
+    public SesionService.SesionEmitida registrar(RegistroRequest request) {
         if (usuarioRepository.existsByEmail(request.email().trim().toLowerCase())) {
             throw new IllegalArgumentException("Ya existe una cuenta registrada con este correo electrónico");
         }
@@ -53,11 +51,10 @@ public class AuthService {
         // Sembrar cuenta predeterminada para evitar que el usuario quede sin cuentas iniciales
         cuentaService.crearCuentaPredeterminada(guardado);
 
-        String token = jwtUtil.generarToken(guardado.getEmail(), guardado.getId(), guardado.getTokenVersion());
-        return AuthResponse.of(token, guardado.getId(), guardado.getNombre(), guardado.getEmail());
+        return sesionService.emitir(guardado);
     }
 
-    public AuthResponse login(LoginRequest request) {
+    public SesionService.SesionEmitida login(LoginRequest request) {
         try {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
@@ -72,8 +69,7 @@ public class AuthService {
         Usuario usuario = usuarioRepository.findByEmail(request.email().trim().toLowerCase())
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
 
-        String token = jwtUtil.generarToken(usuario.getEmail(), usuario.getId(), usuario.getTokenVersion());
-        return AuthResponse.of(token, usuario.getId(), usuario.getNombre(), usuario.getEmail());
+        return sesionService.emitir(usuario);
     }
 
     private void crearCategoriasPredeterminadas(Usuario usuario) {

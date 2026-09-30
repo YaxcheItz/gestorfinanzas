@@ -1,6 +1,6 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, catchError, throwError, finalize, shareReplay, map } from 'rxjs';
 import {
   ApiResponse,
   AuthResponse,
@@ -13,6 +13,9 @@ import {
 import { Router } from '@angular/router';
 import { getApiBaseUrl } from './api-base-url';
 
+/** Necesario para que el navegador acepte y mande la cookie de refresh. */
+const CON_CREDENCIALES = { withCredentials: true } as const;
+
 @Injectable({
   providedIn: 'root'
 })
@@ -24,13 +27,18 @@ export class AuthService {
   private readonly tokenKey = 'finanzas_token';
   private readonly userKey = 'finanzas_user';
 
+  /** Peticion de refresh compartida, para no rotar dos veces a la vez. */
+  private refreshEnVuelo: Observable<AuthResponse> | null = null;
+
   // Signals para estado reactivo moderno
   private readonly _currentUser = signal<Usuario | null>(this.obtenerUsuarioAlmacenado());
   public readonly currentUser = this._currentUser.asReadonly();
   public readonly isAuthenticated = computed(() => !!this._currentUser());
 
   registro(payload: RegistroPayload): Observable<ApiResponse<AuthResponse>> {
-    return this.http.post<ApiResponse<AuthResponse>>(`${this.apiUrl}/registro`, payload).pipe(
+    // withCredentials no es opcional: sin el, el navegador ignora el Set-Cookie de una peticion
+    // de otro origen y la cookie de refresh nunca se guardaria.
+    return this.http.post<ApiResponse<AuthResponse>>(`${this.apiUrl}/registro`, payload, CON_CREDENCIALES).pipe(
       tap(res => {
         if (res.success && res.data) {
           this.guardarSesion(res.data);
@@ -40,7 +48,7 @@ export class AuthService {
   }
 
   login(payload: LoginPayload): Observable<ApiResponse<AuthResponse>> {
-    return this.http.post<ApiResponse<AuthResponse>>(`${this.apiUrl}/login`, payload).pipe(
+    return this.http.post<ApiResponse<AuthResponse>>(`${this.apiUrl}/login`, payload, CON_CREDENCIALES).pipe(
       tap(res => {
         if (res.success && res.data) {
           this.guardarSesion(res.data);
@@ -58,10 +66,58 @@ export class AuthService {
   }
 
   logout(): void {
+    this.cerrarSesionEnServidor().subscribe({
+      next: () => this.cerrarSesionLocal(),
+      error: () => this.cerrarSesionLocal()
+    });
+  }
+
+  /**
+   * Pide un access token nuevo usando la cookie de refresh.
+   *
+   * El navegador manda la cookie solo, asi que la peticion necesita withCredentials. Varias
+   * peticiones pueden pedir renewal al mismo tiempo, y con la rotacion del servidor eso romperia
+   * la sesion: las peticiones en vuelo comparten una sola, y las siguientes se enganchan a ella.
+   */
+  renovarSesion(): Observable<AuthResponse> {
+    if (!this.refreshEnVuelo) {
+      this.refreshEnVuelo =       this.http
+        .post<ApiResponse<AuthResponse>>(`${this.apiUrl}/refresh`, {}, CON_CREDENCIALES)
+        .pipe(
+          map(res => {
+            if (!res.success || !res.data) {
+              throw new Error('La renovación no devolvió sesión');
+            }
+            this.guardarSesion(res.data);
+            return res.data;
+          }),
+          catchError(error => {
+            this.limpiarSesion();
+            return throwError(() => error);
+          }),
+          finalize(() => {
+            this.refreshEnVuelo = null;
+          }),
+          shareReplay({ bufferSize: 1, refCount: false })
+        );
+    }
+    return this.refreshEnVuelo;
+  }
+
+  /** Limpia la sesion local sin tocar el servidor: util cuando la cookie ya no sirve. */
+  cerrarSesionLocal(): void {
+    this.limpiarSesion();
+    this.router.navigate(['/login'], { queryParams: { sessionExpired: 'true' } });
+  }
+
+  private cerrarSesionEnServidor(): Observable<unknown> {
+    return this.http.post(`${this.apiUrl}/logout`, {}, CON_CREDENCIALES);
+  }
+
+  private limpiarSesion(): void {
     localStorage.removeItem(this.tokenKey);
     localStorage.removeItem(this.userKey);
     this._currentUser.set(null);
-    this.router.navigate(['/login']);
   }
 
   actualizarUsuario(usuario: Usuario): void {

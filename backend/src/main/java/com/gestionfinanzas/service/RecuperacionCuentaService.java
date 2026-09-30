@@ -31,6 +31,7 @@ public class RecuperacionCuentaService {
     private final TokenRecuperacionPasswordRepository tokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final ApplicationEventPublisher eventPublisher;
+    private final SesionService sesionService;
 
     @Value("${app.mail.enabled:false}")
     private boolean correoHabilitado;
@@ -61,6 +62,7 @@ public class RecuperacionCuentaService {
         usuario.setTokenVersion(usuario.getTokenVersion() + 1);
         usuarioRepository.save(usuario);
         tokenRepository.deleteByUsuarioId(usuario.getId());
+        sesionService.revocarTodas(usuario.getId());
     }
 
     private void crearYEnviarToken(Usuario usuario) {

@@ -16,6 +16,7 @@ public class PerfilService {
 
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
+    private final SesionService sesionService;
 
     @Transactional(readOnly = true)
     public PerfilResponse obtener(Long usuarioId) {
@@ -58,6 +59,9 @@ public class PerfilService {
         usuario.setPasswordHash(passwordEncoder.encode(request.passwordNueva()));
         usuario.setTokenVersion(usuario.getTokenVersion() + 1);
         usuarioRepository.save(usuario);
+        // Subir la version mata los access tokens, pero el refresh token es de larga duracion:
+        // sin esto, quien robo la contrasena podria seguir renovando la sesion.
+        sesionService.revocarTodas(usuario.getId());
     }
 
     private Usuario buscarUsuario(Long usuarioId) {

@@ -40,7 +40,19 @@ spring:
 
 jwt:
   secret: ${JWT_SECRET}
-  expiration-ms: 86400000 # 24 horas
+  # Access token: vida corta a proposito. Si se filtra, el daño dura lo que dure este reloj.
+  # El frontend lo renueva solo con el refresh token, asi que el usuario nunca ve el login.
+  expiration-ms: ${JWT_EXPIRATION_MS:900000} # 15 minutos
+  refresh:
+    # Refresh token: la sesion que el usuario no nota. 30 dias renewing en cada uso, con
+    # rotacion, de modo que un token robado deja de servir en cuanto se usa legitimamente.
+    expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:2592000000} # 30 dias
+    cookie-name: ${JWT_REFRESH_COOKIE_NAME:finanzas_refresh}
+    # Lax basta mientras el frontend y la API compartan dominio (kaptal.app), porque el
+    # navegador no manda la cookie en peticiones de otro sitio. Si el frontend vive en otro
+    # dominio, hay que poner None y activar secure, y ahi si conviene un token CSRF.
+    same-site: ${JWT_REFRESH_SAME_SITE:Lax}
+    secure: ${JWT_REFRESH_SECURE:true}
 
 app:
   admin:

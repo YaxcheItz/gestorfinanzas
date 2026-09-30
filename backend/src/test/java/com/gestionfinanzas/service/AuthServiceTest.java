@@ -1,7 +1,6 @@
 package com.gestionfinanzas.service;
 
 import com.gestionfinanzas.dto.request.RegistroRequest;
-import com.gestionfinanzas.dto.response.AuthResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,10 +28,11 @@ class AuthServiceTest {
     @Test
     @DisplayName("registra un usuario nuevo y siembra sus cuentas y categorias")
     void registraUsuarioNuevo() {
-        AuthResponse response = authService.registrar(
+        SesionService.SesionEmitida response = authService.registrar(
                 new RegistroRequest("Ana Nueva", "ana.nueva@example.com", "Prueba1234!"));
 
-        assertThat(response.token()).isNotBlank();
+        assertThat(response.auth().token()).isNotBlank();
+        assertThat(response.refreshToken()).isNotBlank();
 
         var usuario = usuarioRepository.findByEmail("ana.nueva@example.com").orElseThrow();
         assertThat(cuentaRepository.findByUsuarioIdOrderByActivoDescNombreAsc(usuario.getId()))

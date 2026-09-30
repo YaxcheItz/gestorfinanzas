@@ -28,6 +28,19 @@ services:
         value: resend
       - key: JWT_SECRET
         generateValue: true
+      # Sesion: access token corto y refresh token de 30 dias en cookie httpOnly.
+      # MismoSite Lax alcanza mientras el frontend y la API compartan dominio, porque el
+      # navegador no manda la cookie desde otro sitio. Si el frontend acaba en un dominio
+      # distinto, Lax no llegaria: habria que poner None, dejar SECURE en true y anadir
+      # proteccion CSRF al endpoint de refresh.
+      - key: JWT_EXPIRATION_MS
+        value: "900000"
+      - key: JWT_REFRESH_EXPIRATION_MS
+        value: "2592000000"
+      - key: JWT_REFRESH_SAME_SITE
+        value: Lax
+      - key: JWT_REFRESH_SECURE
+        value: "true"
       - key: SPRING_DATASOURCE_URL
         sync: false
       - key: SPRING_DATASOURCE_USERNAME
