@@ -78,6 +78,8 @@ class RecordatorioNotificacionServiceTest {
     void enviaRecordatorioDeCorteCuandoElDiaCoincide() {
         BackendApplication.configurarZonaHoraria();
         int diaDeHoy = LocalDate.now().getDayOfMonth();
+        when(whatsAppService.enviarRecordatorio(anyString(), anyString()))
+                .thenReturn("Mensaje enviado exitosamente a +5219515791240. SID: SM123");
         when(plantillaRepository.findByActivaTrueAndSiguienteFecha(any(LocalDate.class))).thenReturn(List.of());
         when(cuentaRepository.findActivasConUsuarioPorTipo(TipoCuenta.CREDITO))
                 .thenReturn(List.of(tarjeta("Citibanamex", diaDeHoy, diaDistinto(diaDeHoy))));
@@ -89,6 +91,23 @@ class RecordatorioNotificacionServiceTest {
         verify(whatsAppService).enviarRecordatorio(org.mockito.ArgumentMatchers.eq("5219515791240"),
                 mensaje.capture());
         assertEquals(true, mensaje.getValue().contains("Citibanamex"));
+    }
+
+    /**
+     * Regresion del conteo: enviarRecordatorio devuelve el resultado como texto y no lanza,
+     * asi que antes se sumaba como enviado aunque Twilio hubiera rechazado el mensaje.
+     */
+    @Test
+    void noCuentaLosRecordatoriosQueTwilioRechazo() {
+        BackendApplication.configurarZonaHoraria();
+        int diaDeHoy = LocalDate.now().getDayOfMonth();
+        when(whatsAppService.enviarRecordatorio(anyString(), anyString()))
+                .thenReturn("Error al enviar mensaje vía Twilio: el destino no tiene WhatsApp activo");
+        when(plantillaRepository.findByActivaTrueAndSiguienteFecha(any(LocalDate.class))).thenReturn(List.of());
+        when(cuentaRepository.findActivasConUsuarioPorTipo(TipoCuenta.CREDITO))
+                .thenReturn(List.of(tarjeta("BBVA", diaDeHoy, diaDistinto(diaDeHoy))));
+
+        assertEquals(0, service.ejecutarRecordatoriosDiarios());
     }
 
     @Test

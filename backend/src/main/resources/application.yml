@@ -43,6 +43,10 @@ jwt:
   expiration-ms: 86400000 # 24 horas
 
 app:
+  admin:
+    # Correos que se promoted a ROLE_ADMIN al arrancar. Requerido para poder disparar
+    # la revision de recordatorios o enviar WhatsApp de prueba a un numero arbitrario.
+    emails: ${APP_ADMIN_EMAILS:}
   mail:
     enabled: ${MAIL_ENABLED:false}
     provider: ${MAIL_PROVIDER:smtp}

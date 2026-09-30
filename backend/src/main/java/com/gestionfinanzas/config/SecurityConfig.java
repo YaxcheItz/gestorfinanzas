@@ -47,6 +47,12 @@ public class SecurityConfig {
             )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**", "/api/health", "/error").permitAll()
+                // Enviar WhatsApp a un numero arbitrario o disparar la revision global de
+                // recordatorios son acciones de administracion: cualquier usuario registrado
+                // podia abusar de ellas para gastar creditos de Twilio o avisar a todos.
+                .requestMatchers("/api/notificaciones/test-whatsapp", "/api/notificaciones/ejecutar-recordatorios")
+                    .hasRole("ADMIN")
+                .requestMatchers("/api/notificaciones/**").authenticated()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

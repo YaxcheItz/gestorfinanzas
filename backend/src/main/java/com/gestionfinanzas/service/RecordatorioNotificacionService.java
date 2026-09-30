@@ -21,6 +21,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class RecordatorioNotificacionService {
 
+    /** Prefijo que devuelve NotificacionWhatsAppService cuando Twilio acepto el mensaje. */
+    private static final String MENSAJE_ENVIADO = "Mensaje enviado exitosamente";
+
     private static final Logger log = LoggerFactory.getLogger(RecordatorioNotificacionService.class);
 
     private final CuentaRepository cuentaRepository;
@@ -65,8 +68,9 @@ public class RecordatorioNotificacionService {
                 }
                 msg.append("\nTe sugerimos ingresar a Kaptal para revisar tus movimientos y planificar tu pago. 🚀");
 
-                whatsAppService.enviarRecordatorio(usuario.getTelefono(), msg.toString());
-                notificacionesEnviadas++;
+                if (enviarContando(usuario.getTelefono(), msg.toString())) {
+                    notificacionesEnviadas++;
+                }
             }
 
             // Recordatorio de FECHA LÍMITE DE PAGO (el mismo día del pago)
@@ -81,8 +85,9 @@ public class RecordatorioNotificacionService {
                         saldoAdeudo,
                         cuenta.getMoneda()
                 );
-                whatsAppService.enviarRecordatorio(usuario.getTelefono(), msg);
-                notificacionesEnviadas++;
+                if (enviarContando(usuario.getTelefono(), msg)) {
+                    notificacionesEnviadas++;
+                }
             }
         }
 
@@ -122,12 +127,27 @@ public class RecordatorioNotificacionService {
                     plantilla.getCuenta().getNombre()
             );
 
-            whatsAppService.enviarRecordatorio(usuario.getTelefono(), msg);
-            notificacionesEnviadas++;
+            if (enviarContando(usuario.getTelefono(), msg)) {
+                notificacionesEnviadas++;
+            }
         }
 
         log.info("Revisión de recordatorios finalizada. Notificaciones enviadas: {}", notificacionesEnviadas);
         return notificacionesEnviadas;
+    }
+
+    /**
+     * El servicio de WhatsApp devuelve un texto con el resultado en lugar de lanzar, asi que
+     * antes se contaba como enviado aunque Twilio hubiera rechazado el mensaje. Ahora solo
+     * suma los que de verdad se mandaron y deja rastro de los que fallaron.
+     */
+    private boolean enviarContando(String telefono, String mensaje) {
+        String resultado = whatsAppService.enviarRecordatorio(telefono, mensaje);
+        if (resultado != null && resultado.startsWith(MENSAJE_ENVIADO)) {
+            return true;
+        }
+        log.warn("No se pudo enviar el recordatorio a {}: {}", telefono, resultado);
+        return false;
     }
 
     private boolean usuarioAceptaWhatsApp(Usuario usuario) {
