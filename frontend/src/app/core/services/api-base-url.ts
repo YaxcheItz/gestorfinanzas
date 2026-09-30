@@ -6,16 +6,22 @@ const runtimeApiBaseUrl = (): string | undefined => {
   return typeof injected === 'string' && injected.length > 0 ? injected : undefined;
 };
 
+/**
+ * La API siempre es '/api', o sea el mismo origen que la pagina, y nunca el dominio de
+ * Render directamente.
+ *
+ * En desarrollo lo resuelve proxy.conf.json contra el backend local. En produccion lo
+ * resuelve el rewrite de vercel.json, que reenvia a Render por detras.
+ *
+ * La razon de que sea el mismo origen es la cookie de sesion. Con la app en vercel.app
+ * llamando a onrender.com, esa cookie cuenta como de terceros, y Firefox o Safari la bloquean
+ * dejando al usuario sin sesion. Al pasar por el proxy pasa a ser de primera parte y todos los
+ * navegadores la respetan.
+ */
 export function getApiBaseUrl(): string {
   const configured = runtimeApiBaseUrl();
   if (configured) {
     return configured.replace(/\/$/, '');
   }
-
-  if (typeof window !== 'undefined' && window.location.port === '4200') {
-    return '/api';
-  }
-
-  const host = typeof window === 'undefined' ? 'localhost' : window.location.hostname;
-  return `http://${host}:8080/api`;
+  return '/api';
 }

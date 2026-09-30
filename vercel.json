@@ -1,10 +1,14 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "cd frontend && npm ci",
-  "buildCommand": "cd frontend && printf 'window.__API_BASE_URL__=\"%s\";\\n' \"$API_BASE_URL\" > public/runtime-config.js && npm run build",
+  "buildCommand": "cd frontend && printf 'window.__API_BASE_URL__=\"%s\";\\n' \"${API_BASE_URL:-/api}\" > public/runtime-config.js && npm run build",
   "outputDirectory": "frontend/dist/frontend/browser",
   "framework": null,
   "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://kaptal-api-0xbn.onrender.com/api/:path*"
+    },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ],
   "headers": [
