@@ -28,7 +28,7 @@ import {
   template: `
     <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-5 sm:space-y-6">
 
-      <!-- Encabezado y Acci�n Principal -->
+      <!-- Encabezado y Acción Principal -->
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
@@ -92,7 +92,7 @@ import {
               type="text"
               [ngModel]="filtroBusqueda()"
               (ngModelChange)="onBusquedaChange($event)"
-              placeholder="Buscar por categor�a o notas..."
+              placeholder="Buscar por categoría o notas..."
               class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
             />
           </div>
@@ -131,7 +131,7 @@ import {
 
         </div>
 
-        <!-- Fila 2: Selectores de Cuenta, Categor�a, Rango de Fechas y Bot�n Limpiar -->
+        <!-- Fila 2: Selectores de Cuenta, Categoría, Rango de Fechas y Botón Limpiar -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2 border-t border-slate-100">
           
           <!-- Filtro Cuenta -->
@@ -148,14 +148,14 @@ import {
             </select>
           </div>
 
-          <!-- Filtro Categor�a -->
+          <!-- Filtro Categoría -->
           <div>
-            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Categor�a</label>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Categoría</label>
             <select
               [ngModel]="filtroCategoriaId()"
               (ngModelChange)="onCategoriaChange($event)"
               class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 cursor-pointer">
-              <option [ngValue]="null">Todas las categor�as</option>
+              <option [ngValue]="null">Todas las categorías</option>
               @for (cat of categorias(); track cat.id) {
                 <option [ngValue]="cat.id">{{ cat.nombre }}</option>
               }
@@ -196,15 +196,15 @@ import {
 
         </div>
 
-        <!-- Presets R�pidos de Fecha -->
+        <!-- Presets Rápidos de Fecha -->
         <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500 pt-1">
-          <span class="font-medium text-slate-400">Rango r�pido:</span>
+          <span class="font-medium text-slate-400">Rango rápido:</span>
           <button (click)="aplicarRangoRapido('ESTE_MES')" class="text-xs text-emerald-600 hover:underline font-semibold cursor-pointer">Este mes</button>
-          <span>�</span>
+          <span>•</span>
           <button (click)="aplicarRangoRapido('MES_PASADO')" class="text-xs text-emerald-600 hover:underline font-semibold cursor-pointer">Mes anterior</button>
-          <span>�</span>
-          <button (click)="aplicarRangoRapido('ULTIMOS_30')" class="text-xs text-emerald-600 hover:underline font-semibold cursor-pointer">�ltimos 30 d�as</button>
-          <span>�</span>
+          <span>•</span>
+          <button (click)="aplicarRangoRapido('ULTIMOS_30')" class="text-xs text-emerald-600 hover:underline font-semibold cursor-pointer">Últimos 30 días</button>
+          <span>•</span>
           <button (click)="aplicarRangoRapido('TODO')" class="text-xs text-emerald-600 hover:underline font-semibold cursor-pointer">Todo el historial</button>
         </div>
 
@@ -224,11 +224,11 @@ import {
             <h2 class="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">{{ resumen.moneda }}</h2>
             <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div class="flex items-center justify-between">
-                <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Ingresos (P�gina)</span>
+                <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Ingresos (Página)</span>
                 <span class="text-base font-bold text-emerald-600">+{{ resumen.ingresos | currency:resumen.moneda:'symbol':'1.2-2' }}</span>
               </div>
               <div class="flex items-center justify-between">
-                <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Gastos (P�gina)</span>
+                <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Gastos (Página)</span>
                 <span class="text-base font-bold text-rose-600">-{{ resumen.gastos | currency:resumen.moneda:'symbol':'1.2-2' }}</span>
               </div>
               <div class="flex items-center justify-between">
@@ -243,7 +243,7 @@ import {
             </div>
           </section>
         } @empty {
-          <p class="text-sm text-slate-500">No hay ingresos ni gastos en esta p�gina.</p>
+          <p class="text-sm text-slate-500">No hay ingresos ni gastos en esta página.</p>
         }
       </div>
 
@@ -266,7 +266,7 @@ import {
             <div class="max-w-sm mx-auto">
               <h3 class="text-base font-bold text-slate-800">No se encontraron movimientos</h3>
               <p class="text-xs text-slate-400 mt-1">
-                No hay transacciones registradas con los filtros aplicados. Prueba cambiando las fechas o el criterio de b�squeda.
+                No hay transacciones registradas con los filtros aplicados. Prueba cambiando las fechas o el criterio de búsqueda.
               </p>
             </div>
             @if (tieneFiltrosActivos()) {
@@ -279,7 +279,7 @@ import {
             }
           </div>
         } @else {
-          <div class="hidden overflow-x-auto sm:block" role="region" aria-label="Movimientos; desliza horizontalmente para ver m�s columnas" tabindex="0">
+          <div class="hidden overflow-x-auto sm:block" role="region" aria-label="Movimientos; desliza horizontalmente para ver más columnas" tabindex="0">
             <table class="w-full min-w-[620px] text-left text-sm text-slate-600">
               <thead class="bg-slate-50 text-[11px] uppercase font-semibold text-slate-400 tracking-wider">
                 <tr>
@@ -314,7 +314,7 @@ import {
                       <div class="truncate max-w-xs sm:max-w-md">
                         <span class="block truncate text-slate-900 font-semibold">{{ m.categoriaNombre || m.descripcion }}</span>
                         @if (m.cashbackAutomatico) {
-                          <span class="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">Cashback autom�tico</span>
+                          <span class="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">Cashback automático</span>
                         }
                         @if (m.notas) {
                           <span class="block text-xs text-slate-400 font-normal truncate">{{ m.notas }}</span>
@@ -385,7 +385,7 @@ import {
             }
           </div>
 
-          <!-- Barra de Paginaci�n -->
+          <!-- Barra de Paginación -->
           <div class="p-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
             <div>
               Mostrando <span class="font-semibold text-slate-700">{{ (paginaActual() * tamanioPagina()) + 1 }}</span> a 
@@ -403,7 +403,7 @@ import {
               </button>
 
               <span class="font-semibold text-slate-700 px-2">
-                P�g. {{ paginaActual() + 1 }} de {{ pageData()!.totalPages || 1 }}
+                Pág. {{ paginaActual() + 1 }} de {{ pageData()!.totalPages || 1 }}
               </span>
 
               <button
@@ -567,7 +567,7 @@ import {
                         placeholder="Ej. 17.25" />
                       @if (formMonto && formTasaCambio && formTasaCambio > 0) {
                         <p class="mt-1 text-xs text-slate-500">
-                          Se depositar�n {{ formMonto * formTasaCambio | currency:monedaCuenta(formCuentaDestinoId):'symbol':'1.2-2' }}.
+                          Se depositarán {{ formMonto * formTasaCambio | currency:monedaCuenta(formCuentaDestinoId):'symbol':'1.2-2' }}.
                         </p>
                       }
                     </div>
@@ -616,7 +616,7 @@ import {
                          class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" />
                   <span>
                     <span class="block text-sm font-semibold text-slate-800">Repetir este movimiento</span>
-                    <span class="block text-xs text-slate-500">Se guardar� como plantilla; confirmar�s cada cargo en su fecha.</span>
+                    <span class="block text-xs text-slate-500">Se guardará como plantilla; confirmarás cada cargo en su fecha.</span>
                   </span>
                 </label>
                 @if (movimientoRecurrente) {
@@ -629,7 +629,7 @@ import {
                         <option value="SEMANAL">Cada semana</option>
                         <option value="QUINCENAL">Cada dos semanas</option>
                         <option value="MENSUAL">Cada mes</option>
-                        <option value="ANUAL">Cada a�o</option>
+                        <option value="ANUAL">Cada año</option>
                       </select>
                     </label>
                     <label class="block text-xs font-semibold text-slate-700">
@@ -673,7 +673,7 @@ import {
               </section>
             }
 
-            <!-- Botones de Acci�n -->
+            <!-- Botones de Acción -->
             <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 pt-4 border-t border-slate-100">
               <button 
                 type="button"
@@ -720,7 +720,7 @@ export class TransaccionesComponent implements OnInit {
   readonly filtroBusqueda = signal<string>('');
   readonly filtroMovimientoId = signal<number | null>(null);
 
-  // Paginaci�n y Datos Signals
+  // Paginación y Datos Signals
   readonly paginaActual = signal<number>(0);
   readonly tamanioPagina = signal<number>(15);
   readonly pageData = signal<PageResponse<Transaccion> | null>(null);
@@ -753,7 +753,7 @@ export class TransaccionesComponent implements OnInit {
   frecuenciaRecurrencia: FrecuenciaRecurrencia = 'MENSUAL';
   siguienteFechaRecurrencia = '';
 
-  // Categor�as filtradas por tipo para el modal
+  // Categorías filtradas por tipo para el modal
   readonly categoriasModal = computed(() => {
     return this.categorias().filter(c => c.tipo === this.formTipo());
   });
@@ -962,7 +962,7 @@ export class TransaccionesComponent implements OnInit {
       next: respuesta => {
         this.exportando.set(false);
         if (!respuesta.body) {
-          this.toastService.error('El servidor devolvi� un archivo CSV vac�o.');
+          this.toastService.error('El servidor devolvió un archivo CSV vacío.');
           return;
         }
         const disposition = respuesta.headers.get('Content-Disposition');
@@ -996,7 +996,7 @@ export class TransaccionesComponent implements OnInit {
   async eliminarMovimiento(id: number): Promise<void> {
     const confirmed = await this.confirmDialogService.confirm({
       title: 'Eliminar Movimiento',
-      message: '�Eliminar este movimiento? Los saldos se recalcular�n autom�ticamente.',
+      message: '¿Eliminar este movimiento? Los saldos se recalcularán automáticamente.',
       type: 'danger'
     });
 
@@ -1126,7 +1126,7 @@ export class TransaccionesComponent implements OnInit {
 
   guardarMovimiento(): void {
     if (!this.formMonto || this.formMonto <= 0) {
-      this.modalError.set('Ingresa un monto v�lido mayor a 0');
+      this.modalError.set('Ingresa un monto válido mayor a 0');
       return;
     }
     if (!this.formCuentaId) {
@@ -1187,7 +1187,7 @@ export class TransaccionesComponent implements OnInit {
       },
       error: (err) => {
         this.submitting.set(false);
-        this.modalError.set(mensajeDeError(err, 'Error al guardar la transacci�n'));
+        this.modalError.set(mensajeDeError(err, 'Error al guardar la transacción'));
       }
     });
   }

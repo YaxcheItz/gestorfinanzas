@@ -469,7 +469,7 @@ export class CuentasComponent implements OnInit {
   private readonly toastService = inject(ToastService);
   private readonly confirmDialog = inject(ConfirmDialogService);
 
-  readonly tiposCuenta: { valor: TipoCuenta; etiqueta: string }[] = [ { valor: 'EFECTIVO', etiqueta: 'Efectivo' }, { valor: 'CREDITO', etiqueta: 'Tarjeta de Crdito' }, { valor: 'AHORRO', etiqueta: 'Cuenta de Ahorro' }, { valor: 'INVERSION', etiqueta: 'Inversin' } ];
+  readonly tiposCuenta: { valor: TipoCuenta; etiqueta: string }[] = [ { valor: 'EFECTIVO', etiqueta: 'Efectivo' }, { valor: 'CREDITO', etiqueta: 'Tarjeta de Crédito' }, { valor: 'AHORRO', etiqueta: 'Cuenta de Ahorro' }, { valor: 'INVERSION', etiqueta: 'Inversión' } ];
 
   readonly tiposCuentaDisponibles = computed(() => { const tiene = this.cuentas().some(c => c.tipo === 'EFECTIVO'); if (this.cuentaEditando() != null) return this.tiposCuenta; return this.tiposCuenta.filter(t => t.valor !== 'EFECTIVO' || !tiene); });
   readonly instituciones = [

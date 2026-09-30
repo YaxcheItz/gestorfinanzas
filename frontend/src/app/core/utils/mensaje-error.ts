@@ -4,13 +4,13 @@ import { HttpErrorResponse } from '@angular/common/http';
  * Extrae el mensaje real de una respuesta de error del backend.
  *
  * El backend responde con la forma { success, message, data }. Ese message
- * suele ser la unica informacion util: por ejemplo, "Ya existe una cuenta con
- * el nombre 'Ahorro'" o "El limite de credito debe ser mayor a 0". Cuando un
- * componente lo reemplaza por un texto generico, el usuario ve algo que no
- * describe lo que fallo y el diagnostico se vuelve imposible.
+ * suele ser la única información útil: por ejemplo, "Ya existe una cuenta con
+ * el nombre 'Ahorro'" o "El límite de crédito debe ser mayor a 0". Cuando un
+ * componente lo reemplaza por un texto genérico, el usuario ve algo que no
+ * describe lo que falló y el diagnóstico se vuelve imposible.
  *
  * Estos fallbacks solo aplican cuando no hay nada mejor que mostrar:
- * - 0    -> la peticion nunca salio: CORS, DNS, o el servicio esta caido
+ * - 0    -> la petición nunca salió: CORS, DNS, o el servicio está caído
  * - >=500 -> error del servidor que no trae cuerpo interpretable
  */
 export function mensajeDeError(error: unknown, fallback: string): string {
@@ -39,7 +39,7 @@ export function mensajeDeError(error: unknown, fallback: string): string {
     }
 
     if (error.status === 0) {
-      return 'No se pudo conectar con el servidor. Revisa tu conexion a internet.';
+      return 'No se pudo conectar con el servidor. Revisa tu conexión a internet.';
     }
   }
 
