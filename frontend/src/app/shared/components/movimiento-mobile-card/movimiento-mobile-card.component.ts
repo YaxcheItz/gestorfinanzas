@@ -181,10 +181,15 @@ export class MovimientoMobileCardComponent {
   @Output() editar = new EventEmitter<Transaccion>();
   @Output() eliminar = new EventEmitter<number>();
 
+  /**
+   * El saldo inicial si se puede eliminar: es la unica forma de deshacer una deuda o un
+   * saldo mal capturado al abrir la cuenta, porque editarlo el backend no lo permite. El
+   * boton de Editar sigue oculto para este tipo en la plantilla, asi que aqui solo se
+   * controla que haya acciones que ofrecer.
+   */
   get puedeAdministrarse(): boolean {
     return this.movimiento.cuentaId !== null
       && (this.movimiento.tipo !== 'TRANSFERENCIA' || this.movimiento.cuentaDestinoId != null)
-      && this.movimiento.tipo !== 'SALDO_INICIAL'
       && !this.movimiento.cashbackAutomatico;
   }
 

@@ -627,7 +627,14 @@ public class TransaccionService {
                 cuentaRepository.save(cuentaDestino);
             }
         } else if (transaccion.getTipo() == TipoTransaccion.SALDO_INICIAL) {
-            cuentaOrigen.setSaldoActual(cuentaOrigen.getSaldoActual().subtract(transaccion.getMonto()));
+            // El saldo inicial guarda el monto en positivo, pero al abrir la cuenta se aplico
+            // con el signo del tipo de cuenta: en una tarjeta de credito se resto, porque una
+            // deuda es un saldo negativo. Por eso deshacerlo no siempre es restar: si se
+            // hiciera siempre, una deuda de 100 passaria a 200 en vez de volver a cero.
+            BigDecimal ajuste = cuentaOrigen.getTipo() == TipoCuenta.CREDITO
+                    ? transaccion.getMonto()
+                    : transaccion.getMonto().negate();
+            cuentaOrigen.setSaldoActual(cuentaOrigen.getSaldoActual().add(ajuste));
             cuentaRepository.save(cuentaOrigen);
         }
 
