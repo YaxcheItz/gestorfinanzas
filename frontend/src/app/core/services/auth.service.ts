@@ -17,6 +17,16 @@ import { getApiBaseUrl } from './api-base-url';
 const CON_CREDENCIALES = { withCredentials: true } as const;
 
 /**
+ * Anticipa la renovacion. El access token vive 15 minutos, asi que sin este margen
+ * la app podria empezar a fallar justo al expirar, y un 401 aislado es
+ * indistinguible de una sesion realmente terminada.
+ */
+const MARGEN_RENOVACION_MS = 30_000;
+
+/** Motivo por el que se cae la sesion. El aviso al usuario cambia con el. */
+export type MotivoCierreSesion = 'expirada' | 'salida';
+
+/**
  * La cookie va en SameSite=None porque el frontend (vercel.app) y la API (onrender.com) son
  * sitios distintos, y así es lo único que cruza. El precio es que otra página podría lanzar un
  * POST contra /refresh o /logout y el navegador añadiría la cookie sin preguntar. Esta cabecera
@@ -76,8 +86,8 @@ export class AuthService {
 
   logout(): void {
     this.cerrarSesionEnServidor().subscribe({
-      next: () => this.cerrarSesionLocal(),
-      error: () => this.cerrarSesionLocal()
+      next: () => this.cerrarSesionLocal('salida'),
+      error: () => this.cerrarSesionLocal('salida')
     });
   }
 
@@ -114,9 +124,11 @@ export class AuthService {
   }
 
   /** Limpia la sesion local sin tocar el servidor: util cuando la cookie ya no sirve. */
-  cerrarSesionLocal(): void {
+  cerrarSesionLocal(motivo: MotivoCierreSesion = 'expirada'): void {
     this.limpiarSesion();
-    this.router.navigate(['/login'], { queryParams: { sessionExpired: 'true' } });
+    this.router.navigate(['/login'], {
+      queryParams: motivo === 'expirada' ? { sessionExpired: 'true' } : {}
+    });
   }
 
   private cerrarSesionEnServidor(): Observable<unknown> {
@@ -136,6 +148,38 @@ export class AuthService {
 
   getToken(): string | null {
     return localStorage.getItem(this.tokenKey);
+  }
+
+  /**
+   * Si el access token ya caduco o esta por caducar.
+   *
+   * El access token vive 15 minutos y la sesion dura 30 dias, asi que tras cualquier
+   * pausa larga el token guardado es inservible aunque la cookie de refresh siga
+   * en pie. Sin mirar la fecha de expiracion, la app no puede distinguir "tengo que
+   * renovar" de "mi sesion se termino", y siempre acaba echando al usuario al login.
+   */
+  tokenCaducado(): boolean {
+    const expiracion = this.leerExpiracion(this.getToken());
+    if (expiracion === null) return false;
+    return Date.now() >= expiracion - MARGEN_RENOVACION_MS;
+  }
+
+  /**
+   * Instante de expiracion del JWT en milisegundos, o null si no se puede leer.
+   * Un token ilegible no se da por caducado: el servidor sera quien lo diga.
+   */
+  private leerExpiracion(token: string | null): number | null {
+    if (!token) return null;
+    const segmentos = token.split('.');
+    if (segmentos.length !== 3) return null;
+    try {
+      const base64 = segmentos[1].replace(/-/g, '+').replace(/_/g, '/');
+      const relleno = base64.padEnd(base64.length + ((4 - base64.length % 4) % 4), '=');
+      const payload = JSON.parse(atob(relleno)) as { exp?: unknown };
+      return typeof payload.exp === 'number' ? payload.exp * 1000 : null;
+    } catch {
+      return null;
+    }
   }
 
   private guardarSesion(auth: AuthResponse): void {

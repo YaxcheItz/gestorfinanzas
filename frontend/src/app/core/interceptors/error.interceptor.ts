@@ -1,7 +1,7 @@
 import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
+import { AuthService } from '../services/auth.service';
 
 /**
  * Interceptor que detecta cuando la sesión quedó inservible y manda al login.
@@ -16,20 +16,23 @@ import { catchError, throwError } from 'rxjs';
  * La excepción son los endpoints públicos de auth: ahí un 401 sí es una
  * respuesta legítima del servidor y hay que dejar pasar el mensaje tal cual
  * para que el componente lo muestre.
+ *
+ * El cierre lo delega en `AuthService` en vez de borrar el almacenamiento con
+ * literales: las claves viven en un solo sitio. Y se salta si ya no queda
+ * sesión, porque al cargar una pantalla llegan varias peticiones en paralelo y
+ * todas caen en 401 a la vez; sin esta guarda se acumulaban varios
+ * `navigate` al mismo sitio, y ademas el componente que espera el dato recibe un
+ * error de una sesion que ya se cerro.
  */
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
-  const router = inject(Router);
+  const authService = inject(AuthService);
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
       const esAuthPublico = req.url.includes('/api/auth/');
 
-      if (error.status === 401 && !esAuthPublico) {
-        localStorage.removeItem('finanzas_token');
-        localStorage.removeItem('finanzas_user');
-        router.navigate(['/login'], {
-          queryParams: { sessionExpired: 'true' }
-        });
+      if (error.status === 401 && !esAuthPublico && authService.isAuthenticated()) {
+        authService.cerrarSesionLocal('expirada');
       }
 
       return throwError(() => error);

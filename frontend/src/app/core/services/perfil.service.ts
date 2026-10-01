@@ -10,6 +10,7 @@ import {
   PerfilActualizarPayload
 } from '../models/auth.models';
 import { getApiBaseUrl } from './api-base-url';
+import { CategoriaPreferidaService } from './categoria-preferida.service';
 import { PrivacidadService } from './privacidad.service';
 
 @Injectable({ providedIn: 'root' })
@@ -17,6 +18,7 @@ export class PerfilService {
   private readonly http = inject(HttpClient);
   private readonly document = inject(DOCUMENT);
   private readonly privacidad = inject(PrivacidadService);
+  private readonly categoriaPreferida = inject(CategoriaPreferidaService);
   private readonly baseUrl = `${getApiBaseUrl()}/perfil`;
 
   readonly perfil = signal<Perfil | null>(null);
@@ -27,6 +29,7 @@ export class PerfilService {
     const temaAlmacenado = this.document.defaultView?.localStorage.getItem(`kaptal_tema_${usuarioId}`);
     if (temaAlmacenado === 'CLARO' || temaAlmacenado === 'OSCURO') this.aplicarTema(temaAlmacenado);
     this.privacidad.aplicarDesdeCache(usuarioId);
+    this.categoriaPreferida.aplicarDesdeCache(usuarioId);
     this.cargando.set(true);
     this.error.set(null);
     this.http.get<ApiResponse<Perfil>>(this.baseUrl).subscribe({
@@ -101,6 +104,7 @@ export class PerfilService {
     this.error.set(null);
     this.aplicarTema('CLARO');
     this.privacidad.limpiar();
+    this.categoriaPreferida.limpiar();
   }
 
   private aplicarPerfil(perfil: Perfil): void {

@@ -2,6 +2,8 @@ import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Categoria, CategoriaPayload, TipoTransaccion } from '../../../core/models/finanzas.models';
+import { CategoriaPreferidaService } from '../../../core/services/categoria-preferida.service';
+import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import { FinanzasService } from '../../../core/services/finanzas.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { CategoriaIconoComponent } from '../categoria-icono/categoria-icono.component';
@@ -13,75 +15,126 @@ import { esEmojiCategoria, ICONOS_CATEGORIA, normalizarIconoCategoria } from '..
   imports: [CommonModule, FormsModule, CategoriaIconoComponent],
   styles: [':host { display: block; width: 100%; min-width: 0; }'],
   template: `
-    <div class="relative space-y-2">
-      <div class="flex items-center justify-between gap-2">
-        <label [for]="selectId" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
-          Categoría
-        </label>
-        <div class="flex shrink-0 items-center gap-2">
-          <button type="button" (click)="abrirCrear()" class="inline-flex min-h-9 items-center justify-center gap-1 rounded-lg border border-emerald-200 bg-white px-2.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 dark:border-emerald-800 dark:bg-slate-800 dark:text-emerald-300 dark:hover:bg-slate-700">
-            <span aria-hidden="true" class="text-base leading-none">+</span>
-            Nueva
-          </button>
-          @if (categoriaSeleccionada()?.esPersonalizada) {
-            <button type="button" (click)="abrirEditar()" class="inline-flex min-h-9 items-center justify-center rounded-lg px-2 text-xs font-semibold text-slate-500 hover:bg-slate-100 hover:text-slate-800">
-              Editar
-            </button>
-          }
-        </div>
-      </div>
-
-      <button
-        type="button"
-        [id]="selectId"
-        role="combobox"
-        aria-haspopup="listbox"
-        [attr.aria-expanded]="opcionesAbiertas()"
-        [attr.aria-controls]="opcionesId"
-        (click)="opcionesAbiertas.update(abierta => !abierta)"
-        class="flex min-h-11 w-full items-center gap-3 rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-left text-sm text-slate-900 transition-colors hover:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700">
-        @if (categoriaSeleccionada(); as seleccionada) {
-          <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white shadow-xs dark:bg-slate-600">
-            <app-categoria-icono [icono]="seleccionada.icono" [tipo]="seleccionada.tipo" [clase]="'h-5 w-5'" />
+<div class="relative space-y-2.5">
+      <!-- Colapsado: solo el mosaico de lo que ya quedo elegido.
+           Casi todos los movimientos caen en la misma categoria, y una rejilla de
+           veinte iconos tapa el resto del formulario sin aportar a la decision. -->
+      @if (!menuAbierto()) {
+        <button
+          type="button"
+          [id]="selectId"
+          aria-haspopup="listbox"
+          [attr.aria-expanded]="false"
+          [attr.aria-label]="descripcionMosaico"
+          (click)="abrirMenu()"
+          class="flex min-h-16 w-full cursor-pointer items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-left transition-colors hover:border-emerald-300 hover:bg-emerald-50/50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-emerald-700 dark:hover:bg-emerald-500/10">
+          <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-700">
+            @if (categoriaSeleccionada(); as seleccionada) {
+              <app-categoria-icono [icono]="seleccionada.icono" [tipo]="seleccionada.tipo" [clase]="'h-5 w-5'" />
+            } @else {
+              <svg class="h-4 w-4 text-slate-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd" d="M3 4a2 2 0 012-2h10a2 2 0 012 2v2h1a1 1 0 011 1v11a1 1 0 01-1 1H3a1 1 0 01-1-1V5a1 1 0 011-1h1V4zm2 0h10V4H5v0z" clip-rule="evenodd" />
+              </svg>
+            }
           </span>
-          <span class="min-w-0 flex-1 truncate">{{ seleccionada.nombre }}</span>
-        } @else {
-          <span class="min-w-0 flex-1 text-slate-500">Sin categoría</span>
-        }
-        <svg class="h-4 w-4 shrink-0 text-slate-500 transition-transform" [class.rotate-180]="opcionesAbiertas()" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-          <path fill-rule="evenodd" d="M5.22 7.22a.75.75 0 011.06 0L10 10.94l3.72-3.72a.75.75 0 111.06 1.06l-4.25 4.25a.75.75 0 01-1.06 0L5.22 8.28a.75.75 0 010-1.06z" clip-rule="evenodd" />
-        </svg>
-      </button>
 
-      @if (opcionesAbiertas()) {
-        <div [id]="opcionesId" role="listbox" aria-label="Categorías disponibles" class="max-h-56 space-y-1 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg dark:border-slate-600 dark:bg-slate-800">
-          <button
-            type="button"
-            role="option"
-            [attr.aria-selected]="selectedId === null"
-            (click)="seleccionarCategoria(null)"
-            class="flex min-h-10 w-full items-center rounded-lg px-2.5 text-left text-sm text-slate-500 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-700">
-            Sin categoría
-          </button>
-          @for (categoria of categoriasFiltradas(); track categoria.id) {
+          <span class="min-w-0 flex-1 truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
+            {{ categoriaSeleccionada()?.nombre ?? 'Sin categoría' }}
+          </span>
+
+          <svg class="h-4 w-4 shrink-0 text-slate-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fill-rule="evenodd" d="M5.22 7.22a.75.75 0 011.06 0L10 10.94l3.72-3.72a.75.75 0 111.06 1.06l-4.25 4.25a.75.75 0 01-1.06 0L5.22 8.28a.75.75 0 010-1.06z" clip-rule="evenodd" />
+          </svg>
+        </button>
+
+        <!-- El nombre visible del mosaico ya dice que es. Repetir "Categoria" en
+             pantalla seria ruido, pero el lector de pantalla si lo necesita. -->
+        <span [id]="labelId" class="sr-only">{{ etiqueta }}</span>
+      } @else {
+        <!-- Abierto: aqui se elige, se crean y se editan. -->
+        <div class="flex items-center justify-between gap-2">
+          <span [id]="labelId" class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            {{ etiqueta }}
+          </span>
+          <div class="flex shrink-0 items-center gap-1">
             <button
+              type="button"
+              (click)="abrirCrear()"
+              class="inline-flex min-h-9 cursor-pointer items-center justify-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 text-xs font-semibold text-emerald-700 transition-colors hover:border-emerald-300 hover:bg-emerald-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/20">
+              <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path d="M10 4a1 1 0 011 1v4h4a1 1 0 110 2h-4v4a1 1 0 11-2 0v-4H5a1 1 0 110-2h4V5a1 1 0 011-1z" />
+              </svg>
+              Nueva
+            </button>
+            @if (categoriaSeleccionada()?.esPersonalizada) {
+              <button
+                type="button"
+                (click)="abrirEditar()"
+                class="inline-flex min-h-9 cursor-pointer items-center justify-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700">
+                <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path d="M13.586 3.586a2 2 0 012.828 2.828l-1.5 1.5-2.828-2.828 1.5-1.5zM10.5 6.5l3 3-7.1 7.1A2 2 0 015 17.9V16a1 1 0 01-1-1v-1.9a1 1 0 01.4-.8l7.1-7.1z" />
+                </svg>
+                Editar
+              </button>
+            }
+            <button
+              type="button"
+              (click)="cerrarMenu()"
+              class="inline-flex min-h-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700">
+              Listo
+            </button>
+          </div>
+        </div>
+
+        <div
+          [id]="menuId"
+          role="listbox"
+          [attr.aria-labelledby]="labelId"
+          class="grid grid-cols-3 gap-2 sm:grid-cols-4"
+        >
+        <button
+          type="button"
+          role="option"
+          [attr.aria-selected]="selectedId === null"
+          (click)="seleccionarCategoria(null)"
+          class="categoria-mosaico flex min-h-20 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 bg-transparent px-1.5 py-2 text-center transition-colors hover:border-slate-400 hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-800"
+          [class.categoria-mosaico--activo]="selectedId === null">
+          <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-400 dark:bg-slate-800">
+            <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fill-rule="evenodd" d="M3 4a2 2 0 012-2h10a2 2 0 012 2v2h1a1 1 0 011 1v11a1 1 0 01-1 1H3a1 1 0 01-1-1V5a1 1 0 011-1h1V4zm2 0h10V4H5v0z" clip-rule="evenodd" />
+            </svg>
+          </span>
+          <span class="line-clamp-2 w-full text-[11px] font-medium leading-tight text-slate-500 dark:text-slate-400">Sin categoría</span>
+        </button>
+
+        @for (categoria of categoriasFiltradas(); track categoria.id) {
+<button
               type="button"
               role="option"
               [attr.aria-selected]="selectedId === categoria.id"
               (click)="seleccionarCategoria(categoria.id)"
-              class="flex min-h-10 w-full items-center gap-3 rounded-lg px-2.5 text-left text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-100 dark:hover:bg-slate-700">
-              <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-slate-50 dark:bg-slate-600">
-                <app-categoria-icono [icono]="categoria.icono" [tipo]="categoria.tipo" [clase]="'h-4 w-4'" />
-              </span>
-              <span class="min-w-0 flex-1 truncate">{{ categoria.nombre }}</span>
-              @if (selectedId === categoria.id) {
-                <svg class="h-4 w-4 shrink-0 text-emerald-600" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            class="categoria-mosaico group relative flex min-h-20 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-1.5 py-2 text-center transition-colors hover:border-emerald-300 hover:bg-emerald-50/50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-emerald-700 dark:hover:bg-emerald-500/10"
+            [class.categoria-mosaico--activo]="selectedId === categoria.id">
+            <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 transition-colors group-hover:bg-white dark:bg-slate-700 dark:group-hover:bg-slate-600">
+              <app-categoria-icono [icono]="categoria.icono" [tipo]="categoria.tipo" [clase]="'h-5 w-5'" />
+            </span>
+            <span class="line-clamp-2 w-full text-[11px] font-medium leading-tight text-slate-600 dark:text-slate-300">{{ categoria.nombre }}</span>
+            @if (selectedId === categoria.id) {
+              <span class="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-600 text-white dark:bg-emerald-500">
+                <svg class="h-2.5 w-2.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                   <path fill-rule="evenodd" d="M16.704 5.29a1 1 0 010 1.414l-7.25 7.25a1 1 0 01-1.414 0l-3.5-3.5a1 1 0 011.414-1.414l2.793 2.793 6.543-6.543a1 1 0 011.414 0z" clip-rule="evenodd" />
                 </svg>
-              }
-            </button>
-          }
-        </div>
+              </span>
+            }
+          </button>
+        }
+      </div>
+
+      @if (categoriasFiltradas().length === 0) {
+          <p class="text-xs text-slate-500 dark:text-slate-400">
+            Todavía no hay categorías de {{ tipoEtiqueta }}. Crea la primera con el botón «Nueva».
+          </p>
+        }
       }
 
       @if (editorAbierto()) {
@@ -90,9 +143,25 @@ import { esEmojiCategoria, ICONOS_CATEGORIA, normalizarIconoCategoria } from '..
             <h3 class="text-sm font-bold text-slate-800">
               {{ editando() ? 'Editar categoría' : 'Nueva categoría de ' + tipoEtiqueta }}
             </h3>
-            <button type="button" (click)="cerrarEditor()" [disabled]="guardando()" class="inline-flex min-h-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors">
-              Cancelar
-            </button>
+            <div class="flex min-w-0 shrink-0 items-center gap-2">
+              <!-- Solo al editar: no tiene sentido borrar lo que se esta creando. -->
+              @if (editando(); as enEdicion) {
+                <button
+                  type="button"
+                  (click)="eliminar()"
+                  [disabled]="guardando()"
+                  [attr.aria-label]="'Eliminar categoría ' + enEdicion.nombre"
+                  class="inline-flex min-h-9 shrink-0 items-center justify-center gap-1 rounded-lg border border-rose-200 bg-white px-2.5 text-xs font-semibold text-rose-600 transition-colors hover:border-rose-300 hover:bg-rose-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-rose-500 disabled:opacity-50 dark:border-rose-900 dark:bg-slate-800 dark:text-rose-300 dark:hover:bg-rose-500/10">
+                  <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M8.25 1.75A1.75 1.75 0 0010 3.5v7.75a1.75 1.75 0 01-3.5 0V3.5c0-.966.784-1.75 1.75-1.75zm3.5 1.75a1.75 1.75 0 113.5 0v7.75a1.75 1.75 0 01-3.5 0V3.5zM2.5 6a1 1 0 012 0v7.25c0 .69.56 1.25 1.25 1.25h8.5c.69 0 1.25-.56 1.25-1.25V6a1 1 0 112 0v7.25A3.75 3.75 0 015.75 17h-1.5A3.75 3.75 0 01.5 13.25V6z" clip-rule="evenodd" />
+                  </svg>
+                  Eliminar
+                </button>
+              }
+              <button type="button" (click)="cerrarEditor()" [disabled]="guardando()" class="inline-flex min-h-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors">
+                Cancelar
+              </button>
+            </div>
           </div>
 
           @if (error()) {
@@ -157,12 +226,15 @@ export class CategoriaSelectorComponent {
   @Input({ required: true }) categorias: Categoria[] = [];
   @Input({ required: true }) tipo!: TipoTransaccion;
   @Input() selectedId: number | null = null;
+  /** Encabezado del grupo. El texto vive aqui para que el host no lo repita. */
+  @Input() etiqueta = 'Categoría';
   @Output() readonly selectedIdChange = new EventEmitter<number | null>();
   @Output() readonly categoriasChange = new EventEmitter<Categoria[]>();
 
   readonly selectId = 'categoriaId';
-  readonly opcionesId = `${this.selectId}-opciones`;
-  readonly opcionesAbiertas = signal(false);
+  readonly menuId = `${this.selectId}-opciones`;
+  readonly labelId = `${this.selectId}-label`;
+  readonly menuAbierto = signal(false);
   readonly editorAbierto = signal(false);
   readonly guardando = signal(false);
   readonly error = signal<string | null>(null);
@@ -173,19 +245,41 @@ export class CategoriaSelectorComponent {
   readonly categoriaSeleccionada = (): Categoria | undefined =>
     this.categoriasFiltradas().find(categoria => categoria.id === this.selectedId);
 
+  /** Lo que anuncia el mosaico colapsado: el nombre y que abre el menú. */
+  get descripcionMosaico(): string {
+    const nombre = this.categoriaSeleccionada()?.nombre ?? 'Sin categoría';
+    return `${this.etiqueta}: ${nombre}. Cambiar`;
+  }
+
+  constructor(
+    private readonly finanzasService: FinanzasService,
+    private readonly toastService: ToastService,
+    private readonly confirmDialog: ConfirmDialogService,
+    private readonly categoriaPreferida: CategoriaPreferidaService
+  ) {}
+
+  abrirMenu(): void {
+    this.menuAbierto.set(true);
+  }
+
+  cerrarMenu(): void {
+    if (this.guardando()) return;
+    this.menuAbierto.set(false);
+  }
+
   seleccionarCategoria(categoriaId: number | null): void {
     this.selectedIdChange.emit(categoriaId);
-    this.opcionesAbiertas.set(false);
+    // Elegir es la señal de que esa categoria es la de siempre: se guarda para
+    // que la siguiente vez abra el formulario con ella ya puesta.
+    if (categoriaId !== null) this.categoriaPreferida.recordar(this.tipo, categoriaId);
+    this.menuAbierto.set(false);
   }
 
   nombre = '';
   icono = '';
   emojiPersonalizado = '';
-
-  constructor(
-    private readonly finanzasService: FinanzasService,
-    private readonly toastService: ToastService
-  ) {}
+  /** Corta la confirmacion si el usuario la acepta dos veces seguidas. */
+  private eliminando = false;
 
   get tipoEtiqueta(): string {
     return this.tipo === 'INGRESO' ? 'ingreso' : 'gasto';
@@ -214,6 +308,53 @@ export class CategoriaSelectorComponent {
   cerrarEditor(): void {
     if (this.guardando()) return;
     this.editorAbierto.set(false);
+  }
+
+  /**
+   * Elimina la categoria que se esta editando. El movimiento no se borra: el
+   * backend la marca como inactiva, asi que los gastos historicos conservan su
+   * categoria y solo deja de ofrecerse al registrar.
+   */
+  eliminar(): void {
+    const categoria = this.editando();
+    if (!categoria || this.guardando() || this.eliminando) return;
+
+    this.confirmDialog.confirm({
+      title: 'Eliminar categoría',
+      message: `Se dejará de ofrecer «${categoria.nombre}» al registrar movimientos. Los movimientos que ya la usan la conservan.`,
+      confirmText: 'Eliminar',
+      type: 'danger'
+    }).then(confirmado => {
+      if (!confirmado) return;
+      this.eliminando = true;
+      this.guardando.set(true);
+      this.error.set(null);
+      this.finanzasService.cambiarEstadoCategoria(categoria.id, false).subscribe({
+        next: response => {
+          this.guardando.set(false);
+          this.eliminando = false;
+          if (!response.success) {
+            this.error.set(response.message || 'No se pudo eliminar la categoría.');
+            return;
+          }
+          // Si era la preferida de este tipo, se olvida: al reabrir el formulario
+          // tiene que caer en otra categoria y no en la que ya no existe.
+          this.categoriaPreferida.olvidar(this.tipo, categoria.id);
+          this.categoriasChange.emit(
+            this.categorias.filter(otra => otra.id !== categoria.id)
+          );
+          this.selectedIdChange.emit(null);
+          this.editorAbierto.set(false);
+          this.menuAbierto.set(false);
+          this.toastService.success('Categoría eliminada.');
+        },
+        error: err => {
+          this.guardando.set(false);
+          this.eliminando = false;
+          this.error.set(err.error?.message || 'No se pudo eliminar la categoría.');
+        }
+      });
+    });
   }
 
   guardar(): void {
@@ -259,7 +400,9 @@ export class CategoriaSelectorComponent {
         this.guardando.set(false);
         this.categoriasChange.emit(categoriasActualizadas);
         this.selectedIdChange.emit(categoriaGuardada.id);
+        this.categoriaPreferida.recordar(this.tipo, categoriaGuardada.id);
         this.editorAbierto.set(false);
+        this.menuAbierto.set(false);
         this.toastService.success(actual ? 'Categoría actualizada.' : 'Categoría creada.');
       },
       error: err => {

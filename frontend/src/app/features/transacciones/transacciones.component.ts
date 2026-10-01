@@ -3,15 +3,15 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FinanzasService } from '../../core/services/finanzas.service';
+import { CategoriaPreferidaService } from '../../core/services/categoria-preferida.service';
 import { mensajeDeError } from '../../core/utils/mensaje-error';
 import { ToastService } from '../../core/services/toast.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { CategoriaSelectorComponent } from '../../shared/components/categoria-selector/categoria-selector.component';
+import { CuentaSelectorComponent } from '../../shared/components/cuenta-selector/cuenta-selector.component';
 import { MovimientoMobileCardComponent } from '../../shared/components/movimiento-mobile-card/movimiento-mobile-card.component';
 import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive';
 import { MontoPipe } from '../../core/pipes/monto.pipe';
-import { PrivacidadService } from '../../core/services/privacidad.service';
-import { resumenCuentaSelector } from '../../core/utils/cuenta-financiera';
 import {
   Categoria,
   Cuenta,
@@ -26,7 +26,7 @@ import {
 @Component({
   selector: 'app-transacciones',
   standalone: true,
-  imports: [CommonModule, FormsModule, CategoriaSelectorComponent, MovimientoMobileCardComponent, FocusTrapDirective, MontoPipe],
+  imports: [CommonModule, FormsModule, CategoriaSelectorComponent, CuentaSelectorComponent, MovimientoMobileCardComponent, FocusTrapDirective, MontoPipe],
   template: `
     <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-5 sm:space-y-6">
 
@@ -138,16 +138,11 @@ import {
           
           <!-- Filtro Cuenta -->
           <div>
-            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Cuenta</label>
-            <select
-              [ngModel]="filtroCuentaId()"
-              (ngModelChange)="onCuentaChange($event)"
-              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 cursor-pointer">
-              <option [ngValue]="null">Todas las cuentas</option>
-              @for (c of cuentas(); track c.id) {
-                <option [ngValue]="c.id">{{ c.nombre }} ({{ c.tipo }})</option>
-              }
-            </select>
+            <app-cuenta-selector
+              [cuentas]="cuentas()"
+              [selectedId]="filtroCuentaId()"
+              label="Cuenta"
+              (selectedIdChange)="onCuentaChange($event)" />
           </div>
 
           <!-- Filtro Categoría -->
@@ -430,13 +425,13 @@ import {
         <div appFocusTrap (focusTrapEscape)="cerrarModal()" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="transacciones-modal-titulo" class="flex max-h-[calc(100dvh-1rem)] min-h-0 w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl animate-in fade-in zoom-in-95 duration-150 sm:rounded-3xl">
           
           <div class="shrink-0 border-b border-slate-100 p-4 sm:p-6">
-            <div class="flex items-center justify-between pb-4">
-              <h2 id="transacciones-modal-titulo" class="text-lg font-bold text-slate-900">{{ modoEdicion() ? 'Editar Movimiento' : 'Registrar Movimiento' }}</h2>
+            <div class="flex items-center justify-between gap-3 pb-3 sm:pb-4">
+              <h2 id="transacciones-modal-titulo" class="text-base font-bold text-slate-900 sm:text-lg">{{ modoEdicion() ? 'Editar Movimiento' : 'Registrar Movimiento' }}</h2>
               <button 
                 type="button"
                 (click)="cerrarModal()" 
                 aria-label="Cerrar formulario de movimiento"
-                class="inline-flex min-h-11 min-w-11 items-center justify-center text-slate-600 hover:text-slate-900 p-1 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600">
+                class="inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-lg p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -444,33 +439,36 @@ import {
             </div>
 
             <!-- Tabs de Tipo -->
-            <div class="grid grid-cols-3 gap-2 p-1 bg-slate-100 rounded-xl text-xs font-semibold">
+            <div role="group" aria-label="Tipo de movimiento" class="grid grid-cols-3 gap-1.5 rounded-xl bg-slate-100 p-1 text-[11px] font-semibold sm:gap-2 sm:text-xs">
               <button 
                 type="button"
                 (click)="cambiarTipoModal('GASTO')"
+                [attr.aria-pressed]="formTipo() === 'GASTO'"
                 [class]="formTipo() === 'GASTO' ? 'bg-white text-rose-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'"
-                class="min-h-11 rounded-lg transition-all text-center cursor-pointer">
+                class="min-h-10 cursor-pointer rounded-lg px-1 py-2 text-center transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 sm:min-h-11">
                 Gasto
               </button>
               <button 
                 type="button"
                 (click)="cambiarTipoModal('INGRESO')"
+                [attr.aria-pressed]="formTipo() === 'INGRESO'"
                 [class]="formTipo() === 'INGRESO' ? 'bg-white text-emerald-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'"
-                class="min-h-11 rounded-lg transition-all text-center cursor-pointer">
+                class="min-h-10 cursor-pointer rounded-lg px-1 py-2 text-center transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 sm:min-h-11">
                 Ingreso
               </button>
               <button 
                 type="button"
                 (click)="cambiarTipoModal('TRANSFERENCIA')"
+                [attr.aria-pressed]="formTipo() === 'TRANSFERENCIA'"
                 [class]="formTipo() === 'TRANSFERENCIA' ? 'bg-white text-blue-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'"
-                class="min-h-11 rounded-lg transition-all text-center cursor-pointer">
+                class="min-h-10 cursor-pointer rounded-lg px-1 py-2 text-center transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 sm:min-h-11">
                 Transferencia
               </button>
             </div>
           </div>
 
           <!-- Formulario -->
-          <form (ngSubmit)="guardarMovimiento()" class="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain rounded-b-2xl p-4 pb-[max(2rem,env(safe-area-inset-bottom))] sm:p-6 sm:pb-8">
+          <form (ngSubmit)="guardarMovimiento()" class="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain rounded-b-2xl p-4 pb-[max(2rem,env(safe-area-inset-bottom))] sm:space-y-4 sm:p-6 sm:pb-8">
             
             @if (modalError()) {
               <div class="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs">
@@ -478,32 +476,79 @@ import {
               </div>
             }
 
-            <!-- Monto -->
-            <div class="space-y-2">
-              <div class="flex items-center justify-between gap-3">
-                <label for="monto" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                  Monto
-                </label>
-                <span class="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-800">
-                  <span class="text-[10px] font-semibold uppercase tracking-wide text-emerald-700">Moneda</span>
+            <!-- Monto: sin título. El número grande y el símbolo de la moneda ya dicen todo,
+                 y una etiqueta encima solo empuja el resto del formulario hacia abajo. -->
+            <div class="rounded-2xl border border-slate-200 bg-white px-4 py-2.5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+              <div class="relative flex items-center justify-center">
+                <span class="absolute left-0 text-xl font-bold text-slate-400 dark:text-slate-500">
                   {{ monedaCuenta(formCuentaId) }}
                 </span>
-              </div>
-              <input
+                <input
                   id="monto"
                   type="number"
                   step="0.01"
                   min="0.01"
                   required
+                  inputmode="decimal"
                   [(ngModel)]="formMonto"
                   name="monto"
                   placeholder="0.00"
-                  class="w-full rounded-xl border-2 border-slate-300 bg-white px-4 py-3 text-lg font-bold text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20"
+                  [attr.aria-label]="'Monto a registrar en ' + monedaCuenta(formCuentaId)"
+                  class="w-full bg-transparent py-1 pl-9 pr-2 text-center text-3xl font-black text-slate-900 placeholder:font-bold placeholder:text-slate-400 focus:outline-none dark:text-white dark:placeholder:text-slate-500"
                 />
+              </div>
             </div>
 
+            <!-- Cuentas. En transferencia: "De" -> "Para" en una sola fila, con la flecha
+                 en una columna propia para que nunca pise ninguno de los dos botones.
+                 Fuera de transferencia la etiqueta "Cuenta" sobra: el botón ya va escrito. -->
+            @if (formTipo() === 'TRANSFERENCIA') {
+              <div class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                <div class="grid grid-cols-[minmax(0,1fr)_1.5rem_minmax(0,1fr)] items-start gap-1.5">
+                  <app-cuenta-selector
+                    [cuentas]="cuentas()"
+                    [selectedId]="formCuentaId"
+                    label="De"
+                    idBase="cuentaId"
+                    [compacto]="true"
+                    (selectedIdChange)="cambiarCuentaOrigen($event)" />
+
+                  <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor"
+                       class="mt-5 h-4 w-4 shrink-0 justify-self-center text-slate-400 dark:text-slate-500">
+                    <path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h9.19L10.72 7.03a.75.75 0 111.06-1.06l3.5 3.5a.75.75 0 010 1.06l-3.5 3.5a.75.75 0 11-1.06-1.06l2.22-2.22H3.75A.75.75 0 013 10z" clip-rule="evenodd" />
+                  </svg>
+
+                  <app-cuenta-selector
+                    [cuentas]="cuentasDestinoDisponibles()"
+                    [selectedId]="formCuentaDestinoId"
+                    label="Para"
+                    idBase="cuentaDestinoId"
+                    [compacto]="true"
+                    (selectedIdChange)="formCuentaDestinoId = $event" />
+                </div>
+
+                @if (cuentasDestinoDisponibles().length === 0) {
+                  <p class="mt-2 text-xs leading-relaxed text-amber-700 dark:text-amber-400">
+                    No puedes transferir entre dos tarjetas de crédito. Elige una cuenta que no sea de crédito.
+                  </p>
+                }
+              </div>
+            } @else {
+              <div class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                <app-cuenta-selector
+                  [cuentas]="cuentas()"
+                  [selectedId]="formCuentaId"
+                  label="Cuenta"
+                  [etiquetaVisible]="false"
+                  idBase="cuentaId"
+                  (selectedIdChange)="cambiarCuentaOrigen($event)" />
+              </div>
+            }
+
+            <!-- Categoría a lo ancho. Con veinte nombres posibles, media columna estrangula
+                 tanto el mosaico como la rejilla que se abre para elegir. -->
             @if (formTipo() !== 'TRANSFERENCIA') {
-              <div>
+              <div class="min-w-0">
                 @defer (on immediate) {
                   <app-categoria-selector
                     [categorias]="categorias()"
@@ -512,78 +557,16 @@ import {
                     (selectedIdChange)="formCategoriaId = $event"
                     (categoriasChange)="categorias.set($event)" />
                 } @placeholder {
-                  <div class="h-20 animate-pulse rounded-xl bg-slate-100"></div>
+                  <div class="h-16 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800"></div>
                 }
               </div>
             }
 
-            <!-- Cuentas -->
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label for="cuentaId" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                  {{ formTipo() === 'TRANSFERENCIA' ? 'Cuenta Origen' : 'Cuenta' }}
-                </label>
-                <select
-                  id="cuentaId"
-                  required
-                  [(ngModel)]="formCuentaId"
-                  name="cuentaId"
-                  class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all cursor-pointer">
-                  @for (c of cuentas(); track c.id) {
-                    <option [ngValue]="c.id">{{ c.nombre }} ({{ resumenCuentaSelector(c) }})</option>
-                  }
-                </select>
-              </div>
-
-              @if (formTipo() === 'TRANSFERENCIA') {
-                <div>
-                  <label for="cuentaDestinoId" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                    Cuenta Destino
-                  </label>
-                  <select
-                    id="cuentaDestinoId"
-                    required
-                    [(ngModel)]="formCuentaDestinoId"
-                    name="cuentaDestinoId"
-                    class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all cursor-pointer">
-                    @for (c of cuentas(); track c.id) {
-                      @if (c.id !== formCuentaId) {
-                        <option [ngValue]="c.id">{{ c.nombre }} ({{ resumenCuentaSelector(c) }})</option>
-                      }
-                    }
-                  </select>
-                  @if (monedaCuenta(formCuentaId) !== monedaCuenta(formCuentaDestinoId)) {
-                    <div class="mt-4">
-                      <label for="tasaCambio" class="block text-xs font-semibold text-slate-700 mb-1.5">
-                        Tasa de cambio (1 {{ monedaCuenta(formCuentaId) }} = ? {{ monedaCuenta(formCuentaDestinoId) }})
-                      </label>
-                      <input
-                        id="tasaCambio"
-                        type="number"
-                        name="tasaCambio"
-                        min="0.00000001"
-                        step="0.00000001"
-                        required
-                        [(ngModel)]="formTasaCambio"
-                        class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
-                        placeholder="Ej. 17.25" />
-                      @if (formMonto && formTasaCambio && formTasaCambio > 0) {
-                        <p class="mt-1 text-xs text-slate-500">
-                          Se depositarán {{ formMonto * formTasaCambio | monto:monedaCuenta(formCuentaDestinoId):'symbol':'1.2-2' }}.
-                        </p>
-                      }
-                    </div>
-                  }
-                </div>
-              }
-            </div>
-
-            <!-- Fecha y Notas -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label for="fecha" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Fecha
-                </label>
+            <!-- Fecha y el campo que la acompaña comparten fila. Ambas etiquetas van
+                 fuera de vista: el control de fecha ya muestra su propio formato. -->
+            <div class="grid grid-cols-2 gap-2">
+              <div class="min-w-0">
+                <label for="fecha" class="sr-only">Fecha del movimiento</label>
                 <input
                   id="fecha"
                   type="date"
@@ -591,88 +574,132 @@ import {
                   [(ngModel)]="formFecha"
                   (ngModelChange)="actualizarSiguienteFecha()"
                   name="fecha"
-                  class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all cursor-pointer"
+                  class="w-full cursor-pointer rounded-xl border border-slate-300 bg-slate-50 px-3 py-3 text-sm text-slate-900 transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
                 />
               </div>
 
+              @if (formTipo() === 'TRANSFERENCIA') {
+                @if (monedaCuenta(formCuentaId) !== monedaCuenta(formCuentaDestinoId)) {
+                  <div class="min-w-0">
+                    <label for="tasaCambio" class="sr-only">Tasa de cambio</label>
+                    <input
+                      id="tasaCambio"
+                      type="number"
+                      name="tasaCambio"
+                      min="0.00000001"
+                      step="0.00000001"
+                      required
+                      inputmode="decimal"
+                      [(ngModel)]="formTasaCambio"
+                      [attr.aria-label]="'Tasa de cambio de ' + monedaCuenta(formCuentaId) + ' a ' + monedaCuenta(formCuentaDestinoId)"
+                      class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-3 text-sm text-slate-900 transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+                      placeholder="Ej. 17.25"
+                    />
+                    <p class="mt-1 truncate text-[11px] text-slate-500 dark:text-slate-400">
+                      1 {{ monedaCuenta(formCuentaId) }} = ? {{ monedaCuenta(formCuentaDestinoId) }}
+                      @if (formMonto && formTasaCambio && formTasaCambio > 0) {
+                        · llegan {{ formMonto * formTasaCambio | monto:monedaCuenta(formCuentaDestinoId):'symbol':'1.2-2' }}
+                      }
+                    </p>
+                  </div>
+                }
+              } @else {
+                <div class="min-w-0">
+                  <label for="notas" class="sr-only">Notas adicionales (opcional)</label>
+                  <input
+                    id="notas"
+                    type="text"
+                    maxlength="500"
+                    [(ngModel)]="formNotas"
+                    name="notas"
+                    placeholder="Notas"
+                    class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-3 text-sm text-slate-900 transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+                  />
+                </div>
+              }
+            </div>
+
+            @if (formTipo() === 'TRANSFERENCIA') {
               <div>
-                <label for="notas" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Notas adicionales (Opcional)
-                </label>
+                <label for="notas" class="sr-only">Notas adicionales (opcional)</label>
                 <input
                   id="notas"
                   type="text"
+                  maxlength="500"
                   [(ngModel)]="formNotas"
                   name="notas"
-                  placeholder="Agrega un detalle si lo necesitas..."
-                  class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
+                  placeholder="Notas"
+                  class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
                 />
               </div>
-            </div>
-
-            @if (!modoEdicion() && formTipo() !== 'TRANSFERENCIA') {
-              <section class="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                <label class="flex min-h-10 cursor-pointer items-center gap-3">
-                  <input type="checkbox" name="movimientoRecurrente" [(ngModel)]="movimientoRecurrente"
-                         (ngModelChange)="actualizarSiguienteFecha()"
-                         class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" />
-                  <span>
-                    <span class="block text-sm font-semibold text-slate-800">Repetir este movimiento</span>
-                    <span class="block text-xs text-slate-500">Se guardará como plantilla; confirmarás cada cargo en su fecha.</span>
-                  </span>
-                </label>
-                @if (movimientoRecurrente) {
-                  <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <label class="block text-xs font-semibold text-slate-700">
-                      Frecuencia
-                      <select name="frecuenciaRecurrencia" [(ngModel)]="frecuenciaRecurrencia"
-                              (ngModelChange)="actualizarSiguienteFecha()"
-                              class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-normal">
-                        <option value="SEMANAL">Cada semana</option>
-                        <option value="QUINCENAL">Cada dos semanas</option>
-                        <option value="MENSUAL">Cada mes</option>
-                        <option value="ANUAL">Cada año</option>
-                      </select>
-                    </label>
-                    <label class="block text-xs font-semibold text-slate-700">
-                      Siguiente fecha
-                      <input id="siguienteFechaRecurrencia" name="siguienteFechaRecurrencia" type="date"
-                             [(ngModel)]="siguienteFechaRecurrencia" [min]="formFecha" required
-                             class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-normal" />
-                    </label>
-                  </div>
-                }
-              </section>
             }
 
-                        @if (!modoEdicion() && formTipo() === 'GASTO' && esCuentaCredito()) {
-              <section class="rounded-xl border border-slate-200 bg-slate-50 p-3 mt-3">
-                <label class="flex min-h-10 cursor-pointer items-center gap-3">
-                  <input type="checkbox" name="esCompraMsi" [(ngModel)]="esCompraMsi"
-                         class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" />
-                  <span>
-                    <span class="block text-sm font-semibold text-slate-800">Compra a Meses Sin Intereses (MSI)</span>
-                    <span class="block text-xs text-slate-500">Retiene el total de tu cupo y difiere los cargos en mensualidades.</span>
+            @if (!modoEdicion() && formTipo() !== 'TRANSFERENCIA') {
+              <!-- Repetir y MSI en la misma fila, excluyentes entre sí: el servidor solo
+                   programa una plantilla por movimiento y con los dos datos se queda con MSI. -->
+              <div class="grid grid-cols-2 gap-2">
+                <label
+                  class="flex min-h-12 cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 transition-colors focus-within:ring-2 focus-within:ring-emerald-500"
+                  [class]="movimientoRecurrente
+                    ? 'border-emerald-500 bg-emerald-50 dark:border-emerald-400 dark:bg-emerald-500/10'
+                    : 'border-slate-200 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900'">
+                  <input type="checkbox" name="movimientoRecurrente" class="h-4 w-4 shrink-0 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                         [ngModel]="movimientoRecurrente" (ngModelChange)="alternarRecurrente($event)" />
+                  <span class="min-w-0 text-xs font-semibold text-slate-800 dark:text-slate-200">
+                    Repetir<span class="sr-only"> este movimiento</span>
                   </span>
                 </label>
-                @if (esCompraMsi) {
-                  <div class="mt-3">
-                    <label class="block text-xs font-semibold text-slate-700">
-                      Plazo en meses
-                      <select name="formMsi" [(ngModel)]="formMsi" required
-                              class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-normal">
-                        <option [ngValue]="null" disabled>Selecciona el plazo</option>
-                        <option [ngValue]="3">3 meses sin intereses</option>
-                        <option [ngValue]="6">6 meses sin intereses</option>
-                        <option [ngValue]="9">9 meses sin intereses</option>
-                        <option [ngValue]="12">12 meses sin intereses</option>
-                        <option [ngValue]="18">18 meses sin intereses</option>
-                        <option [ngValue]="24">24 meses sin intereses</option>
-                      </select>
-                    </label>
-                  </div>
+
+                @if (esCuentaCredito()) {
+                  <label
+                    class="flex min-h-12 cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 transition-colors focus-within:ring-2 focus-within:ring-emerald-500"
+                    [class]="esCompraMsi
+                      ? 'border-emerald-500 bg-emerald-50 dark:border-emerald-400 dark:bg-emerald-500/10'
+                      : 'border-slate-200 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900'">
+                    <input type="checkbox" name="esCompraMsi" class="h-4 w-4 shrink-0 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                           [ngModel]="esCompraMsi" (ngModelChange)="alternarMsi($event)" />
+                    <span class="min-w-0 text-xs font-semibold text-slate-800 dark:text-slate-200">
+                      MSI<span class="sr-only">: compra a meses sin intereses</span>
+                    </span>
+                  </label>
                 }
-              </section>
+              </div>
+
+              @if (movimientoRecurrente) {
+                <div class="grid grid-cols-2 gap-2">
+                  <label class="min-w-0 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                    Frecuencia
+                    <select name="frecuenciaRecurrencia" [(ngModel)]="frecuenciaRecurrencia"
+                            (ngModelChange)="actualizarSiguienteFecha()"
+                            class="mt-1 w-full rounded-xl border border-slate-300 bg-slate-50 px-2.5 py-2.5 text-sm font-normal text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+                      <option value="SEMANAL">Cada semana</option>
+                      <option value="QUINCENAL">Cada dos semanas</option>
+                      <option value="MENSUAL">Cada mes</option>
+                      <option value="ANUAL">Cada año</option>
+                    </select>
+                  </label>
+                  <label class="min-w-0 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                    Siguiente cargo
+                    <input id="siguienteFechaRecurrencia" name="siguienteFechaRecurrencia" type="date"
+                           [(ngModel)]="siguienteFechaRecurrencia" [min]="formFecha" required
+                           class="mt-1 w-full rounded-xl border border-slate-300 bg-slate-50 px-2.5 py-2.5 text-sm font-normal text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
+                  </label>
+                </div>
+              } @else if (esCompraMsi) {
+                <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                  Plazo en meses
+                  <select name="formMsi" [(ngModel)]="formMsi" required
+                          class="mt-1 w-full rounded-xl border border-slate-300 bg-slate-50 px-2.5 py-2.5 text-sm font-normal text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+                    <option [ngValue]="null" disabled>Selecciona el plazo</option>
+                    <option [ngValue]="3">3 meses sin intereses</option>
+                    <option [ngValue]="6">6 meses sin intereses</option>
+                    <option [ngValue]="9">9 meses sin intereses</option>
+                    <option [ngValue]="12">12 meses sin intereses</option>
+                    <option [ngValue]="18">18 meses sin intereses</option>
+                    <option [ngValue]="24">24 meses sin intereses</option>
+                  </select>
+                </label>
+              }
             }
 
             <!-- Botones de Acción -->
@@ -708,10 +735,9 @@ export class TransaccionesComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly finanzasService = inject(FinanzasService);
-  private readonly privacidad = inject(PrivacidadService);
+  private readonly categoriaPreferida = inject(CategoriaPreferidaService);
   private readonly toastService = inject(ToastService);
   private readonly confirmDialogService = inject(ConfirmDialogService);
-  readonly resumenCuentaSelector = (cuenta: Cuenta) => resumenCuentaSelector(cuenta, this.privacidad.ocultarMontos());
 
   // Filtros Signals
   readonly filtroTipo = signal<TipoTransaccion | ''>('');
@@ -762,6 +788,54 @@ export class TransaccionesComponent implements OnInit {
   });
   esCuentaCredito(): boolean {
     return this.cuentas().find(cuenta => cuenta.id === this.formCuentaId)?.tipo === 'CREDITO';
+  }
+
+  /** Destinos válidos: nunca la misma cuenta, ni una tarjeta de crédito si el origen ya lo es. */
+  cuentasDestinoDisponibles(): Cuenta[] {
+    const origen = this.cuentas().find(cuenta => cuenta.id === this.formCuentaId);
+    return this.cuentas().filter(cuenta =>
+      cuenta.id !== this.formCuentaId
+      && !(origen?.tipo === 'CREDITO' && cuenta.tipo === 'CREDITO')
+    );
+  }
+
+  cambiarCuentaOrigen(cuentaId: number | null): void {
+    this.formCuentaId = cuentaId;
+    const destinos = this.cuentasDestinoDisponibles();
+    if (!destinos.some(cuenta => cuenta.id === this.formCuentaDestinoId)) {
+      this.formCuentaDestinoId = destinos[0]?.id ?? null;
+    }
+    if (this.formTipo() !== 'TRANSFERENCIA') this.formCuentaDestinoId = null;
+    // Los MSI solo existen en tarjetas de crédito: si la cuenta cambia y ya no lo es,
+    // dejarlo marcado solo produciría un error del servidor al guardar.
+    if (!this.esCuentaCredito()) this.limpiarMsi();
+  }
+
+  /**
+   * Repetir y MSI no pueden convivir. El servidor solo crea una plantilla por
+   * movimiento, y con los dos datos en el request la de MSI se lleva el resto:
+   * la periodicidad elegida se perdería sin avisar.
+   */
+  alternarRecurrente(valor: boolean): void {
+    this.movimientoRecurrente = valor;
+    if (valor) {
+      this.esCompraMsi = false;
+      this.formMsi = null;
+      this.actualizarSiguienteFecha();
+    }
+  }
+
+  alternarMsi(valor: boolean): void {
+    this.esCompraMsi = valor;
+    if (valor) {
+      this.movimientoRecurrente = false;
+      this.siguienteFechaRecurrencia = '';
+    }
+  }
+
+  limpiarMsi(): void {
+    this.esCompraMsi = false;
+    this.formMsi = null;
   }
 
   monedaCuenta(id: number | null): string {
@@ -1034,15 +1108,21 @@ export class TransaccionesComponent implements OnInit {
 
     const lista = this.cuentas();
     this.formTasaCambio = null;
+    this.formCuentaDestinoId = null;
     if (lista.length > 0) {
       this.formCuentaId = lista[0].id;
-      if (lista.length > 1) {
-        this.formCuentaDestinoId = lista[1].id;
-      }
+      // El destino se recalcula desde la cuenta ya mise: si el origen es una tarjeta,
+      // la lista se queda sin tarjetas de crédito.
+      this.formCuentaDestinoId = this.cuentasDestinoDisponibles()[0]?.id ?? null;
     }
 
     const cats = this.categoriasModal();
-    this.formCategoriaId = cats.length > 0 ? cats[0].id : null;
+    // Se abre con la categoria de la ultima vez de ese tipo, si sigue existiendo;
+    // si no hay memoria, o apunta a algo que ya no esta, cae a la primera.
+    const preferida = this.categoriaPreferida.preferida(tipo);
+    this.formCategoriaId = cats.some(categoria => categoria.id === preferida)
+      ? preferida
+      : (cats[0]?.id ?? null);
     this.modalAbierto.set(true);
   }
 
@@ -1091,12 +1171,15 @@ export class TransaccionesComponent implements OnInit {
     if (tipo === 'TRANSFERENCIA') {
       this.movimientoRecurrente = false;
     }
-    this.esCompraMsi = false;
-    this.formMsi = null;
+    if (tipo !== 'GASTO') this.limpiarMsi();
+    // Cambiar de pestaña tambien cambia de tipo, asi que la memoria es la de ese tipo.
     const cats = this.categoriasModal();
-    this.formCategoriaId = cats.length > 0 ? cats[0].id : null;
+    const preferida = this.categoriaPreferida.preferida(tipo);
+    this.formCategoriaId = cats.some(categoria => categoria.id === preferida)
+      ? preferida
+      : (cats[0]?.id ?? null);
     if (tipo === 'TRANSFERENCIA') {
-      this.formCuentaDestinoId = this.cuentas().find(cuenta => cuenta.id !== this.formCuentaId)?.id ?? null;
+      this.formCuentaDestinoId = this.cuentasDestinoDisponibles()[0]?.id ?? null;
     } else {
       this.formCuentaDestinoId = null;
       this.formTasaCambio = null;

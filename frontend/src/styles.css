@@ -129,6 +129,32 @@
 
 .dashboard-summary-amount {
   overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* Mosaico de categoría: el estado activo no puede depender solo del color, por eso el
+   anillo y el peso de la fuente acompañan al relleno. */
+.categoria-mosaico--activo {
+  border-color: rgb(5 150 105);
+  background-color: rgb(236 253 245);
+  box-shadow: 0 0 0 1px rgb(5 150 105);
+}
+
+.categoria-mosaico--activo .categoria-mosaico__nombre,
+.categoria-mosaico--activo > span:last-of-type {
+  color: rgb(4 120 87);
+  font-weight: 700;
+}
+
+html.dark .categoria-mosaico--activo {
+  border-color: rgb(52 211 153);
+  background-color: rgba(52, 211, 153, 0.12);
+  box-shadow: 0 0 0 1px rgb(52, 211, 153);
+}
+
+html.dark .categoria-mosaico--activo .categoria-mosaico__nombre,
+html.dark .categoria-mosaico--activo > span:last-of-type {
+  color: rgb(110, 231, 183);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -176,14 +202,14 @@
 
 html.dark {
   color-scheme: dark;
-  --kaptal-canvas: #020617;
-  --kaptal-surface: #0f172a;
-  --kaptal-surface-subtle: #1e293b;
-  --kaptal-content: #f8fafc;
-  --kaptal-content-muted: #cbd5e1;
-  --kaptal-border: #334155;
-  --kaptal-brand: #34d399;
-  --kaptal-focus: #6ee7b7;
+  --kaptal-canvas: #000000;
+  --kaptal-surface: #0f0f0f;
+  --kaptal-surface-subtle: #1a1a1a;
+  --kaptal-content: #ffffff;
+  --kaptal-content-muted: #a1a1aa;
+  --kaptal-border: #262626;
+  --kaptal-brand: #10b981;
+  --kaptal-focus: #34d399;
 }
 
 html.dark body {
@@ -247,111 +273,116 @@ html.dark .border-slate-300 {
 }
 
 html.dark .bg-emerald-50 {
-  background-color: rgb(6 78 59 / 0.45);
+  background-color: rgba(16, 185, 129, 0.1);
 }
 
 html.dark .bg-emerald-100 {
-  background-color: rgb(6 78 59 / 0.65);
+  background-color: rgba(16, 185, 129, 0.2);
 }
 
 html.dark .text-emerald-800,
 html.dark .text-emerald-700 {
-  color: rgb(110 231 183);
+  color: #34d399;
 }
 
 html.dark .text-blue-700,
 html.dark .text-blue-600 {
-  color: rgb(147 197 253);
+  color: #60a5fa;
 }
 
 html.dark .border-emerald-100,
 html.dark .border-emerald-200 {
-  border-color: rgb(6 95 70);
+  border-color: rgba(16, 185, 129, 0.3);
 }
 
 html.dark .bg-blue-100 {
-  background-color: rgb(30 58 138 / 0.55);
+  background-color: rgba(59, 130, 246, 0.15);
 }
 
 html.dark .bg-rose-50 {
-  background-color: rgb(136 19 55 / 0.3);
+  background-color: rgba(244, 63, 94, 0.1);
 }
 
 html.dark .bg-rose-100 {
-  background-color: rgb(136 19 55 / 0.45);
+  background-color: rgba(244, 63, 94, 0.2);
 }
 
 html.dark .text-rose-800,
 html.dark .text-rose-700,
 html.dark .text-rose-600 {
-  color: rgb(253 164 175);
+  color: #fb7185;
 }
 
 html.dark .border-rose-100,
 html.dark .border-rose-200 {
-  border-color: rgb(159 18 57 / 0.75);
+  border-color: rgba(244, 63, 94, 0.3);
 }
 
 html.dark .bg-amber-50 {
-  background-color: rgb(120 53 15 / 0.35);
+  background-color: rgba(245, 158, 11, 0.1);
 }
 
 html.dark .text-amber-950,
 html.dark .text-amber-800,
 html.dark .text-amber-700 {
-  color: rgb(252 211 77);
+  color: #fbbf24;
 }
 
 html.dark .border-amber-200 {
-  border-color: rgb(180 83 9 / 0.75);
+  border-color: rgba(245, 158, 11, 0.3);
 }
 
 html.dark .bg-sky-50 {
-  background-color: rgb(12 74 110 / 0.4);
+  background-color: rgba(14, 165, 233, 0.1);
 }
 
 html.dark .text-sky-900 {
-  color: rgb(224 242 254);
+  color: #bae6fd;
 }
 
 html.dark .border-sky-200 {
-  border-color: rgb(3 105 161 / 0.7);
+  border-color: rgba(14, 165, 233, 0.3);
 }
 
 html.dark .bg-violet-50,
 html.dark .bg-purple-50 {
-  background-color: rgb(76 29 149 / 0.35);
+  background-color: rgba(139, 92, 246, 0.1);
 }
 
 html.dark .text-violet-700,
 html.dark .text-purple-700 {
-  color: rgb(221 214 254);
+  color: #c4b5fd;
 }
 
 html.dark .border-violet-200,
 html.dark .border-purple-200 {
-  border-color: rgb(109 40 217 / 0.65);
+  border-color: rgba(139, 92, 246, 0.3);
 }
 
 html.dark .hover\:bg-slate-50:hover,
 html.dark .hover\:bg-slate-100:hover {
-  background-color: rgb(30 41 59);
+  background-color: var(--kaptal-surface-subtle);
 }
 
 html.dark .mobile-bottom-nav {
-  border-color: rgb(51 65 85);
-  box-shadow: 0 -8px 24px rgb(2 6 23 / 0.4);
+  border-color: var(--kaptal-border);
+  background-color: rgba(0, 0, 0, 0.8);
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(16px);
 }
 
 html.dark .mobile-bottom-nav__link--active {
-  background-color: rgb(6 78 59 / 0.55);
-  color: rgb(110 231 183);
+  background-color: rgba(52, 211, 153, 0.15);
+  color: var(--kaptal-brand);
 }
 
 html.dark input,
 html.dark select,
 html.dark textarea {
   color-scheme: dark;
+  background-color: var(--kaptal-surface);
+  border-color: var(--kaptal-border);
+  color: var(--kaptal-content);
 }
 
 html.dark input[type='color'] {
@@ -360,92 +391,92 @@ html.dark input[type='color'] {
 
 html.dark .cashback-benefit-panel,
 html.dark .quick-category-editor {
-  border-color: rgb(51 65 85);
-  background-color: rgb(30 41 59);
+  border-color: var(--kaptal-border);
+  background-color: var(--kaptal-surface);
 }
 
 html.dark .credit-card-settings {
-  border-color: rgb(3 105 161 / 0.7);
-  background-color: rgb(12 35 58);
+  border-color: var(--kaptal-border);
+  background-color: var(--kaptal-surface);
 }
 
 html.dark .credit-card-settings input {
-  border-color: rgb(71 85 105);
-  background-color: rgb(15 23 42);
-  color: rgb(241 245 249);
+  border-color: var(--kaptal-border);
+  background-color: var(--kaptal-canvas);
+  color: var(--kaptal-content);
 }
 
 html.dark .cashback-benefit-panel input,
 html.dark .quick-category-editor input:not([type='color']) {
-  border-color: rgb(71 85 105);
-  background-color: rgb(15 23 42);
-  color: rgb(241 245 249);
+  border-color: var(--kaptal-border);
+  background-color: var(--kaptal-canvas);
+  color: var(--kaptal-content);
 }
 
 html.dark .cashback-badge {
-  background-color: rgb(6 78 59 / 0.7);
-  color: rgb(167 243 208);
+  background-color: rgba(52, 211, 153, 0.2);
+  color: var(--kaptal-brand);
 }
 
 html.dark .quick-category-icon {
-  border-color: rgb(71 85 105);
-  background-color: rgb(51 65 85);
-  color: rgb(203 213 225);
+  border-color: var(--kaptal-border);
+  background-color: var(--kaptal-surface-subtle);
+  color: var(--kaptal-content-muted);
 }
 
 html.dark .quick-category-icon--selected {
-  border-color: rgb(5 150 105);
-  background-color: rgb(6 78 59);
-  color: rgb(167 243 208);
+  border-color: var(--kaptal-brand);
+  background-color: rgba(52, 211, 153, 0.1);
+  color: var(--kaptal-brand);
 }
 
 html.dark .toast-notification {
-  border-color: rgb(71 85 105);
-  background-color: rgb(30 41 59 / 0.98);
-  color: rgb(241 245 249);
-  box-shadow: 0 16px 32px rgb(2 6 23 / 0.45);
+  border-color: var(--kaptal-border);
+  background-color: var(--kaptal-surface);
+  color: var(--kaptal-content);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.6);
 }
 
 html.dark .toast-notification--success {
-  border-color: rgb(5 150 105 / 0.65);
+  border-color: rgba(52, 211, 153, 0.4);
 }
 
 html.dark .toast-notification--error {
-  border-color: rgb(225 29 72 / 0.65);
+  border-color: rgba(244, 63, 94, 0.4);
 }
 
 html.dark .toast-notification--warning {
-  border-color: rgb(217 119 6 / 0.65);
+  border-color: rgba(234, 179, 8, 0.4);
 }
 
 html.dark .toast-notification--info {
-  border-color: rgb(37 99 235 / 0.65);
+  border-color: rgba(59, 130, 246, 0.4);
 }
 
 html.dark .toast-notification__title {
-  color: rgb(248 250 252);
+  color: var(--kaptal-content);
 }
 
 html.dark .toast-notification__message {
-  color: rgb(203 213 225);
+  color: var(--kaptal-content-muted);
 }
 
 html.dark .toast-notification__dismiss {
-  color: rgb(148 163 184);
+  color: var(--kaptal-content-muted);
 }
 
 html.dark .toast-notification__dismiss:hover {
-  background-color: rgb(51 65 85);
-  color: rgb(241 245 249);
+  background-color: var(--kaptal-surface-subtle);
+  color: var(--kaptal-content);
 }
 
 html.dark .confirm-dialog-card {
-  border-color: rgb(51 65 85);
-  background-color: rgb(30 41 59);
+  border-color: var(--kaptal-border);
+  background-color: var(--kaptal-surface);
 }
 
 html.dark .confirm-dialog-card__message {
-  color: rgb(203 213 225);
+  color: var(--kaptal-content-muted);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -13,12 +13,15 @@ import { CommonModule, DOCUMENT } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { CategoriaPreferidaService } from '../../core/services/categoria-preferida.service';
 import { FinanzasService } from '../../core/services/finanzas.service';
 import { ToastService } from '../../core/services/toast.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { PerfilService } from '../../core/services/perfil.service';
 import { CategoriaSelectorComponent } from '../../shared/components/categoria-selector/categoria-selector.component';
+import { CuentaSelectorComponent } from '../../shared/components/cuenta-selector/cuenta-selector.component';
 import { MovimientoMobileCardComponent } from '../../shared/components/movimiento-mobile-card/movimiento-mobile-card.component';
+import { AccionesMovimientoComponent } from '../../shared/components/acciones-movimiento/acciones-movimiento.component';
 import { MontoPipe } from '../../core/pipes/monto.pipe';
 import { PrivacidadService } from '../../core/services/privacidad.service';
 import { resumenCuentaSelector } from '../../core/utils/cuenta-financiera';
@@ -26,7 +29,6 @@ import {
   Categoria,
   Cuenta,
   DashboardAnalitica,
-  DashboardComparacion,
   DashboardResumen,
   FrecuenciaRecurrencia,
   PlantillaRecurrente,
@@ -37,10 +39,10 @@ import {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, CategoriaSelectorComponent, MovimientoMobileCardComponent, MontoPipe],
+  imports: [CommonModule, FormsModule, CategoriaSelectorComponent, CuentaSelectorComponent, MovimientoMobileCardComponent, MontoPipe, AccionesMovimientoComponent],
   template: `
     <div class="dashboard-motion-scope max-w-7xl mx-auto flex flex-col px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-5 sm:space-y-8">
-      
+
       <!-- Encabezado y Saludo -->
       <div class="order-1 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
@@ -58,19 +60,79 @@ import {
             Hola, {{ authService.currentUser()?.nombre || 'Usuario' }}. Aquí tienes el estado consolidado de tus cuentas.
           </p>
         </div>
-
-        <div class="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-3">
-          <button 
-            type="button"
-            (click)="abrirModal('GASTO')"
-            class="inline-flex items-center justify-center px-3 sm:px-4 py-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-xl text-sm font-semibold shadow-md shadow-emerald-600/20 transition-all cursor-pointer">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
-            Nuevo Movimiento
-          </button>
-        </div>
       </div>
+
+      <!-- Tarjeta Consolidada: Saldo + Acciones Rápidas -->
+      <section class="order-2 relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7 dark:border-slate-800 dark:bg-zinc-950 bg-gradient-to-br from-emerald-50/50 to-white dark:from-emerald-900/10 dark:to-transparent" aria-label="Control Financiero">
+        <div class="flex flex-col gap-6">
+
+          <!-- Parte Superior: Saldo Principal -->
+          <div class="relative">
+            <div class="mb-4 flex items-center justify-between">
+              <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Saldo Total</p>
+              <select
+                [ngModel]="monedaResumen()"
+                (ngModelChange)="monedaResumen.set($event)"
+                aria-label="Moneda del saldo"
+                class="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-medium text-slate-600 focus:ring-2 focus:ring-emerald-500 outline-hidden">
+                @for (codigo of monedasResumen(); track codigo) {
+                  <option [value]="codigo">{{ codigo }}</option>
+                }
+              </select>
+            </div>
+
+            @if (resumenMonedaSeleccionada(); as moneda) {
+              <div class="flex flex-col gap-1">
+                <p class="dashboard-summary-amount text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
+                  {{ moneda.balanceTotal | monto:moneda.moneda:'symbol':'1.2-2' }}
+                </p>
+                <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+                  <span class="flex items-center gap-1">
+                    <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                    Disponible: {{ (moneda.dineroDisponible ?? moneda.balanceTotal) | monto:moneda.moneda:'symbol':'1.2-2' }}
+                  </span>
+                  <span aria-hidden="true">•</span>
+                  <span>{{ moneda.totalCuentas }} cuentas activas</span>
+                </div>
+              </div>
+            } @else {
+              <p class="animate-pulse text-sm text-slate-400">Cargando saldos...</p>
+            }
+          </div>
+
+          <!-- Resumen Mensual: Ingresos y Gastos -->
+          @if (resumenMonedaSeleccionada(); as moneda) {
+            <div class="grid grid-cols-2 gap-3">
+              <div class="rounded-2xl border border-slate-100 bg-slate-50 p-3 sm:p-4">
+                <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Ingresos mes</p>
+                <p class="mt-1 text-sm font-bold text-emerald-700 sm:text-lg">
+                  {{ moneda.ingresosMes | monto:moneda.moneda:'symbol':'1.2-2' }}
+                </p>
+              </div>
+              <div class="rounded-2xl border border-slate-100 bg-slate-50 p-3 sm:p-4">
+                <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Gastos mes</p>
+                <p class="mt-1 text-sm font-bold text-slate-700 sm:text-lg">
+                  {{ moneda.gastosMes | monto:moneda.moneda:'symbol':'1.2-2' }}
+                </p>
+              </div>
+            </div>
+          }
+
+          <!-- Separador Visual -->
+          <div class="h-px w-full bg-slate-100"></div>
+
+          <!-- Parte Inferior: Acciones Rápidas -->
+          <div class="flex flex-col gap-3">
+            <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Acciones Rápidas</p>
+            <app-acciones-movimiento
+              (elegir)="abrirModal($event)"
+              (navegar)="irACuentas()"
+              class="w-full"
+            />
+          </div>
+
+        </div>
+      </section>
 
       <!-- Alertas o Mensaje de Error si la API falla -->
       @if (error()) {
@@ -86,136 +148,6 @@ import {
           </button>
         </div>
       }
-
-      <section class="order-2 lg:order-3" aria-label="Resumen financiero por moneda">
-        @if (resumenMonedaSeleccionada(); as moneda) {
-          <div class="grid grid-cols-1 gap-3 lg:grid-cols-5 lg:gap-4">
-            <article class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-950 via-slate-900 to-slate-950 p-5 text-white shadow-lg shadow-emerald-950/10 sm:p-7 lg:col-span-3">
-              <div class="pointer-events-none absolute -right-10 -top-14 h-48 w-48 rounded-full border border-white/10"></div>
-              <div class="pointer-events-none absolute -right-2 -top-6 h-32 w-32 rounded-full border border-white/10"></div>
-              <div class="relative flex items-start justify-between gap-3">
-                <div>
-                  <p class="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-200/80">Dinero en cuentas</p>
-                  <p class="mt-1 text-xs text-slate-300">Sin descontar deuda de tarjetas</p>
-                </div>
-                <label class="sr-only" for="dashboard-currency">Moneda del resumen</label>
-                <select
-                  id="dashboard-currency"
-                  [ngModel]="monedaResumen()"
-                  (ngModelChange)="monedaResumen.set($event)"
-                  class="rounded-lg border border-white/20 bg-white/10 px-2.5 py-1.5 text-xs font-semibold text-white focus:outline-hidden focus:ring-2 focus:ring-emerald-300">
-                  @for (codigo of monedasResumen(); track codigo) {
-                    <option class="bg-slate-900 text-white" [value]="codigo">{{ codigo }}</option>
-                  }
-                </select>
-              </div>
-              <p class="dashboard-summary-amount relative mt-5 min-w-0 break-words text-2xl font-bold tracking-tight sm:text-4xl">
-                {{ (moneda.dineroDisponible ?? moneda.balanceTotal) | monto:moneda.moneda:'symbol':'1.2-2' }}
-              </p>
-              <div class="relative mt-6 grid grid-cols-2 gap-3 border-t border-white/15 pt-4">
-                <div>
-                  <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-300">Patrimonio neto</p>
-                  <p class="dashboard-summary-amount mt-1 min-w-0 break-words text-sm font-bold" [class.text-emerald-300]="moneda.balanceTotal >= 0" [class.text-rose-300]="moneda.balanceTotal < 0">
-                    {{ moneda.balanceTotal | monto:moneda.moneda:'symbol':'1.2-2' }}
-                  </p>
-                </div>
-                <div class="text-right">
-                  <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-300">Cuentas activas</p>
-                  <p class="mt-1 text-sm font-bold text-white">{{ moneda.totalCuentas }}</p>
-                </div>
-              </div>
-            </article>
-
-            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:col-span-2 lg:grid-cols-1">
-              <article class="rounded-2xl border border-emerald-100 bg-white p-3 shadow-xs sm:p-5">
-                <div class="flex items-center gap-2">
-                  <span class="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-lg font-bold text-emerald-700">↗</span>
-                  <p class="text-xs font-semibold text-slate-500">Ingresos del mes</p>
-                </div>
-                <p class="dashboard-summary-amount mt-3 min-w-0 break-words text-base font-bold text-emerald-700 sm:text-2xl">
-                  {{ moneda.ingresosMes | monto:moneda.moneda:'symbol':'1.2-2' }}
-                </p>
-              </article>
-              <article class="rounded-2xl border border-rose-100 bg-white p-3 shadow-xs sm:p-5">
-                <div class="flex items-center gap-2">
-                  <span class="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-50 text-lg font-bold text-rose-700">↘</span>
-                  <p class="text-xs font-semibold text-slate-500">Gastos del mes</p>
-                </div>
-                <p class="dashboard-summary-amount mt-3 min-w-0 break-words text-base font-bold text-rose-700 sm:text-2xl">
-                  {{ moneda.gastosMes | monto:moneda.moneda:'symbol':'1.2-2' }}
-                </p>
-                <p class="mt-1 text-xs text-slate-500">Ahorro: {{ moneda.tasaAhorro | number:'1.1-1' }}%</p>
-              </article>
-              <article class="rounded-2xl border border-amber-100 bg-white p-3 shadow-xs sm:p-5">
-                <div class="flex items-center gap-2">
-                  <span class="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-50 text-lg font-bold text-amber-700" aria-hidden="true">−</span>
-                  <p class="text-xs font-semibold text-slate-500">Deuda en tarjetas</p>
-                </div>
-                <p class="dashboard-summary-amount mt-3 min-w-0 break-words text-base font-bold text-amber-700 sm:text-2xl">
-                  {{ deudaTarjetasActual() | monto:moneda.moneda:'symbol':'1.2-2' }}
-                </p>
-              </article>
-            </div>
-          </div>
-          <article class="mt-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:mt-4 sm:p-5" aria-live="polite">
-            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <h2 class="text-sm font-bold text-slate-900">Comparación de gastos</h2>
-                @if (comparacion()) {
-                  <p class="mt-1 text-xs text-slate-500">
-                    {{ periodoTexto(comparacion()!.mes, comparacion()!.anio) }}
-                    frente a {{ periodoTexto(comparacion()!.mesAnterior, comparacion()!.anioAnterior) }}
-                    · {{ moneda.moneda }}
-                  </p>
-                }
-              </div>
-              @if (comparacionCargando()) {
-                <p role="status" class="text-xs text-slate-500">Cargando comparación...</p>
-              } @else if (comparacionError()) {
-                <div class="flex items-center gap-2 text-xs text-rose-700">
-                  <span role="alert">{{ comparacionError() }}</span>
-                  <button type="button" (click)="cargarComparacion()" class="font-semibold underline">Reintentar</button>
-                </div>
-              } @else if (comparacionMonedaSeleccionada(); as comparacionMoneda) {
-                <div class="grid grid-cols-2 gap-4 sm:min-w-80">
-                  <div>
-                    <p class="text-xs font-medium text-slate-500">Mes anterior</p>
-                    <p class="mt-1 text-sm font-bold text-slate-800">
-                      {{ comparacionMoneda.gastosAnteriores | monto:moneda.moneda:'symbol':'1.2-2' }}
-                    </p>
-                  </div>
-                  <div>
-                    <p class="text-xs font-medium text-slate-500">Mes actual</p>
-                    <p class="mt-1 text-sm font-bold text-slate-800">
-                      {{ comparacionMoneda.gastosActuales | monto:moneda.moneda:'symbol':'1.2-2' }}
-                    </p>
-                  </div>
-                  <p class="col-span-2 text-xs font-semibold"
-                     [class.text-rose-700]="comparacionMoneda.variacionGastos > 0"
-                     [class.text-emerald-700]="comparacionMoneda.variacionGastos <= 0">
-                    @if (comparacionMoneda.variacionGastos > 0) {
-                      Gastaste {{ comparacionMoneda.variacionGastos | monto:moneda.moneda:'symbol':'1.2-2' }} más
-                    } @else if (comparacionMoneda.variacionGastos < 0) {
-                      Gastaste {{ -comparacionMoneda.variacionGastos | monto:moneda.moneda:'symbol':'1.2-2' }} menos
-                    } @else {
-                      Tus gastos se mantuvieron iguales
-                    }
-                    @if (comparacionMoneda.variacionGastosPorcentaje !== null) {
-                      ({{ comparacionMoneda.variacionGastosPorcentaje | number:'1.0-1' }}%)
-                    } @else {
-                      (sin base previa para calcular porcentaje)
-                    }
-                  </p>
-                </div>
-              }
-            </div>
-          </article>
-        } @else if (!loading()) {
-          <p class="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500">Agrega una cuenta para ver tu resumen financiero.</p>
-        } @else {
-          <div class="h-36 animate-pulse rounded-3xl bg-slate-200"></div>
-        }
-      </section>
 
       @if (errorRecurrencias()) {
         <div role="alert" class="order-3 flex flex-col gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 sm:flex-row sm:items-center sm:justify-between">
@@ -416,12 +348,12 @@ import {
                     <div
                       class="w-3 sm:w-4 bg-emerald-500 rounded-t-sm transition-[height]"
                       [style.height.%]="mes.ingresosAltura"
-                      [title]="'Ingresos: ' + (mes.ingresos | number:'1.2-2') + ' ' + monedaAnalitica()">
+                      [title]="'Ingresos: ' + (mes.ingresos | monto:monedaAnalitica():'symbol':'1.2-2') + ' ' + monedaAnalitica()">
                     </div>
                     <div
                       class="w-3 sm:w-4 bg-rose-500 rounded-t-sm transition-[height]"
                       [style.height.%]="mes.gastosAltura"
-                      [title]="'Gastos: ' + (mes.gastos | number:'1.2-2') + ' ' + monedaAnalitica()">
+                      [title]="'Gastos: ' + (mes.gastos | monto:monedaAnalitica():'symbol':'1.2-2') + ' ' + monedaAnalitica()">
                     </div>
                   </div>
                   <span class="mt-2 text-[11px] sm:text-xs text-slate-500 capitalize">{{ mes.etiqueta }}</span>
@@ -513,32 +445,79 @@ import {
               </div>
             }
 
-            <!-- Monto -->
-            <div class="space-y-2">
-              <div class="flex items-center justify-between gap-3">
-                <label for="monto" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                  Monto
-                </label>
-                <span class="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-800">
-                  <span class="text-[10px] font-semibold uppercase tracking-wide text-emerald-700">Moneda</span>
+            <!-- Monto: sin título. El número grande y el símbolo de la moneda ya dicen todo,
+                 y una etiqueta encima solo empuja el resto del formulario hacia abajo. -->
+            <div class="rounded-2xl border border-slate-200 bg-white px-4 py-2.5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+              <div class="relative flex items-center justify-center">
+                <span class="absolute left-0 text-xl font-bold text-slate-400 dark:text-slate-500">
                   {{ monedaCuenta(formCuentaId) }}
                 </span>
-              </div>
-              <input
+                <input
                   id="monto"
                   type="number"
                   step="0.01"
                   min="0.01"
                   required
+                  inputmode="decimal"
                   [(ngModel)]="formMonto"
                   name="monto"
                   placeholder="0.00"
-                  class="min-h-12 w-full rounded-xl border-2 border-slate-300 bg-white px-4 py-3 text-lg font-bold text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20"
+                  [attr.aria-label]="'Monto a registrar en ' + monedaCuenta(formCuentaId)"
+                  class="w-full bg-transparent py-1 pl-9 pr-2 text-center text-3xl font-black text-slate-900 placeholder:font-bold placeholder:text-slate-400 focus:outline-none dark:text-white dark:placeholder:text-slate-500"
                 />
+              </div>
             </div>
 
+            <!-- Cuentas. En transferencia: "De" -> "Para" en una sola fila, con la flecha
+                 en una columna propia para que nunca pise ninguno de los dos botones.
+                 Fuera de transferencia la etiqueta "Cuenta" sobra: el botón ya va escrito. -->
+            @if (formTipo() === 'TRANSFERENCIA') {
+              <div class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                <div class="grid grid-cols-[minmax(0,1fr)_1.5rem_minmax(0,1fr)] items-start gap-1.5">
+                  <app-cuenta-selector
+                    [cuentas]="cuentas()"
+                    [selectedId]="formCuentaId"
+                    label="De"
+                    idBase="cuentaId"
+                    [compacto]="true"
+                    (selectedIdChange)="cambiarCuentaOrigen($event)" />
+
+                  <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor"
+                       class="mt-5 h-4 w-4 shrink-0 justify-self-center text-slate-400 dark:text-slate-500">
+                    <path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h9.19L10.72 7.03a.75.75 0 111.06-1.06l3.5 3.5a.75.75 0 010 1.06l-3.5 3.5a.75.75 0 11-1.06-1.06l2.22-2.22H3.75A.75.75 0 013 10z" clip-rule="evenodd" />
+                  </svg>
+
+                  <app-cuenta-selector
+                    [cuentas]="cuentasDestinoDisponibles()"
+                    [selectedId]="formCuentaDestinoId"
+                    label="Para"
+                    idBase="cuentaDestinoId"
+                    [compacto]="true"
+                    (selectedIdChange)="formCuentaDestinoId = $event" />
+                </div>
+
+                @if (cuentasDestinoDisponibles().length === 0) {
+                  <p class="mt-2 text-xs leading-relaxed text-amber-700 dark:text-amber-400">
+                    No puedes transferir entre dos tarjetas de crédito. Elige una cuenta que no sea de crédito.
+                  </p>
+                }
+              </div>
+            } @else {
+              <div class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                <app-cuenta-selector
+                  [cuentas]="cuentas()"
+                  [selectedId]="formCuentaId"
+                  label="Cuenta"
+                  [etiquetaVisible]="false"
+                  idBase="cuentaId"
+                  (selectedIdChange)="cambiarCuentaOrigen($event)" />
+              </div>
+            }
+
+            <!-- Categoría a lo ancho. Con veinte nombres posibles, media columna estrangula
+                 tanto el mosaico como la rejilla que se abre para elegir. -->
             @if (formTipo() !== 'TRANSFERENCIA') {
-              <div>
+              <div class="min-w-0">
                 @defer (on immediate) {
                   <app-categoria-selector
                     [categorias]="categorias()"
@@ -547,90 +526,16 @@ import {
                     (selectedIdChange)="formCategoriaId = $event"
                     (categoriasChange)="categorias.set($event)" />
                 } @placeholder {
-                  <div class="h-20 animate-pulse rounded-xl bg-slate-100"></div>
+                  <div class="h-16 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800"></div>
                 }
               </div>
             }
 
-            <!-- Cuentas (Origen y Destino si es transferencia) -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label for="cuentaId" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                  {{ formTipo() === 'TRANSFERENCIA' ? 'Cuenta Origen' : 'Cuenta' }}
-                </label>
-                <select
-                  id="cuentaId"
-                  required
-                  [(ngModel)]="formCuentaId"
-                  (ngModelChange)="cambiarCuentaOrigen($event)"
-                  name="cuentaId"
-                  class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all cursor-pointer">
-                  @for (c of cuentas(); track c.id) {
-                    <option [ngValue]="c.id">
-                      {{ c.nombre }} ({{ resumenCuentaSelector(c) }})
-                    </option>
-                  }
-                </select>
-              </div>
-
-              @if (formTipo() === 'TRANSFERENCIA') {
-                <div>
-                  <label for="cuentaDestinoId" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                    Cuenta Destino
-                  </label>
-                  <select
-                    id="cuentaDestinoId"
-                    required
-                    [disabled]="cuentasDestinoDisponibles().length === 0"
-                    [(ngModel)]="formCuentaDestinoId"
-                    name="cuentaDestinoId"
-                    class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all cursor-pointer">
-                    @if (cuentasDestinoDisponibles().length === 0) {
-                      <option [ngValue]="null" disabled>No hay una cuenta destino válida</option>
-                    }
-                    @for (c of cuentasDestinoDisponibles(); track c.id) {
-                      <option [ngValue]="c.id">
-                        {{ c.nombre }} ({{ resumenCuentaSelector(c) }})
-                      </option>
-                    }
-                  </select>
-                  @if (cuentasDestinoDisponibles().length === 0) {
-                    <p class="mt-1.5 text-xs leading-relaxed text-amber-700">
-                      No puedes transferir entre dos tarjetas de crédito. Elige una cuenta que no sea de crédito.
-                    </p>
-                  }
-                  @if (monedaCuenta(formCuentaId) !== monedaCuenta(formCuentaDestinoId)) {
-                    <div class="mt-4">
-                      <label for="dashboard-tasa-cambio" class="block text-xs font-semibold text-slate-700 mb-1.5">
-                        Tasa de cambio (1 {{ monedaCuenta(formCuentaId) }} = ? {{ monedaCuenta(formCuentaDestinoId) }})
-                      </label>
-                      <input
-                        id="dashboard-tasa-cambio"
-                        type="number"
-                        name="tasaCambio"
-                        min="0.00000001"
-                        step="0.00000001"
-                        required
-                        [(ngModel)]="formTasaCambio"
-                        class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
-                        placeholder="Ej. 17.25" />
-                      @if (formMonto && formTasaCambio && formTasaCambio > 0) {
-                        <p class="mt-1 text-xs text-slate-500">
-                          Se depositarán {{ formMonto * formTasaCambio | monto:monedaCuenta(formCuentaDestinoId):'symbol':'1.2-2' }}.
-                        </p>
-                      }
-                    </div>
-                  }
-                </div>
-              }
-            </div>
-
-            <!-- Fecha y notas -->
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label for="fecha" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Fecha
-                </label>
+            <!-- Fecha y el campo que la acompaña comparten fila. Ambas etiquetas van
+                 fuera de vista: el control de fecha ya muestra su propio formato. -->
+            <div class="grid grid-cols-2 gap-2">
+              <div class="min-w-0">
+                <label for="fecha" class="sr-only">Fecha del movimiento</label>
                 <input
                   id="fecha"
                   type="date"
@@ -638,88 +543,132 @@ import {
                   [(ngModel)]="formFecha"
                   (ngModelChange)="actualizarSiguienteFecha()"
                   name="fecha"
-                  class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
+                  class="w-full cursor-pointer rounded-xl border border-slate-300 bg-slate-50 px-3 py-3 text-sm text-slate-900 transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
                 />
               </div>
 
-              <div>
-                <label for="notas" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Notas adicionales (opcional)
-                </label>
-                <textarea
-                  id="notas"
-                  rows="2"
-                  [(ngModel)]="formNotas"
-                  name="notas"
-                  placeholder="Agrega un detalle si lo necesitas..."
-                  class="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all resize-none">
-                </textarea>
-              </div>
+              @if (formTipo() === 'TRANSFERENCIA') {
+                @if (monedaCuenta(formCuentaId) !== monedaCuenta(formCuentaDestinoId)) {
+                  <div class="min-w-0">
+                    <label for="tasaCambio" class="sr-only">Tasa de cambio</label>
+                    <input
+                      id="tasaCambio"
+                      type="number"
+                      name="tasaCambio"
+                      min="0.00000001"
+                      step="0.00000001"
+                      required
+                      inputmode="decimal"
+                      [(ngModel)]="formTasaCambio"
+                      [attr.aria-label]="'Tasa de cambio de ' + monedaCuenta(formCuentaId) + ' a ' + monedaCuenta(formCuentaDestinoId)"
+                      class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-3 text-sm text-slate-900 transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+                      placeholder="Ej. 17.25"
+                    />
+                    <p class="mt-1 truncate text-[11px] text-slate-500 dark:text-slate-400">
+                      1 {{ monedaCuenta(formCuentaId) }} = ? {{ monedaCuenta(formCuentaDestinoId) }}
+                      @if (formMonto && formTasaCambio && formTasaCambio > 0) {
+                        · llegan {{ formMonto * formTasaCambio | monto:monedaCuenta(formCuentaDestinoId):'symbol':'1.2-2' }}
+                      }
+                    </p>
+                  </div>
+                }
+              } @else {
+                <div class="min-w-0">
+                  <label for="notas" class="sr-only">Notas adicionales (opcional)</label>
+                  <input
+                    id="notas"
+                    type="text"
+                    maxlength="500"
+                    [(ngModel)]="formNotas"
+                    name="notas"
+                    placeholder="Notas"
+                    class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-3 text-sm text-slate-900 transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+                  />
+                </div>
+              }
             </div>
 
-            @if (formTipo() !== 'TRANSFERENCIA') {
-              <section class="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                <label class="flex min-h-10 cursor-pointer items-center gap-3">
-                  <input type="checkbox" name="movimientoRecurrente" [(ngModel)]="movimientoRecurrente"
-                         (ngModelChange)="actualizarSiguienteFecha()"
-                         class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" />
-                  <span>
-                    <span class="block text-sm font-semibold text-slate-800">Repetir este movimiento</span>
-                    <span class="block text-xs text-slate-500">Se guardará como plantilla; confirmarás cada cargo en su fecha.</span>
-                  </span>
-                </label>
-                @if (movimientoRecurrente) {
-                  <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <label class="block text-xs font-semibold text-slate-700">
-                      Frecuencia
-                      <select name="frecuenciaRecurrencia" [(ngModel)]="frecuenciaRecurrencia"
-                              (ngModelChange)="actualizarSiguienteFecha()"
-                              class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-normal">
-                        <option value="SEMANAL">Cada semana</option>
-                        <option value="QUINCENAL">Cada dos semanas</option>
-                        <option value="MENSUAL">Cada mes</option>
-                        <option value="ANUAL">Cada año</option>
-                      </select>
-                    </label>
-                    <label class="block text-xs font-semibold text-slate-700">
-                      Siguiente fecha
-                      <input id="siguienteFechaRecurrencia" name="siguienteFechaRecurrencia" type="date"
-                             [(ngModel)]="siguienteFechaRecurrencia" [min]="formFecha" required
-                             class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-normal" />
-                    </label>
-                  </div>
-                }
-              </section>
+            @if (formTipo() === 'TRANSFERENCIA') {
+              <div>
+                <label for="notas" class="sr-only">Notas adicionales (opcional)</label>
+                <input
+                  id="notas"
+                  type="text"
+                  maxlength="500"
+                  [(ngModel)]="formNotas"
+                  name="notas"
+                  placeholder="Notas"
+                  class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+                />
+              </div>
             }
 
-                        @if (formTipo() === 'GASTO' && esCuentaCredito()) {
-              <section class="rounded-xl border border-slate-200 bg-slate-50 p-3 mt-3">
-                <label class="flex min-h-10 cursor-pointer items-center gap-3">
-                  <input type="checkbox" name="dashboardEsCompraMsi" [(ngModel)]="esCompraMsi"
-                         class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" />
-                  <span>
-                    <span class="block text-sm font-semibold text-slate-800">Compra a Meses Sin Intereses (MSI)</span>
-                    <span class="block text-xs text-slate-500">Retiene el total de tu l&iacute;mite y difiere los cargos en mensualidades.</span>
+            @if (formTipo() !== 'TRANSFERENCIA') {
+              <!-- Repetir y MSI en la misma fila. Son excluyentes: el backend solo
+                   programa la plantilla de una forma, y si llegan los dos se queda con MSI. -->
+              <div class="grid grid-cols-2 gap-2">
+                <label
+                  class="flex min-h-12 cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 transition-colors focus-within:ring-2 focus-within:ring-emerald-500"
+                  [class]="movimientoRecurrente
+                    ? 'border-emerald-500 bg-emerald-50 dark:border-emerald-400 dark:bg-emerald-500/10'
+                    : 'border-slate-200 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900'">
+                  <input type="checkbox" name="movimientoRecurrente" class="h-4 w-4 shrink-0 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                         [ngModel]="movimientoRecurrente" (ngModelChange)="alternarRecurrente($event)" />
+                  <span class="min-w-0 text-xs font-semibold text-slate-800 dark:text-slate-200">
+                    Repetir<span class="sr-only"> este movimiento</span>
                   </span>
                 </label>
-                @if (esCompraMsi) {
-                  <div class="mt-3">
-                    <label class="block text-xs font-semibold text-slate-700">
-                      Plazo en meses
-                      <select name="dashboardFormMsi" [(ngModel)]="formMsi" required
-                              class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-normal">
-                        <option [ngValue]="null" disabled>Selecciona el plazo</option>
-                        <option [ngValue]="3">3 meses sin intereses</option>
-                        <option [ngValue]="6">6 meses sin intereses</option>
-                        <option [ngValue]="9">9 meses sin intereses</option>
-                        <option [ngValue]="12">12 meses sin intereses</option>
-                        <option [ngValue]="18">18 meses sin intereses</option>
-                        <option [ngValue]="24">24 meses sin intereses</option>
-                      </select>
-                    </label>
-                  </div>
+
+                @if (esCuentaCredito()) {
+                  <label
+                    class="flex min-h-12 cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 transition-colors focus-within:ring-2 focus-within:ring-emerald-500"
+                    [class]="esCompraMsi
+                      ? 'border-emerald-500 bg-emerald-50 dark:border-emerald-400 dark:bg-emerald-500/10'
+                      : 'border-slate-200 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900'">
+                    <input type="checkbox" name="esCompraMsi" class="h-4 w-4 shrink-0 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                           [ngModel]="esCompraMsi" (ngModelChange)="alternarMsi($event)" />
+                    <span class="min-w-0 text-xs font-semibold text-slate-800 dark:text-slate-200">
+                      MSI<span class="sr-only">: compra a meses sin intereses</span>
+                    </span>
+                  </label>
                 }
-              </section>
+              </div>
+
+              @if (movimientoRecurrente) {
+                <div class="grid grid-cols-2 gap-2">
+                  <label class="min-w-0 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                    Frecuencia
+                    <select name="frecuenciaRecurrencia" [(ngModel)]="frecuenciaRecurrencia"
+                            (ngModelChange)="actualizarSiguienteFecha()"
+                            class="mt-1 w-full rounded-xl border border-slate-300 bg-slate-50 px-2.5 py-2.5 text-sm font-normal text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+                      <option value="SEMANAL">Cada semana</option>
+                      <option value="QUINCENAL">Cada dos semanas</option>
+                      <option value="MENSUAL">Cada mes</option>
+                      <option value="ANUAL">Cada año</option>
+                    </select>
+                  </label>
+                  <label class="min-w-0 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                    Siguiente cargo
+                    <input id="siguienteFechaRecurrencia" name="siguienteFechaRecurrencia" type="date"
+                           [(ngModel)]="siguienteFechaRecurrencia" [min]="formFecha" required
+                           class="mt-1 w-full rounded-xl border border-slate-300 bg-slate-50 px-2.5 py-2.5 text-sm font-normal text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
+                  </label>
+                </div>
+              } @else if (esCompraMsi) {
+                <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                  Plazo en meses
+                  <select name="formMsi" [(ngModel)]="formMsi" required
+                          class="mt-1 w-full rounded-xl border border-slate-300 bg-slate-50 px-2.5 py-2.5 text-sm font-normal text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+                    <option [ngValue]="null" disabled>Selecciona el plazo</option>
+                    <option [ngValue]="3">3 meses sin intereses</option>
+                    <option [ngValue]="6">6 meses sin intereses</option>
+                    <option [ngValue]="9">9 meses sin intereses</option>
+                    <option [ngValue]="12">12 meses sin intereses</option>
+                    <option [ngValue]="18">18 meses sin intereses</option>
+                    <option [ngValue]="24">24 meses sin intereses</option>
+                  </select>
+                </label>
+              }
             }
 
             <!-- Botones de Acción -->
@@ -759,6 +708,7 @@ export class DashboardComponent implements OnInit {
   private readonly confirmDialog = inject(ConfirmDialogService);
   private readonly perfilService = inject(PerfilService);
   private readonly privacidad = inject(PrivacidadService);
+  private readonly categoriaPreferida = inject(CategoriaPreferidaService);
   private readonly document = inject(DOCUMENT);
   readonly resumenCuentaSelector = (cuenta: Cuenta) => resumenCuentaSelector(cuenta, this.privacidad.ocultarMontos());
   private monedaPreferidaAplicada = false;
@@ -795,9 +745,6 @@ export class DashboardComponent implements OnInit {
   analiticaLoading = signal<boolean>(true);
   analiticaError = signal<string | null>(null);
   analitica = signal<DashboardAnalitica | null>(null);
-  comparacion = signal<DashboardComparacion | null>(null);
-  comparacionCargando = signal(false);
-  comparacionError = signal<string | null>(null);
   readonly plantillasRecurrentes = signal<PlantillaRecurrente[]>([]);
   readonly errorRecurrencias = signal<string | null>(null);
   readonly registrandoRecurrenciaId = signal<number | null>(null);
@@ -812,9 +759,6 @@ export class DashboardComponent implements OnInit {
   readonly resumenMonedaSeleccionada = computed(() =>
     this.resumen()?.resumenPorMoneda.find(item => item.moneda === this.monedaResumen()) ?? null
   );
-  readonly comparacionMonedaSeleccionada = computed(() =>
-    this.comparacion()?.porMoneda.find(item => item.moneda === this.monedaResumen()) ?? null
-  );
   readonly plantillasPorAtender = computed(() =>
     this.plantillasRecurrentes().filter(plantilla =>
       plantilla.activa
@@ -825,12 +769,6 @@ export class DashboardComponent implements OnInit {
 
   cuentas = signal<Cuenta[]>([]);
   categorias = signal<Categoria[]>([]);
-  readonly deudaTarjetasActual = computed(() => {
-    const moneda = this.monedaResumen();
-    return this.cuentas()
-      .filter(cuenta => cuenta.activo && cuenta.tipo === 'CREDITO' && cuenta.moneda === moneda)
-      .reduce((total, cuenta) => total + Math.max(0, -cuenta.saldoActual), 0);
-  });
 
   // Estados del modal
   modalAbierto = signal<boolean>(false);
@@ -885,6 +823,36 @@ export class DashboardComponent implements OnInit {
     if (!destinos.some(cuenta => cuenta.id === this.formCuentaDestinoId)) {
       this.formCuentaDestinoId = destinos[0]?.id ?? null;
     }
+    // Los MSI solo existen en tarjetas de crédito: si la cuenta cambia y ya no lo es,
+    // dejarlo marcado solo produciría un error del servidor al guardar.
+    if (!this.esCuentaCredito()) this.limpiarMsi();
+  }
+
+  /**
+   * Repetir y MSI no pueden convivir. El servidor solo crea una plantilla por
+   * movimiento, y con los dos datos en el request la de MSI se lleva el resto:
+   * la periodicidad elegida se perdería sin avisar.
+   */
+  alternarRecurrente(valor: boolean): void {
+    this.movimientoRecurrente = valor;
+    if (valor) {
+      this.esCompraMsi = false;
+      this.formMsi = null;
+      this.actualizarSiguienteFecha();
+    }
+  }
+
+  alternarMsi(valor: boolean): void {
+    this.esCompraMsi = valor;
+    if (valor) {
+      this.movimientoRecurrente = false;
+      this.siguienteFechaRecurrencia = '';
+    }
+  }
+
+  limpiarMsi(): void {
+    this.esCompraMsi = false;
+    this.formMsi = null;
   }
 
   gastosTotales = computed(() =>
@@ -951,7 +919,6 @@ export class DashboardComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
     this.cargarAnalitica();
-    this.cargarComparacion();
     this.cargarRecurrencias();
 
     this.finanzasService.getDashboardResumen().subscribe({
@@ -1002,29 +969,6 @@ export class DashboardComponent implements OnInit {
     });
   }
 
-  cargarComparacion(): void {
-    this.comparacionCargando.set(true);
-    this.comparacionError.set(null);
-    this.finanzasService.getDashboardComparacion().subscribe({
-      next: response => {
-        this.comparacionCargando.set(false);
-        if (!response.success || !response.data) {
-          this.comparacionError.set(response.message || 'No se pudo cargar la comparación.');
-          return;
-        }
-        this.comparacion.set(response.data);
-      },
-      error: () => {
-        this.comparacionCargando.set(false);
-        this.comparacionError.set('No se pudo cargar la comparación de gastos.');
-      }
-    });
-  }
-
-  periodoTexto(mes: number, anio: number): string {
-    return new Date(anio, mes - 1, 1).toLocaleDateString('es-MX', { month: 'long', year: 'numeric' });
-  }
-
   cargarRecurrencias(): void {
     this.errorRecurrencias.set(null);
     this.finanzasService.getPlantillasRecurrentes().subscribe({
@@ -1064,6 +1008,10 @@ export class DashboardComponent implements OnInit {
 
   irAConfiguracion(): void {
     this.router.navigate(['/configuracion']);
+  }
+
+  irACuentas(): void {
+    this.router.navigate(['/cuentas']);
   }
 
   private fechaLocal(fecha: Date): string {
@@ -1110,7 +1058,10 @@ export class DashboardComponent implements OnInit {
     });
   }
 
-  abrirModal(tipo: TipoTransaccion = 'GASTO'): void {
+  abrirModal(params: TipoTransaccion | { tipo: TipoTransaccion; categoriaId?: number | null } = 'GASTO'): void {
+    const tipo = typeof params === 'string' ? params : params.tipo;
+    const catId = typeof params === 'object' ? params.categoriaId : null;
+
     const activeElement = this.document.activeElement;
     this.elementoConFocoPrevio = activeElement && typeof (activeElement as HTMLElement).focus === 'function'
       ? activeElement as HTMLElement
@@ -1133,8 +1084,17 @@ export class DashboardComponent implements OnInit {
       this.formCuentaDestinoId = this.cuentasDestinoDisponibles()[0]?.id ?? null;
     }
 
-    const cats = this.categoriasFiltradas();
-    this.formCategoriaId = cats.length > 0 ? cats[0].id : null;
+    if (catId !== null && catId !== undefined) {
+      this.formCategoriaId = catId;
+    } else {
+      const cats = this.categoriasFiltradas();
+      // Se abre con la categoria de la ultima vez, si sigue existiendo. Solo si no
+      // hay memoria, o la memoria apunta a algo que ya no esta, se cae a la primera.
+      const preferida = this.categoriaPreferida.preferida(tipo);
+      this.formCategoriaId = cats.some(categoria => categoria.id === preferida)
+        ? preferida
+        : (cats[0]?.id ?? null);
+    }
 
     this.modalAbierto.set(true);
   }
@@ -1185,8 +1145,13 @@ export class DashboardComponent implements OnInit {
   cambiarTipo(tipo: TipoTransaccion): void {
     this.formTipo.set(tipo);
     if (tipo === 'TRANSFERENCIA') this.movimientoRecurrente = false;
+    if (tipo !== 'GASTO') this.limpiarMsi();
+    // Cambiar de pestaña también cambia de tipo, así que vale la memoria de ese tipo.
     const cats = this.categoriasFiltradas();
-    this.formCategoriaId = cats.length > 0 ? cats[0].id : null;
+    const preferida = this.categoriaPreferida.preferida(tipo);
+    this.formCategoriaId = cats.some(categoria => categoria.id === preferida)
+      ? preferida
+      : (cats[0]?.id ?? null);
   }
 
   actualizarSiguienteFecha(): void {
@@ -1264,7 +1229,9 @@ export class DashboardComponent implements OnInit {
       fecha: this.formFecha,
       notas: this.formNotas.trim() || null,
       frecuenciaRecurrencia: this.movimientoRecurrente ? this.frecuenciaRecurrencia : null,
-      siguienteFechaRecurrencia: this.movimientoRecurrente ? this.siguienteFechaRecurrencia : null
+      siguienteFechaRecurrencia: this.movimientoRecurrente ? this.siguienteFechaRecurrencia : null,
+      // Sin esto el servidor guardaba el gasto completo y sin cuotas: el MSI se perdía.
+      msi: this.esCompraMsi ? this.formMsi : null
     };
 
     this.submitting.set(true);

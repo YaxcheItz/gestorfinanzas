@@ -3,14 +3,20 @@ import { signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
+import { CategoriaPreferidaService } from '../../core/services/categoria-preferida.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { FinanzasService } from '../../core/services/finanzas.service';
 import { PerfilService } from '../../core/services/perfil.service';
+import { PrivacidadService } from '../../core/services/privacidad.service';
 import { ToastService } from '../../core/services/toast.service';
 import { DashboardComponent } from './dashboard.component';
 
 describe('DashboardComponent movement dialog accessibility', () => {
+  let crearTransaccion: ReturnType<typeof vi.fn>;
+
   beforeEach(async () => {
+    localStorage.clear();
+    crearTransaccion = vi.fn(() => of({ success: true, message: '', data: undefined }));
     TestBed.configureTestingModule({
       imports: [DashboardComponent],
       providers: [
@@ -39,7 +45,8 @@ describe('DashboardComponent movement dialog accessibility', () => {
             getPlantillasRecurrentes: () => of({ success: true, message: '', data: [] }),
             registrarMovimientoRecurrente: () => of({ success: true, message: '', data: undefined }),
             getCuentas: () => of({ success: true, message: '', data: [] }),
-            getCategorias: () => of({ success: true, message: '', data: [] })
+            getCategorias: () => of({ success: true, message: '', data: [] }),
+            crearTransaccion
           }
         },
         { provide: ToastService, useValue: { success: vi.fn(), error: vi.fn() } },
@@ -56,8 +63,8 @@ describe('DashboardComponent movement dialog accessibility', () => {
     fixture.detectChanges();
 
     const opener = Array.from(
-      fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLButtonElement>
-    ).find(button => button.textContent?.includes('Nuevo Movimiento')) as HTMLButtonElement;
+      fixture.nativeElement.querySelectorAll('app-acciones-movimiento button') as NodeListOf<HTMLButtonElement>
+    ).find(button => button.textContent?.includes('Gasto')) as HTMLButtonElement;
     opener.focus();
     opener.click();
     fixture.detectChanges();
@@ -98,6 +105,70 @@ describe('DashboardComponent movement dialog accessibility', () => {
 
     expect(buttons.find(button => button.textContent?.includes('Transferencia'))?.getAttribute('aria-pressed')).toBe('true');
     expect(buttons.find(button => button.textContent?.includes('Gasto'))?.getAttribute('aria-pressed')).toBe('false');
+  });
+
+  describe('categoría recordada por tipo', () => {
+    const categorias = [
+      { id: 1, nombre: 'Comida', tipo: 'GASTO', activo: true, esPersonalizada: false },
+      { id: 2, nombre: 'Transporte', tipo: 'GASTO', activo: true, esPersonalizada: false },
+      { id: 3, nombre: 'Salario', tipo: 'INGRESO', activo: true, esPersonalizada: false }
+    ] as never[];
+
+    const mosaicoDe = (fixture: ReturnType<typeof TestBed.createComponent<DashboardComponent>>) =>
+      (fixture.nativeElement.querySelector('#categoriaId') as HTMLElement | null)?.textContent ?? '';
+
+    beforeEach(() => {
+      localStorage.clear();
+      TestBed.inject(CategoriaPreferidaService).aplicarDesdeCache(7);
+    });
+
+    it('abre el gasto con la última categoría usada, no con la primera de la lista', () => {
+      const fixture = TestBed.createComponent(DashboardComponent);
+      fixture.detectChanges();
+      fixture.componentInstance.categorias.set(categorias);
+      TestBed.inject(CategoriaPreferidaService).recordar('GASTO', 2);
+
+      fixture.componentInstance.abrirModal('GASTO');
+      fixture.detectChanges();
+
+      expect(mosaicoDe(fixture)).toContain('Transporte');
+    });
+
+    it('no arrastra la categoría de un tipo al otro', () => {
+      const fixture = TestBed.createComponent(DashboardComponent);
+      fixture.detectChanges();
+      fixture.componentInstance.categorias.set(categorias);
+      TestBed.inject(CategoriaPreferidaService).recordar('GASTO', 2);
+
+      fixture.componentInstance.abrirModal('INGRESO');
+      fixture.detectChanges();
+
+      expect(mosaicoDe(fixture)).toContain('Salario');
+    });
+
+    it('cae a la primera categoría si la recordada ya no existe', () => {
+      const fixture = TestBed.createComponent(DashboardComponent);
+      fixture.detectChanges();
+      fixture.componentInstance.categorias.set(categorias);
+      TestBed.inject(CategoriaPreferidaService).recordar('GASTO', 99);
+
+      fixture.componentInstance.abrirModal('GASTO');
+      fixture.detectChanges();
+
+      expect(mosaicoDe(fixture)).toContain('Comida');
+    });
+
+    it('deja prevailecer la categoría explícita de una acción rápida', () => {
+      const fixture = TestBed.createComponent(DashboardComponent);
+      fixture.detectChanges();
+      fixture.componentInstance.categorias.set(categorias);
+      TestBed.inject(CategoriaPreferidaService).recordar('GASTO', 2);
+
+      fixture.componentInstance.abrirModal({ tipo: 'GASTO', categoriaId: 1 });
+      fixture.detectChanges();
+
+      expect(mosaicoDe(fixture)).toContain('Comida');
+    });
   });
 
   it('announces analytics loading and errors and exposes chart values in a data table', () => {
@@ -142,7 +213,45 @@ describe('DashboardComponent movement dialog accessibility', () => {
       .toContain('Alimentos');
   });
 
-  it('stacks income and expense summaries on narrow screens and preserves long amounts', () => {
+  it('no deja los importes al descubierto en los title de las barras cuando se pide privacidad', () => {
+    const privacidad = TestBed.inject(PrivacidadService);
+    privacidad.aplicar(1, false);
+
+    const fixture = TestBed.createComponent(DashboardComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+
+    component.analitica.set({
+      gastosPorCategoria: [],
+      ultimosSeisMeses: [{
+        anio: 2026,
+        mes: 4,
+        ingresos: 12500,
+        gastos: 4321,
+        moneda: 'MXN'
+      }]
+    });
+    component.monedaAnalitica.set('MXN');
+    fixture.detectChanges();
+
+    const titlesVisibles = Array.from(
+      fixture.nativeElement.querySelectorAll('[title]') as NodeListOf<HTMLElement>
+    ).map(el => el.getAttribute('title'));
+    expect(titlesVisibles.some(t => t?.includes('12,500.00'))).toBe(true);
+
+    privacidad.aplicar(1, true);
+    fixture.detectChanges();
+
+    const titlesOcultos = Array.from(
+      fixture.nativeElement.querySelectorAll('[title]') as NodeListOf<HTMLElement>
+    ).map(el => el.getAttribute('title'));
+    expect(titlesOcultos.some(t => t?.includes('12,500.00'))).toBe(false);
+    expect(titlesOcultos.some(t => t?.includes('•••'))).toBe(true);
+
+    privacidad.limpiar();
+  });
+
+  it('muestra el saldo, los ingresos y los gastos del mes en una sola tarjeta', () => {
     const fixture = TestBed.createComponent(DashboardComponent);
     fixture.detectChanges();
     fixture.componentInstance.resumen.set({
@@ -167,15 +276,13 @@ describe('DashboardComponent movement dialog accessibility', () => {
     });
     fixture.detectChanges();
 
-    const incomeSummary = fixture.nativeElement.querySelector('article.border-emerald-100') as HTMLElement;
-    const summaryGrid = incomeSummary.parentElement as HTMLElement;
-    const amount = incomeSummary.querySelector('p.min-w-0') as HTMLElement;
-    const totalBalance = fixture.nativeElement.querySelector('article p.min-w-0.break-words') as HTMLElement;
+    const controlFinanciero = fixture.nativeElement.querySelector('[aria-label="Control Financiero"]') as HTMLElement;
+    expect(controlFinanciero).toBeTruthy();
+    expect(controlFinanciero.textContent).toContain('12,500');
+    expect(controlFinanciero.textContent).toContain('2 cuentas activas');
 
-    expect(summaryGrid.classList.contains('grid-cols-1')).toBe(true);
-    expect(summaryGrid.classList.contains('sm:grid-cols-2')).toBe(true);
-    expect(amount.classList.contains('break-words')).toBe(true);
-    expect(totalBalance.classList.contains('text-2xl')).toBe(true);
+    // Los montos largos se parten antes de desbordar la tarjeta.
+    expect(controlFinanciero.querySelector('.dashboard-summary-amount')).toBeTruthy();
   });
 
   it('shows only active recurring movements due within the next seven days', () => {
@@ -214,5 +321,231 @@ describe('DashboardComponent movement dialog accessibility', () => {
     ]);
 
     expect(component.plantillasPorAtender().map(item => item.id)).toEqual([1, 2]);
+  });
+
+  describe('formulario compacto', () => {
+    const abrirModal = async (tipo: 'GASTO' | 'TRANSFERENCIA') => {
+      const fixture = TestBed.createComponent(DashboardComponent);
+      fixture.detectChanges();
+      const component = fixture.componentInstance;
+      component.cuentas.set([
+        { id: 1, nombre: 'Efectivo', tipo: 'DEBITO', moneda: 'MXN', activo: true, saldoActual: 1000, fechaCreacion: '2026-01-01' },
+        { id: 2, nombre: 'Tarjeta', tipo: 'CREDITO', moneda: 'MXN', activo: true, saldoActual: -500, fechaCreacion: '2026-01-01' }
+      ]);
+      component.abrirModal(tipo);
+      await fixture.whenStable();
+      fixture.detectChanges();
+      return { fixture, component };
+    };
+
+    it('deja la categoría a todo el ancho, no en media fila', async () => {
+      const { fixture } = await abrirModal('GASTO');
+      const modal = fixture.nativeElement.querySelector('[role="dialog"]') as HTMLElement;
+      const selector = modal.querySelector('#categoriaId') as HTMLElement;
+
+      // Si la categoría fuera una celda de un `grid-cols-2`, su contenedor mediría
+      // la mitad del modal y el mosaico de veinte nombres quedaría estrangulado.
+      const contenedor = selector.closest('.min-w-0') as HTMLElement;
+      const padre = contenedor.parentElement as HTMLElement;
+      expect(padre.className).not.toContain('grid-cols-2');
+    });
+
+    it('quita los rótulos "Monto a registrar", "Cuenta" y "Fecha" sin perder el nombre accesible', async () => {
+      const { fixture } = await abrirModal('GASTO');
+      const modal = fixture.nativeElement.querySelector('[role="dialog"]') as HTMLElement;
+
+      // Ningún rótulo de campo queda a la vista: los que siguen en el DOM
+      // son solo para el lector de pantalla.
+      const textoLabels = Array.from(
+        modal.querySelectorAll('label, span[id$="-label"]') as NodeListOf<HTMLElement>
+      )
+        .filter(el => !el.className.includes('sr-only'))
+        .map(el => el.textContent?.trim())
+        .join(' | ');
+      expect(textoLabels).not.toContain('Monto a registrar');
+      expect(textoLabels).not.toContain('Cuenta');
+      expect(textoLabels).not.toContain('Fecha');
+
+      // Se sustituyen por descripciones solo para tecnología asistiva.
+      const monto = modal.querySelector('#monto') as HTMLInputElement;
+      expect(monto.getAttribute('aria-label')).toContain('Monto a registrar');
+
+      const fecha = modal.querySelector('#fecha') as HTMLInputElement;
+      expect(fecha.getAttribute('type')).toBe('date');
+      const labelFecha = modal.querySelector('label[for="fecha"]') as HTMLElement;
+      expect(labelFecha.textContent?.trim()).toBe('Fecha del movimiento');
+      expect(labelFecha.className).toContain('sr-only');
+
+      // "Cuenta" sigue enunciando el selector aunque no se pinte.
+      const etiquetaCuenta = modal.querySelector('#cuentaId-label') as HTMLElement;
+      expect(etiquetaCuenta.className).toContain('sr-only');
+    });
+
+    it('deja ver el 0.00 de ejemplo: con placeholder tenue el campo parecía vacío', async () => {
+      const { fixture } = await abrirModal('GASTO');
+      const modal = fixture.nativeElement.querySelector('[role="dialog"]') as HTMLElement;
+      const monto = modal.querySelector('#monto') as HTMLInputElement;
+
+      expect(monto.placeholder).toBe('0.00');
+      expect(monto.className).not.toContain('placeholder:text-slate-200');
+    });
+
+    it('muestra "De" y "Para" en una sola fila con la flecha en columna propia', async () => {
+      const { fixture, component } = await abrirModal('TRANSFERENCIA');
+      component.formCuentaId = 1;
+      component.formCuentaDestinoId = 2;
+      fixture.detectChanges();
+
+      const modal = fixture.nativeElement.querySelector('[role="dialog"]') as HTMLElement;
+      const origen = modal.querySelector('#cuentaId') as HTMLElement;
+      const destino = modal.querySelector('#cuentaDestinoId') as HTMLElement;
+
+      // El contenedor del grid es el ancestro inmediato de cada app-cuenta-selector.
+      const fila = origen.closest('.grid') as HTMLElement;
+      expect(destino.closest('.grid')).toBe(fila);
+      // Una columna fija para la flecha: es lo que impide que se monte sobre un botón.
+      expect(fila.className).toContain('1.5rem');
+
+      const etiquetaOrigen = modal.querySelector('#cuentaId-label') as HTMLElement;
+      const etiquetaDestino = modal.querySelector('#cuentaDestinoId-label') as HTMLElement;
+      expect(etiquetaOrigen.textContent?.trim()).toBe('De');
+      expect(etiquetaDestino.textContent?.trim()).toBe('Para');
+    });
+
+    it('muestra solo el nombre de la cuenta en la fila, no el saldo', async () => {
+      const { fixture, component } = await abrirModal('TRANSFERENCIA');
+      component.formCuentaId = 1;
+      fixture.detectChanges();
+
+      const modal = fixture.nativeElement.querySelector('[role="dialog"]') as HTMLElement;
+      const boton = modal.querySelector('#cuentaId') as HTMLElement;
+      expect(boton.textContent).toContain('Efectivo');
+      expect(boton.textContent).not.toContain('1,000');
+      expect(boton.textContent).not.toContain('MXN');
+
+      // El saldo si aparece en el desplegable, que es donde se elige.
+      boton.click();
+      fixture.detectChanges();
+      const opciones = modal.querySelector('#cuentaId-opciones') as HTMLElement;
+      expect(opciones.textContent).toContain('Efectivo');
+    });
+
+    it('abre el desplegable de las cuentas a todo el ancho del modal', async () => {
+      const { fixture } = await abrirModal('TRANSFERENCIA');
+
+      (fixture.nativeElement.querySelector('#cuentaId') as HTMLElement).click();
+      fixture.detectChanges();
+
+      const modal = fixture.nativeElement.querySelector('[role="dialog"]') as HTMLElement;
+      const panel = modal.querySelector('#cuentaId-opciones') as HTMLElement;
+      // Sin esto el panel mide media fila y los nombres largas se salen.
+      expect(panel.className).toContain('col-span-full');
+    });
+  });
+
+  describe('meses sin intereses y repetición', () => {
+    const cuentas = [
+      { id: 1, nombre: 'Efectivo', tipo: 'DEBITO', moneda: 'MXN', activo: true },
+      { id: 2, nombre: 'Tarjeta', tipo: 'CREDITO', moneda: 'MXN', activo: true }
+    ] as never[];
+
+    const preparar = (cuentaId = 2) => {
+      const fixture = TestBed.createComponent(DashboardComponent);
+      fixture.detectChanges();
+      const component = fixture.componentInstance;
+      component.cuentas.set(cuentas);
+      component.abrirModal('GASTO');
+      component.formCuentaId = cuentaId;
+      component.formMonto = 1200;
+      return { fixture, component };
+    };
+
+    it('envía el plazo al servidor: sin esto el MSI se guardaba como gasto completo', () => {
+      const { component } = preparar();
+
+      component.alternarMsi(true);
+      component.formMsi = 12;
+      component.guardarMovimiento();
+
+      expect(crearTransaccion).toHaveBeenCalledTimes(1);
+      expect(crearTransaccion.mock.calls[0][0].msi).toBe(12);
+      expect(crearTransaccion.mock.calls[0][0].frecuenciaRecurrencia).toBeNull();
+    });
+
+    it('no manda MSI si el plazo quedó sin elegir', () => {
+      const { component } = preparar();
+
+      component.alternarMsi(true);
+      component.formMsi = null;
+      component.guardarMovimiento();
+
+      expect(crearTransaccion).not.toHaveBeenCalled();
+      expect(component.modalError()).toContain('meses sin intereses');
+    });
+
+    it('no manda MSI cuando no está marcado, aunque quede un plazo suelto', () => {
+      const { component } = preparar();
+
+      component.formMsi = 6;
+      component.guardarMovimiento();
+
+      expect(crearTransaccion.mock.calls[0][0].msi).toBeNull();
+    });
+
+    it('rechaza repetir y MSI a la vez: el servidor solo programa una plantilla', () => {
+      const { component } = preparar();
+
+      component.alternarRecurrente(true);
+      component.alternarMsi(true);
+
+      expect(component.movimientoRecurrente).toBe(false);
+      expect(component.esCompraMsi).toBe(true);
+    });
+
+    it('apagar MSI deja limpia la repetición', () => {
+      const { component } = preparar();
+
+      component.alternarMsi(true);
+      component.alternarMsi(false);
+
+      expect(component.esCompraMsi).toBe(false);
+      expect(component.formMsi).toBeNull();
+      expect(component.siguienteFechaRecurrencia).toBe('');
+    });
+
+    it('calcula la siguiente fecha al activar la repetición', () => {
+      const { component } = preparar(1);
+
+      component.alternarRecurrente(true);
+
+      expect(component.siguienteFechaRecurrencia).toBeTruthy();
+      expect(component.siguienteFechaRecurrencia > component.formFecha).toBe(true);
+    });
+
+    it('olvida el MSI al cambiar a una cuenta que no es de crédito', () => {
+      const { component } = preparar();
+
+      component.alternarMsi(true);
+      component.formMsi = 12;
+
+      component.cambiarCuentaOrigen(1);
+
+      // Si se quedara marcado, el servidor responde "Los MSI solo aplican a
+      // gastos con tarjeta de crédito" y el usuario pierde el formulario.
+      expect(component.esCompraMsi).toBe(false);
+      expect(component.formMsi).toBeNull();
+    });
+
+    it('olvida el MSI al salir del tipo gasto', () => {
+      const { component } = preparar();
+
+      component.alternarMsi(true);
+      component.formMsi = 12;
+
+      component.cambiarTipo('INGRESO');
+
+      expect(component.esCompraMsi).toBe(false);
+      expect(component.formMsi).toBeNull();
+    });
   });
 });

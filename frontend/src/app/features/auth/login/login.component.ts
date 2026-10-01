@@ -129,6 +129,15 @@ export class LoginComponent {
         this.sessionExpiredWarning.set(true);
       }
     });
+
+    // Llegar aquí con la sesión viva es el caso normal, no una excepción: pasa al
+    // añadir la app a la pantalla de inicio mientras el acceso ya caducó, porque
+    // el acceso directo guarda la URL del momento. El enlace fijado queda en
+    // /login?sessionExpired=true y se repite en cada arranque. Si el token sigue
+    // sirviendo, no hay nada que pedirle al usuario: se entra directo.
+    if (this.authService.isAuthenticated()) {
+      this.router.navigate(['/dashboard'], { replaceUrl: true });
+    }
   }
 
   togglePasswordVisibility(): void {
