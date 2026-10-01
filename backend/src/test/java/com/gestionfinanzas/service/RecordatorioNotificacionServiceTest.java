@@ -135,8 +135,17 @@ class RecordatorioNotificacionServiceTest {
         verify(whatsAppService, never()).enviarRecordatorio(anyString(), anyString());
     }
 
+    /**
+     * Devuelve un dia del mes garantizado distinto del dia de hoy, para montar tarjetas
+     * que no deben disparar recordatorio sin depender de en que fecha corra la suite.
+     */
     private static int diaDistinto(int dia) {
-        return dia == 1 ? 2 : 1;
+        int hoy = LocalDate.now().getDayOfMonth();
+        int candidato = (dia % 28) + 1;
+        while (candidato == hoy) {
+            candidato = (candidato % 28) + 1;
+        }
+        return candidato;
     }
 
     private static Usuario usuarioConWhatsApp() {
