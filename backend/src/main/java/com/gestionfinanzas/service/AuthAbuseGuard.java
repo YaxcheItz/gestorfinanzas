@@ -21,8 +21,8 @@ public class AuthAbuseGuard {
     private static final Duration LOGIN_WINDOW = Duration.ofMinutes(15);
     private static final Duration RECOVERY_INTERVAL = Duration.ofMinutes(1);
 
-    private final Map<String, LoginWindow> loginFailures = new LinkedHashMap<>(128, 0.75f, true);
-    private final Map<String, Instant> recoveryRequests = new LinkedHashMap<>(128, 0.75f, true);
+    private final LinkedHashMap<String, LoginWindow> loginFailures = new LinkedHashMap<>(128, 0.75f, true);
+    private final LinkedHashMap<String, Instant> recoveryRequests = new LinkedHashMap<>(128, 0.75f, true);
 
     public synchronized void assertLoginAllowed(String email) {
         Instant now = Instant.now();
