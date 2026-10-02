@@ -59,6 +59,9 @@ jwt:
     secure: ${JWT_REFRESH_SECURE:true}
 
 app:
+  auth:
+    google:
+      client-id: ${GOOGLE_CLIENT_ID:}
   admin:
     # Correos que se promoted a ROLE_ADMIN al arrancar. Requerido para poder disparar
     # la revision de recordatorios o enviar WhatsApp de prueba a un numero arbitrario.
