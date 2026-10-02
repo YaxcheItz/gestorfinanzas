@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { GoogleSignInComponent } from '../auth/google-sign-in/google-sign-in.component';
 import { AuthService } from '../../core/services/auth.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { FinanzasService } from '../../core/services/finanzas.service';
@@ -18,7 +19,7 @@ import {
 @Component({
   selector: 'app-configuracion',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, MontoPipe],
+  imports: [CommonModule, FormsModule, RouterLink, MontoPipe, GoogleSignInComponent],
   template: `
     <main class="mx-auto max-w-4xl space-y-5 px-3 py-5 sm:space-y-7 sm:px-6 sm:py-8">
       <header class="flex min-w-0 items-center gap-3 sm:gap-4">
@@ -362,15 +363,19 @@ import {
               Se borrarán tus cuentas, movimientos, libro contable y toda tu información personal.
               No hay forma de recuperarlos.
             </p>
-            <label class="mt-5 block text-xs font-semibold text-slate-700">
-              Escribe tu contraseña para confirmar
-              <input
-                name="passwordBorrado"
-                [(ngModel)]="passwordBorrado"
-                type="password"
-                autocomplete="current-password"
-                class="mt-1.5 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm font-normal text-slate-900" />
-            </label>
+            @if (googleLinked()) {
+              <p class="mt-5 text-sm text-slate-600">Confirma que eres tú con la misma cuenta de Google. La verificación debe hacerse justo antes de eliminar.</p>
+            } @else {
+              <label class="mt-5 block text-xs font-semibold text-slate-700">
+                Escribe tu contraseña para confirmar
+                <input
+                  name="passwordBorrado"
+                  [(ngModel)]="passwordBorrado"
+                  type="password"
+                  autocomplete="current-password"
+                  class="mt-1.5 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm font-normal text-slate-900" />
+              </label>
+            }
             <label class="mt-4 flex items-start gap-2 text-sm text-slate-700">
               <input
                 name="entiendoBorrado"
@@ -382,6 +387,13 @@ import {
             @if (errorBorrado()) {
               <p role="alert" class="mt-4 rounded-xl bg-rose-50 p-3 text-sm text-rose-700">{{ errorBorrado() }}</p>
             }
+            @if (googleLinked()) {
+              <app-google-sign-in
+                class="mt-5 block"
+                text="continue_with"
+                [busy]="eliminandoCuenta() || !entiendoBorrado"
+                (credentialReceived)="eliminarCuentaConGoogle($event)" />
+            }
             <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <button
                 type="button"
@@ -390,6 +402,7 @@ import {
                 class="min-h-11 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">
                 Cancelar
               </button>
+              @if (!googleLinked()) {
               <button
                 type="button"
                 (click)="eliminarCuenta()"
@@ -397,6 +410,7 @@ import {
                 class="min-h-11 rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50">
                 {{ eliminandoCuenta() ? 'Eliminando...' : 'Sí, eliminar mi cuenta' }}
               </button>
+              }
             </div>
           </div>
         </div>
@@ -536,6 +550,10 @@ export class ConfiguracionComponent implements OnInit {
     this.modalBorradoAbierto.set(true);
   }
 
+  googleLinked(): boolean {
+    return this.authService.currentUser()?.googleLinked === true;
+  }
+
   cerrarConfirmacionBorrado(): void {
     if (this.eliminandoCuenta()) return;
     this.modalBorradoAbierto.set(false);
@@ -545,10 +563,19 @@ export class ConfiguracionComponent implements OnInit {
   }
 
   eliminarCuenta(): void {
-    if (!this.entiendoBorrado || this.passwordBorrado.length < 8) return;
+    if (!this.entiendoBorrado || this.passwordBorrado.length < 8 || this.googleLinked()) return;
+    this.confirmarEliminacion({ password: this.passwordBorrado });
+  }
+
+  eliminarCuentaConGoogle(googleCredential: string): void {
+    if (!this.entiendoBorrado || this.eliminandoCuenta() || !this.googleLinked()) return;
+    this.confirmarEliminacion({ googleCredential });
+  }
+
+  private confirmarEliminacion(payload: { password?: string; googleCredential?: string }): void {
     this.eliminandoCuenta.set(true);
     this.errorBorrado.set(null);
-    this.perfilService.eliminarCuenta(this.passwordBorrado).subscribe({
+    this.perfilService.eliminarCuenta(payload).subscribe({
       next: response => {
         this.eliminandoCuenta.set(false);
         if (!response.success) {

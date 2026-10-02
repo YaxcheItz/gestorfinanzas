@@ -199,7 +199,12 @@ export class AuthService {
 
   private guardarSesion(auth: AuthResponse): void {
     localStorage.setItem(this.tokenKey, auth.token);
-    const usuario: Usuario = { id: auth.id, nombre: auth.nombre, email: auth.email };
+    const usuario: Usuario = {
+      id: auth.id,
+      nombre: auth.nombre,
+      email: auth.email,
+      googleLinked: auth.googleLinked === true
+    };
     localStorage.setItem(this.userKey, JSON.stringify(usuario));
     this._currentUser.set(usuario);
   }
