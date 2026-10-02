@@ -14,6 +14,7 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
 import { FechaPickerComponent } from '../../shared/components/fecha-picker/fecha-picker.component';
 import { MontoPipe } from '../../core/pipes/monto.pipe';
 import { nombreCuentaVisible } from '../../core/utils/cuenta-financiera';
+import { firstValueFrom } from 'rxjs';
 import {
   Categoria,
   Cuenta,
@@ -24,6 +25,24 @@ import {
   TransaccionFiltro,
   TransaccionPayload
 } from '../../core/models/finanzas.models';
+
+interface FilaImportacionCsv {
+  numero: number;
+  fecha: string;
+  tipo: string;
+  monto: number;
+  moneda: string;
+  cuenta: string;
+  categoria: string;
+  descripcion: string;
+  notas: string;
+  payload: TransaccionPayload | null;
+  errores: string[];
+  duplicadaEnArchivo: boolean;
+  incluir: boolean;
+  estado: 'PENDIENTE' | 'IMPORTADA' | 'ERROR';
+  errorImportacion?: string;
+}
 
 @Component({
   selector: 'app-transacciones',
@@ -46,6 +65,14 @@ import {
         <div class="flex flex-col sm:flex-row gap-2">
           <button
             type="button"
+            (click)="alternarImportador()"
+            [attr.aria-expanded]="importadorAbierto()"
+            aria-controls="importador-csv"
+            class="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600">
+            {{ importadorAbierto() ? 'Cerrar importación' : 'Importar CSV' }}
+          </button>
+          <button
+            type="button"
             (click)="exportarCsv()"
             [disabled]="exportando()"
             class="inline-flex items-center justify-center px-4 py-2 border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-50 text-slate-700 rounded-xl text-sm font-semibold transition-all cursor-pointer">
@@ -65,6 +92,69 @@ import {
           </button>
         </div>
       </div>
+
+      @if (importadorAbierto()) {
+        <section id="importador-csv" class="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-5" aria-labelledby="importador-csv-titulo">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2 id="importador-csv-titulo" class="text-base font-bold text-slate-900">Importar movimientos desde CSV</h2>
+              <p class="mt-1 max-w-3xl text-sm leading-6 text-slate-600">Usa una fila por ingreso o gasto. Revisa la vista previa; la importación no registra transferencias ni cargos automáticos.</p>
+            </div>
+            <button type="button" (click)="descargarPlantillaCsv()" class="min-h-11 shrink-0 rounded-xl border border-slate-200 px-4 text-sm font-semibold text-emerald-800 hover:bg-emerald-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600">Descargar plantilla</button>
+          </div>
+          <p class="rounded-xl bg-slate-50 p-3 text-xs leading-5 text-slate-600">
+            Columnas: <strong>Fecha, Tipo, Monto, Moneda, Cuenta, Categoría, Descripción, Notas</strong>.
+            Fecha en formato AAAA-MM-DD o DD/MM/AAAA; tipo INGRESO o GASTO; usa el nombre exacto de una cuenta activa.
+            Máximo 5 MB y 500 filas. Las filas con errores no se importan.
+          </p>
+          <label for="archivo-csv-movimientos" class="block text-sm font-semibold text-slate-800">Archivo CSV</label>
+          <input id="archivo-csv-movimientos" type="file" accept=".csv,text/csv" (change)="leerArchivoCsv($event)" [disabled]="importandoCsv()"
+            class="block min-h-11 w-full rounded-xl border border-slate-300 bg-white text-sm text-slate-700 file:mr-3 file:min-h-11 file:border-0 file:bg-slate-100 file:px-3 file:font-semibold file:text-slate-700 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600" />
+          @if (errorCsv()) {
+            <p role="alert" class="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">{{ errorCsv() }}</p>
+          }
+          @if (filasCsv().length > 0) {
+            <div aria-live="polite" class="space-y-3">
+              <div class="flex flex-wrap items-center justify-between gap-2 text-sm">
+                <p class="font-semibold text-slate-800">{{ filasValidasCsv() }} listas · {{ filasInvalidasCsv() }} con errores</p>
+                <p class="text-xs text-slate-500">{{ filasDuplicadasCsv() }} posibles duplicados dentro del archivo</p>
+              </div>
+              <p class="rounded-lg bg-amber-50 p-3 text-xs leading-5 text-amber-900">La detección de duplicados compara filas de este archivo, no tu historial. Antes de importar, confirma que estos movimientos no se hayan registrado antes. Si una petición se interrumpe, revisa el historial antes de reintentar esa fila.</p>
+              <ul class="max-h-80 divide-y divide-slate-100 overflow-y-auto rounded-xl border border-slate-200" aria-label="Vista previa de movimientos CSV">
+                @for (fila of filasCsv(); track fila.numero) {
+                  <li class="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div class="min-w-0">
+                      <p class="break-words text-sm font-semibold text-slate-800">Fila {{ fila.numero }} · {{ fila.fecha || 'Sin fecha' }} · {{ fila.tipo }} · {{ fila.monto || 'Sin monto' }} {{ fila.moneda }}</p>
+                      <p class="mt-0.5 break-words text-xs text-slate-600">{{ fila.descripcion || 'Sin descripción' }} · {{ fila.cuenta || 'Sin cuenta' }}{{ fila.categoria ? ' · ' + fila.categoria : '' }}</p>
+                      @if (fila.errores.length > 0) {
+                        <p class="mt-1 text-xs font-medium text-rose-700">{{ fila.errores.join(' ') }}</p>
+                      } @else if (fila.duplicadaEnArchivo) {
+                        <p class="mt-1 text-xs font-medium text-amber-800">Parece repetida en este archivo; revísala antes de incluirla.</p>
+                      } @else if (fila.estado === 'IMPORTADA') {
+                        <p role="status" class="mt-1 text-xs font-semibold text-emerald-700">Importada correctamente.</p>
+                      } @else if (fila.errorImportacion) {
+                        <p role="alert" class="mt-1 text-xs font-medium text-rose-700">{{ fila.errorImportacion }}</p>
+                      }
+                    </div>
+                    @if (fila.errores.length === 0 && fila.estado !== 'IMPORTADA') {
+                      <label class="flex min-h-11 shrink-0 cursor-pointer items-center gap-2 text-sm font-medium text-slate-700">
+                        <input type="checkbox" [ngModel]="fila.incluir" (ngModelChange)="cambiarInclusionCsv(fila, $event)" [name]="'incluir-csv-' + fila.numero" [disabled]="importandoCsv()" class="h-4 w-4 rounded border-slate-300 text-emerald-700 focus:ring-emerald-600" />
+                        Incluir
+                      </label>
+                    }
+                  </li>
+                }
+              </ul>
+              <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <button type="button" (click)="limpiarImportacionCsv()" [disabled]="importandoCsv()" class="min-h-11 rounded-xl border border-slate-200 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">Elegir otro archivo</button>
+                <button type="button" (click)="importarFilasCsv()" [disabled]="importandoCsv() || filasSeleccionadasCsv() === 0" class="min-h-11 rounded-xl bg-emerald-700 px-4 text-sm font-semibold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50">
+                  {{ importandoCsv() ? 'Importando ' + progresoImportacionCsv() : 'Importar ' + filasSeleccionadasCsv() + ' movimientos' }}
+                </button>
+              </div>
+            </div>
+          }
+        </section>
+      }
 
       <!-- Barra de Filtros Avanzados -->
       <button
@@ -748,6 +838,17 @@ export class TransaccionesComponent implements OnInit {
   readonly pageData = signal<PageResponse<Transaccion> | null>(null);
   readonly loading = signal<boolean>(false);
   readonly exportando = signal(false);
+  readonly importadorAbierto = signal(false);
+  readonly filasCsv = signal<FilaImportacionCsv[]>([]);
+  readonly errorCsv = signal<string | null>(null);
+  readonly importandoCsv = signal(false);
+  readonly progresoImportacionCsv = signal('');
+  readonly filasValidasCsv = computed(() => this.filasCsv().filter(fila => fila.errores.length === 0).length);
+  readonly filasInvalidasCsv = computed(() => this.filasCsv().filter(fila => fila.errores.length > 0).length);
+  readonly filasDuplicadasCsv = computed(() => this.filasCsv().filter(fila => fila.duplicadaEnArchivo).length);
+  readonly filasSeleccionadasCsv = computed(() => this.filasCsv().filter(fila =>
+    fila.incluir && fila.errores.length === 0 && fila.estado !== 'IMPORTADA'
+  ).length);
   readonly error = signal<string | null>(null);
 
   // Auxiliares
@@ -1052,6 +1153,201 @@ export class TransaccionesComponent implements OnInit {
     });
   }
 
+  alternarImportador(): void {
+    this.importadorAbierto.update(abierto => !abierto);
+    this.errorCsv.set(null);
+  }
+
+  descargarPlantillaCsv(): void {
+    const contenido = '\uFEFFFecha,Tipo,Monto,Moneda,Cuenta,Categoría,Descripción,Notas\r\n';
+    const archivo = new Blob([contenido], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(archivo);
+    const enlace = document.createElement('a');
+    enlace.href = url;
+    enlace.download = 'plantilla-movimientos-kaptal.csv';
+    enlace.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  async leerArchivoCsv(evento: Event): Promise<void> {
+    const input = evento.target as HTMLInputElement;
+    const archivo = input.files?.[0];
+    if (!archivo) return;
+
+    this.filasCsv.set([]);
+    this.errorCsv.set(null);
+    if (!archivo.name.toLowerCase().endsWith('.csv')) {
+      this.errorCsv.set('Selecciona un archivo con extensión .csv.');
+      input.value = '';
+      return;
+    }
+    if (archivo.size > 5 * 1024 * 1024) {
+      this.errorCsv.set('El archivo supera el límite de 5 MB.');
+      input.value = '';
+      return;
+    }
+
+    try {
+      const registros = parsearRegistrosCsv((await archivo.text()).replace(/^\uFEFF/, ''));
+      if (registros.length < 2) throw new Error('El CSV debe incluir encabezados y al menos una fila de datos.');
+      if (registros.length > 501) throw new Error('El archivo supera el máximo de 500 movimientos.');
+
+      const encabezados = registros[0].map(normalizarEncabezadoCsv);
+      const columnas = new Map<string, number>();
+      encabezados.forEach((encabezado, indice) => {
+        if (encabezado && !columnas.has(encabezado)) columnas.set(encabezado, indice);
+      });
+      const obligatorias = ['fecha', 'tipo', 'monto', 'moneda', 'cuenta'];
+      const faltantes = obligatorias.filter(nombre => !columnas.has(nombre));
+      if (faltantes.length) {
+        throw new Error(`Faltan columnas obligatorias: ${faltantes.join(', ')}.`);
+      }
+
+      const duplicados = new Set<string>();
+      const filas = registros.slice(1)
+        .map((registro, indice) => ({ registro, numero: indice + 2 }))
+        .filter(({ registro }) => registro.some(valor => valor.trim() !== ''))
+        .map(({ registro, numero }) => {
+          const valor = (nombre: string) => {
+            const indice = columnas.get(nombre);
+            return indice === undefined ? '' : (registro[indice] ?? '').trim();
+          };
+          const fechaOriginal = valor('fecha');
+          const tipoOriginal = valor('tipo').toUpperCase();
+          const montoOriginal = valor('monto');
+          const moneda = valor('moneda').toUpperCase();
+          const cuentaNombre = valor('cuenta');
+          const categoriaNombre = valor('categoria');
+          const descripcion = valor('descripcion');
+          const notas = valor('notas');
+          const errores: string[] = [];
+
+          const fecha = parsearFechaCsv(fechaOriginal);
+          if (!fecha) errores.push('La fecha debe ser válida (AAAA-MM-DD o DD/MM/AAAA).');
+
+          const tipo = tipoOriginal === 'INGRESO' || tipoOriginal === 'GASTO' ? tipoOriginal : null;
+          if (!tipo) errores.push('El tipo debe ser INGRESO o GASTO.');
+
+          const monto = parsearMontoCsv(montoOriginal);
+          if (monto === null || monto <= 0) errores.push('El monto debe ser un número mayor que cero.');
+
+          if (!/^[A-Z]{3}$/.test(moneda)) errores.push('La moneda debe indicarse con un código de 3 letras, por ejemplo MXN.');
+
+          const cuentasCoincidentes = this.cuentas().filter(cuenta =>
+            cuenta.activo
+            && normalizarTextoCsv(cuenta.nombre) === normalizarTextoCsv(cuentaNombre)
+            && cuenta.moneda.toUpperCase() === moneda
+          );
+          const cuenta = cuentasCoincidentes.length === 1 ? cuentasCoincidentes[0] : null;
+          if (!cuentaNombre) errores.push('Indica el nombre de la cuenta.');
+          else if (cuentasCoincidentes.length === 0) errores.push('No se encontró una cuenta activa con ese nombre y moneda.');
+          else if (cuentasCoincidentes.length > 1) errores.push('Hay varias cuentas con ese nombre y moneda; usa un nombre único.');
+
+          let categoria: Categoria | null = null;
+          if (categoriaNombre && tipo) {
+            const categoriasCoincidentes = this.categorias().filter(item =>
+              item.activo
+              && item.tipo === tipo
+              && normalizarTextoCsv(item.nombre) === normalizarTextoCsv(categoriaNombre)
+            );
+            categoria = categoriasCoincidentes.length === 1 ? categoriasCoincidentes[0] : null;
+            if (categoriasCoincidentes.length === 0) errores.push('La categoría no existe o no corresponde al tipo indicado.');
+            else if (categoriasCoincidentes.length > 1) errores.push('La categoría coincide con más de una opción; revisa su nombre.');
+          }
+
+          if (descripcion.length > 200) errores.push('La descripción supera los 200 caracteres.');
+          if (notas.length > 500) errores.push('Las notas superan los 500 caracteres.');
+
+          const payload: TransaccionPayload | null = fecha && tipo && monto !== null && cuenta && errores.length === 0
+            ? {
+                fecha,
+                tipo,
+                monto,
+                cuentaId: cuenta.id,
+                categoriaId: categoria?.id ?? null,
+                descripcion: descripcion || undefined,
+                notas: notas || null
+              }
+            : null;
+          const claveDuplicado = payload && monto !== null && cuenta
+            ? [fecha, tipo, monto.toFixed(2), cuenta.id, categoria?.id ?? '', normalizarTextoCsv(descripcion)].join('|')
+            : '';
+          const duplicadaEnArchivo = !!claveDuplicado && duplicados.has(claveDuplicado);
+          if (claveDuplicado) duplicados.add(claveDuplicado);
+
+          return {
+            numero, fecha: fechaOriginal, tipo: tipo ?? tipoOriginal, monto: monto ?? 0,
+            moneda, cuenta: cuentaNombre, categoria: categoriaNombre, descripcion, notas,
+            payload, errores, duplicadaEnArchivo, incluir: errores.length === 0 && !duplicadaEnArchivo,
+            estado: 'PENDIENTE' as const
+          };
+        });
+
+      if (!filas.length) throw new Error('No hay filas con movimientos para revisar.');
+      this.filasCsv.set(filas);
+    } catch (error) {
+      this.errorCsv.set(error instanceof Error ? error.message : 'No se pudo leer el archivo CSV.');
+    } finally {
+      input.value = '';
+    }
+  }
+
+  cambiarInclusionCsv(filaObjetivo: FilaImportacionCsv, incluir: boolean): void {
+    this.filasCsv.update(filas => filas.map(fila =>
+      fila.numero === filaObjetivo.numero ? { ...fila, incluir } : fila
+    ));
+  }
+
+  limpiarImportacionCsv(): void {
+    this.filasCsv.set([]);
+    this.errorCsv.set(null);
+    this.progresoImportacionCsv.set('');
+  }
+
+  async importarFilasCsv(): Promise<void> {
+    const seleccionadas = this.filasCsv().filter(fila =>
+      fila.incluir && fila.errores.length === 0 && fila.estado !== 'IMPORTADA' && fila.payload !== null
+    );
+    if (!seleccionadas.length || this.importandoCsv()) return;
+
+    this.importandoCsv.set(true);
+    let importadas = 0;
+    let fallidas = 0;
+    for (let indice = 0; indice < seleccionadas.length; indice++) {
+      const fila = seleccionadas[indice];
+      this.progresoImportacionCsv.set(`${indice + 1}/${seleccionadas.length}`);
+      this.filasCsv.update(actuales => actuales.map(actual =>
+        actual.numero === fila.numero ? { ...actual, errorImportacion: undefined } : actual
+      ));
+      try {
+        const respuesta = await firstValueFrom(this.finanzasService.crearTransaccion(fila.payload!));
+        if (!respuesta.success) throw new Error(respuesta.message || 'El servidor rechazó el movimiento.');
+        importadas++;
+        this.filasCsv.update(actuales => actuales.map(actual =>
+          actual.numero === fila.numero ? { ...actual, estado: 'IMPORTADA' as const } : actual
+        ));
+      } catch (error) {
+        fallidas++;
+        const mensaje = mensajeDeError(error, 'No se pudo guardar este movimiento.');
+        this.filasCsv.update(actuales => actuales.map(actual =>
+          actual.numero === fila.numero
+            ? { ...actual, estado: 'ERROR' as const, errorImportacion: mensaje, incluir: true }
+            : actual
+        ));
+      }
+    }
+    this.importandoCsv.set(false);
+    this.progresoImportacionCsv.set('');
+    if (importadas > 0) {
+      this.cargarTransacciones();
+      this.cargarCuentasYCategorias();
+      this.toastService.success(`${importadas} movimiento${importadas === 1 ? '' : 's'} importado${importadas === 1 ? '' : 's'}.`);
+    }
+    if (fallidas > 0) {
+      this.toastService.error(`${fallidas} fila${fallidas === 1 ? '' : 's'} no se pudo${fallidas === 1 ? '' : 'ieron'} importar. Puedes revisar el error y reintentar.`);
+    }
+  }
+
   irAPagina(nuevaPagina: number): void {
     if (nuevaPagina >= 0 && (!this.pageData() || nuevaPagina < this.pageData()!.totalPages)) {
       this.paginaActual.set(nuevaPagina);
@@ -1275,4 +1571,109 @@ export class TransaccionesComponent implements OnInit {
       }
     });
   }
+}
+
+function normalizarTextoCsv(valor: string): string {
+  return valor.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLocaleLowerCase('es-MX');
+}
+
+function normalizarEncabezadoCsv(valor: string): string {
+  return normalizarTextoCsv(valor).replace(/\s+/g, ' ');
+}
+
+function parsearFechaCsv(valor: string): string | null {
+  let anio: number;
+  let mes: number;
+  let dia: number;
+  const iso = valor.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  const local = valor.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (iso) {
+    anio = Number(iso[1]);
+    mes = Number(iso[2]);
+    dia = Number(iso[3]);
+  } else if (local) {
+    dia = Number(local[1]);
+    mes = Number(local[2]);
+    anio = Number(local[3]);
+  } else {
+    return null;
+  }
+  const fecha = new Date(Date.UTC(anio, mes - 1, dia));
+  if (fecha.getUTCFullYear() !== anio || fecha.getUTCMonth() !== mes - 1 || fecha.getUTCDate() !== dia) return null;
+  return `${anio.toString().padStart(4, '0')}-${mes.toString().padStart(2, '0')}-${dia.toString().padStart(2, '0')}`;
+}
+
+function parsearMontoCsv(valor: string): number | null {
+  let limpio = valor.replace(/[\s\u00a0]/g, '').replace(/[^\d,.-]/g, '');
+  if (!limpio || !/^-?\d[\d.,]*$/.test(limpio)) return null;
+  const coma = limpio.lastIndexOf(',');
+  const punto = limpio.lastIndexOf('.');
+  if (coma >= 0 && punto >= 0) {
+    limpio = coma > punto ? limpio.replace(/\./g, '').replace(',', '.') : limpio.replace(/,/g, '');
+  } else if (coma >= 0) {
+    limpio = limpio.replace(',', '.');
+  }
+  const monto = Number(limpio);
+  if (!Number.isFinite(monto) || Math.abs(monto) > 9_999_999_999_999.99) return null;
+  if (Math.abs(monto * 100 - Math.round(monto * 100)) > 0.00001) return null;
+  return monto;
+}
+
+function parsearRegistrosCsv(contenido: string): string[][] {
+  const delimitador = detectarDelimitadorCsv(contenido);
+  const registros: string[][] = [];
+  let registro: string[] = [];
+  let campo = '';
+  let entreComillas = false;
+
+  for (let indice = 0; indice < contenido.length; indice++) {
+    const caracter = contenido[indice];
+    if (caracter === '"') {
+      if (entreComillas && contenido[indice + 1] === '"') {
+        campo += '"';
+        indice++;
+      } else if (entreComillas) {
+        entreComillas = false;
+      } else if (campo.length === 0) {
+        entreComillas = true;
+      } else {
+        campo += caracter;
+      }
+    } else if (caracter === delimitador && !entreComillas) {
+      registro.push(campo);
+      campo = '';
+    } else if ((caracter === '\n' || caracter === '\r') && !entreComillas) {
+      if (caracter === '\r' && contenido[indice + 1] === '\n') indice++;
+      registro.push(campo);
+      if (registro.some(valor => valor.trim() !== '')) registros.push(registro);
+      registro = [];
+      campo = '';
+    } else {
+      campo += caracter;
+    }
+  }
+  if (entreComillas) throw new Error('El archivo contiene comillas sin cerrar.');
+  registro.push(campo);
+  if (registro.some(valor => valor.trim() !== '')) registros.push(registro);
+  return registros;
+}
+
+function detectarDelimitadorCsv(contenido: string): ',' | ';' {
+  let entreComillas = false;
+  let comas = 0;
+  let puntosYComas = 0;
+  for (let indice = 0; indice < contenido.length; indice++) {
+    const caracter = contenido[indice];
+    if (caracter === '"') {
+      if (entreComillas && contenido[indice + 1] === '"') indice++;
+      else entreComillas = !entreComillas;
+    } else if (!entreComillas && (caracter === '\n' || caracter === '\r')) {
+      break;
+    } else if (!entreComillas && caracter === ',') {
+      comas++;
+    } else if (!entreComillas && caracter === ';') {
+      puntosYComas++;
+    }
+  }
+  return puntosYComas > comas ? ';' : ',';
 }
