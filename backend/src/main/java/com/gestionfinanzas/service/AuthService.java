@@ -17,10 +17,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Base64;
+import java.security.SecureRandom;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
 public class AuthService {
+
+    private static final SecureRandom RANDOM = new SecureRandom();
 
     private final UsuarioRepository usuarioRepository;
     private final CategoriaRepository categoriaRepository;
@@ -32,13 +37,13 @@ public class AuthService {
 
     @Transactional
     public SesionService.SesionEmitida registrar(RegistroRequest request) {
-        if (usuarioRepository.existsByEmail(request.email().trim().toLowerCase())) {
+        if (usuarioRepository.existsByEmail(request.email().trim().toLowerCase(Locale.ROOT))) {
             throw new IllegalArgumentException("Ya existe una cuenta registrada con este correo electrónico");
         }
 
         Usuario usuario = Usuario.builder()
                 .nombre(request.nombre().trim())
-                .email(request.email().trim().toLowerCase())
+                .email(request.email().trim().toLowerCase(Locale.ROOT))
                 .passwordHash(passwordEncoder.encode(request.password()))
                 .rol(RolUsuario.ROLE_USER)
                 .activo(true)
@@ -55,8 +60,51 @@ public class AuthService {
         return sesionService.emitir(guardado);
     }
 
+    @Transactional
+    public SesionService.SesionEmitida autenticarGoogle(
+            String googleSubject,
+            String nombre,
+            String email,
+            boolean emailGoogleAutoritativo
+    ) {
+        String emailNormalizado = email.trim().toLowerCase(Locale.ROOT);
+        Usuario usuario = usuarioRepository.findByGoogleSubject(googleSubject).orElseGet(() -> {
+            Usuario existente = usuarioRepository.findByEmail(emailNormalizado).orElse(null);
+            if (existente != null) {
+                if (existente.getGoogleSubject() != null || !emailGoogleAutoritativo) {
+                    throw new BadCredentialsException(
+                            "No se pudo usar Google con este correo. Inicia sesión con tu método habitual."
+                    );
+                }
+                existente.setGoogleSubject(googleSubject);
+                return usuarioRepository.save(existente);
+            }
+
+            byte[] passwordAleatoria = new byte[32];
+            RANDOM.nextBytes(passwordAleatoria);
+            Usuario nuevo = Usuario.builder()
+                    .nombre(nombre.trim())
+                    .email(emailNormalizado)
+                    .passwordHash(passwordEncoder.encode(Base64.getUrlEncoder().withoutPadding()
+                            .encodeToString(passwordAleatoria)))
+                    .googleSubject(googleSubject)
+                    .rol(RolUsuario.ROLE_USER)
+                    .activo(true)
+                    .build();
+            Usuario guardado = usuarioRepository.save(nuevo);
+            crearCategoriasPredeterminadas(guardado);
+            cuentaService.crearCuentaPredeterminada(guardado);
+            return guardado;
+        });
+
+        if (!usuario.isActivo()) {
+            throw new BadCredentialsException("Esta cuenta está desactivada.");
+        }
+        return sesionService.emitir(usuario);
+    }
+
     public SesionService.SesionEmitida login(LoginRequest request) {
-        String email = request.email().trim().toLowerCase();
+        String email = request.email().trim().toLowerCase(Locale.ROOT);
         authAbuseGuard.assertLoginAllowed(email);
         try {
             authenticationManager.authenticate(

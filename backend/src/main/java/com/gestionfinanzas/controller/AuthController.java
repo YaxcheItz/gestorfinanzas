@@ -1,12 +1,15 @@
 package com.gestionfinanzas.controller;
 
 import com.gestionfinanzas.dto.request.LoginRequest;
+import com.gestionfinanzas.dto.request.GoogleLoginRequest;
 import com.gestionfinanzas.dto.request.RestablecerPasswordRequest;
 import com.gestionfinanzas.dto.request.RegistroRequest;
 import com.gestionfinanzas.dto.request.SolicitudRecuperacionRequest;
 import com.gestionfinanzas.dto.response.ApiResponse;
 import com.gestionfinanzas.dto.response.AuthResponse;
+import com.gestionfinanzas.dto.response.GoogleAuthConfigResponse;
 import com.gestionfinanzas.service.AuthService;
+import com.gestionfinanzas.service.GoogleIdentityService;
 import com.gestionfinanzas.service.RecuperacionCuentaService;
 import com.gestionfinanzas.service.SesionService;
 import jakarta.validation.Valid;
@@ -28,6 +31,7 @@ public class AuthController {
     private final AuthService authService;
     private final RecuperacionCuentaService recuperacionCuentaService;
     private final SesionService sesionService;
+    private final GoogleIdentityService googleIdentityService;
 
     @Value("${jwt.refresh.cookie-name:finanzas_refresh}")
     private String cookieName;
@@ -55,6 +59,21 @@ public class AuthController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookieRefresh(sesion.refreshToken()).toString())
                 .body(ApiResponse.ok("Inicio de sesión exitoso", sesion.auth()));
+    }
+
+    @GetMapping("/google/config")
+    public ResponseEntity<ApiResponse<GoogleAuthConfigResponse>> googleConfig() {
+        boolean enabled = googleIdentityService.isEnabled();
+        return ResponseEntity.ok(ApiResponse.ok("Configuración de Google", new GoogleAuthConfigResponse(
+                enabled, googleIdentityService.clientId())));
+    }
+
+    @PostMapping("/google")
+    public ResponseEntity<ApiResponse<AuthResponse>> loginGoogle(@Valid @RequestBody GoogleLoginRequest request) {
+        SesionService.SesionEmitida sesion = googleIdentityService.autenticar(request.credential());
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookieRefresh(sesion.refreshToken()).toString())
+                .body(ApiResponse.ok("Inicio de sesión con Google exitoso", sesion.auth()));
     }
 
     /**
