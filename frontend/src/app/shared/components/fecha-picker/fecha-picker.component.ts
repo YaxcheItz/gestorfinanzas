@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
+import { afterNextRender, Component, ElementRef, EventEmitter, inject, Injector, Input, Output, signal, ViewChild } from '@angular/core';
+import { FocusTrapDirective } from '../../directives/focus-trap.directive';
 
 interface DiaCalendario {
   iso: string;
@@ -11,7 +12,7 @@ interface DiaCalendario {
 @Component({
   selector: 'app-fecha-picker',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FocusTrapDirective],
   template: `
     <button
       type="button"
@@ -26,7 +27,7 @@ interface DiaCalendario {
 
     @if (abierto()) {
       <div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/45 px-3 py-4 backdrop-blur-sm" (click)="cerrar()">
-        <section role="dialog" aria-modal="true" [attr.aria-label]="'Calendario: ' + label" (click)="$event.stopPropagation()" class="w-full max-w-sm overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-zinc-950">
+        <section appFocusTrap (focusTrapEscape)="cerrar()" tabindex="-1" role="dialog" aria-modal="true" [attr.aria-label]="'Calendario: ' + label" (click)="$event.stopPropagation()" class="w-full max-w-sm overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-zinc-950">
           <header class="bg-gradient-to-br from-emerald-700 to-teal-600 p-5 text-white">
             <div class="flex items-center justify-between">
               <button type="button" (click)="cambiarMes(-1)" aria-label="Mes anterior" class="inline-flex h-9 w-9 items-center justify-center rounded-xl text-white/90 transition hover:bg-white/15 hover:text-white">
@@ -44,9 +45,9 @@ interface DiaCalendario {
             <div class="mb-2 grid grid-cols-7 text-center text-[11px] font-semibold uppercase text-slate-400 dark:text-slate-500">
               @for (dia of diasSemana; track dia) { <span class="py-2">{{ dia }}</span> }
             </div>
-            <div class="grid grid-cols-7 gap-1">
+            <div #calendarGrid class="grid grid-cols-7 gap-1" aria-label="Días del mes">
               @for (dia of diasMes(); track dia.iso) {
-                <button type="button" [disabled]="min && dia.iso < min" (click)="elegir(dia.iso)" [attr.aria-label]="fechaAccesible(dia.iso)" [attr.aria-pressed]="dia.iso === value" [class]="clasesDia(dia)" class="relative flex h-10 items-center justify-center rounded-xl text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-30">
+                <button type="button" [disabled]="min && dia.iso < min" [attr.tabindex]="dia.iso === fechaActiva() ? 0 : -1" [attr.data-date]="dia.iso" (keydown)="navegarFecha($event, dia.iso)" (click)="elegir(dia.iso)" [attr.aria-label]="fechaAccesible(dia.iso)" [attr.aria-pressed]="dia.iso === value" [class]="clasesDia(dia)" class="relative flex h-10 items-center justify-center rounded-xl text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-30">
                   {{ dia.numero }}
                   @if (dia.hoy && dia.iso !== value) { <span class="absolute bottom-1 h-1 w-1 rounded-full bg-emerald-500"></span> }
                 </button>
@@ -63,6 +64,8 @@ interface DiaCalendario {
   `
 })
 export class FechaPickerComponent {
+  private readonly injector = inject(Injector);
+  @ViewChild('calendarGrid') private calendarGrid?: ElementRef<HTMLElement>;
   @Input({ required: true }) id = 'fecha';
   @Input() label = 'Fecha';
   @Input() value = '';
@@ -72,18 +75,33 @@ export class FechaPickerComponent {
   readonly abierto = signal(false);
   readonly diasSemana = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
   readonly hoyIso = this.aIso(new Date());
+  readonly fechaEnFoco = signal<string | null>(null);
   private mesVisto = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 
   abrir(): void {
-    const fecha = this.parsear(this.value) ?? new Date();
+    let fecha = this.parsear(this.value) ?? new Date();
+    if (this.min && this.aIso(fecha) < this.min) fecha = this.parsear(this.min) ?? fecha;
     this.mesVisto = new Date(fecha.getFullYear(), fecha.getMonth(), 1);
+    this.fechaEnFoco.set(this.aIso(fecha));
     this.abierto.set(true);
+    this.enfocarFechaDespuesDelRender(this.fechaEnFoco());
   }
 
   cerrar(): void { this.abierto.set(false); }
 
   cambiarMes(cantidad: number): void {
-    this.mesVisto = new Date(this.mesVisto.getFullYear(), this.mesVisto.getMonth() + cantidad, 1);
+    const activa = this.parsear(this.fechaActiva()) ?? new Date();
+    const primeroMesDestino = new Date(this.mesVisto.getFullYear(), this.mesVisto.getMonth() + cantidad, 1);
+    const diaDestino = Math.min(activa.getDate(), new Date(
+      primeroMesDestino.getFullYear(), primeroMesDestino.getMonth() + 1, 0
+    ).getDate());
+    let fechaDestino = new Date(primeroMesDestino.getFullYear(), primeroMesDestino.getMonth(), diaDestino);
+    if (this.min && this.aIso(fechaDestino) < this.min) {
+      fechaDestino = this.parsear(this.min) ?? fechaDestino;
+    }
+    this.mesVisto = new Date(fechaDestino.getFullYear(), fechaDestino.getMonth(), 1);
+    this.fechaEnFoco.set(this.aIso(fechaDestino));
+    this.enfocarFechaDespuesDelRender(this.fechaEnFoco());
   }
 
   mesActual(): string {
@@ -108,8 +126,54 @@ export class FechaPickerComponent {
 
   elegir(iso: string): void {
     if (this.min && iso < this.min) return;
+    this.fechaEnFoco.set(iso);
     this.valueChange.emit(iso);
     this.cerrar();
+  }
+
+  fechaActiva(): string {
+    const preferida = this.fechaEnFoco() ?? this.value;
+    if (preferida && (!this.min || preferida >= this.min)) return preferida;
+    return this.min || this.hoyIso;
+  }
+
+  navegarFecha(event: KeyboardEvent, iso: string): void {
+    const movimientos: Record<string, number> = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 };
+    let destino: Date | null = null;
+    const actual = this.parsear(iso);
+    if (!actual) return;
+
+    if (event.key in movimientos) {
+      destino = new Date(actual.getFullYear(), actual.getMonth(), actual.getDate() + movimientos[event.key]);
+    } else if (event.key === 'Home' || event.key === 'End') {
+      const diaSemana = (actual.getDay() + 6) % 7;
+      destino = new Date(actual.getFullYear(), actual.getMonth(), actual.getDate() + (event.key === 'Home' ? -diaSemana : 6 - diaSemana));
+    } else if (event.key === 'PageUp' || event.key === 'PageDown') {
+      const cantidad = event.key === 'PageUp' ? -1 : 1;
+      const mes = new Date(actual.getFullYear(), actual.getMonth() + cantidad, 1);
+      const dia = Math.min(actual.getDate(), new Date(mes.getFullYear(), mes.getMonth() + 1, 0).getDate());
+      destino = new Date(mes.getFullYear(), mes.getMonth(), dia);
+    }
+    if (!destino) return;
+
+    const isoDestino = this.aIso(destino);
+    if (this.min && isoDestino < this.min) {
+      event.preventDefault();
+      return;
+    }
+    event.preventDefault();
+    this.fechaEnFoco.set(isoDestino);
+    if (!this.diasMes().some(dia => dia.iso === isoDestino)) {
+      this.mesVisto = new Date(destino.getFullYear(), destino.getMonth(), 1);
+    }
+    this.enfocarFechaDespuesDelRender(isoDestino);
+  }
+
+  private enfocarFechaDespuesDelRender(iso: string | null): void {
+    if (!iso) return;
+    afterNextRender(() => {
+      this.calendarGrid?.nativeElement.querySelector<HTMLButtonElement>(`[data-date="${iso}"]`)?.focus();
+    }, { injector: this.injector });
   }
 
   fechaAccesible(iso: string): string {

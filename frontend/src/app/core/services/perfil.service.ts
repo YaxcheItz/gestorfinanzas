@@ -28,8 +28,22 @@ export class PerfilService {
   private privacidadPendiente = false;
   private privacidadPersistida: boolean | null = null;
   private privacidadVersion = 0;
+  private perfilSesionVersion = 0;
+  private perfilUsuarioId: number | null = null;
 
   cargar(usuarioId: number): void {
+    if (this.perfilUsuarioId !== usuarioId) {
+      this.perfilUsuarioId = usuarioId;
+      this.perfilSesionVersion += 1;
+      this.perfil.set(null);
+      this.privacidadEscribiendo = false;
+      this.privacidadPendiente = false;
+      this.privacidadPersistida = null;
+      this.privacidadVersion += 1;
+      this.privacidad.limpiar();
+      this.categoriaPreferida.limpiar();
+    }
+    const versionSesion = this.perfilSesionVersion;
     const temaAlmacenado = this.document.defaultView?.localStorage.getItem(`kaptal_tema_${usuarioId}`);
     if (temaAlmacenado === 'CLARO' || temaAlmacenado === 'OSCURO') this.aplicarTema(temaAlmacenado);
     this.privacidad.aplicarDesdeCache(usuarioId);
@@ -38,14 +52,17 @@ export class PerfilService {
     this.error.set(null);
     this.http.get<ApiResponse<Perfil>>(this.baseUrl).subscribe({
       next: response => {
+        if (!this.esMismaSesion(versionSesion, usuarioId)) return;
         this.cargando.set(false);
         if (!response.success || !response.data) {
           this.error.set(response.message || 'No se pudo cargar el perfil.');
           return;
         }
+        if (response.data.id !== usuarioId) return;
         this.aplicarPerfil(response.data);
       },
       error: err => {
+        if (!this.esMismaSesion(versionSesion, usuarioId)) return;
         this.cargando.set(false);
         this.error.set(this.mensajeError(err));
       }
@@ -53,9 +70,14 @@ export class PerfilService {
   }
 
   actualizar(payload: PerfilActualizarPayload): Observable<ApiResponse<Perfil>> {
+    const versionSesion = this.perfilSesionVersion;
+    const usuarioId = this.perfilUsuarioId;
     return this.http.put<ApiResponse<Perfil>>(this.baseUrl, payload).pipe(
       tap(response => {
-        if (response.success && response.data) this.aplicarPerfil(response.data);
+        if (usuarioId !== null && this.esMismaSesion(versionSesion, usuarioId)
+            && response.success && response.data?.id === usuarioId) {
+          this.aplicarPerfil(response.data);
+        }
       })
     );
   }
@@ -100,6 +122,8 @@ export class PerfilService {
 
     const valorEnviado = this.privacidad.ocultarMontos();
     const versionEnviada = this.privacidadVersion;
+    const versionSesion = this.perfilSesionVersion;
+    const usuarioId = perfil.id;
     this.privacidadPendiente = false;
     this.privacidadEscribiendo = true;
     this.http.put<ApiResponse<Perfil>>(this.baseUrl, {
@@ -112,11 +136,13 @@ export class PerfilService {
       ocultarMontos: valorEnviado
     }).subscribe({
       next: response => {
+        if (!this.esMismaSesion(versionSesion, usuarioId)) return;
         this.privacidadEscribiendo = false;
         if (!response.success || !response.data) {
-          this.revertirPrivacidadSiSigueVigente(perfil.id, valorEnviado, versionEnviada);
+          this.revertirPrivacidadSiSigueVigente(usuarioId, valorEnviado, versionEnviada, versionSesion);
           return;
         }
+        if (response.data.id !== usuarioId) return;
         this.privacidadPersistida = valorEnviado;
         this.perfil.update(actual => actual
           ? { ...response.data!, ocultarMontos: this.privacidad.ocultarMontos() }
@@ -127,13 +153,20 @@ export class PerfilService {
         }
       },
       error: () => {
+        if (!this.esMismaSesion(versionSesion, usuarioId)) return;
         this.privacidadEscribiendo = false;
-        this.revertirPrivacidadSiSigueVigente(perfil.id, valorEnviado, versionEnviada);
+        this.revertirPrivacidadSiSigueVigente(usuarioId, valorEnviado, versionEnviada, versionSesion);
       }
     });
   }
 
-  private revertirPrivacidadSiSigueVigente(usuarioId: number, valorEnviado: boolean, version: number): void {
+  private revertirPrivacidadSiSigueVigente(
+    usuarioId: number,
+    valorEnviado: boolean,
+    version: number,
+    versionSesion: number
+  ): void {
+    if (!this.esMismaSesion(versionSesion, usuarioId)) return;
     if (version === this.privacidadVersion) {
       const valorPrevio = this.privacidadPersistida ?? !valorEnviado;
       this.privacidad.aplicar(usuarioId, valorPrevio);
@@ -155,13 +188,15 @@ export class PerfilService {
   }
 
   limpiar(): void {
+    this.perfilSesionVersion += 1;
+    this.perfilUsuarioId = null;
     this.perfil.set(null);
     this.cargando.set(false);
     this.error.set(null);
     this.privacidadEscribiendo = false;
     this.privacidadPendiente = false;
     this.privacidadPersistida = null;
-    this.privacidadVersion = 0;
+    this.privacidadVersion += 1;
     this.aplicarTema('CLARO');
     this.privacidad.limpiar();
     this.categoriaPreferida.limpiar();
@@ -186,6 +221,10 @@ export class PerfilService {
       }
     }
     if (conservarPreferenciaLocal && !this.privacidadEscribiendo) this.guardarPrivacidadPendiente();
+  }
+
+  private esMismaSesion(version: number, usuarioId: number): boolean {
+    return this.perfilSesionVersion === version && this.perfilUsuarioId === usuarioId;
   }
 
   private aplicarTema(tema: Perfil['tema']): void {

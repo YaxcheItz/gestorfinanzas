@@ -28,6 +28,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final SesionService sesionService;
+    private final AuthAbuseGuard authAbuseGuard;
 
     @Transactional
     public SesionService.SesionEmitida registrar(RegistroRequest request) {
@@ -55,18 +56,22 @@ public class AuthService {
     }
 
     public SesionService.SesionEmitida login(LoginRequest request) {
+        String email = request.email().trim().toLowerCase();
+        authAbuseGuard.assertLoginAllowed(email);
         try {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
-                            request.email().trim().toLowerCase(),
+                            email,
                             request.password()
                     )
             );
         } catch (BadCredentialsException e) {
+            authAbuseGuard.recordLoginFailure(email);
             throw new BadCredentialsException("Credenciales incorrectas: email o contraseña inválidos");
         }
 
-        Usuario usuario = usuarioRepository.findByEmail(request.email().trim().toLowerCase())
+        authAbuseGuard.recordLoginSuccess(email);
+        Usuario usuario = usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
 
         return sesionService.emitir(usuario);
