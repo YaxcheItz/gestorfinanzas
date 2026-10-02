@@ -4,13 +4,14 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
-import jakarta.annotation.PostConstruct;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.time.Instant;
 import java.util.List;
 
 @Service
@@ -43,31 +44,41 @@ public class GoogleIdentityService {
     }
 
     public SesionService.SesionEmitida autenticar(String credential) {
-        if (!isEnabled()) {
-            throw new GoogleAuthUnavailableException();
-        }
+        GoogleIdToken.Payload payload = validarCredencial(credential);
+        String email = payload.getEmail();
+        String name = (String) payload.get("name");
+        String nombre = name == null || name.isBlank()
+                ? email.substring(0, email.indexOf('@'))
+                : name;
+        if (nombre.length() > 100) nombre = nombre.substring(0, 100);
+        boolean googleControlsEmail = email.toLowerCase(java.util.Locale.ROOT).endsWith("@gmail.com")
+                || payload.getHostedDomain() != null;
 
+        return authService.autenticarGoogle(payload.getSubject(), nombre, email, googleControlsEmail);
+    }
+
+    public String verificarReautenticacionReciente(String credential) {
+        GoogleIdToken.Payload payload = validarCredencial(credential);
+        Long issuedAt = payload.getIssuedAtTimeSeconds();
+        long ahora = Instant.now().getEpochSecond();
+        if (issuedAt == null || issuedAt > ahora + 60 || ahora - issuedAt > 300) {
+            throw new BadCredentialsException("Vuelve a confirmar tu cuenta de Google antes de eliminarla.");
+        }
+        return payload.getSubject();
+    }
+
+    private GoogleIdToken.Payload validarCredencial(String credential) {
+        if (!isEnabled()) throw new GoogleAuthUnavailableException();
         try {
             GoogleIdToken token = verifier.verify(credential);
             if (token == null) throw invalidCredential();
-
             GoogleIdToken.Payload payload = token.getPayload();
-            String subject = payload.getSubject();
-            String email = payload.getEmail();
-            String name = (String) payload.get("name");
-            boolean verifiedEmail = Boolean.TRUE.equals(payload.getEmailVerified());
-            if (subject == null || subject.isBlank() || email == null || email.isBlank() || !verifiedEmail) {
+            if (payload.getSubject() == null || payload.getSubject().isBlank()
+                    || payload.getEmail() == null || payload.getEmail().isBlank()
+                    || !Boolean.TRUE.equals(payload.getEmailVerified())) {
                 throw invalidCredential();
             }
-
-            String nombre = name == null || name.isBlank()
-                    ? email.substring(0, email.indexOf('@'))
-                    : name;
-            if (nombre.length() > 100) nombre = nombre.substring(0, 100);
-            boolean googleControlsEmail = email.toLowerCase(java.util.Locale.ROOT).endsWith("@gmail.com")
-                    || payload.getHostedDomain() != null;
-
-            return authService.autenticarGoogle(subject, nombre, email, googleControlsEmail);
+            return payload;
         } catch (BadCredentialsException | GoogleAuthUnavailableException exception) {
             throw exception;
         } catch (GeneralSecurityException | IOException | RuntimeException exception) {

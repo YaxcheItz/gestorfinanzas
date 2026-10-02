@@ -19,6 +19,7 @@ import com.gestionfinanzas.repository.TransaccionRepository;
 import com.gestionfinanzas.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +29,7 @@ public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
+    private final GoogleIdentityService googleIdentityService;
     private final LineaAsientoRepository lineaAsientoRepository;
     private final AsientoContableRepository asientoContableRepository;
     private final AuditoriaTransaccionRepository auditoriaTransaccionRepository;
@@ -46,7 +48,7 @@ private final SesionService sesionService;
 
     /**
      * Elimina la cuenta y TODOS sus datos. No existe reversa ni copia: se pierde tambien
-     * el libro contable y la auditoria, por lo que la contrasena actual es obligatoria.
+     * el libro contable y la auditoria, por lo que se exige confirmar la titularidad.
      *
      * <p>El orden importa porque no hay CascadeType.REMOVE desde Usuario: cada borrado en
      * lote debe hacerse antes que las tablas que sus filas referencian, o PostgreSQL
@@ -64,8 +66,20 @@ private final SesionService sesionService;
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
 
-        if (!passwordEncoder.matches(request.password(), usuario.getPasswordHash())) {
+        boolean passwordProvided = request.password() != null && !request.password().isBlank();
+        boolean googleCredentialProvided = request.googleCredential() != null
+                && !request.googleCredential().isBlank();
+        if (passwordProvided == googleCredentialProvided) {
+            throw new IllegalArgumentException("Confirma la eliminación con tu contraseña o con Google.");
+        }
+        if (passwordProvided && !passwordEncoder.matches(request.password(), usuario.getPasswordHash())) {
             throw new IllegalArgumentException("La contraseña es incorrecta");
+        }
+        if (googleCredentialProvided) {
+            String googleSubject = googleIdentityService.verificarReautenticacionReciente(request.googleCredential());
+            if (usuario.getGoogleSubject() == null || !usuario.getGoogleSubject().equals(googleSubject)) {
+                throw new BadCredentialsException("La cuenta de Google no coincide con esta cuenta de Kaptal.");
+            }
         }
 
         // Antes que nada lo que apunta a Usuario por medio de Pareja. Los repartos

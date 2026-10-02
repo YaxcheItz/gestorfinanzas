@@ -2,6 +2,7 @@ export interface Usuario {
   id: number;
   nombre: string;
   email: string;
+  googleLinked?: boolean;
 }
 
 export interface Perfil {
@@ -31,7 +32,8 @@ export interface CambiarPasswordPayload {
 }
 
 export interface EliminarCuentaPayload {
-  password: string;
+  password?: string;
+  googleCredential?: string;
 }
 
 export interface SolicitudRecuperacionPayload {
@@ -68,6 +70,7 @@ export interface AuthResponse {
   id: number;
   nombre: string;
   email: string;
+  googleLinked?: boolean;
 }
 
 export interface ApiResponse<T> {
