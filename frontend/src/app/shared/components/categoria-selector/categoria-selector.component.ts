@@ -7,7 +7,7 @@ import { ConfirmDialogService } from '../../../core/services/confirm-dialog.serv
 import { FinanzasService } from '../../../core/services/finanzas.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { CategoriaIconoComponent } from '../categoria-icono/categoria-icono.component';
-import { esEmojiCategoria, ICONOS_CATEGORIA, normalizarIconoCategoria } from '../categoria-icono/categoria-iconos';
+import { esEmojiCategoria, normalizarIconoCategoria } from '../categoria-icono/categoria-iconos';
 
 @Component({
   selector: 'app-categoria-selector',
@@ -39,7 +39,7 @@ import { esEmojiCategoria, ICONOS_CATEGORIA, normalizarIconoCategoria } from '..
           </span>
 
           <span class="min-w-0 flex-1 truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
-            {{ categoriaSeleccionada()?.nombre ?? 'Sin categoría' }}
+            {{ categoriaSeleccionada()?.nombre ?? 'Elige una categoría' }}
           </span>
 
           <svg class="h-4 w-4 shrink-0 text-slate-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -51,11 +51,14 @@ import { esEmojiCategoria, ICONOS_CATEGORIA, normalizarIconoCategoria } from '..
              pantalla seria ruido, pero el lector de pantalla si lo necesita. -->
         <span [id]="labelId" class="sr-only">{{ etiqueta }}</span>
       } @else {
-        <!-- Abierto: aqui se elige, se crean y se editan. -->
-        <div class="flex items-center justify-between gap-2">
-          <span [id]="labelId" class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-            {{ etiqueta }}
-          </span>
+        <!-- Selector modal para mantener libre el formulario de movimiento. -->
+        <div class="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/55 px-3 py-4 backdrop-blur-sm sm:p-6" (click)="cerrarMenu()">
+        <section role="dialog" aria-modal="true" [attr.aria-label]="'Elegir ' + etiqueta.toLowerCase()" (click)="$event.stopPropagation()" class="flex max-h-[min(88dvh,44rem)] w-full max-w-xl flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-zinc-950">
+        <div class="flex items-center justify-between gap-2 border-b border-slate-100 p-4 dark:border-slate-800 sm:p-5">
+          <div class="min-w-0">
+            <span [id]="labelId" class="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">{{ etiqueta }}</span>
+            <h2 class="mt-1 text-lg font-bold tracking-tight text-slate-900 dark:text-white">Elige una categoría</h2>
+          </div>
           <div class="flex shrink-0 items-center gap-1">
             <button
               type="button"
@@ -66,17 +69,16 @@ import { esEmojiCategoria, ICONOS_CATEGORIA, normalizarIconoCategoria } from '..
               </svg>
               Nueva
             </button>
-            @if (categoriaSeleccionada()?.esPersonalizada) {
-              <button
+            <button
                 type="button"
-                (click)="abrirEditar()"
+                (click)="modoEdicion.update(valor => !valor)"
+                [attr.aria-pressed]="modoEdicion()"
                 class="inline-flex min-h-9 cursor-pointer items-center justify-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700">
                 <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                   <path d="M13.586 3.586a2 2 0 012.828 2.828l-1.5 1.5-2.828-2.828 1.5-1.5zM10.5 6.5l3 3-7.1 7.1A2 2 0 015 17.9V16a1 1 0 01-1-1v-1.9a1 1 0 01.4-.8l7.1-7.1z" />
                 </svg>
-                Editar
-              </button>
-            }
+                {{ modoEdicion() ? 'Terminar' : 'Editar' }}
+            </button>
             <button
               type="button"
               (click)="cerrarMenu()"
@@ -85,142 +87,63 @@ import { esEmojiCategoria, ICONOS_CATEGORIA, normalizarIconoCategoria } from '..
             </button>
           </div>
         </div>
+        @if (error()) { <p role="alert" class="mx-4 mt-3 rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-950/40 dark:text-rose-200">{{ error() }}</p> }
 
         <div
           [id]="menuId"
           role="listbox"
           [attr.aria-labelledby]="labelId"
-          class="grid grid-cols-3 gap-2 sm:grid-cols-4"
+          class="grid grid-cols-3 gap-2 overflow-y-auto p-4 sm:grid-cols-4 sm:gap-3 sm:p-5"
         >
-        <button
-          type="button"
-          role="option"
-          [attr.aria-selected]="selectedId === null"
-          (click)="seleccionarCategoria(null)"
-          class="categoria-mosaico flex min-h-20 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 bg-transparent px-1.5 py-2 text-center transition-colors hover:border-slate-400 hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-800"
-          [class.categoria-mosaico--activo]="selectedId === null">
-          <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-400 dark:bg-slate-800">
-            <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-              <path fill-rule="evenodd" d="M3 4a2 2 0 012-2h10a2 2 0 012 2v2h1a1 1 0 011 1v11a1 1 0 01-1 1H3a1 1 0 01-1-1V5a1 1 0 011-1h1V4zm2 0h10V4H5v0z" clip-rule="evenodd" />
-            </svg>
-          </span>
-          <span class="line-clamp-2 w-full text-[11px] font-medium leading-tight text-slate-500 dark:text-slate-400">Sin categoría</span>
-        </button>
-
         @for (categoria of categoriasFiltradas(); track categoria.id) {
-<button
-              type="button"
-              role="option"
-              [attr.aria-selected]="selectedId === categoria.id"
-              (click)="seleccionarCategoria(categoria.id)"
-            class="categoria-mosaico group relative flex min-h-20 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-1.5 py-2 text-center transition-colors hover:border-emerald-300 hover:bg-emerald-50/50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-emerald-700 dark:hover:bg-emerald-500/10"
-            [class.categoria-mosaico--activo]="selectedId === categoria.id">
-            <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 transition-colors group-hover:bg-white dark:bg-slate-700 dark:group-hover:bg-slate-600">
-              <app-categoria-icono [icono]="categoria.icono" [tipo]="categoria.tipo" [clase]="'h-5 w-5'" />
-            </span>
-            <span class="line-clamp-2 w-full text-[11px] font-medium leading-tight text-slate-600 dark:text-slate-300">{{ categoria.nombre }}</span>
-            @if (selectedId === categoria.id) {
-              <span class="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-600 text-white dark:bg-emerald-500">
-                <svg class="h-2.5 w-2.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                  <path fill-rule="evenodd" d="M16.704 5.29a1 1 0 010 1.414l-7.25 7.25a1 1 0 01-1.414 0l-3.5-3.5a1 1 0 011.414-1.414l2.793 2.793 6.543-6.543a1 1 0 011.414 0z" clip-rule="evenodd" />
-                </svg>
-              </span>
+<div role="option" [attr.aria-selected]="selectedId === categoria.id" class="categoria-mosaico group relative min-h-24 overflow-hidden rounded-xl border border-slate-200 bg-white text-center transition-colors dark:border-slate-700 dark:bg-slate-800" [class.categoria-mosaico--activo]="selectedId === categoria.id">
+            <button type="button" [disabled]="modoEdicion()" (click)="seleccionarCategoria(categoria.id)" [attr.aria-label]="'Seleccionar ' + categoria.nombre" class="flex min-h-24 w-full cursor-pointer flex-col items-center justify-center gap-1.5 px-2 py-3 hover:bg-emerald-50/50 disabled:cursor-default dark:hover:bg-emerald-500/10">
+              <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-700"><app-categoria-icono [icono]="categoria.icono" [tipo]="categoria.tipo" [clase]="'h-5 w-5'" /></span>
+              <span class="line-clamp-2 w-full text-[11px] font-medium leading-tight text-slate-700 dark:text-slate-200">{{ categoria.nombre }}</span>
+            </button>
+            @if (modoEdicion() && categoria.esPersonalizada) {
+              <button type="button" (click)="abrirEditar(categoria)" [attr.aria-label]="'Editar categoría ' + categoria.nombre" class="absolute left-1 top-1 inline-flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm hover:bg-emerald-50 hover:text-emerald-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-emerald-950">
+                <svg aria-hidden="true" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 012.828 2.828l-1.5 1.5-2.828-2.828 1.5-1.5zM10.5 6.5l3 3-7.1 7.1A2 2 0 015 17.9V16a1 1 0 01-1-1v-1.9a1 1 0 01.4-.8l7.1-7.1z"/></svg>
+              </button>
+              <button type="button" (click)="eliminarCategoria(categoria)" [attr.aria-label]="'Eliminar categoría ' + categoria.nombre" class="absolute right-1 top-1 inline-flex h-7 w-7 items-center justify-center rounded-lg border border-rose-200 bg-white text-rose-600 shadow-sm hover:bg-rose-50 dark:border-rose-900 dark:bg-slate-900 dark:text-rose-300 dark:hover:bg-rose-950">
+                <svg aria-hidden="true" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+              </button>
             }
+          </div>
+        }
+        @if (modoEdicion()) {
+          <button type="button" (click)="abrirCrear()" class="flex min-h-24 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-emerald-400 bg-emerald-50/60 px-2 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300 dark:hover:bg-emerald-950/60">
+            <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-xl shadow-sm dark:bg-slate-800">+</span>Agregar categoría
           </button>
         }
       </div>
 
-      @if (categoriasFiltradas().length === 0) {
-          <p class="text-xs text-slate-500 dark:text-slate-400">
-            Todavía no hay categorías de {{ tipoEtiqueta }}. Crea la primera con el botón «Nueva».
+        @if (categoriasFiltradas().length === 0) {
+          <p class="col-span-full rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
+            Aún no tienes categorías de {{ tipoEtiqueta }}. Usa «Nueva» para crear una.
           </p>
         }
+        </section>
+        </div>
+        @if (error()) { <p role="alert" class="mx-4 mt-3 rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-950/40 dark:text-rose-200">{{ error() }}</p> }
       }
 
       @if (editorAbierto()) {
-        <section class="quick-category-editor box-border w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-emerald-200 bg-emerald-50/50 p-4 pb-[max(2rem,env(safe-area-inset-bottom))] space-y-4 shadow-sm" aria-label="Editar categoría">
-          <div class="flex min-w-0 items-center justify-between gap-3 border-b border-emerald-100 pb-2">
-            <h3 class="text-sm font-bold text-slate-800">
-              {{ editando() ? 'Editar categoría' : 'Nueva categoría de ' + tipoEtiqueta }}
-            </h3>
-            <div class="flex min-w-0 shrink-0 items-center gap-2">
-              <!-- Solo al editar: no tiene sentido borrar lo que se esta creando. -->
-              @if (editando(); as enEdicion) {
-                <button
-                  type="button"
-                  (click)="eliminar()"
-                  [disabled]="guardando()"
-                  [attr.aria-label]="'Eliminar categoría ' + enEdicion.nombre"
-                  class="inline-flex min-h-9 shrink-0 items-center justify-center gap-1 rounded-lg border border-rose-200 bg-white px-2.5 text-xs font-semibold text-rose-600 transition-colors hover:border-rose-300 hover:bg-rose-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-rose-500 disabled:opacity-50 dark:border-rose-900 dark:bg-slate-800 dark:text-rose-300 dark:hover:bg-rose-500/10">
-                  <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                    <path fill-rule="evenodd" d="M8.25 1.75A1.75 1.75 0 0010 3.5v7.75a1.75 1.75 0 01-3.5 0V3.5c0-.966.784-1.75 1.75-1.75zm3.5 1.75a1.75 1.75 0 113.5 0v7.75a1.75 1.75 0 01-3.5 0V3.5zM2.5 6a1 1 0 012 0v7.25c0 .69.56 1.25 1.25 1.25h8.5c.69 0 1.25-.56 1.25-1.25V6a1 1 0 112 0v7.25A3.75 3.75 0 015.75 17h-1.5A3.75 3.75 0 01.5 13.25V6z" clip-rule="evenodd" />
-                  </svg>
-                  Eliminar
-                </button>
-              }
-              <button type="button" (click)="cerrarEditor()" [disabled]="guardando()" class="inline-flex min-h-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors">
-                Cancelar
-              </button>
-            </div>
-          </div>
-
-          @if (error()) {
-            <p role="alert" class="text-xs text-rose-700 font-medium">{{ error() }}</p>
-          }
-
-          <label class="block text-xs font-medium text-slate-700">
-            Nombre
-            <input
-              [(ngModel)]="nombre"
-              [ngModelOptions]="{ standalone: true }"
-              maxlength="80"
-              class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
-              placeholder="Ej. Transporte" />
-          </label>
-
-          <fieldset class="min-w-0 space-y-2">
-            <legend class="text-xs font-medium text-slate-700">Icono</legend>
-            <div class="flex w-full min-w-0 flex-wrap gap-2">
-              @for (opcion of iconosDisponibles; track opcion.codigo) {
-                <button
-                  type="button"
-                  (click)="seleccionarIcono(opcion.codigo)"
-                  [attr.aria-label]="'Icono ' + opcion.nombre"
-                  [attr.aria-pressed]="icono === opcion.codigo"
-                  [title]="opcion.nombre"
-                  [class.quick-category-icon--selected]="icono === opcion.codigo"
-                  class="quick-category-icon flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border bg-white transition-all cursor-pointer shadow-sm">
-                  <app-categoria-icono [icono]="opcion.codigo" [clase]="'h-4 w-4'" />
-                </button>
-              }
-            </div>
-            <label class="block text-xs font-medium text-slate-700">
-              Emoji personalizado (opcional)
-              <input
-                [ngModel]="emojiPersonalizado"
-                (ngModelChange)="seleccionarEmoji($event)"
-                [ngModelOptions]="{ standalone: true }"
-                type="text"
-                maxlength="16"
-                class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-lg dark:border-slate-600 dark:bg-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
-                placeholder="Escribe o pega un emoji, por ejemplo 🏠" />
-            </label>
-          </fieldset>
-          <p class="text-xs text-slate-500 italic">Elige un icono predeterminado o usa un emoji de tu teclado.</p>
-
-          <div class="flex justify-end border-t border-emerald-100 pt-3">
-            <button
-              type="button"
-              (click)="guardar()"
-              [disabled]="guardando()"
-              class="min-h-10 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 shadow-sm transition-all">
-              {{ guardando() ? 'Guardando...' : 'Guardar categoría' }}
-            </button>
-          </div>
-        </section>
+        <div class="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/55 px-3 py-4 backdrop-blur-sm" (click)="cerrarEditor()">
+          <section role="dialog" aria-modal="true" class="quick-category-editor w-full max-w-sm space-y-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-700 dark:bg-zinc-950" [attr.aria-label]="editando() ? 'Editar categoría' : 'Nueva categoría'" (click)="$event.stopPropagation()">
+            <header class="flex items-start justify-between gap-3">
+              <div><h3 class="text-lg font-bold text-slate-900 dark:text-white">{{ editando() ? 'Editar categoría' : 'Nueva categoría' }}</h3><p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Cambia el nombre y el emoji de la categoría.</p></div>
+              <button type="button" (click)="cerrarEditor()" aria-label="Cerrar" class="inline-flex h-9 w-9 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">×</button>
+            </header>
+            @if (error()) { <p role="alert" class="text-sm text-rose-600">{{ error() }}</p> }
+            <div class="flex items-center gap-3 rounded-2xl bg-emerald-50 p-3 dark:bg-emerald-950/40"><span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-2xl shadow-sm dark:bg-slate-800"><app-categoria-icono [icono]="emojiPersonalizado || icono" [tipo]="tipo" [clase]="'h-6 w-6'" /></span><span class="truncate font-semibold text-slate-800 dark:text-slate-100">{{ nombre.trim() || 'Nombre de categoría' }}</span></div>
+            <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Nombre<input [(ngModel)]="nombre" [ngModelOptions]="{ standalone: true }" maxlength="80" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-600 dark:bg-slate-900 dark:text-white" placeholder="Ej. Transporte" /></label>
+            <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Icono o emoji<input [ngModel]="emojiPersonalizado" (ngModelChange)="seleccionarEmoji($event)" [ngModelOptions]="{ standalone: true }" type="text" maxlength="16" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-xl text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-600 dark:bg-slate-900 dark:text-white" placeholder="Escribe o pega un emoji" /></label>
+            <footer class="flex justify-end gap-2 border-t border-slate-100 pt-3 dark:border-slate-800"><button type="button" (click)="cerrarEditor()" [disabled]="guardando()" class="min-h-10 rounded-xl border border-slate-200 px-4 text-sm font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">Cancelar</button><button type="button" (click)="guardar()" [disabled]="guardando()" class="min-h-10 rounded-xl bg-emerald-600 px-4 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60">{{ guardando() ? 'Guardando…' : 'Guardar' }}</button></footer>
+          </section>
+        </div>
       }
-    </div>
-  `
+    </div>`
 })
 export class CategoriaSelectorComponent {
   @Input({ required: true }) categorias: Categoria[] = [];
@@ -235,11 +158,11 @@ export class CategoriaSelectorComponent {
   readonly menuId = `${this.selectId}-opciones`;
   readonly labelId = `${this.selectId}-label`;
   readonly menuAbierto = signal(false);
+  readonly modoEdicion = signal(false);
   readonly editorAbierto = signal(false);
   readonly guardando = signal(false);
   readonly error = signal<string | null>(null);
   readonly editando = signal<Categoria | null>(null);
-  readonly iconosDisponibles = ICONOS_CATEGORIA;
   readonly categoriasFiltradas = (): Categoria[] =>
     this.categorias.filter(categoria => categoria.tipo === this.tipo && categoria.activo);
   readonly categoriaSeleccionada = (): Categoria | undefined =>
@@ -247,7 +170,7 @@ export class CategoriaSelectorComponent {
 
   /** Lo que anuncia el mosaico colapsado: el nombre y que abre el menú. */
   get descripcionMosaico(): string {
-    const nombre = this.categoriaSeleccionada()?.nombre ?? 'Sin categoría';
+    const nombre = this.categoriaSeleccionada()?.nombre ?? 'Elige una categoría';
     return `${this.etiqueta}: ${nombre}. Cambiar`;
   }
 
@@ -259,12 +182,14 @@ export class CategoriaSelectorComponent {
   ) {}
 
   abrirMenu(): void {
+    this.modoEdicion.set(false);
     this.menuAbierto.set(true);
   }
 
   cerrarMenu(): void {
     if (this.guardando()) return;
     this.menuAbierto.set(false);
+    this.modoEdicion.set(false);
   }
 
   seleccionarCategoria(categoriaId: number | null): void {
@@ -286,6 +211,7 @@ export class CategoriaSelectorComponent {
   }
 
   abrirCrear(): void {
+    this.menuAbierto.set(false);
     this.editando.set(null);
     this.nombre = '';
     this.icono = this.tipo === 'INGRESO' ? 'trending-up' : 'receipt';
@@ -294,9 +220,9 @@ export class CategoriaSelectorComponent {
     this.editorAbierto.set(true);
   }
 
-  abrirEditar(): void {
-    const categoria = this.categoriaSeleccionada() ?? null;
+  abrirEditar(categoria: Categoria | null = this.categoriaSeleccionada() ?? null): void {
     if (!categoria?.esPersonalizada) return;
+    this.menuAbierto.set(false);
     this.editando.set(categoria);
     this.nombre = categoria.nombre;
     this.icono = normalizarIconoCategoria(categoria.icono, categoria.tipo);
@@ -308,6 +234,11 @@ export class CategoriaSelectorComponent {
   cerrarEditor(): void {
     if (this.guardando()) return;
     this.editorAbierto.set(false);
+  }
+
+  eliminarCategoria(categoria: Categoria): void {
+    this.editando.set(categoria);
+    this.eliminar();
   }
 
   /**
@@ -340,12 +271,14 @@ export class CategoriaSelectorComponent {
           // Si era la preferida de este tipo, se olvida: al reabrir el formulario
           // tiene que caer en otra categoria y no en la que ya no existe.
           this.categoriaPreferida.olvidar(this.tipo, categoria.id);
-          this.categoriasChange.emit(
-            this.categorias.filter(otra => otra.id !== categoria.id)
-          );
-          this.selectedIdChange.emit(null);
+          const categoriasRestantes = this.categorias.filter(otra => otra.id !== categoria.id);
+          this.categoriasChange.emit(categoriasRestantes);
+          const categoriaSiguiente = categoriasRestantes.find(otra => otra.tipo === this.tipo) ?? null;
+          this.selectedIdChange.emit(categoriaSiguiente?.id ?? null);
+          if (categoriaSiguiente) this.categoriaPreferida.recordar(this.tipo, categoriaSiguiente.id);
           this.editorAbierto.set(false);
           this.menuAbierto.set(false);
+          this.modoEdicion.set(false);
           this.toastService.success('Categoría eliminada.');
         },
         error: err => {
@@ -372,12 +305,12 @@ export class CategoriaSelectorComponent {
       return;
     }
 
+    const actual = this.editando();
     const payload: CategoriaPayload = {
       nombre,
       tipo: this.tipo,
-      icono: (this.emojiPersonalizado || this.icono).trim() || undefined
+      icono: this.emojiPersonalizado.trim() || actual?.icono || (this.tipo === 'INGRESO' ? 'trending-up' : 'receipt')
     };
-    const actual = this.editando();
     this.guardando.set(true);
     this.error.set(null);
 
@@ -403,6 +336,7 @@ export class CategoriaSelectorComponent {
         this.categoriaPreferida.recordar(this.tipo, categoriaGuardada.id);
         this.editorAbierto.set(false);
         this.menuAbierto.set(false);
+        this.modoEdicion.set(false);
         this.toastService.success(actual ? 'Categoría actualizada.' : 'Categoría creada.');
       },
       error: err => {
@@ -417,8 +351,4 @@ export class CategoriaSelectorComponent {
     if (valor.trim()) this.icono = valor.trim();
   }
 
-  seleccionarIcono(codigo: string): void {
-    this.emojiPersonalizado = '';
-    this.icono = codigo;
-  }
 }

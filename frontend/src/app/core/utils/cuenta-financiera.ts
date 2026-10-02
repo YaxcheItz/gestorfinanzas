@@ -1,5 +1,10 @@
 import { Cuenta } from '../models/finanzas.models';
 
+/** Nombre legible para la cuenta de efectivo creada automáticamente en cuentas existentes. */
+export function nombreCuentaVisible(nombre: string | null | undefined): string {
+  return nombre === 'Billetera / Efectivo' ? 'Efectivo' : (nombre ?? '');
+}
+
 export function deudaActualCuenta(cuenta: Pick<Cuenta, 'tipo' | 'saldoActual'>): number {
   return cuenta.tipo === 'CREDITO' ? Math.max(0, -cuenta.saldoActual) : cuenta.saldoActual;
 }

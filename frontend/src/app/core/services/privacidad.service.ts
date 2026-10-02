@@ -12,6 +12,7 @@ import { Injectable, inject, signal } from '@angular/core';
 @Injectable({ providedIn: 'root' })
 export class PrivacidadService {
   private readonly document = inject(DOCUMENT);
+  private usuarioId: number | null = null;
 
   private readonly _ocultarMontos = signal(false);
   readonly ocultarMontos = this._ocultarMontos.asReadonly();
@@ -22,16 +23,28 @@ export class PrivacidadService {
    * mostrar cifras que el usuario pidio ocultar.
    */
   aplicarDesdeCache(usuarioId: number): void {
+    this.usuarioId = usuarioId;
     const guardado = this.document.defaultView?.localStorage.getItem(this.clave(usuarioId));
     if (guardado === 'true' || guardado === 'false') this._ocultarMontos.set(guardado === 'true');
   }
 
   aplicar(usuarioId: number, ocultarMontos: boolean): void {
+    this.usuarioId = usuarioId;
     this._ocultarMontos.set(ocultarMontos);
     this.document.defaultView?.localStorage.setItem(this.clave(usuarioId), String(ocultarMontos));
   }
 
+  alternarLocal(): boolean {
+    const nuevoValor = !this._ocultarMontos();
+    this._ocultarMontos.set(nuevoValor);
+    if (this.usuarioId !== null) {
+      this.document.defaultView?.localStorage.setItem(this.clave(this.usuarioId), String(nuevoValor));
+    }
+    return nuevoValor;
+  }
+
   limpiar(): void {
+    this.usuarioId = null;
     this._ocultarMontos.set(false);
   }
 

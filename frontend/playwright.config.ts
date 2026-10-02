@@ -39,7 +39,7 @@ export default defineConfig({
       timeout: 120_000
     },
     {
-      command: 'npm run start -- --host localhost --port 14200',
+      command: 'npm run start:e2e -- --host localhost --port 14200',
       url: 'http://localhost:14200',
       reuseExistingServer: false,
       timeout: 120_000

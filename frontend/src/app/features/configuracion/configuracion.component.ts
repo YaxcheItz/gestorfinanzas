@@ -9,6 +9,7 @@ import { PerfilService } from '../../core/services/perfil.service';
 import { ToastService } from '../../core/services/toast.service';
 import { MontoPipe } from '../../core/pipes/monto.pipe';
 import { RestauracionRespaldoPreview } from '../../core/models/auth.models';
+import { nombreCuentaVisible } from '../../core/utils/cuenta-financiera';
 import {
   MONEDAS_DISPONIBLES,
   PlantillaRecurrente
@@ -251,7 +252,6 @@ import {
         </div>
       </section>
 
-
       <section id="categories" class="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -295,7 +295,7 @@ import {
                       </span>
                     </div>
                     <p class="mt-1 text-xs text-slate-500">
-                      {{ plantilla.monto | monto:plantilla.moneda:'symbol':'1.2-2' }} · {{ frecuenciaTexto(plantilla.frecuencia) }} · {{ plantilla.cuentaNombre }}
+                      {{ plantilla.monto | monto:plantilla.moneda:'symbol':'1.2-2' }} · {{ frecuenciaTexto(plantilla.frecuencia) }} · {{ nombreCuentaVisible(plantilla.cuentaNombre) }}
                     </p>
                     <p class="mt-1 text-xs font-medium" [class.text-amber-700]="plantilla.activa && plantilla.siguienteFecha <= hoy" [class.text-slate-500]="!plantilla.activa || plantilla.siguienteFecha > hoy">
                       {{ plantilla.siguienteFecha <= hoy && plantilla.activa ? 'Pendiente de confirmar' : 'Siguiente fecha' }}: {{ plantilla.siguienteFecha }}
@@ -405,6 +405,7 @@ import {
   `
 })
 export class ConfiguracionComponent implements OnInit {
+  readonly nombreCuentaVisible = nombreCuentaVisible;
   readonly monedas = MONEDAS_DISPONIBLES;
   readonly guardandoPerfil = signal(false);
   readonly guardandoPassword = signal(false);

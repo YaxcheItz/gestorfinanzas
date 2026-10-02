@@ -22,9 +22,10 @@ import { CategoriaSelectorComponent } from '../../shared/components/categoria-se
 import { CuentaSelectorComponent } from '../../shared/components/cuenta-selector/cuenta-selector.component';
 import { MovimientoMobileCardComponent } from '../../shared/components/movimiento-mobile-card/movimiento-mobile-card.component';
 import { AccionesMovimientoComponent } from '../../shared/components/acciones-movimiento/acciones-movimiento.component';
+import { FechaPickerComponent } from '../../shared/components/fecha-picker/fecha-picker.component';
 import { MontoPipe } from '../../core/pipes/monto.pipe';
 import { PrivacidadService } from '../../core/services/privacidad.service';
-import { resumenCuentaSelector } from '../../core/utils/cuenta-financiera';
+import { nombreCuentaVisible, resumenCuentaSelector } from '../../core/utils/cuenta-financiera';
 import {
   Categoria,
   Cuenta,
@@ -39,7 +40,7 @@ import {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, CategoriaSelectorComponent, CuentaSelectorComponent, MovimientoMobileCardComponent, MontoPipe, AccionesMovimientoComponent],
+  imports: [CommonModule, FormsModule, CategoriaSelectorComponent, CuentaSelectorComponent, MovimientoMobileCardComponent, MontoPipe, AccionesMovimientoComponent, FechaPickerComponent],
   template: `
     <div class="dashboard-motion-scope max-w-7xl mx-auto flex flex-col px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-5 sm:space-y-8">
 
@@ -173,7 +174,7 @@ import {
                     {{ plantilla.categoriaNombre || (plantilla.tipo === 'INGRESO' ? 'Ingreso recurrente' : 'Gasto recurrente') }}
                   </p>
                   <p class="mt-1 text-sm font-bold text-slate-800">
-                    {{ plantilla.monto | monto:plantilla.moneda:'symbol':'1.2-2' }} · {{ plantilla.cuentaNombre }}
+                    {{ plantilla.monto | monto:plantilla.moneda:'symbol':'1.2-2' }} · {{ nombreCuentaVisible(plantilla.cuentaNombre) }}
                   </p>
                   <p class="mt-1 text-xs font-medium text-amber-900">
                     {{ plantilla.siguienteFecha <= fechaHoy() ? 'Pendiente de confirmar' : 'Próximo movimiento' }} · {{ plantilla.siguienteFecha }}
@@ -390,7 +391,7 @@ import {
     <!-- Modal Interactivo 'Nuevo Movimiento' -->
     @if (modalAbierto()) {
       <div class="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto overscroll-contain bg-slate-900/60 px-0 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] backdrop-blur-xs sm:items-center sm:p-4">
-        <div #movementDialog tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="dashboard-movement-title" class="dashboard-motion-scope dashboard-movement-dialog flex max-h-full min-h-0 w-full flex-col overflow-hidden rounded-t-3xl border border-slate-200 bg-white shadow-2xl animate-in fade-in zoom-in-95 duration-150 sm:max-h-[min(90dvh,48rem)] sm:max-w-lg sm:rounded-3xl">
+        <div #movementDialog tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="dashboard-movement-title" class="dashboard-motion-scope dashboard-movement-dialog flex h-full max-h-full min-h-0 w-full flex-col overflow-hidden rounded-t-3xl border border-slate-200 bg-white shadow-2xl animate-in fade-in zoom-in-95 duration-150 sm:h-[min(90dvh,48rem)] sm:max-h-[min(90dvh,48rem)] sm:max-w-lg sm:rounded-3xl">
           
           <!-- Encabezado del Modal con Selector de Tipo -->
           <div class="shrink-0 border-b border-slate-100 p-4 sm:p-6">
@@ -408,13 +409,13 @@ import {
             </div>
 
             <!-- Tabs de Tipo de Transacción -->
-            <div role="group" aria-label="Tipo de movimiento" class="grid grid-cols-3 gap-1.5 rounded-xl bg-slate-100 p-1 text-[11px] font-semibold sm:gap-2 sm:text-xs">
+            <div role="group" aria-label="Tipo de movimiento" class="grid grid-cols-[repeat(3,minmax(0,1fr))] auto-rows-fr items-stretch gap-1.5 rounded-xl bg-slate-100 p-1 text-[11px] font-semibold sm:gap-2 sm:text-xs">
               <button 
                 type="button"
                 (click)="cambiarTipo('GASTO')"
                 [attr.aria-pressed]="formTipo() === 'GASTO'"
                 [class]="formTipo() === 'GASTO' ? 'bg-white text-rose-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'"
-                class="min-h-10 rounded-lg px-1 py-2 text-center transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 cursor-pointer sm:min-h-11">
+                class="h-full min-h-10 w-full min-w-0 whitespace-nowrap rounded-lg px-1 py-2 text-center transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 cursor-pointer sm:min-h-11">
                 Gasto
               </button>
               <button 
@@ -422,7 +423,7 @@ import {
                 (click)="cambiarTipo('INGRESO')"
                 [attr.aria-pressed]="formTipo() === 'INGRESO'"
                 [class]="formTipo() === 'INGRESO' ? 'bg-white text-emerald-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'"
-                class="min-h-10 rounded-lg px-1 py-2 text-center transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 cursor-pointer sm:min-h-11">
+                class="h-full min-h-10 w-full min-w-0 whitespace-nowrap rounded-lg px-1 py-2 text-center transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 cursor-pointer sm:min-h-11">
                 Ingreso
               </button>
               <button 
@@ -430,7 +431,7 @@ import {
                 (click)="cambiarTipo('TRANSFERENCIA')"
                 [attr.aria-pressed]="formTipo() === 'TRANSFERENCIA'"
                 [class]="formTipo() === 'TRANSFERENCIA' ? 'bg-white text-blue-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'"
-                class="min-h-10 rounded-lg px-1 py-2 text-center transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 cursor-pointer sm:min-h-11">
+                class="h-full min-h-10 w-full min-w-0 whitespace-nowrap rounded-lg px-1 py-2 text-center transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 cursor-pointer sm:min-h-11">
                 Transferencia
               </button>
             </div>
@@ -493,6 +494,7 @@ import {
                     label="Para"
                     idBase="cuentaDestinoId"
                     [compacto]="true"
+                    [alinearPanelDerecha]="true"
                     (selectedIdChange)="formCuentaDestinoId = $event" />
                 </div>
 
@@ -536,15 +538,7 @@ import {
             <div class="grid grid-cols-2 gap-2">
               <div class="min-w-0">
                 <label for="fecha" class="sr-only">Fecha del movimiento</label>
-                <input
-                  id="fecha"
-                  type="date"
-                  required
-                  [(ngModel)]="formFecha"
-                  (ngModelChange)="actualizarSiguienteFecha()"
-                  name="fecha"
-                  class="w-full cursor-pointer rounded-xl border border-slate-300 bg-slate-50 px-3 py-3 text-sm text-slate-900 transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
-                />
+                <app-fecha-picker id="fecha" label="Fecha del movimiento" [value]="formFecha" (valueChange)="formFecha = $event; actualizarSiguienteFecha()" />
               </div>
 
               @if (formTipo() === 'TRANSFERENCIA') {
@@ -619,7 +613,7 @@ import {
                   </span>
                 </label>
 
-                @if (esCuentaCredito()) {
+                @if (formTipo() === 'GASTO' && esCuentaCredito()) {
                   <label
                     class="flex min-h-12 cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 transition-colors focus-within:ring-2 focus-within:ring-emerald-500"
                     [class]="esCompraMsi
@@ -649,9 +643,7 @@ import {
                   </label>
                   <label class="min-w-0 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
                     Siguiente cargo
-                    <input id="siguienteFechaRecurrencia" name="siguienteFechaRecurrencia" type="date"
-                           [(ngModel)]="siguienteFechaRecurrencia" [min]="formFecha" required
-                           class="mt-1 w-full rounded-xl border border-slate-300 bg-slate-50 px-2.5 py-2.5 text-sm font-normal text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
+                    <app-fecha-picker id="siguienteFechaRecurrencia" label="Siguiente cargo" [value]="siguienteFechaRecurrencia" [min]="formFecha" (valueChange)="siguienteFechaRecurrencia = $event" />
                   </label>
                 </div>
               } @else if (esCompraMsi) {
@@ -701,6 +693,7 @@ import {
   `
 })
 export class DashboardComponent implements OnInit {
+  readonly nombreCuentaVisible = nombreCuentaVisible;
   public readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly finanzasService = inject(FinanzasService);
@@ -843,6 +836,7 @@ export class DashboardComponent implements OnInit {
   }
 
   alternarMsi(valor: boolean): void {
+    if (valor && this.formTipo() !== 'GASTO') return;
     this.esCompraMsi = valor;
     if (valor) {
       this.movimientoRecurrente = false;
@@ -1186,6 +1180,11 @@ export class DashboardComponent implements OnInit {
 
     if (!this.formCuentaId) {
       this.modalError.set('Selecciona una cuenta');
+      return;
+    }
+
+    if (this.formTipo() !== 'TRANSFERENCIA' && this.formCategoriaId == null) {
+      this.modalError.set('Crea una categoría para este tipo de movimiento y selecciónala.');
       return;
     }
 

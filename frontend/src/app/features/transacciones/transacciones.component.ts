@@ -11,7 +11,9 @@ import { CategoriaSelectorComponent } from '../../shared/components/categoria-se
 import { CuentaSelectorComponent } from '../../shared/components/cuenta-selector/cuenta-selector.component';
 import { MovimientoMobileCardComponent } from '../../shared/components/movimiento-mobile-card/movimiento-mobile-card.component';
 import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive';
+import { FechaPickerComponent } from '../../shared/components/fecha-picker/fecha-picker.component';
 import { MontoPipe } from '../../core/pipes/monto.pipe';
+import { nombreCuentaVisible } from '../../core/utils/cuenta-financiera';
 import {
   Categoria,
   Cuenta,
@@ -26,7 +28,7 @@ import {
 @Component({
   selector: 'app-transacciones',
   standalone: true,
-  imports: [CommonModule, FormsModule, CategoriaSelectorComponent, CuentaSelectorComponent, MovimientoMobileCardComponent, FocusTrapDirective, MontoPipe],
+  imports: [CommonModule, FormsModule, CategoriaSelectorComponent, CuentaSelectorComponent, MovimientoMobileCardComponent, FocusTrapDirective, MontoPipe, FechaPickerComponent],
   template: `
     <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-5 sm:space-y-6">
 
@@ -320,9 +322,9 @@ import {
                     </td>
                     <td class="px-6 py-4 text-xs font-medium text-slate-600">
                       @if (m.tipo === 'TRANSFERENCIA') {
-                        <span>{{ m.cuentaNombre }}@if (m.cuentaId === null) { (cuenta eliminada) } &rarr; {{ m.cuentaDestinoNombre }}@if (m.cuentaDestinoId === null) { (eliminada) }</span>
+                        <span>{{ nombreCuentaVisible(m.cuentaNombre) }}@if (m.cuentaId === null) { (cuenta eliminada) } &rarr; {{ nombreCuentaVisible(m.cuentaDestinoNombre) }}@if (m.cuentaDestinoId === null) { (eliminada) }</span>
                       } @else {
-                        <span>{{ m.cuentaNombre }}@if (m.cuentaId === null) { (cuenta eliminada) }</span>
+                        <span>{{ nombreCuentaVisible(m.cuentaNombre) }}@if (m.cuentaId === null) { (cuenta eliminada) }</span>
                       }
                     </td>
                     <td class="px-6 py-4 text-xs text-slate-500 whitespace-nowrap">
@@ -422,7 +424,7 @@ import {
     @if (modalAbierto()) {
       <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-2 sm:p-4">
         
-        <div appFocusTrap (focusTrapEscape)="cerrarModal()" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="transacciones-modal-titulo" class="flex max-h-[calc(100dvh-1rem)] min-h-0 w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl animate-in fade-in zoom-in-95 duration-150 sm:rounded-3xl">
+        <div appFocusTrap (focusTrapEscape)="cerrarModal()" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="transacciones-modal-titulo" class="flex h-[calc(100dvh-1rem)] max-h-[calc(100dvh-1rem)] min-h-0 w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl animate-in fade-in zoom-in-95 duration-150 sm:h-[min(90dvh,48rem)] sm:max-h-[min(90dvh,48rem)] sm:rounded-3xl">
           
           <div class="shrink-0 border-b border-slate-100 p-4 sm:p-6">
             <div class="flex items-center justify-between gap-3 pb-3 sm:pb-4">
@@ -567,15 +569,7 @@ import {
             <div class="grid grid-cols-2 gap-2">
               <div class="min-w-0">
                 <label for="fecha" class="sr-only">Fecha del movimiento</label>
-                <input
-                  id="fecha"
-                  type="date"
-                  required
-                  [(ngModel)]="formFecha"
-                  (ngModelChange)="actualizarSiguienteFecha()"
-                  name="fecha"
-                  class="w-full cursor-pointer rounded-xl border border-slate-300 bg-slate-50 px-3 py-3 text-sm text-slate-900 transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
-                />
+                <app-fecha-picker id="fecha" label="Fecha del movimiento" [value]="formFecha" (valueChange)="formFecha = $event; actualizarSiguienteFecha()" />
               </div>
 
               @if (formTipo() === 'TRANSFERENCIA') {
@@ -650,7 +644,7 @@ import {
                   </span>
                 </label>
 
-                @if (esCuentaCredito()) {
+                @if (formTipo() === 'GASTO' && esCuentaCredito()) {
                   <label
                     class="flex min-h-12 cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 transition-colors focus-within:ring-2 focus-within:ring-emerald-500"
                     [class]="esCompraMsi
@@ -680,9 +674,7 @@ import {
                   </label>
                   <label class="min-w-0 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
                     Siguiente cargo
-                    <input id="siguienteFechaRecurrencia" name="siguienteFechaRecurrencia" type="date"
-                           [(ngModel)]="siguienteFechaRecurrencia" [min]="formFecha" required
-                           class="mt-1 w-full rounded-xl border border-slate-300 bg-slate-50 px-2.5 py-2.5 text-sm font-normal text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
+                    <app-fecha-picker id="siguienteFechaRecurrencia" label="Siguiente cargo" [value]="siguienteFechaRecurrencia" [min]="formFecha" (valueChange)="siguienteFechaRecurrencia = $event" />
                   </label>
                 </div>
               } @else if (esCompraMsi) {
@@ -732,6 +724,7 @@ import {
   `
 })
 export class TransaccionesComponent implements OnInit {
+  readonly nombreCuentaVisible = nombreCuentaVisible;
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly finanzasService = inject(FinanzasService);
@@ -826,6 +819,7 @@ export class TransaccionesComponent implements OnInit {
   }
 
   alternarMsi(valor: boolean): void {
+    if (valor && this.formTipo() !== 'GASTO') return;
     this.esCompraMsi = valor;
     if (valor) {
       this.movimientoRecurrente = false;
@@ -1217,6 +1211,10 @@ export class TransaccionesComponent implements OnInit {
     }
     if (!this.formCuentaId) {
       this.modalError.set('Selecciona una cuenta');
+      return;
+    }
+    if (this.formTipo() !== 'TRANSFERENCIA' && this.formCategoriaId == null) {
+      this.modalError.set('Crea una categoría para este tipo de movimiento y selecciónala.');
       return;
     }
     if (this.formTipo() === 'TRANSFERENCIA') {

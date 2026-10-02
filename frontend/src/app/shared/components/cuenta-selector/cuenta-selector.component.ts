@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
 import { Cuenta } from '../../../core/models/finanzas.models';
 import { PrivacidadService } from '../../../core/services/privacidad.service';
-import { resumenCuentaSelector } from '../../../core/utils/cuenta-financiera';
+import { nombreCuentaVisible, resumenCuentaSelector } from '../../../core/utils/cuenta-financiera';
 
 @Component({
   selector: 'app-cuenta-selector',
@@ -15,7 +15,7 @@ template: `
          fila "De -> Para". Asi el desplegable puede ocupar las tres columnas con
          col-span-full y medir el ancho del modal en vez de una mitad, que era
          lo que partia los nombres de las cuentas. -->
-    <div [class]="compacto ? 'contents' : 'relative space-y-2'">
+    <div class="relative min-w-0" [class.space-y-2]="!compacto">
       <div class="flex min-w-0 flex-col" [class.gap-1.5]="compacto" [class.gap-2]="!compacto">
       <!-- En compacto la etiqueta si se ve (es "De" / "Para", que orienta la
            transferencia); en la variante ancha el modal la apaga por separado. -->
@@ -38,7 +38,7 @@ template: `
         [attr.aria-expanded]="opcionesAbiertas()"
         [attr.aria-controls]="opcionesId"
         (click)="alternarOpciones()"
-        (keydown.escape)="cerrarOpciones()"
+        (keydown.escape)="$event.stopPropagation(); cerrarOpciones()"
         [class]="botonClases">
 
         <div
@@ -69,8 +69,10 @@ template: `
           [id]="opcionesId"
           role="listbox"
           [attr.aria-labelledby]="labelId"
+          [class.right-0]="compacto && alinearPanelDerecha"
+          [class.left-0]="compacto && !alinearPanelDerecha"
           [class]="compacto
-            ? 'col-span-full mt-1.5 max-h-72 overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50 p-2 shadow-sm dark:border-slate-700 dark:bg-slate-900'
+            ? 'absolute top-full z-30 mt-1.5 max-h-48 w-[calc(200%_+_2.25rem)] overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50 p-2 shadow-xl dark:border-slate-700 dark:bg-slate-900'
             : 'max-h-72 overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50 p-2 shadow-sm dark:border-slate-700 dark:bg-slate-900'">
           <div class="grid grid-cols-1 gap-2">
             @for (cuenta of cuentas; track cuenta.id) {
@@ -79,7 +81,7 @@ template: `
                 role="option"
                 [attr.aria-selected]="selectedId === cuenta.id"
                 (click)="seleccionarCuenta(cuenta.id)"
-                class="group flex min-h-14 w-full cursor-pointer items-center gap-3 rounded-xl border p-3 text-left transition-all hover:bg-white dark:transition-all"
+                class="group flex min-h-14 w-full cursor-pointer items-center gap-3 rounded-xl border p-3 text-left transition-colors hover:bg-slate-100 dark:hover:bg-slate-700"
                 [class.border-emerald-500.bg-emerald-50.text-emerald-700.dark:border-emerald-500.dark:bg-emerald-900/20.dark:text-emerald-300]="selectedId === cuenta.id"
                 [class.border-slate-200.bg-white.text-slate-700.dark:border-slate-700.dark:bg-slate-800.dark:text-slate-200]="selectedId !== cuenta.id">
 
@@ -91,7 +93,7 @@ template: `
 
                 <div class="flex min-w-0 flex-1 flex-col items-start">
                   <div class="flex w-full min-w-0 items-center gap-2">
-                    <span class="min-w-0 truncate font-bold">{{ cuenta.nombre }}</span>
+                    <span class="min-w-0 truncate font-bold">{{ nombreCuentaVisible(cuenta.nombre) }}</span>
                     <span class="shrink-0 rounded-full bg-slate-200 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-600 dark:bg-slate-700 dark:text-slate-400">
                       {{ cuenta.tipo }}
                     </span>
@@ -120,6 +122,7 @@ template: `
   `
 })
 export class CuentaSelectorComponent {
+  readonly nombreCuentaVisible = nombreCuentaVisible;
   @Input({ required: true }) cuentas: Cuenta[] = [];
   @Input({ required: true }) selectedId: number | null = null;
   @Input() label: string = 'Cuenta';
@@ -134,6 +137,7 @@ export class CuentaSelectorComponent {
    * el boton, deja que el desplegable se liste a todo el ancho del modal.
    */
   @Input() compacto = false;
+  @Input() alinearPanelDerecha = false;
   /** Base de los ids. Dos instancias en la misma pantalla necesitan bases distintas. */
   @Input() idBase = 'cuentaId';
   @Output() readonly selectedIdChange = new EventEmitter<number | null>();

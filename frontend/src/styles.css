@@ -132,6 +132,30 @@
   word-break: break-word;
 }
 
+.date-picker-input {
+  color-scheme: light;
+  accent-color: rgb(5 150 105);
+}
+
+.date-picker-input::-webkit-calendar-picker-indicator {
+  width: 1.15rem;
+  height: 1.15rem;
+  margin-left: 0.25rem;
+  cursor: pointer;
+  opacity: 0.72;
+  transition: opacity 150ms ease, transform 150ms ease;
+}
+
+.date-picker-input:hover::-webkit-calendar-picker-indicator {
+  opacity: 1;
+  transform: scale(1.08);
+}
+
+html.dark .date-picker-input {
+  color-scheme: dark;
+  accent-color: rgb(52 211 153);
+}
+
 /* Mosaico de categoría: el estado activo no puede depender solo del color, por eso el
    anillo y el peso de la fuente acompañan al relleno. */
 .categoria-mosaico--activo {
@@ -361,6 +385,11 @@ html.dark .border-purple-200 {
 
 html.dark .hover\:bg-slate-50:hover,
 html.dark .hover\:bg-slate-100:hover {
+  background-color: var(--kaptal-surface-subtle);
+}
+
+html.dark .hover\:bg-white:hover,
+html.dark .group:hover .group-hover\:bg-white {
   background-color: var(--kaptal-surface-subtle);
 }
 

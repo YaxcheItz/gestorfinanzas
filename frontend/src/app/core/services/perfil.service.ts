@@ -24,6 +24,10 @@ export class PerfilService {
   readonly perfil = signal<Perfil | null>(null);
   readonly cargando = signal(false);
   readonly error = signal<string | null>(null);
+  private privacidadEscribiendo = false;
+  private privacidadPendiente = false;
+  private privacidadPersistida: boolean | null = null;
+  private privacidadVersion = 0;
 
   cargar(usuarioId: number): void {
     const temaAlmacenado = this.document.defaultView?.localStorage.getItem(`kaptal_tema_${usuarioId}`);
@@ -73,19 +77,71 @@ export class PerfilService {
    */
   alternarOcultarMontos(): void {
     const perfil = this.perfil();
+    if (!perfil) {
+      this.privacidadVersion += 1;
+      this.privacidad.alternarLocal();
+      this.privacidadPendiente = true;
+      return;
+    }
+
+    const nuevoValor = !this.privacidad.ocultarMontos();
+    this.privacidadVersion += 1;
+    this.privacidad.aplicar(perfil.id, nuevoValor);
+    this.perfil.update(actual => actual ? { ...actual, ocultarMontos: nuevoValor } : actual);
+    if (this.privacidadPersistida === null) this.privacidadPersistida = !nuevoValor;
+    this.privacidadPendiente = true;
+    this.guardarPrivacidadPendiente();
+  }
+
+  private guardarPrivacidadPendiente(): void {
+    if (this.privacidadEscribiendo || !this.privacidadPendiente) return;
+    const perfil = this.perfil();
     if (!perfil) return;
 
-    const nuevoValor = !perfil.ocultarMontos;
-    this.privacidad.aplicar(perfil.id, nuevoValor);
-    this.actualizar({
+    const valorEnviado = this.privacidad.ocultarMontos();
+    const versionEnviada = this.privacidadVersion;
+    this.privacidadPendiente = false;
+    this.privacidadEscribiendo = true;
+    this.http.put<ApiResponse<Perfil>>(this.baseUrl, {
       nombre: perfil.nombre,
       email: perfil.email,
       tema: perfil.tema,
       monedaPredeterminada: perfil.monedaPredeterminada,
       telefono: perfil.telefono ?? null,
       notificacionesWhatsapp: perfil.notificacionesWhatsapp ?? false,
-      ocultarMontos: nuevoValor
-    }).subscribe({ error: () => this.privacidad.aplicar(perfil.id, !nuevoValor) });
+      ocultarMontos: valorEnviado
+    }).subscribe({
+      next: response => {
+        this.privacidadEscribiendo = false;
+        if (!response.success || !response.data) {
+          this.revertirPrivacidadSiSigueVigente(perfil.id, valorEnviado, versionEnviada);
+          return;
+        }
+        this.privacidadPersistida = valorEnviado;
+        this.perfil.update(actual => actual
+          ? { ...response.data!, ocultarMontos: this.privacidad.ocultarMontos() }
+          : actual);
+        if (this.privacidadPendiente || this.privacidad.ocultarMontos() !== valorEnviado) {
+          this.privacidadPendiente = true;
+          this.guardarPrivacidadPendiente();
+        }
+      },
+      error: () => {
+        this.privacidadEscribiendo = false;
+        this.revertirPrivacidadSiSigueVigente(perfil.id, valorEnviado, versionEnviada);
+      }
+    });
+  }
+
+  private revertirPrivacidadSiSigueVigente(usuarioId: number, valorEnviado: boolean, version: number): void {
+    if (version === this.privacidadVersion) {
+      const valorPrevio = this.privacidadPersistida ?? !valorEnviado;
+      this.privacidad.aplicar(usuarioId, valorPrevio);
+      this.perfil.update(actual => actual ? { ...actual, ocultarMontos: valorPrevio } : actual);
+      return;
+    }
+    this.privacidadPendiente = true;
+    this.guardarPrivacidadPendiente();
   }
 
   /**
@@ -102,13 +158,20 @@ export class PerfilService {
     this.perfil.set(null);
     this.cargando.set(false);
     this.error.set(null);
+    this.privacidadEscribiendo = false;
+    this.privacidadPendiente = false;
+    this.privacidadPersistida = null;
+    this.privacidadVersion = 0;
     this.aplicarTema('CLARO');
     this.privacidad.limpiar();
     this.categoriaPreferida.limpiar();
   }
 
   private aplicarPerfil(perfil: Perfil): void {
-    this.perfil.set(perfil);
+    const conservarPreferenciaLocal = this.privacidadPendiente;
+    this.perfil.set(conservarPreferenciaLocal
+      ? { ...perfil, ocultarMontos: this.privacidad.ocultarMontos() }
+      : perfil);
     this.aplicarTema(perfil.tema);
     this.document.defaultView?.localStorage.setItem(`kaptal_tema_${perfil.id}`, perfil.tema);
 
@@ -117,8 +180,12 @@ export class PerfilService {
     // desharia el clic del usuario justo despues de aplicarlo, que es lo que
     // se veía: los montos se tapaban y un segundo después volvían a salir.
     if (perfil.ocultarMontos !== undefined) {
-      this.privacidad.aplicar(perfil.id, perfil.ocultarMontos);
+      if (!conservarPreferenciaLocal) this.privacidad.aplicar(perfil.id, perfil.ocultarMontos);
+      if (this.privacidadPersistida === null || !conservarPreferenciaLocal) {
+        this.privacidadPersistida = perfil.ocultarMontos;
+      }
     }
+    if (conservarPreferenciaLocal && !this.privacidadEscribiendo) this.guardarPrivacidadPendiente();
   }
 
   private aplicarTema(tema: Perfil['tema']): void {

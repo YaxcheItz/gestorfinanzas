@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { AsientoContable, BackfillLibroDiario, ConciliacionCuenta, Cuenta, PageResponse, TipoTransaccion } from '../../core/models/finanzas.models';
 import { FinanzasService } from '../../core/services/finanzas.service';
 import { MontoPipe } from '../../core/pipes/monto.pipe';
+import { nombreCuentaVisible } from '../../core/utils/cuenta-financiera';
 
 @Component({
   selector: 'app-libro-diario',
@@ -50,7 +51,7 @@ import { MontoPipe } from '../../core/pipes/monto.pipe';
           <label class="block text-xs font-semibold text-slate-700 dark:text-slate-200">Cuenta
             <select name="cuentaId" [ngModel]="filtroCuentaId()?.toString() ?? ''" (ngModelChange)="onCuentaFiltroChange($event)" class="mt-1 block min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-normal text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
               <option value="">Todas</option>
-              @for (cuenta of cuentas(); track cuenta.id) { <option [value]="cuenta.id">{{ cuenta.nombre }} · {{ cuenta.moneda }}</option> }
+              @for (cuenta of cuentas(); track cuenta.id) { <option [value]="cuenta.id">{{ nombreCuentaVisible(cuenta.nombre) }} · {{ cuenta.moneda }}</option> }
             </select>
           </label>
         </div>
@@ -253,6 +254,7 @@ import { MontoPipe } from '../../core/pipes/monto.pipe';
   `
 })
 export class LibroDiarioComponent implements OnInit {
+  readonly nombreCuentaVisible = nombreCuentaVisible;
   private readonly finanzasService = inject(FinanzasService);
 
   readonly pagina = signal<PageResponse<AsientoContable> | null>(null);

@@ -7,7 +7,7 @@ import { ConfirmDialogService } from '../../core/services/confirm-dialog.service
 import { FinanzasService } from '../../core/services/finanzas.service';
 import { mensajeDeError } from '../../core/utils/mensaje-error';
 import { ToastService } from '../../core/services/toast.service';
-import { creditoDisponibleCuenta, deudaActualCuenta } from '../../core/utils/cuenta-financiera';
+import { creditoDisponibleCuenta, deudaActualCuenta, nombreCuentaVisible } from '../../core/utils/cuenta-financiera';
 import { MontoPipe } from '../../core/pipes/monto.pipe';
 import { PrivacidadService } from '../../core/services/privacidad.service';
 import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive';
@@ -76,15 +76,15 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
         <section [attr.aria-label]="filtroEstado() === 'ACTIVAS' ? 'Cuentas activas' : 'Cuentas inactivas'" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-5">
           @for (cuenta of cuentasVisibles(); track cuenta.id) {
             <article class="group relative cursor-pointer rounded-2xl border border-slate-200 bg-white p-4 shadow-xs transition-colors duration-150 hover:border-emerald-300 hover:shadow-md sm:p-6" [class.opacity-75]="!cuenta.activo">
-              <a [routerLink]="['/transacciones']" [queryParams]="{ cuentaId: cuenta.id }" [attr.aria-label]="'Ver transacciones de ' + cuenta.nombre" class="absolute inset-0 z-10 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600">
-                <span class="sr-only">Ver todas las transacciones de {{ cuenta.nombre }}</span>
+              <a [routerLink]="['/transacciones']" [queryParams]="{ cuentaId: cuenta.id }" [attr.aria-label]="'Ver transacciones de ' + nombreCuentaVisible(cuenta.nombre)" class="absolute inset-0 z-10 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600">
+                <span class="sr-only">Ver todas las transacciones de {{ nombreCuentaVisible(cuenta.nombre) }}</span>
               </a>
               <div class="flex min-h-11 items-start justify-between gap-4">
                 <div class="min-w-0">
                   <span class="inline-flex px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-semibold uppercase tracking-wide">
                     {{ tipoCuentaLabel(cuenta.tipo) }}
                   </span>
-                  <h2 class="mt-3 truncate text-lg font-bold text-slate-900">{{ cuenta.nombre }}</h2>
+                  <h2 class="mt-3 truncate text-lg font-bold text-slate-900">{{ nombreCuentaVisible(cuenta.nombre) }}</h2>
                   @if (institucionDe(cuenta.institucionFinanciera); as institucion) {
                     <p class="mt-1 text-xs font-medium text-slate-500">{{ institucion.nombre }}</p>
                   }
@@ -227,7 +227,7 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
                     {{ institucionSeleccionada()?.siglas ?? (institucionFinanciera ? 'OTRA' : '-') }}
                   </span>
                   <p class="text-sm text-slate-700">
-                    {{ institucionSeleccionada()?.nombre ?? (institucionFinanciera || 'Efectivo / Otra institución') }}
+                    {{ institucionSeleccionada()?.nombre ?? (institucionFinanciera || 'Sin institución') }}
                   </p>
                 </div>
                 <p class="mt-1.5 text-xs text-slate-500">La institución no se puede cambiar después de crear la cuenta.</p>
@@ -247,7 +247,7 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
                     [(ngModel)]="institucionFinanciera"
                     (ngModelChange)="seleccionarInstitucion($event)"
                     class="min-h-11 min-w-0 flex-1 rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500">
-                    <option value="">Efectivo / Otra institución</option>
+                    <option value="">Agregar otra institución</option>
                     @for (institucion of instituciones; track institucion.id) {
                       <option [value]="institucion.id">{{ institucion.nombre }}</option>
                     }
@@ -467,6 +467,7 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
   `
 })
 export class CuentasComponent implements OnInit {
+  readonly nombreCuentaVisible = nombreCuentaVisible;
   /**
    * El texto de confirmación se arma en TypeScript, fuera de las plantillas, asi
    * que no puede pasar por el pipe y necesita el mismo trato de privacidad.

@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, HostBinding, HostListener, Input, Output, Directive } from '@angular/core';
 import { Transaccion } from '../../../core/models/finanzas.models';
 import { MontoPipe } from '../../../core/pipes/monto.pipe';
+import { nombreCuentaVisible } from '../../../core/utils/cuenta-financiera';
 
 @Directive({
   selector: '[appSwipeActions]',
@@ -152,7 +153,7 @@ export class SwipeActionsDirective {
 
             <div class="mt-3 flex items-center justify-between gap-2 border-t border-slate-100 pt-2">
               <p class="min-w-0 truncate text-xs text-slate-500">
-                {{ movimiento.cuentaNombre }}@if (movimiento.cuentaId === null) { (cuenta eliminada) }@if (movimiento.tipo === 'TRANSFERENCIA' && movimiento.cuentaDestinoNombre) { → {{ movimiento.cuentaDestinoNombre }}@if (movimiento.cuentaDestinoId === null) { (eliminada) }}
+                {{ nombreCuentaVisible(movimiento.cuentaNombre) }}@if (movimiento.cuentaId === null) { (cuenta eliminada) }@if (movimiento.tipo === 'TRANSFERENCIA' && movimiento.cuentaDestinoNombre) { → {{ nombreCuentaVisible(movimiento.cuentaDestinoNombre) }}@if (movimiento.cuentaDestinoId === null) { (eliminada) }}
               </p>
               @if (puedeAdministrarse) {
                 <button
@@ -177,6 +178,7 @@ export class SwipeActionsDirective {
   `
 })
 export class MovimientoMobileCardComponent {
+  readonly nombreCuentaVisible = nombreCuentaVisible;
   @Input({ required: true }) movimiento!: Transaccion;
   @Output() editar = new EventEmitter<Transaccion>();
   @Output() eliminar = new EventEmitter<number>();

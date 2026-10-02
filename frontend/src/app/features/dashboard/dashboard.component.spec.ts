@@ -370,8 +370,8 @@ describe('DashboardComponent movement dialog accessibility', () => {
       const monto = modal.querySelector('#monto') as HTMLInputElement;
       expect(monto.getAttribute('aria-label')).toContain('Monto a registrar');
 
-      const fecha = modal.querySelector('#fecha') as HTMLInputElement;
-      expect(fecha.getAttribute('type')).toBe('date');
+      const fecha = modal.querySelector('#fecha button') as HTMLButtonElement;
+      expect(fecha.getAttribute('aria-haspopup')).toBe('dialog');
       const labelFecha = modal.querySelector('label[for="fecha"]') as HTMLElement;
       expect(labelFecha.textContent?.trim()).toBe('Fecha del movimiento');
       expect(labelFecha.className).toContain('sr-only');
@@ -430,7 +430,7 @@ describe('DashboardComponent movement dialog accessibility', () => {
       expect(opciones.textContent).toContain('Efectivo');
     });
 
-    it('abre el desplegable de las cuentas a todo el ancho del modal', async () => {
+    it('superpone el desplegable a la fila de transferencia sin mover las cuentas', async () => {
       const { fixture } = await abrirModal('TRANSFERENCIA');
 
       (fixture.nativeElement.querySelector('#cuentaId') as HTMLElement).click();
@@ -438,8 +438,12 @@ describe('DashboardComponent movement dialog accessibility', () => {
 
       const modal = fixture.nativeElement.querySelector('[role="dialog"]') as HTMLElement;
       const panel = modal.querySelector('#cuentaId-opciones') as HTMLElement;
-      // Sin esto el panel mide media fila y los nombres largas se salen.
-      expect(panel.className).toContain('col-span-full');
+      expect(panel.className).toContain('absolute');
+      expect(panel.className).toContain('w-[calc(200%_+_2.25rem)]');
+      (modal.querySelector('#cuentaDestinoId') as HTMLElement).click();
+      fixture.detectChanges();
+      const panelDestino = modal.querySelector('#cuentaDestinoId-opciones') as HTMLElement;
+      expect(panelDestino.className).toContain('right-0');
     });
   });
 
@@ -457,6 +461,7 @@ describe('DashboardComponent movement dialog accessibility', () => {
       component.abrirModal('GASTO');
       component.formCuentaId = cuentaId;
       component.formMonto = 1200;
+      component.formCategoriaId = 1;
       return { fixture, component };
     };
 

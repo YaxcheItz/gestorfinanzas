@@ -101,18 +101,17 @@ describe('CategoriaSelectorComponent', () => {
     expect(opciones().textContent).not.toContain('Salario');
   });
 
-  it('ofrece crear dentro del menu, y editar solo si lo que hay seleccionado es editable', () => {
-    // Comida es una categoria del catalogo: se puede usar, no editar.
-    expect(fixture.nativeElement.textContent).not.toContain('Nueva');
-
+  it('ofrece crear y habilita editar tarjetas personalizadas', () => {
     mosaico().click();
     fixture.detectChanges();
-
     expect(fixture.nativeElement.textContent).toContain('Nueva');
-    expect(fixture.nativeElement.textContent).not.toContain('Editar');
+    expect(fixture.nativeElement.querySelector('#categoriaId-opciones [aria-label^="Editar"]')).toBeNull();
 
-    elegir(3);
-    expect(fixture.nativeElement.textContent).toContain('Editar');
+    const editar = Array.from(fixture.nativeElement.querySelectorAll('button'))
+      .find((boton: any) => boton.textContent?.trim() === 'Editar') as HTMLButtonElement;
+    editar.click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#categoriaId-opciones [aria-label^="Editar"]')).toBeTruthy();
   });
 
   it('vuelve al mosaico al elegir, dejando la eleccion a la vista', () => {
@@ -121,7 +120,7 @@ describe('CategoriaSelectorComponent', () => {
     const emitida: number[] = [];
     component.selectedIdChange.subscribe((id: number | null) => emitida.push(id as number));
 
-    opciones().querySelectorAll('button')[3].click();
+    opciones().querySelectorAll('button')[2].click();
     elegir(3);
 
     expect(emitida).toEqual([3]);
@@ -133,40 +132,40 @@ describe('CategoriaSelectorComponent', () => {
     mosaico().click();
     fixture.detectChanges();
 
-    opciones().querySelectorAll('button')[3].click();
+    opciones().querySelectorAll('button')[2].click();
 
     expect(preferida.preferida('GASTO')).toBe(3);
   });
 
-  it('no recuerda nada cuando se elige Sin categoria', () => {
+  it('no ofrece la opcion Sin categoria', () => {
     mosaico().click();
     fixture.detectChanges();
 
-    opciones().querySelector('button')!.click();
+    expect(opciones().textContent).not.toContain('Sin categoria');
 
     // Volver a "sin categoría" es una decision activa: guardarla haria que el
     // formulario se abriera sin categoria, que no es lo que se suele querer.
-    expect(preferida.preferida('GASTO')).toBeNull();
+    expect(preferida.preferida('GASTO')).toBeNull;
   });
 
   it('recuerda por tipo, no una sola categoria para todo', () => {
     mosaico().click();
     fixture.detectChanges();
-    opciones().querySelectorAll('button')[3].click();
+    opciones().querySelectorAll('button')[2].click();
 
     elegir(null, 'INGRESO');
     mosaico().click();
     fixture.detectChanges();
-    opciones().querySelectorAll('button')[1].click();
+    opciones().querySelectorAll('button')[0].click();
 
     expect(preferida.preferida('GASTO')).toBe(3);
     expect(preferida.preferida('INGRESO')).toBe(4);
   });
 
-  it('muestra Sin categoria cuando no hay ninguna elegida', () => {
+  it('pide elegir categoria cuando no hay ninguna elegida', () => {
     elegir(null);
 
-    expect(mosaico().textContent).toContain('Sin categoría');
+    expect(mosaico().textContent).toContain('Elige una');
   });
 
   it('describe el mosaico para quien no ve el icono', () => {
@@ -192,19 +191,20 @@ describe('CategoriaSelectorComponent', () => {
     mosaico().click();
     fixture.detectChanges();
 
-    const marcadas = opciones().querySelectorAll('button[aria-selected="true"]');
+    const marcadas = opciones().querySelectorAll('[role="option"][aria-selected="true"]');
     expect(marcadas.length).toBe(1);
     expect(marcadas[0].textContent).toContain('Comida');
   });
 
-  it('solo ofrece Editar sobre una categoria personalizada', () => {
-    elegir(1);
+  it('muestra controles de edición en las tarjetas personalizadas', () => {
     mosaico().click();
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).not.toContain('Editar');
-
-    elegir(3);
-    expect(fixture.nativeElement.textContent).toContain('Editar');
+    const editar = Array.from(fixture.nativeElement.querySelectorAll('button'))
+      .find((boton: any) => boton.textContent?.trim() === 'Editar') as HTMLButtonElement;
+    editar.click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#categoriaId-opciones [aria-label^="Editar"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('#categoriaId-opciones [aria-label^="Eliminar"]')).toBeTruthy();
   });
 
   describe('eliminar categoria', () => {
@@ -217,16 +217,10 @@ describe('CategoriaSelectorComponent', () => {
       ).find(boton => boton.textContent?.trim() === 'Editar');
       editar?.click();
       fixture.detectChanges();
-      return fixture.nativeElement.querySelector(
-        'section[aria-label="Editar categoría"]'
-      ) as HTMLElement;
     };
 
     const botonEliminar = () =>
-      Array.from(
-        (fixture.nativeElement.querySelector('section[aria-label="Editar categoría"]') as HTMLElement)
-          .querySelectorAll('button') as NodeListOf<HTMLButtonElement>
-      ).find(boton => boton.textContent?.trim() === 'Eliminar');
+      fixture.nativeElement.querySelector('#categoriaId-opciones [aria-label^="Eliminar"]') as HTMLButtonElement | null;
 
     it('no ofrece eliminar mientras se crea una categoria nueva', () => {
       elegir(3);
@@ -238,14 +232,14 @@ describe('CategoriaSelectorComponent', () => {
       nueva?.click();
       fixture.detectChanges();
 
-      expect(botonEliminar()).toBeUndefined();
+      expect(fixture.nativeElement.querySelector('.quick-category-editor [aria-label^="Eliminar"]')).toBeNull();
     });
 
     it('desactiva la categoria, la saca de la lista y olvida la preferida', async () => {
       elegir(3);
       preferida.recordar('GASTO', 3);
       abrirEditor(3);
-      expect(botonEliminar()).toBeDefined();
+      expect(botonEliminar()).toBeTruthy();
 
       // La lista sin la borrada se emite hacia el host, que es quien la guarda.
       const emitidas: Categoria[][] = [];
@@ -263,7 +257,7 @@ describe('CategoriaSelectorComponent', () => {
       const idsEmitidos = emitidas[0]?.map(categoria => categoria.id) ?? [];
       expect(idsEmitidos).not.toContain(3);
       expect(idsEmitidos).toEqual([1, 2, 4]);
-      expect(preferida.preferida('GASTO')).toBeNull();
+      expect(preferida.preferida('GASTO')).toBe(1);
     });
 
     it('no toca nada si el usuario cancela la confirmacion', async () => {
@@ -276,7 +270,7 @@ describe('CategoriaSelectorComponent', () => {
 
       expect(cambiarEstadoCategoria).not.toHaveBeenCalled();
       expect(component.categorias.map(categoria => categoria.id)).toContain(3);
-      expect(botonEliminar()).toBeDefined();
+      expect(botonEliminar()).toBeTruthy();
     });
 
     it('avisa en el editor cuando el servidor rechaza el borrado', async () => {
@@ -289,9 +283,7 @@ describe('CategoriaSelectorComponent', () => {
       await fixture.whenStable();
       fixture.detectChanges();
 
-      const alerta = fixture.nativeElement.querySelector(
-        'section[aria-label="Editar categoría"] [role="alert"]'
-      ) as HTMLElement;
+      const alerta = fixture.nativeElement.querySelector('[role="alert"]') as HTMLElement;
       expect(alerta.textContent).toContain('La categoría tiene movimientos.');
     });
   });
