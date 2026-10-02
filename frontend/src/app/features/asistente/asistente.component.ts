@@ -118,6 +118,20 @@ interface ChatEntry extends AiChatMessage {
           @if (errorChat()) {
             <p role="alert" class="mb-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2.5 text-sm text-rose-700 dark:border-rose-800 dark:bg-rose-950 dark:text-rose-200">{{ errorChat() }}</p>
           }
+          <section aria-labelledby="ai-data-sharing-title" class="mb-3 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-700 dark:bg-amber-950/50 dark:text-amber-100">
+            <h2 id="ai-data-sharing-title" class="font-semibold">Tus datos se compartirán con Google Gemini</h2>
+            <p id="ai-data-sharing-details" class="mt-1 text-xs leading-5">
+              Al enviar, Gemini recibirá los mensajes de este chat y contexto financiero para responder:
+              cuentas y saldos, movimientos recientes con descripción e importe, categorías, presupuestos,
+              recurrencias y tendencias de ingresos y gastos. «Ocultar montos» solo los oculta en pantalla.
+            </p>
+            <label class="mt-3 flex min-h-11 cursor-pointer items-start gap-2.5 font-medium">
+              <input type="checkbox" [checked]="consienteDatosFinancieros()" (change)="cambiarConsentimiento($event)"
+                     aria-describedby="ai-data-sharing-details"
+                     class="mt-0.5 h-4 w-4 shrink-0 rounded border-amber-500 text-emerald-700 focus:ring-emerald-600" />
+              <span>Entiendo y autorizo enviar estos datos a Gemini para esta conversación.</span>
+            </label>
+          </section>
           <form (ngSubmit)="enviarMensaje()" class="flex flex-col gap-2 sm:flex-row sm:items-end">
             <label for="mensaje-asistente" class="sr-only">Escribe tu mensaje para Kaptal IA</label>
             <textarea id="mensaje-asistente" rows="2" maxlength="1200"
@@ -127,7 +141,7 @@ interface ChatEntry extends AiChatMessage {
                       class="min-h-12 flex-1 resize-y rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200 disabled:bg-slate-100 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:disabled:bg-slate-800">
             </textarea>
             <button type="submit"
-                    [disabled]="enviando() || confirmandoId() !== null || !entrada().trim()"
+                    [disabled]="enviando() || confirmandoId() !== null || !entrada().trim() || !consienteDatosFinancieros()"
                     class="inline-flex min-h-12 items-center justify-center rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50">
               {{ enviando() ? 'Enviando...' : 'Enviar' }}
             </button>
@@ -146,6 +160,7 @@ export class AsistenteComponent implements OnInit {
   readonly enviando = signal(false);
   readonly mensajes = signal<ChatEntry[]>([]);
   readonly entrada = signal('');
+  readonly consienteDatosFinancieros = signal(false);
   readonly confirmandoId = signal<string | null>(null);
   readonly error = signal<string | null>(null);
   readonly errorChat = signal<string | null>(null);
@@ -191,9 +206,13 @@ export class AsistenteComponent implements OnInit {
     this.entrada.set((event.target as HTMLTextAreaElement).value);
   }
 
+  cambiarConsentimiento(event: Event): void {
+    this.consienteDatosFinancieros.set((event.target as HTMLInputElement).checked);
+  }
+
   enviarMensaje(): void {
     const content = this.entrada().trim();
-    if (!content || this.enviando() || this.confirmandoId() !== null) {
+    if (!content || this.enviando() || this.confirmandoId() !== null || !this.consienteDatosFinancieros()) {
       return;
     }
     const requestMessages: AiChatMessage[] = this.mensajes()
@@ -210,7 +229,7 @@ export class AsistenteComponent implements OnInit {
     this.entrada.set('');
     this.enviando.set(true);
     this.errorChat.set(null);
-    this.finanzasService.chatWithAi(requestMessages).subscribe({
+    this.finanzasService.chatWithAi(requestMessages, this.consienteDatosFinancieros()).subscribe({
       next: response => {
         this.enviando.set(false);
         if (!response.success || !response.data?.answer?.trim()) {

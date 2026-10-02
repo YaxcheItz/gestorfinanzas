@@ -15,6 +15,11 @@ export interface AiChatMessage {
   content: string;
 }
 
+export interface AiChatRequest {
+  messages: AiChatMessage[];
+  consentimientoDatosFinancieros: boolean;
+}
+
 export interface AiChatResponse {
   answer: string;
   action: AiActionProposal | null;

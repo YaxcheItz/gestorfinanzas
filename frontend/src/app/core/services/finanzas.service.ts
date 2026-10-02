@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { ApiResponse, RestauracionRespaldoPreview } from '../models/auth.models';
 import {
   AiChatMessage,
+  AiChatRequest,
   AiChatResponse,
   AiConnectionStatus,
   AiVerificationResult
@@ -46,8 +47,9 @@ export class FinanzasService {
     return this.http.post<ApiResponse<AiVerificationResult>>(`${this.baseUrl}/asistente/verificar`, {});
   }
 
-  chatWithAi(messages: AiChatMessage[]): Observable<ApiResponse<AiChatResponse>> {
-    return this.http.post<ApiResponse<AiChatResponse>>(`${this.baseUrl}/asistente/chat`, { messages });
+  chatWithAi(messages: AiChatMessage[], consentimientoDatosFinancieros: boolean): Observable<ApiResponse<AiChatResponse>> {
+    const request: AiChatRequest = { messages, consentimientoDatosFinancieros };
+    return this.http.post<ApiResponse<AiChatResponse>>(`${this.baseUrl}/asistente/chat`, request);
   }
 
   confirmAiAction(proposalId: string): Observable<ApiResponse<{ completed: boolean }>> {
