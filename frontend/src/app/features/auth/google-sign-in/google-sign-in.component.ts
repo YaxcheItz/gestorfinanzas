@@ -1,7 +1,7 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, inject, Input, NgZone, Output, signal, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, inject, Input, NgZone, OnDestroy, Output, signal, ViewChild } from '@angular/core';
 import { AuthService } from '../../../core/services/auth.service';
 
-type GoogleButtonText = 'signin_with' | 'signup_with';
+type GoogleButtonText = 'signin_with' | 'signup_with' | 'continue_with';
 
 interface GoogleCredentialResponse {
   credential: string;
@@ -30,6 +30,9 @@ declare global {
   }
 }
 
+let googleClientIdInicializado: string | null = null;
+let callbackGoogleActual: ((credential: string) => void) | null = null;
+
 @Component({
   selector: 'app-google-sign-in',
   standalone: true,
@@ -50,7 +53,7 @@ declare global {
     }
   `
 })
-export class GoogleSignInComponent implements AfterViewInit {
+export class GoogleSignInComponent implements AfterViewInit, OnDestroy {
   private static scriptPromise: Promise<void> | null = null;
   private readonly authService = inject(AuthService);
   private readonly zone = inject(NgZone);
@@ -62,6 +65,7 @@ export class GoogleSignInComponent implements AfterViewInit {
 
   readonly habilitado = signal(false);
   readonly errorCarga = signal<string | null>(null);
+  private callbackDeEstaInstancia: ((credential: string) => void) | null = null;
 
   ngAfterViewInit(): void {
     this.authService.googleConfig().subscribe({
@@ -75,6 +79,10 @@ export class GoogleSignInComponent implements AfterViewInit {
           .catch(() => this.errorCarga.set('No se pudo cargar el acceso de Google. Inténtalo de nuevo.'));
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    if (callbackGoogleActual === this.callbackDeEstaInstancia) callbackGoogleActual = null;
   }
 
   private async cargarScriptGoogle(): Promise<void> {
@@ -105,14 +113,23 @@ export class GoogleSignInComponent implements AfterViewInit {
     const google = window.google?.accounts?.id;
     if (!host || !google) return;
 
-    google.initialize({
-      client_id: clientId,
-      callback: response => this.zone.run(() => {
-        if (response.credential) this.credentialReceived.emit(response.credential);
-      }),
-      auto_select: false,
-      ux_mode: 'popup'
-    });
+    this.callbackDeEstaInstancia = credential => this.zone.run(() => this.credentialReceived.emit(credential));
+    callbackGoogleActual = this.callbackDeEstaInstancia;
+    if (googleClientIdInicializado === null) {
+      google.initialize({
+        client_id: clientId,
+        callback: response => {
+          if (response.credential) callbackGoogleActual?.(response.credential);
+        },
+        auto_select: false,
+        ux_mode: 'popup'
+      });
+      googleClientIdInicializado = clientId;
+    } else if (googleClientIdInicializado !== clientId) {
+      this.errorCarga.set('El cliente de Google cambió. Recarga la página para continuar.');
+      callbackGoogleActual = null;
+      return;
+    }
     google.renderButton(host, {
       theme: 'outline',
       size: 'large',

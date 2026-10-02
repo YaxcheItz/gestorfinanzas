@@ -124,7 +124,8 @@ public class SesionService {
                 .revocado(false)
                 .build());
         return new SesionEmitida(
-                AuthResponse.of(acceso, usuario.getId(), usuario.getNombre(), usuario.getEmail()),
+                AuthResponse.of(acceso, usuario.getId(), usuario.getNombre(), usuario.getEmail(),
+                        usuario.getGoogleSubject() != null),
                 refreshPlano);
     }
 

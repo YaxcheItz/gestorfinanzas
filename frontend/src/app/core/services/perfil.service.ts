@@ -182,8 +182,7 @@ export class PerfilService {
    * contraseña actual. Al terminar hay que cerrar sesión: el token sigue siendo válido
    * hasta que caduque, pero el usuario ya no existe.
    */
-  eliminarCuenta(password: string): Observable<ApiResponse<void>> {
-    const payload: EliminarCuentaPayload = { password };
+  eliminarCuenta(payload: EliminarCuentaPayload): Observable<ApiResponse<void>> {
     return this.http.delete<ApiResponse<void>>(`${getApiBaseUrl()}/usuarios/me`, { body: payload });
   }
 

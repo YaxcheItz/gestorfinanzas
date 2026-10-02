@@ -5,9 +5,10 @@ public record AuthResponse(
     String tokenType,
     Long id,
     String nombre,
-    String email
+    String email,
+    boolean googleLinked
 ) {
-    public static AuthResponse of(String token, Long id, String nombre, String email) {
-        return new AuthResponse(token, "Bearer", id, nombre, email);
+    public static AuthResponse of(String token, Long id, String nombre, String email, boolean googleLinked) {
+        return new AuthResponse(token, "Bearer", id, nombre, email, googleLinked);
     }
 }
