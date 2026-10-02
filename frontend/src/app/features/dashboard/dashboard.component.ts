@@ -30,6 +30,7 @@ import {
   Categoria,
   Cuenta,
   DashboardAnalitica,
+  DashboardComparacion,
   DashboardResumen,
   FrecuenciaRecurrencia,
   PlantillaRecurrente,
@@ -62,6 +63,54 @@ import {
           </p>
         </div>
       </div>
+
+      @if (mostrarPrimerosPasos()) {
+        <section class="order-2 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 sm:p-5" aria-labelledby="primeros-pasos-title">
+          <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-wide text-emerald-800">Empieza aquí</p>
+              <h2 id="primeros-pasos-title" class="mt-1 text-lg font-bold text-slate-900">Prepara tu espacio financiero</h2>
+              <p class="mt-1 text-sm text-slate-600">Dos pasos sencillos para que tu panel empiece a mostrar información útil.</p>
+            </div>
+            <p class="shrink-0 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-emerald-800" role="status">
+              {{ pasosInicialesCompletados() }} de 2 pasos
+            </p>
+          </div>
+          <ol class="mt-4 grid gap-2 sm:grid-cols-2">
+            <li class="flex min-w-0 items-center gap-3 rounded-xl border border-white bg-white p-3">
+              <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold"
+                [class.bg-emerald-100]="pasoCuentaCompletado()"
+                [class.text-emerald-800]="pasoCuentaCompletado()"
+                [class.bg-slate-100]="!pasoCuentaCompletado()"
+                [class.text-slate-600]="!pasoCuentaCompletado()"
+                [attr.aria-label]="pasoCuentaCompletado() ? 'Completado' : 'Pendiente'">
+                {{ pasoCuentaCompletado() ? '✓' : '1' }}
+              </span>
+              <span class="min-w-0 flex-1 text-sm font-semibold text-slate-800">Crea tu primera cuenta</span>
+              @if ((resumen()?.totalCuentas || 0) === 0) {
+                <button type="button" (click)="irACuentas()" class="min-h-10 shrink-0 rounded-lg px-3 text-sm font-semibold text-emerald-800 hover:bg-emerald-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-700">Crear cuenta</button>
+              }
+            </li>
+            <li class="flex min-w-0 items-center gap-3 rounded-xl border border-white bg-white p-3">
+              <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold"
+                [class.bg-emerald-100]="pasoMovimientoCompletado()"
+                [class.text-emerald-800]="pasoMovimientoCompletado()"
+                [class.bg-slate-100]="!pasoMovimientoCompletado()"
+                [class.text-slate-600]="!pasoMovimientoCompletado()"
+                [attr.aria-label]="pasoMovimientoCompletado() ? 'Completado' : 'Pendiente'">
+                {{ pasoMovimientoCompletado() ? '✓' : '2' }}
+              </span>
+              <span class="min-w-0 flex-1 text-sm font-semibold text-slate-800">Registra tu primer movimiento</span>
+              @if (!pasoMovimientoCompletado()) {
+                <button type="button" (click)="iniciarRegistroPrimerMovimiento()" [disabled]="(resumen()?.totalCuentas || 0) === 0" class="min-h-10 shrink-0 rounded-lg px-3 text-sm font-semibold text-emerald-800 hover:bg-emerald-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-700 disabled:cursor-not-allowed disabled:text-slate-400">Registrar</button>
+              }
+            </li>
+          </ol>
+          @if ((resumen()?.totalCuentas || 0) === 0) {
+            <p class="mt-3 text-xs text-slate-600">Primero agrega una cuenta; después podrás registrar ingresos y gastos.</p>
+          }
+        </section>
+      }
 
       <!-- Tarjeta Consolidada: Saldo + Acciones Rápidas -->
       <section class="order-2 relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7 dark:border-slate-800 dark:bg-zinc-950 bg-gradient-to-br from-emerald-50/50 to-white dark:from-emerald-900/10 dark:to-transparent" aria-label="Control Financiero">
@@ -134,6 +183,36 @@ import {
 
         </div>
       </section>
+
+      @if (comparacionMonedaSeleccionada(); as comparacion) {
+        @if (comparacion.gastosActuales > 0 || comparacion.gastosAnteriores > 0) {
+          <section class="order-2 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:flex sm:items-center sm:justify-between sm:gap-5 sm:p-5" aria-labelledby="tendencia-gastos-title" aria-live="polite">
+            <div class="min-w-0">
+              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Comparación mensual · {{ comparacion.moneda }}</p>
+              <h2 id="tendencia-gastos-title" class="mt-1 text-base font-bold text-slate-900">
+                @if (comparacion.gastosAnteriores === 0) {
+                  Este mes registraste gastos por primera vez en esta comparación.
+                } @else if (comparacion.variacionGastos > 0) {
+                  Tus gastos aumentaron frente al mes anterior.
+                } @else if (comparacion.variacionGastos < 0) {
+                  Tus gastos disminuyeron frente al mes anterior.
+                } @else {
+                  Tus gastos se mantuvieron igual que el mes anterior.
+                }
+              </h2>
+              @if (comparacion.gastosAnteriores > 0) {
+                <p class="mt-1 text-sm text-slate-600">
+                  {{ comparacion.variacionGastos | monto:comparacion.moneda:'symbol':'1.2-2' }}
+                  ({{ comparacion.variacionGastosPorcentaje | number:'1.0-1' }}%) respecto al periodo anterior.
+                </p>
+              } @else {
+                <p class="mt-1 text-sm text-slate-600">No hay un periodo anterior con gastos para calcular una variación porcentual.</p>
+              }
+            </div>
+            <button type="button" (click)="irATransacciones()" class="mt-3 min-h-11 shrink-0 rounded-xl border border-slate-200 px-4 text-sm font-semibold text-emerald-800 hover:bg-emerald-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-700 sm:mt-0">Revisar movimientos</button>
+          </section>
+        }
+      }
 
       <!-- Alertas o Mensaje de Error si la API falla -->
       @if (error()) {
@@ -735,6 +814,7 @@ export class DashboardComponent implements OnInit {
   loading = signal<boolean>(true);
   error = signal<string | null>(null);
   resumen = signal<DashboardResumen | null>(null);
+  comparacion = signal<DashboardComparacion | null>(null);
   analiticaLoading = signal<boolean>(true);
   analiticaError = signal<string | null>(null);
   analitica = signal<DashboardAnalitica | null>(null);
@@ -751,6 +831,9 @@ export class DashboardComponent implements OnInit {
   );
   readonly resumenMonedaSeleccionada = computed(() =>
     this.resumen()?.resumenPorMoneda.find(item => item.moneda === this.monedaResumen()) ?? null
+  );
+  readonly comparacionMonedaSeleccionada = computed(() =>
+    this.comparacion()?.porMoneda.find(item => item.moneda === this.monedaResumen()) ?? null
   );
   readonly plantillasPorAtender = computed(() =>
     this.plantillasRecurrentes().filter(plantilla =>
@@ -909,11 +992,38 @@ export class DashboardComponent implements OnInit {
     this.cargarCuentasYCategorias();
   }
 
+  mostrarPrimerosPasos(): boolean {
+    return this.resumen() !== null && (!this.pasoCuentaCompletado() || !this.pasoMovimientoCompletado());
+  }
+
+  pasosInicialesCompletados(): number {
+    return Number(this.pasoCuentaCompletado()) + Number(this.pasoMovimientoCompletado());
+  }
+
+  pasoCuentaCompletado(): boolean {
+    return (this.resumen()?.totalCuentas ?? 0) > 0;
+  }
+
+  pasoMovimientoCompletado(): boolean {
+    return this.resumen()?.ultimosMovimientos.some(movimiento =>
+      movimiento.tipo === 'INGRESO' || movimiento.tipo === 'GASTO'
+    ) ?? false;
+  }
+
+  iniciarRegistroPrimerMovimiento(): void {
+    if (!this.resumen()?.totalCuentas) {
+      this.irACuentas();
+      return;
+    }
+    this.abrirModal('GASTO');
+  }
+
   cargarDashboard(): void {
     this.loading.set(true);
     this.error.set(null);
     this.cargarAnalitica();
     this.cargarRecurrencias();
+    this.cargarComparacion();
 
     this.finanzasService.getDashboardResumen().subscribe({
       next: (res) => {
@@ -933,6 +1043,13 @@ export class DashboardComponent implements OnInit {
         this.error.set('No se pudo cargar el resumen financiero. Verifica que el backend esté en ejecución.');
         this.loading.set(false);
       }
+    });
+  }
+
+  cargarComparacion(): void {
+    this.finanzasService.getDashboardComparacion().subscribe({
+      next: response => this.comparacion.set(response.success ? response.data ?? null : null),
+      error: () => this.comparacion.set(null)
     });
   }
 
