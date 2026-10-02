@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { mensajeDeError } from '../../../core/utils/mensaje-error';
+import { GoogleSignInComponent } from '../google-sign-in/google-sign-in.component';
 
 @Component({
   selector: 'app-registro',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, GoogleSignInComponent],
   template: `
     <div class="flex min-h-[calc(100dvh-8rem)] items-center justify-center px-3 py-5 sm:min-h-[calc(100dvh-4rem)] sm:px-4 sm:py-6">
       <div class="w-full min-w-0 max-w-md space-y-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-xl shadow-slate-200/50 sm:p-8">
@@ -123,6 +124,8 @@ import { mensajeDeError } from '../../../core/utils/mensaje-error';
           </button>
         </form>
 
+        <app-google-sign-in text="signup_with" (credentialReceived)="registrarConGoogle($event)" [busy]="loading()" />
+
         <div class="text-center pt-2 border-t border-slate-100 text-xs text-slate-500">
           ¿Ya tienes una cuenta?
           <a routerLink="/login" class="text-emerald-600 font-semibold hover:underline ml-1">
@@ -195,6 +198,22 @@ export class RegistroComponent {
         this.errorMessage.set(
           mensajeDeError(err, 'Error al registrar la cuenta. Revisa los datos ingresados.')
         );
+      }
+    });
+  }
+
+  registrarConGoogle(credential: string): void {
+    if (this.loading()) return;
+    this.loading.set(true);
+    this.errorMessage.set(null);
+    this.authService.loginWithGoogle(credential).subscribe({
+      next: () => {
+        this.loading.set(false);
+        this.router.navigate(['/dashboard']);
+      },
+      error: error => {
+        this.loading.set(false);
+        this.errorMessage.set(mensajeDeError(error, 'No se pudo crear tu cuenta con Google.'));
       }
     });
   }

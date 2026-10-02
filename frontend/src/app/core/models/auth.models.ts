@@ -86,3 +86,8 @@ export interface RegistroPayload {
   email: string;
   password: string;
 }
+
+export interface GoogleAuthConfig {
+  enabled: boolean;
+  clientId: string | null;
+}

@@ -4,6 +4,7 @@ import { Observable, tap, catchError, throwError, finalize, shareReplay, map } f
 import {
   ApiResponse,
   AuthResponse,
+  GoogleAuthConfig,
   LoginPayload,
   RegistroPayload,
   RestablecerPasswordPayload,
@@ -72,6 +73,20 @@ export class AuthService {
         if (res.success && res.data) {
           this.guardarSesion(res.data);
         }
+      })
+    );
+  }
+
+  googleConfig(): Observable<ApiResponse<GoogleAuthConfig>> {
+    return this.http.get<ApiResponse<GoogleAuthConfig>>(`${this.apiUrl}/google/config`);
+  }
+
+  loginWithGoogle(credential: string): Observable<ApiResponse<AuthResponse>> {
+    return this.http.post<ApiResponse<AuthResponse>>(
+      `${this.apiUrl}/google`, { credential }, CON_CREDENCIALES
+    ).pipe(
+      tap(res => {
+        if (res.success && res.data) this.guardarSesion(res.data);
       })
     );
   }

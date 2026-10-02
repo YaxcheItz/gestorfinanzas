@@ -32,6 +32,7 @@ Son obligatorias. El proceso no arranca si falta alguna.
 | `SPRING_DATASOURCE_PASSWORD` | Contraseña de la base. |
 | `SPRING_JPA_PROPERTIES_HIBERNATE_DEFAULT_SCHEMA` | `finanzas`. Sin esto, las consultas fallan con `relation does not exist`. |
 | `JWT_SECRET` | Firma de los tokens de sesión. |
+| `GOOGLE_CLIENT_ID` | ID de cliente OAuth web de Google. Debe coincidir con el origen autorizado del frontend; sin este valor, el botón Google queda desactivado. |
 | `CORS_ORIGINS` | Origen del frontend, separado por comas si hay varios. |
 | `FRONTEND_URL` | URL pública del frontend. Se usa en los enlaces de correo. |
 | `GEMINI_API_KEY` | Opcional. Sin ella el asistente de IA queda deshabilitado. |
@@ -105,6 +106,23 @@ sirve el frontend y hace proxy de la API.
 El `installCommand` también vive en `vercel.json` (`cd frontend && npm ci`),
 porque Vercel busca `package.json` en la raíz del repo y aquí está en
 `frontend/`.
+
+## Inicio y registro con Google
+
+El backend recibe el ID token emitido por Google Identity Services, valida su
+firma, emisor, expiración y audiencia contra `GOOGLE_CLIENT_ID`, y después emite
+la misma sesión JWT y cookie httpOnly que el inicio de sesión normal. El ID de
+cliente es público; no agregues un secreto OAuth al frontend.
+
+En Google Cloud Console crea un OAuth Client ID de tipo **Web application** y
+agrega como orígenes autorizados `http://localhost:4200` para desarrollo y el
+origen HTTPS del frontend publicado. Configura el valor del ID en
+`GOOGLE_CLIENT_ID` del backend local y del servicio de Render. El botón aparece
+cuando el backend recibe un ID de cliente válido.
+
+El primer acceso con Google crea el usuario y sus datos iniciales. Si ya existe
+una cuenta con ese correo, el enlace automático solo se permite para Gmail o
+Google Workspace verificados; los demás casos deben entrar con su método actual.
 
 Si no se define, el frontend usa rutas relativas a `/api`, que es lo correcto
 cuando el mismo dominio sirve el frontend y hace proxy de la API.

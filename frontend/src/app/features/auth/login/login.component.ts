@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { mensajeDeError } from '../../../core/utils/mensaje-error';
+import { GoogleSignInComponent } from '../google-sign-in/google-sign-in.component';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, GoogleSignInComponent],
   template: `
     <div class="flex min-h-[calc(100dvh-8rem)] items-center justify-center px-3 py-5 sm:min-h-[calc(100dvh-4rem)] sm:px-4 sm:py-6">
     <div class="w-full min-w-0 max-w-md space-y-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-xl shadow-slate-200/50 sm:p-8">
@@ -93,6 +94,8 @@ import { mensajeDeError } from '../../../core/utils/mensaje-error';
           </button>
         </form>
 
+        <app-google-sign-in (credentialReceived)="iniciarConGoogle($event)" [busy]="loading()" />
+
         <div class="text-center -mt-2">
           <a routerLink="/recuperar-cuenta" class="rounded text-sm font-semibold text-emerald-700 hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600">
             ¿Olvidaste tu contraseña?
@@ -164,6 +167,22 @@ export class LoginComponent {
         this.errorMessage.set(
           mensajeDeError(err, 'Error de conexión con el backend o credenciales incorrectas.')
         );
+      }
+    });
+  }
+
+  iniciarConGoogle(credential: string): void {
+    if (this.loading()) return;
+    this.loading.set(true);
+    this.errorMessage.set(null);
+    this.authService.loginWithGoogle(credential).subscribe({
+      next: () => {
+        this.loading.set(false);
+        this.router.navigate(['/dashboard']);
+      },
+      error: error => {
+        this.loading.set(false);
+        this.errorMessage.set(mensajeDeError(error, 'No se pudo iniciar sesión con Google.'));
       }
     });
   }

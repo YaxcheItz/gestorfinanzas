@@ -3,6 +3,7 @@ package com.gestionfinanzas.exception;
 import com.gestionfinanzas.dto.response.ApiResponse;
 import com.gestionfinanzas.ai.AiConfigurationException;
 import com.gestionfinanzas.ai.AiProviderException;
+import com.gestionfinanzas.service.GoogleAuthUnavailableException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.OptimisticLockingFailureException;
@@ -36,6 +37,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ApiResponse<Void>> handleBadCredentials(BadCredentialsException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(GoogleAuthUnavailableException.class)
+    public ResponseEntity<ApiResponse<Void>> handleGoogleAuthUnavailable(GoogleAuthUnavailableException ex) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                 .body(ApiResponse.error(ex.getMessage()));
     }
 
