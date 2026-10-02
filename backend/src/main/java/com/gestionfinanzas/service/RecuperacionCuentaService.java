@@ -32,6 +32,7 @@ public class RecuperacionCuentaService {
     private final PasswordEncoder passwordEncoder;
     private final ApplicationEventPublisher eventPublisher;
     private final SesionService sesionService;
+    private final AuthAbuseGuard authAbuseGuard;
 
     @Value("${app.mail.enabled:false}")
     private boolean correoHabilitado;
@@ -41,8 +42,9 @@ public class RecuperacionCuentaService {
 
     @Transactional
     public boolean solicitarRecuperacion(String email) {
-        if (!correoHabilitado || servidorCorreo.isBlank()) return false;
         String normalizado = email.trim().toLowerCase();
+        authAbuseGuard.assertRecoveryAllowed(normalizado);
+        if (!correoHabilitado || servidorCorreo.isBlank()) return false;
         usuarioRepository.findByEmail(normalizado).ifPresent(usuario -> crearYEnviarToken(usuario));
         return true;
     }
