@@ -29,8 +29,11 @@ spring:
     properties:
       hibernate:
         default_schema: ${SPRING_JPA_PROPERTIES_HIBERNATE_DEFAULT_SCHEMA}
+        jdbc:
+          time_zone: America/Mexico_City
         format_sql: false
     show-sql: false
+
 
   mail:
     host: ${MAIL_HOST:}

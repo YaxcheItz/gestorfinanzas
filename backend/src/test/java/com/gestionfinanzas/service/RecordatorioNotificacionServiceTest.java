@@ -7,7 +7,6 @@ import com.gestionfinanzas.model.enums.TipoCuenta;
 import com.gestionfinanzas.repository.CuentaRepository;
 import com.gestionfinanzas.repository.PlantillaRecurrenteRepository;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -36,16 +35,11 @@ class RecordatorioNotificacionServiceTest {
     private final RecordatorioNotificacionService service =
             new RecordatorioNotificacionService(cuentaRepository, plantillaRepository, whatsAppService);
 
-    private TimeZone zonaOriginal;
-
-    @BeforeEach
-    void guardarZonaOriginal() {
-        zonaOriginal = TimeZone.getDefault();
-    }
-
     @AfterEach
-    void restaurarZonaOriginal() {
-        TimeZone.setDefault(zonaOriginal);
+    void restaurarZonaDeLaAplicacion() {
+        // No restaurar la zona de arranque de la JVM (p. ej. UTC en CI): dejaría el resto
+        // de la suite Surefire con una zona distinta a la de la aplicación.
+        BackendApplication.configurarZonaHoraria();
     }
 
     @Test

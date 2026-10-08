@@ -1,6 +1,5 @@
 package com.gestionfinanzas;
 
-import jakarta.annotation.PostConstruct;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -17,8 +16,17 @@ public class BackendApplication {
 
     public static final String ZONA_HORARIA = "America/Mexico_City";
 
-    public static void main(String[] args) {
+    /**
+     * Debe ejecutarse al cargar la clase, antes de que Spring/Hibernate/JDBC
+     * inicialicen conversiones de fechas. Un {@code @PostConstruct} es demasiado
+     * tarde: Hibernate puede haber capturado UTC y luego leer/escribir {@code LocalDate}
+     * con la zona de Mexico, desplazando el dia civil (p. ej. 2025-01-30 -> 2025-01-29).
+     */
+    static {
         configurarZonaHoraria();
+    }
+
+    public static void main(String[] args) {
         boolean entornoE2E = Boolean.parseBoolean(System.getenv("FINANZAS_E2E"));
         boolean perfilDePruebas = "test".equals(System.getenv("SPRING_PROFILES_ACTIVE"))
                 || "test".equals(System.getProperty("spring.profiles.active"))
@@ -40,20 +48,14 @@ public class BackendApplication {
     }
 
     /**
-     * La JVM arranca en UTC (Render usa UTC), pero la app opera en horario de Ciudad de Mexico.
-     * El atributo {@code zone} de {@code @Scheduled} solo define cuando se dispara la alarma, no la
-     * fecha que devuelve {@code LocalDate.now()} dentro del metodo. Sin esto, entre las 18:00 y las
-     * 24:00 en Mexico la app ya cree que es el dia siguiente y los recordatorios de fecha de corte
-     * y fecha limite de pago se evaluan con el dia equivocado.
+     * La JVM arranca en UTC (Render y GitHub Actions usan UTC), pero la app opera en horario
+     * de Ciudad de Mexico. El atributo {@code zone} de {@code @Scheduled} solo define cuando
+     * se dispara la alarma, no la fecha que devuelve {@code LocalDate.now()} dentro del metodo.
+     * Sin esto, entre las 18:00 y las 24:00 en Mexico la app ya cree que es el dia siguiente
+     * y los recordatorios de fecha de corte y fecha limite de pago se evaluan con el dia equivocado.
      */
     public static void configurarZonaHoraria() {
         TimeZone.setDefault(TimeZone.getTimeZone(ZONA_HORARIA));
-    }
-
-    /** Cubre los contextos de prueba ({@code @SpringBootTest}), que no pasan por {@link #main}. */
-    @PostConstruct
-    void aplicarZonaHorariaEnTests() {
-        configurarZonaHoraria();
     }
 
     private static void cargarVariablesEnv() {
