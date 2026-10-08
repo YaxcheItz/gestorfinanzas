@@ -25,7 +25,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     properties:
       hibernate:
         default_schema: ${SPRING_JPA_PROPERTIES_HIBERNATE_DEFAULT_SCHEMA}
@@ -33,6 +33,14 @@ spring:
           time_zone: America/Mexico_City
         format_sql: false
     show-sql: false
+
+  flyway:
+    enabled: true
+    default-schema: ${SPRING_JPA_PROPERTIES_HIBERNATE_DEFAULT_SCHEMA:finanzas}
+    schemas: ${SPRING_JPA_PROPERTIES_HIBERNATE_DEFAULT_SCHEMA:finanzas}
+    baseline-on-migrate: false
+    clean-disabled: true
+    validate-on-migrate: true
 
 
   mail:

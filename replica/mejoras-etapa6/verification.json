@@ -1,0 +1,108 @@
+{
+  "date": "2026-10-08",
+  "stage": 6,
+  "status": "ready_for_local_review_production_blocked",
+  "branch": "mejoras/etapa-6-datos-recuperacion",
+  "base": "ca594934c58c25be93fc24190b1b79ec18dff003",
+  "backendPostgreSQL": {
+    "tests": 304,
+    "suites": 44,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "version": "17.9",
+    "log": "backend-postgres.log"
+  },
+  "backendH2": {
+    "discovered": 304,
+    "passed": 301,
+    "skippedPostgresOnly": 3,
+    "log": "backend-h2.log"
+  },
+  "frontend": {
+    "tests": 229,
+    "files": 27,
+    "log": "frontend.log"
+  },
+  "e2e": {
+    "passed": 3,
+    "backend": "real",
+    "database": "PostgreSQL",
+    "browser": "Chromium",
+    "log": "e2e.log",
+    "legacySuiteExcluded": "frontend/e2e/finanzas.spec.ts"
+  },
+  "build": {
+    "exitCode": 0,
+    "initialKB": 638.64,
+    "budgetKB": 500,
+    "loginCSSExcessBytes": 1,
+    "log": "build.log"
+  },
+  "recovery": {
+    "tables": 19,
+    "match": true,
+    "data": "synthetic",
+    "evidence": "recovery.json",
+    "dumpCommitted": false
+  },
+  "rollbackApplication": {
+    "baseline": "ca59493",
+    "tests": 57,
+    "database": "PostgreSQL",
+    "ddlAuto": "validate",
+    "log": "rollback-aplicacion.log"
+  },
+  "historicalGate": {
+    "cleanExitCode": 0,
+    "incompleteExitCode": 3,
+    "productionChecked": false
+  },
+  "schemaComparison": {
+    "equalExitCode": 0,
+    "driftExitCode": 1,
+    "noAutomaticBaseline": true
+  },
+  "ci": {
+    "jobs": [
+      "backend",
+      "frontend",
+      "postgres",
+      "e2e"
+    ],
+    "yamlParsed": true,
+    "remoteExecuted": false
+  },
+  "retention": "keep_proposals_and_results_until_account_deletion",
+  "coverage": null,
+  "globalLint": false,
+  "commit": false,
+  "push": false,
+  "deployment": false,
+  "productionBlockers": [
+    "real_schema_adoption",
+    "historical_msi_evidence",
+    "historical_consent_review",
+    "provider_restore_permissions_and_RPO_RTO"
+  ],
+  "migrationFiles": {
+    "V1__base_etapas_1_3.sql": "19422f6a701a2d98d167e1910744f0dad479e708f44cb03c20d7e6fa1ba0499a",
+    "V2__chat_offline_y_cuenta_opcional.sql": "8d7ce75cbdb8a9ecd281baa5ea15cf9285005ba591f5fc75883e576ec344da87"
+  },
+  "restoredStartup": {
+    "tests": 1,
+    "passed": 1,
+    "log": "arranque-restaurado.log"
+  },
+  "cleanup": {
+    "postgresClusterStopped": true,
+    "temporaryWorktreeRemoved": true,
+    "privateDumpsPreserved": true
+  },
+  "finalReview": {
+    "filesScanned": 47,
+    "credentialPatternMatches": 0,
+    "diffCheckExitCode": 0,
+    "CRLFAllowed": true
+  }
+}

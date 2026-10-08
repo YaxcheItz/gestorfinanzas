@@ -12,10 +12,22 @@ import java.util.Map;
 @RequestMapping("/api/health")
 public class HealthController {
 
+    private final javax.sql.DataSource dataSource;
+
+    public HealthController(javax.sql.DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
+
     @GetMapping
     public ResponseEntity<Map<String, Object>> healthCheck() {
-        return ResponseEntity.ok(Map.of(
-                "status", "UP",
+        boolean disponible;
+        try (var connection = dataSource.getConnection()) {
+            disponible = connection.isValid(2);
+        } catch (java.sql.SQLException error) {
+            disponible = false;
+        }
+        return ResponseEntity.status(disponible ? 200 : 503).body(Map.of(
+                "status", disponible ? "UP" : "DOWN",
                 "service", "Gestion Finanzas API",
                 "timestamp", LocalDateTime.now()
         ));
