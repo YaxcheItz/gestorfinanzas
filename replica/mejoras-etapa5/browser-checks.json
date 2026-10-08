@@ -1,0 +1,44 @@
+{
+  "fecha": "2026-10-08T14:54:59.821Z",
+  "api": "sintética",
+  "serviceWorker": "real",
+  "indexedDB": "real",
+  "migracionV2V3": true,
+  "recargaOffline": true,
+  "propuestaSinRegistro": true,
+  "abortoTardio": true,
+  "colaAtomica": true,
+  "reintentoMismoUuid": true,
+  "movimientos": 2,
+  "actualizacionConBorrador": true,
+  "bloqueoEntrePestanas": true,
+  "conflictoBorradorSinRecarga": true,
+  "vistas": [
+    {
+      "width": 360,
+      "height": 800,
+      "dark": false,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "dark": true,
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "height": 900,
+      "dark": false,
+      "overflow": false
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "dark": false,
+      "overflow": false
+    }
+  ],
+  "errores": [],
+  "overflow": false
+}

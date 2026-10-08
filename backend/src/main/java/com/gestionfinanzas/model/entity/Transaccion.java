@@ -85,6 +85,9 @@ public class Transaccion {
     @Column(name = "client_request_id", unique = true, updatable = false)
     private UUID clientRequestId;
 
+    @Column(length=64,updatable=false)
+    private String clientRequestFingerprint;
+
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cashback_origen_id", unique = true)
     private Transaccion cashbackOrigen;

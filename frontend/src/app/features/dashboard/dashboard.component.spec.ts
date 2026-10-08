@@ -65,6 +65,22 @@ describe('DashboardComponent movement dialog accessibility', () => {
     expect(opener).toBeTruthy();
     expect(opener.textContent).toContain('Registrar un movimiento');
   });
+  it('retries an uncertain request without opening an editable replacement', () => {
+    const component=TestBed.createComponent(DashboardComponent).componentInstance;
+    const sincronizar=vi.spyOn(component,'sincronizarPendientes').mockResolvedValue(undefined);
+    const abrir=vi.spyOn(component,'abrirModal');
+    component.revisarPendiente({id:'original',usuarioId:1,payload:{tipo:'GASTO',monto:25},creadoEn:'2026-10-08'} as any);
+    expect(sincronizar).toHaveBeenCalledOnce();expect(abrir).not.toHaveBeenCalled();
+  });
+  it('uses a new UUID for a rejected correction and preserves the original', () => {
+    const component=TestBed.createComponent(DashboardComponent).componentInstance;
+    const pendiente:any={id:'propuesta:original',usuarioId:1,estado:'REVISAR',payload:{tipo:'GASTO',monto:25,cuentaId:1,fecha:'2026-10-08'},creadoEn:'2026-10-08'};
+    component.revisarPendiente(pendiente);
+    expect((component as any).formIdempotencyKey).not.toBe(pendiente.id);
+    expect((component as any).formIdempotencyKey).toMatch(/^[0-9a-f-]{36}$/);
+    expect(pendiente.id).toBe('propuesta:original');
+    expect(component.modalError()).toContain('Revisa Actividad');
+  });
 
   it('includes remaining categories in the total without mixing currencies', () => {
     const component = TestBed.createComponent(DashboardComponent).componentInstance;

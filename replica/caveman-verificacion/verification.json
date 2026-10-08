@@ -1,0 +1,10 @@
+﻿{
+    "commit":  "23beaec2e6b4f0391eea45164e05892c9d3ed730",
+    "beforeSHA256":  "34255A0215A7701EB83D508D03BC9560DC7BFFBEB95A145AD2921AD2598A03BF",
+    "afterSHA256":  "415D43518F2B1A9498C15A445D4657117B129EE5E81B19454CE348439CC6672B",
+    "officialSHA256":  "415D43518F2B1A9498C15A445D4657117B129EE5E81B19454CE348439CC6672B",
+    "matchesOfficial":  true,
+    "method":  "Archivo oficial verificado; descarga completa del instalador detenida por demora",
+    "proxyInstalled":  false,
+    "hooksInstalled":  false
+}

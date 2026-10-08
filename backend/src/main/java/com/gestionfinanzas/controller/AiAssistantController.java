@@ -17,6 +17,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -92,13 +94,32 @@ public class AiAssistantController {
     @PostMapping("/acciones/{id}/confirmar")
     public ResponseEntity<ApiResponse<AiActionConfirmation>> confirmAction(
             @PathVariable String id,
+            @RequestBody(required=false) ConfirmarPropuesta request,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         return ResponseEntity.ok(ApiResponse.ok(
-                actionService.confirm(userDetails.getId(), id),
+                actionService.confirm(userDetails.getId(), id,request==null ? 0L : request.version()==null ? 0L : request.version()),
                 new AiActionConfirmation(true)
         ));
     }
 
     public record AiActionConfirmation(boolean completed) {}
+    public record ConfirmarPropuesta(Long version) {}
+    public record EditarPropuesta(@jakarta.validation.constraints.NotNull Long version,
+            @Valid @jakarta.validation.constraints.NotNull com.gestionfinanzas.dto.request.TransaccionRequest datos) {}
+
+    @GetMapping("/acciones")
+    public ResponseEntity<ApiResponse<java.util.List<AiActionService.ActionProposal>>> pendientes(@AuthenticationPrincipal CustomUserDetails user) {
+        return ResponseEntity.ok(ApiResponse.ok("Propuestas pendientes",actionService.pendientes(user.getId())));
+    }
+    @PutMapping("/acciones/{id}")
+    public ResponseEntity<ApiResponse<AiActionService.ActionProposal>> editar(@PathVariable String id,
+            @Valid @RequestBody EditarPropuesta request,@AuthenticationPrincipal CustomUserDetails user) {
+        return ResponseEntity.ok(ApiResponse.ok("Propuesta actualizada; confirma para guardar",actionService.editar(user.getId(),id,request.version(),request.datos())));
+    }
+    @DeleteMapping("/acciones/{id}")
+    public ResponseEntity<ApiResponse<Void>> descartar(@PathVariable String id,@AuthenticationPrincipal CustomUserDetails user) {
+        actionService.descartar(user.getId(),id);
+        return ResponseEntity.ok(ApiResponse.ok("Propuesta descartada",null));
+    }
 }

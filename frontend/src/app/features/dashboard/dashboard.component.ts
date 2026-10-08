@@ -1,4 +1,4 @@
-import { TextoFinancieroPipe } from '../../core/pipes/texto-financiero.pipe';
+﻿import { TextoFinancieroPipe } from '../../core/pipes/texto-financiero.pipe';
 import { MontoPrivadoDirective } from '../../shared/directives/monto-privado.directive';
 import {
   Component,
@@ -147,7 +147,7 @@ type SpeechRecognitionWindow = Window & {
         <section class="dashboard-screen__notice dashboard-screen__notice--offline" aria-labelledby="offline-pendientes-title">
           <div><strong id="offline-pendientes-title">{{ movimientosOffline.pendientes().length }} movimientos sin sincronizar</strong><p>Guardados en este dispositivo.</p></div>
           <button type="button" (click)="sincronizarPendientes()" [disabled]="movimientosOffline.sincronizando() || !hayConexion()">{{ movimientosOffline.sincronizando() ? 'Sincronizando…' : 'Sincronizar' }}</button>
-          <details><summary>Revisar</summary><ul>@for (pendiente of movimientosOffline.pendientes(); track pendiente.id) {<li><span>{{ etiquetaTipo(pendiente.payload.tipo) }} · {{ (pendiente.payload.notas || 'Sin nota') | textoFinanciero }} · {{ pendiente.payload.fecha }} @if (pendiente.error) {<span class="dashboard-screen__error">{{ pendiente.error }}</span>}</span><span><button type="button" (click)="revisarPendiente(pendiente)">Editar</button> <button type="button" (click)="eliminarPendiente(pendiente.id)">Eliminar</button></span></li>}</ul></details>
+          <details><summary>Revisar</summary><ul>@for (pendiente of movimientosOffline.pendientes(); track pendiente.id) {<li><span>{{ etiquetaTipo(pendiente.payload.tipo) }} · {{ (pendiente.payload.notas || 'Sin nota') | textoFinanciero }} · {{ pendiente.payload.fecha }} @if (pendiente.error) {<span class="dashboard-screen__error">{{ pendiente.error }}</span>}</span><span><button type="button" (click)="revisarPendiente(pendiente)">{{ pendiente.estado === 'REVISAR' ? 'Preparar corrección' : 'Reintentar' }}</button> <button type="button" (click)="eliminarPendiente(pendiente.id)">Eliminar</button></span></li>}</ul></details>
         </section>
       }
       @if (!hayConexion() && movimientosOffline.errorAlmacenamiento()) {
@@ -1324,12 +1324,17 @@ export class DashboardComponent implements OnInit {
   }
 
   cargarCuentasYCategorias(): void {
+    const usuario = this.authService.currentUser()?.id;
+    const vigente = () => this.authService.currentUser()?.id === usuario;
+    let cuentasListas=false,categoriasListas=false;
+    const persistir=()=>{if(cuentasListas&&categoriasListas)void this.guardarCatalogoOffline();};
     this.finanzasService.getCuentas().subscribe({
       next: (res) => {
+        if (!vigente()) return;
         if (res.success && res.data) {
           this.cuentas.set(res.data);
           this.catalogoOfflineUsado.set(false);
-          void this.guardarCatalogoOffline();
+          cuentasListas=true;persistir();
           if (res.data.length > 0 && !res.data.some(cuenta => cuenta.id === this.formCuentaId)) {
             this.formCuentaId = res.data[0].id;
           }
@@ -1341,26 +1346,29 @@ export class DashboardComponent implements OnInit {
         this.cuentasCargadasParaAccionRapida = true;
         this.abrirAccionRapidaCuandoListo();
       },
-      error: () => void this.restaurarCatalogoOffline('cuentas').finally(() => {
+      error: () => { if (!vigente()) return; void this.restaurarCatalogoOffline('cuentas').finally(() => {
+        if (!vigente()) return;
         this.cuentasCargadasParaAccionRapida = true;
         this.abrirAccionRapidaCuandoListo();
-      })
+      }); }
     });
 
     this.finanzasService.getCategorias().subscribe({
       next: (res) => {
+        if (!vigente()) return;
         if (res.success && res.data) {
           this.categorias.set(res.data);
           this.catalogoOfflineUsado.set(false);
-          void this.guardarCatalogoOffline();
+          categoriasListas=true;persistir();
         }
         this.categoriasCargadasParaAccionRapida = true;
         this.abrirAccionRapidaCuandoListo();
       },
-      error: () => void this.restaurarCatalogoOffline('categorias').finally(() => {
+      error: () => { if (!vigente()) return; void this.restaurarCatalogoOffline('categorias').finally(() => {
+        if (!vigente()) return;
         this.categoriasCargadasParaAccionRapida = true;
         this.abrirAccionRapidaCuandoListo();
-      })
+      }); }
     });
   }
 
@@ -1379,7 +1387,7 @@ export class DashboardComponent implements OnInit {
     if (usuarioId == null) return;
     try {
       const catalogo = await this.movimientosOffline.leerCatalogo(usuarioId);
-      if (!catalogo) return;
+      if (!catalogo || this.authService.currentUser()?.id !== usuarioId) return;
       if (seccion === 'cuentas') this.cuentas.set(catalogo.cuentas);
       else this.categorias.set(catalogo.categorias);
       this.catalogoOfflineUsado.set(true);
@@ -1460,9 +1468,13 @@ export class DashboardComponent implements OnInit {
   }
 
   revisarPendiente(pendiente: MovimientoPendiente): void {
+    if (pendiente.estado !== 'REVISAR') {
+      void this.sincronizarPendientes();
+      return;
+    }
     const payload = pendiente.payload;
     this.abrirModal(payload.tipo);
-    this.formIdempotencyKey = pendiente.id;
+    this.formIdempotencyKey = this.crearIdempotencyKey();
     this.formMonto = payload.monto;
     this.formCuentaId = payload.cuentaId;
     this.formCuentaDestinoId = payload.cuentaDestinoId ?? null;
@@ -1475,11 +1487,18 @@ export class DashboardComponent implements OnInit {
     this.siguienteFechaRecurrencia = payload.siguienteFechaRecurrencia ?? '';
     this.formMsi = payload.msi ?? null;
     this.esCompraMsi = payload.msi != null;
-    this.modalError.set(pendiente.error ?? null);
+    this.modalError.set('Revisa Actividad antes de guardar otra solicitud. Esta corrección usará una clave nueva; el pendiente original se conserva. '+(pendiente.error ?? ''));
   }
 
   async eliminarPendiente(id: string): Promise<void> {
-    await this.movimientosOffline.descartar(id);
+    const confirmado = await this.confirmDialog.confirm({
+      title: 'Eliminar solicitud local',
+      message: 'Se elimina solo de este dispositivo. Si el servidor ya la recibió, el movimiento puede estar registrado.',
+      confirmText: 'Eliminar solicitud',
+    });
+    if (!confirmado) return;
+    try { await this.movimientosOffline.descartar(id); }
+    catch { this.toastService.info('No se pudo eliminar. Espera a que termine la sincronización.'); }
   }
 
   async activarAvisosSincronizacion(): Promise<void> {
@@ -1691,6 +1710,7 @@ export class DashboardComponent implements OnInit {
       }
       try {
         await this.movimientosOffline.guardarPendiente(usuarioId, this.formIdempotencyKey, payload);
+        if (this.authService.currentUser()?.id !== usuarioId) return;
         this.submitting.set(false);
         this.cerrarModal();
         this.toastService.info('Guardado en este dispositivo. Se sincronizará cuando vuelva la conexión.');
@@ -1701,10 +1721,17 @@ export class DashboardComponent implements OnInit {
       return;
     }
 
-    this.finanzasService.crearTransaccion(payload, this.formIdempotencyKey).subscribe({
+    const usuarioSolicitud = this.authService.currentUser()?.id;
+    const claveSolicitud = this.formIdempotencyKey;
+    this.finanzasService.crearTransaccion(payload, claveSolicitud).subscribe({
       next: (res) => {
+        if (this.authService.currentUser()?.id !== usuarioSolicitud) return;
         this.submitting.set(false);
-        void this.movimientosOffline.descartar(this.formIdempotencyKey).catch(() => undefined);
+        if (!res.success || !res.data) {
+          this.modalError.set(res.message || 'El servidor no confirmó el registro. Conserva la solicitud antes de reintentar.');
+          return;
+        }
+        void this.movimientosOffline.descartar(claveSolicitud).catch(() => undefined);
         this.formIdempotencyKey = '';
         this.payloadParaReintento = null;
         this.cerrarModal();
@@ -1713,12 +1740,13 @@ export class DashboardComponent implements OnInit {
         this.toastService.success('Movimiento registrado correctamente.');
       },
       error: (err) => {
+        if (this.authService.currentUser()?.id !== usuarioSolicitud) return;
         this.submitting.set(false);
         if (err.status === 0 || err.status >= 500) {
           this.payloadParaReintento = payload;
           this.falloDeRed.set(true);
           this.modalError.set('No hubo respuesta del servidor. Puedes revisar la conexión y reintentar; Kaptal usará la misma clave para evitar duplicarlo si el servidor ya lo recibió.');
-          void this.persistirSolicitudIncierta(payload, this.formIdempotencyKey);
+          void this.persistirSolicitudIncierta(payload, claveSolicitud, usuarioSolicitud);
           return;
         }
         const msg = err.error?.message || 'Error al guardar la transacción';
@@ -1734,6 +1762,7 @@ export class DashboardComponent implements OnInit {
     this.submitting.set(true);
     try {
       await this.movimientosOffline.guardarPendiente(usuarioId, this.formIdempotencyKey, payload);
+      if (this.authService.currentUser()?.id !== usuarioId) return;
       this.submitting.set(false);
       this.falloDeRed.set(false);
       this.payloadParaReintento = null;
@@ -1745,11 +1774,11 @@ export class DashboardComponent implements OnInit {
     }
   }
 
-  private async persistirSolicitudIncierta(payload: TransaccionPayload, id: string): Promise<void> {
-    const usuarioId = this.authService.currentUser()?.id;
+  private async persistirSolicitudIncierta(payload: TransaccionPayload, id: string, usuarioId: number | undefined): Promise<void> {
     if (usuarioId == null) return;
     try {
       await this.movimientosOffline.guardarPendiente(usuarioId, id, payload);
+      if (this.authService.currentUser()?.id !== usuarioId) return;
       this.falloDeRed.set(false);
       this.payloadParaReintento = null;
       this.cerrarModal();

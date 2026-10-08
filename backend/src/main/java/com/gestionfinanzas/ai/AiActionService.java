@@ -23,9 +23,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.text.Normalizer;
 import java.math.BigDecimal;
 import java.util.LinkedHashMap;
@@ -34,14 +32,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.StreamSupport;
 
 @Service
 @RequiredArgsConstructor
 public class AiActionService {
-    private static final long PROPOSAL_LIFETIME_SECONDS = 600;
     private static final String ACTIONS = """
             CREATE_TRANSACTION, UPDATE_TRANSACTION, DELETE_TRANSACTION,
             CREATE_ACCOUNT, UPDATE_ACCOUNT, DELETE_ACCOUNT, DEACTIVATE_ACCOUNT, REACTIVATE_ACCOUNT,
@@ -62,7 +57,8 @@ public class AiActionService {
     private final PlantillaRecurrenteService plantillaService;
     private final ObjectMapper objectMapper;
     private final Validator validator;
-    private final Map<String, PendingAction> pendingActions = new ConcurrentHashMap<>();
+    private final PropuestaChatService propuestas;
+    private final LimiteIa limiteIa=new LimiteIa(java.time.Clock.systemUTC());
 
     public AiActionResult interpret(Long userId, String conversation) {
         AiActionResult registroRapido = interpretarRegistroRapido(userId, conversation);
@@ -70,6 +66,7 @@ public class AiActionService {
             return registroRapido;
         }
 
+        limiteIa.consumir(userId);
         String context = financialContextService.buildContext(userId)
                 + "\nOpciones concretas para acciones:\n" + buildActionOptions(userId);
         String prompt = """
@@ -122,7 +119,9 @@ public class AiActionService {
             if (answer.isBlank()) {
                 throw new AiProviderException("El asistente devolvió una respuesta vacía.");
             }
-            AiReportWidget report = parseReport(result.path("report"));
+            // Validar formato, pero nunca convertir cifras del proveedor en un reporte financiero.
+            parseReport(result.path("report"));
+            AiReportWidget report = null;
 
             JsonNode actions = result.path("actions");
             if (actions.isArray() && !actions.isEmpty()) {
@@ -139,9 +138,8 @@ public class AiActionService {
                     }
                     batch.add(new PendingBatchAction(type, summary, data));
                 }
-                List<ActionProposal> proposals = batch.stream()
-                        .map(item -> crearPropuesta(userId, item.type(), item.summary(), item.data(), answer).action())
-                        .toList();
+                List<ActionProposal> proposals = propuestas.crearLote(userId,batch.stream()
+                        .map(item -> new PropuestaChatService.NuevaPropuesta(item.type(),item.summary(),item.data())).toList());
                 return new AiActionResult(answer, null, proposals, report);
             }
 
@@ -334,41 +332,72 @@ public class AiActionService {
     }
 
     private AiActionResult crearPropuesta(Long userId, String type, String summary, JsonNode data, String answer, AiReportWidget report) {
-        removeExpiredActions();
-        String id = UUID.randomUUID().toString();
         JsonNode actionData = data.deepCopy();
-        pendingActions.put(id, new PendingAction(userId, type, summary, actionData,
-                Instant.now().plusSeconds(PROPOSAL_LIFETIME_SECONDS)));
-        return new AiActionResult(answer, new ActionProposal(id, type, summary, actionData.deepCopy()), List.of(), report);
+        var propuesta=propuestas.crear(userId,type,summary,actionData);
+        return new AiActionResult(answer, propuestas.dto(propuesta), List.of(), report);
     }
 
+    @Transactional
     public void marcarCapturaPorVoz(Long userId, ActionProposal proposal) {
         if (proposal == null || !"CREATE_TRANSACTION".equals(proposal.type())) return;
-        pendingActions.computeIfPresent(proposal.id(), (id, pending) -> {
-            if (!pending.userId().equals(userId) || !(pending.data() instanceof ObjectNode data)) return pending;
-            data.put("metodoCaptura", "VOZ");
-            return pending;
-        });
+        var pendiente=propuestas.bloquear(userId,proposal.id());
+        propuestas.exigirPendiente(pendiente);
+        ObjectNode data=(ObjectNode) propuestas.datos(pendiente);
+        data.put("metodoCaptura","VOZ"); pendiente.setDatos(data.toString());
     }
 
     @Transactional
     public String confirm(Long userId, String proposalId) {
-        PendingAction pending = pendingActions.remove(proposalId);
-        if (pending == null || pending.expiresAt().isBefore(Instant.now())) {
-            throw new IllegalArgumentException("La propuesta venció o ya fue procesada. Pide una nueva propuesta.");
-        }
-        if (!pending.userId().equals(userId)) {
-            pendingActions.putIfAbsent(proposalId, pending);
-            throw new IllegalArgumentException("La propuesta no pertenece a este usuario.");
-        }
+        return confirm(userId,proposalId,null);
+    }
 
-        try {
-            execute(userId, pending.type(), pending.data());
-            return "Listo. " + pending.summary();
-        } catch (RuntimeException ex) {
-            pendingActions.putIfAbsent(proposalId, pending);
-            throw ex;
-        }
+    @Transactional
+    public String confirm(Long userId,String proposalId,Long version) {
+        var pending=propuestas.bloquear(userId,proposalId);
+        if (pending.isCompletada()) return "Listo. " + pending.getResumen();
+        propuestas.exigirPendiente(pending);
+        comprobarVersion(pending,version);
+        execute(userId,pending.getTipo(),propuestas.datos(pending));
+        pending.setCompletada(true);
+        return "Listo. " + pending.getResumen();
+    }
+
+    public List<ActionProposal> pendientes(Long userId) {
+        return propuestas.pendientes(userId).stream().map(propuestas::dto).toList();
+    }
+
+    @Transactional
+    public void descartar(Long userId,String id) {
+        var p=propuestas.bloquear(userId,id);
+        if (p.isCompletada()) throw new IllegalArgumentException("El movimiento ya está guardado; descartar no lo elimina.");
+        p.setDescartada(true);
+    }
+
+    @Transactional
+    public ActionProposal editar(Long userId,String id,Long version,TransaccionRequest request) {
+        var p=propuestas.bloquear(userId,id); propuestas.exigirPendiente(p); comprobarVersion(p,version);
+        if (!"CREATE_TRANSACTION".equals(p.getTipo())) throw new IllegalArgumentException("Solo puedes editar movimientos nuevos aquí.");
+        validarSolicitud(request);
+        var cuentas=cuentaService.listarCuentas(userId,true);
+        if (cuentas.stream().noneMatch(c -> c.id().equals(request.cuentaId()) && c.activo())
+            || (request.cuentaDestinoId()!=null && cuentas.stream().noneMatch(c -> c.id().equals(request.cuentaDestinoId()) && c.activo())))
+            throw new IllegalArgumentException("Elige una cuenta activa propia.");
+        if (request.categoriaId()!=null && categoriaService.listarCategorias(userId).stream().noneMatch(c -> c.id().equals(request.categoriaId()) && c.activo() && c.tipo().name().equals(request.tipo().name())))
+            throw new IllegalArgumentException("Elige una categoría compatible propia.");
+        ObjectNode data=objectMapper.valueToTree(request);
+        data.put("metodoCaptura",propuestas.datos(p).path("metodoCaptura").asText("TEXTO"));
+        p.setDatos(data.toString());
+        p.setResumen(request.tipo()+" de "+request.monto().toPlainString()+" · "+request.fecha()+(request.descripcion()==null ? "" : " · "+request.descripcion()));
+        return propuestas.guardar(p);
+    }
+
+    private void comprobarVersion(com.gestionfinanzas.model.entity.PropuestaChat p,Long version) {
+        if (version!=null && !version.equals(p.getVersion())) throw new IllegalArgumentException("La propuesta cambió. Recupera la versión actual antes de confirmar.");
+    }
+
+    private <T> void validarSolicitud(T request) {
+        var violations=validator.validate(request);
+        if (!violations.isEmpty()) throw new IllegalArgumentException(violations.iterator().next().getMessage());
     }
 
     private String buildActionOptions(Long userId) {
@@ -534,13 +563,9 @@ public class AiActionService {
         return value;
     }
 
-    private void removeExpiredActions() {
-        Instant now = Instant.now();
-        pendingActions.entrySet().removeIf(entry -> entry.getValue().expiresAt().isBefore(now));
+    public record ActionProposal(String id, String type, String summary, JsonNode data,Long version) {
+        public ActionProposal(String id,String type,String summary,JsonNode data) { this(id,type,summary,data,0L); }
     }
-
-    private record PendingAction(Long userId, String type, String summary, JsonNode data, Instant expiresAt) {}
-    public record ActionProposal(String id, String type, String summary, JsonNode data) {}
     private record PendingBatchAction(String type, String summary, JsonNode data) {}
 
     public record AiActionResult(String answer, ActionProposal action, List<ActionProposal> actions, AiReportWidget report, List<String> suggestions, String contexto) {

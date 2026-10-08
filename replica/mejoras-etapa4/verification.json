@@ -1,0 +1,66 @@
+{
+  "fecha": "2026-10-08T05:15:58.313085+00:00",
+  "baseline": {
+    "branch": "develop",
+    "head": "2f28f3ed105d0c496a69aae704d909962816a921",
+    "remoteHead": "2f28f3ed105d0c496a69aae704d909962816a921",
+    "initialClean": true,
+    "main": "237142dfbd94e5d11f89dde03feb0e5a4a8ee152",
+    "sameFilesMainDevelop": true,
+    "ci": [
+      {
+        "head_sha": "2f28f3ed105d0c496a69aae704d909962816a921",
+        "status": "completed",
+        "conclusion": "success",
+        "name": "CI",
+        "html_url": "https://github.com/YaxcheItz/gestorfinanzas/actions/runs/37718135828"
+      },
+      {
+        "head_sha": "2f28f3ed105d0c496a69aae704d909962816a921",
+        "status": "completed",
+        "conclusion": "success",
+        "name": "CI",
+        "html_url": "https://github.com/YaxcheItz/gestorfinanzas/actions/runs/37718119916"
+      }
+    ],
+    "backendTests": 281
+  },
+  "backend": {
+    "tests": 296,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "suites": 41
+  },
+  "frontend": {
+    "tests": 204,
+    "files": 24,
+    "failed": 0,
+    "exitCode": 0
+  },
+  "build": {
+    "exitCode": 0,
+    "initialKB": 614.29,
+    "budgetKB": 500,
+    "loginCSSExcessBytes": 1
+  },
+  "browser": {
+    "scenarios": 4,
+    "api": "synthetic",
+    "serviceWorkers": "blocked",
+    "reducedMotion": true
+  },
+  "limits": [
+    "H2; PostgreSQL no probado",
+    "IA real no llamada",
+    "Sin cobertura porcentual medida",
+    "Límites de IA por proceso, no distribuidos",
+    "Pendientes fuera de respaldo financiero",
+    "Retención de resultados por definir; se limpian al borrar cuenta",
+    "Cambios nuevos locales, sin commit/push/despliegue"
+  ],
+  "caveman": {
+    "active": true,
+    "restartRequired": false
+  }
+}

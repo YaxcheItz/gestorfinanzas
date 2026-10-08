@@ -228,7 +228,7 @@ describe('AsistenteComponent', () => {
     component.confirmarAccion(1);
     fixture.detectChanges();
 
-    expect(finanzasService.confirmAiAction).toHaveBeenCalledWith('proposal-1');
+    expect(finanzasService.confirmAiAction).toHaveBeenCalledWith('proposal-1',0);
     expect(component.mensajes()[1].confirmed).toBe(true);
     expect(component.mensajes()[1].content).toContain('El movimiento se eliminó.');
   });
