@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ApiResponse, RestauracionRespaldoPreview } from '../models/auth.models';
 import {
@@ -23,6 +23,7 @@ import {
   DashboardResumen,
   PlantillaRecurrente,
   PageResponse,
+  PinVinculacionWhatsApp,
   Presupuesto,
   PresupuestoPayload,
   PresupuestoResumen,
@@ -39,6 +40,30 @@ export class FinanzasService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = getApiBaseUrl();
 
+  getConfiguracionPush(): Observable<ApiResponse<{ configurado: boolean; clavePublica: string | null }>> {
+    return this.http.get<ApiResponse<{ configurado: boolean; clavePublica: string | null }>>(
+      `${this.baseUrl}/notificaciones/push/configuracion`
+    );
+  }
+
+  guardarSuscripcionPush(suscripcion: PushSubscriptionJSON): Observable<ApiResponse<void>> {
+    return this.http.post<ApiResponse<void>>(`${this.baseUrl}/notificaciones/push/suscripcion`, suscripcion);
+  }
+
+  eliminarSuscripcionPush(suscripcion: PushSubscriptionJSON): Observable<ApiResponse<void>> {
+    return this.http.delete<ApiResponse<void>>(`${this.baseUrl}/notificaciones/push/suscripcion`, {
+      body: suscripcion
+    });
+  }
+
+  enviarPruebaWhatsApp(): Observable<ApiResponse<string>> {
+    return this.http.post<ApiResponse<string>>(`${this.baseUrl}/notificaciones/test-mi-whatsapp`, {});
+  }
+
+  obtenerPinVinculacionWhatsApp(): Observable<ApiResponse<PinVinculacionWhatsApp>> {
+    return this.http.post<ApiResponse<PinVinculacionWhatsApp>>(`${this.baseUrl}/notificaciones/whatsapp/pin`, {});
+  }
+
   getAiConnectionStatus(): Observable<ApiResponse<AiConnectionStatus>> {
     return this.http.get<ApiResponse<AiConnectionStatus>>(`${this.baseUrl}/asistente/estado`);
   }
@@ -50,6 +75,22 @@ export class FinanzasService {
   chatWithAi(messages: AiChatMessage[], consentimientoDatosFinancieros: boolean): Observable<ApiResponse<AiChatResponse>> {
     const request: AiChatRequest = { messages, consentimientoDatosFinancieros };
     return this.http.post<ApiResponse<AiChatResponse>>(`${this.baseUrl}/asistente/chat`, request);
+  }
+
+  capturaRapidaAi(content: string, consentimientoDatosFinancieros: boolean, capturaPorVoz = false, contexto?: string | null): Observable<ApiResponse<AiChatResponse>> {
+    return this.http.post<ApiResponse<AiChatResponse>>(`${this.baseUrl}/asistente/captura-rapida`, {
+      content,
+      consentimientoDatosFinancieros,
+      capturaPorVoz,
+      contexto
+    });
+  }
+
+  transcribirAudio(audio: Blob): Observable<ApiResponse<string>> {
+    const extension = audio.type.includes('ogg') ? 'ogg' : audio.type.includes('mp4') ? 'm4a' : 'webm';
+    const form = new FormData();
+    form.append('audio', audio, `captura.${extension}`);
+    return this.http.post<ApiResponse<string>>(`${this.baseUrl}/asistente/voz/transcribir`, form);
   }
 
   confirmAiAction(proposalId: string): Observable<ApiResponse<{ completed: boolean }>> {
@@ -119,13 +160,7 @@ export class FinanzasService {
       .set('size', size.toString());
 
     if (filtros) {
-      if (filtros.id != null) params = params.set('id', filtros.id.toString());
-      if (filtros.tipo) params = params.set('tipo', filtros.tipo);
-      if (filtros.cuentaId != null) params = params.set('cuentaId', filtros.cuentaId.toString());
-      if (filtros.categoriaId != null) params = params.set('categoriaId', filtros.categoriaId.toString());
-      if (filtros.fechaInicio) params = params.set('fechaInicio', filtros.fechaInicio);
-      if (filtros.fechaFin) params = params.set('fechaFin', filtros.fechaFin);
-      if (filtros.busqueda && filtros.busqueda.trim()) params = params.set('busqueda', filtros.busqueda.trim());
+      params = this.aplicarParamsFiltroTransaccion(params, filtros);
     }
 
     return this.http.get<ApiResponse<PageResponse<Transaccion>>>(`${this.baseUrl}/transacciones`, { params });
@@ -134,13 +169,7 @@ export class FinanzasService {
   exportarTransaccionesCsv(filtros?: TransaccionFiltro): Observable<HttpResponse<Blob>> {
     let params = new HttpParams();
     if (filtros) {
-      if (filtros.id != null) params = params.set('id', filtros.id.toString());
-      if (filtros.tipo) params = params.set('tipo', filtros.tipo);
-      if (filtros.cuentaId != null) params = params.set('cuentaId', filtros.cuentaId.toString());
-      if (filtros.categoriaId != null) params = params.set('categoriaId', filtros.categoriaId.toString());
-      if (filtros.fechaInicio) params = params.set('fechaInicio', filtros.fechaInicio);
-      if (filtros.fechaFin) params = params.set('fechaFin', filtros.fechaFin);
-      if (filtros.busqueda?.trim()) params = params.set('busqueda', filtros.busqueda.trim());
+      params = this.aplicarParamsFiltroTransaccion(params, filtros);
     }
     return this.http.get(`${this.baseUrl}/transacciones/exportar`, {
       params,
@@ -149,8 +178,33 @@ export class FinanzasService {
     });
   }
 
-  crearTransaccion(payload: TransaccionPayload): Observable<ApiResponse<Transaccion>> {
-    return this.http.post<ApiResponse<Transaccion>>(`${this.baseUrl}/transacciones`, payload);
+  private aplicarParamsFiltroTransaccion(params: HttpParams, filtros: TransaccionFiltro): HttpParams {
+    if (filtros.id != null) params = params.set('id', filtros.id.toString());
+    if (filtros.tipo) params = params.set('tipo', filtros.tipo);
+    if (filtros.cuentaId != null) params = params.set('cuentaId', filtros.cuentaId.toString());
+    if (filtros.categoriaId != null) params = params.set('categoriaId', filtros.categoriaId.toString());
+    if (filtros.categoriaIds?.length) {
+      for (const id of filtros.categoriaIds) {
+        params = params.append('categoriaIds', id.toString());
+      }
+    }
+    if (filtros.fechaInicio) params = params.set('fechaInicio', filtros.fechaInicio);
+    if (filtros.fechaFin) params = params.set('fechaFin', filtros.fechaFin);
+    if (filtros.busqueda?.trim()) params = params.set('busqueda', filtros.busqueda.trim());
+    if (filtros.montoMin != null && Number.isFinite(filtros.montoMin)) {
+      params = params.set('montoMin', filtros.montoMin.toString());
+    }
+    if (filtros.montoMax != null && Number.isFinite(filtros.montoMax)) {
+      params = params.set('montoMax', filtros.montoMax.toString());
+    }
+    return params;
+  }
+
+  crearTransaccion(payload: TransaccionPayload, idempotencyKey?: string): Observable<ApiResponse<Transaccion>> {
+    const options = idempotencyKey
+      ? { headers: new HttpHeaders({ 'Idempotency-Key': idempotencyKey }) }
+      : {};
+    return this.http.post<ApiResponse<Transaccion>>(`${this.baseUrl}/transacciones`, payload, options);
   }
 
   getTransaccion(id: number): Observable<ApiResponse<Transaccion>> {
@@ -166,15 +220,20 @@ export class FinanzasService {
   }
 
   // --- Dashboard Consolidado ---
-  getDashboardResumen(mes?: number, anio?: number): Observable<ApiResponse<DashboardResumen>> {
+  getDashboardResumen(mes?: number, anio?: number, desde?: string, hasta?: string): Observable<ApiResponse<DashboardResumen>> {
     let params = new HttpParams();
     if (mes) params = params.set('mes', mes);
     if (anio) params = params.set('anio', anio);
+    if (desde && hasta) params = params.set('desde', desde).set('hasta', hasta);
     return this.http.get<ApiResponse<DashboardResumen>>(`${this.baseUrl}/dashboard/resumen`, { params });
   }
 
-  getDashboardAnalitica(): Observable<ApiResponse<DashboardAnalitica>> {
-    return this.http.get<ApiResponse<DashboardAnalitica>>(`${this.baseUrl}/dashboard/analitica`);
+  getDashboardAnalitica(mes?: number, anio?: number, desde?: string, hasta?: string): Observable<ApiResponse<DashboardAnalitica>> {
+    let params = new HttpParams();
+    if (mes) params = params.set('mes', mes);
+    if (anio) params = params.set('anio', anio);
+    if (desde && hasta) params = params.set('desde', desde).set('hasta', hasta);
+    return this.http.get<ApiResponse<DashboardAnalitica>>(`${this.baseUrl}/dashboard/analitica`, { params });
   }
 
   getDashboardComparacion(mes?: number, anio?: number): Observable<ApiResponse<DashboardComparacion>> {
