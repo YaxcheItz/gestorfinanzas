@@ -10,10 +10,10 @@ export function deudaActualCuenta(cuenta: Pick<Cuenta, 'tipo' | 'saldoActual'>):
 }
 
 export function creditoDisponibleCuenta(
-  cuenta: Pick<Cuenta, 'tipo' | 'saldoActual' | 'limiteCredito'>
+  cuenta: Pick<Cuenta, 'tipo' | 'saldoActual' | 'limiteCredito' | 'limiteRetenido'>
 ): number | null {
   if (cuenta.tipo !== 'CREDITO' || cuenta.limiteCredito == null) return null;
-  return Math.min(cuenta.limiteCredito, Math.max(0, cuenta.limiteCredito + cuenta.saldoActual));
+  return Math.min(cuenta.limiteCredito, Math.max(0, cuenta.limiteCredito + cuenta.saldoActual - (cuenta.limiteRetenido ?? 0)));
 }
 
 /**
@@ -25,6 +25,7 @@ export function creditoDisponibleCuenta(
  */
 export function resumenCuentaSelector(cuenta: Cuenta, ocultarMontos = false): string {
   if (ocultarMontos) return '•••';
+  if (cuenta.saldoLocalDesactualizado) return 'Saldo no actualizado';
 
   const formatoMoneda = new Intl.NumberFormat('es-MX', {
     style: 'currency',

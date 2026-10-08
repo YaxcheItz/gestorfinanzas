@@ -1,0 +1,49 @@
+{
+  "fecha": "2026-10-06T13:20:31.155Z",
+  "navegador": "Chromium",
+  "api": "sintética",
+  "serviceWorkers": "bloqueados",
+  "checks": [
+    {
+      "width": 360,
+      "dark": false,
+      "confirmacionAntesDeEliminar": true,
+      "cancelarNoEnvia": true,
+      "pendienteExacto": true,
+      "completadaNoReanuda": true,
+      "overflow": false,
+      "errores": []
+    },
+    {
+      "width": 390,
+      "dark": true,
+      "confirmacionAntesDeEliminar": true,
+      "cancelarNoEnvia": true,
+      "pendienteExacto": true,
+      "completadaNoReanuda": true,
+      "overflow": false,
+      "errores": []
+    },
+    {
+      "width": 1280,
+      "dark": false,
+      "confirmacionAntesDeEliminar": true,
+      "cancelarNoEnvia": true,
+      "pendienteExacto": true,
+      "completadaNoReanuda": true,
+      "overflow": false,
+      "errores": []
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "dark": false,
+      "confirmacionAntesDeEliminar": true,
+      "cancelarNoEnvia": true,
+      "pendienteExacto": true,
+      "completadaNoReanuda": true,
+      "overflow": false,
+      "errores": []
+    }
+  ]
+}

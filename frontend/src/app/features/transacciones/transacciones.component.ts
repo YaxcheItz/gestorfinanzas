@@ -1,4 +1,6 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { TextoFinancieroPipe } from '../../core/pipes/texto-financiero.pipe';
+import { MontoPrivadoDirective } from '../../shared/directives/monto-privado.directive';
+import { Component, HostListener, OnDestroy, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -47,18 +49,18 @@ interface FilaImportacionCsv {
 @Component({
   selector: 'app-transacciones',
   standalone: true,
-  imports: [CommonModule, FormsModule, CategoriaSelectorComponent, CuentaSelectorComponent, MovimientoMobileCardComponent, FocusTrapDirective, MontoPipe, FechaPickerComponent],
+  imports: [TextoFinancieroPipe, MontoPrivadoDirective, CommonModule, FormsModule, CategoriaSelectorComponent, CuentaSelectorComponent, MovimientoMobileCardComponent, FocusTrapDirective, MontoPipe, FechaPickerComponent],
   template: `
-    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-5 sm:space-y-6">
+    <div class="finance-page max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-5 sm:space-y-6">
 
       <!-- Encabezado y Acción Principal -->
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
-            Transacciones recientes
+            Movimientos
           </h1>
           <p class="text-sm text-slate-500 mt-1">
-            Consulta, filtra, exporta y administra todos tus ingresos, gastos y transferencias.
+            Tus gastos, ingresos y transferencias en un solo lugar.
           </p>
         </div>
 
@@ -83,8 +85,8 @@ interface FilaImportacionCsv {
           </button>
           <button
             type="button"
-            (click)="abrirModal('GASTO')"
-            class="inline-flex items-center justify-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-xl text-sm font-semibold shadow-md shadow-emerald-600/20 transition-all cursor-pointer">
+            (click)="abrirCapturaChat()"
+            class="order-first inline-flex min-h-11 items-center justify-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-xl text-sm font-semibold shadow-md shadow-emerald-600/20 transition-all cursor-pointer">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
@@ -125,7 +127,7 @@ interface FilaImportacionCsv {
                   <li class="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:justify-between">
                     <div class="min-w-0">
                       <p class="break-words text-sm font-semibold text-slate-800">Fila {{ fila.numero }} · {{ fila.fecha || 'Sin fecha' }} · {{ fila.tipo }} · {{ fila.monto || 'Sin monto' }} {{ fila.moneda }}</p>
-                      <p class="mt-0.5 break-words text-xs text-slate-600">{{ fila.descripcion || 'Sin descripción' }} · {{ fila.cuenta || 'Sin cuenta' }}{{ fila.categoria ? ' · ' + fila.categoria : '' }}</p>
+                      <p class="mt-0.5 break-words text-xs text-slate-600">{{ (fila.descripcion || 'Sin descripción') | textoFinanciero }} · {{ fila.cuenta || 'Sin cuenta' }}{{ fila.categoria ? ' · ' + fila.categoria : '' }}</p>
                       @if (fila.errores.length > 0) {
                         <p class="mt-1 text-xs font-medium text-rose-700">{{ fila.errores.join(' ') }}</p>
                       } @else if (fila.duplicadaEnArchivo) {
@@ -156,148 +158,144 @@ interface FilaImportacionCsv {
         </section>
       }
 
-      <!-- Barra de Filtros Avanzados -->
-      <button
-        type="button"
-        (click)="filtrosMovilAbiertos.update(abiertos => !abiertos)"
-        [attr.aria-expanded]="filtrosMovilAbiertos()"
-        aria-controls="filtros-avanzados-movimientos"
-        class="mb-3 flex min-h-11 w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-xs sm:hidden">
-        <span>{{ tieneFiltrosActivos() ? 'Filtros activos' : 'Filtros avanzados' }}</span>
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform" [class.rotate-180]="filtrosMovilAbiertos()" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
-      <div id="filtros-avanzados-movimientos"
-           [class.is-open]="filtrosMovilAbiertos()"
-           class="mobile-transaction-filters bg-white rounded-2xl border border-slate-200/80 p-3 sm:p-5 shadow-xs space-y-4">
-        
-        <!-- Fila 1: Buscador y Filtro por Tipo (Chips) -->
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          
-          <!-- Buscador de Texto -->
-          <div class="relative flex-1">
-            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-            <input
-              type="text"
-              [ngModel]="filtroBusqueda()"
-              (ngModelChange)="onBusquedaChange($event)"
-              placeholder="Buscar por categoría o notas..."
-              class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
-            />
-          </div>
-
-          <!-- Selector de Tipo por Chips -->
-          <div class="flex items-center space-x-1.5 overflow-x-auto pb-1 md:pb-0">
-            <button
-              type="button"
-              (click)="setTipoFiltro('')"
-              [class]="filtroTipo() === '' ? 'bg-slate-900 text-white shadow-2xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
-              class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap">
-              Todos
-            </button>
-            <button
-              type="button"
-              (click)="setTipoFiltro('INGRESO')"
-              [class]="filtroTipo() === 'INGRESO' ? 'bg-emerald-600 text-white shadow-2xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
-              class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap">
-              Ingresos
-            </button>
-            <button
-              type="button"
-              (click)="setTipoFiltro('GASTO')"
-              [class]="filtroTipo() === 'GASTO' ? 'bg-rose-600 text-white shadow-2xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
-              class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap">
-              Gastos
-            </button>
-            <button
-              type="button"
-              (click)="setTipoFiltro('TRANSFERENCIA')"
-              [class]="filtroTipo() === 'TRANSFERENCIA' ? 'bg-blue-600 text-white shadow-2xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
-              class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap">
-              Transferencias
-            </button>
-          </div>
-
+      <!-- Barra de búsqueda + filtros avanzados (Ledger) -->
+      <div class="ledger-toolbar">
+        <div class="ledger-search">
+          <svg xmlns="http://www.w3.org/2000/svg" class="ledger-search__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            type="search"
+            [ngModel]="filtroBusquedaInput()"
+            (ngModelChange)="onBusquedaChange($event)"
+            placeholder="Buscar (Starbucks, Gasolina…)"
+            aria-label="Buscar movimientos"
+            autocomplete="off"
+            class="ledger-search__input"
+          />
+          @if (filtroBusquedaInput()) {
+            <button type="button" class="ledger-search__clear" (click)="limpiarBusqueda()" aria-label="Limpiar búsqueda">×</button>
+          }
         </div>
-
-        <!-- Fila 2: Selectores de Cuenta, Categoría, Rango de Fechas y Botón Limpiar -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2 border-t border-slate-100">
-          
-          <!-- Filtro Cuenta -->
-          <div>
-            <app-cuenta-selector
-              [cuentas]="cuentas()"
-              [selectedId]="filtroCuentaId()"
-              label="Cuenta"
-              (selectedIdChange)="onCuentaChange($event)" />
-          </div>
-
-          <!-- Filtro Categoría -->
-          <div>
-            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Categoría</label>
-            <select
-              [ngModel]="filtroCategoriaId()"
-              (ngModelChange)="onCategoriaChange($event)"
-              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 cursor-pointer">
-              <option [ngValue]="null">Todas las categorías</option>
-              @for (cat of categorias(); track cat.id) {
-                <option [ngValue]="cat.id">{{ cat.nombre }}</option>
-              }
-            </select>
-          </div>
-
-          <!-- Fecha Desde -->
-          <div>
-            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Desde</label>
-            <input
-              type="date"
-              [ngModel]="filtroFechaInicio()"
-              (ngModelChange)="onFechaInicioChange($event)"
-              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 cursor-pointer"
-            />
-          </div>
-
-          <!-- Fecha Hasta & Limpiar -->
-          <div>
-            <div class="flex items-center justify-between mb-1">
-              <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Hasta</label>
-              @if (tieneFiltrosActivos()) {
-                <button
-                  type="button"
-                  (click)="limpiarFiltros()"
-                  class="text-[11px] font-semibold text-rose-600 hover:underline cursor-pointer">
-                  Limpiar filtros
-                </button>
-              }
-            </div>
-            <input
-              type="date"
-              [ngModel]="filtroFechaFin()"
-              (ngModelChange)="onFechaFinChange($event)"
-              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 cursor-pointer"
-            />
-          </div>
-
-        </div>
-
-        <!-- Presets Rápidos de Fecha -->
-        <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500 pt-1">
-          <span class="font-medium text-slate-400">Rango rápido:</span>
-          <button (click)="aplicarRangoRapido('ESTE_MES')" class="text-xs text-emerald-600 hover:underline font-semibold cursor-pointer">Este mes</button>
-          <span>•</span>
-          <button (click)="aplicarRangoRapido('MES_PASADO')" class="text-xs text-emerald-600 hover:underline font-semibold cursor-pointer">Mes anterior</button>
-          <span>•</span>
-          <button (click)="aplicarRangoRapido('ULTIMOS_30')" class="text-xs text-emerald-600 hover:underline font-semibold cursor-pointer">Últimos 30 días</button>
-          <span>•</span>
-          <button (click)="aplicarRangoRapido('TODO')" class="text-xs text-emerald-600 hover:underline font-semibold cursor-pointer">Todo el historial</button>
-        </div>
-
+        <button
+          type="button"
+          class="ledger-filter-btn"
+          (click)="abrirPanelFiltros()"
+          [attr.aria-expanded]="panelFiltrosAbierto()"
+          aria-controls="ledger-filter-sheet"
+          [attr.aria-label]="tieneFiltrosAvanzadosActivos() ? 'Filtros activos, abrir panel' : 'Abrir filtros avanzados'">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 4h18M6 12h12M10 20h4" />
+          </svg>
+          @if (tieneFiltrosAvanzadosActivos()) {
+            <span class="ledger-filter-btn__badge" aria-hidden="true"></span>
+          }
+        </button>
       </div>
+
+      @if (tieneFiltrosActivos()) {
+        <div class="ledger-active-filters">
+          <span>{{ etiquetaFiltrosActivos() | textoFinanciero }}</span>
+          <button type="button" (click)="limpiarFiltros()">Limpiar</button>
+        </div>
+      }
+
+      <!-- Panel inferior de filtros avanzados -->
+      @if (panelFiltrosAbierto()) {
+        <div class="ledger-filter-backdrop" (click)="cerrarPanelFiltros()" aria-hidden="true"></div>
+        <div
+          id="ledger-filter-sheet"
+          class="ledger-filter-sheet"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="ledger-filter-title"
+          appFocusTrap
+          (focusTrapEscape)="cerrarPanelFiltros()"
+          tabindex="-1"
+          (click)="$event.stopPropagation()">
+          <div class="ledger-filter-sheet__handle" aria-hidden="true"></div>
+          <header class="ledger-filter-sheet__head">
+            <h2 id="ledger-filter-title">Filtros avanzados</h2>
+            <button type="button" (click)="cerrarPanelFiltros()" aria-label="Cerrar filtros">×</button>
+          </header>
+
+          <div class="ledger-filter-sheet__body">
+            <section aria-labelledby="filtro-tipo-title">
+              <h3 id="filtro-tipo-title">Tipo</h3>
+              <div class="ledger-chip-row" role="group" aria-label="Filtrar por tipo">
+                <button type="button" class="ledger-chip" [class.is-active]="borradorTipo() === ''" (click)="borradorTipo.set('')">Todos</button>
+                <button type="button" class="ledger-chip ledger-chip--expense" [class.is-active]="borradorTipo() === 'GASTO'" (click)="borradorTipo.set('GASTO')">Solo gastos</button>
+                <button type="button" class="ledger-chip ledger-chip--income" [class.is-active]="borradorTipo() === 'INGRESO'" (click)="borradorTipo.set('INGRESO')">Solo ingresos</button>
+                <button type="button" class="ledger-chip" [class.is-active]="borradorTipo() === 'TRANSFERENCIA'" (click)="borradorTipo.set('TRANSFERENCIA')">Solo transferencias</button>
+                <button type="button" class="ledger-chip" [class.is-active]="borradorTipo() === 'SALDO_INICIAL'" (click)="borradorTipo.set('SALDO_INICIAL')">Saldos iniciales</button>
+              </div>
+            </section>
+
+            <section aria-labelledby="filtro-monto-title">
+              <h3 id="filtro-monto-title">Monto</h3>
+              <div class="ledger-amount-row">
+                <label>
+                  <span>Mín</span>
+                  <input appMontoPrivado type="number" inputmode="decimal" min="0" step="0.01" [ngModel]="borradorMontoMin()" (ngModelChange)="borradorMontoMin.set($event === '' || $event == null ? null : +$event)" placeholder="0" />
+                </label>
+                <label>
+                  <span>Máx</span>
+                  <input appMontoPrivado type="number" inputmode="decimal" min="0" step="0.01" [ngModel]="borradorMontoMax()" (ngModelChange)="borradorMontoMax.set($event === '' || $event == null ? null : +$event)" placeholder="Sin límite" />
+                </label>
+              </div>
+            </section>
+
+            <section aria-labelledby="filtro-cat-title">
+              <h3 id="filtro-cat-title">Categorías</h3>
+              <div class="ledger-category-list" role="group" aria-label="Seleccionar categorías">
+                @for (cat of categorias(); track cat.id) {
+                  <label class="ledger-category-item">
+                    <input
+                      type="checkbox"
+                      [checked]="borradorCategoriaIds().includes(cat.id)"
+                      (change)="alternarCategoriaBorrador(cat.id, $any($event.target).checked)" />
+                    <span class="ledger-category-item__swatch" [style.background]="cat.color || '#94a3b8'" aria-hidden="true"></span>
+                    <span class="ledger-category-item__name">{{ cat.nombre }}</span>
+                    <small>{{ cat.tipo === 'INGRESO' ? 'Ingreso' : 'Gasto' }}</small>
+                  </label>
+                } @empty {
+                  <p class="ledger-filter-empty">No hay categorías todavía.</p>
+                }
+              </div>
+            </section>
+
+            <section aria-labelledby="filtro-extra-title" class="ledger-filter-extra">
+              <h3 id="filtro-extra-title">Cuenta y fechas</h3>
+              <div class="ledger-extra-grid">
+                <app-cuenta-selector
+                  [cuentas]="cuentas()"
+                  [selectedId]="borradorCuentaId()"
+                  label="Cuenta"
+                  (selectedIdChange)="borradorCuentaId.set($event)" />
+                <label>
+                  <span>Desde</span>
+                  <input type="date" [ngModel]="borradorFechaInicio()" (ngModelChange)="borradorFechaInicio.set($event)" />
+                </label>
+                <label>
+                  <span>Hasta</span>
+                  <input type="date" [ngModel]="borradorFechaFin()" (ngModelChange)="borradorFechaFin.set($event)" />
+                </label>
+              </div>
+              <div class="ledger-chip-row ledger-chip-row--compact">
+                <button type="button" class="ledger-chip" (click)="aplicarRangoRapidoBorrador('ESTE_MES')">Este mes</button>
+                <button type="button" class="ledger-chip" (click)="aplicarRangoRapidoBorrador('MES_PASADO')">Mes anterior</button>
+                <button type="button" class="ledger-chip" (click)="aplicarRangoRapidoBorrador('ULTIMOS_30')">Últimos 30 días</button>
+                <button type="button" class="ledger-chip" (click)="aplicarRangoRapidoBorrador('TODO')">Todo</button>
+              </div>
+            </section>
+          </div>
+
+          <footer class="ledger-filter-sheet__foot">
+            <button type="button" class="ledger-filter-sheet__reset" (click)="resetearBorradorFiltros()">Restablecer</button>
+            <button type="button" class="ledger-filter-sheet__apply" (click)="aplicarPanelFiltros()">Aplicar filtros</button>
+          </footer>
+        </div>
+      }
 
       @if (filtroMovimientoId() !== null) {
         <div role="status" class="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900 dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-100">
@@ -401,12 +399,12 @@ interface FilaImportacionCsv {
                         }
                       </div>
                       <div class="truncate max-w-xs sm:max-w-md">
-                        <span class="block truncate text-slate-900 font-semibold">{{ m.categoriaNombre || m.descripcion }}</span>
+                        <span class="block truncate text-slate-900 font-semibold">{{ (m.categoriaNombre || m.descripcion) | textoFinanciero }}</span>
                         @if (m.cashbackAutomatico) {
                           <span class="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">Cashback automático</span>
                         }
                         @if (m.notas) {
-                          <span class="block text-xs text-slate-400 font-normal truncate">{{ m.notas }}</span>
+                          <span class="block text-xs text-slate-400 font-normal truncate">{{ (m.notas) | textoFinanciero }}</span>
                         }
                       </div>
                     </td>
@@ -435,7 +433,7 @@ interface FilaImportacionCsv {
                       }
                     </td>
                     <td class="px-4 py-4 text-center">
-                      @if (m.cuentaId !== null && (m.tipo !== 'TRANSFERENCIA' || m.cuentaDestinoId != null) && m.tipo !== 'SALDO_INICIAL' && !m.cashbackAutomatico) {
+                      @if (m.cuentaId !== null && (m.tipo !== 'TRANSFERENCIA' || m.cuentaDestinoId != null) && m.tipo !== 'SALDO_INICIAL' && !m.cashbackAutomatico && !m.compraMsiId) {
                         <button
                           type="button"
                           (click)="abrirModalEditar(m)"
@@ -447,7 +445,7 @@ interface FilaImportacionCsv {
                           </svg>
                         </button>
                       }
-                      @if (m.cuentaId !== null && (m.tipo !== 'TRANSFERENCIA' || m.cuentaDestinoId != null) && !m.cashbackAutomatico) {
+                      @if (m.cuentaId !== null && (m.tipo !== 'TRANSFERENCIA' || m.cuentaDestinoId != null) && !m.cashbackAutomatico && !m.compraMsiId) {
                         <button
                           type="button"
                           (click)="eliminarMovimiento(m.id)"
@@ -464,13 +462,14 @@ interface FilaImportacionCsv {
               </tbody>
             </table>
           </div>
-          <div class="space-y-3 p-3 sm:hidden" aria-label="Lista de movimientos">
-            <p class="px-1 text-xs text-slate-500">Desliza a la izquierda o toca ? para editar o eliminar.</p>
+          <div class="space-y-2 p-3 sm:hidden" aria-label="Lista de movimientos">
+            <p class="px-1 text-xs text-slate-500">Desliza ← eliminar · → editar · toca para ver detalle.</p>
             @for (m of pageData()!.content; track m.id) {
               <app-movimiento-mobile-card
                 [movimiento]="m"
                 (editar)="abrirModalEditar($event)"
-                (eliminar)="eliminarMovimiento($event)" />
+                (eliminar)="eliminarMovimiento($event)"
+                (detalle)="abrirDetalleMovimiento($event)" />
             }
           </div>
 
@@ -512,13 +511,13 @@ interface FilaImportacionCsv {
 
     <!-- Modal Interactivo 'Nuevo Movimiento' -->
     @if (modalAbierto()) {
-      <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-2 sm:p-4">
+      <div class="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-slate-900/60 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] backdrop-blur-xs sm:items-center sm:p-4">
         
-        <div appFocusTrap (focusTrapEscape)="cerrarModal()" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="transacciones-modal-titulo" class="flex h-[calc(100dvh-1rem)] max-h-[calc(100dvh-1rem)] min-h-0 w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl animate-in fade-in zoom-in-95 duration-150 sm:h-[min(90dvh,48rem)] sm:max-h-[min(90dvh,48rem)] sm:rounded-3xl">
+        <div appFocusTrap (focusTrapEscape)="cerrarModal()" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="transacciones-modal-titulo" class="transaction-entry-sheet flex h-[calc(100dvh_-_env(safe-area-inset-top)_-_env(safe-area-inset-bottom))] max-h-[calc(100dvh_-_env(safe-area-inset-top)_-_env(safe-area-inset-bottom))] min-h-0 w-full max-w-lg flex-col overflow-hidden rounded-t-3xl border border-slate-200 bg-white shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-200 dark:border-slate-700 dark:bg-slate-900 sm:h-[min(90dvh,48rem)] sm:max-h-[min(90dvh,48rem)] sm:rounded-3xl">
           
-          <div class="shrink-0 border-b border-slate-100 p-4 sm:p-6">
+          <div class="shrink-0 border-b border-slate-100 p-4 dark:border-slate-700 sm:p-6">
             <div class="flex items-center justify-between gap-3 pb-3 sm:pb-4">
-              <h2 id="transacciones-modal-titulo" class="text-base font-bold text-slate-900 sm:text-lg">{{ modoEdicion() ? 'Editar Movimiento' : 'Registrar Movimiento' }}</h2>
+              <h2 id="transacciones-modal-titulo" class="text-base font-bold text-slate-900 dark:text-white sm:text-lg">{{ modoEdicion() ? 'Editar movimiento' : 'Nuevo movimiento' }}</h2>
               <button 
                 type="button"
                 (click)="cerrarModal()" 
@@ -531,29 +530,29 @@ interface FilaImportacionCsv {
             </div>
 
             <!-- Tabs de Tipo -->
-            <div role="group" aria-label="Tipo de movimiento" class="grid grid-cols-3 gap-1.5 rounded-xl bg-slate-100 p-1 text-[11px] font-semibold sm:gap-2 sm:text-xs">
+            <div role="group" aria-label="Tipo de movimiento" class="grid grid-cols-3 gap-1.5 rounded-xl bg-slate-100 p-1 text-[11px] font-semibold dark:bg-slate-800 sm:gap-2 sm:text-xs">
               <button 
                 type="button"
                 (click)="cambiarTipoModal('GASTO')"
                 [attr.aria-pressed]="formTipo() === 'GASTO'"
-                [class]="formTipo() === 'GASTO' ? 'bg-white text-rose-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'"
-                class="min-h-10 cursor-pointer rounded-lg px-1 py-2 text-center transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 sm:min-h-11">
+                [class]="formTipo() === 'GASTO' ? 'bg-white text-rose-700 shadow-xs dark:bg-slate-700 dark:text-rose-300' : 'text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'"
+                class="min-h-11 cursor-pointer rounded-lg px-1 py-2 text-center transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2">
                 Gasto
               </button>
               <button 
                 type="button"
                 (click)="cambiarTipoModal('INGRESO')"
                 [attr.aria-pressed]="formTipo() === 'INGRESO'"
-                [class]="formTipo() === 'INGRESO' ? 'bg-white text-emerald-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'"
-                class="min-h-10 cursor-pointer rounded-lg px-1 py-2 text-center transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 sm:min-h-11">
+                [class]="formTipo() === 'INGRESO' ? 'bg-white text-emerald-700 shadow-xs dark:bg-slate-700 dark:text-emerald-300' : 'text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'"
+                class="min-h-11 cursor-pointer rounded-lg px-1 py-2 text-center transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2">
                 Ingreso
               </button>
               <button 
                 type="button"
                 (click)="cambiarTipoModal('TRANSFERENCIA')"
                 [attr.aria-pressed]="formTipo() === 'TRANSFERENCIA'"
-                [class]="formTipo() === 'TRANSFERENCIA' ? 'bg-white text-blue-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'"
-                class="min-h-10 cursor-pointer rounded-lg px-1 py-2 text-center transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 sm:min-h-11">
+                [class]="formTipo() === 'TRANSFERENCIA' ? 'bg-white text-blue-700 shadow-xs dark:bg-slate-700 dark:text-blue-300' : 'text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'"
+                class="min-h-11 cursor-pointer rounded-lg px-1 py-2 text-center transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2">
                 Transferencia
               </button>
             </div>
@@ -575,7 +574,7 @@ interface FilaImportacionCsv {
                 <span class="absolute left-0 text-xl font-bold text-slate-400 dark:text-slate-500">
                   {{ monedaCuenta(formCuentaId) }}
                 </span>
-                <input
+                <input appMontoPrivado
                   id="monto"
                   type="number"
                   step="0.01"
@@ -666,7 +665,7 @@ interface FilaImportacionCsv {
                 @if (monedaCuenta(formCuentaId) !== monedaCuenta(formCuentaDestinoId)) {
                   <div class="min-w-0">
                     <label for="tasaCambio" class="sr-only">Tasa de cambio</label>
-                    <input
+                    <input appMontoPrivado
                       id="tasaCambio"
                       type="number"
                       name="tasaCambio"
@@ -811,9 +810,75 @@ interface FilaImportacionCsv {
         </div>
       </div>
     }
+
+    <!-- Detalle fullscreen del movimiento -->
+    @if (detalleMovimiento(); as det) {
+      <div class="ledger-detail-backdrop" (click)="cerrarDetalleMovimiento()">
+        <div
+          class="ledger-detail-sheet"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="ledger-detail-title"
+          appFocusTrap
+          (focusTrapEscape)="cerrarDetalleMovimiento()"
+          tabindex="-1"
+          (click)="$event.stopPropagation()">
+          <header class="ledger-detail-sheet__head">
+            <button type="button" (click)="cerrarDetalleMovimiento()" aria-label="Cerrar detalle">←</button>
+            <h2 id="ledger-detail-title">Detalle</h2>
+            <span></span>
+          </header>
+
+          <div class="ledger-detail-sheet__hero" [class.is-income]="det.tipo === 'INGRESO' || det.tipo === 'SALDO_INICIAL'" [class.is-expense]="det.tipo === 'GASTO'">
+            <p class="ledger-detail-sheet__type">{{ etiquetaTipoDetalle(det.tipo) }}</p>
+            <p class="ledger-detail-sheet__amount">
+              {{ (det.tipo === 'INGRESO' || det.tipo === 'SALDO_INICIAL') ? '+' : (det.tipo === 'GASTO' ? '−' : '') }}{{ det.monto | monto:det.moneda:'symbol':'1.2-2' }}
+            </p>
+            <p class="ledger-detail-sheet__category">{{ (det.categoriaNombre || det.descripcion) | textoFinanciero }}</p>
+          </div>
+
+          <dl class="ledger-detail-sheet__meta">
+            <div>
+              <dt>Fecha y hora</dt>
+              <dd>{{ fechaHoraExacta(det) }}</dd>
+            </div>
+            <div>
+              <dt>Método de captura</dt>
+              <dd>{{ etiquetaMetodoCaptura(det) }}</dd>
+            </div>
+            <div>
+              <dt>Cuenta</dt>
+              <dd>
+                @if (det.tipo === 'TRANSFERENCIA') {
+                  {{ nombreCuentaVisible(det.cuentaNombre) }} → {{ nombreCuentaVisible(det.cuentaDestinoNombre) }}
+                } @else {
+                  {{ nombreCuentaVisible(det.cuentaNombre) }}
+                }
+              </dd>
+            </div>
+            <div>
+              <dt>Nota adicional</dt>
+              <dd>{{ (notaDetalleVisible(det) || 'Sin nota') | textoFinanciero }}</dd>
+            </div>
+          </dl>
+
+          @if (det.compraMsiId) {
+            <p class="text-sm text-slate-500">Cuota MSI registrada. Puedes pausar o cancelar las cuotas futuras desde Configuración → Recurrentes. Los pagos registrados se conservan.</p>
+          }
+          <div class="ledger-detail-sheet__actions">
+            @if (det.cuentaId !== null && (det.tipo !== 'TRANSFERENCIA' || det.cuentaDestinoId != null) && det.tipo !== 'SALDO_INICIAL' && !det.cashbackAutomatico && !det.compraMsiId) {
+              <button type="button" class="ledger-detail-sheet__edit" (click)="cerrarDetalleMovimiento(); abrirModalEditar(det)">Editar</button>
+            }
+            @if (det.cuentaId !== null && (det.tipo !== 'TRANSFERENCIA' || det.cuentaDestinoId != null) && !det.cashbackAutomatico && !det.compraMsiId) {
+              <button type="button" class="ledger-detail-sheet__delete" (click)="cerrarDetalleMovimiento(); eliminarMovimiento(det.id)">Eliminar</button>
+            }
+          </div>
+        </div>
+      </div>
+    }
   `
 })
-export class TransaccionesComponent implements OnInit {
+export class TransaccionesComponent implements OnInit, OnDestroy {
   readonly nombreCuentaVisible = nombreCuentaVisible;
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -824,13 +889,29 @@ export class TransaccionesComponent implements OnInit {
 
   // Filtros Signals
   readonly filtroTipo = signal<TipoTransaccion | ''>('');
-  readonly filtrosMovilAbiertos = signal(false);
+  readonly panelFiltrosAbierto = signal(false);
   readonly filtroCuentaId = signal<number | null>(null);
   readonly filtroCategoriaId = signal<number | null>(null);
+  readonly filtroCategoriaIds = signal<number[]>([]);
   readonly filtroFechaInicio = signal<string>('');
   readonly filtroFechaFin = signal<string>('');
   readonly filtroBusqueda = signal<string>('');
+  readonly filtroBusquedaInput = signal<string>('');
+  readonly filtroMontoMin = signal<number | null>(null);
+  readonly filtroMontoMax = signal<number | null>(null);
   readonly filtroMovimientoId = signal<number | null>(null);
+  readonly detalleMovimiento = signal<Transaccion | null>(null);
+
+  // Borrador del panel de filtros (se aplica al confirmar)
+  readonly borradorTipo = signal<TipoTransaccion | ''>('');
+  readonly borradorCuentaId = signal<number | null>(null);
+  readonly borradorCategoriaIds = signal<number[]>([]);
+  readonly borradorFechaInicio = signal<string>('');
+  readonly borradorFechaFin = signal<string>('');
+  readonly borradorMontoMin = signal<number | null>(null);
+  readonly borradorMontoMax = signal<number | null>(null);
+
+  private busquedaDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
   // Paginación y Datos Signals
   readonly paginaActual = signal<number>(0);
@@ -959,15 +1040,202 @@ export class TransaccionesComponent implements OnInit {
       this.filtroTipo() !== '' ||
       this.filtroCuentaId() !== null ||
       this.filtroCategoriaId() !== null ||
+      this.filtroCategoriaIds().length > 0 ||
       this.filtroFechaInicio() !== '' ||
       this.filtroFechaFin() !== '' ||
+      this.filtroMontoMin() !== null ||
+      this.filtroMontoMax() !== null ||
       this.filtroBusqueda().trim() !== '' ||
       this.filtroMovimientoId() !== null
     );
   });
 
+  readonly tieneFiltrosAvanzadosActivos = computed(() =>
+    this.filtroTipo() !== ''
+    || this.filtroCuentaId() !== null
+    || this.filtroCategoriaId() !== null
+    || this.filtroCategoriaIds().length > 0
+    || this.filtroFechaInicio() !== ''
+    || this.filtroFechaFin() !== ''
+    || this.filtroMontoMin() !== null
+    || this.filtroMontoMax() !== null
+  );
+
+  etiquetaFiltrosActivos(): string {
+    const etiquetas: string[] = [];
+    const tipo = this.filtroTipo();
+    if (tipo === 'GASTO') etiquetas.push('Gastos');
+    else if (tipo === 'INGRESO') etiquetas.push('Ingresos');
+    else if (tipo === 'TRANSFERENCIA') etiquetas.push('Transferencias');
+    else if (tipo === 'SALDO_INICIAL') etiquetas.push('Saldos iniciales');
+    if (this.filtroCuentaId() !== null) {
+      const cuenta = this.cuentas().find(item => item.id === this.filtroCuentaId());
+      etiquetas.push(cuenta?.nombre ?? 'Cuenta');
+    }
+    const cantidadCategorias = this.filtroCategoriaIds().length || (this.filtroCategoriaId() !== null ? 1 : 0);
+    if (cantidadCategorias) {
+      etiquetas.push(cantidadCategorias === 1 ? '1 categoría' : `${cantidadCategorias} categorías`);
+    }
+    if (this.filtroMontoMin() !== null || this.filtroMontoMax() !== null) {
+      etiquetas.push(`Monto ${this.filtroMontoMin() ?? '—'}–${this.filtroMontoMax() ?? '—'}`);
+    }
+    if (this.filtroFechaInicio() || this.filtroFechaFin()) etiquetas.push('Fechas');
+    if (this.filtroBusqueda().trim()) etiquetas.push(`“${this.filtroBusqueda().trim()}”`);
+    if (this.filtroMovimientoId() !== null) etiquetas.push(`Movimiento #${this.filtroMovimientoId()}`);
+    return etiquetas.join(' · ');
+  }
+
+  abrirPanelFiltros(): void {
+    this.borradorTipo.set(this.filtroTipo());
+    this.borradorCuentaId.set(this.filtroCuentaId());
+    const categoriasSeleccionadas = this.filtroCategoriaIds();
+    const categoriaSeleccionada = this.filtroCategoriaId();
+    this.borradorCategoriaIds.set(
+      categoriasSeleccionadas.length
+        ? [...categoriasSeleccionadas]
+        : categoriaSeleccionada === null ? [] : [categoriaSeleccionada]
+    );
+    this.borradorFechaInicio.set(this.filtroFechaInicio());
+    this.borradorFechaFin.set(this.filtroFechaFin());
+    this.borradorMontoMin.set(this.filtroMontoMin());
+    this.borradorMontoMax.set(this.filtroMontoMax());
+    this.panelFiltrosAbierto.set(true);
+  }
+
+  cerrarPanelFiltros(): void {
+    this.panelFiltrosAbierto.set(false);
+  }
+
+  resetearBorradorFiltros(): void {
+    this.borradorTipo.set('');
+    this.borradorCuentaId.set(null);
+    this.borradorCategoriaIds.set([]);
+    this.borradorFechaInicio.set('');
+    this.borradorFechaFin.set('');
+    this.borradorMontoMin.set(null);
+    this.borradorMontoMax.set(null);
+  }
+
+  alternarCategoriaBorrador(categoriaId: number, seleccionada: boolean): void {
+    const seleccion = new Set(this.borradorCategoriaIds());
+    if (seleccionada) seleccion.add(categoriaId);
+    else seleccion.delete(categoriaId);
+    this.borradorCategoriaIds.set([...seleccion].sort((a, b) => a - b));
+  }
+
+  aplicarRangoRapidoBorrador(preset: 'ESTE_MES' | 'MES_PASADO' | 'ULTIMOS_30' | 'TODO'): void {
+    const hoy = new Date();
+    if (preset === 'TODO') {
+      this.borradorFechaInicio.set('');
+      this.borradorFechaFin.set('');
+      return;
+    }
+
+    let inicio: Date;
+    let fin: Date;
+    if (preset === 'ESTE_MES') {
+      inicio = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+      fin = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
+    } else if (preset === 'MES_PASADO') {
+      inicio = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1);
+      fin = new Date(hoy.getFullYear(), hoy.getMonth(), 0);
+    } else {
+      inicio = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - 30);
+      fin = hoy;
+    }
+
+    this.borradorFechaInicio.set(this.fechaLocalIso(inicio));
+    this.borradorFechaFin.set(this.fechaLocalIso(fin));
+  }
+
+  aplicarPanelFiltros(): void {
+    const minimo = this.borradorMontoMin();
+    const maximo = this.borradorMontoMax();
+    const fechaInicio = this.borradorFechaInicio();
+    const fechaFin = this.borradorFechaFin();
+    if (
+      (minimo !== null && (!Number.isFinite(minimo) || minimo < 0))
+      || (maximo !== null && (!Number.isFinite(maximo) || maximo < 0))
+      || (minimo !== null && maximo !== null && minimo > maximo)
+    ) {
+      this.toastService.error('Revisa el rango: el monto mínimo debe ser menor o igual al máximo.');
+      return;
+    }
+    if (fechaInicio && fechaFin && fechaInicio > fechaFin) {
+      this.toastService.error('La fecha inicial debe ser anterior o igual a la fecha final.');
+      return;
+    }
+
+    this.filtroTipo.set(this.borradorTipo());
+    this.filtroCuentaId.set(this.borradorCuentaId());
+    this.filtroCategoriaId.set(null);
+    this.filtroCategoriaIds.set([...this.borradorCategoriaIds()]);
+    this.filtroFechaInicio.set(this.borradorFechaInicio());
+    this.filtroFechaFin.set(this.borradorFechaFin());
+    this.filtroMontoMin.set(minimo);
+    this.filtroMontoMax.set(maximo);
+    this.filtroMovimientoId.set(null);
+    this.paginaActual.set(0);
+    this.cerrarPanelFiltros();
+    this.cargarTransacciones();
+  }
+
+  abrirDetalleMovimiento(transaccion: Transaccion): void {
+    this.detalleMovimiento.set(transaccion);
+  }
+
+  cerrarDetalleMovimiento(): void {
+    this.detalleMovimiento.set(null);
+  }
+
+  etiquetaTipoDetalle(tipo: TipoTransaccion): string {
+    switch (tipo) {
+      case 'INGRESO': return 'Ingreso';
+      case 'GASTO': return 'Gasto';
+      case 'TRANSFERENCIA': return 'Transferencia';
+      case 'SALDO_INICIAL': return 'Saldo inicial';
+    }
+  }
+
+  fechaHoraExacta(transaccion: Transaccion): string {
+    const fecha = new Date(transaccion.fechaCreacion);
+    if (!transaccion.fechaCreacion || Number.isNaN(fecha.getTime())) {
+      const soloFecha = new Date(`${transaccion.fecha}T12:00:00`);
+      return Number.isNaN(soloFecha.getTime())
+        ? transaccion.fecha
+        : new Intl.DateTimeFormat('es-MX', { dateStyle: 'medium' }).format(soloFecha);
+    }
+    return new Intl.DateTimeFormat('es-MX', {
+      dateStyle: 'medium',
+      timeStyle: 'short'
+    }).format(fecha);
+  }
+
+  etiquetaMetodoCaptura(transaccion: Transaccion): string {
+    const metodo = MovimientoMobileCardComponent.detectarMetodoCaptura(transaccion);
+    if (metodo === 'VOZ') return 'Voz';
+    if (metodo === 'WHATSAPP') return 'WhatsApp';
+    return metodo === 'TEXTO' ? 'Texto' : 'No registrado';
+  }
+
+  notaDetalleVisible(transaccion: Transaccion): string {
+    return transaccion.notas?.trim() ?? '';
+  }
+
   ngOnInit(): void {
     this.cargarCuentasYCategorias();
+    const categoriaId = Number(this.route.snapshot.queryParamMap.get('categoriaId'));
+    if (Number.isSafeInteger(categoriaId) && categoriaId > 0) {
+      this.filtroCategoriaId.set(categoriaId);
+    }
+    const fechaInicio = this.route.snapshot.queryParamMap.get('fechaInicio');
+    const fechaFin = this.route.snapshot.queryParamMap.get('fechaFin');
+    if (fechaInicio && /^\d{4}-\d{2}-\d{2}$/.test(fechaInicio)) {
+      this.filtroFechaInicio.set(fechaInicio);
+    }
+    if (fechaFin && /^\d{4}-\d{2}-\d{2}$/.test(fechaFin)) {
+      this.filtroFechaFin.set(fechaFin);
+    }
     const cuentaId = Number(this.route.snapshot.queryParamMap.get('cuentaId'));
     if (Number.isSafeInteger(cuentaId) && cuentaId > 0) {
       this.filtroCuentaId.set(cuentaId);
@@ -992,11 +1260,25 @@ export class TransaccionesComponent implements OnInit {
     }
   }
 
+  ngOnDestroy(): void {
+    if (this.busquedaDebounceTimer) clearTimeout(this.busquedaDebounceTimer);
+  }
+
+  private fechaLocalIso(fecha: Date): string {
+    const year = fecha.getFullYear();
+    const month = String(fecha.getMonth() + 1).padStart(2, '0');
+    const day = String(fecha.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
   cargarCuentasYCategorias(): void {
     this.finanzasService.getCuentas().subscribe({
       next: (res) => {
         if (res.success && res.data) {
           this.cuentas.set(res.data.filter(c => c.activo));
+          if (this.modalAbierto() && !this.modoEdicion() && this.formCuentaId == null) {
+            this.formCuentaId = this.cuentas()[0]?.id ?? null;
+          }
         }
       }
     });
@@ -1005,6 +1287,11 @@ export class TransaccionesComponent implements OnInit {
       next: (res) => {
         if (res.success && res.data) {
           this.categorias.set(res.data);
+          if (this.modalAbierto() && !this.modoEdicion() && this.formCategoriaId == null) {
+            const preferida = this.categoriaPreferida.preferida(this.formTipo());
+            this.formCategoriaId = this.categoriasModal().find(item => item.id === preferida)?.id
+              ?? this.categoriasModal()[0]?.id ?? null;
+          }
         }
       }
     });
@@ -1021,7 +1308,10 @@ export class TransaccionesComponent implements OnInit {
       fechaInicio: this.filtroFechaInicio() || null,
       fechaFin: this.filtroFechaFin() || null,
       busqueda: this.filtroBusqueda(),
-      id: this.filtroMovimientoId()
+      id: this.filtroMovimientoId(),
+      categoriaIds: this.filtroCategoriaIds().length ? [...this.filtroCategoriaIds()] : undefined,
+      montoMin: this.filtroMontoMin(),
+      montoMax: this.filtroMontoMax()
     };
 
     this.finanzasService.getTransaccionesPaginadas(filtros, this.paginaActual(), this.tamanioPagina()).subscribe({
@@ -1039,7 +1329,21 @@ export class TransaccionesComponent implements OnInit {
   }
 
   onBusquedaChange(val: string): void {
-    this.filtroBusqueda.set(val);
+    this.filtroBusquedaInput.set(val);
+    if (this.busquedaDebounceTimer) clearTimeout(this.busquedaDebounceTimer);
+    this.busquedaDebounceTimer = setTimeout(() => {
+      this.busquedaDebounceTimer = null;
+      this.filtroBusqueda.set(val);
+      this.paginaActual.set(0);
+      this.cargarTransacciones();
+    }, 300);
+  }
+
+  limpiarBusqueda(): void {
+    if (this.busquedaDebounceTimer) clearTimeout(this.busquedaDebounceTimer);
+    this.busquedaDebounceTimer = null;
+    this.filtroBusquedaInput.set('');
+    this.filtroBusqueda.set('');
     this.paginaActual.set(0);
     this.cargarTransacciones();
   }
@@ -1101,18 +1405,25 @@ export class TransaccionesComponent implements OnInit {
   }
 
   limpiarFiltros(): void {
+    if (this.busquedaDebounceTimer) clearTimeout(this.busquedaDebounceTimer);
+    this.busquedaDebounceTimer = null;
     this.filtroTipo.set('');
     this.filtroCuentaId.set(null);
     this.filtroCategoriaId.set(null);
+    this.filtroCategoriaIds.set([]);
     this.filtroFechaInicio.set('');
     this.filtroFechaFin.set('');
+    this.filtroMontoMin.set(null);
+    this.filtroMontoMax.set(null);
+    this.filtroBusquedaInput.set('');
     this.filtroBusqueda.set('');
     this.filtroMovimientoId.set(null);
     this.paginaActual.set(0);
-    if (this.route.snapshot.queryParamMap.has('movimientoId') || this.route.snapshot.queryParamMap.has('cuentaId')) {
+    if (['movimientoId', 'cuentaId', 'categoriaId', 'fechaInicio', 'fechaFin']
+      .some(parametro => this.route.snapshot.queryParamMap.has(parametro))) {
       this.router.navigate([], {
         relativeTo: this.route,
-        queryParams: { movimientoId: null, cuentaId: null },
+        queryParams: { movimientoId: null, cuentaId: null, categoriaId: null, fechaInicio: null, fechaFin: null },
         queryParamsHandling: 'merge',
         replaceUrl: true
       });
@@ -1127,7 +1438,10 @@ export class TransaccionesComponent implements OnInit {
       categoriaId: this.filtroCategoriaId(),
       fechaInicio: this.filtroFechaInicio() || null,
       fechaFin: this.filtroFechaFin() || null,
-      busqueda: this.filtroBusqueda()
+      busqueda: this.filtroBusqueda(),
+      categoriaIds: this.filtroCategoriaIds().length ? [...this.filtroCategoriaIds()] : undefined,
+      montoMin: this.filtroMontoMin(),
+      montoMax: this.filtroMontoMax()
     };
     this.exportando.set(true);
     this.finanzasService.exportarTransaccionesCsv(filtros).subscribe({
@@ -1362,8 +1676,8 @@ export class TransaccionesComponent implements OnInit {
 
   async eliminarMovimiento(id: number): Promise<void> {
     const confirmed = await this.confirmDialogService.confirm({
-      title: 'Eliminar Movimiento',
-      message: '¿Eliminar este movimiento? Los saldos se recalcularán automáticamente.',
+      title: '\u00bfEliminar permanentemente?',
+      message: '\u00bfEliminar permanentemente? Esta acci\u00f3n no se puede deshacer. Los saldos se recalcular\u00e1n autom\u00e1ticamente.',
       type: 'danger'
     });
 
@@ -1382,6 +1696,29 @@ export class TransaccionesComponent implements OnInit {
   }
 
   // --- Modal Logic ---
+  @HostListener('window:kaptal-movimiento-guardado')
+  refrescarTrasRegistro(): void { this.cargarTransacciones(); this.cargarCuentasYCategorias(); }
+  @HostListener('window:kaptal-abrir-registro-manual', ['$event'])
+  abrirRegistroManual(event?: Event): void {
+    const borrador = (event as CustomEvent<Partial<TransaccionPayload>> | undefined)?.detail;
+    const tipo = borrador?.tipo;
+    this.abrirModal(tipo === 'INGRESO' || tipo === 'TRANSFERENCIA' ? tipo : 'GASTO');
+    if (borrador) {
+      this.formMonto = borrador.monto ?? null;
+      this.formCuentaId = borrador.cuentaId ?? this.formCuentaId;
+      this.formCuentaDestinoId = borrador.cuentaDestinoId ?? this.formCuentaDestinoId;
+      this.formCategoriaId = borrador.categoriaId ?? this.formCategoriaId;
+      this.formFecha = borrador.fecha ?? this.formFecha;
+      this.formNotas = borrador.notas ?? '';
+      this.formTasaCambio = borrador.tasaCambio ?? null;
+    }
+    requestAnimationFrame(() => document.getElementById('monto')?.focus());
+  }
+
+  abrirCapturaChat(): void {
+    window.dispatchEvent(new Event('kaptal-abrir-captura-chat'));
+  }
+
   abrirModal(tipo: TipoTransaccion): void {
     this.modoEdicion.set(false);
     this.transaccionEditando.set(null);
@@ -1393,10 +1730,11 @@ export class TransaccionesComponent implements OnInit {
     this.formMsi = null;
     this.frecuenciaRecurrencia = 'MENSUAL';
     this.siguienteFechaRecurrencia = '';
-    this.formFecha = new Date().toISOString().split('T')[0];
+    this.formFecha = this.fechaLocalIso(new Date());
     this.modalError.set(null);
 
     const lista = this.cuentas();
+    this.formCuentaId = null;
     this.formTasaCambio = null;
     this.formCuentaDestinoId = null;
     if (lista.length > 0) {
@@ -1485,7 +1823,10 @@ export class TransaccionesComponent implements OnInit {
     } else if (this.frecuenciaRecurrencia === 'QUINCENAL') {
       fecha.setDate(fecha.getDate() + 14);
     } else if (this.frecuenciaRecurrencia === 'ANUAL') {
+      fecha.setDate(1);
       fecha.setFullYear(fecha.getFullYear() + 1);
+      const ultimoDia = new Date(fecha.getFullYear(), mes, 0).getDate();
+      fecha.setDate(Math.min(dia, ultimoDia));
     } else {
       const ultimoDiaMes = new Date(anio, mes, 0).getDate();
       fecha.setDate(1);

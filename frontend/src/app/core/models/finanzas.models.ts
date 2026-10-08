@@ -18,6 +18,7 @@ export interface Cuenta {
   cashbackPorcentaje?: number | null;
   cashbackLimiteMensual?: number | null;
   limiteCredito?: number | null;
+  limiteRetenido?: number | null;
   diaCorte?: number | null;
   diaPago?: number | null;
   saldoActual: number;
@@ -25,6 +26,7 @@ export interface Cuenta {
   descripcion?: string;
   activo: boolean;
   fechaCreacion: string;
+  saldoLocalDesactualizado?: boolean;
 }
 
 export interface CuentaPayload {
@@ -58,6 +60,12 @@ export interface CategoriaPayload {
   color?: string;
 }
 
+export interface PinVinculacionWhatsApp {
+  pin: string;
+  vigenciaSegundos: number;
+  numeroBot: string;
+}
+
 export interface Transaccion {
   id: number;
   cuentaId: number | null;
@@ -78,6 +86,8 @@ export interface Transaccion {
   descripcion: string;
   notas?: string | null;
   cashbackAutomatico?: boolean;
+  compraMsiId?: string | null;
+  metodoCaptura?: 'TEXTO' | 'VOZ' | 'WHATSAPP' | null;
   fechaCreacion: string;
 }
 
@@ -178,6 +188,11 @@ export interface PlantillaRecurrente {
   frecuencia: FrecuenciaRecurrencia;
   siguienteFecha: string;
   activa: boolean;
+  cuotasTotales?: number | null;
+  cuotasPagadas?: number | null;
+  fechaAncla?: string | null;
+  montoPendiente?: number | null;
+  compraMsiId?: string | null;
 }
 
 export interface DashboardResumen {
@@ -294,9 +309,12 @@ export interface TransaccionFiltro {
   tipo?: TipoTransaccion | '';
   cuentaId?: number | null;
   categoriaId?: number | null;
+  categoriaIds?: number[];
   fechaInicio?: string | null;
   fechaFin?: string | null;
   busqueda?: string;
+  montoMin?: number | null;
+  montoMax?: number | null;
 }
 
 export interface PageResponse<T> {
