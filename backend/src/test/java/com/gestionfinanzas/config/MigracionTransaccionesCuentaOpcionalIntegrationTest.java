@@ -25,6 +25,19 @@ class MigracionTransaccionesCuentaOpcionalIntegrationTest {
 
     @Autowired private JdbcTemplate jdbcTemplate;
 
+    // Fixture separado: no altera el esquema migrado usado por el resto de suites.
+    private String esquema;
+    @org.junit.jupiter.api.BeforeEach
+    void crearFixture() {
+        esquema = "legacy_" + java.util.UUID.randomUUID().toString().replace("-", "");
+        jdbcTemplate.execute("CREATE SCHEMA " + esquema);
+        jdbcTemplate.execute("CREATE TABLE " + esquema + ".transacciones(cuenta_id bigint)");
+    }
+    @org.junit.jupiter.api.AfterEach
+    void limpiarFixture() {
+        jdbcTemplate.execute("DROP SCHEMA " + esquema + " CASCADE");
+    }
+
     @Test
     void vuelvePermitibleLaCuentaQueEstabaObligatoria() {
         dejarCuentaObligatoria();
@@ -53,18 +66,18 @@ class MigracionTransaccionesCuentaOpcionalIntegrationTest {
     }
 
     private void correrMigracion() {
-        new MigracionTransaccionesCuentaOpcional(jdbcTemplate, "PUBLIC").run(null);
+        new MigracionTransaccionesCuentaOpcional(jdbcTemplate, esquema).run(null);
     }
 
     private void dejarCuentaObligatoria() {
-        jdbcTemplate.execute("ALTER TABLE transacciones ALTER COLUMN cuenta_id SET NOT NULL");
+        jdbcTemplate.execute("ALTER TABLE " + esquema + ".transacciones ALTER COLUMN cuenta_id SET NOT NULL");
     }
 
     private String nullabilidadDeCuenta() {
         return jdbcTemplate.queryForObject(
                 "SELECT is_nullable FROM information_schema.columns "
                         + "WHERE table_name = 'transacciones' AND column_name = 'cuenta_id' "
-                        + "AND UPPER(table_schema) = 'PUBLIC'",
-                String.class);
+                        + "AND UPPER(table_schema) = UPPER(?)",
+                String.class, esquema);
     }
 }

@@ -17,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @DataJpaTest
+@org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase(replace = org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace.NONE)
 @ActiveProfiles("test")
 class CuentaOptimisticLockTest {
 
@@ -28,6 +29,20 @@ class CuentaOptimisticLockTest {
 
     @Autowired
     private PlatformTransactionManager transactionManager;
+
+    private Long fixtureUsuarioId;
+    private Long fixtureCuentaId;
+    @org.junit.jupiter.api.AfterEach
+    void limpiarDatosConfirmados() {
+        if (fixtureUsuarioId == null) return;
+        var tx = new TransactionTemplate(transactionManager);
+        tx.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        tx.executeWithoutResult(status -> {
+            cuentaRepository.deleteById(fixtureCuentaId);
+            cuentaRepository.flush();
+            usuarioRepository.deleteById(fixtureUsuarioId);
+        });
+    }
 
     @Test
     void rejectsUpdateWhenAccountWasChangedAfterItWasRead() {
@@ -45,6 +60,8 @@ class CuentaOptimisticLockTest {
                     .nombre("Efectivo")
                     .tipo(TipoCuenta.EFECTIVO)
                     .build());
+            fixtureUsuarioId = usuario.getId();
+            fixtureCuentaId = cuenta.getId();
             return cuenta.getId();
         });
 

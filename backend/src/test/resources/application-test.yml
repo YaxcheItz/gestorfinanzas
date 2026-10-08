@@ -1,17 +1,22 @@
 spring:
   datasource:
-    url: jdbc:h2:mem:gestionfinanzas;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE
-    username: sa
-    password:
-    driver-class-name: org.h2.Driver
+    url: ${TEST_DATABASE_URL:jdbc:h2:mem:gestionfinanzas;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE}
+    username: ${TEST_DATABASE_USERNAME:sa}
+    password: ${TEST_DATABASE_PASSWORD:}
+    driver-class-name: ${TEST_DATABASE_DRIVER:org.h2.Driver}
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: ${TEST_DDL_AUTO:create-drop}
     properties:
       hibernate:
-        default_schema: PUBLIC
+        default_schema: ${TEST_DATABASE_SCHEMA:PUBLIC}
         jdbc:
           time_zone: America/Mexico_City
+
+  flyway:
+    enabled: ${TEST_FLYWAY_ENABLED:false}
+    default-schema: ${TEST_DATABASE_SCHEMA:PUBLIC}
+    schemas: ${TEST_DATABASE_SCHEMA:PUBLIC}
 
 
 jwt:

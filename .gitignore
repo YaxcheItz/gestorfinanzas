@@ -37,3 +37,9 @@ yarn-error.log*
 
 # Claude Code internal memory
 .claude/
+
+# Respaldos operativos y bases aisladas: contienen datos sensibles.
+.local/
+*.dump
+__pycache__/
+*.pyc
