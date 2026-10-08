@@ -1,0 +1,50 @@
+{
+  "fecha": "2026-10-08",
+  "etapa": 5,
+  "estado": "lista para revisión local",
+  "backend": {
+    "pruebas": 298,
+    "suites": 41,
+    "fallos": 0,
+    "errores": 0,
+    "omitidas": 0,
+    "base": "H2",
+    "exitCode": 0,
+    "log": "backend-final.log"
+  },
+  "frontend": {
+    "pruebas": 229,
+    "archivos": 27,
+    "fallos": 0,
+    "exitCode": 0,
+    "log": "frontend-final.log"
+  },
+  "build": {
+    "exitCode": 0,
+    "initialKB": 638.64,
+    "presupuestoKB": 500,
+    "loginCSSExcesoBytes": 1,
+    "log": "build-final.log"
+  },
+  "browser": {
+    "exitCode": 0,
+    "api": "sintética",
+    "serviceWorker": "real",
+    "indexedDB": "real",
+    "evidencia": "browser-checks.json",
+    "log": "browser-final.log"
+  },
+  "diff": {
+    "exitCode": 0,
+    "log": "diff-check.log"
+  },
+  "coberturaPorcentual": null,
+  "lintGlobalEjecutado": false,
+  "postgresqlRealProbado": false,
+  "dispositivosFisicosProbados": false,
+  "nuevasDependencias": false,
+  "commit": false,
+  "push": false,
+  "despliegue": false,
+  "etapa6Iniciada": false
+}

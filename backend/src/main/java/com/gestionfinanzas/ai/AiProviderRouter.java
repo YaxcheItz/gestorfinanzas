@@ -10,6 +10,7 @@ import java.util.List;
 @Primary
 public class AiProviderRouter implements AiProvider {
     private final AiProvider selected;
+    private final java.util.concurrent.Semaphore simultaneas=new java.util.concurrent.Semaphore(4);
 
     public AiProviderRouter(AiProperties properties, OpenAiProvider openAi,
                             GeminiAiProvider gemini, GroqAiProvider groq) {
@@ -25,6 +26,13 @@ public class AiProviderRouter implements AiProvider {
     @Override public String model() { return selected.model(); }
     @Override public boolean isConfigured() { return selected.isConfigured(); }
     @Override public String generate(String prompt, int maxOutputTokens) {
-        return selected.generate(prompt, maxOutputTokens);
+        if (prompt==null || prompt.length()>60000 || maxOutputTokens<1 || maxOutputTokens>1200)
+            throw new AiProviderException("La solicitud supera el límite de IA. Reduce el texto o usa un reporte local.");
+        if (!simultaneas.tryAcquire()) throw new AiProviderException("La IA está ocupada. Inténtalo más tarde.");
+        try {
+            String respuesta=selected.generate(prompt,maxOutputTokens);
+            if (respuesta==null || respuesta.length()>40000) throw new AiProviderException("La respuesta de IA supera el límite permitido.");
+            return respuesta;
+        } finally { simultaneas.release(); }
     }
 }

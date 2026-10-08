@@ -7,6 +7,7 @@ import { ConfirmDialogComponent } from './shared/components/confirm-dialog/confi
 import { AuthService } from './core/services/auth.service';
 import { PerfilService } from './core/services/perfil.service';
 import { QuickCaptureComponent } from './shared/components/quick-capture/quick-capture.component';
+import { ActualizacionPwaService } from './core/services/actualizacion-pwa.service';
 
 @Component({
   selector: 'app-root',
@@ -15,6 +16,7 @@ import { QuickCaptureComponent } from './shared/components/quick-capture/quick-c
   styleUrl: './app.css'
 })
 export class App {
+  readonly actualizacion=inject(ActualizacionPwaService);
   readonly authService = inject(AuthService);
   private readonly perfilService = inject(PerfilService);
   private loadedUserId: number | null = null;

@@ -1,0 +1,60 @@
+{
+  "fecha": "2026-10-08T05:15:25.251Z",
+  "api": "sintética",
+  "serviceWorkers": "bloqueados",
+  "reducedMotion": true,
+  "resultados": [
+    {
+      "width": 360,
+      "height": 800,
+      "dark": false,
+      "recarga": true,
+      "edicionSinRegistro": true,
+      "reintentoSinDuplicados": true,
+      "descartePersistente": true,
+      "consentimiento": true,
+      "reporteLocal": true,
+      "errores": [],
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "dark": true,
+      "recarga": true,
+      "edicionSinRegistro": true,
+      "reintentoSinDuplicados": true,
+      "descartePersistente": true,
+      "consentimiento": true,
+      "reporteLocal": true,
+      "errores": [],
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "height": 900,
+      "dark": false,
+      "recarga": true,
+      "edicionSinRegistro": true,
+      "reintentoSinDuplicados": true,
+      "descartePersistente": true,
+      "consentimiento": true,
+      "reporteLocal": true,
+      "errores": [],
+      "overflow": false
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "dark": false,
+      "recarga": true,
+      "edicionSinRegistro": true,
+      "reintentoSinDuplicados": true,
+      "descartePersistente": true,
+      "consentimiento": true,
+      "reporteLocal": true,
+      "errores": [],
+      "overflow": false
+    }
+  ]
+}

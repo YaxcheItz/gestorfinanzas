@@ -1,0 +1,23 @@
+﻿[
+    {
+        "head_sha":  "2f28f3ed105d0c496a69aae704d909962816a921",
+        "status":  "completed",
+        "conclusion":  "success",
+        "name":  "CI",
+        "html_url":  "https://github.com/YaxcheItz/gestorfinanzas/actions/runs/37718135828"
+    },
+    {
+        "head_sha":  "2f28f3ed105d0c496a69aae704d909962816a921",
+        "status":  "completed",
+        "conclusion":  "success",
+        "name":  "CI",
+        "html_url":  "https://github.com/YaxcheItz/gestorfinanzas/actions/runs/37718119916"
+    },
+    {
+        "head_sha":  "bada1434ebf906ecd755fc01533780696d9c35a7",
+        "status":  "completed",
+        "conclusion":  "failure",
+        "name":  "CI",
+        "html_url":  "https://github.com/YaxcheItz/gestorfinanzas/actions/runs/37714133791"
+    }
+]

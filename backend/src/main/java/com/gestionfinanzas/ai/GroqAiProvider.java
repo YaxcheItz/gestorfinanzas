@@ -14,6 +14,10 @@ import java.util.Map;
 
 @Component
 public class GroqAiProvider implements AiProvider {
+    @org.springframework.beans.factory.annotation.Autowired
+    public GroqAiProvider(RestClient.Builder builder,AiProperties properties,AiHttpClient cliente) {
+        this(cliente.configurar(builder),properties);
+    }
     private static final String DEFAULT_MODEL = "openai/gpt-oss-20b";
 
     private final AiProperties.Groq properties;

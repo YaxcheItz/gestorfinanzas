@@ -26,6 +26,10 @@ public class OpenAiProvider implements AiProvider {
                 : this.properties.baseUrl();
         this.restClient = builder.baseUrl(baseUrl).build();
     }
+    @org.springframework.beans.factory.annotation.Autowired
+    public OpenAiProvider(RestClient.Builder builder,AiProperties properties,AiHttpClient cliente) {
+        this(cliente.configurar(builder),properties);
+    }
 
     @Override
     public String id() {

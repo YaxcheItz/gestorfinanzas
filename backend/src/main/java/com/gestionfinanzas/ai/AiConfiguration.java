@@ -5,4 +5,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @EnableConfigurationProperties(AiProperties.class)
-public class AiConfiguration {}
+public class AiConfiguration {
+    @org.springframework.context.annotation.Bean
+    public AiHttpClient clienteIa() { return new AiHttpClient(); }
+}

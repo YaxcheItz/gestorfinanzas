@@ -486,7 +486,7 @@ export class AsistenteComponent implements OnInit {
     }
     this.confirmandoId.set(action.id);
     this.errorChat.set(null);
-    this.finanzasService.confirmAiAction(action.id).subscribe({
+    this.finanzasService.confirmAiAction(action.id,action.version??0).subscribe({
       next: response => {
         this.confirmandoId.set(null);
         if (!response.success) {
@@ -514,7 +514,7 @@ export class AsistenteComponent implements OnInit {
     if (this.confirmandoId() !== null) return;
     this.confirmandoId.set(action.id);
     this.errorChat.set(null);
-    this.finanzasService.confirmAiAction(action.id).subscribe({
+    this.finanzasService.confirmAiAction(action.id,action.version??0).subscribe({
       next: response => {
         this.confirmandoId.set(null);
         if (!response.success) {
