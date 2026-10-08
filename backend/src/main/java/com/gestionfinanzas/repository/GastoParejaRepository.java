@@ -13,6 +13,10 @@ import java.util.Optional;
 @Repository
 public interface GastoParejaRepository extends JpaRepository<GastoPareja, Long> {
 
+    @Modifying(flushAutomatically = true)
+    @Query("UPDATE GastoPareja g SET g.pagadoPor = :anonimo WHERE g.pagadoPor.id = :id")
+    void anonimizarUsuario(@Param("id") Long id, @Param("anonimo") com.gestionfinanzas.model.entity.Usuario anonimo);
+
     List<GastoPareja> findByParejaIdOrderByFechaDescIdDesc(Long parejaId);
 
     Optional<GastoPareja> findByIdAndParejaId(Long id, Long parejaId);

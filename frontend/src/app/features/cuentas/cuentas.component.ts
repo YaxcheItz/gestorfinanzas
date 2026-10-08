@@ -1,4 +1,6 @@
-import { CommonModule } from '@angular/common';
+import { TextoFinancieroPipe } from '../../core/pipes/texto-financiero.pipe';
+import { MontoPrivadoDirective } from '../../shared/directives/monto-privado.directive';
+﻿import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -15,9 +17,9 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
 @Component({
   selector: 'app-cuentas',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, FocusTrapDirective, MontoPipe],
+  imports: [TextoFinancieroPipe, MontoPrivadoDirective, CommonModule, FormsModule, RouterLink, FocusTrapDirective, MontoPipe],
   template: `
-    <main class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-4 sm:space-y-6">
+    <main class="finance-page max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-4 sm:space-y-6">
       <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
           <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">Mis cuentas</h1>
@@ -89,7 +91,7 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
                     <p class="mt-1 text-xs font-medium text-slate-500">{{ institucion.nombre }}</p>
                   }
                   @if (cuenta.descripcion) {
-                    <p class="mt-1 break-words text-sm text-slate-500">{{ cuenta.descripcion }}</p>
+                    <p class="mt-1 break-words text-sm text-slate-500">{{ (cuenta.descripcion) | textoFinanciero }}</p>
                   }
                 </div>
                 @if (institucionDe(cuenta.institucionFinanciera); as institucion) {
@@ -127,8 +129,10 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
                 @if (cuenta.limiteCredito != null) {
                   <p class="mt-2 text-xs text-slate-500">
                     Límite {{ cuenta.limiteCredito | monto:cuenta.moneda:'symbol':'1.2-2' }}
-                    @if (cuenta.diaCorte != null && cuenta.diaPago != null) {
-                      &bull; Corte día {{ cuenta.diaCorte }} &bull; Pago día {{ cuenta.diaPago }}
+                    @if (cuenta.diaCorte != null) {
+                      <span class="mt-2 block text-xs font-medium text-slate-600">Próximo corte: {{ formatearFecha(proximaFechaCorte(cuenta.diaCorte)) }}</span>
+                      <span class="block text-xs font-medium text-slate-600">Próximo pago estimado: {{ formatearFecha(proximaFechaPago(cuenta.diaCorte)) }}</span>
+                      <span class="mt-1 block text-[11px] leading-relaxed text-slate-400">Estimación de 20 días naturales después del corte; confirma la fecha en tu estado de cuenta.</span>
                     }
                   </p>
                 }
@@ -312,7 +316,7 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
                 </div>
                 <div>
                   <label for="cuenta-limite-credito" class="block text-xs font-semibold text-slate-700 mb-1.5">Límite de crédito <span class="text-rose-600">*</span></label>
-                  <input
+                  <input appMontoPrivado
                     id="cuenta-limite-credito"
                     name="limiteCredito"
                     type="number"
@@ -347,14 +351,14 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
                       min="1"
                       max="31"
                       step="1"
-                      required
-                      [(ngModel)]="diaPago"
+                      readonly
+                      [value]="diaCorte == null ? '' : proximaFechaPago(diaCorte).getDate()"
                       class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
                       placeholder="1-31" />
                   </div>
                 </div>
                 <p class="text-[11px] leading-relaxed text-slate-600">
-                  Las fechas se guardan para programar tus recordatorios automáticos de pago y corte.
+                  Kaptal estima el pago a 20 días naturales del corte. Confirma siempre la fecha límite exacta en el estado de cuenta de tu banco.
                 </p>
               </section>
             }
@@ -385,7 +389,7 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
                   </div>
                   <div>
                     <label for="cuenta-cashback-limite" class="block text-xs font-semibold text-slate-700 mb-1.5">Límite mensual (opcional)</label>
-                    <input
+                    <input appMontoPrivado
                       id="cuenta-cashback-limite"
                       name="cashbackLimiteMensual"
                       type="number"
@@ -405,7 +409,7 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
                 <label for="cuenta-saldo" class="block text-xs font-semibold text-slate-700 mb-1.5">
                   {{ tipo === 'CREDITO' ? 'Deuda actual' : 'Saldo inicial' }}
                 </label>
-                <input
+                <input appMontoPrivado
                   id="cuenta-saldo"
                   name="saldoInicial"
                   type="number"
@@ -522,10 +526,57 @@ export class CuentasComponent implements OnInit {
   cashbackLimiteMensual: number | null = null;
   limiteCredito: number | null = null;
   diaCorte: number | null = null;
+  /** Campo antiguo conservado para leer formularios/versiones previas de la cuenta. */
   diaPago: number | null = null;
   saldoInicial: number | null = null;
   moneda = 'MXN';
   descripcion = '';
+
+  formatearFecha(fecha: Date): string {
+    return new Intl.DateTimeFormat('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }).format(fecha);
+  }
+
+  proximaFechaCorte(diaCorte: number): Date {
+    const hoy = new Date();
+    const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+    for (let offset = 0; offset < 2; offset++) {
+      const mes = new Date(inicioMes.getFullYear(), inicioMes.getMonth() + offset, 1);
+      const fecha = new Date(mes.getFullYear(), mes.getMonth(), Math.min(diaCorte, new Date(mes.getFullYear(), mes.getMonth() + 1, 0).getDate()));
+      if (fecha >= new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate())) return fecha;
+    }
+    return hoy;
+  }
+
+  proximaFechaPago(diaCorte: number, diaPagoLegado?: number): Date {
+    if (diaPagoLegado != null) {
+      const hoy = new Date();
+      const inicioHoy = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+      for (let offset = -1; offset < 3; offset++) {
+        const mesCorte = new Date(hoy.getFullYear(), hoy.getMonth() + offset, 1);
+        const corte = new Date(mesCorte.getFullYear(), mesCorte.getMonth(), Math.min(diaCorte, new Date(mesCorte.getFullYear(), mesCorte.getMonth() + 1, 0).getDate()));
+        let mesPago = new Date(mesCorte.getFullYear(), mesCorte.getMonth() + (diaPagoLegado <= diaCorte ? 1 : 0), 1);
+        let pago = new Date(mesPago.getFullYear(), mesPago.getMonth(), Math.min(diaPagoLegado, new Date(mesPago.getFullYear(), mesPago.getMonth() + 1, 0).getDate()));
+        if (pago <= corte) {
+          mesPago = new Date(mesPago.getFullYear(), mesPago.getMonth() + 1, 1);
+          pago = new Date(mesPago.getFullYear(), mesPago.getMonth(), Math.min(diaPagoLegado, new Date(mesPago.getFullYear(), mesPago.getMonth() + 1, 0).getDate()));
+        }
+        if (pago >= inicioHoy && corte < pago) return pago;
+      }
+      return hoy;
+    }
+
+    const hoy = new Date();
+    const inicioHoy = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+    let proximoPago: Date | null = null;
+    for (let offset = -2; offset < 4; offset++) {
+      const mesCorte = new Date(hoy.getFullYear(), hoy.getMonth() + offset, 1);
+      const corte = new Date(mesCorte.getFullYear(), mesCorte.getMonth(), Math.min(diaCorte, new Date(mesCorte.getFullYear(), mesCorte.getMonth() + 1, 0).getDate()));
+      const pago = new Date(corte);
+      pago.setDate(pago.getDate() + 20);
+      if (pago >= inicioHoy && (!proximoPago || pago < proximoPago)) proximoPago = pago;
+    }
+    return proximoPago ?? hoy;
+  }
 
   ngOnInit(): void {
     this.cargarCuentas();
@@ -629,10 +680,6 @@ export class CuentasComponent implements OnInit {
       this.modalError.set('Indica el día de corte entre 1 y 31.');
       return;
     }
-    if (this.tipo === 'CREDITO' && (this.diaPago == null || !this.diaValido(this.diaPago))) {
-      this.modalError.set('Indica el día de pago entre 1 y 31.');
-      return;
-    }
     if (this.tipo === 'CREDITO' && this.limiteCredito != null) {
       const cuentaBase = this.cuentaEditando();
       const deudaActual = cuentaBase?.tipo === 'CREDITO'
@@ -654,7 +701,9 @@ export class CuentasComponent implements OnInit {
       ...(this.tipo === 'CREDITO' && this.cashbackLimiteMensual != null ? { cashbackLimiteMensual: this.cashbackLimiteMensual } : {}),
       ...(this.tipo === 'CREDITO' && this.limiteCredito != null ? { limiteCredito: this.limiteCredito } : {}),
       ...(this.tipo === 'CREDITO' && this.diaCorte != null ? { diaCorte: this.diaCorte } : {}),
-      ...(this.tipo === 'CREDITO' && this.diaPago != null ? { diaPago: this.diaPago } : {}),
+      ...(this.tipo === 'CREDITO' && this.diaCorte != null
+        ? { diaPago: this.diaPago ?? this.proximaFechaPago(this.diaCorte).getDate() }
+        : {}),
       moneda: codigoMoneda,
       descripcion: this.descripcion.trim() || undefined
     };

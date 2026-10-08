@@ -1,0 +1,13 @@
+{
+  "fecha": "2026-10-06T06:16:24.434Z",
+  "navegador": "Chromium",
+  "api": "sintética",
+  "serviceWorkers": "bloqueados",
+  "comprobaciones": {
+    "renovacionDosPestanas": true,
+    "unaSolaRotacion": true,
+    "cierreCompartido": true,
+    "erroresJavaScript": []
+  },
+  "renovaciones": 1
+}

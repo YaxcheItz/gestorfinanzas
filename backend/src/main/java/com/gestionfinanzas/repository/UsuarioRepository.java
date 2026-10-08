@@ -16,9 +16,14 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     @Query("SELECT u FROM Usuario u WHERE u.id = :id")
     Optional<Usuario> findByIdForUpdate(@Param("id") Long id);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT u FROM Usuario u WHERE u.whatsappPinPhone = :telefono")
+    Optional<Usuario> findByWhatsappPinPhoneForUpdate(@Param("telefono") String telefono);
+
     Optional<Usuario> findByEmail(String email);
     Optional<Usuario> findByEmailIgnoreCase(String email);
     Optional<Usuario> findByGoogleSubject(String googleSubject);
+    Optional<Usuario> findByWhatsappPinPhone(String telefono);
     boolean existsByEmail(String email);
     boolean existsByEmailAndIdNot(String email, Long id);
 }

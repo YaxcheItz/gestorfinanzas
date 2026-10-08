@@ -1,0 +1,14 @@
+{
+  "color": {
+    "bg": "#151615", "surface": "#1e201e", "subtle": "#292c29",
+    "text": "#f5f4ed", "text-muted": "#b1b3aa", "border": "#383b36",
+    "accent": "#e9a98b", "voice": "#ad4d35", "on-accent": "#ffffff",
+    "danger": "#f0aaa1", "success": "#98c9a2", "ring": "#e9a98b"
+  },
+  "pairs": [
+    ["text", "bg"], ["text", "surface"], ["text", "subtle"],
+    ["text-muted", "bg"], ["text-muted", "surface"], ["text-muted", "subtle"],
+    ["on-accent", "voice"], ["accent", "bg"], ["danger", "surface"],
+    ["success", "surface"], ["ring", "bg", "ui"]
+  ]
+}

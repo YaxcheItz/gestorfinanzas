@@ -1,0 +1,53 @@
+[
+  {
+    "width": 390,
+    "height": 844,
+    "colorScheme": "light",
+    "hasTouch": true,
+    "status": "passed",
+    "checked": [
+      "donut total and keyboard",
+      "today dates",
+      "custom dates",
+      "manual FAB and loaded account",
+      "primary button contrast >= 4.5",
+      "no overflow",
+      "no page errors"
+    ],
+    "mockedApi": true
+  },
+  {
+    "width": 390,
+    "height": 844,
+    "colorScheme": "dark",
+    "hasTouch": true,
+    "status": "passed",
+    "checked": [
+      "donut total and keyboard",
+      "today dates",
+      "custom dates",
+      "manual FAB and loaded account",
+      "primary button contrast >= 4.5",
+      "no overflow",
+      "no page errors"
+    ],
+    "mockedApi": true
+  },
+  {
+    "width": 1280,
+    "height": 900,
+    "colorScheme": "light",
+    "hasTouch": false,
+    "status": "passed",
+    "checked": [
+      "donut total and keyboard",
+      "today dates",
+      "custom dates",
+      "manual FAB and loaded account",
+      "primary button contrast >= 4.5",
+      "no overflow",
+      "no page errors"
+    ],
+    "mockedApi": true
+  }
+]

@@ -2,6 +2,7 @@ package com.gestionfinanzas.dto.response;
 
 import com.gestionfinanzas.model.entity.Transaccion;
 import com.gestionfinanzas.model.enums.TipoTransaccion;
+import com.gestionfinanzas.model.enums.MetodoCaptura;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -27,8 +28,32 @@ public record TransaccionResponse(
     String descripcion,
     String notas,
     boolean cashbackAutomatico,
-    LocalDateTime fechaCreacion
+    LocalDateTime fechaCreacion,
+    MetodoCaptura metodoCaptura,
+    java.util.UUID compraMsiId
 ) {
+    public TransaccionResponse(Long id, Long cuentaId, String cuentaNombre, Long cuentaDestinoId,
+            String cuentaDestinoNombre, Long categoriaId, String categoriaNombre, String categoriaIcono,
+            String categoriaColor, TipoTransaccion tipo, BigDecimal monto, BigDecimal montoDestino,
+            BigDecimal tasaCambio, String moneda, String monedaDestino, LocalDate fecha,
+            String descripcion, String notas, boolean cashbackAutomatico, LocalDateTime fechaCreacion,
+            MetodoCaptura metodoCaptura) {
+        this(id, cuentaId, cuentaNombre, cuentaDestinoId, cuentaDestinoNombre, categoriaId,
+                categoriaNombre, categoriaIcono, categoriaColor, tipo, monto, montoDestino,
+                tasaCambio, moneda, monedaDestino, fecha, descripcion, notas, cashbackAutomatico,
+                fechaCreacion, metodoCaptura, null);
+    }
+    // Compatibilidad con respaldos y consumidores anteriores: origen desconocido.
+    public TransaccionResponse(Long id, Long cuentaId, String cuentaNombre, Long cuentaDestinoId,
+            String cuentaDestinoNombre, Long categoriaId, String categoriaNombre, String categoriaIcono,
+            String categoriaColor, TipoTransaccion tipo, BigDecimal monto, BigDecimal montoDestino,
+            BigDecimal tasaCambio, String moneda, String monedaDestino, LocalDate fecha,
+            String descripcion, String notas, boolean cashbackAutomatico, LocalDateTime fechaCreacion) {
+        this(id, cuentaId, cuentaNombre, cuentaDestinoId, cuentaDestinoNombre, categoriaId,
+                categoriaNombre, categoriaIcono, categoriaColor, tipo, monto, montoDestino,
+                tasaCambio, moneda, monedaDestino, fecha, descripcion, notas, cashbackAutomatico,
+                fechaCreacion, null);
+    }
     public static TransaccionResponse fromEntity(Transaccion t) {
         return new TransaccionResponse(
             t.getId(),
@@ -50,7 +75,9 @@ public record TransaccionResponse(
             t.getDescripcion(),
             t.getNotas(),
             t.getCashbackOrigen() != null,
-            t.getFechaCreacion()
+            t.getFechaCreacion(),
+            t.getMetodoCaptura(),
+            t.getCompraMsiId()
         );
     }
 }

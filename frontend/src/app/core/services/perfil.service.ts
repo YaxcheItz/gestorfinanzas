@@ -30,6 +30,13 @@ export class PerfilService {
   private privacidadVersion = 0;
   private perfilSesionVersion = 0;
   private perfilUsuarioId: number | null = null;
+  private mediaQuery: MediaQueryList | null = null;
+  private readonly escucharCambioTema = (event: MediaQueryListEvent): void => {
+    const usuarioId = this.perfilUsuarioId;
+    if (usuarioId && this.esTemaAutomatico(usuarioId)) {
+      this.aplicarTema(event.matches ? 'OSCURO' : 'CLARO');
+    }
+  };
 
   cargar(usuarioId: number): void {
     if (this.perfilUsuarioId !== usuarioId) {
@@ -45,7 +52,12 @@ export class PerfilService {
     }
     const versionSesion = this.perfilSesionVersion;
     const temaAlmacenado = this.document.defaultView?.localStorage.getItem(`kaptal_tema_${usuarioId}`);
-    if (temaAlmacenado === 'CLARO' || temaAlmacenado === 'OSCURO') this.aplicarTema(temaAlmacenado);
+    if (this.esTemaAutomatico(usuarioId)) {
+      this.configurarEscuchaTema();
+      this.aplicarTema(this.temaSistema());
+    } else if (temaAlmacenado === 'CLARO' || temaAlmacenado === 'OSCURO') {
+      this.aplicarTema(temaAlmacenado);
+    }
     this.privacidad.aplicarDesdeCache(usuarioId);
     this.categoriaPreferida.aplicarDesdeCache(usuarioId);
     this.cargando.set(true);
@@ -80,6 +92,26 @@ export class PerfilService {
         }
       })
     );
+  }
+
+  esTemaAutomatico(usuarioId: number): boolean {
+    return this.document.defaultView?.localStorage.getItem(`kaptal_tema_modo_${usuarioId}`) === 'AUTO';
+  }
+
+  temaSistema(): 'CLARO' | 'OSCURO' {
+    return this.document.defaultView?.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'OSCURO' : 'CLARO';
+  }
+
+  configurarTema(usuarioId: number, modo: 'CLARO' | 'OSCURO' | 'AUTO'): void {
+    const storage = this.document.defaultView?.localStorage;
+    if (modo === 'AUTO') {
+      storage?.setItem(`kaptal_tema_modo_${usuarioId}`, 'AUTO');
+      this.configurarEscuchaTema();
+      this.aplicarTema(this.temaSistema());
+      return;
+    }
+    storage?.removeItem(`kaptal_tema_modo_${usuarioId}`);
+    this.aplicarTema(modo);
   }
 
   cambiarPassword(payload: CambiarPasswordPayload): Observable<ApiResponse<void>> {
@@ -206,7 +238,7 @@ export class PerfilService {
     this.perfil.set(conservarPreferenciaLocal
       ? { ...perfil, ocultarMontos: this.privacidad.ocultarMontos() }
       : perfil);
-    this.aplicarTema(perfil.tema);
+    this.aplicarTema(this.esTemaAutomatico(perfil.id) ? this.temaSistema() : perfil.tema);
     this.document.defaultView?.localStorage.setItem(`kaptal_tema_${perfil.id}`, perfil.tema);
 
     // Solo se adopta la preferencia si el servidor la menciona. Un backend que
@@ -230,6 +262,13 @@ export class PerfilService {
     const root = this.document.documentElement;
     root.classList.toggle('dark', tema === 'OSCURO');
     root.style.colorScheme = tema === 'OSCURO' ? 'dark' : 'light';
+  }
+
+  private configurarEscuchaTema(): void {
+    const matchMedia = this.document.defaultView?.matchMedia;
+    if (!matchMedia || this.mediaQuery) return;
+    this.mediaQuery = matchMedia.call(this.document.defaultView, '(prefers-color-scheme: dark)');
+    this.mediaQuery.addEventListener('change', this.escucharCambioTema);
   }
 
   private mensajeError(error: unknown): string {

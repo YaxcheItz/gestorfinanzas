@@ -21,13 +21,29 @@ public class CorsConfig {
         CorsConfiguration configuration = new CorsConfiguration();
 
         List<String> origins = parseOrigins(allowedOrigins);
-        configuration.setAllowedOrigins(origins);
+        List<String> patterns = new java.util.ArrayList<>(List.of(
+                "http://localhost:[*]",
+                "https://localhost:[*]",
+                "http://127.0.0.1:[*]",
+                "https://127.0.0.1:[*]",
+                "http://192.168.*:[*]",
+                "https://192.168.*:[*]",
+                "http://10.*:[*]",
+                "https://10.*:[*]",
+                "http://172.*:[*]",
+                "https://172.*:[*]",
+                "https://*.vercel.app",
+                "https://*.onrender.com"
+        ));
+        for (String origin : origins) {
+            if (!patterns.contains(origin)) {
+                patterns.add(origin);
+            }
+        }
+        configuration.setAllowedOriginPatterns(patterns);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        // La cabecera de CSRF va en la lista porque su presencia es lo que distingue una
-        // peticion de nuestra app de una lanzada desde otra pagina. Sin ella en el allowedHeaders,
-        // el preflight que dispara la cabecera seria denegado y el refresh no pasaria nunca.
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "X-Requested-With",
-                FiltroCsrfSesion.CABECERA));
+                FiltroCsrfSesion.CABECERA, "Idempotency-Key", "Origin"));
         configuration.setExposedHeaders(List.of("Authorization", "Content-Disposition"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);

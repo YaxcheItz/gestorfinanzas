@@ -20,6 +20,7 @@ import { catchError, switchMap, throwError } from 'rxjs';
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
   const token = authService.getToken();
+  const usuarioId = authService.currentUser()?.id ?? null;
 
   if (token && req.url.includes('/api/')) {
     const authReq = req.clone({
@@ -30,8 +31,14 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     return next(authReq).pipe(
       catchError((error) => {
         const esPeticionDeAuth = req.url.includes('/api/auth/');
-        if (error.status !== 401 || esPeticionDeAuth) {
+        if (error.status !== 401 || esPeticionDeAuth || !authService.getToken()
+            || (authService.currentUser()?.id ?? null) !== usuarioId) {
           return throwError(() => error);
+        }
+        // Una respuesta tardía puede pertenecer al token anterior a un refresh ya terminado.
+        const tokenActual = authService.getToken();
+        if (tokenActual !== token) {
+          return next(req.clone({ setHeaders: { Authorization: `Bearer ${tokenActual}` } }));
         }
         return authService.renovarSesion().pipe(
           switchMap(() => next(req.clone({
@@ -41,10 +48,11 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
           }))),
           catchError((errorRefresh) => {
             // La cookie tampoco sirvio: aqui si se acabo la sesion.
-            if (errorRefresh.status === 401) {
+            if (errorRefresh.status === 401 && authService.isAuthenticated()
+                && authService.currentUser()?.id === usuarioId) {
               authService.cerrarSesionLocal();
             }
-            return throwError(() => error);
+            return throwError(() => errorRefresh);
           })
         );
       })

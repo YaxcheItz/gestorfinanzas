@@ -5,6 +5,7 @@ import { App } from './app';
 
 describe('App', () => {
   beforeEach(async () => {
+    localStorage.clear();
     await TestBed.configureTestingModule({
       imports: [App],
       providers: [provideRouter([]), provideHttpClient()],
@@ -17,12 +18,12 @@ describe('App', () => {
     expect(app).toBeTruthy();
   });
 
-  it('should render the Kaptal brand linked to the home dashboard', async () => {
+  it('should link the Kaptal brand to login for a visitor without a session', async () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
-    const brandLink = compiled.querySelector('app-navbar a[aria-label="Kaptal - ir al inicio"]');
+    const brandLink = compiled.querySelector('a[aria-label="Kaptal, inicio"]');
     expect(brandLink?.textContent).toContain('Kaptal');
-    expect(brandLink?.getAttribute('href')).toBe('/dashboard');
+    expect(brandLink?.getAttribute('href')).toBe('/login');
   });
 });

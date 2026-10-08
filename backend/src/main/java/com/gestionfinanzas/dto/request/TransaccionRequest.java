@@ -43,5 +43,7 @@ public record TransaccionRequest(
 
     LocalDate siguienteFechaRecurrencia,
 
+    @jakarta.validation.constraints.Min(value = 2, message = "Los MSI deben tener al menos 2 cuotas")
+    @jakarta.validation.constraints.Max(value = 60, message = "Los MSI admiten hasta 60 cuotas")
     Integer msi
 ) {}

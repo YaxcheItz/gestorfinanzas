@@ -20,9 +20,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.UUID;
 import jakarta.validation.constraints.Min;
 
 @RestController
@@ -35,9 +37,10 @@ public class TransaccionController {
     @PostMapping
     public ResponseEntity<ApiResponse<TransaccionResponse>> crearTransaccion(
             @Valid @RequestBody TransaccionRequest request,
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestHeader(value = "Idempotency-Key", required = false) UUID idempotencyKey
     ) {
-        TransaccionResponse transaccion = transaccionService.crearTransaccion(userDetails.getId(), request);
+        TransaccionResponse transaccion = transaccionService.crearTransaccion(userDetails.getId(), request, idempotencyKey);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.ok("Movimiento registrado exitosamente", transaccion));
     }
@@ -67,14 +70,19 @@ public class TransaccionController {
             @RequestParam(required = false) TipoTransaccion tipo,
             @RequestParam(required = false) Long cuentaId,
             @RequestParam(required = false) Long categoriaId,
+            @RequestParam(required = false) List<Long> categoriaIds,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
             @RequestParam(required = false) String busqueda,
             @RequestParam(required = false) @Min(1) Long id,
+            @RequestParam(required = false) BigDecimal montoMin,
+            @RequestParam(required = false) BigDecimal montoMax,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "fecha", "id"));
-        TransaccionFiltroRequest filtro = new TransaccionFiltroRequest(tipo, cuentaId, categoriaId, fechaInicio, fechaFin, busqueda, id);
+        TransaccionFiltroRequest filtro = new TransaccionFiltroRequest(
+                tipo, cuentaId, categoriaId, categoriaIds, fechaInicio, fechaFin, busqueda, id, montoMin, montoMax
+        );
         Page<TransaccionResponse> resultado = transaccionService.listarConFiltros(userDetails.getId(), filtro, pageRequest);
         return ResponseEntity.ok(ApiResponse.ok("Transacciones obtenidas correctamente", resultado));
     }
@@ -84,14 +92,17 @@ public class TransaccionController {
             @RequestParam(required = false) TipoTransaccion tipo,
             @RequestParam(required = false) Long cuentaId,
             @RequestParam(required = false) Long categoriaId,
+            @RequestParam(required = false) List<Long> categoriaIds,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
             @RequestParam(required = false) String busqueda,
             @RequestParam(required = false) @Min(1) Long id,
+            @RequestParam(required = false) BigDecimal montoMin,
+            @RequestParam(required = false) BigDecimal montoMax,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         TransaccionFiltroRequest filtro = new TransaccionFiltroRequest(
-                tipo, cuentaId, categoriaId, fechaInicio, fechaFin, busqueda, id
+                tipo, cuentaId, categoriaId, categoriaIds, fechaInicio, fechaFin, busqueda, id, montoMin, montoMax
         );
         String filename = fechaInicio != null && fechaFin != null
                 ? "movimientos_" + fechaInicio + "_a_" + fechaFin + ".csv"

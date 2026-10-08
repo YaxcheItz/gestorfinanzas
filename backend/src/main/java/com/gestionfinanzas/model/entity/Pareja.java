@@ -48,6 +48,27 @@ public class Pareja {
     @Builder.Default
     private boolean activa = true;
 
+    @Column(nullable = false, columnDefinition = "boolean not null default false")
+    @Builder.Default
+    private boolean pendiente = false;
+
+    private LocalDateTime fechaAceptacion;
+
+    @Column(length = 100)
+    private String nombreRemitenteInvitacion;
+    @Column(length = 150)
+    private String correoRemitenteInvitacion;
+    @Column(length = 150)
+    private String correoDestinatarioInvitacion;
+
+    /** Una importación es una copia privada; no concede acceso al otro miembro. */
+    private Long propietarioHistorialId;
+
+    @Version
+    @Column(nullable = false, columnDefinition = "bigint not null default 0")
+    @Builder.Default
+    private Long version = 0L;
+
     @CreationTimestamp
     @Column(name = "fecha_creacion", updatable = false)
     private LocalDateTime fechaCreacion;

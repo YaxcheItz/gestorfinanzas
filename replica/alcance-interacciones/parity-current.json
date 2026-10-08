@@ -1,0 +1,72 @@
+{
+  "feature_score": 95.6,
+  "counted": 45,
+  "must_have_done": 41,
+  "must_have_total": 45,
+  "by_area": [
+    {
+      "area": "4. AI Reports",
+      "score": 90.0,
+      "features": 5
+    },
+    {
+      "area": "2. Captura híbrida",
+      "score": 90.9,
+      "features": 11
+    },
+    {
+      "area": "6. Configuración y perfil",
+      "score": 92.9,
+      "features": 7
+    },
+    {
+      "area": "1. Dashboard",
+      "score": 100.0,
+      "features": 6
+    },
+    {
+      "area": "3. Historial",
+      "score": 100.0,
+      "features": 9
+    },
+    {
+      "area": "5. Categorías",
+      "score": 100.0,
+      "features": 7
+    }
+  ],
+  "missing": [
+    {
+      "feature": "Calendario nativo",
+      "area": "2. Captura híbrida",
+      "priority": "must",
+      "clone": "partial",
+      "notes": "Existe FechaPickerComponent con calendario propio, navegación de teclado y elección de fecha; no es un DatePicker nativo del sistema."
+    },
+    {
+      "feature": "Campo Cuánto con numpad personalizado",
+      "area": "2. Captura híbrida",
+      "priority": "must",
+      "clone": "partial",
+      "notes": "Hay input numérico con `inputmode=\"decimal\"`; no hay teclado numérico construido por la app."
+    },
+    {
+      "feature": "Guardar gráfico como imagen en galería",
+      "area": "4. AI Reports",
+      "priority": "must",
+      "clone": "partial",
+      "notes": "Convierte SVG a PNG y usa compartir archivos si el navegador lo permite; en caso contrario descarga. No hay guardado directo y garantizado en la galería del sistema."
+    },
+    {
+      "feature": "Borrar todos los datos escribiendo ELIMINAR",
+      "area": "6. Configuración y perfil",
+      "priority": "must",
+      "clone": "partial",
+      "notes": "Requiere ELIMINAR y autenticación adicional, pero la acción disponible borra también la cuenta. Falta la operación de vaciar datos conservando el acceso."
+    }
+  ],
+  "skipped": [],
+  "extras": [],
+  "problems": [],
+  "basis": "Comparison with original user scope; four partial rows reflect deliberate scope decisions for the web app. No device certification."
+}

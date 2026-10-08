@@ -1,0 +1,39 @@
+{
+  "verifiedAt": "2026-10-05T02:35:58.040003+00:00",
+  "frontend": {
+    "status": "passed",
+    "tests": 170,
+    "files": 22,
+    "exitCode": 0,
+    "command": "npm test -- --watch=false --runner-config=../replica/navegacion-captura/vitest.config.mjs",
+    "log": "frontend-tests.log",
+    "note": "Una ejecucion paralela anterior agoto memoria; la verificacion final limita trabajadores y pasa completa."
+  },
+  "build": {
+    "status": "passed",
+    "exitCode": 0,
+    "command": "npm run build",
+    "initialBundleKb": 609.87,
+    "log": "frontend-build.log",
+    "warnings": [
+      "Bundle inicial excede presupuesto 500 kB",
+      "CSS login excede 4 kB por 1 byte"
+    ]
+  },
+  "browser": {
+    "status": "passed",
+    "configurations": 4,
+    "api": "synthetic",
+    "evidence": "browser-checks.json"
+  },
+  "diffCheck": {
+    "status": "passed",
+    "exitCode": 0
+  },
+  "limits": [
+    "Microfono simulado: no se probo hardware real",
+    "Chromium con viewports moviles: no un telefono fisico",
+    "Sin backend vivo para esta tarea"
+  ],
+  "deployment": "Cambios locales; sin commit ni despliegue"
+}

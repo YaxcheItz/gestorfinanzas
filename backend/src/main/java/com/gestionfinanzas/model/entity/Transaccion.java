@@ -1,6 +1,7 @@
 package com.gestionfinanzas.model.entity;
 
 import com.gestionfinanzas.model.enums.TipoTransaccion;
+import com.gestionfinanzas.model.enums.MetodoCaptura;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -8,6 +9,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "transacciones", indexes = {
@@ -76,9 +78,18 @@ public class Transaccion {
     @Column(length = 500)
     private String notas;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "metodo_captura", length = 20, updatable = false)
+    private MetodoCaptura metodoCaptura;
+
+    @Column(name = "client_request_id", unique = true, updatable = false)
+    private UUID clientRequestId;
+
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cashback_origen_id", unique = true)
     private Transaccion cashbackOrigen;
+
+    private java.util.UUID compraMsiId;
 
     @CreationTimestamp
     @Column(name = "fecha_creacion", updatable = false)

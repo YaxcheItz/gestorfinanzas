@@ -5,6 +5,12 @@ spring:
   application:
     name: gestion-finanzas-api
 
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
+      file-size-threshold: 5MB
+
   datasource:
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
@@ -58,6 +64,11 @@ jwt:
     same-site: ${JWT_REFRESH_SAME_SITE:Lax}
     secure: ${JWT_REFRESH_SECURE:true}
 
+whatsapp:
+  bot:
+    phone: ${WHATSAPP_BOT_PHONE:5219515791240}
+    verification-token: ${WHATSAPP_BOT_VERIFICATION_TOKEN:}
+
 app:
   auth:
     google:
@@ -72,14 +83,26 @@ app:
     from: ${MAIL_FROM:no-reply@kaptal.app}
   frontend-url: ${FRONTEND_URL:http://localhost:4200}
   cors:
-    allowed-origins: ${CORS_ORIGINS:http://localhost:4200}
+    allowed-origins: ${CORS_ORIGINS:http://localhost:4200,http://192.168.0.12:4200,http://127.0.0.1:4200}
+  push:
+    public-key: ${WEB_PUSH_PUBLIC_KEY:}
+    private-key: ${WEB_PUSH_PRIVATE_KEY:}
+    subject: ${WEB_PUSH_SUBJECT:mailto:soporte@kaptal.app}
   ai:
-    provider: ${AI_PROVIDER:gemini}
+    provider: ${AI_PROVIDER:openai}
     model: ${AI_MODEL:gemini-2.5-flash}
     fallback-model: ${AI_FALLBACK_MODEL:gemini-flash-lite-latest}
     gemini:
       api-key: ${GEMINI_API_KEY:}
       base-url: ${GEMINI_API_URL:https://generativelanguage.googleapis.com/v1beta}
+    groq:
+      api-key: ${GROQ_API_KEY:}
+      base-url: ${GROQ_API_URL:https://api.groq.com/openai/v1}
+      model: ${GROQ_MODEL:openai/gpt-oss-20b}
+    openai:
+      api-key: ${OPENAI_API_KEY:}
+      base-url: ${OPENAI_API_URL:https://api.openai.com/v1}
+      model: ${OPENAI_MODEL:gpt-4.1-mini}
 
 resend:
   api-key: ${RESEND_API_KEY:}

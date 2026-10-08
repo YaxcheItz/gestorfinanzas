@@ -95,7 +95,7 @@ public class CuentaService {
                     .cuenta(guardada)
                     .tipo(TipoTransaccion.SALDO_INICIAL)
                     .monto(saldoInicial.abs())
-                    .fecha(LocalDate.now())
+                    .fecha(com.gestionfinanzas.service.CalendarioFinanciero.hoy())
                     .descripcion("Saldo inicial")
                     .build());
             var movimientoInicial = TransaccionResponse.fromEntity(saldoInicialRegistrado);
@@ -134,7 +134,9 @@ public class CuentaService {
             throw new IllegalArgumentException("No se puede cambiar la moneda de una cuenta con saldo o movimientos registrados");
         }
         if (request.tipo() == TipoCuenta.CREDITO) {
-            validarLimiteContraDeuda(request.limiteCredito(), cuenta.getSaldoActual().negate().max(BigDecimal.ZERO));
+            validarLimiteContraDeuda(request.limiteCredito(), cuenta.getSaldoActual().negate()
+                    .add(cuenta.getLimiteRetenido() == null ? BigDecimal.ZERO : cuenta.getLimiteRetenido())
+                    .max(BigDecimal.ZERO));
         }
 
         cuenta.setNombre(nombreTrim);

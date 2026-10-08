@@ -20,8 +20,16 @@ public record CuentaResponse(
     String moneda,
     String descripcion,
     boolean activo,
-    LocalDateTime fechaCreacion
+    LocalDateTime fechaCreacion,
+    BigDecimal limiteRetenido
 ) {
+    public CuentaResponse(Long id, String nombre, TipoCuenta tipo, String institucionFinanciera,
+            BigDecimal cashbackPorcentaje, BigDecimal cashbackLimiteMensual, BigDecimal limiteCredito,
+            Integer diaCorte, Integer diaPago, BigDecimal saldoActual, String moneda, String descripcion,
+            boolean activo, LocalDateTime fechaCreacion) {
+        this(id, nombre, tipo, institucionFinanciera, cashbackPorcentaje, cashbackLimiteMensual,
+                limiteCredito, diaCorte, diaPago, saldoActual, moneda, descripcion, activo, fechaCreacion, null);
+    }
     public static CuentaResponse fromEntity(Cuenta cuenta) {
         return new CuentaResponse(
             cuenta.getId(),
@@ -37,7 +45,8 @@ public record CuentaResponse(
             cuenta.getMoneda(),
             cuenta.getDescripcion(),
             cuenta.isActivo(),
-            cuenta.getFechaCreacion()
+            cuenta.getFechaCreacion(),
+            cuenta.getLimiteRetenido()
         );
     }
 }

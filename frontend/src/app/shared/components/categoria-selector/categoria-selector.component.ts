@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Categoria, CategoriaPayload, TipoTransaccion } from '../../../core/models/finanzas.models';
+import { CategoriaOrdenService } from '../../../core/services/categoria-orden.service';
 import { CategoriaPreferidaService } from '../../../core/services/categoria-preferida.service';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import { FinanzasService } from '../../../core/services/finanzas.service';
@@ -137,7 +138,7 @@ import { esEmojiCategoria, normalizarIconoCategoria } from '../categoria-icono/c
             </header>
             @if (error()) { <p role="alert" class="text-sm text-rose-600">{{ error() }}</p> }
             <div class="flex items-center gap-3 rounded-2xl bg-emerald-50 p-3 dark:bg-emerald-950/40"><span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-2xl shadow-sm dark:bg-slate-800"><app-categoria-icono [icono]="emojiPersonalizado || icono" [tipo]="tipo" [clase]="'h-6 w-6'" /></span><span class="truncate font-semibold text-slate-800 dark:text-slate-100">{{ nombre.trim() || 'Nombre de categoría' }}</span></div>
-            <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Nombre<input [(ngModel)]="nombre" [ngModelOptions]="{ standalone: true }" maxlength="80" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-600 dark:bg-slate-900 dark:text-white" placeholder="Ej. Transporte" /></label>
+            <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Nombre<input [(ngModel)]="nombre" [ngModelOptions]="{ standalone: true }" [attr.maxlength]="maxLongitudNombre()" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-600 dark:bg-slate-900 dark:text-white" placeholder="Ej. Transporte" /></label>
             <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Icono o emoji<input [ngModel]="emojiPersonalizado" (ngModelChange)="seleccionarEmoji($event)" [ngModelOptions]="{ standalone: true }" type="text" maxlength="16" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-xl text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-600 dark:bg-slate-900 dark:text-white" placeholder="Escribe o pega un emoji" /></label>
             <footer class="flex justify-end gap-2 border-t border-slate-100 pt-3 dark:border-slate-800"><button type="button" (click)="cerrarEditor()" [disabled]="guardando()" class="min-h-10 rounded-xl border border-slate-200 px-4 text-sm font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">Cancelar</button><button type="button" (click)="guardar()" [disabled]="guardando()" class="min-h-10 rounded-xl bg-emerald-600 px-4 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60">{{ guardando() ? 'Guardando…' : 'Guardar' }}</button></footer>
           </section>
@@ -164,7 +165,7 @@ export class CategoriaSelectorComponent {
   readonly error = signal<string | null>(null);
   readonly editando = signal<Categoria | null>(null);
   readonly categoriasFiltradas = (): Categoria[] =>
-    this.categorias.filter(categoria => categoria.tipo === this.tipo && categoria.activo);
+    this.categoriaOrden.ordenar(this.categorias.filter(categoria => categoria.tipo === this.tipo && categoria.activo));
   readonly categoriaSeleccionada = (): Categoria | undefined =>
     this.categoriasFiltradas().find(categoria => categoria.id === this.selectedId);
 
@@ -178,7 +179,8 @@ export class CategoriaSelectorComponent {
     private readonly finanzasService: FinanzasService,
     private readonly toastService: ToastService,
     private readonly confirmDialog: ConfirmDialogService,
-    private readonly categoriaPreferida: CategoriaPreferidaService
+    private readonly categoriaPreferida: CategoriaPreferidaService,
+    private readonly categoriaOrden: CategoriaOrdenService
   ) {}
 
   abrirMenu(): void {
@@ -208,6 +210,11 @@ export class CategoriaSelectorComponent {
 
   get tipoEtiqueta(): string {
     return this.tipo === 'INGRESO' ? 'ingreso' : 'gasto';
+  }
+
+  maxLongitudNombre(): number {
+    const longitudOriginal = this.editando()?.nombre.length ?? 0;
+    return Math.max(20, longitudOriginal);
   }
 
   abrirCrear(): void {
@@ -292,8 +299,9 @@ export class CategoriaSelectorComponent {
 
   guardar(): void {
     const nombre = this.nombre.trim();
-    if (nombre.length < 2 || nombre.length > 80) {
-      this.error.set('El nombre debe tener entre 2 y 80 caracteres.');
+    const actual = this.editando();
+    if (nombre.length < 2 || (nombre.length > 20 && nombre !== actual?.nombre)) {
+      this.error.set('El nombre debe tener entre 2 y 20 caracteres. Puedes conservar el nombre original de una categoría anterior.');
       return;
     }
     if (this.tipo !== 'GASTO' && this.tipo !== 'INGRESO') {
@@ -305,11 +313,11 @@ export class CategoriaSelectorComponent {
       return;
     }
 
-    const actual = this.editando();
     const payload: CategoriaPayload = {
       nombre,
       tipo: this.tipo,
-      icono: this.emojiPersonalizado.trim() || actual?.icono || (this.tipo === 'INGRESO' ? 'trending-up' : 'receipt')
+      icono: this.emojiPersonalizado.trim() || actual?.icono || (this.tipo === 'INGRESO' ? 'trending-up' : 'receipt'),
+      color: actual?.color ?? undefined
     };
     this.guardando.set(true);
     this.error.set(null);

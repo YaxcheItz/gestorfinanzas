@@ -4,7 +4,9 @@ import com.gestionfinanzas.dto.response.AuthResponse;
 import com.gestionfinanzas.model.entity.RefreshToken;
 import com.gestionfinanzas.model.entity.Usuario;
 import com.gestionfinanzas.repository.RefreshTokenRepository;
+import com.gestionfinanzas.repository.UsuarioRepository;
 import com.gestionfinanzas.security.JwtUtil;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,6 +41,8 @@ public class SesionService {
 
     private final JwtUtil jwtUtil;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final UsuarioRepository usuarioRepository;
+    private final EntityManager entityManager;
 
     @Value("${jwt.refresh.expiration-ms:2592000000}")
     private long refreshExpirationMs;
@@ -48,7 +52,9 @@ public class SesionService {
 
     @Transactional
     public SesionEmitida emitir(Usuario usuario) {
-        return crearTokens(usuario);
+        Usuario bloqueado = bloquearUsuario(usuario.getId());
+        if (!bloqueado.isActivo()) throw new SesionInvalidaException();
+        return crearTokens(bloqueado);
     }
 
     /**
@@ -57,22 +63,20 @@ public class SesionService {
      * Un token ya revocado que vuelve a presentarse no es un error de dedo: significa que dos
      * partes tienen la misma credencial, asi que se revocan todas las sesiones del usuario.
      */
-    @Transactional
+    @Transactional(noRollbackFor = SesionInvalidaException.class)
     public SesionEmitida refrescar(String refreshTokenPlano) {
         if (refreshTokenPlano == null || refreshTokenPlano.isBlank()) {
             throw new SesionInvalidaException();
         }
-        Instant ahora = Instant.now();
-        RefreshToken presented = refreshTokenRepository.findByTokenHash(hash(refreshTokenPlano))
+        String tokenHash = hash(refreshTokenPlano);
+        Long usuarioId = refreshTokenRepository.findUsuarioIdByTokenHash(tokenHash)
                 .orElseThrow(SesionInvalidaException::new);
-
-        if (presented.isRevocado() || presented.getFechaRotacion() != null) {
-            log.warn("Refresh token ya rotado de nuevo presentado; se cierran todas las sesiones");
-            revocarTodas(presented.getUsuario().getId());
-            throw new SesionInvalidaException();
-        }
-
-        Usuario usuario = presented.getUsuario();
+        // Serializa emisión, rotación y revocación de todas las sesiones de este usuario.
+        // Después de esperar se vuelve a leer el token para ver la rotación ya confirmada.
+        Usuario usuario = bloquearUsuario(usuarioId);
+        RefreshToken presented = refreshTokenRepository.findByTokenHash(tokenHash)
+                .orElseThrow(SesionInvalidaException::new);
+        Instant ahora = Instant.now();
         if (presented.estaVencido(ahora)
                 || !usuario.isActivo()
                 || presented.getTokenVersion() != usuario.getTokenVersion()) {
@@ -81,10 +85,16 @@ public class SesionService {
             throw new SesionInvalidaException();
         }
 
+        if (presented.isRevocado() || presented.getFechaRotacion() != null) {
+            log.warn("Refresh token reutilizado; se invalidan las sesiones y sus tokens de acceso");
+            revocarTokens(usuario);
+            throw new SesionInvalidaException();
+        }
+
         presented.setRevocado(true);
         presented.setFechaRotacion(ahora);
         refreshTokenRepository.save(presented);
-        limpiarVencidos(ahora);
+        limpiarVencidos(usuarioId, ahora);
         return crearTokens(usuario);
     }
 
@@ -94,7 +104,11 @@ public class SesionService {
         if (refreshTokenPlano == null || refreshTokenPlano.isBlank()) {
             return;
         }
-        refreshTokenRepository.findByTokenHash(hash(refreshTokenPlano)).ifPresent(token -> {
+        String tokenHash = hash(refreshTokenPlano);
+        refreshTokenRepository.findUsuarioIdByTokenHash(tokenHash).ifPresent(usuarioId -> {
+            bloquearUsuario(usuarioId);
+            RefreshToken token = refreshTokenRepository.findByTokenHash(tokenHash).orElse(null);
+            if (token == null) return;
             token.setRevocado(true);
             refreshTokenRepository.save(token);
         });
@@ -102,7 +116,14 @@ public class SesionService {
 
     @Transactional
     public void revocarTodas(Long usuarioId) {
-        refreshTokenRepository.findByUsuarioId(usuarioId).forEach(token -> {
+        revocarTokens(bloquearUsuario(usuarioId));
+    }
+
+    private void revocarTokens(Usuario usuario) {
+        // Los JWT ya emitidos también deben dejar de autenticar, no solo sus refresh tokens.
+        usuario.setTokenVersion(usuario.getTokenVersion() + 1);
+        usuarioRepository.save(usuario);
+        refreshTokenRepository.findByUsuarioId(usuario.getId()).forEach(token -> {
             token.setRevocado(true);
             refreshTokenRepository.save(token);
         });
@@ -110,7 +131,15 @@ public class SesionService {
 
     @Transactional
     public void eliminarTodas(Long usuarioId) {
+        bloquearUsuario(usuarioId);
         refreshTokenRepository.deleteByUsuarioId(usuarioId);
+    }
+
+    private Usuario bloquearUsuario(Long usuarioId) {
+        Usuario usuario = usuarioRepository.findByIdForUpdate(usuarioId).orElseThrow(SesionInvalidaException::new);
+        // El filtro JWT o un servicio llamador pudieron cargarlo antes de esperar por el bloqueo.
+        entityManager.refresh(usuario);
+        return usuario;
     }
 
     private SesionEmitida crearTokens(Usuario usuario) {
@@ -129,8 +158,8 @@ public class SesionService {
                 refreshPlano);
     }
 
-    private void limpiarVencidos(Instant ahora) {
-        refreshTokenRepository.deleteByFechaExpiracionBefore(ahora);
+    private void limpiarVencidos(Long usuarioId, Instant ahora) {
+        refreshTokenRepository.deleteByUsuarioIdAndFechaExpiracionBefore(usuarioId, ahora);
     }
 
     private static String generarAleatorio() {

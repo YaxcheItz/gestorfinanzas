@@ -23,8 +23,13 @@ public record ParejaResponse(
         Resumen resumen,
         List<Aporte> aportes,
         List<Gasto> gastos,
-        List<Pago> pagos
+        List<Pago> pagos,
+        boolean activa
 ) {
+    public ParejaResponse(Long id, String moneda, LocalDateTime fechaCreacion, Miembro yo, Miembro pareja,
+            Resumen resumen, List<Aporte> aportes, List<Gasto> gastos, List<Pago> pagos) {
+        this(id,moneda,fechaCreacion,yo,pareja,resumen,aportes,gastos,pagos,true);
+    }
 
     /**
      * Posición de una persona dentro de la pareja.
@@ -107,6 +112,7 @@ public record ParejaResponse(
             String moneda,
             LocalDate fecha,
             String notas,
-            LocalDateTime fechaCreacion
+            LocalDateTime fechaCreacion,
+            Long registradoPorId
     ) {}
 }

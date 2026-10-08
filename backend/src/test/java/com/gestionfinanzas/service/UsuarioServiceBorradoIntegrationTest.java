@@ -183,7 +183,7 @@ class UsuarioServiceBorradoIntegrationTest {
     }
 
     @Test
-    void eliminaLosGastosCompartidosDeLaParejaSinViolarLlavesForaneas() {
+    void conservaLosGastosCompartidosAnonimizadosSinViolarLlavesForaneas() {
         Usuario ana = crearUsuario("ana@example.com");
         Usuario luis = crearUsuario("luis@example.com");
 
@@ -208,11 +208,15 @@ class UsuarioServiceBorradoIntegrationTest {
         usuarioService.eliminarCuenta(ana.getId(), new EliminarUsuarioRequest(PASSWORD));
 
         assertTrue(usuarioRepository.findById(ana.getId()).isEmpty());
-        assertEquals(0, parejaRepository.count(), "la pareja debe borrarse");
-        assertEquals(0, aportacionRepository.count());
-        assertEquals(0, gastoRepository.count());
-        assertEquals(0, repartoRepository.count());
-        assertEquals(0, pagoRepository.count());
+        assertEquals(1, parejaRepository.count(), "el historial de la otra persona debe conservarse");
+        assertEquals(1, aportacionRepository.count());
+        assertEquals(1, gastoRepository.count());
+        assertEquals(2, repartoRepository.count());
+        assertEquals(1, pagoRepository.count());
+        Pareja archivada=parejaRepository.findById(pareja.getId()).orElseThrow();
+        org.junit.jupiter.api.Assertions.assertFalse(archivada.isActiva());
+        org.junit.jupiter.api.Assertions.assertFalse(archivada.getUsuarioA().isActivo());
+        assertEquals("Cuenta eliminada",archivada.getUsuarioA().getNombre());
         assertTrue(usuarioRepository.findById(luis.getId()).isPresent(),
                 "la cuenta de la pareja sobrevive aunque el vinculo se borre");
     }
