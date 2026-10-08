@@ -10,6 +10,9 @@ spring:
     properties:
       hibernate:
         default_schema: PUBLIC
+        jdbc:
+          time_zone: America/Mexico_City
+
 
 jwt:
   secret: 0123456789abcdef0123456789abcdef

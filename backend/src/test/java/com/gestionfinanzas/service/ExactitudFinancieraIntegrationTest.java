@@ -57,8 +57,11 @@ class ExactitudFinancieraIntegrationTest {
         var inicial = movimientos.crearTransaccion(usuarioId, compra("100.00",3));
         Long id = plan().getId();
         comprobarCuenta("-33.33","66.67");
+        assertEquals(LocalDate.of(2025,1,30), plan().getFechaAncla());
+        assertEquals(LocalDate.of(2025,2,28), plan().getSiguienteFecha());
         recurrentes.registrarSiguiente(usuarioId,id);
         comprobarCuenta("-66.66","33.34");
+        assertEquals(LocalDate.of(2025,1,30), plan().getFechaAncla());
         assertEquals(LocalDate.of(2025,3,30), plan().getSiguienteFecha());
         recurrentes.registrarSiguiente(usuarioId,id);
         comprobarCuenta("-100.00","0.00");
