@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders, HttpParams, HttpResponse } from '@angular/comm
 import { Observable } from 'rxjs';
 import { ApiResponse, RestauracionRespaldoPreview } from '../models/auth.models';
 import {
+  AiActionProposal,
   AiChatMessage,
   AiChatRequest,
   AiChatResponse,
@@ -93,10 +94,19 @@ export class FinanzasService {
     return this.http.post<ApiResponse<string>>(`${this.baseUrl}/asistente/voz/transcribir`, form);
   }
 
-  confirmAiAction(proposalId: string): Observable<ApiResponse<{ completed: boolean }>> {
+  getPropuestasAi(): Observable<ApiResponse<AiActionProposal[]>> {
+    return this.http.get<ApiResponse<AiActionProposal[]>>(`${this.baseUrl}/asistente/acciones`);
+  }
+  editarPropuestaAi(proposalId: string, datos: Record<string, unknown>, version = 0): Observable<ApiResponse<AiActionProposal>> {
+    return this.http.put<ApiResponse<AiActionProposal>>(`${this.baseUrl}/asistente/acciones/${encodeURIComponent(proposalId)}`, { datos, version });
+  }
+  descartarPropuestaAi(proposalId: string): Observable<ApiResponse<void>> {
+    return this.http.delete<ApiResponse<void>>(`${this.baseUrl}/asistente/acciones/${encodeURIComponent(proposalId)}`);
+  }
+  confirmAiAction(proposalId: string, version = 0): Observable<ApiResponse<{ completed: boolean }>> {
     return this.http.post<ApiResponse<{ completed: boolean }>>(
       `${this.baseUrl}/asistente/acciones/${encodeURIComponent(proposalId)}/confirmar`,
-      {}
+      { version }
     );
   }
 

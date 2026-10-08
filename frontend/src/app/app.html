@@ -10,3 +10,11 @@
 <!-- Global UI Layer: Toasts y Diálogos de Confirmación -->
 <app-toast-container />
 <app-confirm-dialog />
+
+@if (actualizacion.disponible()) {
+  <aside class="pwa-update" aria-label="Actualización disponible">
+    <span>Hay una nueva versión. El borrador se guardará antes de recargar.</span>
+    <button type="button" (click)="actualizacion.actualizar()" [disabled]="actualizacion.aplicando()">{{ actualizacion.aplicando() ? 'Guardando…' : 'Guardar borrador y actualizar' }}</button>
+    @if(actualizacion.error()){<p role="alert">{{ actualizacion.error() }}</p>}
+  </aside>
+}

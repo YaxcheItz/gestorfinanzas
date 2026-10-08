@@ -112,6 +112,9 @@ public class AiAssistantService {
         if (request.capturaPorVoz()) {
             actionService.marcarCapturaPorVoz(userId, response.action());
             response.actions().forEach(proposal -> actionService.marcarCapturaPorVoz(userId, proposal));
+            var actuales=actionService.pendientes(userId).stream().collect(java.util.stream.Collectors.toMap(AiActionService.ActionProposal::id,p -> p));
+            response=new AiChatResponse(response.answer(),response.action()==null ? null : actuales.get(response.action().id()),
+                    response.actions().stream().map(p -> actuales.get(p.id())).toList(),response.report(),response.engine(),response.suggestions(),response.contexto());
         }
         return response;
     }

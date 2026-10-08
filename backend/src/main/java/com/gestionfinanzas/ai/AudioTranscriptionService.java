@@ -15,6 +15,10 @@ import java.util.Arrays;
 
 @Service
 public class AudioTranscriptionService {
+    @org.springframework.beans.factory.annotation.Autowired
+    public AudioTranscriptionService(RestClient.Builder builder,AiProperties properties,AiHttpClient cliente) {
+        this(cliente.configurar(builder),properties);
+    }
     private static final int MAX_AUDIO_BYTES = 5 * 1024 * 1024;
     private static final String GROQ_MODEL = "whisper-large-v3-turbo";
 

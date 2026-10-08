@@ -16,6 +16,10 @@ import java.util.Map;
 
 @Component
 public class GeminiAiProvider implements AiProvider {
+    @org.springframework.beans.factory.annotation.Autowired
+    public GeminiAiProvider(RestClient.Builder builder,AiProperties properties,AiHttpClient cliente) {
+        this(cliente.configurar(builder),properties);
+    }
     private final AiProperties properties;
     private final RestClient restClient;
 

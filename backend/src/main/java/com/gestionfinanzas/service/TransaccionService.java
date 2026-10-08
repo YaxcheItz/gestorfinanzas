@@ -69,6 +69,21 @@ public class TransaccionService {
         return crearInterna(usuarioId, request, idempotencyKey, metodoCaptura, null);
     }
 
+    private static String huellaSolicitud(TransaccionRequest request) {
+        try {
+            var contenido=new StringBuilder();
+            for(var campo:TransaccionRequest.class.getRecordComponents()) {
+                Object valor=campo.getAccessor().invoke(request);
+                String texto=valor instanceof BigDecimal decimal ? decimal.stripTrailingZeros().toPlainString()
+                    : valor==null ? "<null>" : valor.toString();
+                contenido.append(campo.getName()).append(':').append(valor==null?'0':'1')
+                    .append(':').append(texto.length()).append(':').append(texto).append(';');
+            }
+            return java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256")
+                .digest(contenido.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+        }catch(ReflectiveOperationException|java.security.NoSuchAlgorithmException error){throw new IllegalStateException("No se pudo identificar la solicitud.",error);}
+    }
+
     private TransaccionResponse crearInterna(Long usuarioId, TransaccionRequest request, UUID idempotencyKey,
             com.gestionfinanzas.model.enums.MetodoCaptura metodoCaptura, UUID compraExistente) {
         if (idempotencyKey != null) {
@@ -77,6 +92,8 @@ public class TransaccionService {
                 if (!existente.getUsuario().getId().equals(usuarioId)) {
                     throw new IllegalArgumentException("La clave de solicitud ya fue utilizada");
                 }
+                if(existente.getClientRequestFingerprint()!=null && !existente.getClientRequestFingerprint().equals(huellaSolicitud(request)))
+                    throw new IllegalArgumentException("Esta solicitud ya se registró con otros datos. No cambies el contenido al reintentar.");
                 return TransaccionResponse.fromEntity(existente);
             }
         }
@@ -128,6 +145,7 @@ public class TransaccionService {
                 .notas(normalizarNotas(request.notas()))
                 .metodoCaptura(metodoCaptura)
                 .clientRequestId(idempotencyKey)
+                .clientRequestFingerprint(idempotencyKey==null?null:huellaSolicitud(request))
                 .build();
 
         Transaccion guardada = transaccionRepository.save(transaccion);

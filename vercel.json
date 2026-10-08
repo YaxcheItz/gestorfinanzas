@@ -1,5 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "git": {
+    "deploymentEnabled": {
+      "mejoras/etapas-1-5": false
+    }
+  },
   "installCommand": "cd frontend && npm ci",
   "buildCommand": "cd frontend && printf 'window.__API_BASE_URL__=\"%s\";\\n' \"${API_BASE_URL:-/api}\" > public/runtime-config.js && npm run build",
   "outputDirectory": "frontend/dist/frontend/browser",

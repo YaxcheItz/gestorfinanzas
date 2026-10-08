@@ -48,6 +48,7 @@ public class UsuarioService {
     private final PagoParejaRepository pagoParejaRepository;
     private final SesionService sesionService;
     private final jakarta.persistence.EntityManager entityManager;
+    private final com.gestionfinanzas.repository.PropuestaChatRepository propuestaChatRepository;
 
     /** Elimina datos personales y financieros propios; conserva el historial común
      * del otro miembro con una referencia anónima desactivada, sin credenciales reutilizables. */
@@ -123,6 +124,7 @@ public class UsuarioService {
             if (parejaRepository.listarIdsDeUsuario(referenciaId).isEmpty()) usuarioRepository.deleteById(referenciaId);
         }
 
+        propuestaChatRepository.eliminarDeUsuario(usuarioId);
         lineaAsientoRepository.deleteByUsuarioId(usuarioId);
         asientoContableRepository.deleteByUsuarioId(usuarioId);
         auditoriaTransaccionRepository.deleteByUsuarioId(usuarioId);

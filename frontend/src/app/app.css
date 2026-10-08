@@ -1,0 +1,2 @@
+﻿.pwa-update { position:fixed; z-index:1600; top:12px; left:12px; right:12px; max-width:680px; margin:auto; padding:16px; border:1px solid #777; border-radius:16px; background:var(--kaptal-surface,#fff); color:var(--kaptal-content,#222); box-shadow:0 4px 24px #0003; }
+.pwa-update button { min-height:44px; margin-top:8px; padding:8px 12px; border:1px solid currentColor; border-radius:8px; }

@@ -38,6 +38,8 @@ export interface AiReportWidget {
 }
 
 export interface AiActionProposal {
+  local?: boolean;
+  version?: number;
   id: string;
   type: string;
   summary: string;

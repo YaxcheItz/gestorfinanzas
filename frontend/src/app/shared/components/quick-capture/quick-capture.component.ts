@@ -8,13 +8,17 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { Router } from '@angular/router';
 import { AiActionProposal, AiChatMessage, AiReportWidget } from '../../../core/models/ai.models';
-import { Categoria, Transaccion } from '../../../core/models/finanzas.models';
+import { Categoria, Cuenta, Transaccion } from '../../../core/models/finanzas.models';
 import { FinanzasService } from '../../../core/services/finanzas.service';
 import { PerfilService } from '../../../core/services/perfil.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { MontoPipe } from '../../../core/pipes/monto.pipe';
 import { TextoFinancieroPipe } from '../../../core/pipes/texto-financiero.pipe';
 import { CategoriaIconoComponent } from '../categoria-icono/categoria-icono.component';
+import { MontoPrivadoDirective } from '../../directives/monto-privado.directive';
+import { MovimientosOfflineService, BorradorChat } from '../../../core/services/movimientos-offline.service';
+import { ActualizacionPwaService } from '../../../core/services/actualizacion-pwa.service';
+import { prepararCapturaOffline, validarPayloadOffline } from '../../../core/utils/captura-offline';
 
 type CaptureMode = 'CAPTURE' | 'REPORT';
 /** Estado del panel de procesamiento de voz */
@@ -25,7 +29,7 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
 @Component({
   selector: 'app-quick-capture',
   standalone: true,
-  imports: [PrivacyToggleComponent, CommonModule, FormsModule, MontoPipe, TextoFinancieroPipe, CategoriaIconoComponent],
+  imports: [PrivacyToggleComponent, CommonModule, FormsModule, MontoPipe, TextoFinancieroPipe, CategoriaIconoComponent, MontoPrivadoDirective],
   template: `
     <!-- Processing Sheet: aparece al soltar el FAB de voz, muestra el progreso y permite cancelar -->
     @if (processingStep()) {
@@ -61,8 +65,29 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
           <button type="button" class="capture-clear" (click)="limpiarChat()" [disabled]="loading() || confirming() !== null || escuchando()" aria-label="Limpiar historial del chat" title="Limpiar chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14M10 11v6m4-6v6"/></svg></button><app-privacy-toggle/><button type="button" (click)="close()" aria-label="Cerrar">×</button>
         </header>
         <p class="capture-instructions">Registra movimientos y pide reportes. Primero reglas e historial; IA solo cuando hace falta y la autorizas.</p>
+        @if(!offline.conexion()){<p role="status">Sin conexión. Revisa y confirma para guardar en este dispositivo; se enviará al volver la conexión.</p>}
+        @if(errorBorrador()){<p class="capture-error" role="alert">{{ errorBorrador() }}</p>}
+        @if(offline.pendientes().length){<p role="status">{{ offline.pendientes().length }} movimiento(s) guardados en este dispositivo, pendientes del servidor.</p>}
 
         @if (mode() === 'CAPTURE') {
+          <button type="button" class="capture-cancel" style="min-height:44px;color:inherit" (click)="recuperarPropuestas()" [disabled]="recuperando() || loading() || confirming() !== null">{{ recuperando() ? 'Recuperando…' : 'Recuperar propuestas pendientes' }}</button>
+          @if (editando()) {
+            <form class="capture-editor" (ngSubmit)="guardarEdicion()" (input)="marcarBorrador()" (change)="marcarBorrador()" aria-label="Editar propuesta">
+              <strong>Editar antes de guardar</strong>
+              <label>Tipo<select name="editTipo" [(ngModel)]="borrador['tipo']"><option value="GASTO">Gasto</option><option value="INGRESO">Ingreso</option><option value="TRANSFERENCIA">Transferencia</option></select></label>
+              <label>Monto<input appMontoPrivado name="editMonto" type="number" min="0.01" step="0.01" inputmode="decimal" [(ngModel)]="borrador['monto']" required></label>
+              <label>Fecha<input name="editFecha" type="date" [(ngModel)]="borrador['fecha']" required></label>
+              <label>Cuenta<select name="editCuenta" [(ngModel)]="borrador['cuentaId']" required>@for(cuenta of cuentasEdicion();track cuenta.id){<option [ngValue]="cuenta.id">{{ cuenta.nombre }} · {{ cuenta.moneda }}</option>}</select></label>
+              @if(borrador['tipo']==='TRANSFERENCIA'){
+                <label>Cuenta destino<select name="editDestino" [(ngModel)]="borrador['cuentaDestinoId']" required>@for(cuenta of cuentasEdicion();track cuenta.id){<option [ngValue]="cuenta.id">{{ cuenta.nombre }} · {{ cuenta.moneda }}</option>}</select></label>
+                <label>Tasa de cambio<input name="editTasa" type="number" step="0.00000001" min="0.00000001" [(ngModel)]="borrador['tasaCambio']"></label>
+              }
+              <label>Descripción<input name="editDescripcion" maxlength="200" [(ngModel)]="borrador['descripcion']"></label>
+              <label>Notas<input name="editNotas" maxlength="500" [(ngModel)]="borrador['notas']"></label>
+              <div class="capture-proposal__actions"><button type="button" class="capture-cancel" (click)="editando.set(null)">Cancelar edición</button><button type="submit" class="capture-save" [disabled]="confirming()!==null">Actualizar propuesta</button></div>
+              <p>Actualizar prepara la propuesta. Confirma después para registrar el movimiento.</p>
+            </form>
+          } @else {
           <div id="capture-chat-thread" class="capture-chat" aria-live="polite" aria-relevant="additions text" [attr.aria-busy]="loading()">
             @if (captureTurns().length === 0 && !pendingCaptureText()) {
               <div class="capture-chat__intro"><span class="capture-chat__avatar" aria-hidden="true">✦</span><div><strong>¿Qué anotamos o consultamos?</strong><p>{{ captureHint() }} Ejemplos:</p><div class="capture-chat__suggestions"><button type="button" (click)="usarEjemplo('Gasté 180 en comida')">Gasté $180 en comida</button><button type="button" (click)="usarEjemplo('Recibí 8500 de nómina')">Recibí $8,500 de nómina</button></div></div></div>
@@ -78,6 +103,7 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
                 }
                 @if (turn.suggestions?.length) {<div class="chat-followups">@for (suggestion of turn.suggestions; track suggestion) {<button type="button" (click)="usarSugerencia(suggestion)" [disabled]="loading() || confirming() !== null">{{ suggestion | textoFinanciero }}</button>}</div>}
                 @for (proposal of turn.actions; track proposal.id) {
+                  <button type="button" class="capture-cancel" style="min-height:44px" (click)="abrirEdicion(proposal)" [disabled]="confirming()!==null">Editar propuesta</button>
                   @if (necesitaCategoria(proposal)) {
                     <section class="categorization-review" aria-label="Elige una categoría">
                       <article class="categorization-review__expense" draggable="true" (dragstart)="iniciarArrastre($event, proposal)" [attr.aria-label]="turn.user | textoFinanciero"><span class="categorization-review__grip" aria-hidden="true">⠿</span><div><small>Movimiento</small><strong>{{ proposal.summary | textoFinanciero }}</strong></div></article>
@@ -131,6 +157,7 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
           </form>
           @if (voiceMessage()) { <p class="voice-transcribed" role="status">{{ voiceMessage() }}</p> }
           <label class="capture-consent capture-chat__consent"><input type="checkbox" [(ngModel)]="consent" name="captureConsent"><span>Permitir IA y compartir contexto financiero solo para solicitudes complejas</span></label>
+          }
         } @else {
           <div class="report-thread" aria-live="polite" aria-relevant="additions text" [attr.aria-busy]="reportLoading()">
             @if (reportMessages().length === 0) {
@@ -167,9 +194,24 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
         }
       </section>
     }
-  `
+  `,
+  styles:[`.capture-editor{display:grid;gap:12px;max-height:55dvh;overflow:auto;padding:16px;border:1px solid var(--border-color,#777);border-radius:16px}.capture-editor label{display:grid;gap:4px}.capture-editor input,.capture-editor select{min-height:44px;font-size:16px;padding:8px;background:var(--surface-color,transparent);color:inherit;border:1px solid #888;border-radius:8px}.capture-editor button{min-height:44px}`]
 })
 export class QuickCaptureComponent implements OnDestroy {
+  readonly offline=inject(MovimientosOfflineService);
+  private readonly actualizacion=inject(ActualizacionPwaService);
+  readonly errorBorrador=signal('');
+  private readonly borradorRestaurado=signal(false);
+  private readonly revisionBorrador=signal(0);
+  private guardadoBorrador:Promise<void>=Promise.resolve();
+  private guardadoTimer:ReturnType<typeof setTimeout>|null=null;
+  private quitarProtector:()=>void=()=>{};
+  private operaciones = new Subscription();
+  private chatGeneration = 0;
+  readonly recuperando = signal(false);
+  readonly editando = signal<AiActionProposal | null>(null);
+  readonly cuentasEdicion = signal<Cuenta[]>([]);
+  borrador: Record<string, unknown> = {};
   private readonly finanzas = inject(FinanzasService);
   private readonly auth = inject(AuthService);
   readonly privacidad = inject(PrivacidadService);
@@ -178,14 +220,79 @@ export class QuickCaptureComponent implements OnDestroy {
   private contexto: string | null = null;
   private voiceConsent = false;
   private usuarioChat: number | null = null;
+  private destruido = false;
   constructor() {
+    this.quitarProtector=this.actualizacion.proteger(async()=>{
+      const generation = this.chatGeneration;
+      const estado = () => JSON.stringify({texto:this.content,acciones:this.captureTurns().flatMap(t=>t.actions),contexto:this.contexto,editando:this.editando()?.id,edicion:this.borrador});
+      const antes = estado();
+      if(this.loading()||this.confirming()||this.listening()||this.stopping())return false;
+      await this.guardarBorradorAhora();
+      return generation === this.chatGeneration && !this.destruido && antes === estado()
+        && !this.loading() && !this.confirming() && !this.listening() && !this.stopping();
+    });
     effect(() => {
       const usuarioId = this.auth.currentUser()?.id ?? null;
       if (this.usuarioChat !== usuarioId) {
+        if(this.guardadoTimer)clearTimeout(this.guardadoTimer);this.guardadoTimer=null;
+        this.borradorRestaurado.set(false);this.errorBorrador.set('');
+        this.chatGeneration++;
+        this.operaciones.unsubscribe(); this.operaciones=new Subscription();
+        this.confirming.set(null); this.reportMessages.set([]); this.weeklyTransactions.set([]);
+        this.categories.set([]); this.cuentasEdicion.set([]); this.borrador={};
+        this.pendingCaptureText.set(''); this.sourceInput.set(''); this.voiceMessage.set(''); this.aiConsentRequired.set(false);
+        this.reportLoading.set(false); this.reportError.set(''); this.error.set(''); this.editando.set(null);
+        this.recuperando.set(false);
         this.usuarioChat = usuarioId; this.captureTurns.set([]); this.content = ''; this.contexto = null; this.consent = false; this.voiceConsent = false;
         this.capturaSub?.unsubscribe(); this.transcripcionSub?.unsubscribe(); this.stopVoice(true); this.loading.set(false); this.processingStep.set(null); this.open.set(false);
+        if (usuarioId!==null) void this.restaurarBorrador(usuarioId,this.chatGeneration);
       }
     });
+    effect(()=>{
+      this.revisionBorrador();this.captureTurns();this.editando();
+      if(this.borradorRestaurado())this.programarBorrador();
+    });
+  }
+  marcarBorrador():void{this.revisionBorrador.update(n=>n+1);}
+  private programarBorrador():void{
+    if(this.guardadoTimer)clearTimeout(this.guardadoTimer);
+    this.guardadoTimer=setTimeout(()=>{this.guardadoTimer=null;void this.guardarBorradorAhora().catch(()=>{});},120);
+  }
+  private async guardarBorradorAhora():Promise<void>{
+    if(this.guardadoTimer)clearTimeout(this.guardadoTimer);this.guardadoTimer=null;
+    const usuarioId=this.usuarioChat,generation=this.chatGeneration;
+    if(usuarioId===null||!this.borradorRestaurado())return;
+    const snapshot:BorradorChat={usuarioId,texto:this.content,acciones:this.captureTurns().flatMap(t=>t.actions),contexto:this.contexto,
+      editandoId:this.editando()?.id??null,edicion:this.editando()?structuredClone(this.borrador):undefined,actualizadoEn:new Date().toISOString()};
+    const guardado=this.guardadoBorrador.catch(()=>{}).then(async()=>{
+      if(generation!==this.chatGeneration)return;
+      await this.offline.guardarBorrador(snapshot);
+      if(generation===this.chatGeneration)this.errorBorrador.set('');
+    });
+    this.guardadoBorrador=guardado;
+    try{await guardado;}catch(error){if(generation===this.chatGeneration)this.errorBorrador.set(error instanceof Error?error.message:'No se pudo guardar el borrador. Conserva el texto antes de cerrar.');throw error;}
+  }
+  private async restaurarBorrador(usuarioId:number,generation:number):Promise<void>{
+    try{
+      const b=await this.offline.leerBorrador(usuarioId),catalogo=await this.offline.leerCatalogo(usuarioId);
+      if(generation!==this.chatGeneration || this.destruido)return;
+      if(catalogo){this.cuentasEdicion.set(catalogo.cuentas);this.categories.set(catalogo.categorias);}
+      if(b){this.content=b.texto;this.contexto=b.contexto??null;
+        if(b.acciones.length)this.captureTurns.set([{id:++this.captureTurnId,user:'Borrador recuperado',answer:'Revisa antes de confirmar. No se ha registrado todavía.',actions:b.acciones,voice:false}]);
+        const editando=b.acciones.find(p=>p.id===b.editandoId);if(editando){this.borrador=b.edicion??{...editando.data};this.editando.set(editando);}
+      }
+    }catch{if(generation===this.chatGeneration)this.errorBorrador.set('No se pudo recuperar el borrador local.');}
+    finally{if(generation===this.chatGeneration && !this.destruido){this.borradorRestaurado.set(true);if(this.offline.conexion()){this.recuperarPropuestas();this.cargarCatalogoChat();}}}
+  }
+  private cargarCatalogoChat():void{
+    const generation=this.chatGeneration,uid=this.usuarioChat;if(uid===null)return;
+    let cuentasListas=false,categoriasListas=false;
+    const persistir=()=>{if(cuentasListas&&categoriasListas)this.persistirCatalogo();};
+    this.operaciones.add(this.finanzas.getCuentas().subscribe({next:r=>{if(generation!==this.chatGeneration||!r.success||!r.data)return;this.cuentasEdicion.set(r.data);cuentasListas=true;persistir();},error:()=>{}}));
+    this.operaciones.add(this.finanzas.getCategorias().subscribe({next:r=>{if(generation!==this.chatGeneration||!r.success||!r.data)return;this.categories.set(r.data);categoriasListas=true;persistir();},error:()=>{}}));
+  }
+  private persistirCatalogo():void{
+    const uid=this.usuarioChat;if(uid!==null)void this.offline.guardarCatalogo(uid,this.cuentasEdicion(),this.categories()).catch(()=>{});
   }
   private esPedidoNuevo(texto: string): boolean { return /^(?:por favor\s+)?(?:gast[eé]|gasto|pagu[eé]|recib[ií]|ingreso|transfer|reporte|resumen|saldo|top|alertas)/i.test(texto); }
   usarSugerencia(texto: string): void { this.contexto = null; this.content = texto; this.voiceCapture.set(false); this.submit(); }
@@ -266,6 +373,10 @@ export class QuickCaptureComponent implements OnDestroy {
   private voiceGeneration = 0;
 
   ngOnDestroy(): void {
+    this.destruido = true;
+    if(this.guardadoTimer)clearTimeout(this.guardadoTimer);this.quitarProtector();
+    void this.guardarBorradorAhora().catch(()=>{});
+    this.operaciones.unsubscribe();
     this.transcripcionSub?.unsubscribe();
     this.capturaSub?.unsubscribe();
     this.limpiarHoldTimer();
@@ -295,7 +406,7 @@ export class QuickCaptureComponent implements OnDestroy {
     else if (!event.shiftKey && document.activeElement === ultimo) { event.preventDefault(); primero?.focus(); }
   }
   toggle(): void { this.open.update(value => !value); }
-  alCambiarTexto(): void { this.voiceCapture.set(false); this.error.set(''); this.aiConsentRequired.set(false); }
+  alCambiarTexto(): void { this.voiceCapture.set(false); this.error.set(''); this.aiConsentRequired.set(false);this.marcarBorrador(); }
   enviarConEnter(inputEvent: Event): void {
     const event = inputEvent as KeyboardEvent;
     if (event.shiftKey || event.isComposing) return;
@@ -318,6 +429,14 @@ export class QuickCaptureComponent implements OnDestroy {
   submit(): void {
     const value = this.content.trim();
     if (!value || this.loading() || this.listening() || this.stopping() || this.confirming() !== null) return;
+    if(!this.offline.conexion()){
+      try{
+        if(!this.cuentasEdicion().length)throw new Error('Abre la app con conexión para guardar primero tus cuentas.');
+        const p=prepararCapturaOffline(value,this.cuentasEdicion(),this.categories());
+        this.captureTurns.update(turns=>[...turns,{id:++this.captureTurnId,user:value,answer:'Preparado en este dispositivo. Edita la cuenta si falta y confirma antes de enviarlo.',actions:[p],voice:false,engine:'REGLAS'}]);
+        this.content='';this.error.set('');this.marcarBorrador();
+      }catch(error){this.error.set(error instanceof Error?error.message:'No se pudo preparar el movimiento.');}return;
+    }
     this.aiConsentRequired.set(false);
     this.sourceInput.set(value); this.pendingCaptureText.set(value); this.loading.set(true); this.error.set('');
     const capturedByVoice = this.voiceCapture();
@@ -397,21 +516,82 @@ export class QuickCaptureComponent implements OnDestroy {
     this.asignarCategoria(proposal, categoria, source);
   }
   asignarCategoria(proposal: AiActionProposal, categoria: Categoria, source: string): void {
-    const capturedByVoice = this.captureTurns().find(turn => turn.actions.some(action => action.id === proposal.id))?.voice ?? false;
-    this.dismiss(proposal.id);
-    this.content = `${source.replace(/\s+$/, '')} en ${categoria.nombre}`.trim();
-    this.voiceCapture.set(capturedByVoice);
-    this.submit();
+    this.actualizarPropuesta(proposal,{...proposal.data,categoriaId:categoria.id});
   }
   dismiss(id: string): void {
-    this.captureTurns.update(turns => turns.map(turn => ({ ...turn, actions: turn.actions.filter(action => action.id !== id) })));
+    if (this.confirming()) return;
+    const propuesta=this.captureTurns().flatMap(t=>t.actions).find(p=>p.id===id);
+    if(propuesta?.local){this.captureTurns.update(turns=>turns.map(t=>({...t,actions:t.actions.filter(p=>p.id!==id)})));this.marcarBorrador();return;}
+    if(!this.offline.conexion()){this.error.set('Descartar una propuesta del servidor necesita conexión.');return;}
+    this.confirming.set(id);
+    const generation=this.chatGeneration;
+    this.operaciones.add(this.finanzas.descartarPropuestaAi(id).subscribe({
+      next: response => { if (generation!==this.chatGeneration) return; this.confirming.set(null);
+        if (!response.success) { this.error.set(response.message||'No se pudo descartar. Reintenta.'); return; }
+        this.captureTurns.update(turns => turns.map(turn => ({...turn,actions:turn.actions.filter(action => action.id!==id)})));
+      }, error: error => { if (generation!==this.chatGeneration) return; this.confirming.set(null); this.error.set(this.errorMessage(error)); }
+    }));
+  }
+
+  recuperarPropuestas(): void {
+    if(!this.offline.conexion())return;
+    if (this.recuperando() || this.confirming() || this.loading()) return;
+    this.recuperando.set(true); const generation=this.chatGeneration;
+    this.operaciones.add(this.finanzas.getPropuestasAi().subscribe({
+      next: response => { if (generation!==this.chatGeneration) return; this.recuperando.set(false);
+        if (!response.success || !response.data) { this.error.set(response.message||'No pude recuperar propuestas. Reintenta.'); return; }
+        const pendientes=response.data.filter(p=>p.type==='CREATE_TRANSACTION'); const ids=new Set(pendientes.map(p => p.id));
+        this.captureTurns.update(turns => turns.map(turn => ({...turn, actions:turn.actions.filter(p => p.local||ids.has(p.id)).map(p => p.local?p:pendientes.find(n => n.id===p.id)!)})));
+        const visibles=new Set(this.captureTurns().flatMap(t => t.actions.map(p => p.id)));
+        const nuevas=pendientes.filter(p => !visibles.has(p.id));
+        if (nuevas.length) this.captureTurns.update(turns => [...turns,{id:++this.captureTurnId,user:'Propuestas recuperadas',answer:'Revisa antes de guardar. Prepararlas no modifica tus cuentas.',actions:nuevas,voice:false}]);
+      }, error: error => { if (generation!==this.chatGeneration) return; this.recuperando.set(false); this.error.set(this.errorMessage(error)); }
+    }));
+  }
+  abrirEdicion(proposal: AiActionProposal): void {
+    if (this.confirming()) return;
+    this.borrador={...proposal.data}; this.editando.set(proposal);
+    if(!this.offline.conexion())return;
+    const generation=this.chatGeneration;
+    this.operaciones.add(this.finanzas.getCuentas().subscribe({next:r => { if (generation===this.chatGeneration) this.cuentasEdicion.set(r.data??[]); },error:e => { if(generation===this.chatGeneration) this.error.set(this.errorMessage(e)); }}));
+  }
+  guardarEdicion(): void {
+    const p=this.editando(); if (!p) return;
+    const datos={...this.borrador};
+    if(datos['tipo']==='TRANSFERENCIA')datos['categoriaId']=null;
+    else { datos['cuentaDestinoId']=null; datos['tasaCambio']=null;
+      if(datos['tipo']!==p.data['tipo'])datos['categoriaId']=null;
+    }
+    this.actualizarPropuesta(p,datos);
+  }
+  private actualizarPropuesta(proposal:AiActionProposal,datos:Record<string,unknown>):void {
+    if (this.confirming()) return;
+    if(proposal.local){
+      const cuenta=this.cuentasEdicion().find(c=>c.id===datos['cuentaId'])?.nombre??'Cuenta por seleccionar';
+      const destino=datos['tipo']==='TRANSFERENCIA'?' a '+(this.cuentasEdicion().find(c=>c.id===datos['cuentaDestinoId'])?.nombre??'destino por seleccionar'):'';
+      const p={...proposal,data:{...datos},version:(proposal.version??0)+1,summary:`${datos['tipo']} de ${datos['monto']} · ${cuenta}${destino} · ${datos['fecha']}`};
+      this.captureTurns.update(turns=>turns.map(t=>({...t,actions:t.actions.map(previo=>previo.id===p.id?p:previo)})));
+      this.editando.set(null);this.marcarBorrador();return;
+    }
+    if(!this.offline.conexion()){this.error.set('Editar una propuesta del servidor requiere conexión.');return;}
+    this.confirming.set(proposal.id); const generation=this.chatGeneration;
+    this.operaciones.add(this.finanzas.editarPropuestaAi(proposal.id,datos,proposal.version??0).subscribe({
+      next:r => { if(generation!==this.chatGeneration)return; this.confirming.set(null);
+        if(!r.success||!r.data){this.error.set(r.message||'No se pudo editar.');return;}
+        this.captureTurns.update(turns=>turns.map(t=>({...t,actions:t.actions.map(p=>p.id===proposal.id?r.data!:p)})));
+        this.editando.set(null);this.error.set('');
+      },error:e=>{if(generation!==this.chatGeneration)return;this.confirming.set(null);this.error.set(this.errorMessage(e));}
+    }));
   }
 
   confirm(proposal: AiActionProposal): void {
     if (this.confirming()) return;
+    if(proposal.local||!this.offline.conexion()){void this.confirmarEnDispositivo(proposal);return;}
     this.confirming.set(proposal.id); this.error.set('');
-    this.finanzas.confirmAiAction(proposal.id).subscribe({
+    const generation=this.chatGeneration;
+    this.operaciones.add(this.finanzas.confirmAiAction(proposal.id,proposal.version??0).subscribe({
       next: result => {
+        if(generation!==this.chatGeneration)return;
         this.confirming.set(null);
         if (!result.success) {
           const msg = result.message || 'No se guardó el movimiento.';
@@ -426,12 +606,13 @@ export class QuickCaptureComponent implements OnDestroy {
         this.toast.success('Movimiento guardado con éxito.', '✅ Listo');
       },
       error: error => {
+        if(generation!==this.chatGeneration)return;
         this.confirming.set(null);
-        const msg = this.errorMessage(error);
+        const msg = this.errorConfirmacion(error);
         this.error.set(msg);
         this.toast.error(msg, '⚠️ Error de conexión');
       }
-    });
+    }));
   }
 
   preguntaSugerida(question: string): void { this.reportQuestion = question; this.askReport(); }
@@ -442,23 +623,27 @@ export class QuickCaptureComponent implements OnDestroy {
     history.push({ role: 'USER', content });
     this.reportMessages.update(messages => [...messages, { role: 'USER', content }]);
     this.reportQuestion = ''; this.reportLoading.set(true); this.reportError.set('');
-    this.finanzas.chatWithAi(history, true).subscribe({
+    const generation=this.chatGeneration;
+    this.operaciones.add(this.finanzas.chatWithAi(history, true).subscribe({
       next: response => {
+        if(generation!==this.chatGeneration)return;
         this.reportLoading.set(false);
-        if (!response.success || !response.data) { this.reportError.set(response.message || 'No pude preparar el informe.'); return; }
+        if (!response.success || !response.data) { this.reportMessages.update(m=>m.slice(0,-1));this.reportError.set(response.message || 'No pude preparar el informe.'); return; }
         const actions = response.data.actions?.length ? response.data.actions : response.data.action ? [response.data.action] : [];
         this.reportMessages.update(messages => [...messages, { role: 'ASSISTANT', content: response.data!.answer, actions }]);
         if (this.reportMessages().length > 12) this.reportMessages.update(messages => messages.slice(-12));
       },
-      error: error => { this.reportLoading.set(false); this.reportError.set(this.errorMessage(error)); }
-    });
+      error: error => { if(generation!==this.chatGeneration)return; this.reportMessages.update(m=>m.slice(0,-1));this.reportLoading.set(false); this.reportError.set(this.errorMessage(error)); }
+    }));
   }
 
   confirmReportAction(messageIndex: number, proposal: AiActionProposal): void {
     if (this.confirming()) return;
     this.confirming.set(proposal.id);
-    this.finanzas.confirmAiAction(proposal.id).subscribe({
+    const generation=this.chatGeneration;
+    this.operaciones.add(this.finanzas.confirmAiAction(proposal.id,proposal.version??0).subscribe({
       next: response => {
+        if(generation!==this.chatGeneration)return;
         this.confirming.set(null);
         if (!response.success) { this.reportError.set(response.message || 'No se pudo completar el cambio.'); return; }
         this.reportMessages.update(messages => messages.map((message, index) => index === messageIndex
@@ -466,8 +651,8 @@ export class QuickCaptureComponent implements OnDestroy {
           : message));
         window.dispatchEvent(new Event('kaptal-movimiento-guardado'));
       },
-      error: error => { this.confirming.set(null); this.reportError.set(this.errorMessage(error)); }
-    });
+      error: error => { if(generation!==this.chatGeneration)return; this.confirming.set(null); this.reportError.set(this.errorConfirmacion(error)); }
+    }));
   }
 
   private loadWeeklyTransactions(): void {
@@ -475,14 +660,16 @@ export class QuickCaptureComponent implements OnDestroy {
     const until = new Date();
     const from = new Date(until.getFullYear(), until.getMonth(), until.getDate() - 6);
     const iso = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-    this.finanzas.getTransaccionesPaginadas({ fechaInicio: iso(from), fechaFin: iso(until) }, 0, 100).subscribe({
+    const generation=this.chatGeneration;
+    this.operaciones.add(this.finanzas.getTransaccionesPaginadas({ fechaInicio: iso(from), fechaFin: iso(until) }, 0, 100).subscribe({
       next: response => {
+        if(generation!==this.chatGeneration)return;
         const transactions = response.data?.content ?? [];
         this.weeklyTransactions.set(transactions);
         const preferred = this.perfil.perfil()?.monedaPredeterminada;
         this.reportCurrency.set(transactions.some(item => item.moneda === preferred) ? preferred! : transactions[0]?.moneda ?? 'MXN');
       }
-    });
+    }));
   }
 
   @HostListener('window:kaptal-abrir-captura-chat', ['$event'])
@@ -548,6 +735,7 @@ export class QuickCaptureComponent implements OnDestroy {
     void this.startVoice();
   }
   private async startVoice(): Promise<void> {
+    if (!this.offline.conexion()) { this.error.set('La transcripción necesita conexión. Puedes escribir el movimiento.'); return; }
     if (this.listening() || this.stopping() || this.loading() || this.transcribiendoVoz()) return;
     const generation = ++this.voiceGeneration;
     this.error.set(''); this.voiceMessage.set('');
@@ -653,10 +841,11 @@ export class QuickCaptureComponent implements OnDestroy {
     this.cronometro.set(`${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`);
   }
   private cargarCategoriasCaptura(): void {
-    this.finanzas.getCategorias().subscribe({
-      next: response => { if (response.success && response.data) this.categories.set(response.data); },
-      error: () => this.error.set('No se pudieron cargar las categorías. Reintenta la captura.')
-    });
+    const generation=this.chatGeneration;
+    this.operaciones.add(this.finanzas.getCategorias().subscribe({
+      next: response => { if (generation===this.chatGeneration && response.success && response.data) this.categories.set(response.data); },
+      error: () => {if(generation===this.chatGeneration)this.error.set('No se pudieron cargar las categorías. Reintenta la captura.');}
+    }));
   }
   private iniciarNivelesAudio(stream: MediaStream): void {
     try {
@@ -706,6 +895,27 @@ export class QuickCaptureComponent implements OnDestroy {
       if (body?.message) return body.message;
     }
     return 'No pude procesar la solicitud. Inténtalo de nuevo.';
+  }
+  private async confirmarEnDispositivo(proposal:AiActionProposal):Promise<void>{
+    const uid=this.usuarioChat,generation=this.chatGeneration;if(uid===null){this.error.set('Inicia sesión para guardar en este dispositivo.');return;}
+    this.confirming.set(proposal.id);this.error.set('');
+    try{
+      const payload=validarPayloadOffline(proposal.data,this.cuentasEdicion(),this.categories());
+      await this.guardarBorradorAhora();
+      if(generation!==this.chatGeneration)return;
+      if(proposal.local)await this.offline.guardarPendiente(uid,proposal.id,payload);
+      else await this.offline.guardarConfirmacion(uid,proposal,payload);
+      if(generation!==this.chatGeneration)return;
+      this.captureTurns.update(turns=>turns.map(t=>({...t,actions:t.actions.filter(p=>p.id!==proposal.id)})));
+      this.toast.info('Guardado en este dispositivo. Falta confirmación del servidor.');
+      this.marcarBorrador();if(this.offline.conexion())void this.offline.sincronizar();
+    }catch(error){if(generation===this.chatGeneration)this.error.set(error instanceof Error?error.message:'No se pudo guardar localmente. La propuesta sigue disponible.');}
+    finally{if(generation===this.chatGeneration)this.confirming.set(null);}
+  }
+  private errorConfirmacion(error:unknown):string {
+    if(error instanceof HttpErrorResponse && (error.status===0 || error.status>=500))
+      return 'No pude comprobar el resultado. Reintenta esta misma propuesta; si ya se guardó, no se duplicará.';
+    return this.errorMessage(error);
   }
   @HostListener('document:keydown.escape') closeOnEscape(): void { this.close(); }
 }

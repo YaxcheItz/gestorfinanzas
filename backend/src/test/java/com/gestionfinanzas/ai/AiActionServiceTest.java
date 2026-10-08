@@ -25,6 +25,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class AiActionServiceTest {
+    private final java.util.Map<String,com.gestionfinanzas.model.entity.PropuestaChat> filas=new java.util.HashMap<>();
+    private final com.gestionfinanzas.repository.PropuestaChatRepository propuestas=mock(com.gestionfinanzas.repository.PropuestaChatRepository.class);
+    private final com.gestionfinanzas.repository.UsuarioRepository usuarios=mock(com.gestionfinanzas.repository.UsuarioRepository.class);
+    private final PropuestaChatService almacen=new PropuestaChatService(propuestas,usuarios,new ObjectMapper().findAndRegisterModules(),mock(jakarta.persistence.EntityManager.class));
     @Test
     void confirmacionDeVozPersisteOrigenSinSobrescribirNotas() {
         var proposal = service.interpret(7L, "Registra un gasto de 25 pesos");
@@ -44,11 +48,14 @@ class AiActionServiceTest {
     private final AiActionService service = new AiActionService(
             provider, contextService, cuentaService, categoriaService, presupuestoService,
             transaccionService, plantillaService, new ObjectMapper().findAndRegisterModules(),
-            Validation.buildDefaultValidatorFactory().getValidator()
+            Validation.buildDefaultValidatorFactory().getValidator(), almacen
     );
 
     @BeforeEach
     void configureContext() {
+        when(usuarios.findByIdForUpdate(anyLong())).thenAnswer(inv -> java.util.Optional.of(com.gestionfinanzas.model.entity.Usuario.builder().id(inv.getArgument(0)).activo(true).build()));
+        when(propuestas.save(org.mockito.ArgumentMatchers.any())).thenAnswer(inv -> { var p=(com.gestionfinanzas.model.entity.PropuestaChat)inv.getArgument(0); filas.put(p.getId(),p); return p; });
+        when(propuestas.bloquear(org.mockito.ArgumentMatchers.anyString(),anyLong())).thenAnswer(inv -> java.util.Optional.ofNullable(filas.get(inv.getArgument(0))).filter(p -> p.getUsuario().getId().equals(inv.getArgument(1))));
         when(contextService.buildContext(anyLong())).thenReturn("{}");
         when(cuentaService.listarCuentas(anyLong(), anyBoolean())).thenReturn(List.of());
         when(categoriaService.listarCategorias(anyLong())).thenReturn(List.of());
@@ -72,7 +79,7 @@ class AiActionServiceTest {
         service.confirm(7L, proposal.action().id());
 
         verify(transaccionService).crearTransaccion(eq(7L), org.mockito.ArgumentMatchers.any());
-        assertThrows(IllegalArgumentException.class, () -> service.confirm(7L, proposal.action().id()));
+        assertEquals("Listo. Registrar gasto de 25 MXN", service.confirm(7L, proposal.action().id()));
         verify(transaccionService).crearTransaccion(eq(7L), org.mockito.ArgumentMatchers.any());
     }
 
@@ -97,10 +104,7 @@ class AiActionServiceTest {
 
         var response = service.interpret(7L, "Muéstrame una gráfica de gastos por categoría");
 
-        assertEquals("Gastos por categoría", response.report().title());
-        assertEquals(List.of("Comida", "Transporte"), response.report().labels());
-        assertEquals(List.of(1200.0, 800.0), response.report().values());
-        assertEquals("MXN", response.report().unit());
+        org.junit.jupiter.api.Assertions.assertNull(response.report(),"Las cifras de IA no se publican como un reporte calculado.");
     }
 
     @Test

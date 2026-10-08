@@ -11,7 +11,7 @@ import java.util.List;
 public record AiChatRequest(
         @NotEmpty(message = "Escribe un mensaje para el asistente")
         @Size(max = 10, message = "La conversación puede incluir como máximo 10 mensajes")
-        List<@Valid Message> messages,
+        List<@NotNull @Valid Message> messages,
         boolean consentimientoDatosFinancieros
 ) {
     public AiChatRequest(List<Message> messages) {
