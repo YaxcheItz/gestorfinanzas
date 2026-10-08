@@ -9,7 +9,7 @@ export type TipoReparto = 'IGUAL' | 'PORCENTAJE' | 'EXACTO';
 export interface ParejaMiembro {
   id: number;
   nombre: string;
-  email: string;
+  email: string | null;
   aportado: number;
   consumido: number;
   pagado: number;
@@ -71,6 +71,7 @@ export interface ParejaPago {
   fecha: string;
   notas: string | null;
   fechaCreacion: string;
+  registradoPorId?: number | null;
 }
 
 export interface Pareja {
@@ -83,6 +84,25 @@ export interface Pareja {
   aportes: ParejaAporte[];
   gastos: ParejaGasto[];
   pagos: ParejaPago[];
+  activa?: boolean;
+}
+
+export interface InvitacionPareja {
+  id: number;
+  remitenteNombre: string;
+  remitenteEmail: string;
+  destinatarioEmail: string;
+  moneda: string;
+  recibida: boolean;
+  fechaCreacion: string;
+}
+
+export interface HistorialPareja {
+  id: number;
+  nombrePareja: string;
+  moneda: string;
+  importado: boolean;
+  fechaCreacion: string;
 }
 
 export interface ParejaCrearPayload {
