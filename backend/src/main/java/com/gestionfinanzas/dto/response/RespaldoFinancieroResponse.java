@@ -73,8 +73,14 @@ public record RespaldoFinancieroResponse(
             String moneda,
             LocalDate fecha,
             String notas,
-            LocalDateTime fechaCreacion
-    ) {}
+            LocalDateTime fechaCreacion,
+            MiembroRespaldo registradoPor
+    ) {
+        public PagoRespaldo(Long id, MiembroRespaldo pagador, MiembroRespaldo beneficiario,
+                BigDecimal monto, String moneda, LocalDate fecha, String notas, LocalDateTime fechaCreacion) {
+            this(id,pagador,beneficiario,monto,moneda,fecha,notas,fechaCreacion,null);
+        }
+    }
 
     public record PresupuestoRespaldo(
             Long id,

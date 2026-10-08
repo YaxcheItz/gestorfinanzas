@@ -189,16 +189,28 @@ describe('CuentasComponent', () => {
     component.guardar();
     expect(component.modalError()).toContain('día de corte');
 
-    component.diaCorte = 10;
-    component.diaPago = null;
-    component.guardar();
-    expect(component.modalError()).toContain('día de pago');
-
     component.diaCorte = 32;
     component.diaPago = 1;
     component.guardar();
     expect(component.modalError()).toContain('día de corte');
     expect(finanzasService.crearCuenta).not.toHaveBeenCalled();
+  });
+
+  it('uses the estimated payment date when a payment day has not been entered', () => {
+    component.nombre = 'Tarjeta';
+    component.tipo = 'CREDITO';
+    component.limiteCredito = 10000;
+    component.diaCorte = 10;
+    component.diaPago = null;
+    vi.spyOn(component, 'proximaFechaPago').mockReturnValue(new Date(2026, 9, 30));
+
+    component.guardar();
+
+    expect(component.modalError()).toBeNull();
+    expect(finanzasService.crearCuenta).toHaveBeenCalledWith(expect.objectContaining({
+      diaCorte: 10,
+      diaPago: 30
+    }));
   });
 
   it('rejects a credit limit below the current or opening debt', () => {

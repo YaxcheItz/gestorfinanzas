@@ -1,4 +1,4 @@
-import { ApplicationConfig, provideAppInitializer, provideBrowserGlobalErrorListeners, inject } from '@angular/core';
+import { ApplicationConfig, provideAppInitializer, provideBrowserGlobalErrorListeners, inject, isDevMode } from '@angular/core';
 import { provideRouter, withInMemoryScrolling } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
@@ -6,6 +6,7 @@ import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { errorInterceptor } from './core/interceptors/error.interceptor';
 import { AuthService } from './core/services/auth.service';
 import { routes } from './app.routes';
+import { provideServiceWorker } from '@angular/service-worker';
 
 /**
  * Al arrancar, si el access token guardado ya caducó, se renueva antes de que la
@@ -31,7 +32,12 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes, withInMemoryScrolling({ anchorScrolling: 'enabled' })),
-    provideHttpClient(withInterceptors([authInterceptor, errorInterceptor])),
-    provideAppInitializer(renovarSiHaceFalta)
+    // El error global solo debe ver el resultado final, después del intento de renovación.
+    provideHttpClient(withInterceptors([errorInterceptor, authInterceptor])),
+    provideAppInitializer(renovarSiHaceFalta),
+    provideServiceWorker('ngsw-worker.js', {
+      enabled: !isDevMode(),
+      registrationStrategy: 'registerWhenStable:30000'
+    })
   ]
 };

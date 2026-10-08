@@ -70,6 +70,11 @@ public class PlantillaRecurrente {
     @Builder.Default
     private Integer cuotasPagadas = 0;
 
+    private LocalDate fechaAncla;
+    @Column(precision = 15, scale = 2)
+    private BigDecimal montoPendiente;
+    private java.util.UUID compraMsiId;
+
     @CreationTimestamp
     @Column(name = "fecha_creacion", updatable = false)
     private LocalDateTime fechaCreacion;

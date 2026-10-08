@@ -12,6 +12,10 @@ import java.util.List;
 @Repository
 public interface RepartoGastoRepository extends JpaRepository<RepartoGasto, Long> {
 
+    @Modifying(flushAutomatically = true)
+    @Query("UPDATE RepartoGasto r SET r.usuario = :anonimo WHERE r.usuario.id = :id")
+    void anonimizarUsuario(@Param("id") Long id, @Param("anonimo") com.gestionfinanzas.model.entity.Usuario anonimo);
+
     List<RepartoGasto> findByGastoIdOrderByIdAsc(Long gastoId);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)

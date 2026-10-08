@@ -1,0 +1,122 @@
+[
+  {
+    "width": 320,
+    "height": 740,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "checks": [
+      "budgets",
+      "navigation targets",
+      "refresh",
+      "more and Escape",
+      "capture panel",
+      "time dialog"
+    ]
+  },
+  {
+    "width": 320,
+    "height": 740,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "checks": [
+      "budgets",
+      "navigation targets",
+      "refresh",
+      "more and Escape",
+      "capture panel",
+      "time dialog"
+    ]
+  },
+  {
+    "width": 390,
+    "height": 844,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "checks": [
+      "budgets",
+      "navigation targets",
+      "refresh",
+      "more and Escape",
+      "capture panel",
+      "time dialog"
+    ]
+  },
+  {
+    "width": 390,
+    "height": 844,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "checks": [
+      "budgets",
+      "navigation targets",
+      "refresh",
+      "more and Escape",
+      "capture panel",
+      "time dialog"
+    ]
+  },
+  {
+    "width": 768,
+    "height": 1024,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "checks": [
+      "budgets",
+      "navigation targets",
+      "refresh",
+      "more and Escape",
+      "capture panel",
+      "time dialog"
+    ]
+  },
+  {
+    "width": 768,
+    "height": 1024,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "checks": [
+      "budgets",
+      "navigation targets",
+      "refresh",
+      "more and Escape",
+      "capture panel",
+      "time dialog"
+    ]
+  },
+  {
+    "width": 1440,
+    "height": 1000,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "checks": [
+      "budgets",
+      "navigation targets",
+      "refresh",
+      "more and Escape",
+      "capture panel",
+      "time dialog"
+    ]
+  },
+  {
+    "width": 1440,
+    "height": 1000,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "checks": [
+      "budgets",
+      "navigation targets",
+      "refresh",
+      "more and Escape",
+      "capture panel",
+      "time dialog"
+    ]
+  }
+]

@@ -73,6 +73,7 @@ class TransaccionServiceTest {
         assertEquals(new BigDecimal("17.50"), response.tasaCambio());
         assertEquals("USD", response.moneda());
         assertEquals("MXN", response.monedaDestino());
+        assertEquals(com.gestionfinanzas.model.enums.MetodoCaptura.TEXTO, response.metodoCaptura());
         verify(auditoriaService).registrar(
                 eq(7L), isNull(), eq("CREAR"), isNull(), any(TransaccionResponse.class)
         );
@@ -445,7 +446,7 @@ class TransaccionServiceTest {
     @Test
     void exportarCsvRechazaRangoDeFechasInvertido() {
         var filtro = new TransaccionFiltroRequest(
-                null, null, null, LocalDate.of(2026, 9, 27), LocalDate.of(2026, 9, 26), null, null
+                null, null, null, null, LocalDate.of(2026, 9, 27), LocalDate.of(2026, 9, 26), null, null, null, null
         );
 
         assertThrows(IllegalArgumentException.class, () -> transaccionService.exportarCsv(7L, filtro));

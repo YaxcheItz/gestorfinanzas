@@ -1,0 +1,20 @@
+{
+  "date": "2026-10-04",
+  "frontend_tests": {
+    "files": 18,
+    "passed": 149,
+    "failed": 0
+  },
+  "production_build": "passed with size warnings",
+  "initial_bundle_kB": 582.41,
+  "initial_bundle_warning_kB": 500,
+  "baseline_initial_bundle_kB": 566.57,
+  "replica_upstream_tests": 57,
+  "theme_contrast_pairs": 22,
+  "theme_contrast_failures": 0,
+  "dashboard_viewports_themes": 8,
+  "secondary_screen_checks": 8,
+  "empty_state": "passed",
+  "browser_data": "synthetic intercepted APIs",
+  "physical_microphone_and_live_backend": "not tested"
+}

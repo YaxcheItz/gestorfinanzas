@@ -1,0 +1,43 @@
+{
+  "fecha": "2026-10-06T13:21:03.357588+00:00",
+  "backend": {
+    "tests": 256,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "suites": 37
+  },
+  "frontend": {
+    "tests": 190,
+    "files": 24,
+    "failed": 0
+  },
+  "build": {
+    "exitCode": 0,
+    "initialKB": 604.63,
+    "budgetKB": 500,
+    "loginCSSExcessBytes": 1
+  },
+  "browser": {
+    "scenarios": 4,
+    "api": "synthetic",
+    "serviceWorkers": "blocked",
+    "reducedMotion": true
+  },
+  "limits": [
+    "H2; no PostgreSQL integration or production changes",
+    "No measured coverage percentage",
+    "Legacy MSI needs original purchase amounts for reconciliation"
+  ],
+  "caveman": {
+    "repositorio": "https://github.com/JuliusBrussee/caveman",
+    "commit": "99aafe151a1be72be783e662858e8a0955add59f",
+    "ruta": "C:/Users/yaxti_cm5rg3t/.codex/skills/caveman",
+    "sha256": "34255a0215a7701eb83d508d03bc9560dc7bffbeb95a145ad2921ad2598a03bf",
+    "coincideConOrigen": true,
+    "dependenciasNuevas": false,
+    "activacion": "Disponible y activada durante esta misma sesion; no fue necesario reiniciar."
+  },
+  "commit": false,
+  "deploy": false
+}

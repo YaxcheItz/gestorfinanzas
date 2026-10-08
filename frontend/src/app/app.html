@@ -1,8 +1,10 @@
-<div class="min-h-screen flex flex-col bg-slate-50 text-slate-900">
-  <app-navbar />
+<div class="app-shell monai-theme min-h-screen flex flex-col text-slate-900">
+  @if (authService.isAuthenticated()) { <app-navbar /> }
+  @else { <a routerLink="/login" class="auth-brand" aria-label="Kaptal, inicio"><img src="kaptal.svg" alt=""><span>Kaptal</span></a> }
   <main class="flex-1" [class.app-content-with-bottom-nav]="authService.isAuthenticated()">
     <router-outlet />
   </main>
+  @if (authService.isAuthenticated()) { <app-quick-capture /> }
 </div>
 
 <!-- Global UI Layer: Toasts y Diálogos de Confirmación -->

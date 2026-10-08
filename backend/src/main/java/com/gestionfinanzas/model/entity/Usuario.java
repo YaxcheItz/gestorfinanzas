@@ -43,6 +43,11 @@ public class Usuario {
     @Builder.Default
     private boolean activo = true;
 
+    /** Identidad sin acceso usada exclusivamente para referencias históricas. */
+    @Column(nullable = false, columnDefinition = "boolean not null default false")
+    @Builder.Default
+    private boolean referenciaHistorica = false;
+
     @Column(name = "token_version", nullable = false, columnDefinition = "integer not null default 0")
     @Builder.Default
     private int tokenVersion = 0;
@@ -65,6 +70,22 @@ public class Usuario {
     @Column(name = "ocultar_montos", nullable = false, columnDefinition = "boolean not null default false")
     @Builder.Default
     private boolean ocultarMontos = false;
+
+    @Column(name = "whatsapp_pin_hash", length = 100)
+    private String whatsappPinHash;
+
+    @Column(name = "whatsapp_pin_phone", length = 16, unique = true)
+    private String whatsappPinPhone;
+
+    @Column(name = "whatsapp_pin_issued_at")
+    private LocalDateTime whatsappPinIssuedAt;
+
+    @Column(name = "whatsapp_pin_expires_at")
+    private LocalDateTime whatsappPinExpiresAt;
+
+    @Column(name = "whatsapp_pin_failed_attempts", nullable = false, columnDefinition = "integer not null default 0")
+    @Builder.Default
+    private int whatsappPinFailedAttempts = 0;
 
     @CreationTimestamp
     @Column(name = "fecha_creacion", updatable = false)

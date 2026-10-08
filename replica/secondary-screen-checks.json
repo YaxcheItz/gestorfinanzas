@@ -1,0 +1,50 @@
+[
+  {
+    "route": "transacciones",
+    "theme": "light",
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "route": "cuentas",
+    "theme": "light",
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "route": "presupuestos",
+    "theme": "light",
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "route": "configuracion",
+    "theme": "light",
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "route": "transacciones",
+    "theme": "dark",
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "route": "cuentas",
+    "theme": "dark",
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "route": "presupuestos",
+    "theme": "dark",
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "route": "configuracion",
+    "theme": "dark",
+    "errors": [],
+    "overflow": false
+  }
+]

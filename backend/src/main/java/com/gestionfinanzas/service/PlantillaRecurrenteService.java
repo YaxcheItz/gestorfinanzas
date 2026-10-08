@@ -4,7 +4,6 @@ import com.gestionfinanzas.dto.request.TransaccionRequest;
 import com.gestionfinanzas.dto.response.PlantillaRecurrenteResponse;
 import com.gestionfinanzas.model.entity.PlantillaRecurrente;
 import com.gestionfinanzas.model.entity.Cuenta;
-import com.gestionfinanzas.model.enums.FrecuenciaRecurrencia;
 import com.gestionfinanzas.repository.PlantillaRecurrenteRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -30,13 +29,28 @@ public class PlantillaRecurrenteService {
     @Transactional
     public PlantillaRecurrenteResponse cambiarEstado(Long usuarioId, Long plantillaId, boolean activa) {
         PlantillaRecurrente plantilla = buscar(usuarioId, plantillaId);
+        if (activa && plantilla.getCuotasTotales() != null
+                && plantilla.getCuotasPagadas() >= plantilla.getCuotasTotales()) {
+            throw new IllegalArgumentException("Esta compra MSI ya terminó");
+        }
         plantilla.setActiva(activa);
         return PlantillaRecurrenteResponse.fromEntity(plantillaRepository.save(plantilla));
     }
 
     @Transactional
     public void eliminar(Long usuarioId, Long plantillaId) {
-        plantillaRepository.delete(buscar(usuarioId, plantillaId));
+        PlantillaRecurrente plantilla = buscar(usuarioId, plantillaId);
+        if (plantilla.getCuotasTotales() != null) {
+            java.math.BigDecimal pendiente = pendiente(plantilla);
+            Cuenta cuenta = plantilla.getCuenta();
+            java.math.BigDecimal retenido = cuenta.getLimiteRetenido() == null
+                    ? java.math.BigDecimal.ZERO : cuenta.getLimiteRetenido();
+            if (retenido.compareTo(pendiente) < 0) {
+                throw new IllegalArgumentException("La retención MSI no coincide con las cuotas pendientes; revisa la cuenta antes de cancelar");
+            }
+            cuenta.setLimiteRetenido(retenido.subtract(pendiente));
+        }
+        plantillaRepository.delete(plantilla);
     }
 
     @Transactional
@@ -46,30 +60,40 @@ public class PlantillaRecurrenteService {
             throw new IllegalArgumentException("La plantilla recurrente está pausada");
         }
         LocalDate fecha = plantilla.getSiguienteFecha();
-        if (fecha.isAfter(LocalDate.now())) {
+        if (fecha.isAfter(CalendarioFinanciero.hoy())) {
             throw new IllegalArgumentException("Este movimiento recurrente aún no vence");
         }
 
         String descripcion = null;
+        java.math.BigDecimal monto = plantilla.getMonto();
         if (plantilla.getCuotasTotales() != null) {
+            if (plantilla.getCuotasPagadas() >= plantilla.getCuotasTotales()) {
+                throw new IllegalArgumentException("Esta compra MSI ya terminó");
+            }
+            java.math.BigDecimal pendiente = pendiente(plantilla);
+            if (plantilla.getCuotasPagadas() + 1 == plantilla.getCuotasTotales()) monto = pendiente;
             plantilla.setCuotasPagadas(plantilla.getCuotasPagadas() + 1);
             descripcion = "Cuota " + (plantilla.getCuotasPagadas() + 1) + "/" + (plantilla.getCuotasTotales() + 1);
             
             Cuenta cuenta = plantilla.getCuenta();
             java.math.BigDecimal retenido = cuenta.getLimiteRetenido() != null ? cuenta.getLimiteRetenido() : java.math.BigDecimal.ZERO;
-            cuenta.setLimiteRetenido(retenido.subtract(plantilla.getMonto()).max(java.math.BigDecimal.ZERO));
+            if (retenido.compareTo(monto) < 0) {
+                throw new IllegalArgumentException("La retención MSI no coincide con el plan de pagos");
+            }
+            cuenta.setLimiteRetenido(retenido.subtract(monto));
+            plantilla.setMontoPendiente(pendiente.subtract(monto));
             
             if (plantilla.getCuotasPagadas() >= plantilla.getCuotasTotales()) {
                 plantilla.setActiva(false);
             }
         }
 
-        transaccionService.crearTransaccion(usuarioId, new TransaccionRequest(
+        transaccionService.crearCuotaRecurrente(usuarioId, new TransaccionRequest(
                 plantilla.getCuenta().getId(),
                 null,
                 plantilla.getCategoria() != null ? plantilla.getCategoria().getId() : null,
                 plantilla.getTipo(),
-                plantilla.getMonto(),
+                monto,
                 null,
                 fecha,
                 descripcion,
@@ -77,8 +101,9 @@ public class PlantillaRecurrenteService {
                 null,
                 null,
                 null
-        ));
-        plantilla.setSiguienteFecha(siguienteFecha(fecha, plantilla.getFrecuencia()));
+        ), plantilla.getCompraMsiId());
+        if (plantilla.getFechaAncla() == null) plantilla.setFechaAncla(fecha);
+        plantilla.setSiguienteFecha(CalendarioFinanciero.siguiente(fecha, plantilla.getFrecuencia(), plantilla.getFechaAncla()));
         plantillaRepository.save(plantilla);
     }
 
@@ -87,19 +112,10 @@ public class PlantillaRecurrenteService {
                 .orElseThrow(() -> new IllegalArgumentException("Plantilla recurrente no encontrada"));
     }
 
-    private LocalDate siguienteFecha(LocalDate fecha, FrecuenciaRecurrencia frecuencia) {
-        return switch (frecuencia) {
-            case SEMANAL -> fecha.plusWeeks(1);
-            case QUINCENAL -> fecha.plusWeeks(2);
-            case MENSUAL -> {
-                LocalDate siguienteMes = fecha.plusMonths(1);
-                int dia = fecha.getDayOfMonth() == fecha.lengthOfMonth()
-                        ? siguienteMes.lengthOfMonth()
-                        : Math.min(fecha.getDayOfMonth(), siguienteMes.lengthOfMonth());
-                yield siguienteMes.withDayOfMonth(dia);
-            }
-            case ANUAL -> fecha.plusYears(1);
-        };
+    private java.math.BigDecimal pendiente(PlantillaRecurrente plantilla) {
+        return plantilla.getMontoPendiente() != null ? plantilla.getMontoPendiente()
+                : plantilla.getMonto().multiply(java.math.BigDecimal.valueOf(
+                        plantilla.getCuotasTotales() - plantilla.getCuotasPagadas()));
     }
 }
 

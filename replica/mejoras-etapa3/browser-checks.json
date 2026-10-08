@@ -1,0 +1,66 @@
+{
+  "fecha": "2026-10-06T19:39:36.834Z",
+  "navegador": "Chromium",
+  "api": "sintética",
+  "serviceWorkers": "bloqueados",
+  "reducedMotion": true,
+  "resultados": [
+    {
+      "width": 360,
+      "dark": false,
+      "invitacionSinVinculo": true,
+      "aceptacionConfirmada": true,
+      "cancelarNoAcepta": true,
+      "permisosBorrado": true,
+      "pagoDirigidoCorrectamente": true,
+      "historialConservado": true,
+      "historialSoloLectura": true,
+      "escriturasPersonales": [],
+      "overflow": false,
+      "errores": []
+    },
+    {
+      "width": 390,
+      "dark": true,
+      "invitacionSinVinculo": true,
+      "aceptacionConfirmada": true,
+      "cancelarNoAcepta": true,
+      "permisosBorrado": true,
+      "pagoDirigidoCorrectamente": true,
+      "historialConservado": true,
+      "historialSoloLectura": true,
+      "escriturasPersonales": [],
+      "overflow": false,
+      "errores": []
+    },
+    {
+      "width": 1280,
+      "dark": false,
+      "invitacionSinVinculo": true,
+      "aceptacionConfirmada": true,
+      "cancelarNoAcepta": true,
+      "permisosBorrado": true,
+      "pagoDirigidoCorrectamente": true,
+      "historialConservado": true,
+      "historialSoloLectura": true,
+      "escriturasPersonales": [],
+      "overflow": false,
+      "errores": []
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "dark": false,
+      "invitacionSinVinculo": true,
+      "aceptacionConfirmada": true,
+      "cancelarNoAcepta": true,
+      "permisosBorrado": true,
+      "pagoDirigidoCorrectamente": true,
+      "historialConservado": true,
+      "historialSoloLectura": true,
+      "escriturasPersonales": [],
+      "overflow": false,
+      "errores": []
+    }
+  ]
+}

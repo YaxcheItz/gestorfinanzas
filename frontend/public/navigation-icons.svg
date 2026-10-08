@@ -31,4 +31,5 @@
   <symbol id="categories" viewBox="0 0 24 24">
     <path d="m20 13-7 7L3 10V3h7l10 10zm-12.5-5.5h.01"/>
   </symbol>
+  <symbol id="settings" viewBox="0 0 24 24"><path d="m9 3-.5 2a8 8 0 0 0-2 1.2L4.5 6 2 10l1.5 1.5a8 8 0 0 0 0 1L2 14l2.5 4 2-0.2A8 8 0 0 0 8.5 19l.5 2h6l.5-2a8 8 0 0 0 2-1.2l2 .2L22 14l-1.5-1.5a8 8 0 0 0 0-1L22 10l-2.5-4-2 .2a8 8 0 0 0-2-1.2L15 3Z"/><circle cx="12" cy="12" r="3"/></symbol>
 </svg>

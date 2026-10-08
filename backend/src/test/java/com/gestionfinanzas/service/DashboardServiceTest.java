@@ -26,6 +26,25 @@ import static org.mockito.Mockito.when;
 
 class DashboardServiceTest {
 
+    @Test
+    void rangoPersonalizadoAplicaALosTotalesCategoriasYActividad() {
+        LocalDate desde = LocalDate.of(2025, 12, 29);
+        LocalDate hasta = LocalDate.of(2026, 1, 4);
+        dashboardService.obtenerResumen(7L, 1, 2026, desde, hasta);
+        dashboardService.obtenerAnalitica(7L, 1, 2026, desde, hasta);
+        verify(transaccionRepository).findTotalesMensualesPorMoneda(7L, desde, hasta);
+        verify(transaccionRepository).findTop10ByUsuarioIdAndFechaBetweenOrderByFechaDescIdDesc(7L, desde, hasta);
+        verify(transaccionRepository).findGastosPorCategoria(7L, TipoTransaccion.GASTO, desde, hasta);
+    }
+
+    @Test
+    void rechazaRangosIncompletosOInvertidos() {
+        LocalDate desde = LocalDate.of(2026, 1, 4);
+        LocalDate hasta = LocalDate.of(2025, 12, 29);
+        assertThrows(IllegalArgumentException.class, () -> dashboardService.obtenerResumen(7L, 1, 2026, desde, hasta));
+        assertThrows(IllegalArgumentException.class, () -> dashboardService.obtenerAnalitica(7L, 1, 2026, desde, null));
+    }
+
     private final CuentaRepository cuentaRepository = mock(CuentaRepository.class);
     private final TransaccionRepository transaccionRepository = mock(TransaccionRepository.class);
     private final DashboardService dashboardService = new DashboardService(cuentaRepository, transaccionRepository);

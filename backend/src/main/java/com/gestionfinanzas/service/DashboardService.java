@@ -39,12 +39,19 @@ public class DashboardService {
 
     @Transactional(readOnly = true)
     public DashboardResumenResponse obtenerResumen(Long usuarioId, Integer mes, Integer anio) {
-        LocalDate hoy = LocalDate.now();
+        return obtenerResumen(usuarioId, mes, anio, null, null);
+    }
+
+    @Transactional(readOnly = true)
+    public DashboardResumenResponse obtenerResumen(Long usuarioId, Integer mes, Integer anio,
+                                                    LocalDate desde, LocalDate hasta) {
+        LocalDate hoy = com.gestionfinanzas.service.CalendarioFinanciero.hoy();
         int mesConsulta = (mes != null && mes >= 1 && mes <= 12) ? mes : hoy.getMonthValue();
         int anioConsulta = (anio != null && anio >= 2000 && anio <= 2100) ? anio : hoy.getYear();
 
-        LocalDate inicioPeriodo = LocalDate.of(anioConsulta, mesConsulta, 1);
-        LocalDate finPeriodo = inicioPeriodo.withDayOfMonth(inicioPeriodo.lengthOfMonth());
+        LocalDate[] rango = resolverRango(mesConsulta, anioConsulta, desde, hasta);
+        LocalDate inicioPeriodo = rango[0];
+        LocalDate finPeriodo = rango[1];
 
         List<Cuenta> cuentasActivas = cuentaRepository.findByUsuarioIdAndActivoTrue(usuarioId);
         Map<String, BigDecimal> balancesPorMoneda = new HashMap<>();
@@ -96,7 +103,7 @@ public class DashboardService {
                 ));
 
         List<TransaccionResponse> ultimosMovimientos = transaccionRepository
-                .findTop10ByUsuarioIdOrderByFechaDescIdDesc(usuarioId)
+                .findTop10ByUsuarioIdAndFechaBetweenOrderByFechaDescIdDesc(usuarioId, inicioPeriodo, finPeriodo)
                 .stream()
                 .map(TransaccionResponse::fromEntity)
                 .toList();
@@ -117,12 +124,31 @@ public class DashboardService {
 
     @Transactional(readOnly = true)
     public DashboardAnaliticaResponse obtenerAnalitica(Long usuarioId) {
-        YearMonth mesActual = YearMonth.now();
+        return obtenerAnalitica(usuarioId, null, null);
+    }
+
+    @Transactional(readOnly = true)
+    public DashboardAnaliticaResponse obtenerAnalitica(Long usuarioId, Integer mesParametro, Integer anioParametro) {
+        return obtenerAnalitica(usuarioId, mesParametro, anioParametro, null, null);
+    }
+
+    @Transactional(readOnly = true)
+    public DashboardAnaliticaResponse obtenerAnalitica(Long usuarioId, Integer mesParametro, Integer anioParametro,
+                                                       LocalDate desde, LocalDate hasta) {
+        LocalDate hoy = com.gestionfinanzas.service.CalendarioFinanciero.hoy();
+        int mesConsulta = mesParametro == null ? hoy.getMonthValue() : mesParametro;
+        int anioConsulta = anioParametro == null ? hoy.getYear() : anioParametro;
+        if (mesConsulta < 1 || mesConsulta > 12 || anioConsulta < 2000 || anioConsulta > 2100) {
+            throw new IllegalArgumentException("El periodo solicitado no es válido");
+        }
+
+        YearMonth mesActual = YearMonth.of(anioConsulta, mesConsulta);
         LocalDate inicioMes = mesActual.atDay(1);
         LocalDate finMes = mesActual.atEndOfMonth();
+        LocalDate[] rango = resolverRango(mesConsulta, anioConsulta, desde, hasta);
         List<DashboardGastoCategoriaResponse> gastosPorCategoria =
                 transaccionRepository.findGastosPorCategoria(
-                        usuarioId, TipoTransaccion.GASTO, inicioMes, finMes
+                        usuarioId, TipoTransaccion.GASTO, rango[0], rango[1]
                 );
 
         YearMonth primerMes = mesActual.minusMonths(5);
@@ -180,7 +206,7 @@ public class DashboardService {
 
     @Transactional(readOnly = true)
     public DashboardComparacionResponse obtenerComparacion(Long usuarioId, Integer mes, Integer anio) {
-        LocalDate hoy = LocalDate.now();
+        LocalDate hoy = com.gestionfinanzas.service.CalendarioFinanciero.hoy();
         int mesConsulta = mes == null ? hoy.getMonthValue() : mes;
         int anioConsulta = anio == null ? hoy.getYear() : anio;
         if (mesConsulta < 1 || mesConsulta > 12 || anioConsulta < 2000 || anioConsulta > 2100) {
@@ -230,6 +256,20 @@ public class DashboardService {
                 periodoAnterior.getMonthValue(), periodoAnterior.getYear(),
                 comparaciones
         );
+    }
+
+    private LocalDate[] resolverRango(int mes, int anio, LocalDate desde, LocalDate hasta) {
+        if ((desde == null) != (hasta == null)) {
+            throw new IllegalArgumentException("Indica ambas fechas del periodo.");
+        }
+        if (desde != null) {
+            if (desde.isAfter(hasta) || desde.getYear() < 2000 || hasta.getYear() > 2100) {
+                throw new IllegalArgumentException("El rango de fechas no es válido.");
+            }
+            return new LocalDate[] { desde, hasta };
+        }
+        YearMonth periodo = YearMonth.of(anio, mes);
+        return new LocalDate[] { periodo.atDay(1), periodo.atEndOfMonth() };
     }
 
     private Map<String, DashboardMonedaTotales> indexarTotales(List<DashboardMonedaTotales> totales) {

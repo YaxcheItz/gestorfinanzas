@@ -1,0 +1,90 @@
+[
+  {
+    "width": 360,
+    "height": 800,
+    "colorScheme": "light",
+    "hasTouch": true,
+    "status": "passed",
+    "checked": [
+      "donut total and keyboard",
+      "today dates",
+      "custom dates",
+      "stable five-position navigation",
+      "global privacy and masked input",
+      "quick expense and income save and idempotency header",
+      "transfer defaults and save",
+      "explicit voice consent and panel bounds",
+      "settings management links and privacy across pages",
+      "primary button contrast >= 4.5",
+      "no overflow",
+      "no page errors"
+    ],
+    "mockedApi": true
+  },
+  {
+    "width": 390,
+    "height": 844,
+    "colorScheme": "light",
+    "hasTouch": true,
+    "status": "passed",
+    "checked": [
+      "donut total and keyboard",
+      "today dates",
+      "custom dates",
+      "stable five-position navigation",
+      "global privacy and masked input",
+      "quick expense and income save and idempotency header",
+      "transfer defaults and save",
+      "explicit voice consent and panel bounds",
+      "settings management links and privacy across pages",
+      "primary button contrast >= 4.5",
+      "no overflow",
+      "no page errors"
+    ],
+    "mockedApi": true
+  },
+  {
+    "width": 390,
+    "height": 844,
+    "colorScheme": "dark",
+    "hasTouch": true,
+    "status": "passed",
+    "checked": [
+      "donut total and keyboard",
+      "today dates",
+      "custom dates",
+      "stable five-position navigation",
+      "global privacy and masked input",
+      "quick expense and income save and idempotency header",
+      "transfer defaults and save",
+      "explicit voice consent and panel bounds",
+      "settings management links and privacy across pages",
+      "primary button contrast >= 4.5",
+      "no overflow",
+      "no page errors"
+    ],
+    "mockedApi": true
+  },
+  {
+    "width": 1280,
+    "height": 900,
+    "colorScheme": "light",
+    "hasTouch": false,
+    "status": "passed",
+    "checked": [
+      "donut total and keyboard",
+      "today dates",
+      "custom dates",
+      "stable five-position navigation",
+      "global privacy and masked input",
+      "quick expense and income save and idempotency header",
+      "transfer defaults and save",
+      "explicit voice consent and panel bounds",
+      "settings management links and privacy across pages",
+      "primary button contrast >= 4.5",
+      "no overflow",
+      "no page errors"
+    ],
+    "mockedApi": true
+  }
+]

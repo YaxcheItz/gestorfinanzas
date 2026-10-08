@@ -1,7 +1,6 @@
 package com.gestionfinanzas.dto.request;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -13,7 +12,6 @@ public record AiChatRequest(
         @NotEmpty(message = "Escribe un mensaje para el asistente")
         @Size(max = 10, message = "La conversación puede incluir como máximo 10 mensajes")
         List<@Valid Message> messages,
-        @AssertTrue(message = "Confirma que autorizas compartir el contexto financiero con el proveedor de IA")
         boolean consentimientoDatosFinancieros
 ) {
     public AiChatRequest(List<Message> messages) {

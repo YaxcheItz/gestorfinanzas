@@ -32,7 +32,7 @@ public class AiFinancialContextService {
 
     @Transactional(readOnly = true)
     public String buildContext(Long userId) {
-        YearMonth currentMonth = YearMonth.now();
+        YearMonth currentMonth = YearMonth.from(com.gestionfinanzas.service.CalendarioFinanciero.hoy());
         YearMonth firstMonth = currentMonth.minusMonths(HISTORY_MONTHS - 1);
         LocalDate monthStart = currentMonth.atDay(1);
         LocalDate monthEnd = currentMonth.atEndOfMonth();
@@ -68,7 +68,7 @@ public class AiFinancialContextService {
                 );
 
         FinancialContext context = new FinancialContext(
-                LocalDate.now(),
+                com.gestionfinanzas.service.CalendarioFinanciero.hoy(),
                 accounts,
                 currentMonthTotals,
                 currentMonthExpensesByCategory,
@@ -79,6 +79,35 @@ public class AiFinancialContextService {
         } catch (JsonProcessingException ex) {
             throw new AiProviderException("No fue posible preparar el resumen financiero para el asistente.");
         }
+    }
+
+    /** Totales agregados en SQL y siempre acotados al usuario autenticado. */
+    @Transactional(readOnly = true)
+    public AiActionService.AiActionResult reporteLocal(Long userId, String modo, LocalDate desde, LocalDate hasta, String moneda) {
+        if ("SALDO".equals(modo)) {
+            String texto=cuentaRepository.findByUsuarioIdAndActivoTrue(userId).stream()
+                .filter(c -> moneda==null || moneda.equals(c.getMoneda()))
+                .map(c -> c.getNombre()+": "+c.getSaldoActual().toPlainString()+" "+c.getMoneda())
+                .collect(java.util.stream.Collectors.joining("\n"));
+            return new AiActionService.AiActionResult(texto.isBlank()?"No hay cuentas activas para esa moneda.":"Saldos actuales (no dependen del periodo):\n"+texto,null);
+        }
+        String periodo=desde+" al "+hasta;
+        if ("CATEGORIAS".equals(modo)) {
+            var categorias=transaccionRepository.findGastosPorCategoria(userId,TipoTransaccion.GASTO,desde,hasta).stream()
+                .filter(c -> moneda==null || moneda.equals(c.moneda())).toList();
+            String texto=categorias.stream().map(c -> (c.categoriaNombre()==null?"Sin categor\u00eda":c.categoriaNombre())+": "+c.monto().toPlainString()+" "+c.moneda()).collect(java.util.stream.Collectors.joining("\n"));
+            var monedas=categorias.stream().map(DashboardGastoCategoriaResponse::moneda).distinct().toList();
+            var top=categorias.stream().limit(8).toList();
+            var grafico=monedas.size()==1 ? new AiActionService.AiReportWidget("Gastos por categor\u00eda: "+periodo,
+                top.stream().map(c -> c.categoriaNombre()==null?"Sin categor\u00eda":c.categoriaNombre()).toList(),top.stream().map(c -> c.monto().doubleValue()).toList(),monedas.get(0)):null;
+            return new AiActionService.AiActionResult("Gastos por categor\u00eda del "+periodo+"\n"+(texto.isBlank()?"No hay gastos en ese periodo.":texto),null,List.of(),grafico);
+        }
+        var totales=transaccionRepository.findTotalesMensualesPorMoneda(userId,desde,hasta).stream()
+            .filter(t -> moneda==null||moneda.equals(t.moneda())).toList();
+        String texto=totales.stream().map(t -> t.moneda()+": ingresos "+t.ingresos().toPlainString()+", gastos "+t.gastos().toPlainString()+", balance del periodo "+t.ingresos().subtract(t.gastos()).toPlainString()).collect(java.util.stream.Collectors.joining("\n"));
+        AiActionService.AiReportWidget grafico=null;
+        if(totales.size()==1){var t=totales.get(0);grafico=new AiActionService.AiReportWidget("Resumen: "+periodo,List.of("Ingresos","Gastos"),List.of(t.ingresos().doubleValue(),t.gastos().doubleValue()),t.moneda());}
+        return new AiActionService.AiActionResult("Resumen del "+periodo+"\n"+(texto.isBlank()?"No hay ingresos ni gastos registrados en ese periodo.":texto),null,List.of(),grafico);
     }
 
     private record AccountSummary(

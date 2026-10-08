@@ -528,7 +528,8 @@ class RestauracionRespaldoServiceTest {
         List<Pareja> parejas = parejaRepository.findTodasDeUsuario(ana.getId());
         assertEquals(1, parejas.size());
         Pareja pareja = parejas.get(0);
-        assertEquals(luis.getId(), pareja.getUsuarioB().getId());
+        assertTrue(pareja.getUsuarioB().isReferenciaHistorica());
+        assertNotEquals(luis.getId(), pareja.getUsuarioB().getId());
         assertEquals("MXN", pareja.getMoneda());
         assertEquals(1, aportacionRepository.findByParejaIdOrderByFechaDescIdDesc(pareja.getId()).size());
         assertEquals(1, gastoRepository.findByParejaIdOrderByFechaDescIdDesc(pareja.getId()).size());
@@ -552,7 +553,7 @@ class RestauracionRespaldoServiceTest {
         RepartoGasto deAna = repartos.stream()
                 .filter(parte -> parte.getUsuario().getId().equals(ana.getId())).findFirst().orElseThrow();
         RepartoGasto deLuis = repartos.stream()
-                .filter(parte -> parte.getUsuario().getId().equals(luis.getId())).findFirst().orElseThrow();
+                .filter(parte -> parte.getUsuario().getId().equals(pareja.getUsuarioB().getId())).findFirst().orElseThrow();
         assertEquals(new BigDecimal("150.00"), deAna.getMonto());
         assertEquals(new BigDecimal("150.00"), deLuis.getMonto());
         assertEquals(TipoReparto.IGUAL, deAna.getTipo());
@@ -560,7 +561,7 @@ class RestauracionRespaldoServiceTest {
     }
 
     @Test
-    void siLaCuentaDeLaParejaNoExisteRestauraElRestoYLoAvisa() {
+    void siLaCuentaDeLaParejaNoExisteConservaUnaCopiaPrivadaYLoAvisa() {
         Usuario ana = crearUsuario();
         crearBilleteraInicial(ana);
         Archivo archivo = archivoCompleto()
@@ -569,12 +570,17 @@ class RestauracionRespaldoServiceTest {
         RestauracionRespaldoPreviewResponse vista = servicio.previsualizar(ana.getId(), archivo.build());
         assertEquals(1, vista.parejas());
         assertEquals(1, vista.aportesPareja());
-        assertTrue(vista.advertencias().stream().anyMatch(aviso -> aviso.contains("Luis fantasma")),
-                "hay que avisar por nombre a quien no se le va a restaurar: " + vista.advertencias());
+        assertTrue(vista.advertencias().stream().anyMatch(aviso -> aviso.contains("referencias históricas")),
+                "hay que avisar sobre la referencia histórica: " + vista.advertencias());
 
         servicio.restaurar(ana.getId(), archivo.build());
 
-        assertEquals(0, parejaRepository.count());
+        assertEquals(1, parejaRepository.count());
+        Pareja copia=parejaRepository.findTodasDeUsuario(ana.getId()).getFirst();
+        assertFalse(copia.isActiva());
+        assertEquals(ana.getId(),copia.getPropietarioHistorialId());
+        assertTrue(copia.getUsuarioB().isReferenciaHistorica());
+        assertFalse(copia.getUsuarioB().isActivo());
         assertEquals(1, transaccionRepository.count(), "el resto del respaldo si se restaura");
     }
 

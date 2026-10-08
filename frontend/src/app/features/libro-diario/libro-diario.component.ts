@@ -1,4 +1,5 @@
-import { CommonModule } from '@angular/common';
+import { TextoFinancieroPipe } from '../../core/pipes/texto-financiero.pipe';
+﻿import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -10,9 +11,9 @@ import { nombreCuentaVisible } from '../../core/utils/cuenta-financiera';
 @Component({
   selector: 'app-libro-diario',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, MontoPipe],
+  imports: [TextoFinancieroPipe, CommonModule, FormsModule, RouterLink, MontoPipe],
   template: `
-    <main class="mx-auto max-w-5xl space-y-5 px-3 py-5 sm:space-y-7 sm:px-6 sm:py-8">
+    <main class="finance-page mx-auto max-w-5xl space-y-5 px-3 py-5 sm:space-y-7 sm:px-6 sm:py-8">
       <header>
         <p class="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700">Finanzas · Registro contable</p>
         <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Libro diario</h1>
@@ -96,7 +97,7 @@ import { nombreCuentaVisible } from '../../core/utils/cuenta-financiera';
           @if (resumen.pendientes > 0) {
             <div class="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950">
               <p class="font-semibold">Antes de continuar</p>
-              <p class="mt-1">Se registrará el estado actual de cada movimiento disponible. Este proceso no reconstruye ediciones anteriores ni movimientos eliminados. Los nuevos asientos aparecerán como “Historial incorporado”.</p>
+              <p class="mt-1">Se registrará el estado actual de cada movimiento disponible. Este proceso no reconstruye ediciones anteriores ni movimientos eliminados. Los nuevos asientos aparecerán como “Historial incorporadoâ€.</p>
               <label class="mt-3 flex min-h-11 cursor-pointer items-start gap-3">
                 <input type="checkbox" [checked]="confirmarBackfill()" (change)="confirmarBackfill.set($any($event.target).checked)"
                   class="mt-1 size-4 accent-emerald-700" />
@@ -182,7 +183,7 @@ import { nombreCuentaVisible } from '../../core/utils/cuenta-financiera';
               <header class="flex flex-col gap-2 border-b border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
                 <div class="min-w-0">
                   <div class="flex flex-wrap items-center gap-2">
-                    <h2 class="break-words text-sm font-bold text-slate-900">{{ asiento.descripcion }}</h2>
+                    <h2 class="break-words text-sm font-bold text-slate-900">{{ (asiento.descripcion) | textoFinanciero }}</h2>
                     @if (asiento.tipoMovimiento) { <span class="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-700 dark:bg-slate-700 dark:text-slate-100">{{ etiquetaMovimiento(asiento.tipoMovimiento) }}</span> }
                     <span [class]="claseEvento(asiento.tipoEvento)" class="rounded-full px-2 py-1 text-[11px] font-semibold">
                       {{ etiquetaEvento(asiento.tipoEvento) }}
@@ -198,7 +199,7 @@ import { nombreCuentaVisible } from '../../core/utils/cuenta-financiera';
                   }
                 </div>
                 @if (asiento.tasaCambio) {
-                  <p class="shrink-0 text-xs text-slate-600">Tipo de cambio: {{ asiento.tasaCambio | number:'1.0-8' }}</p>
+                  <p class="shrink-0 text-xs text-slate-600">Tipo de cambio: {{ (asiento.tasaCambio | number:'1.0-8') | textoFinanciero }}</p>
                 }
               </header>
 

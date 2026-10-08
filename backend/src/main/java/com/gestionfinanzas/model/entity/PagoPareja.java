@@ -44,6 +44,11 @@ public class PagoPareja {
     @JoinColumn(name = "beneficiario_id", nullable = false)
     private Usuario beneficiario;
 
+    /** Autor del registro, que puede documentar un pago recibido. Null en históricos. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "registrado_por_id")
+    private Usuario registradoPor;
+
     @Column(nullable = false, precision = 15, scale = 2)
     private BigDecimal monto;
 

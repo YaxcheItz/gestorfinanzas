@@ -11,107 +11,265 @@ import { GoogleSignInComponent } from '../google-sign-in/google-sign-in.componen
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, GoogleSignInComponent],
   template: `
-    <div class="flex min-h-[calc(100dvh-8rem)] items-center justify-center px-3 py-5 sm:min-h-[calc(100dvh-4rem)] sm:px-4 sm:py-6">
-    <div class="w-full min-w-0 max-w-md space-y-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-xl shadow-slate-200/50 sm:p-8">
-        
-        <div class="text-center space-y-2">
-          <div class="w-12 h-12 bg-emerald-100 text-emerald-700 rounded-xl mx-auto flex items-center justify-center font-bold text-xl mb-3">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+    <div class="login-screen">
+      <div class="login-card">
+        <div class="login-card__intro">
+          <div class="login-card__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
           </div>
-          <h1 class="text-2xl font-bold tracking-tight text-slate-900">Bienvenido de nuevo</h1>
-          <p class="text-sm text-slate-500">Ingresa a tu gestor de finanzas personales</p>
+          <h1>Bienvenido de nuevo</h1>
+          <p>Ingresa a tu gestor de finanzas personales</p>
         </div>
 
         @if (sessionExpiredWarning()) {
-          <div class="break-words bg-amber-50 border border-amber-200 text-amber-800 text-sm px-4 py-3 rounded-xl flex items-start space-x-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0 text-amber-500 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-            </svg>
+          <div class="login-alert login-alert--warn" role="status">
             <span>Tu sesión ha expirado. Ingresa nuevamente para continuar.</span>
           </div>
         }
 
         @if (errorMessage()) {
-          <div role="alert" aria-live="assertive" class="break-words bg-rose-50 border border-rose-200 text-rose-700 text-sm px-4 py-3 rounded-xl flex items-start space-x-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0 text-rose-500 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-            </svg>
+          <div class="login-alert login-alert--error" role="alert" aria-live="assertive">
             <span>{{ errorMessage() }}</span>
           </div>
         }
 
-        <form (ngSubmit)="onSubmit()" class="space-y-4">
-          <div>
-            <label for="email" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-              Correo Electrónico
-            </label>
+        <form (ngSubmit)="onSubmit()" class="login-form">
+          <label class="login-field">
+            <span>Correo electrónico</span>
             <input
               id="email"
               name="email"
               type="email"
               autocomplete="email"
+              inputmode="email"
               required
               [(ngModel)]="email"
               placeholder="tu@correo.com"
-              class="min-h-11 w-full min-w-0 px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
             />
-          </div>
+          </label>
 
-          <div>
-            <label for="password" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-              Contraseña
-            </label>
-            <div class="relative">
-            <input
-              id="password"
-              name="password"
-              [type]="mostrarPassword() ? 'text' : 'password'"
-              autocomplete="current-password"
-              required
-              [(ngModel)]="password"
-              placeholder="••••••••"
-              class="min-h-11 w-full min-w-0 px-3.5 py-2.5 pr-14 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
-            />
-            <button type="button" (click)="togglePasswordVisibility()" [attr.aria-pressed]="mostrarPassword()" [attr.aria-label]="mostrarPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'" class="absolute right-1 top-1 inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:text-slate-300 dark:hover:bg-slate-700">
-              <svg aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-            </button>
+          <label class="login-field">
+            <span>Contraseña</span>
+            <div class="login-field__password">
+              <input
+                id="password"
+                name="password"
+                [type]="mostrarPassword() ? 'text' : 'password'"
+                autocomplete="current-password"
+                required
+                [(ngModel)]="password"
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                (click)="togglePasswordVisibility()"
+                [attr.aria-pressed]="mostrarPassword()"
+                [attr.aria-label]="mostrarPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'">
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
             </div>
-          </div>
+          </label>
 
-          <button
-            type="submit"
-            [disabled]="loading()"
-            class="min-h-12 w-full px-4 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-semibold text-sm rounded-xl shadow-md shadow-emerald-600/20 transition-all flex items-center justify-center space-x-2 cursor-pointer"
-          >
+          <button type="submit" class="login-submit" [disabled]="loading()">
             @if (loading()) {
-              <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              <span class="login-submit__spinner" aria-hidden="true"></span>
               <span>Ingresando...</span>
             } @else {
-              <span>Iniciar Sesión</span>
+              <span>Iniciar sesión</span>
             }
           </button>
         </form>
 
         <app-google-sign-in (credentialReceived)="iniciarConGoogle($event)" [busy]="loading()" />
 
-        <div class="text-center -mt-2">
-          <a routerLink="/recuperar-cuenta" class="rounded text-sm font-semibold text-emerald-700 hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600">
-            ¿Olvidaste tu contraseña?
-          </a>
-        </div>
+        <a routerLink="/recuperar-cuenta" class="login-link">¿Olvidaste tu contraseña?</a>
 
-        <div class="text-center pt-2 border-t border-slate-100 text-xs text-slate-500">
+        <p class="login-footer">
           ¿No tienes una cuenta aún?
-          <a routerLink="/registro" class="text-emerald-600 font-semibold hover:underline ml-1">
-            Regístrate aquí
-          </a>
-        </div>
-
+          <a routerLink="/registro">Regístrate aquí</a>
+        </p>
       </div>
     </div>
-  `
+  `,
+  styles: [`
+    :host { display: block; }
+    .login-screen {
+      display: flex;
+      min-height: calc(100dvh - 5.5rem);
+      align-items: center;
+      justify-content: center;
+      padding: 1rem max(0.75rem, env(safe-area-inset-right)) 1.5rem max(0.75rem, env(safe-area-inset-left));
+    }
+    .login-card {
+      width: min(100%, 26rem);
+      border: 1px solid #e5e7eb;
+      border-radius: 1.25rem;
+      padding: 1.25rem;
+      background: #ffffff;
+      box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+    }
+    .login-card__intro { text-align: center; }
+    .login-card__icon {
+      display: grid;
+      width: 3rem;
+      height: 3rem;
+      margin: 0 auto 0.75rem;
+      place-items: center;
+      border-radius: 0.85rem;
+      background: #f3f4f6;
+      color: #111827;
+    }
+    .login-card__icon svg { width: 1.35rem; height: 1.35rem; }
+    .login-card__intro h1 {
+      margin: 0;
+      color: #111827;
+      font-size: 1.45rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+    }
+    .login-card__intro p {
+      margin: 0.35rem 0 0;
+      color: #6b7280;
+      font-size: 0.875rem;
+    }
+    .login-alert {
+      margin-top: 1rem;
+      border-radius: 0.85rem;
+      padding: 0.75rem 0.9rem;
+      font-size: 0.875rem;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+    .login-alert--warn { border: 1px solid #fde68a; background: #fffbeb; color: #92400e; }
+    .login-alert--error { border: 1px solid #fecaca; background: #fff1f2; color: #be123c; }
+    .login-form { display: grid; gap: 0.85rem; margin-top: 1.15rem; }
+    .login-field { display: grid; gap: 0.4rem; }
+    .login-field > span {
+      color: #374151;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .login-field input {
+      width: 100%;
+      min-height: 2.85rem;
+      border: 1px solid #d1d5db;
+      border-radius: 0.85rem;
+      padding: 0.7rem 0.9rem;
+      background: #f9fafb;
+      color: #111827;
+      font-size: 16px;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    .login-field input:focus {
+      outline: none;
+      border-color: #111827;
+      background: #ffffff;
+      box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.12);
+    }
+    .login-field__password { position: relative; }
+    .login-field__password input { padding-right: 3rem; }
+    .login-field__password button {
+      position: absolute;
+      top: 50%;
+      right: 0.25rem;
+      display: grid;
+      width: 2.5rem;
+      height: 2.5rem;
+      place-items: center;
+      border: 0;
+      border-radius: 0.65rem;
+      background: transparent;
+      color: #4b5563;
+      transform: translateY(-50%);
+    }
+    .login-field__password svg { width: 1.15rem; height: 1.15rem; }
+    .login-submit {
+      display: inline-flex;
+      min-height: 3rem;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 0.2rem;
+      border: 0;
+      border-radius: 0.85rem;
+      background: #111827 !important;
+      color: #ffffff !important;
+      font-size: 0.95rem;
+      font-weight: 700;
+      touch-action: manipulation;
+    }
+    .login-submit:disabled { opacity: 0.55; }
+    .login-submit__spinner {
+      width: 1rem;
+      height: 1rem;
+      border: 2px solid rgba(255,255,255,0.35);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: login-spin 0.7s linear infinite;
+    }
+    .login-link {
+      display: block;
+      margin-top: 0.85rem;
+      color: #111827;
+      font-size: 0.875rem;
+      font-weight: 700;
+      text-align: center;
+      text-decoration: none;
+    }
+    .login-footer {
+      margin: 1rem 0 0;
+      padding-top: 0.85rem;
+      border-top: 1px solid #f3f4f6;
+      color: #6b7280;
+      font-size: 0.75rem;
+      text-align: center;
+    }
+    .login-footer a {
+      margin-left: 0.25rem;
+      color: #111827;
+      font-weight: 700;
+      text-decoration: none;
+    }
+    @keyframes login-spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) {
+      .login-submit__spinner { animation: none; }
+    }
+    :host-context(html.dark) .login-card {
+      border-color: #27272a;
+      background: #121212;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+    }
+    :host-context(html.dark) .login-card__icon { background: #1f1f1f; color: #f4f4f5; }
+    :host-context(html.dark) .login-card__intro h1 { color: #f9fafb; }
+    :host-context(html.dark) .login-card__intro p,
+    :host-context(html.dark) .login-footer { color: #9ca3af; }
+    :host-context(html.dark) .login-field > span { color: #d1d5db; }
+    :host-context(html.dark) .login-field input {
+      border-color: #3f3f46;
+      background: #1a1a1a;
+      color: #f9fafb;
+    }
+    :host-context(html.dark) .login-field input:focus {
+      border-color: #e5e7eb;
+      background: #111113;
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.12);
+    }
+    :host-context(html.dark) .login-field__password button { color: #d1d5db; }
+    :host-context(html.dark) .login-submit {
+      background: #f4f4f5 !important;
+      color: #111827 !important;
+    }
+    :host-context(html.dark) .login-link,
+    :host-context(html.dark) .login-footer a { color: #f4f4f5; }
+    :host-context(html.dark) .login-footer { border-top-color: #27272a; }
+    :host-context(html.dark) .login-alert--warn { border-color: #78350f; background: #1c1917; color: #fbbf24; }
+    :host-context(html.dark) .login-alert--error { border-color: #7f1d1d; background: #1c1917; color: #fca5a5; }
+  `]
 })
 export class LoginComponent {
   private readonly authService = inject(AuthService);
@@ -126,18 +284,12 @@ export class LoginComponent {
   mostrarPassword = signal(false);
 
   constructor() {
-    // Detectar si viene desde un redirect por sesión expirada
     this.route.queryParams.subscribe(params => {
       if (params['sessionExpired'] === 'true') {
         this.sessionExpiredWarning.set(true);
       }
     });
 
-    // Llegar aquí con la sesión viva es el caso normal, no una excepción: pasa al
-    // añadir la app a la pantalla de inicio mientras el acceso ya caducó, porque
-    // el acceso directo guarda la URL del momento. El enlace fijado queda en
-    // /login?sessionExpired=true y se repite en cada arranque. Si el token sigue
-    // sirviendo, no hay nada que pedirle al usuario: se entra directo.
     if (this.authService.isAuthenticated()) {
       this.router.navigate(['/dashboard'], { replaceUrl: true });
     }

@@ -53,7 +53,7 @@ public class PerfilController {
         return ResponseEntity.ok()
                 .cacheControl(CacheControl.noStore())
                 .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=\"kaptal-respaldo-" + LocalDate.now() + ".json\"")
+                        "attachment; filename=\"kaptal-respaldo-" + com.gestionfinanzas.service.CalendarioFinanciero.hoy() + ".json\"")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(respaldoService.generar(userDetails.getId()));
     }

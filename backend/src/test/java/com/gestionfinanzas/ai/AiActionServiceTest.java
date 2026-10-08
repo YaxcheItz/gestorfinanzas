@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -24,6 +25,14 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class AiActionServiceTest {
+    @Test
+    void confirmacionDeVozPersisteOrigenSinSobrescribirNotas() {
+        var proposal = service.interpret(7L, "Registra un gasto de 25 pesos");
+        service.marcarCapturaPorVoz(7L, proposal.action());
+        service.confirm(7L, proposal.action().id());
+        verify(transaccionService).crearTransaccion(eq(7L), org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.isNull(), eq(com.gestionfinanzas.model.enums.MetodoCaptura.VOZ));
+    }
     private final AiProvider provider = mock(AiProvider.class);
     private final AiFinancialContextService contextService = mock(AiFinancialContextService.class);
     private final CuentaService cuentaService = mock(CuentaService.class);
@@ -76,5 +85,32 @@ class AiActionServiceTest {
 
         service.confirm(7L, proposal.action().id());
         verify(transaccionService).crearTransaccion(eq(7L), org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void devuelveUnGraficoFinancieroEstructuradoConLaRespuesta() {
+        when(provider.generate(org.mockito.ArgumentMatchers.anyString(), anyInt())).thenReturn("""
+                {"answer":"Tus gastos principales son comida y transporte.","action":null,
+                 "report":{"title":"Gastos por categoría","labels":["Comida","Transporte"],
+                 "values":[1200,800],"unit":"MXN"}}
+                """);
+
+        var response = service.interpret(7L, "Muéstrame una gráfica de gastos por categoría");
+
+        assertEquals("Gastos por categoría", response.report().title());
+        assertEquals(List.of("Comida", "Transporte"), response.report().labels());
+        assertEquals(List.of(1200.0, 800.0), response.report().values());
+        assertEquals("MXN", response.report().unit());
+    }
+
+    @Test
+    void rechazaGraficosFinancierosConValoresNoNumericos() {
+        when(provider.generate(org.mockito.ArgumentMatchers.anyString(), anyInt())).thenReturn("""
+                {"answer":"Aquí está el gráfico.","action":null,
+                 "report":{"title":"Gastos","labels":["Comida"],"values":["mucho"],"unit":"MXN"}}
+                """);
+
+        assertThrows(AiProviderException.class,
+                () -> service.interpret(7L, "Muéstrame una gráfica de mis gastos"));
     }
 }

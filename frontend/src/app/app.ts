@@ -1,15 +1,16 @@
 import { Component, inject } from '@angular/core';
 import { effect } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { RouterLink, RouterOutlet } from '@angular/router';
 import { NavbarComponent } from './shared/components/navbar/navbar.component';
 import { ToastContainerComponent } from './shared/components/toast-container/toast-container.component';
 import { ConfirmDialogComponent } from './shared/components/confirm-dialog/confirm-dialog.component';
 import { AuthService } from './core/services/auth.service';
 import { PerfilService } from './core/services/perfil.service';
+import { QuickCaptureComponent } from './shared/components/quick-capture/quick-capture.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, NavbarComponent, ToastContainerComponent, ConfirmDialogComponent],
+  imports: [RouterOutlet, RouterLink, NavbarComponent, QuickCaptureComponent, ToastContainerComponent, ConfirmDialogComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })

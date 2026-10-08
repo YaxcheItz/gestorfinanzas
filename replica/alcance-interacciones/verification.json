@@ -1,0 +1,85 @@
+{
+  "date": "2026-10-04",
+  "frontend": {
+    "passed": 158,
+    "files": 19,
+    "command": "npm test -- --watch=false"
+  },
+  "backend": {
+    "tests": 213,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "command": "mvnw.cmd test -q",
+    "latestAdditionalCheck": "mvnw.cmd -Dtest=TransaccionServiceTest test -q"
+  },
+  "build": {
+    "status": "passed",
+    "initialBundleKB": 584.91,
+    "warnings": [
+      "Initial bundle exceeds 500 kB budget",
+      "Login component CSS exceeds 4 kB by one byte"
+    ]
+  },
+  "browser": [
+    {
+      "width": 390,
+      "height": 844,
+      "colorScheme": "light",
+      "hasTouch": true,
+      "status": "passed",
+      "checked": [
+        "donut total and keyboard",
+        "today dates",
+        "custom dates",
+        "manual FAB and loaded account",
+        "primary button contrast >= 4.5",
+        "no overflow",
+        "no page errors"
+      ],
+      "mockedApi": true
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "colorScheme": "dark",
+      "hasTouch": true,
+      "status": "passed",
+      "checked": [
+        "donut total and keyboard",
+        "today dates",
+        "custom dates",
+        "manual FAB and loaded account",
+        "primary button contrast >= 4.5",
+        "no overflow",
+        "no page errors"
+      ],
+      "mockedApi": true
+    },
+    {
+      "width": 1280,
+      "height": 900,
+      "colorScheme": "light",
+      "hasTouch": false,
+      "status": "passed",
+      "checked": [
+        "donut total and keyboard",
+        "today dates",
+        "custom dates",
+        "manual FAB and loaded account",
+        "primary button contrast >= 4.5",
+        "no overflow",
+        "no page errors"
+      ],
+      "mockedApi": true
+    }
+  ],
+  "diffCheck": "passed",
+  "coverage": "not measured",
+  "lint": "no package script",
+  "limits": [
+    "Browser checks use synthetic intercepted API data",
+    "No physical microphone or native gallery tests",
+    "No production data deletion or deployment"
+  ]
+}
