@@ -29,6 +29,9 @@ import java.util.List;
  */
 @Slf4j
 @Component
+// Compatibilidad opt-in para diagnósticos antiguos. Flyway V2 gestiona el DDL normal.
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(
+        name = "app.schema-legacy-repair.enabled", havingValue = "true")
 public class MigracionTransaccionesCuentaOpcional implements ApplicationRunner {
 
     private final JdbcTemplate jdbcTemplate;

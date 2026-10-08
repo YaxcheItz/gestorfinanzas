@@ -1,5 +1,27 @@
 # Estado para retomar la sesión
 
+## Resguardo solicitado de etapa 6
+
+- El usuario autorizó subir todos los cambios de etapa 6 con su autoría exclusiva. Commit de fuentes/evidencias: `1a981d79a9babc08554fb87203926ee5ffbf2cb0`, rama `mejoras/etapa-6-datos-recuperacion`.
+- Autor y committer comprobados: `YaxcheItz <yaxtibla1@gmail.com>`. Sin firma ni coautoría del asistente. Los dumps y `.local/` permanecen excluidos.
+- Push pendiente por conectividad: fetch, varios pushes y comprobación HTTPS fallaron al conectar con github.com:443. El último intento no interactivo devolvió el mismo error. No se confirmó rama remota ni ejecución de CI. No hay procesos de push pendientes.
+- Reintentar únicamente esta rama al recuperar conexión; no recrear commits ni cambiar autoría. CI se activará al subir; Vercel excluye esta rama y Render declara main. La documentación de verificación anterior describe el estado previo al commit.
+
+## Etapa 6 en rama propia (2026-10-08)
+
+- El usuario confirmó merge del resguardo en develop y pidió continuar, trabajando cada etapa en rama distinta. Fetch verificó árbol limpio y develop/origin/develop en `ca59493`. Rama de esta entrega: `mejoras/etapa-6-datos-recuperacion`; preferencia persistida en AGENTS.md.
+- Flyway V1 (referencia de entidades etapas 1–3) y V2 (propuestas/huella offline/cuenta opcional). Hibernate validate; sin baseline automático ni clean. Bases existentes requieren comparación en copia y baseline explícito tras revisión. No se usó producción.
+- PostgreSQL 17.9 local en cluster aislado bajo TEMP, puerto 15432. Nuevas pruebas de migración, checksum, rechazo de base desconocida y rollback DDL. Pruebas JPA no sustituyen PostgreSQL por H2; fixtures de concurrencia y runner antiguo ahora aislados/limpiados.
+- Recuperación operativa comprobada en base nueva: 19 tablas, datos, secuencias, columnas, índices y restricciones iguales; fixture MSI con centavos y propuesta completada. Dump privado en .local, sin commit. Arranque de la aplicación sobre una restauración comprobado.
+- Rollback del código anterior ca59493 sobre esquema migrado con validate: 57 pruebas pasan. Se preservan tabla/huella y resultados; no se implementa down-migration destructiva. Retención: conservar resultados/propuestas hasta eliminar cuenta, sin purga que rompa reintentos.
+- CI configurado para backend H2/PostgreSQL, frontend unitarias/build y E2E portable con PostgreSQL. Tres escenarios E2E reales: recuperación/reintento, descarte, ingreso/transferencia/restauración privada. Suite E2E histórica con diseño anterior preservada pero excluida explícitamente; no se presenta como pasada. CI remoto aún sin ejecutar para esta rama.
+- Readiness ahora valida conexión JDBC y responde 503 ante fallo, sin detalles sensibles. Gate de conciliación de solo lectura exit 3 ante MSI incompleto, retención discrepante o consentimiento histórico ausente. Comparación de esquema rechaza columna inesperada (exit 1).
+- Informe `docs/MEJORAS_ETAPA_6_DATOS_RECUPERACION.md`; evidencia final `replica/mejoras-etapa6/verification.json` y logs. Consultar ese JSON para el recuento final de pruebas; build mantiene bundle 638.64 kB / 500 kB y CSS login +1 byte. Sin cobertura porcentual ni lint global.
+- Adopción/conciliación real sigue pendiente: no hay copia de producción ni originales MSI en esta sesión. Publicación bloqueada; no se inventaron importes, vínculos, autoría ni aceptación. Copia real, roles/grants, frecuencia de respaldo y RPO/RTO requieren validación en infraestructura elegida.
+- Cambios locales en rama propia, sin commit, push, despliegue ni modificación de bases reales. Etapa 6 lista para revisión local. No iniciar Wallet/etapa siguiente en esta misma rama. Cada nuevo bloque parte de develop actualizado tras su revisión/integración.
+- Caveman activo en español; skills caveman, security-review y ecc-verification-loop. Las secciones siguientes son historia, no el estado vigente.
+- Limpieza final: cluster PostgreSQL temporal detenido y worktree de rollback retirado. Bases sintéticas permanecen bajo TEMP; dumps bajo `.local/` ignorada por Git. No asumir que PostgreSQL sigue ejecutándose al retomar.
+
 ## Prioridad vigente y resguardo (2026-10-08)
 
 - El usuario entregó un nuevo orden de diez prioridades y autorizó crear/subir `mejoras/etapas-1-5`, usando únicamente su autoría. Plan vigente en `docs/PLAN_MEJORAS_PROYECTO.md`; sustituye el orden anterior, conservando números de etapa.

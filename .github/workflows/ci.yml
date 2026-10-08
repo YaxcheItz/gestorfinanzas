@@ -2,12 +2,16 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, develop, 'mejoras/**']
   pull_request:
     branches: [main, develop]
 
 permissions:
   contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   backend:
@@ -39,7 +43,7 @@ jobs:
           ./mvnw -B verify
 
   frontend:
-    name: Frontend (build)
+    name: Frontend (unitarias + build)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -58,3 +62,114 @@ jobs:
 
       - name: Compilar
         run: npm run build
+
+      - name: Pruebas unitarias
+        run: npm test -- --watch=false --runner-config=../replica/navegacion-captura/vitest.config.mjs
+
+  postgres:
+    name: PostgreSQL (migraciones + regresiones + recuperación)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: kaptal_ci_test
+          POSTGRES_USER: kaptal_test
+          POSTGRES_PASSWORD: prueba-ci-aislada
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U kaptal_test -d kaptal_ci_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      TEST_DATABASE_URL: jdbc:postgresql://127.0.0.1:5432/kaptal_ci_test
+      TEST_DATABASE_USERNAME: kaptal_test
+      TEST_DATABASE_PASSWORD: prueba-ci-aislada
+      TEST_DATABASE_DRIVER: org.postgresql.Driver
+      TEST_DATABASE_SCHEMA: finanzas
+      TEST_DDL_AUTO: validate
+      TEST_FLYWAY_ENABLED: 'true'
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: kaptal_test
+      PGPASSWORD: prueba-ci-aislada
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Migrar y probar sobre PostgreSQL
+        working-directory: backend
+        run: sh ./mvnw -B verify
+      - name: Instalar cliente PostgreSQL 17
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-common ca-certificates
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y postgresql-client-17
+      - name: Respaldo y restauración en base nueva
+        env:
+          PG_BIN: /usr/lib/postgresql/17/bin
+        run: |
+          python3 scripts/test_recovery.py
+          "$PG_BIN/psql" -X -v ON_ERROR_STOP=1 -d kaptal_ci_test -f scripts/recovery-test-fixture.sql
+          python3 scripts/verify-postgres-recovery.py --source kaptal_ci_test --restore kaptal_restore_ci --output .local/recovery-ci
+      - name: Evidencia de recuperación (sin dump)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: postgres-recovery
+          path: .local/recovery-ci/verification.json
+          retention-days: 7
+
+  e2e:
+    name: E2E Chromium + API + PostgreSQL
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: kaptal_ci_e2e
+          POSTGRES_USER: kaptal_test
+          POSTGRES_PASSWORD: prueba-ci-aislada
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U kaptal_test -d kaptal_ci_e2e"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Compilar backend y clases de prueba
+        working-directory: backend
+        run: sh ./mvnw -B -DskipTests test-compile
+      - name: Instalar frontend y Chromium
+        working-directory: frontend
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Flujos con API real
+        working-directory: frontend
+        env:
+          E2E_DATABASE_URL: jdbc:postgresql://127.0.0.1:5432/kaptal_ci_e2e
+          E2E_DATABASE_USERNAME: kaptal_test
+          E2E_DATABASE_PASSWORD: prueba-ci-aislada
+        run: npm run test:e2e
+      - name: Evidencias E2E
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: e2e-failures
+          path: frontend/test-results/
+          retention-days: 7

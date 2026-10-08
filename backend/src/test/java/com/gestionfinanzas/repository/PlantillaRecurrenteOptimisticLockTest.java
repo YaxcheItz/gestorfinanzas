@@ -21,6 +21,7 @@ import java.time.LocalDate;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @DataJpaTest
+@org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase(replace = org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace.NONE)
 @ActiveProfiles("test")
 class PlantillaRecurrenteOptimisticLockTest {
 
@@ -35,6 +36,23 @@ class PlantillaRecurrenteOptimisticLockTest {
 
     @Autowired
     private PlatformTransactionManager transactionManager;
+
+    private Long fixtureUsuarioId;
+    private Long fixtureCuentaId;
+    private Long fixturePlantillaId;
+    @org.junit.jupiter.api.AfterEach
+    void limpiarDatosConfirmados() {
+        if (fixtureUsuarioId == null) return;
+        var tx = new TransactionTemplate(transactionManager);
+        tx.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        tx.executeWithoutResult(status -> {
+            plantillaRepository.deleteById(fixturePlantillaId);
+            plantillaRepository.flush();
+            cuentaRepository.deleteById(fixtureCuentaId);
+            cuentaRepository.flush();
+            usuarioRepository.deleteById(fixtureUsuarioId);
+        });
+    }
 
     @Test
     void soloUnaConfirmacionConcurrentePuedeAvanzarLaFechaRecurrente() {
@@ -52,7 +70,9 @@ class PlantillaRecurrenteOptimisticLockTest {
                     .tipo(TipoCuenta.EFECTIVO)
                     .moneda("MXN")
                     .build());
-            return plantillaRepository.saveAndFlush(PlantillaRecurrente.builder()
+            fixtureUsuarioId = usuario.getId();
+            fixtureCuentaId = cuenta.getId();
+            fixturePlantillaId = plantillaRepository.saveAndFlush(PlantillaRecurrente.builder()
                     .usuario(usuario)
                     .cuenta(cuenta)
                     .tipo(TipoTransaccion.GASTO)
@@ -61,6 +81,7 @@ class PlantillaRecurrenteOptimisticLockTest {
                     .siguienteFecha(LocalDate.of(2025, 1, 1))
                     .activa(true)
                     .build()).getId();
+            return fixturePlantillaId;
         });
 
         PlantillaRecurrente lecturaAnterior = transaction.execute(

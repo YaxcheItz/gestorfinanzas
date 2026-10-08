@@ -37,9 +37,7 @@ public class BackendApplication {
                         .anyMatch("test"::equals);
         if (entornoE2E) {
             String url = System.getenv("SPRING_DATASOURCE_URL");
-            if (url == null || !url.startsWith("jdbc:h2:")) {
-                throw new IllegalStateException("El entorno E2E requiere una base H2 aislada.");
-            }
+            validarBaseE2E(url);
         }
         if (!entornoE2E && !perfilDePruebas) {
             cargarVariablesEnv();
@@ -56,6 +54,15 @@ public class BackendApplication {
      */
     public static void configurarZonaHoraria() {
         TimeZone.setDefault(TimeZone.getTimeZone(ZONA_HORARIA));
+    }
+
+    public static void validarBaseE2E(String url) {
+        boolean h2 = url != null && url.startsWith("jdbc:h2:mem:");
+        boolean postgres = url != null && url.matches(
+                "jdbc:postgresql://(localhost|127\\.0\\.0\\.1):[0-9]+/kaptal_[a-z0-9_]+_e2e");
+        if (!h2 && !postgres) {
+            throw new IllegalStateException("E2E requiere H2 en memoria o PostgreSQL local dedicado kaptal_*_e2e.");
+        }
     }
 
     private static void cargarVariablesEnv() {

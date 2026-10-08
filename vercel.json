@@ -2,7 +2,8 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "git": {
     "deploymentEnabled": {
-      "mejoras/etapas-1-5": false
+      "mejoras/etapas-1-5": false,
+      "mejoras/etapa-6-datos-recuperacion": false
     }
   },
   "installCommand": "cd frontend && npm ci",

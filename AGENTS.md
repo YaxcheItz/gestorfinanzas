@@ -5,3 +5,4 @@
 - Lee las instrucciones de las skills seleccionadas y explica brevemente cuál aplicas y para qué cuando corresponda.
 - Usa skills cuando aporten valor a la tarea; no ejecutes todas por el simple hecho de estar instaladas.
 - Comunica en español.
+- Trabaja cada etapa en una rama distinta, creada desde `develop` actualizado y comprobado contra el remoto. No implementes etapas nuevas directamente sobre `develop` ni reutilices la rama de una etapa anterior.
