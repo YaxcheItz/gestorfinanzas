@@ -76,7 +76,7 @@
   "retention": "keep_proposals_and_results_until_account_deletion",
   "coverage": null,
   "globalLint": false,
-  "commit": false,
+  "commit": true,
   "push": false,
   "deployment": false,
   "productionBlockers": [
@@ -104,5 +104,15 @@
     "credentialPatternMatches": 0,
     "diffCheckExitCode": 0,
     "CRLFAllowed": true
+  },
+  "publication": {
+    "sourceCommit": "1a981d79a9babc08554fb87203926ee5ffbf2cb0",
+    "author": "YaxcheItz <yaxtibla1@gmail.com>",
+    "committer": "YaxcheItz <yaxtibla1@gmail.com>",
+    "assistantCoauthor": false,
+    "signed": false,
+    "pushConfirmed": false,
+    "error": "Failed to connect to github.com port 443",
+    "retryBranch": "mejoras/etapa-6-datos-recuperacion"
   }
 }

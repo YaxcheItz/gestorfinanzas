@@ -1,5 +1,12 @@
 # Estado para retomar la sesión
 
+## Resguardo solicitado de etapa 6
+
+- El usuario autorizó subir todos los cambios de etapa 6 con su autoría exclusiva. Commit de fuentes/evidencias: `1a981d79a9babc08554fb87203926ee5ffbf2cb0`, rama `mejoras/etapa-6-datos-recuperacion`.
+- Autor y committer comprobados: `YaxcheItz <yaxtibla1@gmail.com>`. Sin firma ni coautoría del asistente. Los dumps y `.local/` permanecen excluidos.
+- Push pendiente por conectividad: fetch, varios pushes y comprobación HTTPS fallaron al conectar con github.com:443. El último intento no interactivo devolvió el mismo error. No se confirmó rama remota ni ejecución de CI. No hay procesos de push pendientes.
+- Reintentar únicamente esta rama al recuperar conexión; no recrear commits ni cambiar autoría. CI se activará al subir; Vercel excluye esta rama y Render declara main. La documentación de verificación anterior describe el estado previo al commit.
+
 ## Etapa 6 en rama propia (2026-10-08)
 
 - El usuario confirmó merge del resguardo en develop y pidió continuar, trabajando cada etapa en rama distinta. Fetch verificó árbol limpio y develop/origin/develop en `ca59493`. Rama de esta entrega: `mejoras/etapa-6-datos-recuperacion`; preferencia persistida en AGENTS.md.
