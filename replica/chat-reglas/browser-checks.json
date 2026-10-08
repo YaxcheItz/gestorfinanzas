@@ -1,0 +1,54 @@
+[
+  {
+    "settings": {
+      "width": 360,
+      "height": 800,
+      "colorScheme": "light",
+      "hasTouch": true
+    },
+    "chatOnly": true,
+    "confirmation": true,
+    "unifiedReports": true,
+    "noProviderPing": true,
+    "noOverflow": true
+  },
+  {
+    "settings": {
+      "width": 390,
+      "height": 844,
+      "colorScheme": "light",
+      "hasTouch": true
+    },
+    "chatOnly": true,
+    "confirmation": true,
+    "unifiedReports": true,
+    "noProviderPing": true,
+    "noOverflow": true
+  },
+  {
+    "settings": {
+      "width": 390,
+      "height": 844,
+      "colorScheme": "dark",
+      "hasTouch": true
+    },
+    "chatOnly": true,
+    "confirmation": true,
+    "unifiedReports": true,
+    "noProviderPing": true,
+    "noOverflow": true
+  },
+  {
+    "settings": {
+      "width": 1280,
+      "height": 900,
+      "colorScheme": "light",
+      "hasTouch": false
+    },
+    "chatOnly": true,
+    "confirmation": true,
+    "unifiedReports": true,
+    "noProviderPing": true,
+    "noOverflow": true
+  }
+]
