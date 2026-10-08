@@ -10,6 +10,9 @@ import com.gestionfinanzas.dto.request.PresupuestoRequest;
 import com.gestionfinanzas.dto.request.TransaccionRequest;
 import com.gestionfinanzas.dto.response.PlantillaRecurrenteResponse;
 import com.gestionfinanzas.dto.response.PresupuestoResponse;
+import com.gestionfinanzas.dto.response.CuentaResponse;
+import com.gestionfinanzas.dto.response.CategoriaResponse;
+import com.gestionfinanzas.model.enums.TipoTransaccion;
 import com.gestionfinanzas.service.CategoriaService;
 import com.gestionfinanzas.service.CuentaService;
 import com.gestionfinanzas.service.PlantillaRecurrenteService;
@@ -21,10 +24,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.text.Normalizer;
+import java.math.BigDecimal;
 import java.util.LinkedHashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.StreamSupport;
 
 @Service
 @RequiredArgsConstructor
@@ -37,6 +49,9 @@ public class AiActionService {
             UPSERT_BUDGET, DELETE_BUDGET,
             REGISTER_RECURRING, PAUSE_RECURRING, RESUME_RECURRING, DELETE_RECURRING
             """;
+    private static final Pattern REGISTRO_RAPIDO = Pattern.compile(
+            "^(?:por favor )?(?:(?:registra|anota|captura) (?:un )?)?(gasto|ingreso|compra|pago|ingres[eé]|recib[ií]|gast[eé]|pagu[eé])(?: de)? \\$?([0-9][0-9.,]*)(?:\\s*(?:mxn|pesos?))?(?: en (.+))?$"
+    );
 
     private final AiProvider provider;
     private final AiFinancialContextService financialContextService;
@@ -50,15 +65,30 @@ public class AiActionService {
     private final Map<String, PendingAction> pendingActions = new ConcurrentHashMap<>();
 
     public AiActionResult interpret(Long userId, String conversation) {
+        AiActionResult registroRapido = interpretarRegistroRapido(userId, conversation);
+        if (registroRapido != null) {
+            return registroRapido;
+        }
+
         String context = financialContextService.buildContext(userId)
                 + "\nOpciones concretas para acciones:\n" + buildActionOptions(userId);
         String prompt = """
                 Eres el asistente financiero de Kaptal. Responde en español.
                 Devuelve exclusivamente un objeto JSON válido con esta forma:
-                {"answer":"respuesta breve","action":null}
+                {"answer":"respuesta breve","action":null,"actions":[],"report":null}
                 o, solo cuando el usuario solicite claramente un cambio,
                 {"answer":"Explica qué vas a hacer","action":{"type":"ACTION_TYPE","summary":"resumen claro",
-                "data":{}}}.
+                "data":{}},"actions":[],"report":null}.
+                Cuando el usuario pida un reporte numérico o una comparación y los datos aparezcan explícitamente
+                en el contexto financiero, incluye opcionalmente "report":{"title":"...","labels":["..."],
+                "values":[0],"unit":"MXN"}. Cada etiqueta debe corresponder al valor de la misma posición.
+                Usa solo valores numéricos presentes en el contexto, máximo 8 pares y nunca inventes ni estimes
+                cifras. No incluyas reportes para preguntas sin datos suficientes, cambios o acciones.
+                Si el usuario enumera varios ingresos o gastos en un solo mensaje, usa "actions" con una propuesta
+                CREATE_TRANSACTION por cada movimiento independiente; nunca los combines en un solo monto. Para una
+                lista, cada propuesta debe tener su propio monto, tipo, fecha, cuenta y categoriaId cuando sea claro.
+                En "actions" solo propongas CREATE_TRANSACTION. No inventes cuentas ni categorias y conserva dudas
+                como preguntas en "answer" en vez de proponer una transaccion ambigua.
                 Acciones disponibles: %s.
                 No propongas IDs, nombres ni valores que no aparezcan en el contexto o en los datos explícitos del usuario.
                 Si falta un dato obligatorio o hay ambigüedad, action debe ser null y pregunta qué dato falta.
@@ -92,27 +122,233 @@ public class AiActionService {
             if (answer.isBlank()) {
                 throw new AiProviderException("El asistente devolvió una respuesta vacía.");
             }
+            AiReportWidget report = parseReport(result.path("report"));
+
+            JsonNode actions = result.path("actions");
+            if (actions.isArray() && !actions.isEmpty()) {
+                if (actions.size() > 8) {
+                    throw new AiProviderException("Puedo preparar hasta 8 movimientos por mensaje. Divide la lista y vuelve a intentarlo.");
+                }
+                List<PendingBatchAction> batch = new ArrayList<>();
+                for (JsonNode action : actions) {
+                    String type = action.path("type").asText("");
+                    String summary = action.path("summary").asText("").trim();
+                    JsonNode data = action.path("data");
+                    if (!"CREATE_TRANSACTION".equals(type) || summary.isBlank() || !data.isObject()) {
+                        throw new AiProviderException("No pude preparar toda la lista con seguridad. Aclara cada monto y movimiento.");
+                    }
+                    batch.add(new PendingBatchAction(type, summary, data));
+                }
+                List<ActionProposal> proposals = batch.stream()
+                        .map(item -> crearPropuesta(userId, item.type(), item.summary(), item.data(), answer).action())
+                        .toList();
+                return new AiActionResult(answer, null, proposals, report);
+            }
 
             JsonNode action = result.path("action");
             if (action.isMissingNode() || action.isNull()) {
-                return new AiActionResult(answer, null);
+                return new AiActionResult(answer, null, List.of(), report);
             }
             String type = action.path("type").asText("");
             String summary = action.path("summary").asText("").trim();
             JsonNode data = action.path("data");
             if (!isSupported(type) || summary.isBlank() || !data.isObject()) {
-                return new AiActionResult(answer, null);
+                return new AiActionResult(answer, null, List.of(), report);
             }
 
-            removeExpiredActions();
-            String id = UUID.randomUUID().toString();
-            JsonNode actionData = data.deepCopy();
-            pendingActions.put(id, new PendingAction(userId, type, summary, actionData,
-                    Instant.now().plusSeconds(PROPOSAL_LIFETIME_SECONDS)));
-            return new AiActionResult(answer, new ActionProposal(id, type, summary, actionData.deepCopy()));
+            return crearPropuesta(userId, type, summary, data, answer, report);
         } catch (JsonProcessingException ex) {
             throw new AiProviderException("El asistente devolvió una respuesta con formato inválido.");
         }
+    }
+
+    private AiReportWidget parseReport(JsonNode report) {
+        if (report == null || report.isMissingNode() || report.isNull()) return null;
+        JsonNode title = report.path("title");
+        JsonNode labels = report.path("labels");
+        JsonNode values = report.path("values");
+        JsonNode unit = report.path("unit");
+        if (!report.isObject() || !title.isTextual() || title.asText().isBlank()
+                || title.asText().length() > 100 || !labels.isArray() || !values.isArray()
+                || labels.isEmpty() || labels.size() > 8 || labels.size() != values.size()
+                || (!unit.isMissingNode() && !unit.isNull()
+                && (!unit.isTextual() || unit.asText().length() > 12))) {
+            throw new AiProviderException("El asistente devolvió un reporte con formato inválido.");
+        }
+
+        List<String> labelValues = StreamSupport.stream(labels.spliterator(), false)
+                .map(label -> label.isTextual() ? label.asText().trim() : "")
+                .toList();
+        List<Double> numberValues = StreamSupport.stream(values.spliterator(), false)
+                .map(value -> value.isNumber() ? value.doubleValue() : Double.NaN)
+                .toList();
+        if (labelValues.stream().anyMatch(label -> label.isBlank() || label.length() > 60)
+                || numberValues.stream().anyMatch(value -> !Double.isFinite(value) || Math.abs(value) > 1.0e15)) {
+            throw new AiProviderException("El asistente devolvió datos inválidos para el reporte.");
+        }
+
+        return new AiReportWidget(title.asText().trim(), labelValues, numberValues,
+                unit.isTextual() ? unit.asText() : "");
+    }
+
+    /** Intenta clasificar una captura con reglas locales antes de necesitar consentimiento o proveedor externo. */
+    public AiActionResult interpretarCapturaRapida(Long userId, String mensaje) {
+        var reglas = new MotorChatReglas().interpretar(mensaje,
+                cuentaService.listarCuentas(userId, true), categoriaService.listarCategorias(userId),
+                transaccionService.listarRecientes(userId), com.gestionfinanzas.service.CalendarioFinanciero.hoy());
+        if (reglas == null) return null;
+        if (reglas.reporte() != null) {
+            if ("PRESUPUESTOS".equals(reglas.reporte())) {
+                var resumen = presupuestoService.obtenerResumenPeriodo(userId, reglas.hasta().getMonthValue(), reglas.hasta().getYear());
+                String texto = resumen.presupuestos().stream().filter(p -> reglas.moneda()==null || reglas.moneda().equals(p.moneda()))
+                        .map(p -> p.categoriaNombre()+": gastado "+p.montoGastado()+" / l\u00edmite "+p.montoLimite()+" "+p.moneda()+" ("+p.estado()+")")
+                        .collect(java.util.stream.Collectors.joining("\n"));
+                return new AiActionResult("Presupuestos de "+reglas.hasta().getMonthValue()+"/"+reglas.hasta().getYear()+"\n"+(texto.isBlank()?"No hay presupuestos para esa moneda y mes.":texto), null);
+            }
+            if ("RECURRENTES".equals(reglas.reporte())) {
+                String texto = plantillaService.listar(userId).stream().filter(p -> p.activa() && (reglas.moneda()==null || reglas.moneda().equals(p.moneda())))
+                        .map(p -> p.categoriaNombre()+": "+p.monto()+" "+p.moneda()+"; pr\u00f3ximo: "+p.siguienteFecha())
+                        .collect(java.util.stream.Collectors.joining("\n"));
+                return new AiActionResult(texto.isBlank()?"No hay movimientos recurrentes activos.":"Movimientos recurrentes:\n"+texto, null);
+            }
+            return financialContextService.reporteLocal(userId, reglas.reporte(), reglas.desde(), reglas.hasta(), reglas.moneda());
+        }
+        if (reglas.datos() == null) return new AiActionResult(reglas.respuesta(), null, List.of(), null, reglas.sugerencias(), reglas.contexto());
+        return crearPropuesta(userId, "CREATE_TRANSACTION", reglas.respuesta(), objectMapper.valueToTree(reglas.datos()),
+                "Revisa los datos. Todav\u00eda no se ha guardado el movimiento; se interpret\u00f3 con reglas y tu historial.");
+    }
+
+    /** Resuelve comandos sencillos con un diccionario local y sin enviar el mensaje al proveedor de IA. */
+    private AiActionResult interpretarRegistroRapido(Long userId, String conversation) {
+        if (conversation == null) return null;
+        int inicioMensaje = conversation.lastIndexOf("Usuario:");
+        if (inicioMensaje < 0) return null;
+        String mensaje = conversation.substring(inicioMensaje + "Usuario:".length()).strip();
+        return interpretarMensajeRapido(userId, mensaje);
+    }
+
+    private AiActionResult interpretarMensajeRapido(Long userId, String mensaje) {
+        if (mensaje == null) return null;
+        String frase = normalizar(mensaje);
+        Matcher matcher = REGISTRO_RAPIDO.matcher(frase);
+        if (!matcher.matches()) return null;
+
+        String verbo = matcher.group(1);
+        TipoTransaccion tipo = List.of("ingreso", "ingrese", "recibi").contains(verbo)
+                ? TipoTransaccion.INGRESO : TipoTransaccion.GASTO;
+        BigDecimal monto;
+        try {
+            monto = interpretarMonto(matcher.group(2));
+        } catch (NumberFormatException | ArithmeticException ex) {
+            return null;
+        }
+        if (monto.compareTo(BigDecimal.ZERO) <= 0) return null;
+
+        List<CuentaResponse> cuentas = cuentaService.listarCuentas(userId, true).stream()
+                .filter(CuentaResponse::activo)
+                .toList();
+        // Si la cuenta no se puede resolver sin ambigüedad, dejamos que el asistente pregunte.
+        if (cuentas.size() != 1) return null;
+        CuentaResponse cuenta = cuentas.get(0);
+
+        String concepto = matcher.group(3) == null ? "" : matcher.group(3).strip();
+        LocalDate fecha = com.gestionfinanzas.service.CalendarioFinanciero.hoy();
+        String conceptoNormalizado = normalizar(concepto);
+        if (conceptoNormalizado.endsWith(" ayer")) {
+            fecha = fecha.minusDays(1);
+            concepto = concepto.substring(0, concepto.length() - " ayer".length()).strip();
+            conceptoNormalizado = normalizar(concepto);
+        } else if (conceptoNormalizado.endsWith(" hoy")) {
+            concepto = concepto.substring(0, concepto.length() - " hoy".length()).strip();
+            conceptoNormalizado = normalizar(concepto);
+        }
+
+        String claveCategoria = conceptoNormalizado;
+        Map<String, List<String>> alias = Map.ofEntries(
+                Map.entry("supermercado", List.of("super", "supermercado", "despensa", "abarrotes")),
+                Map.entry("alimentos", List.of("super", "supermercado", "despensa", "abarrotes")),
+                Map.entry("alimentacion", List.of("super", "supermercado", "despensa", "abarrotes")),
+                Map.entry("transporte", List.of("taxi", "uber", "didi", "gasolina", "metro", "camion")),
+                Map.entry("comida", List.of("restaurante", "comida", "cafe", "cafeteria", "comida rapida")),
+                Map.entry("hogar", List.of("renta", "luz", "agua", "internet", "hogar")),
+                Map.entry("servicios", List.of("luz", "agua", "internet", "telefono", "gas")),
+                Map.entry("salud", List.of("farmacia", "doctor", "medicina", "salud")),
+                Map.entry("entretenimiento", List.of("cine", "netflix", "spotify", "entretenimiento")),
+                Map.entry("salario", List.of("salario", "nomina", "sueldo")),
+                Map.entry("ingresos", List.of("salario", "nomina", "sueldo")));
+        CategoriaResponse categoria = claveCategoria.isBlank() ? null
+                : categoriaService.listarCategorias(userId).stream()
+                .filter(CategoriaResponse::activo)
+                .filter(opcion -> opcion.tipo() == tipo)
+                .filter(opcion -> {
+                    String nombre = normalizar(opcion.nombre());
+                    return nombre.equals(claveCategoria) || claveCategoria.contains(nombre)
+                            || alias.entrySet().stream().anyMatch(entry -> entry.getValue().stream()
+                            .anyMatch(palabra -> claveCategoria.contains(palabra)) && nombre.contains(entry.getKey()));
+                })
+                .findFirst().orElse(null);
+
+        String descripcion = concepto.isBlank()
+                ? (tipo == TipoTransaccion.GASTO ? "Gasto" : "Ingreso")
+                : concepto;
+        Map<String, Object> datos = new LinkedHashMap<>();
+        datos.put("cuentaId", cuenta.id());
+        datos.put("categoriaId", categoria == null ? null : categoria.id());
+        datos.put("tipo", tipo.name());
+        datos.put("monto", monto);
+        datos.put("fecha", fecha.toString());
+        datos.put("descripcion", descripcion);
+        String resumen = (tipo == TipoTransaccion.GASTO ? "Registrar gasto" : "Registrar ingreso")
+                + " de " + monto.toPlainString() + " " + cuenta.moneda()
+                + (categoria == null ? "" : " en " + categoria.nombre())
+                + " desde " + cuenta.nombre() + " para el " + fecha;
+        JsonNode propuesta = objectMapper.valueToTree(datos);
+        return crearPropuesta(userId, "CREATE_TRANSACTION", resumen, propuesta,
+                "Preparé el movimiento con tus datos y sin llamar a un proveedor de IA. Revisa la propuesta antes de confirmarla.");
+    }
+
+    private BigDecimal interpretarMonto(String texto) {
+        String monto = texto;
+        int ultimaComa = monto.lastIndexOf(',');
+        int ultimoPunto = monto.lastIndexOf('.');
+        if (ultimaComa >= 0 && ultimoPunto >= 0) {
+            monto = monto.replace(",", "");
+        } else if (ultimaComa >= 0) {
+            int decimales = monto.length() - ultimaComa - 1;
+            monto = decimales > 0 && decimales <= 2
+                    ? monto.replace(',', '.')
+                    : monto.replace(",", "");
+        }
+        return new BigDecimal(monto).setScale(2, java.math.RoundingMode.UNNECESSARY);
+    }
+
+    private String normalizar(String valor) {
+        return Normalizer.normalize(valor, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .toLowerCase(java.util.Locale.ROOT)
+                .strip();
+    }
+
+    private AiActionResult crearPropuesta(Long userId, String type, String summary, JsonNode data, String answer) {
+        return crearPropuesta(userId, type, summary, data, answer, null);
+    }
+
+    private AiActionResult crearPropuesta(Long userId, String type, String summary, JsonNode data, String answer, AiReportWidget report) {
+        removeExpiredActions();
+        String id = UUID.randomUUID().toString();
+        JsonNode actionData = data.deepCopy();
+        pendingActions.put(id, new PendingAction(userId, type, summary, actionData,
+                Instant.now().plusSeconds(PROPOSAL_LIFETIME_SECONDS)));
+        return new AiActionResult(answer, new ActionProposal(id, type, summary, actionData.deepCopy()), List.of(), report);
+    }
+
+    public void marcarCapturaPorVoz(Long userId, ActionProposal proposal) {
+        if (proposal == null || !"CREATE_TRANSACTION".equals(proposal.type())) return;
+        pendingActions.computeIfPresent(proposal.id(), (id, pending) -> {
+            if (!pending.userId().equals(userId) || !(pending.data() instanceof ObjectNode data)) return pending;
+            data.put("metodoCaptura", "VOZ");
+            return pending;
+        });
     }
 
     @Transactional
@@ -190,8 +426,16 @@ public class AiActionService {
 
     private void execute(Long userId, String type, JsonNode data) {
         switch (type) {
-            case "CREATE_TRANSACTION" ->
-                    transaccionService.crearTransaccion(userId, read(data, TransaccionRequest.class));
+            case "CREATE_TRANSACTION" -> {
+                if ("VOZ".equals(data.path("metodoCaptura").asText())) {
+                    transaccionService.crearTransaccion(userId,
+                            readWithout(data, TransaccionRequest.class, "metodoCaptura"), null,
+                            com.gestionfinanzas.model.enums.MetodoCaptura.VOZ);
+                } else {
+                    transaccionService.crearTransaccion(userId,
+                            readWithout(data, TransaccionRequest.class, "metodoCaptura"));
+                }
+            }
             case "UPDATE_TRANSACTION" ->
                     transaccionService.actualizarTransaccion(userId, requiredId(data, "transaccionId"),
                             readWithout(data, TransaccionRequest.class, "transaccionId"));
@@ -297,5 +541,20 @@ public class AiActionService {
 
     private record PendingAction(Long userId, String type, String summary, JsonNode data, Instant expiresAt) {}
     public record ActionProposal(String id, String type, String summary, JsonNode data) {}
-    public record AiActionResult(String answer, ActionProposal action) {}
+    private record PendingBatchAction(String type, String summary, JsonNode data) {}
+
+    public record AiActionResult(String answer, ActionProposal action, List<ActionProposal> actions, AiReportWidget report, List<String> suggestions, String contexto) {
+        public AiActionResult(String answer, ActionProposal action, List<ActionProposal> actions, AiReportWidget report) {
+            this(answer, action, actions, report, List.of(), null);
+        }
+        public AiActionResult(String answer, ActionProposal action) {
+            this(answer, action, action == null ? List.of() : List.of(action), null);
+        }
+
+        public AiActionResult(String answer, ActionProposal action, List<ActionProposal> actions) {
+            this(answer, action, actions, null);
+        }
+    }
+
+    public record AiReportWidget(String title, List<String> labels, List<Double> values, String unit) {}
 }

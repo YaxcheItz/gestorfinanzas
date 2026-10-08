@@ -1,7 +1,6 @@
 package com.gestionfinanzas.ai;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
@@ -16,7 +15,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Component
-@ConditionalOnProperty(prefix = "app.ai", name = "provider", havingValue = "gemini", matchIfMissing = true)
 public class GeminiAiProvider implements AiProvider {
     private final AiProperties properties;
     private final RestClient restClient;

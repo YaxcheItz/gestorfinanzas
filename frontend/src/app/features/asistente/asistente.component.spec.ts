@@ -18,6 +18,12 @@ describe('AsistenteComponent', () => {
     summary: 'Eliminar el gasto de comida',
     data: { transaccionId: 43, descripcion: 'Comida', monto: 250 }
   };
+  const createProposal = {
+    id: 'proposal-create-1',
+    type: 'CREATE_TRANSACTION',
+    summary: 'Registrar gasto de comida',
+    data: { cuentaId: 1, tipo: 'GASTO', monto: 250 }
+  };
 
   beforeEach(() => {
     finanzasService = {
@@ -49,13 +55,13 @@ describe('AsistenteComponent', () => {
     });
   });
 
-  it('verifies the provider automatically when the assistant opens', () => {
+  it('loads configuration without calling the external provider', () => {
     const fixture = TestBed.createComponent(AsistenteComponent);
     fixture.detectChanges();
 
     expect(finanzasService.getAiConnectionStatus).toHaveBeenCalledTimes(1);
-    expect(finanzasService.verifyAiConnection).toHaveBeenCalledTimes(1);
-    expect(fixture.nativeElement.textContent).toContain('Gemini está listo');
+    expect(finanzasService.verifyAiConnection).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.textContent).toContain('Google Gemini');
     expect(fixture.nativeElement.textContent).not.toContain('Probar conexión');
   });
 
@@ -85,6 +91,7 @@ describe('AsistenteComponent', () => {
     const fixture = TestBed.createComponent(AsistenteComponent);
     fixture.detectChanges();
     const component = fixture.componentInstance;
+    component.consienteDatosFinancieros.set(true);
     component.entrada.set('  ¿Cuánto gasté este mes?  ');
 
     const form = fixture.nativeElement.querySelector('form') as HTMLFormElement;
@@ -93,13 +100,83 @@ describe('AsistenteComponent', () => {
 
     expect(finanzasService.chatWithAi).toHaveBeenCalledWith([
       { role: 'USER', content: '¿Cuánto gasté este mes?' }
-    ]);
+    ], true);
     expect(component.enviando()).toBe(false);
     expect(component.mensajes()).toEqual([
       { role: 'USER', content: '¿Cuánto gasté este mes?' },
       { role: 'ASSISTANT', content: 'Este mes registraste gastos.', action: undefined }
     ]);
     expect(fixture.nativeElement.textContent).toContain('Este mes registraste gastos.');
+  });
+
+  it('sends financial-report suggestions immediately and keeps them in a horizontal strip', () => {
+    const fixture = TestBed.createComponent(AsistenteComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    component.consienteDatosFinancieros.set(true);
+
+    const suggestions = fixture.nativeElement.querySelector('.ai-report-prompts') as HTMLElement;
+    expect(suggestions).toBeTruthy();
+    expect(suggestions.className).toContain('overflow-x-auto');
+    fixture.detectChanges();
+    const fixedExpenses = Array.from(suggestions.querySelectorAll('button') as NodeListOf<HTMLButtonElement>)
+      .find(button => button.textContent?.includes('Gastos fijos'));
+    expect(fixedExpenses).toBeTruthy();
+
+    fixedExpenses?.click();
+    fixture.detectChanges();
+
+    expect(finanzasService.chatWithAi).toHaveBeenCalledWith([
+      { role: 'USER', content: 'Analiza mis gastos fijos del periodo actual y resume cuánto representan.' }
+    ], true);
+    expect(component.entrada()).toBe('');
+    expect(component.mensajes()[0].content).toContain('gastos fijos');
+  });
+
+  it('clears only local chat messages', () => {
+    const fixture = TestBed.createComponent(AsistenteComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    component.mensajes.set([
+      { role: 'USER', content: '¿Qué categoría gastó más?' },
+      { role: 'ASSISTANT', content: 'Transporte.' }
+    ]);
+
+    component.limpiarHistorial();
+
+    expect(component.mensajes()).toEqual([]);
+    expect(finanzasService.chatWithAi).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelector('[aria-label="Limpiar historial del chat"]')).toBeTruthy();
+  });
+
+  it('renders a financial report widget with values and an export action', () => {
+    finanzasService.chatWithAi.mockReturnValue(of({
+      success: true,
+      message: '',
+      data: {
+        answer: 'Aquí está la distribución.',
+        action: null,
+        report: {
+          title: 'Gastos por categoría',
+          labels: ['Comida', 'Transporte'],
+          values: [1200, 800],
+          unit: 'MXN'
+        }
+      }
+    }));
+    const fixture = TestBed.createComponent(AsistenteComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    component.consienteDatosFinancieros.set(true);
+    component.entrada.set('Muéstrame una gráfica de gastos por categoría');
+    component.enviarMensaje();
+    fixture.detectChanges();
+
+    const widget = fixture.nativeElement.querySelector('[data-report-widget]') as HTMLElement;
+    expect(widget).toBeTruthy();
+    expect(widget.textContent).toContain('Gastos por categoría');
+    expect(widget.textContent).toContain('Comida');
+    expect(widget.querySelector('button[aria-label="Exportar gráfico Gastos por categoría"]')).toBeTruthy();
   });
 
   it('keeps the failed question available to retry without corrupting chat history', () => {
@@ -109,6 +186,7 @@ describe('AsistenteComponent', () => {
     const fixture = TestBed.createComponent(AsistenteComponent);
     fixture.detectChanges();
     const component = fixture.componentInstance;
+    component.consienteDatosFinancieros.set(true);
     component.entrada.set('¿Cuál es mi saldo?');
 
     component.enviarMensaje();
@@ -137,6 +215,7 @@ describe('AsistenteComponent', () => {
     const fixture = TestBed.createComponent(AsistenteComponent);
     fixture.detectChanges();
     const component = fixture.componentInstance;
+    component.consienteDatosFinancieros.set(true);
     component.entrada.set('Elimina el gasto de comida');
     component.enviarMensaje();
     fixture.detectChanges();
@@ -154,6 +233,25 @@ describe('AsistenteComponent', () => {
     expect(component.mensajes()[1].content).toContain('El movimiento se eliminó.');
   });
 
+  it('keeps a single proposal returned inside the actions collection actionable', () => {
+    finanzasService.chatWithAi.mockReturnValue(of({
+      success: true,
+      message: '',
+      data: { answer: 'Revisa este movimiento.', action: null, actions: [createProposal] }
+    }));
+    const fixture = TestBed.createComponent(AsistenteComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    component.consienteDatosFinancieros.set(true);
+    component.entrada.set('Elimina el gasto de comida');
+    component.enviarMensaje();
+    fixture.detectChanges();
+
+    expect(component.mensajes()[1].actions).toEqual([createProposal]);
+    expect(fixture.nativeElement.textContent).toContain('Revisa cada movimiento antes de guardarlo');
+    expect(fixture.nativeElement.textContent).toContain('Confirmar movimiento');
+  });
+
   it('requires the additional confirmation step before deleting', () => {
     finanzasService.chatWithAi.mockReturnValue(of({
       success: true,
@@ -163,6 +261,7 @@ describe('AsistenteComponent', () => {
     const fixture = TestBed.createComponent(AsistenteComponent);
     fixture.detectChanges();
     const component = fixture.componentInstance;
+    component.consienteDatosFinancieros.set(true);
     component.entrada.set('Elimina el gasto');
     component.enviarMensaje();
     fixture.detectChanges();
@@ -192,6 +291,7 @@ describe('AsistenteComponent', () => {
     const fixture = TestBed.createComponent(AsistenteComponent);
     fixture.detectChanges();
     const component = fixture.componentInstance;
+    component.consienteDatosFinancieros.set(true);
     component.entrada.set('Elimina el gasto');
     component.enviarMensaje();
 

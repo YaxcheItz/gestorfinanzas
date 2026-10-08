@@ -1,0 +1,78 @@
+{
+  "requests": [
+    {
+      "path": "/api/perfil",
+      "method": "GET",
+      "params": {},
+      "body": null
+    },
+    {
+      "path": "/api/recurrencias",
+      "method": "GET",
+      "params": {},
+      "body": null
+    },
+    {
+      "path": "/api/presupuestos",
+      "method": "GET",
+      "params": {
+        "mes": "10",
+        "anio": "2026"
+      },
+      "body": null
+    },
+    {
+      "path": "/api/dashboard/resumen",
+      "method": "GET",
+      "params": {
+        "mes": "10",
+        "anio": "2026",
+        "desde": "2026-10-01",
+        "hasta": "2026-10-31"
+      },
+      "body": null
+    },
+    {
+      "path": "/api/dashboard/analitica",
+      "method": "GET",
+      "params": {
+        "mes": "10",
+        "anio": "2026",
+        "desde": "2026-10-01",
+        "hasta": "2026-10-31"
+      },
+      "body": null
+    },
+    {
+      "path": "/api/cuentas",
+      "method": "GET",
+      "params": {},
+      "body": null
+    },
+    {
+      "path": "/api/categorias",
+      "method": "GET",
+      "params": {},
+      "body": null
+    },
+    {
+      "path": "/api/categorias",
+      "method": "GET",
+      "params": {},
+      "body": null
+    },
+    {
+      "path": "/api/asistente/captura-rapida",
+      "method": "POST",
+      "params": {},
+      "body": {
+        "content": "Gaste 80 en tacos",
+        "consentimientoDatosFinancieros": false,
+        "capturaPorVoz": false,
+        "contexto": null
+      }
+    }
+  ],
+  "errors": [],
+  "text": "✦\nKaptal\nTu chat financiero\n×\n\nRegistra movimientos y pide reportes. Primero reglas e historial; IA solo cuando hace falta y la autorizas.\n\nGaste 80 en tacos\n✦\nReglas e historial\n\nRevisa antes de guardar\n\nConfirma para guardar\nGasto de 80 MXN ? Efectivo ? 2026-10-04\nDescartar\nGuardar movimiento\nGrabar movimiento\nHoy\nTop categorías\nPresupuestos\nSaldos\nEscribe el movimiento que quieres registrar\nPermitir IA y compartir contexto financiero solo para solicitudes complejas"
+}
