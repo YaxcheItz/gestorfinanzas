@@ -88,7 +88,7 @@ public class RespaldoFinancieroService {
                 .toList();
 
         return new RespaldoFinancieroResponse(
-                1,
+                3,
                 Instant.now(),
                 perfilService.obtener(usuarioId),
                 cuentas,
@@ -148,13 +148,14 @@ public class RespaldoFinancieroService {
                     .findByParejaIdOrderByFechaDescIdDesc(pareja.getId()).stream()
                     .map(pago -> new RespaldoFinancieroResponse.PagoRespaldo(
                             pago.getId(), miembro(pago.getPagador(), usuarioId), miembro(pago.getBeneficiario(), usuarioId),
-                            pago.getMonto(), pago.getMoneda(), pago.getFecha(), pago.getNotas(), pago.getFechaCreacion()
+                            pago.getMonto(), pago.getMoneda(), pago.getFecha(), pago.getNotas(), pago.getFechaCreacion(),
+                            pago.getRegistradoPor() == null ? null : miembro(pago.getRegistradoPor(),usuarioId)
                     ))
                     .toList();
 
             resultado.add(new RespaldoFinancieroResponse.ParejaRespaldo(
                     pareja.getId(), pareja.isActiva(), pareja.getMoneda(), pareja.getFechaCreacion(),
-                    otro.getNombre(), otro.getEmail(), aportes, gastos, pagos
+                    otro.getNombre(), ParejaService.correoCompartido(pareja,otro.getId()), aportes, gastos, pagos
             ));
         }
         return List.copyOf(resultado);

@@ -7,6 +7,7 @@ import com.gestionfinanzas.dto.response.AuditoriaTransaccionResponse;
 import com.gestionfinanzas.dto.response.CategoriaResponse;
 import com.gestionfinanzas.dto.response.CuentaResponse;
 import com.gestionfinanzas.dto.response.PlantillaRecurrenteResponse;
+import com.gestionfinanzas.model.enums.TipoCuenta;
 import com.gestionfinanzas.dto.response.RespaldoFinancieroResponse;
 import com.gestionfinanzas.dto.response.RestauracionRespaldoPreviewResponse;
 import com.gestionfinanzas.dto.response.TransaccionResponse;
@@ -62,7 +63,7 @@ import java.util.function.Function;
 @Slf4j
 public class RestauracionRespaldoService {
 
-    private static final int VERSION_COMPATIBLE = 1;
+    private static final int VERSION_COMPATIBLE = 3;
     private static final int MAX_REGISTROS = 20_000;
     private static final Map<String, CategoriaInicial> CATEGORIAS_INICIALES = Map.of(
             "Alimentos y Supermercado", new CategoriaInicial(TipoTransaccion.GASTO, "shopping-cart", "#f59e0b"),
@@ -108,17 +109,13 @@ public class RestauracionRespaldoService {
         if (parejas == null) {
             advertencias.add("Este respaldo antiguo no incluye los gastos compartidos, así que no se restaurará ese historial.");
         } else {
-            advertencias.add("El historial de gastos compartidos solo se restaura si la cuenta de tu pareja existe en esta plataforma; se le busca por su correo.");
-            for (RespaldoFinancieroResponse.ParejaRespaldo pareja : parejas) {
-                if (resoluble(usuarioId, pareja.emailPareja())) {
-                    continue;
-                }
-                String nombre = pareja.nombrePareja() == null ? pareja.emailPareja() : pareja.nombrePareja();
-                advertencias.add("No se restaurarán los gastos compartidos con " + nombre
-                        + ": esa cuenta no existe aquí. Vuelve a vincularte cuando la tenga.");
-            }
+            advertencias.add("El historial de gastos compartidos se restaura como una copia privada de consulta. No reactiva vínculos ni concede acceso a otra persona.");
+            advertencias.add("Los otros participantes se conservan según el archivo, con referencias históricas sin acceso. No se consulta su perfil actual.");
         }
         advertencias.add("Se conservarán tu correo, contraseña y preferencias actuales del perfil.");
+        if (respaldo.cuentas().stream().anyMatch(c -> c.tipo() == TipoCuenta.CREDITO && c.limiteRetenido() == null)) {
+            advertencias.add("Este respaldo antiguo no conserva el crédito retenido ni todos los datos MSI. No se puede reconstruir el total original de esas compras automáticamente.");
+        }
         return new RestauracionRespaldoPreviewResponse(
                 respaldo.version(), respaldo.generadoEn(), respaldo.cuentas().size(),
                 respaldo.categoriasPersonalizadas().size(), respaldo.presupuestos().size(),
@@ -130,20 +127,6 @@ public class RestauracionRespaldoService {
                 parejas == null ? 0 : parejas.stream().mapToInt(p -> p.pagos() == null ? 0 : p.pagos().size()).sum(),
                 vacio, vacio, advertencias
         );
-    }
-
-    /**
-     * Solo el propietario y alguien cuya cuenta exista y no sea el mismo pueden
-     * formar una pareja restaurada. Busca por correo porque los ids del archivo
-     * pertenecen a la base de datos de origen.
-     */
-    private boolean resoluble(Long usuarioId, String emailPareja) {
-        if (emailPareja == null || emailPareja.isBlank()) {
-            return false;
-        }
-        return usuarioRepository.findByEmailIgnoreCase(emailPareja)
-                .filter(otro -> !otro.getId().equals(usuarioId))
-                .isPresent();
     }
 
     @Transactional
@@ -231,7 +214,7 @@ public class RestauracionRespaldoService {
     }
 
     private long contarMovimientosPareja(List<RespaldoFinancieroResponse.ParejaRespaldo> parejas) {
-        long total = 0;
+        long total = parejas.size();
         for (RespaldoFinancieroResponse.ParejaRespaldo pareja : parejas) {
             total += pareja.aportes() == null ? 0 : pareja.aportes().size();
             total += pareja.gastos() == null ? 0 : pareja.gastos().size();
@@ -241,16 +224,14 @@ public class RestauracionRespaldoService {
     }
 
     private void validarParejas(List<RespaldoFinancieroResponse.ParejaRespaldo> parejas) {
-        Set<String> correos = new HashSet<>();
+        Set<Long> ids = new HashSet<>();
         for (RespaldoFinancieroResponse.ParejaRespaldo pareja : parejas) {
-            if (pareja == null || !monedaValida(pareja.moneda())) {
+            if (pareja == null || pareja.id()==null || !monedaValida(pareja.moneda())
+                    || excede(pareja.nombrePareja(),100) || excede(pareja.emailPareja(),150)) {
                 throw new IllegalArgumentException("El respaldo contiene un historial de gastos compartidos no válido.");
             }
-            // Dos parejas con el mismo correo no se pueden volver a crear en la
-            // misma cuenta, ni aunque una venga desactivada.
-            if (pareja.emailPareja() != null && !pareja.emailPareja().isBlank()
-                    && !correos.add(pareja.emailPareja().toLowerCase(Locale.ROOT))) {
-                throw new IllegalArgumentException("El respaldo repite el mismo correo de pareja en dos vínculos.");
+            if (!ids.add(pareja.id())) {
+                throw new IllegalArgumentException("El respaldo repite el mismo historial de pareja.");
             }
             validarAportesPareja(pareja.aportes());
             validarGastosPareja(pareja.gastos());
@@ -263,7 +244,7 @@ public class RestauracionRespaldoService {
         for (RespaldoFinancieroResponse.AporteRespaldo aporte : aportes) {
             if (aporte == null || !montoValido(aporte.monto()) || !monedaValida(aporte.moneda())
                     || aporte.fecha() == null || aporte.usuario() == null
-                    || excede(aporte.notas(), 255)) {
+                    || excede(aporte.notas(), 500)) {
                 throw new IllegalArgumentException("El respaldo contiene un aporte de pareja no válido.");
             }
         }
@@ -320,7 +301,7 @@ public class RestauracionRespaldoService {
         for (RespaldoFinancieroResponse.PagoRespaldo pago : pagos) {
             if (pago == null || !montoValido(pago.monto()) || !monedaValida(pago.moneda())
                     || pago.fecha() == null || pago.pagador() == null || pago.beneficiario() == null
-                    || excede(pago.notas(), 255)) {
+                    || excede(pago.notas(), 500)) {
                 throw new IllegalArgumentException("El respaldo contiene un pago entre parejas no válido.");
             }
             if (pago.pagador().propietario() == pago.beneficiario().propietario()) {
@@ -333,25 +314,26 @@ public class RestauracionRespaldoService {
         if (parejas == null || parejas.isEmpty()) {
             return;
         }
+        Map<String,Usuario> referencias = new HashMap<>();
         for (RespaldoFinancieroResponse.ParejaRespaldo respaldo : parejas) {
-            Optional<Usuario> otro = usuarioRepository.findByEmailIgnoreCase(respaldo.emailPareja() == null ? "" : respaldo.emailPareja())
-                    .filter(candidato -> !candidato.getId().equals(usuario.getId()));
-            if (otro.isEmpty()) {
-                // La vista previa ya le avisó. No es un error: restaurar el resto
-                // del respaldo es válido aunque esta pareja no se pueda rehacer.
-                log.warn("Se omite el historial de la pareja con correo '{}': la cuenta no existe en este entorno.",
-                        respaldo.emailPareja());
-                continue;
-            }
+            String clave=(respaldo.emailPareja()==null ? "historial-"+respaldo.id() : respaldo.emailPareja().toLowerCase(Locale.ROOT))
+                    + ":" + respaldo.nombrePareja();
+            Usuario otro=referencias.computeIfAbsent(clave,k -> usuarioRepository.save(Usuario.builder()
+                        .nombre(respaldo.nombrePareja()==null || respaldo.nombrePareja().isBlank() ? "Participante histórico" : respaldo.nombrePareja().trim())
+                        .email("archivo-"+java.util.UUID.randomUUID()+"@cuenta.invalid")
+                        .passwordHash("!"+java.util.UUID.randomUUID()).activo(false).referenciaHistorica(true).build()));
             Pareja pareja = parejaRepository.save(Pareja.builder()
                     .usuarioA(usuario)
-                    .usuarioB(otro.get())
+                    .usuarioB(otro)
+                    .nombreRemitenteInvitacion(usuario.getNombre())
+                    .correoRemitenteInvitacion(usuario.getEmail())
+                    .correoDestinatarioInvitacion(respaldo.emailPareja())
                     .moneda(respaldo.moneda())
-                    .activa(respaldo.activa())
+                    .activa(false).pendiente(false).propietarioHistorialId(usuario.getId())
                     .build());
-            restaurarAportesPareja(pareja, usuario, otro.get(), respaldo.aportes());
-            restaurarGastosPareja(pareja, usuario, otro.get(), respaldo.gastos());
-            restaurarPagosPareja(pareja, usuario, otro.get(), respaldo.pagos());
+            restaurarAportesPareja(pareja, usuario, otro, respaldo.aportes());
+            restaurarGastosPareja(pareja, usuario, otro, respaldo.gastos());
+            restaurarPagosPareja(pareja, usuario, otro, respaldo.pagos());
         }
     }
 
@@ -403,6 +385,7 @@ public class RestauracionRespaldoService {
                     .pareja(pareja)
                     .pagador(resolver(yo, otro, respaldo.pagador()))
                     .beneficiario(resolver(yo, otro, respaldo.beneficiario()))
+                    .registradoPor(respaldo.registradoPor() == null ? null : resolver(yo,otro,respaldo.registradoPor()))
                     .monto(respaldo.monto())
                     .moneda(respaldo.moneda())
                     .fecha(respaldo.fecha())
@@ -416,7 +399,8 @@ public class RestauracionRespaldoService {
     }
 
     private boolean montoValido(BigDecimal monto) {
-        return monto != null && monto.signum() >= 0;
+        return monto != null && monto.signum() >= 0 && monto.stripTrailingZeros().scale()<=2
+                && monto.compareTo(new BigDecimal("9999999999999.99"))<=0;
     }
 
     private boolean monedaValida(String moneda) {
@@ -434,7 +418,7 @@ public class RestauracionRespaldoService {
     }
 
     private void validarContenido(RespaldoFinancieroResponse respaldo) {
-        if (respaldo == null || respaldo.version() != VERSION_COMPATIBLE || respaldo.generadoEn() == null
+        if (respaldo == null || respaldo.version() < 1 || respaldo.version() > VERSION_COMPATIBLE || respaldo.generadoEn() == null
                 || respaldo.perfil() == null || respaldo.cuentas() == null
                 || respaldo.categoriasPersonalizadas() == null || respaldo.presupuestos() == null
                 || respaldo.recurrencias() == null || respaldo.historialMovimientos() == null
@@ -463,6 +447,12 @@ public class RestauracionRespaldoService {
         }
 
         for (CuentaResponse cuenta : respaldo.cuentas()) {
+            if (cuenta.limiteRetenido() != null && (cuenta.limiteRetenido().signum() < 0
+                    || cuenta.limiteRetenido().stripTrailingZeros().scale() > 2
+                    || cuenta.limiteRetenido().compareTo(new BigDecimal("9999999999999.99")) > 0
+                    || (cuenta.tipo() != TipoCuenta.CREDITO && cuenta.limiteRetenido().signum() != 0))) {
+                throw new IllegalArgumentException("El respaldo contiene una retención de crédito no válida.");
+            }
             if (cuenta.nombre() == null || cuenta.nombre().isBlank() || cuenta.nombre().length() > 100
                     || cuenta.tipo() == null || cuenta.saldoActual() == null || cuenta.moneda() == null
                     || cuenta.moneda().length() < 3 || cuenta.moneda().length() > 10) {
@@ -536,18 +526,72 @@ public class RestauracionRespaldoService {
                 throw new IllegalArgumentException("El respaldo contiene dos presupuestos para la misma categoría y periodo.");
             }
         }
+        java.util.Set<java.util.UUID> compras = new java.util.HashSet<>();
+        java.util.Map<Long, BigDecimal> pendientesMsi = new java.util.HashMap<>();
         for (PlantillaRecurrenteResponse recurrencia : respaldo.recurrencias()) {
             if (recurrencia == null) throw new IllegalArgumentException("El respaldo contiene una recurrencia no válida.");
+            if (recurrencia.cuotasTotales() != null) {
+                int pagadas = recurrencia.cuotasPagadas() == null ? 0 : recurrencia.cuotasPagadas();
+                if (recurrencia.cuotasTotales() < 1 || recurrencia.cuotasTotales() > 59
+                        || pagadas < 0 || pagadas > recurrencia.cuotasTotales()
+                        || recurrencia.tipo() != TipoTransaccion.GASTO
+                        || recurrencia.frecuencia() != com.gestionfinanzas.model.enums.FrecuenciaRecurrencia.MENSUAL
+                        || (recurrencia.activa() && pagadas == recurrencia.cuotasTotales())) {
+                    throw new IllegalArgumentException("El respaldo contiene un plan MSI no válido.");
+                }
+                if (recurrencia.montoPendiente() != null && (recurrencia.montoPendiente().signum() < 0
+                        || recurrencia.montoPendiente().stripTrailingZeros().scale() > 2
+                        || recurrencia.montoPendiente().compareTo(new BigDecimal("9999999999999.99")) > 0
+                        || (pagadas == recurrencia.cuotasTotales() && recurrencia.montoPendiente().signum() != 0)
+                        || (pagadas < recurrencia.cuotasTotales() && (recurrencia.monto() == null
+                            || recurrencia.montoPendiente().compareTo(recurrencia.monto().multiply(BigDecimal.valueOf(recurrencia.cuotasTotales() - pagadas))) < 0)))) {
+                    throw new IllegalArgumentException("El respaldo contiene cuotas pendientes inconsistentes.");
+                }
+            } else if (recurrencia.montoPendiente() != null || recurrencia.compraMsiId() != null
+                    || (recurrencia.cuotasPagadas() != null && recurrencia.cuotasPagadas() != 0)) {
+                throw new IllegalArgumentException("El respaldo contiene datos MSI sin un plan de cuotas.");
+            }
             validarReferencia(recurrencia.cuentaId(), cuentaIds, "cuenta de una recurrencia");
             validarCategoriaReferencia(recurrencia.categoriaId(), categoriaIds,
                     recurrencia.categoriaNombre(), recurrencia.tipo());
             if (recurrencia.tipo() == null || recurrencia.monto() == null
-                    || recurrencia.monto().compareTo(BigDecimal.ZERO) <= 0 || recurrencia.frecuencia() == null
+                    || recurrencia.monto().compareTo(BigDecimal.ZERO) <= 0
+                    || recurrencia.monto().stripTrailingZeros().scale() > 2
+                    || recurrencia.monto().compareTo(new BigDecimal("9999999999999.99")) > 0
+                    || recurrencia.frecuencia() == null
                     || recurrencia.siguienteFecha() == null) {
                 throw new IllegalArgumentException("El respaldo contiene una recurrencia no válida.");
             }
+            if (recurrencia.cuotasTotales() != null) {
+                CuentaResponse tarjeta = respaldo.cuentas().stream()
+                        .filter(c -> c.id().equals(recurrencia.cuentaId())).findFirst().orElseThrow();
+                if (tarjeta.tipo() != TipoCuenta.CREDITO) {
+                    throw new IllegalArgumentException("El respaldo contiene MSI en una cuenta sin crédito.");
+                }
+                if (recurrencia.montoPendiente() != null) {
+                    pendientesMsi.merge(tarjeta.id(), recurrencia.montoPendiente(), BigDecimal::add);
+                }
+                if (recurrencia.compraMsiId() != null) {
+                    if (!compras.add(recurrencia.compraMsiId())) {
+                        throw new IllegalArgumentException("El respaldo repite una compra MSI.");
+                    }
+                    var cuotas = respaldo.transacciones().stream()
+                            .filter(t -> recurrencia.compraMsiId().equals(t.compraMsiId())).toList();
+                    if (cuotas.size() != (recurrencia.cuotasPagadas() == null ? 0 : recurrencia.cuotasPagadas()) + 1
+                            || cuotas.stream().anyMatch(t -> t.tipo() != TipoTransaccion.GASTO
+                            || !recurrencia.cuentaId().equals(t.cuentaId()))) {
+                        throw new IllegalArgumentException("El respaldo contiene vínculos de cuotas MSI inconsistentes.");
+                    }
+                }
+            }
             if (excede(recurrencia.notas(), 500)) {
                 throw new IllegalArgumentException("El respaldo contiene una recurrencia con notas demasiado largas.");
+            }
+        }
+        for (CuentaResponse cuenta : respaldo.cuentas()) {
+            if (pendientesMsi.getOrDefault(cuenta.id(), BigDecimal.ZERO)
+                    .compareTo(cuenta.limiteRetenido() == null ? BigDecimal.ZERO : cuenta.limiteRetenido()) > 0) {
+                throw new IllegalArgumentException("El crédito retenido no cubre las cuotas MSI del respaldo.");
             }
         }
         for (AuditoriaTransaccionResponse evento : respaldo.historialMovimientos()) {
@@ -642,6 +686,7 @@ public class RestauracionRespaldoService {
                     .cashbackPorcentaje(origen.cashbackPorcentaje())
                     .cashbackLimiteMensual(origen.cashbackLimiteMensual())
                     .limiteCredito(origen.limiteCredito())
+                    .limiteRetenido(origen.limiteRetenido() == null ? BigDecimal.ZERO : origen.limiteRetenido())
                     .diaCorte(origen.diaCorte())
                     .diaPago(origen.diaPago())
                     .saldoActual(origen.saldoActual())
@@ -695,6 +740,8 @@ public class RestauracionRespaldoService {
                     .fecha(origen.fecha())
                     .descripcion(origen.descripcion())
                     .notas(origen.notas())
+                    .compraMsiId(origen.compraMsiId())
+                    .metodoCaptura(origen.metodoCaptura())
                     .build());
             mapa.put(origen.id(), guardada.getId());
         }
@@ -736,6 +783,10 @@ public class RestauracionRespaldoService {
             plantillaRepository.save(PlantillaRecurrente.builder()
                     .usuario(usuario).cuenta(cuenta).categoria(categoria).tipo(origen.tipo())
                     .monto(origen.monto()).notas(origen.notas()).frecuencia(origen.frecuencia())
+                    .cuotasTotales(origen.cuotasTotales())
+                    .cuotasPagadas(origen.cuotasPagadas() == null ? 0 : origen.cuotasPagadas())
+                    .fechaAncla(origen.fechaAncla()).montoPendiente(origen.montoPendiente())
+                    .compraMsiId(origen.compraMsiId())
                     .siguienteFecha(origen.siguienteFecha()).activa(origen.activa()).build());
         }
     }
@@ -791,7 +842,7 @@ public class RestauracionRespaldoService {
                 resolverCategoriaHistorica(origen.categoriaId(), categorias), origen.categoriaNombre(),
                 origen.categoriaIcono(), origen.categoriaColor(), origen.tipo(), origen.monto(),
                 origen.montoDestino(), origen.tasaCambio(), origen.moneda(), origen.monedaDestino(),
-                origen.fecha(), origen.descripcion(), origen.notas(), origen.cashbackAutomatico(), origen.fechaCreacion()
+                origen.fecha(), origen.descripcion(), origen.notas(), origen.cashbackAutomatico(), origen.fechaCreacion(), origen.metodoCaptura(), origen.compraMsiId()
         );
     }
 

@@ -26,12 +26,14 @@ import { AuthService } from '../services/auth.service';
  */
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
+  const usuarioId = authService.currentUser()?.id ?? null;
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
       const esAuthPublico = req.url.includes('/api/auth/');
 
-      if (error.status === 401 && !esAuthPublico && authService.isAuthenticated()) {
+      if (error.status === 401 && !esAuthPublico && authService.isAuthenticated()
+          && (authService.currentUser()?.id ?? null) === usuarioId) {
         authService.cerrarSesionLocal('expirada');
       }
 

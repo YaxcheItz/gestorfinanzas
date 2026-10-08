@@ -1,0 +1,52 @@
+{
+  "fecha": "2026-10-06",
+  "etapa": 1,
+  "alcance": "Sesiones",
+  "estado": "verificada_localmente_lista_para_revision",
+  "backend": {
+    "comando": ".\\mvnw.cmd test",
+    "exitCode": 0,
+    "pruebas": 240,
+    "suites": 36,
+    "fallos": 0,
+    "errores": 0,
+    "omitidas": 0,
+    "nuevasPruebas": 8,
+    "basePruebas": "H2 en modo PostgreSQL"
+  },
+  "frontend": {
+    "comando": "npm.cmd test -- --watch=false --runner-config=../replica/navegacion-captura/vitest.config.mjs",
+    "exitCode": 0,
+    "pruebas": 186,
+    "archivos": 23,
+    "fallos": 0,
+    "nuevasPruebas": 12
+  },
+  "buildFrontend": {
+    "comando": "npm.cmd run build",
+    "exitCode": 0,
+    "initialKB": 604.63,
+    "advertencias": [
+      "Bundle inicial mayor que el presupuesto de 500 kB",
+      "CSS del login 1 byte por encima del presupuesto de 4 kB"
+    ]
+  },
+  "navegador": {
+    "comando": "node replica/mejoras-etapa1/browser-sesiones.mjs",
+    "exitCode": 0,
+    "motor": "Chromium",
+    "api": "sintética",
+    "serviceWorkers": "bloqueados",
+    "evidencia": "browser-checks.json",
+    "dosPestanasUnaRotacion": true,
+    "cierreCompartido": true,
+    "salidaAlLogin": true,
+    "erroresJavaScript": 0
+  },
+  "diffAplicacion": { "exitCode": 0, "crlfPermitido": true },
+  "coberturaPorcentual": "no medida",
+  "postgresqlRealProbado": false,
+  "desplegado": false,
+  "baseProduccionModificada": false,
+  "siguienteEtapa": "Exactitud financiera; después de la revisión del usuario"
+}

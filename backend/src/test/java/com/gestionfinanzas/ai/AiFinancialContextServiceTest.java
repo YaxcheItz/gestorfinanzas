@@ -79,4 +79,26 @@ class AiFinancialContextServiceTest {
                 currentMonth.atEndOfMonth()
         );
     }
+    @Test
+    void reporteLocalSeparaMonedasYRespetaUsuarioYPeriodo() {
+        var desde=java.time.LocalDate.of(2026,10,1);var hasta=desde.plusDays(3);
+        when(transaccionRepository.findTotalesMensualesPorMoneda(7L,desde,hasta)).thenReturn(List.of(
+            new DashboardMonedaTotales("MXN",new BigDecimal("1000"),new BigDecimal("80")),
+            new DashboardMonedaTotales("USD",new BigDecimal("50"),new BigDecimal("2"))));
+        var resultado=service.reporteLocal(7L,"RESUMEN",desde,hasta,null);
+        org.junit.jupiter.api.Assertions.assertNull(resultado.report());
+        assertTrue(resultado.answer().contains("MXN"));assertTrue(resultado.answer().contains("USD"));
+        var filtrado=service.reporteLocal(7L,"RESUMEN",desde,hasta,"MXN");
+        org.junit.jupiter.api.Assertions.assertEquals("MXN",filtrado.report().unit());
+        org.junit.jupiter.api.Assertions.assertEquals(List.of(1000.0,80.0),filtrado.report().values());
+    }
+    @Test
+    void reporteDeCategoriasUsaAgregadoPropioSinInventarDatos() {
+        var fecha=java.time.LocalDate.of(2026,10,4);
+        when(transaccionRepository.findGastosPorCategoria(7L,TipoTransaccion.GASTO,fecha,fecha)).thenReturn(List.of());
+        var resultado=service.reporteLocal(7L,"CATEGORIAS",fecha,fecha,null);
+        assertTrue(resultado.answer().contains("No hay gastos"));
+        org.junit.jupiter.api.Assertions.assertNull(resultado.report());
+        verify(transaccionRepository).findGastosPorCategoria(7L,TipoTransaccion.GASTO,fecha,fecha);
+    }
 }

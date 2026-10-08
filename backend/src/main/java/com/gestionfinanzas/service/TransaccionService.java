@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -47,7 +48,44 @@ public class TransaccionService {
     private final LibroDiarioService libroDiarioService;
 
     @Transactional
+    public TransaccionResponse crearCuotaRecurrente(Long usuarioId, TransaccionRequest request, UUID compraMsiId) {
+        return crearInterna(usuarioId, request, null,
+                com.gestionfinanzas.model.enums.MetodoCaptura.TEXTO, compraMsiId);
+    }
+
+    @Transactional
     public TransaccionResponse crearTransaccion(Long usuarioId, TransaccionRequest request) {
+        return crearTransaccion(usuarioId, request, null);
+    }
+
+    @Transactional
+    public TransaccionResponse crearTransaccion(Long usuarioId, TransaccionRequest request, UUID idempotencyKey) {
+        return crearTransaccion(usuarioId, request, idempotencyKey, com.gestionfinanzas.model.enums.MetodoCaptura.TEXTO);
+    }
+
+    @Transactional
+    public TransaccionResponse crearTransaccion(Long usuarioId, TransaccionRequest request, UUID idempotencyKey,
+                                               com.gestionfinanzas.model.enums.MetodoCaptura metodoCaptura) {
+        return crearInterna(usuarioId, request, idempotencyKey, metodoCaptura, null);
+    }
+
+    private TransaccionResponse crearInterna(Long usuarioId, TransaccionRequest request, UUID idempotencyKey,
+            com.gestionfinanzas.model.enums.MetodoCaptura metodoCaptura, UUID compraExistente) {
+        if (idempotencyKey != null) {
+            Transaccion existente = transaccionRepository.findByClientRequestId(idempotencyKey).orElse(null);
+            if (existente != null) {
+                if (!existente.getUsuario().getId().equals(usuarioId)) {
+                    throw new IllegalArgumentException("La clave de solicitud ya fue utilizada");
+                }
+                return TransaccionResponse.fromEntity(existente);
+            }
+        }
+        if (request.msi() != null && (request.msi() < 2 || request.msi() > 60)) {
+            throw new IllegalArgumentException("Los MSI deben tener entre 2 y 60 cuotas");
+        }
+        if (request.msi() != null && request.frecuenciaRecurrencia() != null) {
+            throw new IllegalArgumentException("Una compra MSI no puede tener otra recurrencia");
+        }
         DatosTransaccion datos = prepararTransaccion(usuarioId, request);
         validarRecurrencia(request, datos.tipo());
         validarLimiteCredito(datos.cuentaOrigen(), datos.tipo(), request.monto(), null);
@@ -58,7 +96,8 @@ public class TransaccionService {
             if (datos.tipo() != TipoTransaccion.GASTO || datos.cuentaOrigen().getTipo() != TipoCuenta.CREDITO) {
                 throw new IllegalArgumentException("Los MSI solo aplican a gastos con tarjeta de crédito");
             }
-            montoGuardar = request.monto().divide(BigDecimal.valueOf(request.msi()), 2, RoundingMode.HALF_UP);
+            montoGuardar = request.monto().divide(BigDecimal.valueOf(request.msi()), 2, RoundingMode.DOWN);
+            if (montoGuardar.signum() <= 0) throw new IllegalArgumentException("El monto no alcanza para cuotas de un centavo");
             BigDecimal montoRetenido = request.monto().subtract(montoGuardar);
             datos.cuentaOrigen().setLimiteRetenido(
                     (datos.cuentaOrigen().getLimiteRetenido() != null ? datos.cuentaOrigen().getLimiteRetenido() : BigDecimal.ZERO).add(montoRetenido)
@@ -69,7 +108,9 @@ public class TransaccionService {
         aplicarImpacto(datos.tipo(), datos.cuentaOrigen(), datos.cuentaDestino(),
                 montoGuardar, datos.montoDestino(), 1);
 
+        UUID compraMsiId = isMsi ? UUID.randomUUID() : compraExistente;
         Transaccion transaccion = Transaccion.builder()
+                .compraMsiId(compraMsiId)
                 .usuario(datos.usuario())
                 .cuenta(datos.cuentaOrigen())
                 .cuentaDestino(datos.cuentaDestino())
@@ -85,6 +126,8 @@ public class TransaccionService {
                 .fecha(request.fecha())
                 .descripcion(descripcionMovimiento(datos, request.descripcion()) + (isMsi ? " (Cuota 1/" + request.msi() + ")" : ""))
                 .notas(normalizarNotas(request.notas()))
+                .metodoCaptura(metodoCaptura)
+                .clientRequestId(idempotencyKey)
                 .build();
 
         Transaccion guardada = transaccionRepository.save(transaccion);
@@ -104,7 +147,10 @@ public class TransaccionService {
                     .monto(montoGuardar)
                     .notas(normalizarNotas(request.notas()))
                     .frecuencia(FrecuenciaRecurrencia.MENSUAL)
-                    .siguienteFecha(request.fecha().plusMonths(1))
+                    .siguienteFecha(CalendarioFinanciero.siguiente(request.fecha(), FrecuenciaRecurrencia.MENSUAL, request.fecha()))
+                    .fechaAncla(request.fecha())
+                    .montoPendiente(request.monto().subtract(montoGuardar))
+                    .compraMsiId(compraMsiId)
                     .cuotasTotales(request.msi() - 1)
                     .cuotasPagadas(0)
                     .build());
@@ -117,6 +163,8 @@ public class TransaccionService {
                     .monto(request.monto())
                     .notas(normalizarNotas(request.notas()))
                     .frecuencia(request.frecuenciaRecurrencia())
+                    .fechaAncla(CalendarioFinanciero.siguiente(request.fecha(), request.frecuenciaRecurrencia(), request.fecha())
+                            .equals(request.siguienteFechaRecurrencia()) ? request.fecha() : request.siguienteFechaRecurrencia())
                     .siguienteFecha(request.siguienteFechaRecurrencia())
                     .build());
         }
@@ -127,6 +175,9 @@ public class TransaccionService {
     public TransaccionResponse actualizarTransaccion(Long usuarioId, Long transaccionId, TransaccionRequest request) {
         Transaccion transaccion = transaccionRepository.findByIdAndUsuarioId(transaccionId, usuarioId)
                 .orElseThrow(() -> new IllegalArgumentException("Transacción no encontrada o no autorizada"));
+        if (transaccion.getCompraMsiId() != null) {
+            throw new IllegalArgumentException("Las cuotas MSI no se editan individualmente; cancela las cuotas pendientes desde Recurrentes");
+        }
         if (transaccion.getTipo() == TipoTransaccion.SALDO_INICIAL) {
             throw new IllegalArgumentException("El saldo inicial no se puede editar");
         }
@@ -142,6 +193,9 @@ public class TransaccionService {
         Cuenta cuentaAnterior = transaccion.getCuenta();
         LocalDate fechaAnterior = transaccion.getFecha();
         TipoTransaccion tipoAnterior = transaccion.getTipo();
+        if (request.msi() != null || request.frecuenciaRecurrencia() != null || request.siguienteFechaRecurrencia() != null) {
+            throw new IllegalArgumentException("Los MSI y las recurrencias se programan al crear un movimiento");
+        }
         DatosTransaccion datos = prepararTransaccion(usuarioId, request);
         validarLimiteCredito(datos.cuentaOrigen(), datos.tipo(), request.monto(), transaccion);
         if (tipoAnterior == TipoTransaccion.GASTO) {
@@ -241,6 +295,11 @@ public class TransaccionService {
     }
 
     private DatosTransaccion prepararTransaccion(Long usuarioId, TransaccionRequest request) {
+        if (request.monto() == null || request.monto().signum() <= 0
+                || request.monto().stripTrailingZeros().scale() > 2
+                || request.monto().compareTo(new BigDecimal("9999999999999.99")) > 0) {
+            throw new IllegalArgumentException("El monto debe ser positivo, con hasta 13 enteros y 2 decimales");
+        }
         if (request.tipo() == TipoTransaccion.SALDO_INICIAL) {
             throw new IllegalArgumentException("El saldo inicial solo se crea al registrar una cuenta");
         }
@@ -589,6 +648,9 @@ public class TransaccionService {
     public void eliminarTransaccion(Long usuarioId, Long transaccionId) {
         Transaccion transaccion = transaccionRepository.findByIdAndUsuarioId(transaccionId, usuarioId)
                 .orElseThrow(() -> new IllegalArgumentException("Transacción no encontrada o no autorizada"));
+        if (transaccion.getCompraMsiId() != null) {
+            throw new IllegalArgumentException("Las cuotas MSI registradas conservan su historial; cancela las pendientes desde Recurrentes");
+        }
         TransaccionResponse antes = TransaccionResponse.fromEntity(transaccion);
         if (transaccion.getCashbackOrigen() != null) {
             throw new IllegalArgumentException("El cashback automático se elimina junto con el gasto que lo generó");

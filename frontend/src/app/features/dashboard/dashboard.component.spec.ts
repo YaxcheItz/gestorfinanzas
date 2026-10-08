@@ -7,7 +7,6 @@ import { CategoriaPreferidaService } from '../../core/services/categoria-preferi
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { FinanzasService } from '../../core/services/finanzas.service';
 import { PerfilService } from '../../core/services/perfil.service';
-import { PrivacidadService } from '../../core/services/privacidad.service';
 import { ToastService } from '../../core/services/toast.service';
 import { DashboardComponent } from './dashboard.component';
 
@@ -32,6 +31,7 @@ describe('DashboardComponent movement dialog accessibility', () => {
               message: '',
               data: { resumenPorMoneda: [], ultimosMovimientos: [] }
             }),
+            getPresupuestos: () => of({ success: true, message: '', data: { presupuestos: [], resumenPorMoneda: [] } }),
             getDashboardAnalitica: () => of({
               success: true,
               message: '',
@@ -52,46 +52,59 @@ describe('DashboardComponent movement dialog accessibility', () => {
         { provide: ToastService, useValue: { success: vi.fn(), error: vi.fn() } },
         { provide: ConfirmDialogService, useValue: { confirm: vi.fn() } },
         { provide: PerfilService, useValue: { perfil: signal(null) } },
-        { provide: Router, useValue: { navigate: vi.fn() } }
+        { provide: Router, useValue: { navigate: vi.fn(), parseUrl: () => ({ queryParams: {} }) } }
       ]
     });
     await TestBed.compileComponents();
   });
 
-  it('moves focus into the dialog, traps Tab, and restores focus on Escape', () => {
+  it('shows the accessible primary action for chat based movement capture', () => {
     const fixture = TestBed.createComponent(DashboardComponent);
     fixture.detectChanges();
+    const opener = fixture.nativeElement.querySelector('.dashboard-screen__action--chat') as HTMLButtonElement;
+    expect(opener).toBeTruthy();
+    expect(opener.textContent).toContain('Registrar un movimiento');
+  });
 
-    const opener = Array.from(
-      fixture.nativeElement.querySelectorAll('app-acciones-movimiento button') as NodeListOf<HTMLButtonElement>
-    ).find(button => button.textContent?.includes('Gasto')) as HTMLButtonElement;
-    opener.focus();
-    opener.click();
-    fixture.detectChanges();
+  it('includes remaining categories in the total without mixing currencies', () => {
+    const component = TestBed.createComponent(DashboardComponent).componentInstance;
+    component.analitica.set({ gastosPorCategoria: [
+      ...[50, 20, 10, 10, 10].map((monto, index) => ({ categoriaId: index + 1, categoriaNombre: `Cat ${index}`, categoriaColor: '#123456', monto, moneda: 'MXN' })),
+      { categoriaId: 9, categoriaNombre: 'USD', categoriaColor: '#123456', monto: 500, moneda: 'USD' }
+    ], ultimosSeisMeses: [] });
+    expect(component.totalGastosPeriodo()).toBe(100);
+    expect(component.donutCategorias()[0].porcentaje).toBe(50);
+    expect(component.donutCategorias().find(item => item.nombre === 'Otros')?.monto).toBe(10);
+  });
 
-    const dialog = fixture.nativeElement.querySelector('[role="dialog"]') as HTMLDivElement;
-    const closeButton = dialog.querySelector('[aria-label="Cerrar formulario de movimiento"]') as HTMLButtonElement;
-    const submitButton = dialog.querySelector('button[type="submit"]') as HTMLButtonElement;
+  it('loads today and the last seven local dates instead of monthly data', () => {
+    const component = TestBed.createComponent(DashboardComponent).componentInstance;
+    const resumen = vi.spyOn(TestBed.inject(FinanzasService), 'getDashboardResumen');
+    const analitica = vi.spyOn(TestBed.inject(FinanzasService), 'getDashboardAnalitica');
+    component.seleccionarRango('HOY');
+    const hoy = component.fechasRango().hasta;
+    expect(resumen.mock.calls.at(-1)?.slice(2)).toEqual([hoy, hoy]);
+    component.seleccionarRango('SEMANA');
+    const { desde, hasta } = component.fechasRango();
+    expect(hasta).toBe(hoy);
+    expect(Math.round((Date.parse(hasta) - Date.parse(desde)) / 86400000)).toBe(6);
+    expect(analitica.mock.calls.at(-1)?.slice(2)).toEqual([desde, hasta]);
+  });
 
-    expect(fixture.nativeElement.ownerDocument.activeElement).toBe(dialog.querySelector('#monto'));
-
-    opener.focus();
-    opener.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true }));
-    expect(fixture.nativeElement.ownerDocument.activeElement).toBe(closeButton);
-
-    closeButton.focus();
-    dialog.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true, cancelable: true }));
-    expect(fixture.nativeElement.ownerDocument.activeElement).toBe(submitButton);
-
-    submitButton.focus();
-    dialog.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true }));
-    expect(fixture.nativeElement.ownerDocument.activeElement).toBe(closeButton);
-
-    dialog.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
-    fixture.detectChanges();
-
-    expect(fixture.nativeElement.querySelector('[role="dialog"]')).toBeNull();
-    expect(fixture.nativeElement.ownerDocument.activeElement).toBe(opener);
+  it('does not change the applied range until valid custom dates are submitted', () => {
+    const component = TestBed.createComponent(DashboardComponent).componentInstance;
+    component.seleccionarRango('PERSONALIZADO');
+    expect(component.tipoRango()).toBe('MES');
+    component.borradorDesde = '2025-02-02';
+    component.borradorHasta = '2025-02-01';
+    component.aplicarRangoPersonalizado();
+    expect(component.errorRango()).toBeTruthy();
+    expect(component.tipoRango()).toBe('MES');
+    component.borradorHasta = '2025-03-04';
+    component.aplicarRangoPersonalizado();
+    expect(component.fechasRango()).toEqual({ desde: '2025-02-02', hasta: '2025-03-04' });
+    component.seleccionarRango('MES');
+    expect(component.periodoEsActual()).toBe(true);
   });
 
   it('exposes the selected movement type as a pressed state', () => {
@@ -115,7 +128,7 @@ describe('DashboardComponent movement dialog accessibility', () => {
     ] as never[];
 
     const mosaicoDe = (fixture: ReturnType<typeof TestBed.createComponent<DashboardComponent>>) =>
-      (fixture.nativeElement.querySelector('#categoriaId') as HTMLElement | null)?.textContent ?? '';
+      (fixture.nativeElement.querySelector('app-categoria-selector button') as HTMLElement | null)?.textContent ?? '';
 
     beforeEach(() => {
       localStorage.clear();
@@ -131,7 +144,7 @@ describe('DashboardComponent movement dialog accessibility', () => {
       fixture.componentInstance.abrirModal('GASTO');
       fixture.detectChanges();
 
-      expect(mosaicoDe(fixture)).toContain('Transporte');
+      expect(fixture.componentInstance.formCategoriaId).toBe(2);
     });
 
     it('no arrastra la categoría de un tipo al otro', () => {
@@ -171,84 +184,17 @@ describe('DashboardComponent movement dialog accessibility', () => {
     });
   });
 
-  it('announces analytics loading and errors and exposes chart values in a data table', () => {
+  it('muestra el registro principal, presupuestos y actividad sin gr?ficas de tendencia', () => {
     const fixture = TestBed.createComponent(DashboardComponent);
     fixture.detectChanges();
-    const component = fixture.componentInstance;
+    const root = fixture.nativeElement as HTMLElement;
+    const text = root.textContent ?? '';
 
-    component.analiticaLoading.set(true);
-    fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('[role="status"]')?.textContent).toContain('Cargando analítica');
-
-    component.analiticaLoading.set(false);
-    component.analiticaError.set('No se pudo cargar la analítica financiera.');
-    fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('[role="alert"]')?.textContent).toContain('No se pudo cargar');
-
-    component.analiticaError.set(null);
-    component.analitica.set({
-      gastosPorCategoria: [{
-        categoriaId: 1,
-        categoriaNombre: 'Alimentos',
-        monto: 4321,
-        moneda: 'MXN'
-      }],
-      ultimosSeisMeses: [{
-        anio: 2026,
-        mes: 4,
-        ingresos: 12500,
-        gastos: 4321,
-        moneda: 'MXN'
-      }]
-    });
-    component.monedaAnalitica.set('MXN');
-    fixture.detectChanges();
-
-    const table = fixture.nativeElement.querySelector('table') as HTMLTableElement;
-    expect(table.textContent).toContain('abr 2026');
-    expect(table.textContent).toContain('Ingresos');
-    expect(table.textContent).toContain('Gastos');
-    expect(table.textContent).toContain('12,500.00');
-    expect(fixture.nativeElement.querySelector('ul[aria-label="Gastos por categoría e importe"]')?.textContent)
-      .toContain('Alimentos');
-  });
-
-  it('no deja los importes al descubierto en los title de las barras cuando se pide privacidad', () => {
-    const privacidad = TestBed.inject(PrivacidadService);
-    privacidad.aplicar(1, false);
-
-    const fixture = TestBed.createComponent(DashboardComponent);
-    fixture.detectChanges();
-    const component = fixture.componentInstance;
-
-    component.analitica.set({
-      gastosPorCategoria: [],
-      ultimosSeisMeses: [{
-        anio: 2026,
-        mes: 4,
-        ingresos: 12500,
-        gastos: 4321,
-        moneda: 'MXN'
-      }]
-    });
-    component.monedaAnalitica.set('MXN');
-    fixture.detectChanges();
-
-    const titlesVisibles = Array.from(
-      fixture.nativeElement.querySelectorAll('[title]') as NodeListOf<HTMLElement>
-    ).map(el => el.getAttribute('title'));
-    expect(titlesVisibles.some(t => t?.includes('12,500.00'))).toBe(true);
-
-    privacidad.aplicar(1, true);
-    fixture.detectChanges();
-
-    const titlesOcultos = Array.from(
-      fixture.nativeElement.querySelectorAll('[title]') as NodeListOf<HTMLElement>
-    ).map(el => el.getAttribute('title'));
-    expect(titlesOcultos.some(t => t?.includes('12,500.00'))).toBe(false);
-    expect(titlesOcultos.some(t => t?.includes('•••'))).toBe(true);
-
-    privacidad.limpiar();
+    expect(root.querySelector('.dashboard-screen__action--chat')?.textContent).toContain('Registrar un movimiento');
+    expect(root.querySelector('#dashboard-budgets-title')?.textContent).toContain('Presupuestos');
+    expect(root.querySelector('#dashboard-recent-title')?.textContent).toContain('Movimientos recientes');
+    expect(text).not.toContain('As? va tu mes');
+    expect(text).not.toContain('Tendencia de gastos');
   });
 
   it('muestra el saldo, los ingresos y los gastos del mes en una sola tarjeta', () => {
@@ -276,13 +222,16 @@ describe('DashboardComponent movement dialog accessibility', () => {
     });
     fixture.detectChanges();
 
-    const controlFinanciero = fixture.nativeElement.querySelector('[aria-label="Control Financiero"]') as HTMLElement;
+    const controlFinanciero = fixture.nativeElement.querySelector('.dashboard-screen__monthly') as HTMLElement;
     expect(controlFinanciero).toBeTruthy();
+    expect(controlFinanciero.textContent).toContain('Balance Total');
     expect(controlFinanciero.textContent).toContain('12,500');
-    expect(controlFinanciero.textContent).toContain('2 cuentas activas');
+    expect(controlFinanciero.textContent).toContain('Ingresos');
+    expect(controlFinanciero.textContent).toContain('Gastos');
+    expect(controlFinanciero.textContent).toContain('2 cuentas');
 
     // Los montos largos se parten antes de desbordar la tarjeta.
-    expect(controlFinanciero.querySelector('.dashboard-summary-amount')).toBeTruthy();
+    expect(controlFinanciero.querySelector('.dashboard-screen__amount')).toBeTruthy();
   });
 
   it('shows only active recurring movements due within the next seven days', () => {

@@ -1,0 +1,142 @@
+{
+  "feature_score": 83.3,
+  "counted": 45,
+  "must_have_done": 31,
+  "must_have_total": 45,
+  "by_area": [
+    {
+      "area": "2. Captura híbrida",
+      "score": 63.6,
+      "features": 11
+    },
+    {
+      "area": "1. Dashboard",
+      "score": 75.0,
+      "features": 6
+    },
+    {
+      "area": "4. AI Reports",
+      "score": 90.0,
+      "features": 5
+    },
+    {
+      "area": "5. Categorías",
+      "score": 92.9,
+      "features": 7
+    },
+    {
+      "area": "6. Configuración y perfil",
+      "score": 92.9,
+      "features": 7
+    },
+    {
+      "area": "3. Historial",
+      "score": 94.4,
+      "features": 9
+    }
+  ],
+  "missing": [
+    {
+      "feature": "Panel «Categorizando…» después de transcribir",
+      "area": "2. Captura híbrida",
+      "priority": "must",
+      "clone": "no",
+      "notes": "El tipo y el texto están declarados, pero nunca se establece ese estado. La transcripción queda en el textarea para revisar y enviar; no se categoriza automáticamente al soltar."
+    },
+    {
+      "feature": "Dropdown/modal con Mes Actual, Semana, Hoy, Personalizado",
+      "area": "1. Dashboard",
+      "priority": "must",
+      "clone": "partial",
+      "notes": "Las opciones existen. `seleccionarRango` cambia el estado y la etiqueta; las consultas siguen recibiendo mes/año. Hoy y Semana no filtran sus datos. Mes Actual tampoco restablece por sí solo el mes actual después de navegar a otro mes."
+    },
+    {
+      "feature": "Intervalo personalizado",
+      "area": "1. Dashboard",
+      "priority": "must",
+      "clone": "partial",
+      "notes": "Personalizado permite navegar por mes/año; no elegir fechas inicial/final arbitrarias."
+    },
+    {
+      "feature": "Tocar segmento y mostrar monto y porcentaje del total",
+      "area": "1. Dashboard",
+      "priority": "must",
+      "clone": "partial",
+      "notes": "La selección muestra nombre, monto y porcentaje, pero el denominador suma solo las cuatro categorías visibles. Con más categorías, el porcentaje y el centro «Total Gastos» excluyen el resto."
+    },
+    {
+      "feature": "Calendario nativo",
+      "area": "2. Captura híbrida",
+      "priority": "must",
+      "clone": "partial",
+      "notes": "Existe FechaPickerComponent con calendario propio, navegación de teclado y elección de fecha; no es un DatePicker nativo del sistema."
+    },
+    {
+      "feature": "Campo Cuánto con numpad personalizado",
+      "area": "2. Captura híbrida",
+      "priority": "must",
+      "clone": "partial",
+      "notes": "Hay input numérico con `inputmode=\"decimal\"`; no hay teclado numérico construido por la app."
+    },
+    {
+      "feature": "Cancelar petición en cualquier fase de procesamiento",
+      "area": "2. Captura híbrida",
+      "priority": "must",
+      "clone": "partial",
+      "notes": "Se cancela la suscripción HTTP de transcripción. La petición de captura/categorización no tiene cancelación equivalente. Cancelar en el cliente tampoco prueba que un proveedor remoto detenga trabajo ya iniciado."
+    },
+    {
+      "feature": "Ecualizador en tiempo real",
+      "area": "2. Captura híbrida",
+      "priority": "must",
+      "clone": "partial",
+      "notes": "Hay barras animadas mientras se graba; no se encontró análisis de amplitud del audio. La animación no representa el sonido real."
+    },
+    {
+      "feature": "Toasts efímeros de éxito y error desde arriba",
+      "area": "2. Captura híbrida",
+      "priority": "must",
+      "clone": "partial",
+      "notes": "Hay servicio, contenedor y avisos de éxito/error. En móvil se colocan abajo, por encima de la navegación, no bajan desde arriba como pide el texto."
+    },
+    {
+      "feature": "Toque simple abre entrada manual numérica",
+      "area": "2. Captura híbrida",
+      "priority": "must",
+      "clone": "partial",
+      "notes": "Abre un textarea de captura en lenguaje natural. El formulario numérico existe en Transacciones, pero el toque del FAB no lo abre."
+    },
+    {
+      "feature": "Metadatos: hora, Voz/Texto/WhatsApp y nota",
+      "area": "3. Historial",
+      "priority": "must",
+      "clone": "partial",
+      "notes": "Hora de creación y nota disponibles. El método de captura se deduce buscando palabras en descripción/notas, no leyendo un dato de origen fiable. Puede etiquetar mal una compra descrita como «curso de WhatsApp» o perder el origen al editar la nota."
+    },
+    {
+      "feature": "Guardar gráfico como imagen en galería",
+      "area": "4. AI Reports",
+      "priority": "must",
+      "clone": "partial",
+      "notes": "Convierte SVG a PNG y usa compartir archivos si el navegador lo permite; en caso contrario descarga. No hay guardado directo y garantizado en la galería del sistema."
+    },
+    {
+      "feature": "Mantener pulsado handle y arrastrar en móvil",
+      "area": "5. Categorías",
+      "priority": "must",
+      "clone": "partial",
+      "notes": "Handle con HTML Drag and Drop y botones para subir/bajar. No hay implementación específica de pulsación larga y arrastre táctil; debe validarse por dispositivo."
+    },
+    {
+      "feature": "Borrar todos los datos escribiendo ELIMINAR",
+      "area": "6. Configuración y perfil",
+      "priority": "must",
+      "clone": "partial",
+      "notes": "Requiere ELIMINAR y autenticación adicional, pero la acción disponible borra también la cuenta. Falta la operación de vaciar datos conservando el acceso."
+    }
+  ],
+  "skipped": [],
+  "extras": [],
+  "problems": [],
+  "basis": "User-provided scope; source inspection only. Equal weights. No live-device certification."
+}

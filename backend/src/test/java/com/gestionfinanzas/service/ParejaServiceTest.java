@@ -90,7 +90,7 @@ class ParejaServiceTest {
     @BeforeEach
     void setUp() {
         servicio = new ParejaService(parejaRepository, aporteRepository, gastoRepository,
-                repartoRepository, pagoRepository, usuarioRepository);
+                repartoRepository, pagoRepository, usuarioRepository, org.mockito.Mockito.mock(jakarta.persistence.EntityManager.class));
 
         ana = usuario(ANA, "Ana", "ana@example.com");
         luis = usuario(LUIS, "Luis", "luis@example.com");
@@ -98,6 +98,16 @@ class ParejaServiceTest {
 
         lenient().when(usuarioRepository.findById(ANA)).thenReturn(Optional.of(ana));
         lenient().when(usuarioRepository.findById(LUIS)).thenReturn(Optional.of(luis));
+        lenient().when(usuarioRepository.findByIdForUpdate(ANA)).thenReturn(Optional.of(ana));
+        lenient().when(usuarioRepository.findByIdForUpdate(LUIS)).thenReturn(Optional.of(luis));
+        lenient().when(parejaRepository.findById(PAREJA)).thenReturn(Optional.of(pareja));
+        lenient().when(parejaRepository.findByIdForUpdate(PAREJA)).thenReturn(Optional.of(pareja));
+        var participantes=org.mockito.Mockito.mock(ParejaRepository.Participantes.class);
+        lenient().when(participantes.getUsuarioAId()).thenReturn(ANA);
+        lenient().when(participantes.getUsuarioBId()).thenReturn(LUIS);
+        lenient().when(parejaRepository.findParticipantes(PAREJA)).thenReturn(Optional.of(participantes));
+        lenient().when(parejaRepository.findIdsActivasDeUsuario(ANA)).thenAnswer(i -> parejaRepository.findActivaDeUsuario(ANA).stream().map(Pareja::getId).toList());
+        lenient().when(parejaRepository.findIdsActivasDeUsuario(LUIS)).thenAnswer(i -> parejaRepository.findActivaDeUsuario(LUIS).stream().map(Pareja::getId).toList());
         lenient().when(parejaRepository.findActivaDeUsuario(ANA)).thenReturn(List.of(pareja));
         lenient().when(parejaRepository.findActivaDeUsuario(LUIS)).thenReturn(List.of(pareja));
 
@@ -180,12 +190,13 @@ class ParejaServiceTest {
             return guardada;
         });
 
-        ParejaResponse respuesta = servicio.crear(ANA, new ParejaCrearRequest("  Luis@Example.com "));
+        var respuesta = servicio.crear(ANA, new ParejaCrearRequest("  Luis@Example.com "));
 
         assertEquals(PAREJA, respuesta.id());
         assertEquals("USD", respuesta.moneda());
-        assertEquals(ANA, respuesta.yo().id());
-        assertEquals(LUIS, respuesta.pareja().id());
+        assertEquals("ana@example.com", respuesta.remitenteEmail());
+        assertEquals("luis@example.com", respuesta.destinatarioEmail());
+        assertFalse(respuesta.recibida());
     }
 
     @Test

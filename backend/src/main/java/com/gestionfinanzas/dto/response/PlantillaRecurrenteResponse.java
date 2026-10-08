@@ -19,8 +19,20 @@ public record PlantillaRecurrenteResponse(
         String notas,
         FrecuenciaRecurrencia frecuencia,
         LocalDate siguienteFecha,
-        boolean activa
+        boolean activa,
+        Integer cuotasTotales,
+        Integer cuotasPagadas,
+        LocalDate fechaAncla,
+        BigDecimal montoPendiente,
+        java.util.UUID compraMsiId
 ) {
+    public PlantillaRecurrenteResponse(Long id, Long cuentaId, String cuentaNombre,
+            Long categoriaId, String categoriaNombre, TipoTransaccion tipo, BigDecimal monto,
+            String moneda, String notas, FrecuenciaRecurrencia frecuencia, LocalDate siguienteFecha,
+            boolean activa) {
+        this(id, cuentaId, cuentaNombre, categoriaId, categoriaNombre, tipo, monto, moneda,
+                notas, frecuencia, siguienteFecha, activa, null, null, null, null, null);
+    }
     public static PlantillaRecurrenteResponse fromEntity(PlantillaRecurrente plantilla) {
         return new PlantillaRecurrenteResponse(
                 plantilla.getId(),
@@ -34,7 +46,9 @@ public record PlantillaRecurrenteResponse(
                 plantilla.getNotas(),
                 plantilla.getFrecuencia(),
                 plantilla.getSiguienteFecha(),
-                plantilla.isActiva()
+                plantilla.isActiva(),
+                plantilla.getCuotasTotales(), plantilla.getCuotasPagadas(), plantilla.getFechaAncla(),
+                plantilla.getMontoPendiente(), plantilla.getCompraMsiId()
         );
     }
 }

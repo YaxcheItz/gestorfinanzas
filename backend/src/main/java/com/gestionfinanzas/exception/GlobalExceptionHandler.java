@@ -4,6 +4,7 @@ import com.gestionfinanzas.dto.response.ApiResponse;
 import com.gestionfinanzas.ai.AiConfigurationException;
 import com.gestionfinanzas.ai.AiProviderException;
 import com.gestionfinanzas.service.GoogleAuthUnavailableException;
+import com.gestionfinanzas.service.SesionInvalidaException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.OptimisticLockingFailureException;
@@ -23,6 +24,17 @@ import java.util.Map;
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(com.gestionfinanzas.service.PermisoCompartidoException.class)
+    public ResponseEntity<ApiResponse<Void>> handlePermisoCompartido(com.gestionfinanzas.service.PermisoCompartidoException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(SesionInvalidaException.class)
+    public ResponseEntity<ApiResponse<Void>> handleSesionInvalida(SesionInvalidaException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.error(ex.getMessage()));
+    }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Map<String, String>>> handleValidationExceptions(MethodArgumentNotValidException ex) {

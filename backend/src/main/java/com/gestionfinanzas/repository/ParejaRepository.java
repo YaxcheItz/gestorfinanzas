@@ -13,6 +13,35 @@ import java.util.Optional;
 @Repository
 public interface ParejaRepository extends JpaRepository<Pareja, Long> {
 
+    interface Participantes {
+        Long getUsuarioAId();
+        Long getUsuarioBId();
+    }
+
+    @Query("SELECT p.usuarioA.id AS usuarioAId, p.usuarioB.id AS usuarioBId FROM Pareja p WHERE p.id = :id")
+    Optional<Participantes> findParticipantes(@Param("id") Long id);
+
+    @Query("SELECT p.id FROM Pareja p WHERE p.activa = true " +
+            "AND (p.usuarioA.id = :usuarioId OR p.usuarioB.id = :usuarioId) ORDER BY p.id DESC")
+    List<Long> findIdsActivasDeUsuario(@Param("usuarioId") Long usuarioId);
+
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT p FROM Pareja p WHERE p.id = :id")
+    Optional<Pareja> findByIdForUpdate(@Param("id") Long id);
+
+    @Query("SELECT p FROM Pareja p WHERE p.pendiente = true AND " +
+            "(p.usuarioA.id = :usuarioId OR p.usuarioB.id = :usuarioId) ORDER BY p.id DESC")
+    List<Pareja> findPendientesDeUsuario(@Param("usuarioId") Long usuarioId);
+
+    @Query("SELECT p FROM Pareja p WHERE p.activa = false AND p.pendiente = false " +
+            "AND (p.usuarioA.id = :usuarioId OR p.usuarioB.id = :usuarioId) " +
+            "AND (p.propietarioHistorialId IS NULL OR p.propietarioHistorialId = :usuarioId) " +
+            "AND (p.fechaAceptacion IS NOT NULL OR p.propietarioHistorialId IS NOT NULL " +
+            "OR EXISTS (SELECT a.id FROM AportacionPareja a WHERE a.pareja = p) " +
+            "OR EXISTS (SELECT g.id FROM GastoPareja g WHERE g.pareja = p) " +
+            "OR EXISTS (SELECT v.id FROM PagoPareja v WHERE v.pareja = p)) ORDER BY p.id DESC")
+    List<Pareja> findHistorialDeUsuario(@Param("usuarioId") Long usuarioId);
+
     /**
      * La pareja activa del usuario, sea cual de los dos lados que lo guarde.
      * Se escribe a mano en vez de con un método derivado porque el filtro tiene
@@ -40,7 +69,12 @@ public interface ParejaRepository extends JpaRepository<Pareja, Long> {
      * historia del usuario y debe sobrevivir a una restauracion.
      */
     @Query("SELECT p FROM Pareja p " +
-           "WHERE p.usuarioA.id = :usuarioId OR p.usuarioB.id = :usuarioId " +
+           "WHERE p.pendiente = false AND (p.usuarioA.id = :usuarioId OR p.usuarioB.id = :usuarioId) " +
+           "AND (p.propietarioHistorialId IS NULL OR p.propietarioHistorialId = :usuarioId) " +
+           "AND (p.activa = true OR p.fechaAceptacion IS NOT NULL OR p.propietarioHistorialId IS NOT NULL " +
+           "OR EXISTS (SELECT a.id FROM AportacionPareja a WHERE a.pareja = p) " +
+           "OR EXISTS (SELECT g.id FROM GastoPareja g WHERE g.pareja = p) " +
+           "OR EXISTS (SELECT v.id FROM PagoPareja v WHERE v.pareja = p)) " +
            "ORDER BY p.id DESC")
     List<Pareja> findTodasDeUsuario(@Param("usuarioId") Long usuarioId);
 

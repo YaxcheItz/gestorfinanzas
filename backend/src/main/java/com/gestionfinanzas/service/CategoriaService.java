@@ -44,6 +44,7 @@ public class CategoriaService {
     public CategoriaResponse crearCategoria(Long usuarioId, CategoriaRequest request) {
         validarTipoEditable(request.tipo());
         String nombre = request.nombre().trim();
+        validarLongitudNombre(nombre);
         if (categoriaRepository.existsByUsuarioIdAndTipoAndNombreIgnoreCase(usuarioId, request.tipo(), nombre)) {
             throw new IllegalArgumentException("Ya existe una categoría con ese nombre y tipo");
         }
@@ -65,12 +66,15 @@ public class CategoriaService {
         validarTipoEditable(request.tipo());
         Categoria categoria = categoriaRepository.findByIdAndUsuarioId(categoriaId, usuarioId)
                 .orElseThrow(() -> new IllegalArgumentException("Categoría personalizada no encontrada"));
+        String nombre = request.nombre().trim();
+        if (nombre.length() > 20 && !nombre.equals(categoria.getNombre())) {
+            throw new IllegalArgumentException("El nombre debe tener entre 2 y 20 caracteres");
+        }
         if (categoria.getTipo() != request.tipo()
                 && (transaccionRepository.existsByCategoriaId(categoriaId)
                 || presupuestoRepository.existsByCategoriaId(categoriaId))) {
             throw new IllegalArgumentException("No se puede cambiar el tipo de una categoría que ya tiene movimientos o presupuestos");
         }
-        String nombre = request.nombre().trim();
         if ((!categoria.getNombre().equalsIgnoreCase(nombre) || categoria.getTipo() != request.tipo())
                 && categoriaRepository.existsByUsuarioIdAndTipoAndNombreIgnoreCase(usuarioId, request.tipo(), nombre)) {
             throw new IllegalArgumentException("Ya existe una categoría con ese nombre y tipo");
@@ -99,6 +103,12 @@ public class CategoriaService {
     private void validarTipoEditable(TipoTransaccion tipo) {
         if (tipo != TipoTransaccion.INGRESO && tipo != TipoTransaccion.GASTO) {
             throw new IllegalArgumentException("Las categorías solo pueden ser de ingreso o gasto");
+        }
+    }
+
+    private void validarLongitudNombre(String nombre) {
+        if (nombre.length() < 2 || nombre.length() > 20) {
+            throw new IllegalArgumentException("El nombre debe tener entre 2 y 20 caracteres");
         }
     }
 

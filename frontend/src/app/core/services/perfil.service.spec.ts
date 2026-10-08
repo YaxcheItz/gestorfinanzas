@@ -103,4 +103,31 @@ describe('PerfilService', () => {
 
     expect(privacidad.ocultarMontos()).toBe(false);
   });
+
+  it('sigue el tema del sistema cuando el usuario elige Automático', () => {
+    let listener: ((event: MediaQueryListEvent) => void) | undefined;
+    const query = {
+      matches: true,
+      addEventListener: vi.fn((_type: string, callback: (event: MediaQueryListEvent) => void) => {
+        listener = callback;
+      }),
+      removeEventListener: vi.fn()
+    };
+    Object.defineProperty(window, 'matchMedia', { configurable: true, value: vi.fn(() => query) });
+    service.cargar(7);
+    httpMock.expectOne(esPerfil('GET')).flush({
+      success: true,
+      message: '',
+      data: perfilBase
+    });
+
+    service.configurarTema(7, 'AUTO');
+
+    expect(document.documentElement.classList.contains('dark')).toBe(true);
+    query.matches = false;
+    listener?.({ matches: false } as MediaQueryListEvent);
+    expect(document.documentElement.classList.contains('dark')).toBe(false);
+    expect(service.esTemaAutomatico(7)).toBe(true);
+    Reflect.deleteProperty(window, 'matchMedia');
+  });
 });

@@ -41,13 +41,44 @@ public class ParejaController {
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<ParejaResponse>> crear(
+    public ResponseEntity<ApiResponse<com.gestionfinanzas.dto.response.InvitacionParejaResponse>> crear(
             @Valid @RequestBody ParejaCrearRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        ParejaResponse pareja = parejaService.crear(userDetails.getId(), request);
+        var pareja = parejaService.crear(userDetails.getId(), request);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok("Pareja vinculada correctamente", pareja));
+                .body(ApiResponse.ok("Invitación pendiente de aceptación", pareja));
+    }
+
+    @GetMapping("/invitaciones")
+    public ResponseEntity<ApiResponse<java.util.List<com.gestionfinanzas.dto.response.InvitacionParejaResponse>>> invitaciones(
+            @AuthenticationPrincipal CustomUserDetails usuario) {
+        return ResponseEntity.ok(ApiResponse.ok("Invitaciones",parejaService.invitaciones(usuario.getId())));
+    }
+
+    @PostMapping("/invitaciones/{id}/aceptar")
+    public ResponseEntity<ApiResponse<ParejaResponse>> aceptar(@PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails usuario) {
+        return ResponseEntity.ok(ApiResponse.ok("Invitación aceptada",parejaService.aceptar(usuario.getId(),id)));
+    }
+
+    @DeleteMapping("/invitaciones/{id}")
+    public ResponseEntity<ApiResponse<Void>> resolver(@PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails usuario) {
+        parejaService.resolverInvitacion(usuario.getId(),id);
+        return ResponseEntity.ok(ApiResponse.ok("Invitación resuelta",null));
+    }
+
+    @GetMapping("/historial")
+    public ResponseEntity<ApiResponse<java.util.List<com.gestionfinanzas.dto.response.HistorialParejaResponse>>> historiales(
+            @AuthenticationPrincipal CustomUserDetails usuario) {
+        return ResponseEntity.ok(ApiResponse.ok("Historiales archivados",parejaService.historiales(usuario.getId())));
+    }
+
+    @GetMapping("/historial/{id}")
+    public ResponseEntity<ApiResponse<ParejaResponse>> historial(@PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails usuario) {
+        return ResponseEntity.ok(ApiResponse.ok("Historial archivado",parejaService.historial(usuario.getId(),id)));
     }
 
     @PostMapping("/aportes")

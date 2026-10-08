@@ -53,9 +53,10 @@ public class ParejaService {
     private final RepartoGastoRepository repartoRepository;
     private final PagoParejaRepository pagoRepository;
     private final UsuarioRepository usuarioRepository;
+    private final jakarta.persistence.EntityManager entityManager;
 
     @Transactional
-    public ParejaResponse crear(Long usuarioId, ParejaCrearRequest request) {
+    public com.gestionfinanzas.dto.response.InvitacionParejaResponse crear(Long usuarioId, ParejaCrearRequest request) {
         Usuario yo = buscarUsuario(usuarioId);
 
         if (parejaRepository.contarActivasDeUsuario(usuarioId) > 0) {
@@ -75,21 +76,111 @@ public class ParejaService {
         if (!otro.isActivo()) {
             throw new IllegalArgumentException("Esa cuenta está desactivada y no se puede vincular.");
         }
+        bloquearMiembros(yo.getId(), otro.getId());
+        if (parejaRepository.contarActivasDeUsuario(usuarioId) > 0) {
+            throw new IllegalArgumentException("Ya tienes una pareja activa.");
+        }
         if (parejaRepository.contarActivasDeUsuario(otro.getId()) > 0) {
             throw new IllegalArgumentException("Esa persona ya tiene una pareja activa.");
+        }
+
+        var pendientes = parejaRepository.findPendientesDeUsuario(usuarioId);
+        for (Pareja pendiente : pendientes) {
+            if (pendiente.getUsuarioA().getId().equals(usuarioId)
+                    && pendiente.getUsuarioB().getId().equals(otro.getId())) {
+                if (pendiente.getCorreoRemitenteInvitacion()==null || pendiente.getCorreoDestinatarioInvitacion()==null
+                        || pendiente.getNombreRemitenteInvitacion()==null) {
+                    pendiente.setNombreRemitenteInvitacion(yo.getNombre());
+                    pendiente.setCorreoRemitenteInvitacion(yo.getEmail());
+                    pendiente.setCorreoDestinatarioInvitacion(correo.toLowerCase(java.util.Locale.ROOT));
+                    parejaRepository.save(pendiente);
+                }
+                return com.gestionfinanzas.dto.response.InvitacionParejaResponse.fromEntity(pendiente, usuarioId);
+            }
+        }
+        if (pendientes.size() >= 20 || parejaRepository.findPendientesDeUsuario(otro.getId()).size() >= 20) {
+            throw new IllegalArgumentException("Hay demasiadas invitaciones pendientes; cancela o resuelve alguna primero.");
         }
 
         Pareja pareja = parejaRepository.save(Pareja.builder()
                 .usuarioA(yo)
                 .usuarioB(otro)
+                .nombreRemitenteInvitacion(yo.getNombre())
+                .correoRemitenteInvitacion(yo.getEmail())
+                .correoDestinatarioInvitacion(correo.toLowerCase(java.util.Locale.ROOT))
                 .moneda(yo.getMonedaPreferida() == null ? "MXN" : yo.getMonedaPreferida())
-                .activa(true)
+                .activa(false).pendiente(true)
                 .build());
 
-        return construirEstado(pareja, yo);
+        return com.gestionfinanzas.dto.response.InvitacionParejaResponse.fromEntity(pareja, usuarioId);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, isolation = org.springframework.transaction.annotation.Isolation.REPEATABLE_READ)
+    public List<com.gestionfinanzas.dto.response.InvitacionParejaResponse> invitaciones(Long usuarioId) {
+        return parejaRepository.findPendientesDeUsuario(usuarioId).stream()
+                .map(p -> com.gestionfinanzas.dto.response.InvitacionParejaResponse.fromEntity(p,usuarioId)).toList();
+    }
+
+    @Transactional
+    public ParejaResponse aceptar(Long usuarioId, Long invitacionId) {
+        var candidata = parejaRepository.findParticipantes(invitacionId)
+                .orElseThrow(() -> new IllegalArgumentException("Invitación no disponible."));
+        if (!candidata.getUsuarioBId().equals(usuarioId)) {
+            throw new PermisoCompartidoException("Solo la persona invitada puede aceptar.");
+        }
+        bloquearMiembros(candidata.getUsuarioAId(), candidata.getUsuarioBId());
+        Pareja invitacion = bloquearPareja(invitacionId);
+        if (invitacion.isActiva() && !invitacion.isPendiente() && invitacion.getFechaAceptacion()!=null) {
+            return construirEstado(invitacion,buscarUsuario(usuarioId));
+        }
+        if (!invitacion.isPendiente() || invitacion.isActiva()) {
+            throw new IllegalArgumentException("La invitación ya fue resuelta.");
+        }
+        if (invitacion.getNombreRemitenteInvitacion()==null || invitacion.getCorreoRemitenteInvitacion()==null
+                || invitacion.getCorreoDestinatarioInvitacion()==null) {
+            throw new IllegalArgumentException("Faltan los datos originales de la invitación; pide que te inviten de nuevo.");
+        }
+        if (parejaRepository.contarActivasDeUsuario(usuarioId) > 0
+                || parejaRepository.contarActivasDeUsuario(invitacion.getUsuarioA().getId()) > 0) {
+            throw new IllegalArgumentException("Una de las personas ya tiene una pareja activa.");
+        }
+        invitacion.setPendiente(false);
+        invitacion.setActiva(true);
+        invitacion.setFechaAceptacion(java.time.LocalDateTime.now(CalendarioFinanciero.ZONA));
+        parejaRepository.save(invitacion);
+        return construirEstado(invitacion,buscarUsuario(usuarioId));
+    }
+
+    @Transactional
+    public void resolverInvitacion(Long usuarioId, Long invitacionId) {
+        var miembros=parejaRepository.findParticipantes(invitacionId)
+                .orElseThrow(() -> new IllegalArgumentException("Invitación no disponible."));
+        if (!miembros.getUsuarioAId().equals(usuarioId) && !miembros.getUsuarioBId().equals(usuarioId))
+            throw new PermisoCompartidoException("Invitación no disponible.");
+        bloquearMiembros(miembros.getUsuarioAId(),miembros.getUsuarioBId());
+        Pareja invitacion = bloquearPareja(invitacionId);
+        if (!pertenece(invitacion,usuarioId)) throw new PermisoCompartidoException("Invitación no disponible.");
+        if (!invitacion.isPendiente()) throw new IllegalArgumentException("La invitación ya fue resuelta.");
+        invitacion.setPendiente(false);
+        parejaRepository.save(invitacion);
+    }
+
+    @Transactional(readOnly = true, isolation = org.springframework.transaction.annotation.Isolation.REPEATABLE_READ)
+    public List<com.gestionfinanzas.dto.response.HistorialParejaResponse> historiales(Long usuarioId) {
+        Usuario yo=buscarUsuario(usuarioId);
+        return parejaRepository.findHistorialDeUsuario(usuarioId).stream()
+                .map(p -> new com.gestionfinanzas.dto.response.HistorialParejaResponse(p.getId(),laOtra(p,yo).getNombre(),
+                        p.getMoneda(),p.getPropietarioHistorialId()!=null,p.getFechaCreacion())).toList();
+    }
+
+    @Transactional(readOnly = true, isolation = org.springframework.transaction.annotation.Isolation.REPEATABLE_READ)
+    public ParejaResponse historial(Long usuarioId, Long parejaId) {
+        Pareja p=parejaRepository.findHistorialDeUsuario(usuarioId).stream().filter(h -> h.getId().equals(parejaId))
+                .findFirst().orElseThrow(() -> new PermisoCompartidoException("Historial no disponible."));
+        return construirEstado(p,buscarUsuario(usuarioId));
+    }
+
+    @Transactional(readOnly = true, isolation = org.springframework.transaction.annotation.Isolation.REPEATABLE_READ)
     public ParejaResponse obtener(Long usuarioId) {
         Pareja pareja = buscarParejaDe(usuarioId);
         if (pareja == null) return null;
@@ -98,6 +189,7 @@ public class ParejaService {
 
     @Transactional
     public ParejaResponse agregarAporte(Long usuarioId, AportacionParejaRequest request) {
+        validarMonto(request.monto());
         Pareja pareja = exigirPareja(usuarioId);
         Usuario yo = buscarUsuario(usuarioId);
 
@@ -118,12 +210,16 @@ public class ParejaService {
         Pareja pareja = exigirPareja(usuarioId);
         AportacionPareja aporte = aporteRepository.findByIdAndParejaId(aporteId, pareja.getId())
                 .orElseThrow(() -> new IllegalArgumentException("El aporte no existe o no te pertenece."));
+        exigirAutor(aporte.getUsuario().getId(),usuarioId);
         aporteRepository.delete(aporte);
         return construirEstado(pareja, buscarUsuario(usuarioId));
     }
 
     @Transactional
     public ParejaResponse agregarGasto(Long usuarioId, GastoParejaRequest request) {
+        validarMonto(request.monto());
+        if (request.descripcion() == null || request.descripcion().isBlank() || request.descripcion().trim().length()>200
+                || request.tipoReparto()==null) throw new IllegalArgumentException("Indica descripción y reparto válidos.");
         Pareja pareja = exigirPareja(usuarioId);
         Usuario yo = buscarUsuario(usuarioId);
         Usuario otro = laOtra(pareja, yo);
@@ -135,6 +231,9 @@ public class ParejaService {
         BigDecimal total = request.monto().setScale(ESCALA, RoundingMode.HALF_UP);
         BigDecimal partePareja = calcularParteDeLaPareja(request, total);
         BigDecimal partePropia = total.subtract(partePareja);
+        if (partePareja.signum()<=0 || partePropia.signum()<=0) {
+            throw new IllegalArgumentException("Cada persona debe tener al menos un centavo asignado.");
+        }
 
         GastoPareja gasto = gastoRepository.save(GastoPareja.builder()
                 .pareja(pareja)
@@ -158,6 +257,7 @@ public class ParejaService {
         Pareja pareja = exigirPareja(usuarioId);
         GastoPareja gasto = gastoRepository.findByIdAndParejaId(gastoId, pareja.getId())
                 .orElseThrow(() -> new IllegalArgumentException("El gasto no existe o no te pertenece."));
+        exigirAutor(gasto.getPagadoPor().getId(),usuarioId);
         // Los repartos salen primero: apuntan al gasto con llave foránea.
         repartoRepository.deleteByGastoId(gasto.getId());
         gastoRepository.delete(gasto);
@@ -166,6 +266,7 @@ public class ParejaService {
 
     @Transactional
     public ParejaResponse registrarPago(Long usuarioId, PagoParejaRequest request) {
+        validarMonto(request.monto());
         Pareja pareja = exigirPareja(usuarioId);
         Usuario yo = buscarUsuario(usuarioId);
 
@@ -180,6 +281,7 @@ public class ParejaService {
                 .pareja(pareja)
                 .pagador(pagador)
                 .beneficiario(beneficiario)
+                .registradoPor(yo)
                 .monto(request.monto())
                 .moneda(pareja.getMoneda())
                 .fecha(request.fecha())
@@ -194,17 +296,24 @@ public class ParejaService {
         Pareja pareja = exigirPareja(usuarioId);
         PagoPareja pago = pagoRepository.findByIdAndParejaId(pagoId, pareja.getId())
                 .orElseThrow(() -> new IllegalArgumentException("El pago no existe o no te pertenece."));
+        if (pago.getRegistradoPor() == null) {
+            throw new PermisoCompartidoException("El autor de este pago histórico no se guardó; el registro se conserva de consulta.");
+        }
+        exigirAutor(pago.getRegistradoPor().getId(),usuarioId);
         pagoRepository.delete(pago);
         return construirEstado(pareja, buscarUsuario(usuarioId));
     }
 
     @Transactional
     public void desvincular(Long usuarioId, Long parejaId) {
-        Pareja pareja = parejaRepository.findByIdAndActivaTrue(parejaId)
+        var candidata = parejaRepository.findParticipantes(parejaId)
                 .orElseThrow(() -> new IllegalArgumentException("La pareja no existe o ya no está activa."));
-        if (!pertenece(pareja, usuarioId)) {
-            throw new IllegalArgumentException("La pareja no existe o no te pertenece.");
+        if (!candidata.getUsuarioAId().equals(usuarioId) && !candidata.getUsuarioBId().equals(usuarioId)) {
+            throw new PermisoCompartidoException("La pareja no existe o no te pertenece.");
         }
+        bloquearMiembros(candidata.getUsuarioAId(),candidata.getUsuarioBId());
+        Pareja pareja=bloquearPareja(parejaId);
+        if (!pareja.isActiva()) throw new IllegalArgumentException("La pareja ya no está activa.");
         // Se desactiva en vez de borrarse: el historial de aportes y gastos de los
         // dos deja de tener sentido si desaparece, y volver a vincular más adelante
         // debe poder retomar lo que había.
@@ -234,6 +343,7 @@ public class ParejaService {
                     throw new IllegalArgumentException("El porcentaje de tu pareja debe estar entre 0 y 100, "
                             + "para que las dos partes queden positivas.");
                 }
+                if (porcentaje.stripTrailingZeros().scale()>2) throw new IllegalArgumentException("Usa hasta dos decimales en el porcentaje.");
                 yield total.multiply(porcentaje).divide(CIEN, ESCALA, RoundingMode.HALF_UP);
             }
             case EXACTO -> {
@@ -241,6 +351,7 @@ public class ParejaService {
                 if (exacto == null) {
                     throw new IllegalArgumentException("Indica cuánto le toca exactamente a tu pareja.");
                 }
+                validarMonto(exacto);
                 if (exacto.compareTo(BigDecimal.ZERO) <= 0 || exacto.compareTo(total) >= 0) {
                     throw new IllegalArgumentException("El monto exacto de tu pareja debe estar entre 0 y el total "
                             + "del gasto, para que las dos partes queden positivas.");
@@ -377,7 +488,7 @@ public class ParejaService {
                 pareja.getFechaCreacion(),
                 new ParejaResponse.Miembro(yoId, yo.getNombre(), yo.getEmail(),
                         aportadoYo, consumidoYo, pagadoYo, cobradoYo, saldoYo),
-                new ParejaResponse.Miembro(otroId, otro.getNombre(), otro.getEmail(),
+                new ParejaResponse.Miembro(otroId, otro.getNombre(), correoCompartido(pareja,otroId),
                         aportadoOtro, consumidoOtro, pagadoOtro, cobradoOtro, saldoOtro),
                 construirResumen(totalAportado, totalGastado, fondoDisponible,
                         aportes.size(), gastos.size(), pagos.size(),
@@ -394,8 +505,9 @@ public class ParejaService {
                                 pago.getId(), pago.getPagador().getId(), pago.getPagador().getNombre(),
                                 pago.getBeneficiario().getId(), pago.getBeneficiario().getNombre(),
                                 pago.getMonto(), pago.getMoneda(), pago.getFecha(),
-                                pago.getNotas(), pago.getFechaCreacion()))
-                        .toList()
+                                pago.getNotas(), pago.getFechaCreacion(),
+                                pago.getRegistradoPor() == null ? null : pago.getRegistradoPor().getId()))
+                        .toList(), pareja.isActiva()
         );
     }
 
@@ -439,11 +551,43 @@ public class ParejaService {
     }
 
     private Pareja exigirPareja(Long usuarioId) {
-        Pareja pareja = buscarParejaDe(usuarioId);
-        if (pareja == null) {
+        Long parejaId = parejaRepository.findIdsActivasDeUsuario(usuarioId).stream().findFirst().orElse(null);
+        if (parejaId == null) {
             throw new IllegalArgumentException("Todavía no tienes una pareja vinculada.");
         }
-        return pareja;
+        Pareja bloqueada=bloquearPareja(parejaId);
+        if (!bloqueada.isActiva() || bloqueada.isPendiente() || bloqueada.getPropietarioHistorialId()!=null
+                || !pertenece(bloqueada,usuarioId)) throw new PermisoCompartidoException("El vínculo ya no permite movimientos.");
+        return bloqueada;
+    }
+
+    private Pareja bloquearPareja(Long id) {
+        Pareja p=parejaRepository.findByIdForUpdate(id).orElseThrow(() -> new IllegalArgumentException("Vínculo no disponible."));
+        entityManager.refresh(p);
+        return p;
+    }
+
+    private void bloquearMiembros(Long a, Long b) {
+        for (Long id : java.util.stream.Stream.of(a,b).sorted().toList()) {
+            Usuario u=usuarioRepository.findByIdForUpdate(id).orElseThrow(() -> new IllegalArgumentException("Cuenta no disponible."));
+            entityManager.refresh(u);
+            if (!u.isActivo()) throw new IllegalArgumentException("Cuenta no disponible.");
+        }
+    }
+
+    private static void exigirAutor(Long autorId, Long usuarioId) {
+        if (!autorId.equals(usuarioId)) throw new PermisoCompartidoException("Solo puedes eliminar movimientos que tú registraste.");
+    }
+
+    static String correoCompartido(Pareja pareja, Long miembroId) {
+        return pareja.getUsuarioA().getId().equals(miembroId)
+                ? pareja.getCorreoRemitenteInvitacion() : pareja.getCorreoDestinatarioInvitacion();
+    }
+
+    private static void validarMonto(BigDecimal monto) {
+        if (monto==null || monto.signum()<=0 || monto.stripTrailingZeros().scale()>2
+                || monto.compareTo(new BigDecimal("9999999999999.99"))>0)
+            throw new IllegalArgumentException("El monto debe ser positivo y tener hasta dos decimales.");
     }
 
     private Usuario buscarUsuario(Long usuarioId) {

@@ -72,7 +72,7 @@ public class PresupuestoService {
 
     @Transactional(readOnly = true)
     public PresupuestoResumenResponse obtenerResumenPeriodo(Long usuarioId, Integer mes, Integer anio) {
-        LocalDate hoy = LocalDate.now();
+        LocalDate hoy = com.gestionfinanzas.service.CalendarioFinanciero.hoy();
         int mesConsulta = (mes != null && mes >= 1 && mes <= 12) ? mes : hoy.getMonthValue();
         int anioConsulta = (anio != null && anio >= 2000 && anio <= 2100) ? anio : hoy.getYear();
 

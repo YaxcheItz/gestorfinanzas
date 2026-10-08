@@ -1,3 +1,4 @@
+import { TextoFinancieroPipe } from '../../../core/pipes/texto-financiero.pipe';
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ToastService, ToastMessage } from '../../../core/services/toast.service';
@@ -5,7 +6,7 @@ import { ToastService, ToastMessage } from '../../../core/services/toast.service
 @Component({
   selector: 'app-toast-container',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TextoFinancieroPipe],
   template: `
     <div class="mobile-toast-container fixed bottom-5 left-3 right-3 sm:left-auto sm:right-5 sm:top-5 sm:bottom-auto z-50 flex flex-col space-y-2.5 max-w-sm w-auto sm:w-full px-0 pointer-events-none">
       @for (toast of toastService.toasts(); track toast.id) {
@@ -47,7 +48,7 @@ import { ToastService, ToastMessage } from '../../../core/services/toast.service
             @if (toast.title) {
               <h4 class="toast-notification__title text-xs font-bold text-slate-900">{{ toast.title }}</h4>
             }
-            <p class="toast-notification__message text-xs text-slate-600 mt-0.5 leading-relaxed break-words">{{ toast.message }}</p>
+            <p class="toast-notification__message text-xs text-slate-600 mt-0.5 leading-relaxed break-words">{{ toast.message | textoFinanciero }}</p>
           </div>
 
           <!-- Botón Cerrar -->

@@ -105,11 +105,26 @@
 			<artifactId>h2</artifactId>
 			<scope>test</scope>
 		</dependency>
-	    <dependency>
-        <groupId>com.twilio.sdk</groupId>
-        <artifactId>twilio</artifactId>
-        <version>10.0.0</version>
-    </dependency>
+		<dependency>
+			<groupId>com.twilio.sdk</groupId>
+			<artifactId>twilio</artifactId>
+			<version>10.0.0</version>
+		</dependency>
+		<dependency>
+			<groupId>nl.martijndwars</groupId>
+			<artifactId>web-push</artifactId>
+			<version>5.1.2</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcprov-jdk18on</artifactId>
+			<version>1.86</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bitbucket.b_c</groupId>
+			<artifactId>jose4j</artifactId>
+			<version>0.7.9</version>
+		</dependency>
 </dependencies>
 
 	<build>

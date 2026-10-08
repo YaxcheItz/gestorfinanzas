@@ -20,11 +20,14 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public interface TransaccionRepository extends JpaRepository<Transaccion, Long>, JpaSpecificationExecutor<Transaccion> {
 
     Optional<Transaccion> findByIdAndUsuarioId(Long id, Long usuarioId);
+
+    Optional<Transaccion> findByClientRequestId(UUID clientRequestId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT t FROM Transaccion t WHERE t.id = :id AND t.usuario.id = :usuarioId")
@@ -41,6 +44,10 @@ public interface TransaccionRepository extends JpaRepository<Transaccion, Long>,
     boolean existsByCategoriaId(Long categoriaId);
 
     List<Transaccion> findTop10ByUsuarioIdOrderByFechaDescIdDesc(Long usuarioId);
+
+    List<Transaccion> findTop10ByUsuarioIdAndFechaBetweenOrderByFechaDescIdDesc(
+            Long usuarioId, LocalDate desde, LocalDate hasta
+    );
 
     List<Transaccion> findByCuentaIdAndTipoAndFechaBetweenOrderByFechaAscIdAsc(
             Long cuentaId, TipoTransaccion tipo, LocalDate fechaInicio, LocalDate fechaFin

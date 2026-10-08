@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.format.annotation.DateTimeFormat;
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/dashboard")
@@ -25,17 +27,23 @@ public class DashboardController {
     public ResponseEntity<ApiResponse<DashboardResumenResponse>> obtenerResumen(
             @RequestParam(required = false) Integer mes,
             @RequestParam(required = false) Integer anio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        DashboardResumenResponse resumen = dashboardService.obtenerResumen(userDetails.getId(), mes, anio);
+        DashboardResumenResponse resumen = dashboardService.obtenerResumen(userDetails.getId(), mes, anio, desde, hasta);
         return ResponseEntity.ok(ApiResponse.ok("Resumen del dashboard obtenido correctamente", resumen));
     }
 
     @GetMapping("/analitica")
     public ResponseEntity<ApiResponse<DashboardAnaliticaResponse>> obtenerAnalitica(
+            @RequestParam(required = false) Integer mes,
+            @RequestParam(required = false) Integer anio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        DashboardAnaliticaResponse analitica = dashboardService.obtenerAnalitica(userDetails.getId());
+        DashboardAnaliticaResponse analitica = dashboardService.obtenerAnalitica(userDetails.getId(), mes, anio, desde, hasta);
         return ResponseEntity.ok(ApiResponse.ok("Analítica del dashboard obtenida correctamente", analitica));
     }
 

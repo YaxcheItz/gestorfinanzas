@@ -29,10 +29,11 @@ class CorsConfigTest {
     @DisplayName("acepta varios origenes separados por coma, ignorando espacios")
     void acceptsCommaSeparatedOrigins() {
         CorsConfiguration configuration = buildWith(
-                "https://kaptalgf.vercel.app, https://otro.vercel.app");
+                "https://kaptal.example, https://otro.example");
 
-        assertThat(configuration.getAllowedOrigins())
-                .containsExactly("https://kaptalgf.vercel.app", "https://otro.vercel.app");
+        assertThat(configuration.checkOrigin("https://kaptal.example")).isEqualTo("https://kaptal.example");
+        assertThat(configuration.checkOrigin("https://otro.example")).isEqualTo("https://otro.example");
+        assertThat(configuration.checkOrigin("https://no-autorizado.example")).isNull();
     }
 
     @Test
@@ -40,8 +41,7 @@ class CorsConfigTest {
     void emptyValueFallsBackInsteadOfRejectingEverything() {
         CorsConfiguration configuration = buildWith("");
 
-        assertThat(configuration.getAllowedOrigins())
-                .isEqualTo(java.util.List.of("http://localhost:4200"));
+        assertThat(configuration.checkOrigin("http://localhost:4200")).isEqualTo("http://localhost:4200");
     }
 
     @Test
@@ -49,8 +49,7 @@ class CorsConfigTest {
     void blankValueFallsBack() {
         CorsConfiguration configuration = buildWith("   ");
 
-        assertThat(configuration.getAllowedOrigins())
-                .isEqualTo(java.util.List.of("http://localhost:4200"));
+        assertThat(configuration.checkOrigin("http://localhost:4200")).isEqualTo("http://localhost:4200");
     }
 
     @Test
@@ -58,8 +57,7 @@ class CorsConfigTest {
     void nullValueFallsBack() {
         CorsConfiguration configuration = buildWith(null);
 
-        assertThat(configuration.getAllowedOrigins())
-                .isEqualTo(java.util.List.of("http://localhost:4200"));
+        assertThat(configuration.checkOrigin("http://localhost:4200")).isEqualTo("http://localhost:4200");
     }
 
     @Test
@@ -67,7 +65,7 @@ class CorsConfigTest {
     void discardsEmptyEntriesBetweenCommas() {
         CorsConfiguration configuration = buildWith("https://kaptalgf.vercel.app,,");
 
-        assertThat(configuration.getAllowedOrigins())
-                .containsExactly("https://kaptalgf.vercel.app");
+        assertThat(configuration.checkOrigin("https://kaptalgf.vercel.app")).isEqualTo("https://kaptalgf.vercel.app");
+        assertThat(configuration.getAllowedOriginPatterns()).doesNotContain("");
     }
 }

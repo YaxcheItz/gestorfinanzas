@@ -1,0 +1,46 @@
+feature,area,priority,original,clone,notes
+"Dropdown/modal con Mes Actual, Semana, Hoy, Personalizado",1. Dashboard,must,yes,yes,"Implementado tras la auditoria inicial; criterios, pruebas y limites en docs/AJUSTES_ALCANCE_INTERACCIONES.md"
+Intervalo personalizado,1. Dashboard,must,yes,yes,"Implementado tras la auditoria inicial; criterios, pruebas y limites en docs/AJUSTES_ALCANCE_INTERACCIONES.md"
+Swipe del balance entre meses,1. Dashboard,must,yes,yes,Gestos táctiles cambian el periodo y recargan el dashboard. Se impide avanzar más allá del mes actual.
+Donut con 3–4 categorías principales,1. Dashboard,must,yes,yes,Se ordenan por gasto y se muestran las cuatro principales de la moneda seleccionada.
+Tocar segmento y mostrar monto y porcentaje del total,1. Dashboard,must,yes,yes,"Implementado tras la auditoria inicial; criterios, pruebas y limites en docs/AJUSTES_ALCANCE_INTERACCIONES.md"
+Últimas 5–10 operaciones y Ver Todo al final,1. Dashboard,must,yes,yes,Se limita a ocho movimientos y hay acceso al historial al final.
+"FAB central, mantener pulsado para grabar y soltar para procesar",2. Captura híbrida,must,yes,yes,"Pointer events, umbral de 280 ms, MediaRecorder y envío para transcripción. Requiere consentimiento, permiso de micrófono y contexto seguro."
+Ecualizador en tiempo real,2. Captura híbrida,must,yes,yes,"Implementado tras la auditoria inicial; criterios, pruebas y limites en docs/AJUSTES_ALCANCE_INTERACCIONES.md"
+Toque simple abre entrada manual numérica,2. Captura híbrida,must,yes,yes,"Implementado tras la auditoria inicial; criterios, pruebas y limites en docs/AJUSTES_ALCANCE_INTERACCIONES.md"
+Panel inferior «Transcribiendo…»,2. Captura híbrida,must,yes,yes,Estado conectado al envío de audio.
+Panel «Categorizando…» después de transcribir,2. Captura híbrida,must,yes,yes,"Implementado tras la auditoria inicial; criterios, pruebas y limites en docs/AJUSTES_ALCANCE_INTERACCIONES.md"
+Cancelar petición en cualquier fase de procesamiento,2. Captura híbrida,must,yes,yes,"Implementado tras la auditoria inicial; criterios, pruebas y limites en docs/AJUSTES_ALCANCE_INTERACCIONES.md"
+Campo Qué / descripción,2. Captura híbrida,must,yes,yes,Existe descripción en el formulario manual y texto editable en la captura.
+Campo Cuánto con numpad personalizado,2. Captura híbrida,must,yes,partial,"Hay input numérico con `inputmode=""decimal""`; no hay teclado numérico construido por la app."
+Calendario nativo,2. Captura híbrida,must,yes,partial,"Existe FechaPickerComponent con calendario propio, navegación de teclado y elección de fecha; no es un DatePicker nativo del sistema."
+Control segmentado verde/rojo Ingreso/Gasto,2. Captura híbrida,must,yes,yes,El formulario manual tiene botones segmentados y añade Transferencia.
+Toasts efímeros de éxito y error desde arriba,2. Captura híbrida,must,yes,yes,"Implementado tras la auditoria inicial; criterios, pruebas y limites en docs/AJUSTES_ALCANCE_INTERACCIONES.md"
+Buscar texto libre con debounce de 300 ms,3. Historial,must,yes,yes,"Timer de 300 ms, reinicio de página y consulta del historial filtrado."
+Bottom sheet de filtros,3. Historial,must,yes,yes,"Borrador independiente, aplicar/restablecer y cierre del panel."
+Filtrar solo gastos/ingresos,3. Historial,must,yes,yes,Filtro por tipo.
+Rango de monto mínimo/máximo,3. Historial,must,yes,yes,Validación de valores y orden; parámetros enviados y utilizados por la especificación del backend.
+Categorías con selección múltiple,3. Historial,must,yes,yes,Lista de IDs enviada al backend y aplicada a la consulta.
+Swipe izquierda revela papelera roja y confirmación,3. Historial,must,yes,yes,Se revela la acción y la papelera solicita «¿Eliminar permanentemente?». Se conserva un paso explícito antes de borrar.
+Swipe derecha revela edición,3. Historial,must,yes,yes,Se revela el botón de edición; tocarlo abre el formulario. No abre la edición automáticamente al terminar el gesto.
+Toque abre detalle a pantalla completa,3. Historial,must,yes,yes,Tarjeta con evento de detalle y alternativas Enter/Espacio; vista de detalle.
+"Metadatos: hora, Voz/Texto/WhatsApp y nota",3. Historial,must,yes,yes,"Implementado tras la auditoria inicial; criterios, pruebas y limites en docs/AJUSTES_ALCANCE_INTERACCIONES.md"
+Entrada de chat abajo,4. AI Reports,must,yes,yes,Formulario al final de la interfaz del asistente; debe verificarse su posición y visibilidad con el teclado móvil abierto.
+Prompt pills con scroll horizontal y envío automático,4. AI Reports,must,yes,yes,Grupo horizontal; `usarSugerencia` establece el texto y llama a `enviarMensaje`.
+Limpiar historial local sin borrar transacciones,4. AI Reports,must,yes,yes,Vacía señales de mensajes/entrada/error; no llama al borrado financiero.
+Widgets en respuestas con Exportar Gráfico,4. AI Reports,must,yes,yes,Widgets de reporte y botón asociado al mensaje.
+Guardar gráfico como imagen en galería,4. AI Reports,must,yes,partial,Convierte SVG a PNG y usa compartir archivos si el navegador lo permite; en caso contrario descarga. No hay guardado directo y garantizado en la galería del sistema.
+Nueva Categoría abre formulario,5. Categorías,must,yes,yes,"Crear, editar, archivar y restaurar."
+Nombre máximo 20 caracteres,5. Categorías,must,yes,yes,"Para categorías nuevas y cambios de nombre; se permite conservar un nombre antiguo más largo, una compatibilidad razonable."
+Cuadrícula de emojis nativos,5. Categorías,must,yes,yes,Selección de emojis renderizados por el dispositivo y entrada personalizada; también hay iconos propios.
+Paleta de 12–16 colores planos,5. Categorías,must,yes,yes,Dieciséis colores predefinidos.
+Toggle presupuesto y límite mensual,5. Categorías,must,yes,yes,Guarda presupuesto de gasto en el backend para el mes/año actual. No implica automáticamente repetir el límite en meses siguientes.
+Mantener pulsado handle y arrastrar en móvil,5. Categorías,must,yes,yes,"Implementado tras la auditoria inicial; criterios, pruebas y limites en docs/AJUSTES_ALCANCE_INTERACCIONES.md"
+Orden aplicado a selectores manuales,5. Categorías,must,yes,yes,CategoriaOrdenService ordena también el selector compartido. Se almacena localmente por usuario; no se sincroniza entre dispositivos.
+Avatar y email,6. Configuración y perfil,must,yes,yes,Avatar con iniciales y datos de perfil; no hay evidencia aquí de subida de fotografía.
+Cerrar sesión en rojo,6. Configuración y perfil,must,yes,yes,Botón conectado a AuthService.
+Obtener PIN mediante endpoint,6. Configuración y perfil,must,yes,yes,Endpoint propio de Spring `/whatsapp/pin`. No usa Appwrite; cubre la finalidad sin requerir migración de backend. Depende de que el bot esté configurado.
+Deep link al bot de WhatsApp,6. Configuración y perfil,must,yes,yes,`wa.me` con texto VINCULAR y PIN.
+Exportar todas las transacciones a CSV y compartir,6. Configuración y perfil,must,yes,yes,Archivo CSV y Web Share de archivos cuando se admite; descarga como alternativa del navegador.
+Borrar todos los datos escribiendo ELIMINAR,6. Configuración y perfil,must,yes,partial,"Requiere ELIMINAR y autenticación adicional, pero la acción disponible borra también la cuenta. Falta la operación de vaciar datos conservando el acceso."
+"Claro, Oscuro y Automático en botones grandes",6. Configuración y perfil,must,yes,yes,Tres opciones; Automático consulta y escucha los cambios de preferencia del sistema.
