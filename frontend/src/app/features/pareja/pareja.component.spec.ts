@@ -5,7 +5,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { FormsModule } from '@angular/forms';
-import { of, throwError } from 'rxjs';
+import { of, throwError, Subject } from 'rxjs';
 import { ApiResponse } from '../../core/models/auth.models';
 import { Pareja } from '../../core/models/pareja.models';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -32,6 +32,11 @@ describe('ParejaComponent', () => {
   beforeEach(async () => {
     parejaServiceMock = {
       obtener: vi.fn().mockReturnValue(of({ success: true, data: null, message: '' })),
+      invitaciones: vi.fn().mockReturnValue(of({ success: true, data: [], message: '' })),
+      historiales: vi.fn().mockReturnValue(of({ success: true, data: [], message: '' })),
+      historial: vi.fn().mockReturnValue(of({ success: true, data: {...mockPareja,activa:false}, message: '' })),
+      aceptar: vi.fn().mockReturnValue(of({ success: true, data: mockPareja, message: '' })),
+      resolverInvitacion: vi.fn().mockReturnValue(of({ success: true, data: null, message: '' })),
       crear: vi.fn().mockReturnValue(of({ success: true, data: mockPareja, message: '' })),
       agregarAporte: vi.fn().mockReturnValue(of({ success: true, data: mockPareja, message: '' })),
       eliminarAporte: vi.fn().mockReturnValue(of({ success: true, data: mockPareja, message: '' })),
@@ -89,16 +94,18 @@ describe('ParejaComponent', () => {
   });
 
   describe('Vinculación', () => {
-    it('should link a couple successfully', () => {
-      const apiResponse: ApiResponse<Pareja> = { success: true, data: mockPareja, message: 'Ok' };
+    it('envía una invitación sin activar el vínculo', () => {
+      const invitacion = {id:1,remitenteNombre:'Ana',remitenteEmail:'ana@example.com',destinatarioEmail:'luis@example.com',recibida:false,moneda:'MXN',fechaCreacion:''};
+      const apiResponse = { success: true, data: invitacion, message: 'Ok' };
       parejaServiceMock.crear.mockReturnValue(of(apiResponse));
 
       component.correoPareja = 'luis@example.com';
       component.vincular();
 
       expect(parejaServiceMock.crear).toHaveBeenCalledWith({ email: 'luis@example.com' });
-      expect(component.pareja()).toBe(mockPareja);
-      expect(toastServiceMock.show).toHaveBeenCalledWith('success', 'Pareja vinculada correctamente');
+      expect(component.pareja()).toBeNull();
+      expect(component.invitaciones()).toEqual([invitacion]);
+      expect(toastServiceMock.show).toHaveBeenCalledWith('success', 'Invitación enviada; falta que la otra persona acepte');
     });
   });
 
@@ -183,5 +190,60 @@ describe('ParejaComponent', () => {
 
       expect(parejaServiceMock.desvincular).not.toHaveBeenCalled();
     });
+  });
+
+  it('acepta solo tras confirmar y luego carga el vínculo activo', async () => {
+    parejaServiceMock.obtener.mockReturnValue(of({success:true,data:mockPareja,message:''}));
+    confirmDialogServiceMock.confirm.mockResolvedValue(true);
+    await component.aceptarInvitacion({id:8,recibida:true,remitenteNombre:'Luis',remitenteEmail:'luis@example.com',destinatarioEmail:'ana@example.com',moneda:'MXN',fechaCreacion:''});
+    expect(confirmDialogServiceMock.confirm).toHaveBeenCalled();
+    expect(parejaServiceMock.aceptar).toHaveBeenCalledWith(8);
+    expect(component.pareja()).toEqual(mockPareja);
+  });
+  it('cancelar la confirmación de aceptación no envía una petición', async () => {
+    confirmDialogServiceMock.confirm.mockResolvedValue(false);
+    await component.aceptarInvitacion({id:8,recibida:true,remitenteNombre:'Luis',remitenteEmail:'luis@example.com',destinatarioEmail:'ana@example.com',moneda:'MXN',fechaCreacion:''});
+    expect(parejaServiceMock.aceptar).not.toHaveBeenCalled();
+    expect(component.ocupado()).toBe(false);
+  });
+  it('historial de consulta no permite formularios ni borrados', async () => {
+    component.verHistorial(1);
+    component.abrir('gasto');
+    await component.eliminarGasto(4);
+    expect(component.formulario()).toBeNull();
+    expect(parejaServiceMock.eliminarGasto).not.toHaveBeenCalled();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Historial archivado de consulta');
+    expect(fixture.nativeElement.textContent).not.toContain('Registrar gasto');
+  });
+  it('no muestra una deuda ficticia de cero', () => {
+    component.pareja.set(mockPareja);
+    expect(component.deuda()).toBeNull();
+  });
+  it('un pago enviado usa pagador y beneficiario distintos y termina el envío síncrono', () => {
+    component.pareja.set({...mockPareja,resumen:{...mockPareja.resumen,idQuienDebe:10,montoDeuda:20}});
+    component.abrir('pago'); component.formMonto=20; component.guardar();
+    expect(parejaServiceMock.registrarPago).toHaveBeenCalledWith(expect.objectContaining({pagadorId:10,beneficiarioId:11}));
+    expect(component.ocupado()).toBe(false);
+  });
+  it('un pago recibido invierte la dirección sin repetir el deudor', () => {
+    component.pareja.set({...mockPareja,resumen:{...mockPareja.resumen,idQuienDebe:11,montoDeuda:20}});
+    component.abrir('pago'); component.formMonto=20; component.guardar();
+    expect(parejaServiceMock.registrarPago).toHaveBeenCalledWith(expect.objectContaining({pagadorId:11,beneficiarioId:10}));
+  });
+  it('impide doble envío mientras sigue pendiente una respuesta', () => {
+    const pendiente=new Subject(); parejaServiceMock.agregarAporte.mockReturnValue(pendiente);
+    component.pareja.set(mockPareja); component.abrir('aporte'); component.formMonto=10;
+    component.guardar(); component.guardar();
+    expect(parejaServiceMock.agregarAporte).toHaveBeenCalledTimes(1);
+    pendiente.complete();
+  });
+  it('el reparto actualiza la vista previa y rechaza partes redondeadas a cero', () => {
+    component.abrir('gasto'); component.formDescripcion='Cena'; component.formMonto=100;
+    component.formTipoReparto='PORCENTAJE'; component.formPorcentaje=30;
+    expect(component.porcentajePropio()).toBe(70);
+    component.formPorcentaje=40; expect(component.porcentajePropio()).toBe(60);
+    component.formMonto=0.02; component.formPorcentaje=0.01;
+    expect(component.puedeGuardar()).toBe(false);
   });
 });

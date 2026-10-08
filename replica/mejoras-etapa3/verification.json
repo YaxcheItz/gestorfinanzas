@@ -1,0 +1,40 @@
+{
+  "fecha": "2026-10-06T19:39:45.961398+00:00",
+  "backend": {
+    "tests": 281,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "suites": 39
+  },
+  "frontend": {
+    "tests": 198,
+    "files": 24,
+    "failed": 0
+  },
+  "build": {
+    "success": true,
+    "initialKB": 604.64,
+    "budgetKB": 500,
+    "loginCSSExcessBytes": 1
+  },
+  "browser": {
+    "scenarios": 4,
+    "api": "synthetic",
+    "serviceWorkers": "blocked",
+    "reducedMotion": true
+  },
+  "limits": [
+    "H2; PostgreSQL real no probado",
+    "Sin cobertura porcentual medida",
+    "Consentimiento de vínculos activos anteriores por revisar",
+    "Pagos históricos sin autor de solo lectura",
+    "UUID de idempotencia para movimientos compartidos pendiente",
+    "Sin commit, despliegue ni cambios en producción"
+  ],
+  "caveman": {
+    "active": true,
+    "installed": true,
+    "restartRequired": false
+  }
+}
