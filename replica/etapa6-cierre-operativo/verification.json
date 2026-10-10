@@ -1,0 +1,28 @@
+{
+  "branch": "mejoras/etapa-6-cierre-operativo",
+  "sourceReadOnly": true,
+  "restoredTables": 18,
+  "restoreMatch": true,
+  "schemaMatchAfterAdoption": true,
+  "explicitBaselineVersion": 2,
+  "repeatedMigrations": 0,
+  "contextTests": {
+    "passed": 1,
+    "failed": 0
+  },
+  "pythonTests": {
+    "passed": 5
+  },
+  "historicalAudit": {
+    "exitCode": 0,
+    "incompleteMSI": 0,
+    "retentionMismatch": 0,
+    "missingRecordedConsent": 0,
+    "unknownPaymentAuthors": 0
+  },
+  "originalDataHashesUnchangedAfterContext": true,
+  "sequencesUnchangedAfterContext": true,
+  "productionModified": false,
+  "deployed": false,
+  "privateArtifactsCommitted": false
+}
