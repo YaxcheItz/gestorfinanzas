@@ -1,6 +1,20 @@
 # Estado para retomar la sesión
 
-## Resguardo solicitado de etapa 6
+## Estado vigente: cierre operativo de etapa 6 (2026-10-08)
+
+- Usuario integró etapa 6. Develop local/remoto `e1e3189`, main local/remoto `77a4511`; árboles iguales. CI remoto de ambos pasó sus cuatro jobs. El push pendiente de las secciones inferiores quedó resuelto por el usuario.
+- Rama actual: `mejoras/etapa-6-cierre-operativo`, desde develop. Cada etapa/bloque sigue en rama distinta. Sin commit ni push de este cierre por ahora; conservar autor y committer del usuario al resguardar.
+- Main activó despliegues automáticos: Vercel correcto, Render fallido. Log del usuario confirma esquema `finanzas` no vacío sin historial Flyway. El usuario confirmó que Render usa Supabase de `backend/.env`; no imprimir valores.
+- Copia real de solo lectura y restauración privada comprobadas: 18 tablas coinciden. Dump/informes en `.local/etapa6-cierre-operativo`, ACL restringida, excluidos de Git. Solo finanzas: no certifica backups/grants/roles de Supabase.
+- Dos diferencias reales respecto a V2: CHECK de categorías sin SALDO_INICIAL y default MXN ausente en cuentas.moneda. SQL de adopción revisable probado exclusivamente en copia; comparación posterior coincide. Normalización de orden físico/nombres de índice tiene pruebas que conservan cambios de comportamiento.
+- Baseline explícito 2 ensayado con Flyway; reproduce fallo original, valida y no repite V1/V2. Contexto Spring/Hibernate validate: una prueba pasa. Cinco pruebas Python pasan. Datos y secuencias originales preservados.
+- Auditoría histórica de la copia: exit 0; cero MSI incompletos, retenciones discrepantes, vínculos activos sin consentimiento registrado y pagos sin autor conocido. No sustituye cotejo contable externo.
+- Informe actual: `docs/ETAPA_6_CIERRE_OPERATIVO.md`. Etapa 6 sigue abierta hasta adopción y comprobación real de Render, permisos/grants y respaldo operativo del proveedor. No se modificó producción ni se desplegó desde esta rama. El plan vigente exige autorización específica para esos pasos.
+- Caveman, security-review y ecc-verification-loop aplicados. Comunicación en español. No iniciar Wallet en esta rama.
+- Cluster local temporal detenido al terminar la verificación; copia y respaldo preservados. Solicitud de autorización para adopción en Supabase/reintento de Render enviada; no interpretar silencio como aprobación.
+- Las secciones inferiores son historia y no describen el estado actual de Git, CI ni despliegue.
+
+## Resguardo solicitado de etapa 6 (histórico)
 
 - El usuario autorizó subir todos los cambios de etapa 6 con su autoría exclusiva. Commit de fuentes/evidencias: `1a981d79a9babc08554fb87203926ee5ffbf2cb0`, rama `mejoras/etapa-6-datos-recuperacion`.
 - Autor y committer comprobados: `YaxcheItz <yaxtibla1@gmail.com>`. Sin firma ni coautoría del asistente. Los dumps y `.local/` permanecen excluidos.
