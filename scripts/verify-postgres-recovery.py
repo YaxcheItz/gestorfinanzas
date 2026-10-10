@@ -39,8 +39,11 @@ def canonical_constraint(definition):
     return definition
 
 
-def manifest(database, include_data=True):
-    rows = json.loads(query(database, "SELECT COALESCE(json_agg(x),'[]') FROM (SELECT schemaname,tablename FROM pg_tables WHERE schemaname NOT IN ('pg_catalog','information_schema') ORDER BY 1,2) x"))
+def manifest(database, include_data=True, schemas=None, query_function=None):
+    read = query_function or query
+    rows = json.loads(read(database, "SELECT COALESCE(json_agg(x),'[]') FROM (SELECT schemaname,tablename FROM pg_tables WHERE schemaname NOT IN ('pg_catalog','information_schema') ORDER BY 1,2) x"))
+    if schemas is not None:
+        rows = [row for row in rows if row['schemaname'] in schemas]
     tables = {}
     for row in rows:
         schema, table = row["schemaname"], row["tablename"]
@@ -49,15 +52,20 @@ def manifest(database, include_data=True):
             continue
         # Los identificadores vienen del catálogo: se citan incluso cuando incluyen comillas.
         identifier = '"' + schema.replace('"', '""') + '"."' + table.replace('"', '""') + '"'
-        tables[f"{schema}.{table}"] = json.loads(query(database,
+        tables[f"{schema}.{table}"] = json.loads(read(database,
             f"SELECT json_build_object('rows',count(*),'hash',md5(COALESCE(string_agg(h,'' ORDER BY h),''))) FROM (SELECT md5(to_jsonb(t)::text) h FROM {identifier} t) hashes"))
-    sequences = json.loads(query(database, "SELECT COALESCE(json_agg(x),'[]') FROM (SELECT schemaname,sequencename,start_value,min_value,max_value,increment_by,cycle,last_value FROM pg_sequences WHERE schemaname NOT IN ('pg_catalog','information_schema') ORDER BY 1,2) x"))
-    constraints = json.loads(query(database, "SELECT COALESCE(json_agg(x),'[]') FROM (SELECT n.nspname AS schema,c.relname AS tabla,k.contype,pg_get_constraintdef(k.oid,true) AS definition,k.convalidated FROM pg_constraint k JOIN pg_class c ON c.oid=k.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname NOT IN ('pg_catalog','information_schema') ORDER BY 1,2,3,4) x"))
+    sequences = json.loads(read(database, "SELECT COALESCE(json_agg(x),'[]') FROM (SELECT schemaname,sequencename,start_value,min_value,max_value,increment_by,cycle,last_value FROM pg_sequences WHERE schemaname NOT IN ('pg_catalog','information_schema') ORDER BY 1,2) x"))
+    constraints = json.loads(read(database, "SELECT COALESCE(json_agg(x),'[]') FROM (SELECT n.nspname AS schema,c.relname AS tabla,k.contype,pg_get_constraintdef(k.oid,true) AS definition,k.convalidated FROM pg_constraint k JOIN pg_class c ON c.oid=k.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname NOT IN ('pg_catalog','information_schema') ORDER BY 1,2,3,4) x"))
     for constraint in constraints:
         constraint["definition"] = canonical_constraint(constraint["definition"])
     constraints.sort(key=lambda row: json.dumps(row, sort_keys=True))
-    columns = json.loads(query(database, "SELECT COALESCE(json_agg(x),'[]') FROM (SELECT table_schema,table_name,column_name,ordinal_position,data_type,udt_name,is_nullable,column_default,numeric_precision,numeric_scale,character_maximum_length FROM information_schema.columns WHERE table_schema NOT IN ('pg_catalog','information_schema') ORDER BY 1,2,4) x"))
-    indexes = json.loads(query(database, "SELECT COALESCE(json_agg(x),'[]') FROM (SELECT schemaname,tablename,indexname,indexdef FROM pg_indexes WHERE schemaname NOT IN ('pg_catalog','information_schema') ORDER BY 1,2,3) x"))
+    columns = json.loads(read(database, "SELECT COALESCE(json_agg(x),'[]') FROM (SELECT table_schema,table_name,column_name,ordinal_position,data_type,udt_name,is_nullable,column_default,numeric_precision,numeric_scale,character_maximum_length FROM information_schema.columns WHERE table_schema NOT IN ('pg_catalog','information_schema') ORDER BY 1,2,4) x"))
+    indexes = json.loads(read(database, "SELECT COALESCE(json_agg(x),'[]') FROM (SELECT schemaname,tablename,indexname,indexdef FROM pg_indexes WHERE schemaname NOT IN ('pg_catalog','information_schema') ORDER BY 1,2,3) x"))
+    if schemas is not None:
+        sequences = [row for row in sequences if row['schemaname'] in schemas]
+        constraints = [row for row in constraints if row['schema'] in schemas]
+        columns = [row for row in columns if row['table_schema'] in schemas]
+        indexes = [row for row in indexes if row['schemaname'] in schemas]
     return {"tables": tables, "sequences": sequences, "constraints": constraints, "columns": columns, "indexes": indexes}
 
 

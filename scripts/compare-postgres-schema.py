@@ -2,7 +2,8 @@
 """Compara una copia candidata contra una referencia migrada. Solo lectura; NO hace baseline.
 
 La referencia debe representar la versión elegida (V1 o V2) y usar el mismo nombre de esquema.
-No consulta datos de filas. Excluye únicamente flyway_schema_history y el avance de secuencias.
+No consulta filas. Ignora historial, avance de secuencias, orden físico de columnas
+y nombres de índices; conserva tipos, defaults, unicidad, predicados y restricciones.
 """
 import argparse
 import importlib.util
@@ -15,8 +16,28 @@ recovery = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(recovery)
 
 
+def canonical_columns(rows):
+    return sorted(({key: value for key, value in row.items() if key != 'ordinal_position'}
+                   for row in rows), key=lambda row: (row['table_schema'], row['table_name'], row['column_name']))
+
+
+def canonical_indexes(rows):
+    result = []
+    for row in rows:
+        item = {key: value for key, value in row.items() if key != 'indexname'}
+        # El nombre no determina comportamiento. El resto de pg_get_indexdef permanece exacto.
+        prefix = 'CREATE UNIQUE INDEX ' if row['indexdef'].startswith('CREATE UNIQUE INDEX ') else 'CREATE INDEX '
+        quoted_name = '"' + row['indexname'].replace('"', '""') + '"'
+        for name in (row['indexname'], quoted_name):
+            if row['indexdef'].startswith(prefix + name + ' ON '):
+                item['indexdef'] = prefix + '<name>' + row['indexdef'][len(prefix + name):]
+                break
+        result.append(item)
+    return sorted(result, key=lambda row: json.dumps(row, sort_keys=True))
+
+
 def schema(database, name):
-    result = recovery.manifest(database, include_data=False)
+    result = recovery.manifest(database, include_data=False, schemas={name})
     result["tables"] = sorted(table for table in result["tables"] if table.startswith(name + ".") and not table.endswith(".flyway_schema_history"))
     if not all(name + "." + table in result["tables"] for table in ("usuarios", "cuentas", "transacciones")):
         raise RuntimeError("El esquema elegido no contiene las tablas principales de Kaptal.")
@@ -26,6 +47,8 @@ def schema(database, name):
     result["sequences"] = [r for r in result["sequences"] if r["schemaname"] == name]
     for sequence in result["sequences"]:
         sequence.pop("last_value", None)
+    result['columns'] = canonical_columns(result['columns'])
+    result['indexes'] = canonical_indexes(result['indexes'])
     return result
 
 

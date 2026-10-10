@@ -3,7 +3,8 @@
   "git": {
     "deploymentEnabled": {
       "mejoras/etapas-1-5": false,
-      "mejoras/etapa-6-datos-recuperacion": false
+      "mejoras/etapa-6-datos-recuperacion": false,
+      "mejoras/etapa-6-cierre-operativo": false
     }
   },
   "installCommand": "cd frontend && npm ci",

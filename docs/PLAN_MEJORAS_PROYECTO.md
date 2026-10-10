@@ -10,6 +10,8 @@ La primera prioridad de la auditoría se divide en bloques para que sesiones, im
 
 ## Prioridad vigente (8 de octubre de 2026)
 
+Estado comprobado: resguardo e integración en develop/main completados; CI remoto de etapa 6 pasa. Render falló por esquema existente sin historial Flyway. El cierre operativo está en `mejoras/etapa-6-cierre-operativo`: respaldo real restaurado, ajustes de esquema y baseline 2 probados en copia; adopción real, permisos del proveedor y recuperación del despliegue siguen pendientes de autorización. Ver `docs/ETAPA_6_CIERRE_OPERATIVO.md`. Continuar por las prioridades siguientes solamente después de revisar y cerrar este bloque, siempre en una rama nueva.
+
 Este orden sustituye la secuencia anterior como orden de ejecución. Se conservan los números de etapa para enlazar informes y evidencias. Cada bloque se comprueba antes de avanzar. No se autoriza publicar ni modificar datos de producción.
 
 | Prioridad | Trabajo | Resultado esperado |
