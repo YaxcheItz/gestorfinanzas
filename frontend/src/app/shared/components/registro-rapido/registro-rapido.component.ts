@@ -12,13 +12,14 @@ import { ToastService } from '../../../core/services/toast.service';
 import { PrivacidadService } from '../../../core/services/privacidad.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { PrivacyToggleComponent } from '../privacy-toggle/privacy-toggle.component';
+import { DialogViewportDirective } from '../../directives/dialog-viewport.directive';
 
 type TipoRegistro = 'GASTO' | 'INGRESO' | 'TRANSFERENCIA';
 @Component({
   selector: 'app-registro-rapido', standalone: true,
-  imports: [TextoFinancieroPipe, MontoPrivadoDirective, FormsModule, RouterLink, PrivacyToggleComponent],
+  imports: [TextoFinancieroPipe, MontoPrivadoDirective, FormsModule, RouterLink, PrivacyToggleComponent, DialogViewportDirective],
   template: `@if (open()) {
-    <div class="quick-entry-backdrop" (click)="cerrar()">
+    <div appDialogViewport class="quick-entry-backdrop" (click)="cerrar()">
       <section class="quick-entry" role="dialog" aria-modal="true" aria-labelledby="quick-entry-title" (click)="$event.stopPropagation()" (keydown)="teclado($event)">
         <header><div><small>Un movimiento, en segundos</small><h2 id="quick-entry-title">Añadir movimiento</h2></div><app-privacy-toggle/><button type="button" class="utility-button" (click)="cerrar()" [disabled]="saving()" aria-label="Cerrar registro">×</button></header>
         <form (ngSubmit)="guardar()">

@@ -37,6 +37,19 @@ class SesionServiceIntegrationTest {
 
     private Usuario usuario;
 
+    @Test
+    void limitaSesionesSinImpedirRotacionNiReemplazarUnaSesionCerrada() {
+        var primera = sesionService.emitir(usuario);
+        for(int i=1;i<20;i++) sesionService.emitir(usuario);
+        assertThrows(com.gestionfinanzas.exception.TooManyRequestsException.class, ()->sesionService.emitir(usuario));
+        var rotada = sesionService.refrescar(primera.refreshToken());
+        assertNotNull(rotada.auth().token());
+        sesionService.revocar(rotada.refreshToken());
+        assertNotNull(sesionService.emitir(usuario).auth().token());
+        assertEquals(20,refreshTokenRepository.findByUsuarioId(usuario.getId()).stream()
+                .filter(token->!token.isRevocado()&&!token.estaVencido(Instant.now())).count());
+    }
+
     @BeforeEach
     void prepararUsuario() {
         usuario = usuarioRepository.saveAndFlush(Usuario.builder()

@@ -12,4 +12,5 @@ public interface SuscripcionNotificacionRepository extends JpaRepository<Suscrip
     void deleteByEndpointAndUsuarioId(String endpoint, Long usuarioId);
     void deleteAllByUsuarioId(Long usuarioId);
     boolean existsByUsuarioId(Long usuarioId);
+    long countByUsuarioId(Long usuarioId);
 }

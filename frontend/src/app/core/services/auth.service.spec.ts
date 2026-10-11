@@ -4,7 +4,8 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { Router } from '@angular/router';
 import { appConfig } from '../../app.config';
 import { AuthService } from './auth.service';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, of } from 'rxjs';
+import { SwPush } from '@angular/service-worker';
 
 describe('sesiones con los interceptores de la aplicación', () => {
   let http: HttpClient;
@@ -12,6 +13,7 @@ describe('sesiones con los interceptores de la aplicación', () => {
   let auth: AuthService;
   let locksOriginal: PropertyDescriptor | undefined;
   const navigate = vi.fn(() => Promise.resolve(true));
+  const push = { isEnabled: false, subscription: of<PushSubscription | null>(null), unsubscribe: vi.fn(async () => undefined) };
   const usuario = { id: 1, nombre: 'Ana', email: 'ana@example.com' };
   const sesion = (token: string) => ({ success: true, message: 'ok', data: { ...usuario, token, tokenType: 'Bearer' } });
 
@@ -21,14 +23,48 @@ describe('sesiones con los interceptores de la aplicación', () => {
     localStorage.setItem('finanzas_token', 'token-anterior');
     localStorage.setItem('finanzas_user', JSON.stringify(usuario));
     navigate.mockClear();
+    push.isEnabled = false;
+    push.subscription = of(null);
+    push.unsubscribe.mockClear();
     TestBed.configureTestingModule({ providers: [
       ...appConfig.providers,
       provideHttpClientTesting(),
+      { provide: SwPush, useValue: push },
       { provide: Router, useValue: { navigate } }
     ] });
     http = TestBed.inject(HttpClient);
     backend = TestBed.inject(HttpTestingController);
     auth = TestBed.inject(AuthService);
+  });
+
+  it('desvincula el dispositivo push antes de cerrar sesión sin borrar otros dispositivos', async () => {
+    const subscription = { endpoint: 'https://fcm.googleapis.com/fcm/send/test', keys: { p256dh: 'public', auth: 'auth' } };
+    push.isEnabled = true;
+    push.subscription = of({ toJSON: () => subscription } as unknown as PushSubscription);
+    auth.logout();
+    const baja = await vi.waitFor(() => backend.expectOne('/api/notificaciones/push/suscripcion'));
+    expect(baja.request.method).toBe('DELETE');
+    expect(baja.request.body).toEqual(subscription);
+    expect(baja.request.headers.get('Authorization')).toBe('Bearer token-anterior');
+    expect(auth.isAuthenticated()).toBe(true);
+    backend.expectNone('/api/auth/logout');
+    baja.flush({ success: true });
+    const salida = await vi.waitFor(() => backend.expectOne('/api/auth/logout'));
+    expect(push.unsubscribe).toHaveBeenCalledOnce();
+    salida.flush({ success: true });
+    expect(auth.isAuthenticated()).toBe(false);
+  });
+
+  it('intenta revocar push local y cierra sesión aunque falle la baja remota', async () => {
+    push.isEnabled = true;
+    push.subscription = of({ toJSON: () => ({ endpoint: 'https://fcm.googleapis.com/fcm/send/test', keys: {} }) } as unknown as PushSubscription);
+    auth.logout();
+    const baja = await vi.waitFor(() => backend.expectOne('/api/notificaciones/push/suscripcion'));
+    baja.flush({}, { status: 503, statusText: 'Unavailable' });
+    const salida = await vi.waitFor(() => backend.expectOne('/api/auth/logout'));
+    expect(push.unsubscribe).toHaveBeenCalledOnce();
+    salida.flush({}, { status: 503, statusText: 'Unavailable' });
+    expect(auth.isAuthenticated()).toBe(false);
   });
 
   afterEach(() => {
@@ -50,6 +86,36 @@ describe('sesiones con los interceptores de la aplicación', () => {
     backend.expectOne('/api/cuentas').flush([]);
     expect(auth.isAuthenticated()).toBe(true);
     expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('al reanudar Android comparte un refresh y conserva la sesión ante una desconexión temporal', () => {
+    const visible = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible');
+    const vencido = `e30.${btoa(JSON.stringify({ exp: Date.now()/1000-60 }))}.signature`;
+    localStorage.setItem('finanzas_token', vencido);
+    try {
+      window.dispatchEvent(new Event('pageshow'));
+      document.dispatchEvent(new Event('visibilitychange'));
+      window.dispatchEvent(new Event('online'));
+      const refreshes = backend.match('/api/auth/refresh');
+      expect(refreshes).toHaveLength(1);
+      refreshes[0].flush({}, { status: 503, statusText: 'Unavailable' });
+      expect(auth.isAuthenticated()).toBe(true);
+      expect(auth.getToken()).toBe(vencido);
+      expect(navigate).not.toHaveBeenCalled();
+    } finally { visible.mockRestore(); }
+  });
+
+  it('no intenta renovar al reanudar sin conexión o con el token aún vigente', () => {
+    const visible = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible');
+    const online = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+    try {
+      window.dispatchEvent(new Event('pageshow'));
+      backend.expectNone('/api/auth/refresh');
+      online.mockReturnValue(true);
+      localStorage.setItem('finanzas_token', `e30.${btoa(JSON.stringify({ exp: Date.now()/1000+3600 }))}.signature`);
+      window.dispatchEvent(new Event('pageshow'));
+      backend.expectNone('/api/auth/refresh');
+    } finally { visible.mockRestore(); online.mockRestore(); }
   });
 
   it('un fallo temporal al renovar conserva la sesión y se comunica como 503', () => {

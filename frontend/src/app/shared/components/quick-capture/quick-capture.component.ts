@@ -19,6 +19,7 @@ import { MontoPrivadoDirective } from '../../directives/monto-privado.directive'
 import { MovimientosOfflineService, BorradorChat } from '../../../core/services/movimientos-offline.service';
 import { ActualizacionPwaService } from '../../../core/services/actualizacion-pwa.service';
 import { prepararCapturaOffline, validarPayloadOffline } from '../../../core/utils/captura-offline';
+import { DialogViewportDirective } from '../../directives/dialog-viewport.directive';
 
 type CaptureMode = 'CAPTURE' | 'REPORT';
 /** Estado del panel de procesamiento de voz */
@@ -29,7 +30,7 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
 @Component({
   selector: 'app-quick-capture',
   standalone: true,
-  imports: [PrivacyToggleComponent, CommonModule, FormsModule, MontoPipe, TextoFinancieroPipe, CategoriaIconoComponent, MontoPrivadoDirective],
+  imports: [PrivacyToggleComponent, CommonModule, FormsModule, MontoPipe, TextoFinancieroPipe, CategoriaIconoComponent, MontoPrivadoDirective, DialogViewportDirective],
   template: `
     <!-- Processing Sheet: aparece al soltar el FAB de voz, muestra el progreso y permite cancelar -->
     @if (processingStep()) {
@@ -59,7 +60,7 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
 
     @if (open()) {
       <div class="voice-dialog-backdrop" (click)="close()"></div>
-      <section role="dialog" aria-modal="true" (keydown)="tecladoPanel($event)" id="quick-capture-panel" class="capture-panel" aria-label="Kaptal, captura y reportes">
+      <section appDialogViewport role="dialog" aria-modal="true" (keydown)="tecladoPanel($event)" id="quick-capture-panel" class="capture-panel" aria-label="Kaptal, captura y reportes">
         <header class="capture-panel__head">
           <div><span class="capture-panel__spark">✦</span><div><strong>Kaptal</strong><small>{{ mode() === 'CAPTURE' ? 'Tu chat financiero' : 'Tus finanzas, en contexto' }}</small></div></div>
           <button type="button" class="capture-clear" (click)="limpiarChat()" [disabled]="loading() || confirming() !== null || escuchando()" aria-label="Limpiar historial del chat" title="Limpiar chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14M10 11v6m4-6v6"/></svg></button><app-privacy-toggle/><button type="button" (click)="close()" aria-label="Cerrar">×</button>
