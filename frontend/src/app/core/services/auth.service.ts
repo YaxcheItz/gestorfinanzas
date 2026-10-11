@@ -13,6 +13,8 @@ import {
 } from '../models/auth.models';
 import { Router } from '@angular/router';
 import { getApiBaseUrl } from './api-base-url';
+import { SwPush } from '@angular/service-worker';
+import { take, timeout } from 'rxjs';
 
 /** Necesario para que el navegador acepte y mande la cookie de refresh. */
 const CON_CREDENCIALES = { withCredentials: true } as const;
@@ -40,6 +42,7 @@ export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly swPush = inject(SwPush, { optional: true });
   private readonly apiUrl = `${getApiBaseUrl()}/auth`;
 
   private readonly tokenKey = 'finanzas_token';
@@ -55,6 +58,21 @@ export class AuthService {
   public readonly isAuthenticated = computed(() => !!this._currentUser());
 
   constructor() {
+    const reanudar = () => {
+      // Android puede suspender la PWA durante más tiempo que la vida del access token.
+      // Un fallo de red conserva la sesión; solo un refresh 401 la invalida.
+      if (document.visibilityState !== 'visible' || navigator.onLine === false
+          || !this.isAuthenticated() || !this.tokenCaducado()) return;
+      this.renovarSesion().subscribe({ error: () => undefined });
+    };
+    document.addEventListener('visibilitychange', reanudar);
+    window.addEventListener('pageshow', reanudar);
+    window.addEventListener('online', reanudar);
+    this.destroyRef.onDestroy(() => {
+      document.removeEventListener('visibilitychange', reanudar);
+      window.removeEventListener('pageshow', reanudar);
+      window.removeEventListener('online', reanudar);
+    });
     const actualizarDesdeOtraPestana = (event: StorageEvent) => {
       if (event.storageArea !== localStorage || (event.key !== null
           && event.key !== this.userKey && event.key !== this.tokenKey)) return;
@@ -116,6 +134,36 @@ export class AuthService {
   }
 
   logout(): void {
+    if (this.swPush?.isEnabled) {
+      void this.desvincularPush().finally(() => this.finalizarLogout());
+      return;
+    }
+    this.finalizarLogout();
+  }
+
+  private async desvincularPush(): Promise<void> {
+    const push = this.swPush;
+    if (!push) return;
+    try {
+      const subscription = await firstValueFrom(push.subscription.pipe(take(1), timeout(2000)));
+      if (subscription) {
+        // Se conserva la sesión mientras se elimina únicamente el dispositivo actual.
+        await firstValueFrom(this.http.delete(`${getApiBaseUrl()}/notificaciones/push/suscripcion`, {
+          body: subscription.toJSON()
+        }).pipe(timeout(2000)));
+      }
+    } catch {
+      // La revocación local se intenta también si no se pudo contactar al backend.
+    } finally {
+      try {
+        await firstValueFrom(from(push.unsubscribe()).pipe(timeout(2000)));
+      } catch {
+        // Sin suscripción, sin conexión o permiso revocado: no bloquear el cierre de sesión.
+      }
+    }
+  }
+
+  private finalizarLogout(): void {
     this.cerrarSesionEnServidor().subscribe({
       next: () => this.cerrarSesionLocal('salida'),
       error: () => this.cerrarSesionLocal('salida')

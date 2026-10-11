@@ -49,6 +49,39 @@ describe('authInterceptor', () => {
     backend.expectNone(esRefresh);
   });
 
+  it('no filtra el token a terceros ni renueva por su respuesta 401', () => {
+    localStorage.setItem('finanzas_token', 'token-privado');
+    for (const url of ['https://externo.example/api/cuentas', '//externo.example/api/cuentas',
+      '/archivo?destino=/api/cuentas', '/api-ajena/cuentas']) {
+      http.get(url).subscribe({ error: () => undefined });
+      const request = backend.expectOne(url);
+      expect(request.request.headers.has('Authorization')).toBe(false);
+      request.flush({}, { status: 401, statusText: 'Unauthorized' });
+      backend.expectNone(esRefresh);
+    }
+    expect(localStorage.getItem('finanzas_token')).toBe('token-privado');
+  });
+
+  it('admite la API absoluta configurada sin extender la confianza a otros orígenes', () => {
+    const runtime = window as unknown as Record<string, unknown>;
+    const previous = runtime['__API_BASE_URL__'];
+    runtime['__API_BASE_URL__'] = 'https://api.example/api';
+    localStorage.setItem('finanzas_token', 'token-privado');
+    try {
+      http.get('https://api.example/api/cuentas').subscribe();
+      const propia = backend.expectOne('https://api.example/api/cuentas');
+      expect(propia.request.headers.get('Authorization')).toBe('Bearer token-privado');
+      propia.flush([]);
+      http.get('https://api.example.evil.test/api/cuentas').subscribe();
+      const ajena = backend.expectOne('https://api.example.evil.test/api/cuentas');
+      expect(ajena.request.headers.has('Authorization')).toBe(false);
+      ajena.flush([]);
+    } finally {
+      if (previous === undefined) delete runtime['__API_BASE_URL__'];
+      else runtime['__API_BASE_URL__'] = previous;
+    }
+  });
+
   it('renueva en silencio y reintenta cuando el access token caduca', () => {
     localStorage.setItem('finanzas_token', 'token-caducado');
 

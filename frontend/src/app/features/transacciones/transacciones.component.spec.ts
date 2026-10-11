@@ -15,6 +15,7 @@ describe('TransaccionesComponent history filters', () => {
     getCategorias: ReturnType<typeof vi.fn>;
     getTransaccionesPaginadas: ReturnType<typeof vi.fn>;
     eliminarTransaccion: ReturnType<typeof vi.fn>;
+    crearTransaccion: ReturnType<typeof vi.fn>;
   };
   let confirm: ReturnType<typeof vi.fn>;
 
@@ -45,7 +46,8 @@ describe('TransaccionesComponent history filters', () => {
           empty: true
         }
       })),
-      eliminarTransaccion: vi.fn(() => of({ success: true, message: '', data: undefined }))
+      eliminarTransaccion: vi.fn(() => of({ success: true, message: '', data: undefined })),
+      crearTransaccion: vi.fn()
     };
     confirm = vi.fn().mockResolvedValue(false);
 
@@ -69,6 +71,29 @@ describe('TransaccionesComponent history filters', () => {
   afterEach(() => {
     vi.useRealTimers();
     fixture.destroy();
+  });
+
+  it('bloquea el doble envío y reintenta el mismo gasto tras una respuesta incierta', () => {
+    const component=fixture.componentInstance;
+    const primera=new Subject();
+    finanzasService.crearTransaccion.mockReturnValue(primera);
+    component.abrirModal('GASTO');
+    component.formMonto=25;component.formCuentaId=1;component.formCategoriaId=10;
+    component.guardarMovimiento();component.guardarMovimiento();
+    expect(finanzasService.crearTransaccion).toHaveBeenCalledOnce();
+    const [payload,key]=finanzasService.crearTransaccion.mock.calls[0];
+    expect(key).toMatch(/^[0-9a-f-]{36}$/);
+    component.cerrarModal();expect(component.modalAbierto()).toBe(true);
+    primera.error({status:0});
+    component.cambiarTipoModal('INGRESO');
+    expect(component.formTipo()).toBe('GASTO');
+    component.abrirRegistroManual(new CustomEvent('registro', {detail:{monto:999,tipo:'INGRESO'}}));
+    expect(component.formMonto).toBe(25);
+    component.cerrarModal();component.abrirModal('GASTO');
+    expect(component.movimientoIncierto()).toBe(true);
+    finanzasService.crearTransaccion.mockReturnValue(new Subject());
+    component.guardarMovimiento();
+    expect(finanzasService.crearTransaccion.mock.calls[1]).toEqual([payload,key]);
   });
 
   it('debounces free-text searches for 300 ms and queries with the latest value', () => {

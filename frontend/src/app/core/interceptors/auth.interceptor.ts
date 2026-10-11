@@ -2,6 +2,7 @@ import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { AuthService } from '../services/auth.service';
 import { catchError, switchMap, throwError } from 'rxjs';
+import { getApiBaseUrl } from '../services/api-base-url';
 
 /**
  * Mantiene viva la sesion sin molestar al usuario.
@@ -22,7 +23,12 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const token = authService.getToken();
   const usuarioId = authService.currentUser()?.id ?? null;
 
-  if (token && req.url.includes('/api/')) {
+  const base = new URL(getApiBaseUrl(), window.location.origin);
+  const destino = new URL(req.url, window.location.origin);
+  const esApi = destino.origin === base.origin && !destino.username && !destino.password
+    && (destino.pathname === base.pathname || destino.pathname.startsWith(`${base.pathname}/`));
+
+  if (token && esApi) {
     const authReq = req.clone({
       setHeaders: {
         Authorization: `Bearer ${token}`
@@ -30,7 +36,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     });
     return next(authReq).pipe(
       catchError((error) => {
-        const esPeticionDeAuth = req.url.includes('/api/auth/');
+        const esPeticionDeAuth = destino.pathname.startsWith(`${base.pathname}/auth/`);
         if (error.status !== 401 || esPeticionDeAuth || !authService.getToken()
             || (authService.currentUser()?.id ?? null) !== usuarioId) {
           return throwError(() => error);

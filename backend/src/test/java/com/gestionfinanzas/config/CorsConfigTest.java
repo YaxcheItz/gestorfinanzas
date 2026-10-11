@@ -42,6 +42,7 @@ class CorsConfigTest {
         CorsConfiguration configuration = buildWith("");
 
         assertThat(configuration.checkOrigin("http://localhost:4200")).isEqualTo("http://localhost:4200");
+        assertThat(configuration.checkOrigin("https://kaptalgf.vercel.app")).isEqualTo("https://kaptalgf.vercel.app");
     }
 
     @Test
@@ -67,5 +68,15 @@ class CorsConfigTest {
 
         assertThat(configuration.checkOrigin("https://kaptalgf.vercel.app")).isEqualTo("https://kaptalgf.vercel.app");
         assertThat(configuration.getAllowedOriginPatterns()).doesNotContain("");
+    }
+
+    @Test
+    void noConfiaEnOtrosProyectosNiEnOrígenesLocalesNoConfigurados() {
+        CorsConfiguration configuration = buildWith("https://kaptalgf.vercel.app");
+        assertThat(configuration.checkOrigin("https://otro-proyecto.vercel.app")).isNull();
+        assertThat(configuration.checkOrigin("https://otro-servicio.onrender.com")).isNull();
+        assertThat(configuration.checkOrigin("http://192.168.1.25:4200")).isNull();
+        assertThat(configuration.checkOrigin("http://localhost:12345")).isNull();
+        assertThat(configuration.getExposedHeaders()).contains("Retry-After");
     }
 }
