@@ -6,6 +6,7 @@ import com.gestionfinanzas.model.entity.Usuario;
 import com.gestionfinanzas.repository.RefreshTokenRepository;
 import com.gestionfinanzas.repository.UsuarioRepository;
 import com.gestionfinanzas.security.JwtUtil;
+import com.gestionfinanzas.exception.TooManyRequestsException;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -54,6 +55,13 @@ public class SesionService {
     public SesionEmitida emitir(Usuario usuario) {
         Usuario bloqueado = bloquearUsuario(usuario.getId());
         if (!bloqueado.isActivo()) throw new SesionInvalidaException();
+        Instant ahora = Instant.now();
+        limpiarVencidos(bloqueado.getId(), ahora);
+        long activas = refreshTokenRepository.findByUsuarioId(bloqueado.getId()).stream()
+                .filter(token -> !token.isRevocado() && !token.estaVencido(ahora)).count();
+        if (activas >= 20) {
+            throw new TooManyRequestsException("Límite de sesiones alcanzado. Cierra una sesión antes de iniciar otra.", 60);
+        }
         return crearTokens(bloqueado);
     }
 

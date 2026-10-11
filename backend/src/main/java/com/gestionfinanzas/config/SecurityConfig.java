@@ -1,6 +1,8 @@
 package com.gestionfinanzas.config;
 
 import com.gestionfinanzas.security.JwtAuthenticationFilter;
+import com.gestionfinanzas.security.FiltroLimiteAbuso;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,6 +26,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final FiltroLimiteAbuso filtroLimiteAbuso;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -56,7 +59,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/notificaciones/**").authenticated()
                 .anyRequest().authenticated()
             )
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+            .addFilterAfter(filtroLimiteAbuso, JwtAuthenticationFilter.class);
 
         return http.build();
     }
@@ -64,6 +68,13 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public FilterRegistrationBean<FiltroLimiteAbuso> registroLimiteAbuso() {
+        var registro = new FilterRegistrationBean<>(filtroLimiteAbuso);
+        registro.setEnabled(false);
+        return registro;
     }
 
     @Bean

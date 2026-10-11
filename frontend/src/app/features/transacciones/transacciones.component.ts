@@ -13,6 +13,7 @@ import { CategoriaSelectorComponent } from '../../shared/components/categoria-se
 import { CuentaSelectorComponent } from '../../shared/components/cuenta-selector/cuenta-selector.component';
 import { MovimientoMobileCardComponent } from '../../shared/components/movimiento-mobile-card/movimiento-mobile-card.component';
 import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive';
+import { DialogViewportDirective } from '../../shared/directives/dialog-viewport.directive';
 import { FechaPickerComponent } from '../../shared/components/fecha-picker/fecha-picker.component';
 import { MontoPipe } from '../../core/pipes/monto.pipe';
 import { nombreCuentaVisible } from '../../core/utils/cuenta-financiera';
@@ -49,7 +50,7 @@ interface FilaImportacionCsv {
 @Component({
   selector: 'app-transacciones',
   standalone: true,
-  imports: [TextoFinancieroPipe, MontoPrivadoDirective, CommonModule, FormsModule, CategoriaSelectorComponent, CuentaSelectorComponent, MovimientoMobileCardComponent, FocusTrapDirective, MontoPipe, FechaPickerComponent],
+  imports: [TextoFinancieroPipe, MontoPrivadoDirective, CommonModule, FormsModule, CategoriaSelectorComponent, CuentaSelectorComponent, MovimientoMobileCardComponent, FocusTrapDirective, MontoPipe, FechaPickerComponent, DialogViewportDirective],
   template: `
     <div class="finance-page max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-5 sm:space-y-6">
 
@@ -511,7 +512,7 @@ interface FilaImportacionCsv {
 
     <!-- Modal Interactivo 'Nuevo Movimiento' -->
     @if (modalAbierto()) {
-      <div class="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-slate-900/60 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] backdrop-blur-xs sm:items-center sm:p-4">
+      <div appDialogViewport class="transaction-entry-backdrop fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-slate-900/60 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] backdrop-blur-xs sm:items-center sm:p-4">
         
         <div appFocusTrap (focusTrapEscape)="cerrarModal()" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="transacciones-modal-titulo" class="transaction-entry-sheet flex h-[calc(100dvh_-_env(safe-area-inset-top)_-_env(safe-area-inset-bottom))] max-h-[calc(100dvh_-_env(safe-area-inset-top)_-_env(safe-area-inset-bottom))] min-h-0 w-full max-w-lg flex-col overflow-hidden rounded-t-3xl border border-slate-200 bg-white shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-200 dark:border-slate-700 dark:bg-slate-900 sm:h-[min(90dvh,48rem)] sm:max-h-[min(90dvh,48rem)] sm:rounded-3xl">
           
@@ -521,6 +522,7 @@ interface FilaImportacionCsv {
               <button 
                 type="button"
                 (click)="cerrarModal()" 
+                [disabled]="submitting()"
                 aria-label="Cerrar formulario de movimiento"
                 class="inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-lg p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -567,6 +569,7 @@ interface FilaImportacionCsv {
               </div>
             }
 
+            <fieldset [disabled]="submitting() || movimientoIncierto()" class="min-w-0 space-y-3 border-0 p-0 sm:space-y-4">
             <!-- Monto: sin título. El número grande y el símbolo de la moneda ya dicen todo,
                  y una etiqueta encima solo empuja el resto del formulario hacia abajo. -->
             <div class="rounded-2xl border border-slate-200 bg-white px-4 py-2.5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -783,6 +786,7 @@ interface FilaImportacionCsv {
               }
             }
 
+            </fieldset>
             <!-- Botones de Acción -->
             <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 pt-4 border-t border-slate-100">
               <button 
@@ -800,7 +804,7 @@ interface FilaImportacionCsv {
                   <div class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
                   <span>Guardando...</span>
                 } @else {
-                  <span>{{ modoEdicion() ? 'Guardar cambios' : 'Registrar' }}</span>
+                  <span>{{ movimientoIncierto() ? 'Reintentar el mismo movimiento' : modoEdicion() ? 'Guardar cambios' : 'Registrar' }}</span>
                 }
               </button>
             </div>
@@ -938,6 +942,9 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
 
   // Modal Signals
   readonly modalAbierto = signal<boolean>(false);
+  readonly movimientoIncierto = signal(false);
+  private claveMovimiento = '';
+  private movimientoPendiente: TransaccionPayload | null = null;
   readonly formTipo = signal<TipoTransaccion>('GASTO');
   readonly modoEdicion = signal(false);
   readonly transaccionEditando = signal<Transaccion | null>(null);
@@ -1700,6 +1707,10 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
   refrescarTrasRegistro(): void { this.cargarTransacciones(); this.cargarCuentasYCategorias(); }
   @HostListener('window:kaptal-abrir-registro-manual', ['$event'])
   abrirRegistroManual(event?: Event): void {
+    if (this.submitting() || this.movimientoIncierto()) {
+      this.modalAbierto.set(true);
+      return;
+    }
     const borrador = (event as CustomEvent<Partial<TransaccionPayload>> | undefined)?.detail;
     const tipo = borrador?.tipo;
     this.abrirModal(tipo === 'INGRESO' || tipo === 'TRANSFERENCIA' ? tipo : 'GASTO');
@@ -1720,6 +1731,14 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
   }
 
   abrirModal(tipo: TipoTransaccion): void {
+    if (this.submitting()) return;
+    if (this.movimientoIncierto() && this.movimientoPendiente) {
+      this.modalError.set('Hay un movimiento pendiente de confirmar. Reintenta para evitar duplicados.');
+      this.modalAbierto.set(true);
+      return;
+    }
+    this.claveMovimiento = crypto.randomUUID();
+    this.movimientoPendiente = null;
     this.modoEdicion.set(false);
     this.transaccionEditando.set(null);
     this.formTipo.set(tipo);
@@ -1755,6 +1774,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
   }
 
   abrirModalEditar(transaccion: Transaccion): void {
+    if (this.submitting() || this.movimientoIncierto()) return;
     if (transaccion.cuentaId == null
         || (transaccion.tipo === 'TRANSFERENCIA' && transaccion.cuentaDestinoId == null)) {
       this.toastService.error('No se puede editar un movimiento cuyo historial pertenece a una cuenta eliminada.');
@@ -1780,6 +1800,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
   }
 
   cerrarModal(): void {
+    if (this.submitting()) return;
     this.modalAbierto.set(false);
     this.modalError.set(null);
     this.modoEdicion.set(false);
@@ -1795,6 +1816,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
   }
 
   cambiarTipoModal(tipo: TipoTransaccion): void {
+    if (this.submitting() || this.movimientoIncierto()) return;
     this.formTipo.set(tipo);
     if (tipo === 'TRANSFERENCIA') {
       this.movimientoRecurrente = false;
@@ -1842,6 +1864,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
   }
 
   guardarMovimiento(): void {
+    if (this.submitting()) return;
     if (!this.formMonto || this.formMonto <= 0) {
       this.modalError.set('Ingresa un monto válido mayor a 0');
       return;
@@ -1875,7 +1898,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const payload: TransaccionPayload = {
+    const payload: TransaccionPayload = this.movimientoPendiente ?? {
       cuentaId: this.formCuentaId,
       cuentaDestinoId: this.formTipo() === 'TRANSFERENCIA' ? this.formCuentaDestinoId : null,
       categoriaId: this.formTipo() !== 'TRANSFERENCIA' ? this.formCategoriaId : null,
@@ -1895,12 +1918,18 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
     this.modalError.set(null);
 
     const transaccion = this.transaccionEditando();
+    if (!transaccion) {
+      this.claveMovimiento ||= crypto.randomUUID();
+      this.movimientoPendiente = payload;
+    }
     const request = transaccion
       ? this.finanzasService.actualizarTransaccion(transaccion.id, payload)
-      : this.finanzasService.crearTransaccion(payload);
+      : this.finanzasService.crearTransaccion(payload, this.claveMovimiento);
     request.subscribe({
       next: () => {
         this.submitting.set(false);
+        this.movimientoIncierto.set(false);
+        this.movimientoPendiente = null;
         this.cerrarModal();
         this.cargarTransacciones();
         this.cargarCuentasYCategorias();
@@ -1908,7 +1937,11 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.submitting.set(false);
-        this.modalError.set(mensajeDeError(err, 'Error al guardar la transacción'));
+        const incierto = !transaccion && (err.status === 0 || err.status >= 500);
+        this.movimientoIncierto.set(incierto);
+        if (!incierto) this.movimientoPendiente = null;
+        this.modalError.set(incierto ? 'No se pudo confirmar el guardado. Reintenta el mismo movimiento; no se duplicará.'
+          : mensajeDeError(err, 'Error al guardar la transacción'));
       }
     });
   }
