@@ -1,11 +1,12 @@
 package com.gestionfinanzas.security;
 
 import com.gestionfinanzas.exception.TooManyRequestsException;
+import com.gestionfinanzas.exception.LimiteNoDisponibleException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -16,9 +17,14 @@ import java.util.Map;
 import java.util.Set;
 
 @Component
-@RequiredArgsConstructor
 public class FiltroLimiteAbuso extends OncePerRequestFilter {
     private final LimiteAbuso limite;
+    private final OrigenSolicitud origen;
+    public FiltroLimiteAbuso(LimiteAbuso limite) { this(limite,new OrigenSolicitud("")); }
+    @Autowired
+    public FiltroLimiteAbuso(LimiteAbuso limite, OrigenSolicitud origen) {
+        this.limite=limite; this.origen=origen;
+    }
     private static final Map<String,Integer> PUBLICOS = Map.of(
         "/api/auth/login",20, "/api/auth/registro",5, "/api/auth/google",20,
         "/api/auth/recuperacion",5, "/api/auth/recuperacion/confirmar",10,
@@ -32,7 +38,7 @@ public class FiltroLimiteAbuso extends OncePerRequestFilter {
             if ("POST".equals(request.getMethod()) && PUBLICOS.containsKey(ruta)) {
                 // No confiar en X-Forwarded-For enviado por el cliente. Tras un proxy sin
                 // configuración de confianza, este límite corresponde a la dirección del proxy.
-                limite.comprobar("origen:"+request.getRemoteAddr()+":"+ruta,
+                limite.comprobar("origen:"+origen.obtener(request)+":"+ruta,
                         PUBLICOS.get(ruta),Duration.ofMinutes(1));
             }
             var autenticacion=SecurityContextHolder.getContext().getAuthentication();
@@ -51,6 +57,12 @@ public class FiltroLimiteAbuso extends OncePerRequestFilter {
                 }
             }
             chain.doFilter(request,response);
+        } catch (LimiteNoDisponibleException error) {
+            response.setStatus(503);
+            response.setHeader("Retry-After","5");
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            response.setCharacterEncoding("UTF-8");
+            response.getWriter().write("{\"success\":false,\"message\":\"No se pudo comprobar el límite. Reintenta en un momento.\",\"data\":null}");
         } catch (TooManyRequestsException error) {
             response.setStatus(429);
             response.setHeader("Retry-After",Long.toString(error.retryAfterSeconds()));

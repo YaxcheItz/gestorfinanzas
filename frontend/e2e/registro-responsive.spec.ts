@@ -1,11 +1,12 @@
 import { expect,test } from '@playwright/test';
+import { registrarPrueba } from './registro-helper';
 test.use({isMobile:true,hasTouch:true});
 
 test('registra un gasto una vez y conserva los diálogos dentro del viewport',async({page})=>{
   const password='Password123';
   const email=`mobile-${crypto.randomUUID()}@example.test`;
   const errors:string[]=[];page.on('pageerror',error=>errors.push(error.message));
-  const registro=await page.request.post('/api/auth/registro',{data:{nombre:'Prueba Android',email,password}});
+  const registro=await registrarPrueba(page.request,{nombre:'Prueba Android',email,password});
   expect(registro.ok()).toBeTruthy();
   const auth=(await registro.json()).data;
   const headers={Authorization:`Bearer ${auth.token}`};

@@ -5,6 +5,7 @@
     <router-outlet />
   </main>
   @if (authService.isAuthenticated()) { <app-quick-capture /> }
+  @if (authService.isAuthenticated()) { <app-registro-rapido /> }
 </div>
 
 <!-- Global UI Layer: Toasts y Diálogos de Confirmación -->

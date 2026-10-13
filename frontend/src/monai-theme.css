@@ -300,6 +300,17 @@ html .monai-theme .capture-panel { z-index: 65; bottom: env(safe-area-inset-bott
 @media (min-width: 640px) { .transaction-entry-backdrop .transaction-entry-sheet { height: min(100%, 48rem); max-height: min(100%, 48rem); } }
 html .monai-theme #quick-capture-panel { bottom: auto; top: calc(var(--dialog-visible-top, 0px) + var(--dialog-visible-height, 100dvh) - min(40rem, var(--dialog-visible-height, 100dvh) - 1rem)); height: min(40rem, calc(var(--dialog-visible-height, 100dvh) - 1rem)); max-height: calc(var(--dialog-visible-height, 100dvh) - 1rem); min-width: 0; }
 html .monai-theme #quick-capture-text { min-width: 0; min-height: 3rem; max-height: 6rem; field-sizing: content; resize: none; overflow-y: auto; }
+html .monai-theme #quick-capture-panel { display: flex; flex-direction: column; overflow: hidden; }
+html .monai-theme #quick-capture-panel > :not(.capture-chat):not(.capture-editor):not(.report-thread) { flex-shrink: 0; }
+html .monai-theme #quick-capture-panel .capture-chat { flex: 1; min-height: 0; max-height: none; }
+html .monai-theme #quick-capture-panel .capture-chat > * { flex-shrink: 0; }
+html .monai-theme #quick-capture-panel .capture-editor,html .monai-theme #quick-capture-panel .report-thread { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+html .monai-theme #quick-capture-panel .capture-manual { align-self: flex-start; min-height: 44px; margin-bottom: .4rem; padding: .4rem .75rem; border: 1px solid var(--kaptal-border); border-radius: .75rem; color: var(--kaptal-content); background: var(--kaptal-surface-subtle); font-size: .8rem; touch-action: manipulation; }
+html .monai-theme #quick-capture-panel[data-compact-viewport] { padding: .5rem .75rem; }
+html .monai-theme #quick-capture-panel[data-compact-viewport] .capture-instructions,html .monai-theme #quick-capture-panel[data-compact-viewport] .chat-local-prompts { display: none; }
+html .monai-theme #quick-capture-panel[data-compact-viewport] .capture-panel__head { margin-bottom: .25rem; }
+html .monai-theme #quick-capture-panel[data-compact-viewport] .voice-record-button { display: none; }
+html .monai-theme #quick-capture-panel[data-compact-viewport] > p[role="status"] { font-size: .75rem; line-height: 1.3; max-height: 3rem; overflow-y: auto; }
 @media (pointer: coarse) { html .monai-theme #quick-capture-panel :is(input, select, textarea) { font-size: max(1rem, 16px); } }
 
 html .monai-theme .capture-panel__head > button { width: 44px; height: 44px; flex: none; }
@@ -320,3 +331,55 @@ html .monai-theme .chat-local-report button { min-height:44px; font-size:.75rem;
 
 html .monai-theme .capture-clear { display:grid; place-items:center; }
 html .monai-theme .capture-clear svg { width:20px; height:20px; }
+
+/* El hilo ocupa el espacio libre; las acciones y la escritura permanecen accesibles. */
+html .monai-theme #quick-capture-panel .capture-panel__tools { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin-bottom: .5rem; }
+html .monai-theme .entry-mode { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.3fr); gap: .25rem; padding: .25rem; margin-bottom: .75rem; background: var(--kaptal-surface-subtle); border-radius: .9rem; }
+html .monai-theme .entry-mode button { min-width: 0; min-height: 44px; padding: .5rem; border-radius: .65rem; font-size: .8rem; color: var(--kaptal-content-muted); touch-action: manipulation; }
+html .monai-theme .entry-mode .is-active { background: var(--kaptal-surface); color: var(--kaptal-content); font-weight: 700; }
+html .monai-theme #quick-capture-panel .entry-mode { flex: 1; min-width: 0; margin: 0; }
+html .monai-theme .quick-entry { display: flex; flex-direction: column; height: min(46rem, calc(var(--dialog-visible-height, 100dvh) - .5rem)); overflow: hidden; padding: 1rem 1rem max(.75rem, env(safe-area-inset-bottom)); }
+html .monai-theme .quick-entry > header,html .monai-theme .quick-entry > .entry-mode { flex: none; }
+html .monai-theme .quick-entry form { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+html .monai-theme .quick-entry fieldset { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: .15rem .25rem .75rem; }
+html .monai-theme .quick-entry .entry-footer { flex: none; padding-top: .65rem; border-top: 1px solid var(--kaptal-border); }
+html .monai-theme .quick-entry .entry-save { margin-top: 0; }
+html .monai-theme .quick-entry .entry-category-chips { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); overflow: visible; padding: 2px; }
+html .monai-theme .quick-entry .entry-category-chips button { display: flex; align-items: center; gap: .5rem; min-height: 48px; text-align: left; white-space: normal; overflow-wrap: anywhere; font-size: .8rem; }
+html .monai-theme .quick-entry .entry-category-chips app-categoria-icono { flex: none; }
+html .monai-theme .quick-entry .entry-categories > span { display: block; margin-bottom: .5rem; font-size: .8rem; font-weight: 600; }
+html .monai-theme .quick-entry .entry-date { margin: 0; color: var(--kaptal-content-muted); font-size: .75rem; }
+html .monai-theme .quick-entry .entry-offline { margin-bottom: .5rem; font-size: .75rem; color: var(--kaptal-content-muted); }
+html .monai-theme .quick-entry .entry-error { margin: 0 0 .5rem; }
+html .monai-theme .quick-entry .entry-summary { margin: 0 0 .5rem; color: var(--kaptal-content-muted); font-size: .75rem; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html .monai-theme .quick-entry .entry-amount input:focus-visible { outline: none; border-bottom-color: var(--kaptal-focus); box-shadow: 0 1px 0 var(--kaptal-focus); }
+html .monai-theme .quick-entry-backdrop[data-compact-viewport] .quick-entry header { margin-bottom: .5rem; }
+html .monai-theme .quick-entry-backdrop[data-compact-viewport] .quick-entry header small { display: none; }
+html .monai-theme .quick-entry-backdrop[data-compact-viewport] .entry-mode { margin-bottom: .5rem; }
+html .monai-theme #quick-capture-panel .capture-manual { margin: 0; font-weight: 600; }
+html .monai-theme #quick-capture-panel .capture-recover { display: grid; place-items: center; flex: none; width: 44px; height: 44px; border: 1px solid var(--kaptal-border); border-radius: .75rem; background: transparent; color: var(--kaptal-content-muted); touch-action: manipulation; }
+html .monai-theme #quick-capture-panel .capture-recover svg { width: 20px; height: 20px; }
+html .monai-theme #quick-capture-panel .capture-chat { gap: 1rem; padding-block: .75rem 1rem; scrollbar-gutter: stable; overflow-wrap: anywhere; }
+html .monai-theme #quick-capture-panel .capture-chat__intro { margin-top: .5rem; }
+html .monai-theme #quick-capture-panel .capture-chat__intro > div { min-width: 0; gap: .65rem; }
+html .monai-theme #quick-capture-panel .capture-chat__intro strong { font-size: 1rem; line-height: 1.4; }
+html .monai-theme #quick-capture-panel .capture-chat__intro p { font-size: .8rem; line-height: 1.6; }
+html .monai-theme #quick-capture-panel .capture-chat__suggestions button { min-height: 44px; max-width: 100%; padding: .5rem .75rem; font-size: .75rem; line-height: 1.4; text-align: left; }
+html .monai-theme #quick-capture-panel .capture-chat__user span { font-size: .875rem; line-height: 1.6; }
+html .monai-theme #quick-capture-panel .capture-chat__reply > p { font-size: .875rem; line-height: 1.6; }
+html .monai-theme #quick-capture-panel .capture-chat__reply { padding: .85rem; }
+html .monai-theme #quick-capture-panel .capture-chat__composer { padding: .4rem; gap: .25rem; border-color: var(--kaptal-border); background: var(--kaptal-surface-subtle); }
+html .monai-theme #quick-capture-panel .capture-chat__composer:focus-within { border-color: var(--kaptal-focus); box-shadow: 0 0 0 1px var(--kaptal-focus); }
+html .monai-theme #quick-capture-text { font-size: 1rem; line-height: 1.5; padding: .65rem .5rem; background: transparent; border: 0; border-radius: 0; box-shadow: none; }
+html .monai-theme #quick-capture-text:focus-visible { outline: none; }
+html .monai-theme #quick-capture-panel .capture-chat__composer button { width: 44px; min-width: 44px; height: 44px; min-height: 44px; touch-action: manipulation; }
+html .monai-theme #quick-capture-panel .capture-chat__send { background: var(--kaptal-brand); color: var(--kaptal-on-brand); }
+html .monai-theme #quick-capture-panel .capture-chat__send:disabled { opacity: .45; }
+html .monai-theme #quick-capture-panel .capture-chat__consent { min-height: 44px; align-items: center; gap: .5rem; margin: .4rem 0 0; padding: .2rem; font-size: .75rem; line-height: 1.5; }
+html .monai-theme #quick-capture-panel .capture-chat__consent input { width: 16px; height: 16px; min-height: 0; flex: none; accent-color: var(--kaptal-brand); }
+html .monai-theme #quick-capture-panel[data-compact-viewport] .capture-panel__tools { margin-bottom: .25rem; }
+html .monai-theme #quick-capture-panel[data-compact-viewport] .capture-chat { padding-block: .25rem .5rem; }
+html .monai-theme #quick-capture-panel[data-compact-viewport] #quick-capture-text { max-height: 5rem; }
+@media (max-width: 639px) {
+  html .monai-theme #quick-capture-panel { height: min(46rem, calc(var(--dialog-visible-height, 100dvh) - .5rem)); max-height: calc(var(--dialog-visible-height, 100dvh) - .5rem); top: calc(var(--dialog-visible-top, 0px) + var(--dialog-visible-height, 100dvh) - min(46rem, var(--dialog-visible-height, 100dvh) - .5rem)); padding-bottom: max(.75rem, env(safe-area-inset-bottom)); }
+}

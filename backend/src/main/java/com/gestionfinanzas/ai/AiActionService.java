@@ -18,6 +18,7 @@ import com.gestionfinanzas.service.CuentaService;
 import com.gestionfinanzas.service.PlantillaRecurrenteService;
 import com.gestionfinanzas.service.PresupuestoService;
 import com.gestionfinanzas.service.TransaccionService;
+import com.gestionfinanzas.security.LimiteAbuso;
 import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -58,7 +59,7 @@ public class AiActionService {
     private final ObjectMapper objectMapper;
     private final Validator validator;
     private final PropuestaChatService propuestas;
-    private final LimiteIa limiteIa=new LimiteIa(java.time.Clock.systemUTC());
+    private final LimiteAbuso limiteAbuso;
 
     public AiActionResult interpret(Long userId, String conversation) {
         AiActionResult registroRapido = interpretarRegistroRapido(userId, conversation);
@@ -66,7 +67,7 @@ public class AiActionService {
             return registroRapido;
         }
 
-        limiteIa.consumir(userId);
+        limiteAbuso.comprobar("ia:"+userId,10,java.time.Duration.ofMinutes(1));
         String context = financialContextService.buildContext(userId)
                 + "\nOpciones concretas para acciones:\n" + buildActionOptions(userId);
         String prompt = """

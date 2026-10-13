@@ -10,6 +10,17 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class LimiteAbusoTest {
+    @Test void falloAlAbrirTransaccionCompartidaDevuelveIndisponibilidad() {
+        var store=mock(LimiteAbusoCompartido.class);
+        var provider=new org.springframework.beans.factory.support.StaticListableBeanFactory();
+        provider.addBean("store",store);
+        doThrow(new org.springframework.transaction.CannotCreateTransactionException("detalle privado"))
+                .when(store).comprobar(anyString(),anyInt(),any());
+        var limite=new LimiteAbuso(provider.getBeanProvider(LimiteAbusoCompartido.class),"postgres");
+        var error=assertThrows(com.gestionfinanzas.exception.LimiteNoDisponibleException.class,
+                ()->limite.comprobar("usuario:1",5,Duration.ofMinutes(1)));
+        assertFalse(error.getMessage().contains("detalle privado"));
+    }
     @Test void expiraLaVentanaYNoBloqueaOtrosUsuarios() {
         Clock clock=mock(Clock.class);
         Instant now=Instant.parse("2026-10-10T00:00:00Z");

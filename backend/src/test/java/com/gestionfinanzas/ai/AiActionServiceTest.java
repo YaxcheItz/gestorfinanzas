@@ -48,7 +48,8 @@ class AiActionServiceTest {
     private final AiActionService service = new AiActionService(
             provider, contextService, cuentaService, categoriaService, presupuestoService,
             transaccionService, plantillaService, new ObjectMapper().findAndRegisterModules(),
-            Validation.buildDefaultValidatorFactory().getValidator(), almacen
+            Validation.buildDefaultValidatorFactory().getValidator(), almacen,
+            new com.gestionfinanzas.security.LimiteAbuso()
     );
 
     @BeforeEach
