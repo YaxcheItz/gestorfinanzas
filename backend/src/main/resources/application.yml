@@ -1,5 +1,6 @@
 server:
   port: ${PORT:8080}
+  forward-headers-strategy: none
 
 spring:
   application:
@@ -81,6 +82,9 @@ whatsapp:
     verification-token: ${WHATSAPP_BOT_VERIFICATION_TOKEN:}
 
 app:
+  abuse:
+    store: ${ABUSE_LIMIT_STORE:memory}
+    trusted-proxies: ${ABUSE_TRUSTED_PROXIES:}
   auth:
     google:
       client-id: ${GOOGLE_CLIENT_ID:}

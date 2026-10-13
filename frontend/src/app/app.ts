@@ -7,11 +7,12 @@ import { ConfirmDialogComponent } from './shared/components/confirm-dialog/confi
 import { AuthService } from './core/services/auth.service';
 import { PerfilService } from './core/services/perfil.service';
 import { QuickCaptureComponent } from './shared/components/quick-capture/quick-capture.component';
+import { RegistroRapidoComponent } from './shared/components/registro-rapido/registro-rapido.component';
 import { ActualizacionPwaService } from './core/services/actualizacion-pwa.service';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, NavbarComponent, QuickCaptureComponent, ToastContainerComponent, ConfirmDialogComponent],
+  imports: [RouterOutlet, RouterLink, NavbarComponent, QuickCaptureComponent, RegistroRapidoComponent, ToastContainerComponent, ConfirmDialogComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })

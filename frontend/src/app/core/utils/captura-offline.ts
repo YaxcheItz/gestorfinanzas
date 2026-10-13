@@ -1,6 +1,7 @@
 import { AiActionProposal } from '../models/ai.models';
 import { Categoria, Cuenta, TransaccionPayload } from '../models/finanzas.models';
 import { fechaFinanciera } from './fecha-financiera';
+import { crearIdSolicitud } from './request-id';
 
 const normalizar=(texto:string)=>texto.normalize('NFD').replace(/\p{M}/gu,'').toLowerCase().trim().replace(/\s+/g,' ');
 
@@ -40,7 +41,7 @@ export function prepararCapturaOffline(texto:string,cuentas:Cuenta[],categorias:
   const coincidencias=categorias.filter(c=>c.activo&&c.tipo===tipo&&(' '+limpio+' ').includes(' '+normalizar(c.nombre)+' '));
   const cuenta=activas.find(c=>c.id===cuentaId)?.nombre??'Cuenta por seleccionar';
   const destino=tipo==='TRANSFERENCIA'?' a '+(activas.find(c=>c.id===cuentaDestinoId)?.nombre??'destino por seleccionar'):'';
-  return {id:crypto.randomUUID(),local:true,version:0,type:'CREATE_TRANSACTION',summary:`${tipo} de ${monto} · ${cuenta}${destino} · ${fecha}`,
+  return {id:crearIdSolicitud(),local:true,version:0,type:'CREATE_TRANSACTION',summary:`${tipo} de ${monto} · ${cuenta}${destino} · ${fecha}`,
     data:{tipo,monto,fecha,cuentaId,cuentaDestinoId,categoriaId:coincidencias.length===1?coincidencias[0].id:null,descripcion:texto.slice(0,200)}};
 }
 

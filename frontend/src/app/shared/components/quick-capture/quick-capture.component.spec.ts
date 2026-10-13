@@ -77,10 +77,42 @@ describe('QuickCaptureComponent processing and gestures', () => {
     expect(component.captureTurns()).toEqual([]);
     expect(offline.guardarPendiente).not.toHaveBeenCalled();
   });
+  it('prepares locally when the network fails but onLine stays true', () => {
+    component.cuentasEdicion.set([{id:1,nombre:'Efectivo',tipo:'EFECTIVO',moneda:'MXN',saldoActual:0,activo:true} as any]);
+    component.content='Gasté 25 en comida';component.submit();
+    result.error(new HttpErrorResponse({status:0}));
+    expect(conexion()).toBe(true);
+    expect(component.captureTurns()[0].actions[0].local).toBe(true);
+    expect(component.loading()).toBe(false);
+    expect(offline.guardarPendiente).not.toHaveBeenCalled();
+  });
+  it('keeps the selected category when saving a local proposal offline', async () => {
+    usuario.set({id:1});fixture.detectChanges();await Promise.resolve();await Promise.resolve();
+    conexion.set(false);
+    component.cuentasEdicion.set([{id:1,nombre:'Efectivo',tipo:'EFECTIVO',moneda:'MXN',saldoActual:0,activo:true} as any]);
+    const category={id:2,nombre:'Comida',tipo:'GASTO',activo:true} as any;
+    component.categories.set([category]);component.content='Gasté 25';component.submit();
+    component.asignarCategoria(component.captureTurns()[0].actions[0],category,'Gasté 25');
+    const proposal=component.captureTurns()[0].actions[0];
+    component.confirm(proposal);component.confirm(proposal);
+    await vi.waitFor(()=>expect(offline.guardarPendiente).toHaveBeenCalledOnce());
+    expect(offline.guardarPendiente).toHaveBeenCalledWith(1,proposal.id,expect.objectContaining({categoriaId:2,monto:25}));
+    expect(TestBed.inject(FinanzasService).editarPropuestaAi).not.toHaveBeenCalled();
+    expect(TestBed.inject(FinanzasService).confirmAiAction).not.toHaveBeenCalled();
+  });
   it('does not request a microphone or transcribe offline', () => {
     conexion.set(false);(component as any).voiceConsent=true;
     component.toggleVoice();expect(component.error()).toContain('conexión');
     expect(component.listening()).toBe(false);
+  });
+  it('preserves an explicitly selected compatible category when changing type', () => {
+    const proposal={id:'local-edit',local:true,type:'CREATE_TRANSACTION',summary:'Gasto',data:{tipo:'GASTO',monto:25,cuentaId:1,categoriaId:2}} as any;
+    component.categories.set([{id:3,nombre:'Nómina',tipo:'INGRESO',activo:true} as any]);
+    component.captureTurns.set([{id:1,user:'Gasto',answer:'Revisa',actions:[proposal],voice:false}]);
+    component.abrirEdicion(proposal);component.borrador['tipo']='INGRESO';component.borrador['categoriaId']=3;
+    component.guardarEdicion();
+    expect(component.captureTurns()[0].actions[0].data['categoriaId']).toBe(3);
+    expect(TestBed.inject(FinanzasService).editarPropuestaAi).not.toHaveBeenCalled();
   });
   it('blocks update when text changes during the draft commit', async () => {
     (component as any).usuarioChat=1;(component as any).borradorRestaurado.set(true);
@@ -105,10 +137,10 @@ describe('QuickCaptureComponent processing and gestures', () => {
 
   it('opens the manual form after a simple tap', async () => {
     const opened = vi.fn();
-    window.addEventListener('kaptal-abrir-registro-manual', opened, { once: true });
+    window.addEventListener('kaptal-abrir-registro-rapido', opened, { once: true });
     component.abrirConTeclado();
     await Promise.resolve();
-    expect(navigate).toHaveBeenCalledWith(['/transacciones']);
+    expect(navigate).not.toHaveBeenCalled();
     expect(opened).toHaveBeenCalledOnce();
   });
 

@@ -1,4 +1,5 @@
 import { TextoFinancieroPipe } from '../../core/pipes/texto-financiero.pipe';
+import { crearIdSolicitud } from '../../core/utils/request-id';
 import { MontoPrivadoDirective } from '../../shared/directives/monto-privado.directive';
 import { Component, HostListener, OnDestroy, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -1727,7 +1728,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
   }
 
   abrirCapturaChat(): void {
-    window.dispatchEvent(new Event('kaptal-abrir-captura-chat'));
+    window.dispatchEvent(new Event('kaptal-abrir-registro-rapido'));
   }
 
   abrirModal(tipo: TipoTransaccion): void {
@@ -1737,7 +1738,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
       this.modalAbierto.set(true);
       return;
     }
-    this.claveMovimiento = crypto.randomUUID();
+    this.claveMovimiento = crearIdSolicitud();
     this.movimientoPendiente = null;
     this.modoEdicion.set(false);
     this.transaccionEditando.set(null);
@@ -1919,7 +1920,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
 
     const transaccion = this.transaccionEditando();
     if (!transaccion) {
-      this.claveMovimiento ||= crypto.randomUUID();
+      this.claveMovimiento ||= crearIdSolicitud();
       this.movimientoPendiente = payload;
     }
     const request = transaccion

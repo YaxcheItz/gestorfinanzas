@@ -21,5 +21,5 @@ export class NavbarComponent {
   readonly router = inject(Router);
   private readonly document = inject(DOCUMENT);
   reportes(): void { this.document.defaultView?.dispatchEvent(new CustomEvent('kaptal-abrir-captura-chat', {detail:{content:'Reporte de este mes'}})); }
-  anadir(): void { this.document.defaultView?.dispatchEvent(new CustomEvent('kaptal-abrir-captura-chat')); }
+  anadir(): void { this.document.defaultView?.dispatchEvent(new CustomEvent('kaptal-abrir-registro-rapido')); }
 }

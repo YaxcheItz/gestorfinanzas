@@ -1140,7 +1140,7 @@ export class DashboardComponent implements OnInit {
   }
 
   abrirChatRegistro(tipo?: TipoTransaccion): void {
-    window.dispatchEvent(new CustomEvent('kaptal-abrir-captura-chat', { detail: { tipo } }));
+    window.dispatchEvent(new CustomEvent('kaptal-abrir-registro-rapido', { detail: { tipo } }));
   }
 
   cargarDashboard(): void {

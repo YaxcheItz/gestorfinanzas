@@ -20,14 +20,28 @@ export class DialogViewportDirective implements AfterViewInit, OnDestroy {
       if (this.viewport && this.viewport.scale !== 1) return;
       this.element.style.setProperty('--dialog-visible-height', `${this.viewport?.height ?? this.window!.innerHeight}px`);
       this.element.style.setProperty('--dialog-visible-top', `${this.viewport?.offsetTop ?? 0}px`);
+      this.element.toggleAttribute('data-compact-viewport', (this.viewport?.height ?? this.window!.innerHeight) < 480);
       const focused = this.document.activeElement;
       if (focused instanceof HTMLElement && this.element.contains(focused)
           && focused.matches('input, textarea, select')) {
         const rect = focused.getBoundingClientRect();
         const top = this.viewport?.offsetTop ?? 0;
         const height = this.viewport?.height ?? this.window!.innerHeight;
-        if (rect.top < top || rect.bottom > top+height) {
+        let visibleTop=top,visibleBottom=top+height;
+        for(let parent=focused.parentElement;parent && this.element.contains(parent);parent=parent.parentElement){
+          if(/auto|scroll|hidden|clip/.test(this.window!.getComputedStyle(parent).overflowY)){
+            const bounds=parent.getBoundingClientRect();
+            visibleTop=Math.max(visibleTop,bounds.top+parent.clientTop);
+            visibleBottom=Math.min(visibleBottom,bounds.top+parent.clientTop+parent.clientHeight);
+          }
+        }
+        if (rect.top < visibleTop || rect.bottom > visibleBottom) {
           focused.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+        }
+        // Al reducirse el campo, mantener visible el final que se está escribiendo.
+        if (focused instanceof HTMLTextAreaElement && focused.selectionStart === focused.value.length
+            && focused.selectionEnd === focused.value.length) {
+          focused.scrollTop = focused.scrollHeight;
         }
       }
     });
@@ -41,6 +55,7 @@ export class DialogViewportDirective implements AfterViewInit, OnDestroy {
     this.viewport?.addEventListener('resize', this.actualizar);
     this.viewport?.addEventListener('scroll', this.actualizar);
     this.window?.addEventListener('resize', this.actualizar);
+    this.element.addEventListener('focusin', this.actualizar);
     this.actualizar();
   }
 
@@ -48,6 +63,7 @@ export class DialogViewportDirective implements AfterViewInit, OnDestroy {
     this.viewport?.removeEventListener('resize', this.actualizar);
     this.viewport?.removeEventListener('scroll', this.actualizar);
     this.window?.removeEventListener('resize', this.actualizar);
+    this.element.removeEventListener('focusin', this.actualizar);
     if (this.frame) this.window?.cancelAnimationFrame(this.frame);
     const actual = bloqueos.get(this.document);
     if (actual && actual.cantidad > 1) actual.cantidad--;
