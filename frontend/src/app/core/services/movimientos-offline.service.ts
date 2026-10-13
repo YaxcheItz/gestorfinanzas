@@ -5,6 +5,7 @@ import { AiActionProposal } from '../models/ai.models';
 import { Categoria, Cuenta, TransaccionPayload } from '../models/finanzas.models';
 import { AuthService } from './auth.service';
 import { FinanzasService } from './finanzas.service';
+import { crearIdSolicitud } from '../utils/request-id';
 
 export interface MovimientoPendiente {
   id:string; usuarioId:number; payload:TransaccionPayload; creadoEn:string; error?:string;
@@ -70,7 +71,7 @@ export class MovimientosOfflineService {
         b.onsuccess=()=>{const previo=b.result as BorradorChat|undefined;
           if(previo){const ids=new Set([e.id,e.propuestaId]);previo.acciones=previo.acciones.filter(p=>!ids.has(p.id));
             if(previo.editandoId&&ids.has(previo.editandoId)){previo.editandoId=null;previo.edicion=undefined;}
-            previo.revision=crypto.randomUUID();borradores.put(previo);
+            previo.revision=crearIdSolicitud();borradores.put(previo);
           }done(previo?.revision);
         };
       };
@@ -84,7 +85,7 @@ export class MovimientosOfflineService {
   async leerCatalogo(usuarioId:number):Promise<CatalogoOffline|null>{this.exigirUsuario(usuarioId);const c=await this.leer<CatalogoOffline>('catalogos',usuarioId);this.exigirUsuario(usuarioId);return c;}
   async guardarBorrador(b:BorradorChat):Promise<void>{
     this.exigirUsuario(b.usuarioId);if(b.texto.length>1200||b.acciones.length>50||JSON.stringify(b).length>200000)throw new Error('El borrador es demasiado grande.');
-    const revision=crypto.randomUUID(),base=this.revisiones.get(b.usuarioId);
+    const revision=crearIdSolicitud(),base=this.revisiones.get(b.usuarioId);
     await this.transaccion<void>('borradores','readwrite',(s,done,fail)=>{const r=s.get(b.usuarioId);r.onsuccess=()=>{
       if(r.result&&r.result.revision!==base){fail(new Error('Otro chat cambió el borrador guardado. Conserva este texto antes de recargar.'));return;}
       s.put({...structuredClone(b),revision});done();

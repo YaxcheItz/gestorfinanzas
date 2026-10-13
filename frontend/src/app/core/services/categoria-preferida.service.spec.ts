@@ -2,6 +2,15 @@ import { TestBed } from '@angular/core/testing';
 import { CategoriaPreferidaService } from './categoria-preferida.service';
 
 describe('CategoriaPreferidaService', () => {
+  it('recuerda cuatro categorías recientes por usuario y tipo sin repetirlas',()=>{
+    preferida.aplicarDesdeCache(7);
+    for(const id of [1,2,3,4,5,3])preferida.recordar('GASTO',id);
+    expect(preferida.recientes('GASTO')).toEqual([3,5,4,2]);
+    preferida.limpiar();preferida.aplicarDesdeCache(7);
+    expect(preferida.recientes('GASTO')).toEqual([3,5,4,2]);
+    expect(preferida.recientes('INGRESO')).toEqual([]);
+    preferida.aplicarDesdeCache(9);expect(preferida.recientes('GASTO')).toEqual([]);
+  });
   let preferida: CategoriaPreferidaService;
 
   beforeEach(() => {

@@ -1,11 +1,12 @@
 import { expect, test, type Page } from '@playwright/test';
+import { registrarPrueba } from './registro-helper';
 
 const password = 'Password123';
 
 async function iniciar(page: Page) {
   const email = `e2e-${crypto.randomUUID()}@example.test`;
-  const response = await page.request.post('/api/auth/registro', {
-    data: { nombre: 'Prueba recuperación', email, password }
+  const response = await registrarPrueba(page.request, {
+    nombre: 'Prueba recuperación', email, password
   });
   expect(response.ok()).toBeTruthy();
   const auth = (await response.json()).data;
@@ -25,6 +26,7 @@ async function iniciar(page: Page) {
 
 async function abrirChat(page: Page) {
   await page.getByRole('button', { name: 'Añadir movimiento', exact: true }).click();
+  await page.getByRole('button', { name: 'Escribir o dictar', exact: true }).click();
   await expect(page.locator('#quick-capture-text')).toBeVisible();
 }
 
@@ -100,8 +102,8 @@ test('ingreso, transferencia y restauración financiera conservan importes y pro
   expect(archivoResponse.ok()).toBeTruthy();
   const archivo = await archivoResponse.json();
   expect(archivo.version).toBe(3);
-  const nuevoResponse = await page.request.post('/api/auth/registro', {
-    data: { nombre: 'Destino respaldo', email: `restore-${crypto.randomUUID()}@example.test`, password }
+  const nuevoResponse = await registrarPrueba(page.request, {
+    nombre: 'Destino respaldo', email: `restore-${crypto.randomUUID()}@example.test`, password
   });
   expect(nuevoResponse.ok()).toBeTruthy();
   const nuevo = (await nuevoResponse.json()).data;

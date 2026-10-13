@@ -40,13 +40,9 @@ jobs:
     steps:
       - name: Comprobar API
         env:
-          API_URL: ${{ vars.KAPTAL_API_URL || 'https://kaptal-api-0xbn.onrender.com' }}
+          API_URL: https://kaptal-api-0xbn.onrender.com/api/health
         run: |
-          if [ -z "$API_URL" ]; then
-            echo "::error::KAPTAL_API_URL no esta definida. Anadela en Settings > Secrets and variables > Actions > Variables."
-            exit 1
-          fi
-          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 90 "$API_URL/api/health")
+          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 90 "$API_URL")
           if [ "$code" != "200" ]; then
             echo "::error::La API respondio $code. Puede ser un arranque en frio o una caida real."
             exit 1

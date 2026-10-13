@@ -71,7 +71,7 @@ class PropuestasChatIntegrationTest {
     }
     @Test void otraInstanciaRecuperaLaPropuestaSinMoverDinero() {
         var p=propuesta();
-        var otra=new AiActionService(provider,context,cuentaService,categorias,presupuestos,transacciones,plantillas,mapper,validator,almacen);
+        var otra=new AiActionService(provider,context,cuentaService,categorias,presupuestos,transacciones,plantillas,mapper,validator,almacen,new com.gestionfinanzas.security.LimiteAbuso());
         assertEquals(p.id(),otra.pendientes(a.getId()).getFirst().id());
         assertEquals(new BigDecimal("100.00"),cuentas.findById(cuenta.getId()).orElseThrow().getSaldoActual());
         assertTrue(otra.pendientes(b.getId()).isEmpty());

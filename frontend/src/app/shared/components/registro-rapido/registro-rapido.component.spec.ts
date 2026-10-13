@@ -9,6 +9,7 @@ import { CategoriaPreferidaService } from '../../../core/services/categoria-pref
 import { PerfilService } from '../../../core/services/perfil.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { PrivacidadService } from '../../../core/services/privacidad.service';
+import { MovimientosOfflineService } from '../../../core/services/movimientos-offline.service';
 
 const cuentas = [{id:1,nombre:'Efectivo',tipo:'EFECTIVO',moneda:'MXN',activo:true}, {id:2,nombre:'Ahorro',tipo:'AHORRO',moneda:'MXN',activo:true}, {id:3,nombre:'USD',tipo:'DEBITO',moneda:'USD',activo:true}, {id:4,nombre:'Credito',tipo:'CREDITO',moneda:'MXN',activo:true}, {id:5,nombre:'Credito 2',tipo:'CREDITO',moneda:'MXN',activo:true}];
 const categorias = [{id:10,nombre:'Comida',tipo:'GASTO',activo:true}, {id:20,nombre:'Sueldo',tipo:'INGRESO',activo:true}];
@@ -18,19 +19,40 @@ describe('Registro rapido: guardado y privacidad', () => {
   let respuesta: Subject<any>;
   let crear: ReturnType<typeof vi.fn>;
   const usuario = signal<any>({id:991});
+  const conexion = signal(true);
+  let offline: any;
   beforeEach(() => {
     localStorage.clear(); usuario.set({id:991}); respuesta = new Subject(); crear = vi.fn(() => respuesta);
+    conexion.set(true);
+    offline={conexion,guardarCatalogo:vi.fn(async()=>{}),leerCatalogo:vi.fn(async()=>({cuentas,categorias})),guardarPendiente:vi.fn(async()=>{}),sincronizar:vi.fn(async()=>0)};
     TestBed.configureTestingModule({imports:[RegistroRapidoComponent], providers:[provideRouter([]),
       {provide:FinanzasService,useValue:{getCuentas:()=>of({data:cuentas}),getCategorias:()=>of({data:categorias}),crearTransaccion:crear}},
       {provide:AuthService,useValue:{currentUser:usuario}},
-      {provide:CategoriaPreferidaService,useValue:{preferida:()=>null,recordar:vi.fn()}},
+      {provide:CategoriaPreferidaService,useValue:{preferida:()=>null,recientes:()=>[],recordar:vi.fn()}},
+      {provide:MovimientosOfflineService,useValue:offline},
       {provide:PerfilService,useValue:{alternarOcultarMontos:()=>TestBed.inject(PrivacidadService).alternarLocal()}},
-      {provide:ToastService,useValue:{success:vi.fn()}}
+      {provide:ToastService,useValue:{success:vi.fn(),info:vi.fn()}}
     ]});
     fixture=TestBed.createComponent(RegistroRapidoComponent);component=fixture.componentInstance;
     component.abrir();fixture.detectChanges();
   });
   afterEach(()=>fixture.destroy());
+  it('conserva monto y cuenta al alternar con escribir',()=>{
+    component.monto='45';component.cuentaId=2;component.cerrar();
+    component.abrir(new CustomEvent('registro',{detail:{preservar:true}}));
+    expect(component.monto).toBe('45');expect(component.cuentaId).toBe(2);
+  });
+  it('guarda offline una sola vez y conserva los datos si falla el almacenamiento',async()=>{
+    conexion.set(false);component.monto='45';
+    let completar!:()=>void;
+    offline.guardarPendiente.mockImplementation(()=>new Promise<void>(resolve=>{completar=resolve;}));
+    component.guardar();component.guardar();
+    expect(offline.guardarPendiente).toHaveBeenCalledOnce();expect(crear).not.toHaveBeenCalled();
+    completar();await fixture.whenStable();expect(component.open()).toBe(false);
+    component.abrir();component.monto='60';offline.guardarPendiente.mockRejectedValue(new Error('No hay espacio'));
+    component.guardar();await fixture.whenStable();
+    expect(component.open()).toBe(true);expect(component.monto).toBe('60');expect(component.error()).toBe('No hay espacio');
+  });
   it('guarda un gasto con solo el monto y los valores predeterminados',()=>{
     component.monto='25,50';component.guardar();
     expect(crear.mock.calls[0][0]).toMatchObject({tipo:'GASTO',monto:25.5,cuentaId:1,categoriaId:10});

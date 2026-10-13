@@ -60,18 +60,25 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
 
     @if (open()) {
       <div class="voice-dialog-backdrop" (click)="close()"></div>
-      <section appDialogViewport role="dialog" aria-modal="true" (keydown)="tecladoPanel($event)" id="quick-capture-panel" class="capture-panel" aria-label="Kaptal, captura y reportes">
+      <section appDialogViewport role="dialog" aria-modal="true" tabindex="-1" (keydown)="tecladoPanel($event)" id="quick-capture-panel" class="capture-panel" aria-label="Kaptal, captura y reportes">
         <header class="capture-panel__head">
           <div><span class="capture-panel__spark">✦</span><div><strong>Kaptal</strong><small>{{ mode() === 'CAPTURE' ? 'Tu chat financiero' : 'Tus finanzas, en contexto' }}</small></div></div>
           <button type="button" class="capture-clear" (click)="limpiarChat()" [disabled]="loading() || confirming() !== null || escuchando()" aria-label="Limpiar historial del chat" title="Limpiar chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14M10 11v6m4-6v6"/></svg></button><app-privacy-toggle/><button type="button" (click)="close()" aria-label="Cerrar">×</button>
         </header>
-        <p class="capture-instructions">Registra movimientos y pide reportes. Primero reglas e historial; IA solo cuando hace falta y la autorizas.</p>
+        <div class="capture-panel__tools">
+          <div class="entry-mode" aria-label="Forma de añadir"><button type="button" (click)="abrirConTeclado()" [disabled]="loading() || confirming() !== null || escuchando()">Rápido</button><button type="button" class="is-active" aria-pressed="true">Escribir o dictar</button></div>
+          @if (mode() === 'CAPTURE') {
+            <button type="button" class="capture-recover" (click)="recuperarPropuestas()" [disabled]="recuperando() || loading() || confirming() !== null" aria-label="Recuperar propuestas pendientes" title="Recuperar propuestas pendientes" [attr.aria-busy]="recuperando()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11a9 9 0 1 1 2.8 7M3 4v7h7M12 7v5l3 2"/></svg>
+            </button>
+          }
+        </div>
+        <p class="capture-instructions">Escribe, revisa y confirma. Tú decides qué guardar.</p>
         @if(!offline.conexion()){<p role="status">Sin conexión. Revisa y confirma para guardar en este dispositivo; se enviará al volver la conexión.</p>}
         @if(errorBorrador()){<p class="capture-error" role="alert">{{ errorBorrador() }}</p>}
         @if(offline.pendientes().length){<p role="status">{{ offline.pendientes().length }} movimiento(s) guardados en este dispositivo, pendientes del servidor.</p>}
 
         @if (mode() === 'CAPTURE') {
-          <button type="button" class="capture-cancel" style="min-height:44px;color:inherit" (click)="recuperarPropuestas()" [disabled]="recuperando() || loading() || confirming() !== null">{{ recuperando() ? 'Recuperando…' : 'Recuperar propuestas pendientes' }}</button>
           @if (editando()) {
             <form class="capture-editor" (ngSubmit)="guardarEdicion()" (input)="marcarBorrador()" (change)="marcarBorrador()" aria-label="Editar propuesta">
               <strong>Editar antes de guardar</strong>
@@ -82,6 +89,9 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
               @if(borrador['tipo']==='TRANSFERENCIA'){
                 <label>Cuenta destino<select name="editDestino" [(ngModel)]="borrador['cuentaDestinoId']" required>@for(cuenta of cuentasEdicion();track cuenta.id){<option [ngValue]="cuenta.id">{{ cuenta.nombre }} · {{ cuenta.moneda }}</option>}</select></label>
                 <label>Tasa de cambio<input name="editTasa" type="number" step="0.00000001" min="0.00000001" [(ngModel)]="borrador['tasaCambio']"></label>
+              }
+              @if(borrador['tipo']!=='TRANSFERENCIA'){
+                <label>Categoría<select name="editCategoria" [(ngModel)]="borrador['categoriaId']"><option [ngValue]="null">Sin categoría</option>@for(categoria of categories();track categoria.id){@if(categoria.activo && categoria.tipo===borrador['tipo']){<option [ngValue]="categoria.id">{{ categoria.nombre }}</option>}}</select></label>
               }
               <label>Descripción<input name="editDescripcion" maxlength="200" [(ngModel)]="borrador['descripcion']"></label>
               <label>Notas<input name="editNotas" maxlength="500" [(ngModel)]="borrador['notas']"></label>
@@ -148,16 +158,15 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
             }
           </div>
           @if (permisoVoz()) {<section class="voice-permission" role="status"><p>El audio se enviará para transcribirlo. Revisa el movimiento antes de guardarlo.</p><button type="button" (click)="permitirVoz()">Permitir audio y grabar</button></section>}
-          <button type="button" class="voice-record-button" (click)="toggleVoice()" [disabled]="loading() || transcribiendoVoz() || stopping()" [attr.aria-pressed]="escuchando()">{{ escuchando() ? 'Detener y revisar' : 'Grabar movimiento' }}</button>
           <div class="chat-local-prompts" aria-label="Consultas y registros sugeridos"><button type="button" (click)="usarSugerencia('Reporte de hoy')" [disabled]="loading()">Hoy</button><button type="button" (click)="usarSugerencia('Top categorías de este mes')" [disabled]="loading()">Top categorías</button><button type="button" (click)="usarSugerencia('Alertas de presupuesto')" [disabled]="loading()">Presupuestos</button><button type="button" (click)="usarSugerencia('Saldo')" [disabled]="loading()">Saldos</button></div>
           <form class="capture-chat__composer" (ngSubmit)="submit()">
             <label class="sr-only" for="quick-capture-text">Escribe el movimiento que quieres registrar</label>
-            <textarea id="quick-capture-text" name="content" [(ngModel)]="content" (ngModelChange)="alCambiarTexto()" (keydown.enter)="enviarConEnter($event)" rows="1" maxlength="1200" placeholder="Gasté 80 en tacos, recibí 900 o reporte de hoy…" [disabled]="loading() || escuchando() || stopping()"></textarea>
+            <textarea id="quick-capture-text" name="content" [(ngModel)]="content" (ngModelChange)="alCambiarTexto()" (keydown.enter)="enviarConEnter($event)" rows="1" maxlength="1200" enterkeyhint="send" placeholder="Escribe un movimiento o una pregunta…" [disabled]="loading() || escuchando() || stopping()"></textarea>
             <button type="button" class="capture-mic" (click)="toggleVoice()" [class.is-listening]="escuchando()" [disabled]="loading() || transcribiendoVoz() || stopping()" [attr.aria-label]="escuchando() ? 'Detener dictado' : 'Dictar movimiento'"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5m-4 0h8"/></svg></button>
             <button type="submit" class="capture-chat__send" [disabled]="loading() || escuchando() || stopping() || !content.trim()" aria-label="Enviar movimiento"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 14-7-5 14-3-6-6-1Z"/><path d="m11 13 4-4"/></svg></button>
           </form>
           @if (voiceMessage()) { <p class="voice-transcribed" role="status">{{ voiceMessage() }}</p> }
-          <label class="capture-consent capture-chat__consent"><input type="checkbox" [(ngModel)]="consent" name="captureConsent"><span>Permitir IA y compartir contexto financiero solo para solicitudes complejas</span></label>
+          <label class="capture-consent capture-chat__consent"><input type="checkbox" [(ngModel)]="consent" name="captureConsent"><span>Permitir IA con mi contexto financiero para consultas complejas</span></label>
           }
         } @else {
           <div class="report-thread" aria-live="polite" aria-relevant="additions text" [attr.aria-busy]="reportLoading()">
@@ -401,9 +410,10 @@ export class QuickCaptureComponent implements OnDestroy {
   tecladoPanel(event: KeyboardEvent): void {
     if (event.key === 'Escape') { event.preventDefault(); this.close(); }
     if (event.key !== 'Tab') return;
-    const elementos = [...(event.currentTarget as HTMLElement).querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), textarea:not(:disabled), a[href]')];
+    const elementos = [...(event.currentTarget as HTMLElement).querySelectorAll<HTMLElement>('button, input, textarea, select, a[href], summary')]
+      .filter(elemento => !elemento.matches(':disabled') && elemento.tabIndex >= 0 && elemento.checkVisibility({ visibilityProperty: true }));
     const primero = elementos[0], ultimo = elementos.at(-1);
-    if (event.shiftKey && document.activeElement === primero) { event.preventDefault(); ultimo?.focus(); }
+    if (event.shiftKey && (document.activeElement === primero || document.activeElement === event.currentTarget)) { event.preventDefault(); ultimo?.focus(); }
     else if (!event.shiftKey && document.activeElement === ultimo) { event.preventDefault(); primero?.focus(); }
   }
   toggle(): void { this.open.update(value => !value); }
@@ -431,12 +441,7 @@ export class QuickCaptureComponent implements OnDestroy {
     const value = this.content.trim();
     if (!value || this.loading() || this.listening() || this.stopping() || this.confirming() !== null) return;
     if(!this.offline.conexion()){
-      try{
-        if(!this.cuentasEdicion().length)throw new Error('Abre la app con conexión para guardar primero tus cuentas.');
-        const p=prepararCapturaOffline(value,this.cuentasEdicion(),this.categories());
-        this.captureTurns.update(turns=>[...turns,{id:++this.captureTurnId,user:value,answer:'Preparado en este dispositivo. Edita la cuenta si falta y confirma antes de enviarlo.',actions:[p],voice:false,engine:'REGLAS'}]);
-        this.content='';this.error.set('');this.marcarBorrador();
-      }catch(error){this.error.set(error instanceof Error?error.message:'No se pudo preparar el movimiento.');}return;
+      this.prepararEnDispositivo(value);return;
     }
     this.aiConsentRequired.set(false);
     this.sourceInput.set(value); this.pendingCaptureText.set(value); this.loading.set(true); this.error.set('');
@@ -464,11 +469,29 @@ export class QuickCaptureComponent implements OnDestroy {
       error: error => {
         this.processingStep.set(null);
         this.loading.set(false); this.pendingCaptureText.set('');
+        // onLine puede seguir siendo true aunque Firefox no alcance el servidor.
+        // Preparar una propuesta local nunca registra dinero sin confirmación.
+        if (error instanceof HttpErrorResponse && error.status === 0) {
+          this.prepararEnDispositivo(value);return;
+        }
         const message = this.errorMessage(error);
         if (/no encontr[eé] una regla local/i.test(message)) this.aiConsentRequired.set(true);
         else this.error.set(message);
       }
     });
+  }
+
+  private prepararEnDispositivo(value: string): void {
+    try {
+      if (!this.cuentasEdicion().length) throw new Error('Abre la app con conexión para guardar primero tus cuentas.');
+      const proposal = prepararCapturaOffline(value, this.cuentasEdicion(), this.categories());
+      this.captureTurns.update(turns => [...turns, {id:++this.captureTurnId,user:value,
+        answer:'Preparado en este dispositivo. Revisa la cuenta y la categoría; confirma para guardarlo y enviarlo al recuperar conexión.',
+        actions:[proposal],voice:false,engine:'REGLAS'}]);
+      this.content='';this.error.set('');this.marcarBorrador();this.scrollCaptureToBottom();
+    } catch (error) {
+      this.error.set(error instanceof Error ? error.message : 'No se pudo preparar el movimiento.');
+    }
   }
 
   permitirIaYReintentar(): void {
@@ -561,7 +584,7 @@ export class QuickCaptureComponent implements OnDestroy {
     const datos={...this.borrador};
     if(datos['tipo']==='TRANSFERENCIA')datos['categoriaId']=null;
     else { datos['cuentaDestinoId']=null; datos['tasaCambio']=null;
-      if(datos['tipo']!==p.data['tipo'])datos['categoriaId']=null;
+      if(datos['tipo']!==p.data['tipo'] && !this.categories().some(c=>c.activo && c.tipo===datos['tipo'] && c.id===datos['categoriaId']))datos['categoriaId']=null;
     }
     this.actualizarPropuesta(p,datos);
   }
@@ -687,7 +710,10 @@ export class QuickCaptureComponent implements OnDestroy {
     } else {
       this.captureHint.set('Hoy se usa por defecto. Indica ayer, una fecha o una cuenta si lo necesitas.');
     }
-    requestAnimationFrame(() => document.getElementById('quick-capture-text')?.focus());
+    requestAnimationFrame(() => {
+      const target = window.matchMedia('(pointer: coarse)').matches ? 'quick-capture-panel' : 'quick-capture-text';
+      document.getElementById(target)?.focus({ preventScroll: true });
+    });
   }
 
   readonly captureHint = signal('Hoy se usa por defecto. Puedes indicar ayer, una fecha, tu cuenta o categoría.');
@@ -722,9 +748,7 @@ export class QuickCaptureComponent implements OnDestroy {
   abrirConTeclado(): void {
     if (this.suppressNextClick) { this.suppressNextClick = false; return; }
     this.close();
-    void this.router.navigate(['/transacciones']).then(() => {
-      window.dispatchEvent(new Event('kaptal-abrir-registro-manual'));
-    });
+    window.dispatchEvent(new CustomEvent('kaptal-abrir-registro-rapido', {detail:{preservar:true}}));
   }
   private limpiarHoldTimer(): void { if (this.holdTimer) clearTimeout(this.holdTimer); this.holdTimer = null; }
   readonly stopping = signal(false);
