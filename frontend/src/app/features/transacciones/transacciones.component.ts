@@ -15,10 +15,11 @@ import { CuentaSelectorComponent } from '../../shared/components/cuenta-selector
 import { MovimientoMobileCardComponent } from '../../shared/components/movimiento-mobile-card/movimiento-mobile-card.component';
 import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive';
 import { DialogViewportDirective } from '../../shared/directives/dialog-viewport.directive';
+import { PrivacyToggleComponent } from '../../shared/components/privacy-toggle/privacy-toggle.component';
 import { FechaPickerComponent } from '../../shared/components/fecha-picker/fecha-picker.component';
 import { MontoPipe } from '../../core/pipes/monto.pipe';
 import { nombreCuentaVisible } from '../../core/utils/cuenta-financiera';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, Subscription } from 'rxjs';
 import {
   Categoria,
   Cuenta,
@@ -48,12 +49,19 @@ interface FilaImportacionCsv {
   errorImportacion?: string;
 }
 
+interface FiltroVisible {
+  clave: 'tipo' | 'cuenta' | 'categoria' | 'monto' | 'fechas' | 'busqueda' | 'movimiento';
+  id: string;
+  etiqueta: string;
+  categoriaId?: number;
+}
+
 @Component({
   selector: 'app-transacciones',
   standalone: true,
-  imports: [TextoFinancieroPipe, MontoPrivadoDirective, CommonModule, FormsModule, CategoriaSelectorComponent, CuentaSelectorComponent, MovimientoMobileCardComponent, FocusTrapDirective, MontoPipe, FechaPickerComponent, DialogViewportDirective],
+  imports: [TextoFinancieroPipe, MontoPrivadoDirective, CommonModule, FormsModule, CategoriaSelectorComponent, CuentaSelectorComponent, MovimientoMobileCardComponent, FocusTrapDirective, MontoPipe, FechaPickerComponent, DialogViewportDirective, PrivacyToggleComponent],
   template: `
-    <div class="finance-page max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-5 sm:space-y-6">
+    <div class="finance-page history-page max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-5 sm:space-y-6">
 
       <!-- Encabezado y Acción Principal -->
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -66,25 +74,7 @@ interface FilaImportacionCsv {
           </p>
         </div>
 
-        <div class="flex flex-col sm:flex-row gap-2">
-          <button
-            type="button"
-            (click)="alternarImportador()"
-            [attr.aria-expanded]="importadorAbierto()"
-            aria-controls="importador-csv"
-            class="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600">
-            {{ importadorAbierto() ? 'Cerrar importación' : 'Importar CSV' }}
-          </button>
-          <button
-            type="button"
-            (click)="exportarCsv()"
-            [disabled]="exportando()"
-            class="inline-flex items-center justify-center px-4 py-2 border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-50 text-slate-700 rounded-xl text-sm font-semibold transition-all cursor-pointer">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1M7 10l5 5m0 0l5-5m-5 5V3" />
-            </svg>
-            {{ exportando() ? 'Preparando...' : 'Exportar CSV' }}
-          </button>
+        <div class="history-actions">
           <button
             type="button"
             (click)="abrirCapturaChat()"
@@ -94,6 +84,29 @@ interface FilaImportacionCsv {
             </svg>
             Nuevo Movimiento
           </button>
+          <details #historyTools class="history-tools">
+            <summary>Más opciones <span aria-hidden="true">⋯</span></summary>
+            <div class="history-tools__menu">
+          <button
+            type="button"
+            (click)="alternarImportador(); historyTools.removeAttribute('open')"
+            [attr.aria-expanded]="importadorAbierto()"
+            aria-controls="importador-csv"
+            class="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600">
+            {{ importadorAbierto() ? 'Cerrar importación' : 'Importar CSV' }}
+          </button>
+          <button
+            type="button"
+            (click)="exportarCsv(); historyTools.removeAttribute('open')"
+            [disabled]="exportando()"
+            class="inline-flex items-center justify-center px-4 py-2 border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-50 text-slate-700 rounded-xl text-sm font-semibold transition-all cursor-pointer">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1M7 10l5 5m0 0l5-5m-5 5V3" />
+            </svg>
+            {{ exportando() ? 'Preparando...' : 'Exportar CSV' }}
+          </button>
+            </div>
+          </details>
         </div>
       </div>
 
@@ -170,7 +183,8 @@ interface FilaImportacionCsv {
             type="search"
             [ngModel]="filtroBusquedaInput()"
             (ngModelChange)="onBusquedaChange($event)"
-            placeholder="Buscar (Starbucks, Gasolina…)"
+            placeholder="Buscar un movimiento…"
+            enterkeyhint="search"
             aria-label="Buscar movimientos"
             autocomplete="off"
             class="ledger-search__input"
@@ -189,16 +203,23 @@ interface FilaImportacionCsv {
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3 4h18M6 12h12M10 20h4" />
           </svg>
-          @if (tieneFiltrosAvanzadosActivos()) {
-            <span class="ledger-filter-btn__badge" aria-hidden="true"></span>
-          }
+          <span>Filtros</span>
+          @if (tieneFiltrosAvanzadosActivos()) {<span class="ledger-filter-btn__badge" aria-hidden="true"></span>}
         </button>
       </div>
 
+      <div class="history-types" role="group" aria-label="Tipo de movimiento">
+        @for (opcion of tiposHistorial; track opcion.value) {
+          <button type="button" [class.is-active]="filtroTipo() === opcion.value" [attr.aria-pressed]="filtroTipo() === opcion.value" (click)="setTipoFiltro(opcion.value)">{{ opcion.label }}</button>
+        }
+      </div>
+
       @if (tieneFiltrosActivos()) {
-        <div class="ledger-active-filters">
-          <span>{{ etiquetaFiltrosActivos() | textoFinanciero }}</span>
-          <button type="button" (click)="limpiarFiltros()">Limpiar</button>
+        <div class="ledger-active-filters history-filter-list" role="group" aria-label="Filtros aplicados">
+          @for (filtro of filtrosVisibles(); track filtro.id) {
+            <button type="button" class="history-filter-chip" (click)="quitarFiltro(filtro)" [attr.aria-label]="('Quitar filtro: ' + filtro.etiqueta) | textoFinanciero">{{ filtro.etiqueta | textoFinanciero }} <span aria-hidden="true">×</span></button>
+          }
+          <button type="button" class="history-filter-reset" (click)="limpiarFiltros()">Limpiar todo</button>
         </div>
       }
 
@@ -207,6 +228,7 @@ interface FilaImportacionCsv {
         <div class="ledger-filter-backdrop" (click)="cerrarPanelFiltros()" aria-hidden="true"></div>
         <div
           id="ledger-filter-sheet"
+          appDialogViewport
           class="ledger-filter-sheet"
           role="dialog"
           aria-modal="true"
@@ -309,19 +331,19 @@ interface FilaImportacionCsv {
       <!-- Resumen de Totales del Filtro Actual, separado por moneda -->
       <div class="space-y-3">
         @for (resumen of resumenPaginaPorMoneda(); track resumen.moneda) {
-          <section class="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs">
-            <h2 class="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">{{ resumen.moneda }}</h2>
+          <section class="history-summary rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs">
+            <h2 class="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">Resumen de esta página · {{ resumen.moneda }}</h2>
             <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div class="flex items-center justify-between">
-                <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Ingresos (Página)</span>
+                <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Ingresos</span>
                 <span class="text-base font-bold text-emerald-600">+{{ resumen.ingresos | monto:resumen.moneda:'symbol':'1.2-2' }}</span>
               </div>
               <div class="flex items-center justify-between">
-                <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Gastos (Página)</span>
+                <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Gastos</span>
                 <span class="text-base font-bold text-rose-600">-{{ resumen.gastos | monto:resumen.moneda:'symbol':'1.2-2' }}</span>
               </div>
               <div class="flex items-center justify-between">
-                <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Balance Neto</span>
+                <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Balance de la página</span>
                 <span
                   [class.text-emerald-600]="resumen.balance >= 0"
                   [class.text-rose-600]="resumen.balance < 0"
@@ -337,25 +359,25 @@ interface FilaImportacionCsv {
       </div>
 
       <!-- Tabla de Transacciones -->
-      <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+      <div class="history-results bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden" [attr.aria-busy]="loading()">
         
         @if (loading()) {
-          <div class="p-16 text-center text-slate-400 text-sm flex items-center justify-center space-x-2">
+          <div role="status" class="p-16 text-center text-slate-400 text-sm flex items-center justify-center space-x-2">
             <div class="w-5 h-5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
             <span>Buscando movimientos...</span>
           </div>
         } @else if (!pageData() || pageData()!.content.length === 0) {
           <!-- Empty State -->
-          <div class="p-16 text-center space-y-4">
+          <div class="history-empty p-16 text-center space-y-4">
             <div class="w-14 h-14 bg-slate-100 text-slate-400 rounded-2xl mx-auto flex items-center justify-center">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
               </svg>
             </div>
             <div class="max-w-sm mx-auto">
-              <h3 class="text-base font-bold text-slate-800">No se encontraron movimientos</h3>
+              <h3 class="text-base font-bold text-slate-800">{{ tieneFiltrosActivos() ? 'Sin coincidencias' : 'Tu historial empieza aquí' }}</h3>
               <p class="text-xs text-slate-400 mt-1">
-                No hay transacciones registradas con los filtros aplicados. Prueba cambiando las fechas o el criterio de búsqueda.
+                {{ tieneFiltrosActivos() ? 'Prueba otra búsqueda o quita los filtros para ver más movimientos.' : 'Añade tu primer gasto, ingreso o transferencia. Lo encontrarás aquí.' }}
               </p>
             </div>
             @if (tieneFiltrosActivos()) {
@@ -363,8 +385,10 @@ interface FilaImportacionCsv {
                 type="button"
                 (click)="limpiarFiltros()"
                 class="inline-flex items-center px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-colors cursor-pointer">
-                Restablecer todos los filtros
+                Quitar filtros
               </button>
+            } @else {
+              <button type="button" class="history-empty-add" (click)="abrirCapturaChat()">Añadir movimiento</button>
             }
           </div>
         } @else {
@@ -401,7 +425,10 @@ interface FilaImportacionCsv {
                         }
                       </div>
                       <div class="truncate max-w-xs sm:max-w-md">
-                        <span class="block truncate text-slate-900 font-semibold">{{ (m.categoriaNombre || m.descripcion) | textoFinanciero }}</span>
+                        <span class="block truncate text-slate-900 font-semibold">{{ (m.descripcion || m.categoriaNombre) | textoFinanciero }}</span>
+                        @if (m.categoriaNombre && m.categoriaNombre !== m.descripcion) {
+                          <span class="block truncate text-xs font-normal text-slate-500">{{ m.categoriaNombre }}</span>
+                        }
                         @if (m.cashbackAutomatico) {
                           <span class="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">Cashback automático</span>
                         }
@@ -440,7 +467,7 @@ interface FilaImportacionCsv {
                           type="button"
                           (click)="abrirModalEditar(m)"
                           class="text-slate-500 hover:text-emerald-700 transition-colors p-1.5 rounded-lg hover:bg-emerald-50 cursor-pointer"
-                          [attr.aria-label]="'Editar movimiento ' + (m.categoriaNombre || m.descripcion)"
+                          [attr.aria-label]="('Editar movimiento ' + (m.descripcion || m.categoriaNombre)) | textoFinanciero"
                           title="Editar movimiento">
                           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -466,12 +493,17 @@ interface FilaImportacionCsv {
           </div>
           <div class="space-y-2 p-3 sm:hidden" aria-label="Lista de movimientos">
             <p class="px-1 text-xs text-slate-500">Desliza ← eliminar · → editar · toca para ver detalle.</p>
-            @for (m of pageData()!.content; track m.id) {
+            @for (grupo of gruposHistorial(); track grupo.fecha) {
+              <section class="history-day" [attr.aria-label]="etiquetaDiaHistorial(grupo.fecha)">
+                <h2>{{ etiquetaDiaHistorial(grupo.fecha) }} <span>{{ grupo.movimientos.length }} {{ grupo.movimientos.length === 1 ? 'movimiento' : 'movimientos' }}</span></h2>
+              @for (m of grupo.movimientos; track m.id) {
               <app-movimiento-mobile-card
                 [movimiento]="m"
                 (editar)="abrirModalEditar($event)"
                 (eliminar)="eliminarMovimiento($event)"
                 (detalle)="abrirDetalleMovimiento($event)" />
+            }
+              </section>
             }
           </div>
 
@@ -594,6 +626,10 @@ interface FilaImportacionCsv {
               </div>
             </div>
 
+            <div>
+              <label for="descripcion-movimiento" class="block text-sm font-medium mb-1">Descripción <span class="text-slate-500">(opcional)</span></label>
+              <input id="descripcion-movimiento" name="descripcion" type="text" maxlength="200" [(ngModel)]="formDescripcion" placeholder="Ej. cena con amigos o ahorro del mes" class="w-full min-h-11 rounded-xl border border-slate-300 bg-slate-50 px-3 py-3 text-sm text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
+            </div>
             <!-- Cuentas. En transferencia: "De" -> "Para" en una sola fila, con la flecha
                  en una columna propia para que nunca pise ninguno de los dos botones.
                  Fuera de transferencia la etiqueta "Cuenta" sobra: el botón ya va escrito. -->
@@ -820,6 +856,7 @@ interface FilaImportacionCsv {
     @if (detalleMovimiento(); as det) {
       <div class="ledger-detail-backdrop" (click)="cerrarDetalleMovimiento()">
         <div
+          appDialogViewport
           class="ledger-detail-sheet"
           role="dialog"
           aria-modal="true"
@@ -831,7 +868,7 @@ interface FilaImportacionCsv {
           <header class="ledger-detail-sheet__head">
             <button type="button" (click)="cerrarDetalleMovimiento()" aria-label="Cerrar detalle">←</button>
             <h2 id="ledger-detail-title">Detalle</h2>
-            <span></span>
+            <app-privacy-toggle/>
           </header>
 
           <div class="ledger-detail-sheet__hero" [class.is-income]="det.tipo === 'INGRESO' || det.tipo === 'SALDO_INICIAL'" [class.is-expense]="det.tipo === 'GASTO'">
@@ -839,12 +876,17 @@ interface FilaImportacionCsv {
             <p class="ledger-detail-sheet__amount">
               {{ (det.tipo === 'INGRESO' || det.tipo === 'SALDO_INICIAL') ? '+' : (det.tipo === 'GASTO' ? '−' : '') }}{{ det.monto | monto:det.moneda:'symbol':'1.2-2' }}
             </p>
-            <p class="ledger-detail-sheet__category">{{ (det.categoriaNombre || det.descripcion) | textoFinanciero }}</p>
+            <p class="history-detail-currency">{{ det.moneda }}</p>
+            <p class="ledger-detail-sheet__category">{{ (det.descripcion || det.categoriaNombre || 'Movimiento') | textoFinanciero }}</p>
           </div>
 
           <dl class="ledger-detail-sheet__meta">
             <div>
-              <dt>Fecha y hora</dt>
+              <dt>Fecha del movimiento</dt>
+              <dd>{{ etiquetaDiaHistorial(det.fecha) }}</dd>
+            </div>
+            <div>
+              <dt>Registrado</dt>
               <dd>{{ fechaHoraExacta(det) }}</dd>
             </div>
             <div>
@@ -852,25 +894,35 @@ interface FilaImportacionCsv {
               <dd>{{ etiquetaMetodoCaptura(det) }}</dd>
             </div>
             <div>
-              <dt>Cuenta</dt>
+              <dt>{{ det.tipo === 'TRANSFERENCIA' ? 'Origen' : 'Cuenta' }}</dt>
               <dd>
-                @if (det.tipo === 'TRANSFERENCIA') {
-                  {{ nombreCuentaVisible(det.cuentaNombre) }} → {{ nombreCuentaVisible(det.cuentaDestinoNombre) }}
-                } @else {
-                  {{ nombreCuentaVisible(det.cuentaNombre) }}
-                }
+                {{ nombreCuentaVisible(det.cuentaNombre) }}
               </dd>
             </div>
+            @if (det.tipo === 'TRANSFERENCIA') {
+              <div><dt>Destino</dt><dd>{{ nombreCuentaVisible(det.cuentaDestinoNombre) }}</dd></div>
+              <div><dt>Importe recibido</dt><dd>@if(det.montoDestino != null && det.monedaDestino) { {{ det.montoDestino | monto:det.monedaDestino:'symbol':'1.2-2' }} <span>{{ det.monedaDestino }}</span> } @else { No registrado }</dd></div>
+              @if (det.tasaCambio != null && det.monedaDestino && det.moneda !== det.monedaDestino) {
+                <div><dt>Tipo de cambio</dt><dd>{{ ('1 ' + det.moneda + ' = ' + det.tasaCambio + ' ' + det.monedaDestino) | textoFinanciero }}</dd></div>
+              }
+            } @else {
+              <div><dt>Categoría</dt><dd>{{ det.categoriaNombre || 'Sin categoría' }}</dd></div>
+            }
+            @if (notaDetalleVisible(det)) {
             <div>
               <dt>Nota adicional</dt>
               <dd>{{ (notaDetalleVisible(det) || 'Sin nota') | textoFinanciero }}</dd>
             </div>
+            }
           </dl>
 
           @if (det.compraMsiId) {
             <p class="text-sm text-slate-500">Cuota MSI registrada. Puedes pausar o cancelar las cuotas futuras desde Configuración → Recurrentes. Los pagos registrados se conservan.</p>
           }
           <div class="ledger-detail-sheet__actions">
+            @if (puedeRepetirse(det)) {
+              <button type="button" class="history-repeat-button" (click)="repetirMovimiento(det)">Repetir movimiento</button>
+            }
             @if (det.cuentaId !== null && (det.tipo !== 'TRANSFERENCIA' || det.cuentaDestinoId != null) && det.tipo !== 'SALDO_INICIAL' && !det.cashbackAutomatico && !det.compraMsiId) {
               <button type="button" class="ledger-detail-sheet__edit" (click)="cerrarDetalleMovimiento(); abrirModalEditar(det)">Editar</button>
             }
@@ -916,6 +968,25 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
   readonly borradorMontoMin = signal<number | null>(null);
   readonly borradorMontoMax = signal<number | null>(null);
 
+  private listadoSub?: Subscription;
+  readonly tiposHistorial: {value: TipoTransaccion | ''; label: string}[] = [
+    {value:'',label:'Todos'}, {value:'GASTO',label:'Gastos'}, {value:'INGRESO',label:'Ingresos'}, {value:'TRANSFERENCIA',label:'Transferencias'}
+  ];
+  readonly gruposHistorial = computed(() => {
+    const grupos = new Map<string, Transaccion[]>();
+    for (const movimiento of this.pageData()?.content ?? []) {
+      const grupo = grupos.get(movimiento.fecha) ?? [];
+      grupo.push(movimiento); grupos.set(movimiento.fecha, grupo);
+    }
+    return Array.from(grupos, ([fecha, movimientos]) => ({fecha, movimientos}));
+  });
+  etiquetaDiaHistorial(fecha: string): string {
+    const hoy = new Date(), ayer = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()-1);
+    if(fecha === this.fechaLocalIso(hoy)) return 'Hoy';
+    if(fecha === this.fechaLocalIso(ayer)) return 'Ayer';
+    const dia = new Date(`${fecha}T00:00:00`);
+    return Number.isNaN(dia.getTime()) ? fecha : new Intl.DateTimeFormat('es-MX',{day:'numeric',month:'long',year:'numeric'}).format(dia);
+  }
   private busquedaDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
   // Paginación y Datos Signals
@@ -959,6 +1030,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
   formCategoriaId: number | null = null;
   formFecha: string = '';
   formNotas: string = '';
+  formDescripcion = '';
   movimientoRecurrente = false;
   esCompraMsi = false;
   formMsi: number | null = null;
@@ -1069,28 +1141,42 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
     || this.filtroMontoMax() !== null
   );
 
-  etiquetaFiltrosActivos(): string {
-    const etiquetas: string[] = [];
+  readonly filtrosVisibles = computed(() => {
+    const filtros: FiltroVisible[] = [];
+    const agregar = (clave: FiltroVisible['clave'], etiqueta: string) => filtros.push({clave,id:clave,etiqueta});
     const tipo = this.filtroTipo();
-    if (tipo === 'GASTO') etiquetas.push('Gastos');
-    else if (tipo === 'INGRESO') etiquetas.push('Ingresos');
-    else if (tipo === 'TRANSFERENCIA') etiquetas.push('Transferencias');
-    else if (tipo === 'SALDO_INICIAL') etiquetas.push('Saldos iniciales');
-    if (this.filtroCuentaId() !== null) {
-      const cuenta = this.cuentas().find(item => item.id === this.filtroCuentaId());
-      etiquetas.push(cuenta?.nombre ?? 'Cuenta');
+    if(tipo) agregar('tipo',this.etiquetaTipoDetalle(tipo));
+    if(this.filtroCuentaId() !== null) agregar('cuenta','Cuenta: '+(this.cuentas().find(c=>c.id===this.filtroCuentaId())?.nombre ?? 'Cuenta'));
+    const ids = new Set(this.filtroCategoriaIds());
+    const categoria = this.filtroCategoriaId();
+    if(categoria !== null) ids.add(categoria);
+    for(const id of ids) filtros.push({clave:'categoria',id:`categoria-${id}`,categoriaId:id,etiqueta:this.categorias().find(c=>c.id===id)?.nombre ?? 'Categoría'});
+    if(this.filtroMontoMin() !== null || this.filtroMontoMax() !== null) agregar('monto',`Monto: ${this.filtroMontoMin() ?? 'sin mínimo'} – ${this.filtroMontoMax() ?? 'sin máximo'}`);
+    if(this.filtroFechaInicio() || this.filtroFechaFin()) agregar('fechas',`${this.filtroFechaInicio() || 'Sin inicio'} → ${this.filtroFechaFin() || 'Sin fin'}`);
+    if(this.filtroBusqueda().trim()) agregar('busqueda',`Búsqueda: ${this.filtroBusqueda().trim()}`);
+    if(this.filtroMovimientoId() !== null) agregar('movimiento',`Movimiento #${this.filtroMovimientoId()}`);
+    return filtros;
+  });
+
+  quitarFiltro(filtro: FiltroVisible): void {
+    let queryParams: Record<string,null> = {};
+    switch(filtro.clave) {
+      case 'tipo': this.filtroTipo.set('');break;
+      case 'cuenta': this.filtroCuentaId.set(null);queryParams={cuentaId:null};break;
+      case 'categoria':
+        this.filtroCategoriaIds.update(ids=>ids.filter(id=>id!==filtro.categoriaId));
+        if(this.filtroCategoriaId()===filtro.categoriaId) this.filtroCategoriaId.set(null);
+        if(Number(this.route.snapshot.queryParamMap.get('categoriaId'))===filtro.categoriaId) queryParams={categoriaId:null};
+        break;
+      case 'monto': this.filtroMontoMin.set(null);this.filtroMontoMax.set(null);break;
+      case 'fechas': this.filtroFechaInicio.set('');this.filtroFechaFin.set('');queryParams={fechaInicio:null,fechaFin:null};break;
+      case 'busqueda': this.limpiarBusqueda();return;
+      case 'movimiento': this.filtroMovimientoId.set(null);queryParams={movimientoId:null};break;
     }
-    const cantidadCategorias = this.filtroCategoriaIds().length || (this.filtroCategoriaId() !== null ? 1 : 0);
-    if (cantidadCategorias) {
-      etiquetas.push(cantidadCategorias === 1 ? '1 categoría' : `${cantidadCategorias} categorías`);
+    if(Object.keys(queryParams).some(param=>this.route.snapshot.queryParamMap.has(param))) {
+      void this.router.navigate([],{relativeTo:this.route,queryParams,queryParamsHandling:'merge',replaceUrl:true});
     }
-    if (this.filtroMontoMin() !== null || this.filtroMontoMax() !== null) {
-      etiquetas.push(`Monto ${this.filtroMontoMin() ?? '—'}–${this.filtroMontoMax() ?? '—'}`);
-    }
-    if (this.filtroFechaInicio() || this.filtroFechaFin()) etiquetas.push('Fechas');
-    if (this.filtroBusqueda().trim()) etiquetas.push(`“${this.filtroBusqueda().trim()}”`);
-    if (this.filtroMovimientoId() !== null) etiquetas.push(`Movimiento #${this.filtroMovimientoId()}`);
-    return etiquetas.join(' · ');
+    this.paginaActual.set(0);this.cargarTransacciones();
   }
 
   abrirPanelFiltros(): void {
@@ -1192,8 +1278,19 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
     this.detalleMovimiento.set(transaccion);
   }
 
+  puedeRepetirse(movimiento: Transaccion): boolean {
+    return movimiento.tipo !== 'SALDO_INICIAL' && movimiento.cuentaId != null
+      && (movimiento.tipo !== 'TRANSFERENCIA' || movimiento.cuentaDestinoId != null)
+      && !movimiento.cashbackAutomatico && !movimiento.compraMsiId;
+  }
+  repetirMovimiento(movimiento: Transaccion): void {
+    if(!this.puedeRepetirse(movimiento)) return;
+    this.cerrarDetalleMovimiento();
+    window.dispatchEvent(new CustomEvent('kaptal-abrir-registro-rapido',{detail:{repetir:{tipo:movimiento.tipo,monto:movimiento.monto,cuentaId:movimiento.cuentaId,categoriaId:movimiento.categoriaId??null,cuentaDestinoId:movimiento.cuentaDestinoId??null,tasaCambio:movimiento.tasaCambio??null,descripcion:movimiento.descripcion,notas:movimiento.notas??null}}}));
+  }
   cerrarDetalleMovimiento(): void {
     this.detalleMovimiento.set(null);
+    if(this.route.snapshot.queryParamMap.has('detalle'))void this.router.navigate([],{relativeTo:this.route,queryParams:{detalle:null},queryParamsHandling:'merge',replaceUrl:true});
   }
 
   etiquetaTipoDetalle(tipo: TipoTransaccion): string {
@@ -1253,22 +1350,24 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
       this.filtroMovimientoId.set(movimientoId);
     }
     this.cargarTransacciones();
-    const transaccionId = Number(this.route.snapshot.queryParamMap.get('editar'));
+    const editar = this.route.snapshot.queryParamMap.get('editar');
+    const transaccionId = Number(editar ?? this.route.snapshot.queryParamMap.get('detalle'));
     if (Number.isSafeInteger(transaccionId) && transaccionId > 0) {
       this.finanzasService.getTransaccion(transaccionId).subscribe({
         next: response => {
           if (!response.success || !response.data) {
-            this.toastService.error(response.message || 'No se pudo abrir el movimiento para editar.');
+            this.toastService.error(response.message || 'No se pudo abrir este movimiento.');
             return;
           }
-          this.abrirModalEditar(response.data);
+          if(editar)this.abrirModalEditar(response.data);else this.abrirDetalleMovimiento(response.data);
         },
-        error: err => this.toastService.error(mensajeDeError(err, 'No se pudo abrir el movimiento para editar.'))
+        error: err => this.toastService.error(mensajeDeError(err, 'No se pudo abrir este movimiento.'))
       });
     }
   }
 
   ngOnDestroy(): void {
+    this.listadoSub?.unsubscribe();
     if (this.busquedaDebounceTimer) clearTimeout(this.busquedaDebounceTimer);
   }
 
@@ -1306,6 +1405,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
   }
 
   cargarTransacciones(): void {
+    this.listadoSub?.unsubscribe();
     this.loading.set(true);
     this.error.set(null);
 
@@ -1322,7 +1422,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
       montoMax: this.filtroMontoMax()
     };
 
-    this.finanzasService.getTransaccionesPaginadas(filtros, this.paginaActual(), this.tamanioPagina()).subscribe({
+    this.listadoSub = this.finanzasService.getTransaccionesPaginadas(filtros, this.paginaActual(), this.tamanioPagina()).subscribe({
       next: (res) => {
         this.loading.set(false);
         if (res.success && res.data) {
@@ -1722,6 +1822,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
       this.formCategoriaId = borrador.categoriaId ?? this.formCategoriaId;
       this.formFecha = borrador.fecha ?? this.formFecha;
       this.formNotas = borrador.notas ?? '';
+      this.formDescripcion = borrador.descripcion ?? '';
       this.formTasaCambio = borrador.tasaCambio ?? null;
     }
     requestAnimationFrame(() => document.getElementById('monto')?.focus());
@@ -1745,6 +1846,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
     this.formTipo.set(tipo);
     this.formMonto = null;
     this.formNotas = '';
+    this.formDescripcion = '';
     this.movimientoRecurrente = false;
     this.esCompraMsi = false;
     this.formMsi = null;
@@ -1796,6 +1898,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
     this.formCategoriaId = transaccion.categoriaId ?? null;
     this.formFecha = transaccion.fecha;
     this.formNotas = transaccion.notas ?? '';
+    this.formDescripcion = transaccion.descripcion ?? '';
     this.modalError.set(null);
     this.modalAbierto.set(true);
   }
@@ -1910,6 +2013,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
         ? this.formTasaCambio
         : null,
       fecha: this.formFecha,
+      descripcion: this.formDescripcion.trim() || undefined,
       notas: this.formNotas.trim() || null,
       frecuenciaRecurrencia: this.movimientoRecurrente ? this.frecuenciaRecurrencia : null,
       siguienteFechaRecurrencia: this.movimientoRecurrente ? this.siguienteFechaRecurrencia : null, msi: this.esCompraMsi ? this.formMsi : null

@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { signal } from '@angular/core';
 import { of, Subject } from 'rxjs';
 import { RegistroRapidoComponent } from './registro-rapido.component';
@@ -41,6 +41,32 @@ describe('Registro rapido: guardado y privacidad', () => {
     component.monto='45';component.cuentaId=2;component.cerrar();
     component.abrir(new CustomEvent('registro',{detail:{preservar:true}}));
     expect(component.monto).toBe('45');expect(component.cuentaId).toBe(2);
+  });
+
+  it('repetir prepara fecha de hoy y una solicitud nueva, sin guardar hasta confirmar',()=>{
+    const repetir={tipo:'GASTO',cuentaId:2,categoriaId:null,monto:35,descripcion:'Cena',notas:'Sin picante',fecha:'2020-01-01'};
+    component.cerrar();component.abrir(new CustomEvent('registro',{detail:{repetir}}));
+    expect(component.fecha).toBe(component.hoyLocal());expect(component.cuentaId).toBe(2);expect(component.categoriaId).toBeNull();
+    expect(component.descripcion).toBe('Cena');expect(component.nota).toBe('Sin picante');expect(crear).not.toHaveBeenCalled();
+    component.guardar();component.guardar();expect(crear).toHaveBeenCalledOnce();const key=crear.mock.calls[0][1];
+    expect(crear.mock.calls[0][0]).toMatchObject({monto:35,fecha:component.hoyLocal(),categoriaId:null,descripcion:'Cena'});
+    respuesta.next({success:true});respuesta.complete();respuesta=new Subject();
+    component.abrir(new CustomEvent('registro',{detail:{repetir}}));component.guardar();expect(crear.mock.calls[1][1]).not.toBe(key);
+  });
+  it('no sustituye silenciosamente una cuenta que ya no existe al repetir',()=>{
+    component.cerrar();component.abrir(new CustomEvent('registro',{detail:{repetir:{tipo:'GASTO',cuentaId:999,categoriaId:10,monto:35}}}));
+    expect(component.cuentaId).toBeNull();expect(component.error()).toContain('ya no está disponible');
+    component.guardar();expect(crear).not.toHaveBeenCalled();
+  });
+
+  it('lleva descripción y nota por separado al formulario avanzado',async()=>{
+    const router=TestBed.inject(Router);
+    vi.spyOn(router,'navigate').mockResolvedValue(true);
+    const recibir=vi.fn();window.addEventListener('kaptal-abrir-registro-manual',recibir);
+    try {
+      component.descripcion='Cena';component.nota='Sin picante';component.avanzado();await fixture.whenStable();
+      expect(recibir.mock.calls[0][0].detail).toMatchObject({descripcion:'Cena',notas:'Sin picante'});
+    }finally{window.removeEventListener('kaptal-abrir-registro-manual',recibir);}
   });
   it('guarda offline una sola vez y conserva los datos si falla el almacenamiento',async()=>{
     conexion.set(false);component.monto='45';

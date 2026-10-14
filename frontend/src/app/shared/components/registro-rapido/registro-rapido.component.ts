@@ -24,7 +24,7 @@ type TipoRegistro = 'GASTO' | 'INGRESO' | 'TRANSFERENCIA';
   template: `@if (open()) {
     <div appDialogViewport class="quick-entry-backdrop" (click)="cerrar()">
       <section class="quick-entry" role="dialog" aria-modal="true" aria-labelledby="quick-entry-title" (click)="$event.stopPropagation()" (keydown)="teclado($event)">
-        <header><div><small>Un movimiento, en segundos</small><h2 id="quick-entry-title">Añadir movimiento</h2></div><app-privacy-toggle/><button type="button" class="utility-button" (click)="cerrar()" [disabled]="saving()" aria-label="Cerrar registro">×</button></header>
+        <header><div><small>Un movimiento, en segundos</small><h2 id="quick-entry-title">{{ repitiendo() ? 'Repetir movimiento' : 'Añadir movimiento' }}</h2></div><app-privacy-toggle/><button type="button" class="utility-button" (click)="cerrar()" [disabled]="saving()" aria-label="Cerrar registro">×</button></header>
         <div class="entry-mode" aria-label="Forma de añadir"><button type="button" class="is-active" aria-pressed="true">Rápido</button><button type="button" (click)="voz()" [disabled]="saving() || incierto">Escribir o dictar</button></div>
         <form (ngSubmit)="guardar()">
           <fieldset [disabled]="saving() || incierto || loading()">
@@ -33,7 +33,8 @@ type TipoRegistro = 'GASTO' | 'INGRESO' | 'TRANSFERENCIA';
             @if (loading()) {<p role="status">Cargando cuentas y categorías…</p>}
             @else if (!cuentas.length) {<p>Necesitas una cuenta para registrar movimientos. <a routerLink="/cuentas" (click)="cerrar()">Crear cuenta</a></p>}
             @else {
-              <div class="entry-accounts"><label>{{ tipo === 'TRANSFERENCIA' ? 'Desde' : 'Cuenta' }}<select name="cuenta" [(ngModel)]="cuentaId" (ngModelChange)="ajustarDestino()">@for (cuenta of cuentasDisponibles(); track cuenta.id) {<option [ngValue]="cuenta.id">{{ cuenta.nombre }} · {{ cuenta.moneda }}</option>}</select></label>
+              @if(repitiendo()) {<label>Descripción <span class="entry-optional">opcional</span><input name="descripcion" [(ngModel)]="descripcion" maxlength="200" /></label>}
+              <div class="entry-accounts"><label>{{ tipo === 'TRANSFERENCIA' ? 'Desde' : 'Cuenta' }}<select name="cuenta" [(ngModel)]="cuentaId" (ngModelChange)="ajustarDestino()">@if(cuentaId === null) {<option [ngValue]="null" disabled>Elige una cuenta</option>}@for (cuenta of cuentasDisponibles(); track cuenta.id) {<option [ngValue]="cuenta.id">{{ cuenta.nombre }} · {{ cuenta.moneda }}</option>}</select></label>
               @if (tipo === 'TRANSFERENCIA') {<label>Hacia<select name="destino" [(ngModel)]="destinoId">@for (cuenta of destinos(); track cuenta.id) {<option [ngValue]="cuenta.id">{{ cuenta.nombre }} · {{ cuenta.moneda }}</option>}</select></label>}</div>
               @if (tipo === 'TRANSFERENCIA' && distintaMoneda()) {<label>Tipo de cambio ({{ cuentaActual()?.moneda }} → {{ cuentaDestino()?.moneda }})<input appMontoPrivado name="tasa" type="number" inputmode="decimal" min="0.000001" step="any" [(ngModel)]="tasaCambio" required /></label>}
               @if (tipo !== 'TRANSFERENCIA') {
@@ -42,16 +43,17 @@ type TipoRegistro = 'GASTO' | 'INGRESO' | 'TRANSFERENCIA';
               <p class="entry-date">{{ fecha === hoyLocal() ? 'Hoy' : fecha }} · {{ tipo === 'TRANSFERENCIA' ? 'Entre tus cuentas' : 'Descripción opcional' }}</p>
               <details class="entry-details"><summary>Más categorías, fecha y detalles</summary>
                 @if (tipo !== 'TRANSFERENCIA') {<label>Todas las categorías<select name="categoria" [(ngModel)]="categoriaId"><option [ngValue]="null">Sin categoría</option>@for (categoria of categoriasDisponibles(); track categoria.id) {<option [ngValue]="categoria.id">{{ categoria.nombre }}</option>}</select></label>}
-                <label>Descripción <span class="entry-optional">opcional</span><input name="descripcion" [(ngModel)]="descripcion" maxlength="200" placeholder="Ej. tacos, sueldo o ahorro" /></label>
+                @if(!repitiendo()) {<label>Descripción <span class="entry-optional">opcional</span><input name="descripcion" [(ngModel)]="descripcion" maxlength="200" placeholder="Ej. tacos, sueldo o ahorro" /></label>}
                 <label>Fecha<input name="fecha" type="date" [(ngModel)]="fecha" required /></label><label>Nota<input name="nota" [(ngModel)]="nota" maxlength="500" /></label><button type="button" class="entry-text-button" (click)="avanzado()">Opciones avanzadas: recurrentes y meses sin intereses</button>
               </details>
             }
           </fieldset>
           <footer class="entry-footer">
+          @if(repitiendo()) {<p class="entry-repeat" role="status">{{ fecha === hoyLocal() ? 'Es un movimiento nuevo para hoy.' : 'Es un movimiento nuevo con fecha ' + fecha + '.' }} Revisa los datos antes de guardar.</p>}
           @if (cuentaActual(); as cuenta) {<p class="entry-summary">{{ cuenta.nombre }}@if(tipo === 'TRANSFERENCIA') { → {{ cuentaDestino()?.nombre || 'Elige destino' }}} @else { · {{ categoriaActual()?.nombre || 'Sin categoría' }}}</p>}
           @if (!offline.conexion()) {<p class="entry-offline" role="status">Se guardará en este dispositivo y se enviará al volver la conexión.</p>}
           @if (error()) {<p class="entry-error" role="alert">{{ (error()) | textoFinanciero }}</p>}
-          <button type="submit" class="entry-save" [disabled]="saving() || loading() || !cuentas.length || (!incierto && !monto.trim())">{{ saving() ? 'Guardando…' : incierto ? 'Reintentar el mismo movimiento' : 'Guardar ' + (tipo === 'GASTO' ? 'gasto' : tipo === 'INGRESO' ? 'ingreso' : 'transferencia') }}</button>
+          <button type="submit" class="entry-save" [disabled]="saving() || loading() || !cuentas.length || (!incierto && (!monto.trim() || !cuentaActual()))">{{ saving() ? 'Guardando…' : incierto ? 'Reintentar el mismo movimiento' : !offline.conexion() ? 'Guardar en este dispositivo' : 'Guardar ' + (tipo === 'GASTO' ? 'gasto' : tipo === 'INGRESO' ? 'ingreso' : 'transferencia') }}</button>
           </footer>
         </form>
       </section>
@@ -71,6 +73,8 @@ export class RegistroRapidoComponent implements OnDestroy {
   readonly loading = signal(false);
   readonly saving = signal(false);
   readonly error = signal('');
+  readonly repitiendo = signal(false);
+  private repeticion: Partial<TransaccionPayload> | null = null;
   readonly tipos: { value: TipoRegistro; label: string }[] = [{value:'GASTO',label:'Gasto'}, {value:'INGRESO',label:'Ingreso'}, {value:'TRANSFERENCIA',label:'Transferencia'}];
   cuentas: Cuenta[] = [];
   categorias: Categoria[] = [];
@@ -91,6 +95,7 @@ export class RegistroRapidoComponent implements OnDestroy {
       if (this.usuarioRegistro !== null && usuarioId !== this.usuarioRegistro) {
         this.catalogoSub?.unsubscribe(); this.guardarSub?.unsubscribe(); this.open.set(false); this.saving.set(false);
         this.incierto = false; this.pendiente = null; this.cuentas = []; this.categorias = []; this.usuarioRegistro = null;
+        this.repeticion=null;this.repitiendo.set(false);
       }
     });
   }
@@ -99,10 +104,12 @@ export class RegistroRapidoComponent implements OnDestroy {
     if (this.open()) return;
     this.focoAnterior = this.document.activeElement as HTMLElement;
     if (this.incierto && this.pendiente && this.usuarioRegistro===this.auth.currentUser()?.id) { this.open.set(true); return; }
-    const detail = (event as CustomEvent<{tipo?: TipoRegistro;preservar?:boolean}> | undefined)?.detail;
+    const detail = (event as CustomEvent<{tipo?: TipoRegistro;preservar?:boolean;repetir?:Partial<TransaccionPayload>}> | undefined)?.detail;
+    if(detail?.repetir && !['GASTO','INGRESO','TRANSFERENCIA'].includes(detail.repetir.tipo??''))return;
     if (detail?.preservar && !this.loading() && this.cuentas.length && this.usuarioRegistro === this.auth.currentUser()?.id) { this.open.set(true); this.enfocarMonto();return; }
     this.usuarioRegistro = this.auth.currentUser()?.id ?? null;
-    const solicitado = detail?.tipo;
+    this.repeticion=detail?.repetir??null;this.repitiendo.set(!!this.repeticion);
+    const solicitado = this.repeticion?.tipo ?? detail?.tipo;
     this.tipo = solicitado === 'INGRESO' || solicitado === 'TRANSFERENCIA' ? solicitado : 'GASTO';
     this.monto = ''; this.descripcion = ''; this.nota = ''; this.tasaCambio = null;
     this.fecha = this.hoyLocal();
@@ -114,7 +121,7 @@ export class RegistroRapidoComponent implements OnDestroy {
       next: data => {
         this.cuentas = data.cuentas.data.filter(c => c.activo); this.categorias = data.categorias.data.filter(c => c.activo);
         if (this.usuarioRegistro !== null) void this.offline.guardarCatalogo(this.usuarioRegistro,this.cuentas,this.categorias).catch(()=>{});
-        this.cambiarTipo(this.tipo); this.loading.set(false);
+        this.cambiarTipo(this.tipo);this.aplicarRepeticion(); this.loading.set(false);
         this.enfocarMonto();
       },
       error: () => { void this.cargarCatalogoLocal(version); }
@@ -127,6 +134,16 @@ export class RegistroRapidoComponent implements OnDestroy {
     try { anterior = Number(this.document.defaultView?.localStorage.getItem(`kaptal_cuenta_rapida_${this.auth.currentUser()?.id}_${tipo}`)); } catch { /* Preferencia opcional. */ }
     this.cuentaId = this.cuentasDisponibles().find(c => c.id === anterior)?.id ?? this.cuentasDisponibles()[0]?.id ?? null;
     this.ajustarDestino();
+  }
+  private aplicarRepeticion(): void {
+    const movimiento=this.repeticion;if(!movimiento)return;
+    this.monto=movimiento.monto==null?'':String(movimiento.monto);this.descripcion=movimiento.descripcion??'';this.nota=movimiento.notas??'';
+    this.cuentaId=this.cuentas.find(c=>c.id===movimiento.cuentaId)?.id??null;
+    this.categoriaId=this.categoriasDisponibles().find(c=>c.id===movimiento.categoriaId)?.id??null;
+    this.destinoId=this.tipo==='TRANSFERENCIA'?(this.destinos().find(c=>c.id===movimiento.cuentaDestinoId)?.id??null):null;
+    this.tasaCambio=this.tipo==='TRANSFERENCIA'&&this.distintaMoneda()?(movimiento.tasaCambio??null):null;
+    if(this.cuentaId===null || (this.tipo==='TRANSFERENCIA' && this.destinoId===null))this.error.set('Una cuenta anterior ya no está disponible. Elige las cuentas antes de guardar.');
+    else if(movimiento.categoriaId!=null && this.tipo!=='TRANSFERENCIA' && this.categoriaId===null)this.error.set('La categoría anterior ya no está disponible. Elige otra o guarda sin categoría.');
   }
   cuentasDisponibles(): Cuenta[] { return this.cuentas; }
   categoriasDisponibles(): Categoria[] { return this.categorias.filter(c => c.tipo === this.tipo); }
@@ -149,6 +166,7 @@ export class RegistroRapidoComponent implements OnDestroy {
       this.categorias=catalogo?.categorias.filter(c=>c.activo)??[];
       this.cambiarTipo(this.tipo);
       this.error.set(this.cuentas.length?'':'Sin cuentas guardadas en este dispositivo. Abre el registro con conexión primero.');
+      this.aplicarRepeticion();
     } catch { if(version===this.catalogoVersion){this.cuentas=[];this.error.set('No se pudieron cargar las cuentas. Cierra y vuelve a intentar.');} }
     finally { if(version===this.catalogoVersion && usuario===this.usuarioRegistro)this.loading.set(false); }
   }
@@ -201,7 +219,7 @@ export class RegistroRapidoComponent implements OnDestroy {
   private recordarCuenta(): void { try {this.document.defaultView?.localStorage.setItem(`kaptal_cuenta_rapida_${this.auth.currentUser()?.id}_${this.tipo}`,String(this.cuentaId));}catch{/* Preferencia opcional. */} }
   voz(): void { this.cerrar(); this.document.defaultView?.dispatchEvent(new CustomEvent('kaptal-abrir-captura-chat', { detail: {tipo: this.tipo} })); }
   avanzado(): void {
-    const borrador = { tipo: this.tipo, monto: Number(this.monto.replace(',', '.')) || null, cuentaId: this.cuentaId, cuentaDestinoId: this.destinoId, categoriaId: this.categoriaId, fecha: this.fecha, notas: this.nota || this.descripcion, tasaCambio: this.tasaCambio };
+    const borrador = { tipo: this.tipo, monto: Number(this.monto.replace(',', '.')) || null, cuentaId: this.cuentaId, cuentaDestinoId: this.destinoId, categoriaId: this.categoriaId, fecha: this.fecha, descripcion: this.descripcion, notas: this.nota || null, tasaCambio: this.tasaCambio };
     this.cerrar(); void this.router.navigate(['/transacciones']).then(() => this.document.defaultView?.dispatchEvent(new CustomEvent('kaptal-abrir-registro-manual', {detail:borrador})));
   }
   teclado(event: KeyboardEvent): void {
