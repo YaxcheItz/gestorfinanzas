@@ -5,15 +5,25 @@
   <title>Kaptal | Finanzas personales</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#176b4c" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#09090b" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#faf9f6" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#151615" media="(prefers-color-scheme: dark)">
   <link rel="icon" type="image/svg+xml" href="kaptal.svg">
   <link rel="apple-touch-icon" href="icons/kaptal-192.png">
-  <script src="runtime-config.js"></script>
   <link rel="manifest" href="manifest.webmanifest">
+  <style>
+    body { margin:0; }
+    .kaptal-launch { min-height:100svh; display:grid; place-content:center; justify-items:center; gap:16px; padding:24px; box-sizing:border-box; background:#faf9f6; color:#252522; font-family:system-ui,sans-serif; text-align:center; }
+    .kaptal-launch img { width:64px; height:64px; }
+    .kaptal-launch strong { font-size:24px; letter-spacing:-.04em; }
+    .kaptal-launch p { margin:0; color:#696963; font-size:14px; }
+    .kaptal-launch a { display:inline-flex; min-height:44px; align-items:center; padding:0 20px; border-radius:14px; background:#994530; color:#fff; text-decoration:none; }
+    @media(prefers-color-scheme:dark) { .kaptal-launch { background:#151615; color:#f5f4ed; } .kaptal-launch p { color:#b1b3aa; } }
+  </style>
 </head>
 <body>
-  <app-root></app-root>
+  <app-root><div class="kaptal-launch" role="status"><img src="kaptal.svg" alt="" width="64" height="64"><strong>Kaptal</strong><p>Abriendo tu espacio…</p></div></app-root>
+  <script src="startup-check.js"></script>
+  <script src="runtime-config.js"></script>
   <noscript>Activa JavaScript para continuar usando Kaptal.</noscript>
 </body>
 </html>

@@ -19,11 +19,11 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
   standalone: true,
   imports: [TextoFinancieroPipe, MontoPrivadoDirective, CommonModule, FormsModule, RouterLink, FocusTrapDirective, MontoPipe],
   template: `
-    <main class="finance-page max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-4 sm:space-y-6">
+    <main class="finance-page accounts-page max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-4 sm:space-y-6">
       <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
           <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">Mis cuentas</h1>
-          <p class="text-sm text-slate-500 mt-1">Administra tus cuentas y saldos financieros.</p>
+          <p class="text-sm text-slate-500 mt-1">Tu dinero y tus tarjetas, en un solo lugar.</p>
         </div>
         <button
           type="button"
@@ -37,6 +37,7 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
         <button
           type="button"
           (click)="filtroEstado.set('ACTIVAS')"
+          [attr.aria-pressed]="filtroEstado() === 'ACTIVAS'"
           [class]="filtroEstado() === 'ACTIVAS' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600'"
           class="px-3 py-2 rounded-lg text-xs font-semibold cursor-pointer">
           Activas
@@ -44,6 +45,7 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
         <button
           type="button"
           (click)="filtroEstado.set('INACTIVAS')"
+          [attr.aria-pressed]="filtroEstado() === 'INACTIVAS'"
           [class]="filtroEstado() === 'INACTIVAS' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600'"
           class="px-3 py-2 rounded-lg text-xs font-semibold cursor-pointer">
           Inactivas
@@ -51,14 +53,16 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
       </div>
 
       @if (error()) {
-        <div class="p-4 bg-rose-50 border border-rose-200 rounded-xl text-sm text-rose-700 flex items-center justify-between gap-3">
+        <div role="alert" class="p-4 bg-rose-50 border border-rose-200 rounded-xl text-sm text-rose-700 flex items-center justify-between gap-3">
           <span>{{ error() }}</span>
           <button type="button" (click)="cargarCuentas()" class="font-semibold underline cursor-pointer">Reintentar</button>
         </div>
       }
 
       @if (loading()) {
-        <div class="p-12 text-center text-sm text-slate-400">Cargando cuentas...</div>
+        <div class="finance-loading-list" role="status" aria-label="Cargando cuentas"><span class="sr-only">Cargando cuentas...</span>@for (fila of [0,1,2]; track fila) {<div class="finance-loading-card" aria-hidden="true"><span class="loading-placeholder"></span><span class="loading-placeholder loading-placeholder--amount"></span></div>}</div>
+      } @else if (error()) {
+        <p class="finance-state-note">Tus cuentas no están disponibles ahora. Usa Reintentar para consultarlas.</p>
       } @else if (cuentasVisibles().length === 0) {
         <section class="bg-white p-10 rounded-2xl border border-slate-200 text-center">
           @if (filtroEstado() === 'ACTIVAS') {
@@ -77,7 +81,7 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
       } @else {
         <section [attr.aria-label]="filtroEstado() === 'ACTIVAS' ? 'Cuentas activas' : 'Cuentas inactivas'" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-5">
           @for (cuenta of cuentasVisibles(); track cuenta.id) {
-            <article class="group relative cursor-pointer rounded-2xl border border-slate-200 bg-white p-4 shadow-xs transition-colors duration-150 hover:border-emerald-300 hover:shadow-md sm:p-6" [class.opacity-75]="!cuenta.activo">
+            <article class="account-card group relative cursor-pointer rounded-2xl border border-slate-200 bg-white p-4 shadow-xs transition-colors duration-150 sm:p-6" [class.opacity-75]="!cuenta.activo">
               <a [routerLink]="['/transacciones']" [queryParams]="{ cuentaId: cuenta.id }" [attr.aria-label]="'Ver transacciones de ' + nombreCuentaVisible(cuenta.nombre)" class="absolute inset-0 z-10 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600">
                 <span class="sr-only">Ver todas las transacciones de {{ nombreCuentaVisible(cuenta.nombre) }}</span>
               </a>
@@ -87,6 +91,7 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
                     {{ tipoCuentaLabel(cuenta.tipo) }}
                   </span>
                   <h2 class="mt-3 truncate text-lg font-bold text-slate-900">{{ nombreCuentaVisible(cuenta.nombre) }}</h2>
+                  <p class="account-currency">{{ cuenta.moneda }}</p>
                   @if (institucionDe(cuenta.institucionFinanciera); as institucion) {
                     <p class="mt-1 text-xs font-medium text-slate-500">{{ institucion.nombre }}</p>
                   }
@@ -116,7 +121,7 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
                     </p>
                   </div>
                   <div class="text-right">
-                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Disponible</p>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Crédito disponible</p>
                     @if (cuenta.limiteCredito != null) {
                       <p class="mt-1 text-lg font-bold text-emerald-700">
                         {{ creditoDisponibleCuenta(cuenta) ?? 0 | monto:cuenta.moneda:'symbol':'1.2-2' }}
@@ -155,7 +160,9 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
                 Ver transacciones <span aria-hidden="true">&rarr;</span>
               </p>
 
-              <div class="relative z-20 pointer-events-none mt-4 flex items-center justify-end gap-2 border-t border-slate-100 pt-3 sm:mt-5 sm:pt-4">
+              <details class="account-manage relative z-20 mt-4 border-t border-slate-100 pt-3">
+                <summary [attr.aria-label]="'Administrar cuenta ' + nombreCuentaVisible(cuenta.nombre)">Administrar <span aria-hidden="true">⌄</span></summary>
+                <div class="account-manage__actions">
                 <button
                   type="button"
                   (click)="abrirEditar(cuenta)"
@@ -183,7 +190,8 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
                   class="pointer-events-auto min-h-10 rounded-lg px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-rose-600 cursor-pointer">
                   Eliminar
                 </button>
-              </div>
+                </div>
+              </details>
             </article>
           }
         </section>

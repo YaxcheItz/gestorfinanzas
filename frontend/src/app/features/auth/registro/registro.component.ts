@@ -11,8 +11,8 @@ import { GoogleSignInComponent } from '../google-sign-in/google-sign-in.componen
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, GoogleSignInComponent],
   template: `
-    <div class="flex min-h-[calc(100dvh-8rem)] items-center justify-center px-3 py-5 sm:min-h-[calc(100dvh-4rem)] sm:px-4 sm:py-6">
-      <div class="w-full min-w-0 max-w-md space-y-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-xl shadow-slate-200/50 sm:p-8">
+    <div class="auth-screen flex min-h-[calc(100dvh-8rem)] items-center justify-center px-3 py-5 sm:min-h-[calc(100dvh-4rem)] sm:px-4 sm:py-6">
+      <div class="auth-card w-full min-w-0 max-w-md space-y-6 rounded-2xl border border-slate-200 bg-white p-4 sm:p-8">
         
         <div class="text-center space-y-2">
           <div class="w-12 h-12 bg-emerald-100 text-emerald-700 rounded-xl mx-auto flex items-center justify-center font-bold text-xl mb-3">
@@ -162,6 +162,7 @@ export class RegistroComponent {
   }
 
   onSubmit(): void {
+    if (this.loading()) return;
     if (!this.nombre.trim() || !this.email.trim() || !this.password) {
       this.errorMessage.set('Por favor completa todos los campos.');
       return;
@@ -189,8 +190,12 @@ export class RegistroComponent {
     this.errorMessage.set(null);
 
     this.authService.registro({ nombre: this.nombre.trim(), email: this.email.trim(), password: this.password }).subscribe({
-      next: () => {
+      next: response => {
         this.loading.set(false);
+        if (!response.success || !response.data) {
+          this.errorMessage.set(response.message || 'No pudimos crear la cuenta. Revisa los datos.');
+          return;
+        }
         this.router.navigate(['/dashboard']);
       },
       error: (err) => {
@@ -207,8 +212,12 @@ export class RegistroComponent {
     this.loading.set(true);
     this.errorMessage.set(null);
     this.authService.loginWithGoogle(credential).subscribe({
-      next: () => {
+      next: response => {
         this.loading.set(false);
+        if (!response.success || !response.data) {
+          this.errorMessage.set(response.message || 'No pudimos crear la cuenta con Google.');
+          return;
+        }
         this.router.navigate(['/dashboard']);
       },
       error: error => {

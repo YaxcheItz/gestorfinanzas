@@ -170,7 +170,7 @@ type SpeechRecognitionWindow = Window & {
         aria-labelledby="dashboard-balance-title">
         @if (resumenMonedaSeleccionada(); as moneda) {
           <div class="dashboard-screen__balance-head">
-            <span id="dashboard-balance-title">Balance Total</span>
+            <span id="dashboard-balance-title">{{ moneda.dineroDisponible != null ? 'Dinero en cuentas' : 'Balance Total' }}</span>
 
           </div>
 
@@ -178,10 +178,16 @@ type SpeechRecognitionWindow = Window & {
             @if (loading()) {
               <div class="dashboard-screen__amount-skeleton" role="status">Cargando balance</div>
             } @else {
-              <p class="dashboard-screen__amount">{{ moneda.balanceTotal | monto:moneda.moneda:'symbol':'1.2-2' }}</p>
+              <p class="dashboard-screen__amount">{{ (moneda.dineroDisponible ?? moneda.balanceTotal) | monto:moneda.moneda:'symbol':'1.2-2' }}</p>
             }
           </div>
 
+          <p class="dashboard-period-caption">Saldo actual · {{ moneda.moneda }}</p>
+          @if (moneda.deudaTarjetas != null && moneda.deudaTarjetas > 0) {
+            <div class="dashboard-debt-note"><span>Deuda de tarjetas</span><strong>{{ moneda.deudaTarjetas | monto:moneda.moneda:'symbol':'1.2-2' }}</strong></div>
+            <div class="dashboard-debt-note"><span>Saldo neto</span><strong>{{ moneda.balanceTotal | monto:moneda.moneda:'symbol':'1.2-2' }}</strong></div>
+          }
+          <p class="dashboard-period-caption">Ingresos y gastos · {{ etiquetaRangoSeleccionado() }}</p>
           <div class="dashboard-screen__monthly-stats dashboard-screen__monthly-stats--flow">
             <div class="dashboard-screen__flow-block">
               <div class="dashboard-screen__flow-label">
@@ -210,7 +216,14 @@ type SpeechRecognitionWindow = Window & {
             <span class="hero-swipe-dot"></span>
           </div>
         } @else if (loading()) {
-          <p class="dashboard-screen__loading" role="status">Cargando balance…</p>
+          <div class="dashboard-loading-summary" role="status" aria-label="Cargando balance">
+            <span class="sr-only">Cargando balance…</span>
+            <span class="loading-placeholder loading-placeholder--caption" aria-hidden="true"></span>
+            <span class="loading-placeholder loading-placeholder--amount" aria-hidden="true"></span>
+            <div class="dashboard-loading-flow" aria-hidden="true"><span class="loading-placeholder"></span><span class="loading-placeholder"></span></div>
+          </div>
+        } @else if (error()) {
+          <div class="dashboard-screen__empty"><h2>Resumen no disponible</h2><p>Reintenta desde el aviso de arriba. Tus movimientos guardados se conservan.</p></div>
         } @else {
           <div class="dashboard-screen__empty"><h2>Empieza con una cuenta</h2><p>Agrega efectivo, banco o tarjeta para ver aqu&iacute; tus gastos e ingresos.</p><button type="button" (click)="irACuentas()">Agregar cuenta</button></div>
         }
@@ -232,6 +245,9 @@ type SpeechRecognitionWindow = Window & {
         @else if (presupuestosDashboard().length === 0) {
           <button type="button" class="dashboard-screen__budget-empty" (click)="irAPresupuestos()"><span>Define un límite para saber cuánto puedes gastar.</span><strong>Crear presupuesto <span aria-hidden="true">→</span></strong></button>
         } @else {
+          @if (presupuestoMonedaSeleccionada(); as disponible) {
+            <div class="dashboard-budget-remaining"><span>{{ disponible.totalDisponible < 0 ? 'Presupuesto excedido en' : 'Te queda en presupuestos' }}<small>{{ periodoResumen() }} · solo categorías con presupuesto</small></span><strong [class.is-over]="disponible.totalDisponible < 0">{{ (disponible.totalDisponible < 0 ? -disponible.totalDisponible : disponible.totalDisponible) | monto:disponible.moneda:'symbol':'1.2-2' }}</strong></div>
+          }
           <div #budgetScroller class="dashboard-screen__budget-carousel" aria-label="Presupuestos del mes" tabindex="0">
             @for (presupuesto of presupuestosDashboard(); track presupuesto.id) {
               <article class="dashboard-screen__budget-card">
@@ -251,6 +267,7 @@ type SpeechRecognitionWindow = Window & {
                 <div class="budget-pillar__label">
                   <strong>{{ presupuesto.categoriaNombre }}</strong>
                   <small>de {{ presupuesto.montoLimite | monto:presupuesto.moneda:'symbol':'1.0-2' }}</small>
+                  <small class="dashboard-budget-left" [class.is-over]="presupuesto.montoDisponible < 0">{{ presupuesto.montoDisponible < 0 ? 'Excedido en' : 'Queda' }} {{ (presupuesto.montoDisponible < 0 ? -presupuesto.montoDisponible : presupuesto.montoDisponible) | monto:presupuesto.moneda:'symbol':'1.2-2' }}</small>
                   <small [class.is-over]="presupuesto.estado === 'EXCEDIDO'">{{ presupuesto.estado === 'EXCEDIDO' ? 'Excedido' : presupuesto.estado === 'ALERTA' ? 'Cerca del límite' : 'En control' }}</small>
                 </div>
               </article>
@@ -282,7 +299,7 @@ type SpeechRecognitionWindow = Window & {
       <section class="dashboard-screen__section dashboard-screen__activity dashboard-screen__recent" aria-labelledby="dashboard-recent-title">
         <div class="dashboard-screen__section-heading">
           <div>
-            <p class="dashboard-screen__eyebrow">Actividad</p>
+            <p class="dashboard-screen__eyebrow">Actividad · {{ etiquetaRangoSeleccionado() }}</p>
             <h2 id="dashboard-recent-title">Movimientos recientes</h2>
           </div>
           <button type="button" class="dashboard-screen__text-link" (click)="irATransacciones()">
@@ -290,22 +307,24 @@ type SpeechRecognitionWindow = Window & {
           </button>
         </div>
         @if (loading()) {
-          <p class="dashboard-screen__muted" role="status">Cargando movimientos…</p>
+          <div class="dashboard-loading-movements" role="status" aria-label="Cargando movimientos">
+            <span class="sr-only">Cargando movimientos…</span>
+            @for (fila of [0, 1, 2]; track fila) {
+              <div class="dashboard-loading-row" aria-hidden="true"><span class="loading-placeholder loading-placeholder--icon"></span><span class="loading-placeholder loading-placeholder--text"></span><span class="loading-placeholder loading-placeholder--value"></span></div>
+            }
+          </div>
+        } @else if (error()) {
+          <p class="dashboard-screen__muted">No pudimos consultar tus movimientos recientes. Usa Reintentar para volver a cargarlos.</p>
         } @else if ((ultimosMovimientosLimitados().length === 0)) {
           <div class="dashboard-screen__inline-empty">
-            <p>Tu primer gasto o ingreso aparecer&aacute; aqu&iacute;.</p>
-            <button type="button" (click)="abrirChatRegistro()">Registrar</button>
+            <p>No hay movimientos en este período. Puedes añadir uno o consultar el historial.</p>
+            @if((resumen()?.totalCuentas??0) === 0) {<button type="button" (click)="irACuentas()">Crear cuenta</button>} @else {<button type="button" (click)="abrirChatRegistro()">Añadir movimiento</button>}
           </div>
         } @else {
           <div class="dashboard-screen__recent-list">
             @for (movimiento of ultimosMovimientosLimitados(); track movimiento.id) {
-              <app-movimiento-mobile-card [movimiento]="movimiento" (editar)="editarMovimiento($event.id)" (eliminar)="eliminarMovimiento($event)" />
+              <app-movimiento-mobile-card [movimiento]="movimiento" (detalle)="verDetalleMovimiento($event.id)" (editar)="editarMovimiento($event.id)" (eliminar)="eliminarMovimiento($event)" />
             }
-          </div>
-          <div class="dashboard-screen__view-all-wrap">
-            <button type="button" class="dashboard-screen__view-all-btn" (click)="irATransacciones()">
-              Ver Todo el Historial <span aria-hidden="true">→</span>
-            </button>
           </div>
         }
       </section>
@@ -328,7 +347,11 @@ type SpeechRecognitionWindow = Window & {
             }
           </div>
 
-          @if (donutCategorias().length === 0) {
+          @if (analiticaLoading()) {
+            <p class="dashboard-screen__muted" role="status">Cargando distribución de gastos…</p>
+          } @else if (analiticaError()) {
+            <div class="dashboard-screen__inline-empty" role="alert"><p>No pudimos cargar la distribución de gastos.</p><button type="button" (click)="cargarDashboard()">Reintentar</button></div>
+          } @else if (donutCategorias().length === 0) {
             <div class="dashboard-screen__inline-empty">
               <p>No hay gastos registrados en este periodo para graficar.</p>
               <button type="button" (click)="abrirChatRegistro()">Registrar gasto</button>
@@ -834,6 +857,7 @@ export class DashboardComponent implements OnInit {
   readonly presupuestosDashboard = computed(() =>
     (this.presupuestoResumen()?.presupuestos ?? []).filter(p => p.moneda === this.monedaResumen())
   );
+  readonly presupuestoMonedaSeleccionada = computed(() => this.presupuestoResumen()?.resumenPorMoneda?.find(p=>p.moneda===this.monedaResumen()) ?? null);
   readonly plantillasPorAtender = computed(() =>
     this.plantillasRecurrentes().filter(plantilla =>
       plantilla.activa
@@ -951,6 +975,8 @@ export class DashboardComponent implements OnInit {
   ];
 
   readonly analitica = signal<DashboardAnalitica | null>(null);
+  readonly analiticaLoading = signal(false);
+  readonly analiticaError = signal(false);
 
   /** Computed: categorías de gasto para el donut (top 4, en moneda seleccionada). */
   readonly donutCategorias = computed(() => {
@@ -1148,6 +1174,7 @@ export class DashboardComponent implements OnInit {
     const version = ++this.dashboardVersion;
     this.resetearDonut();
     this.analitica.set(null);
+    this.analiticaLoading.set(true);this.analiticaError.set(false);
     this.resumen.set(null);
     this.loading.set(true);
     this.error.set(null);
@@ -1176,15 +1203,15 @@ export class DashboardComponent implements OnInit {
       },
       error: (_err) => {
         if (version !== this.dashboardVersion) return;
-        this.error.set('No se pudo cargar el resumen financiero. Verifica que el backend esté en ejecución.');
+        this.error.set('No se pudo cargar tu resumen. Revisa la conexión e inténtalo de nuevo.');
         this.loading.set(false);
       }
     });
 
     // Cargar analítica de categorías para el gráfico donut
     this.finanzasService.getDashboardAnalitica(mes, anio, desde, hasta).subscribe({
-      next: (res) => { if (version === this.dashboardVersion && res.success && res.data) this.analitica.set(res.data); },
-      error: () => { if (version === this.dashboardVersion) this.toastService.error('No se pudo cargar el gráfico de gastos.'); }
+      next: (res) => { if (version !== this.dashboardVersion) return; this.analiticaLoading.set(false); if(res.success && res.data)this.analitica.set(res.data);else this.analiticaError.set(true); },
+      error: () => { if (version === this.dashboardVersion) {this.analiticaLoading.set(false);this.analiticaError.set(true);} }
     });
   }
 
@@ -1806,6 +1833,7 @@ export class DashboardComponent implements OnInit {
     const { desde: fechaInicio, hasta: fechaFin } = this.fechasRango();
     this.router.navigate(['/transacciones'], { queryParams: { categoriaId, fechaInicio, fechaFin } });
   }
+  verDetalleMovimiento(id: number): void { void this.router.navigate(['/transacciones'],{queryParams:{detalle:id}}); }
 
   eliminarMovimiento(id: number): void {
     this.confirmDialog.confirm({

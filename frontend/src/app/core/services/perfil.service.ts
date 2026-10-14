@@ -262,6 +262,11 @@ export class PerfilService {
     const root = this.document.documentElement;
     root.classList.toggle('dark', tema === 'OSCURO');
     root.style.colorScheme = tema === 'OSCURO' ? 'dark' : 'light';
+    // El navegador debe seguir el tema elegido en Kaptal, aunque difiera del sistema.
+    for (const meta of this.document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]')) {
+      meta.content = tema === 'OSCURO' ? '#151615' : '#faf9f6';
+      meta.removeAttribute('media');
+    }
   }
 
   private configurarEscuchaTema(): void {

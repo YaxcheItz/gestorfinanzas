@@ -61,6 +61,19 @@ describe('QuickCaptureComponent processing and gestures', () => {
 
   afterEach(() => { fixture.destroy(); vi.useRealTimers(); vi.unstubAllGlobals(); });
 
+  it('muestra confirmación del servidor solamente tras un guardado exitoso', () => {
+    const propuesta = { id: 'confirmacion-visible', type: 'CREATE_TRANSACTION', summary: 'Gasto', data: {}, version: 0 } as any;
+    component.captureTurns.set([{ id: 1, user: 'Gasto', answer: 'Revisa', actions: [propuesta], voice: false }]);
+    const confirmar = vi.spyOn(TestBed.inject(FinanzasService), 'confirmAiAction');
+    confirmar.mockReturnValueOnce(of({ success: false, message: 'Revisa los datos' } as any));
+    component.confirm(propuesta);
+    expect(component.captureTurns()[0].confirmaciones).toBeUndefined();
+    expect(component.captureTurns()[0].actions).toHaveLength(1);
+    component.confirm(propuesta);
+    expect(component.captureTurns()[0].confirmaciones).toEqual([{ id: propuesta.id, estado: 'SERVIDOR' }]);
+    expect(component.captureTurns()[0].actions).toHaveLength(0);
+  });
+
   it('prepares an offline proposal without sending text or recording money', () => {
     conexion.set(false);
     component.cuentasEdicion.set([{id:1,nombre:'Efectivo',tipo:'EFECTIVO',moneda:'MXN',saldoActual:0,activo:true} as any]);
@@ -97,6 +110,7 @@ describe('QuickCaptureComponent processing and gestures', () => {
     component.confirm(proposal);component.confirm(proposal);
     await vi.waitFor(()=>expect(offline.guardarPendiente).toHaveBeenCalledOnce());
     expect(offline.guardarPendiente).toHaveBeenCalledWith(1,proposal.id,expect.objectContaining({categoriaId:2,monto:25}));
+    await vi.waitFor(() => expect(component.captureTurns()[0].confirmaciones).toEqual([{id:proposal.id,estado:'DISPOSITIVO'}]));
     expect(TestBed.inject(FinanzasService).editarPropuestaAi).not.toHaveBeenCalled();
     expect(TestBed.inject(FinanzasService).confirmAiAction).not.toHaveBeenCalled();
   });

@@ -17,10 +17,20 @@ test('chat mantiene escritura visible y guarda categoría offline sin duplicados
   await page.getByRole('button',{name:'Escribir o dictar',exact:true}).click();
   const panel=page.locator('#quick-capture-panel'),text=page.locator('#quick-capture-text');
   await expect(panel).toBeFocused();
+  const opcionesIa=panel.locator('.capture-options > summary');
+  await page.keyboard.press('Shift+Tab');
+  await expect(opcionesIa).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(panel.getByRole('button',{name:'Limpiar historial del chat'})).toBeFocused();
+  await opcionesIa.click();
+  await expect(panel.getByRole('checkbox')).toBeVisible();
+  await panel.getByRole('button',{name:'Limpiar historial del chat'}).focus();
   await page.keyboard.press('Shift+Tab');
   await expect(panel.getByRole('checkbox')).toBeFocused();
   await page.keyboard.press('Tab');
   await expect(panel.getByRole('button',{name:'Limpiar historial del chat'})).toBeFocused();
+  await opcionesIa.click();
+  await expect(panel.getByRole('checkbox')).not.toBeVisible();
   await expect(panel.getByRole('button',{name:'Rápido',exact:true})).toBeVisible();
   await expect(panel.getByRole('button',{name:'Dictar movimiento'})).toBeVisible();
   expect(await panel.locator('.capture-chat').evaluate(e=>e.clientHeight)).toBeGreaterThan(250);
@@ -44,7 +54,8 @@ test('chat mantiene escritura visible y guarda categoría offline sin duplicados
   await expect.poll(()=>panel.getAttribute('data-compact-viewport')).toBe('');
   await expect(text).toBeInViewport();await expect(page.getByRole('button',{name:'Enviar movimiento'})).toBeInViewport();
   await expect(panel.getByRole('button',{name:'Recuperar propuestas pendientes'})).toBeInViewport();
-  for(const selector of ['.capture-panel__head','.capture-chat__composer','.capture-chat__consent']){
+  for(const selector of ['.capture-panel__head','.capture-chat__composer','.capture-options > summary']){
+    await expect(panel.locator(selector)).toBeVisible();
     await expect.poll(()=>panel.locator(selector).evaluate(element=>{
       const r=element.getBoundingClientRect();return r.top>=0 && r.bottom<=innerHeight && r.left>=0 && r.right<=innerWidth;
     })).toBe(true);

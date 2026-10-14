@@ -10,8 +10,8 @@ import { mensajeDeError } from '../../../core/utils/mensaje-error';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
   template: `
-    <main class="flex min-h-[calc(100dvh-8rem)] items-center justify-center px-3 py-6 sm:min-h-[calc(100dvh-4rem)] sm:px-4">
-      <section class="w-full max-w-md space-y-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-xl shadow-slate-200/50 sm:p-8">
+    <main class="auth-screen flex min-h-[calc(100dvh-8rem)] items-center justify-center px-3 py-6 sm:min-h-[calc(100dvh-4rem)] sm:px-4">
+      <section class="auth-card w-full max-w-md space-y-5 rounded-2xl border border-slate-200 bg-white p-5 sm:p-8">
         <header class="space-y-2 text-center">
           <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700" aria-hidden="true">
             <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
@@ -37,7 +37,7 @@ import { mensajeDeError } from '../../../core/utils/mensaje-error';
             <form (ngSubmit)="solicitar()" class="space-y-4">
               <div>
                 <label for="recovery-email" class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-700">Correo electrónico</label>
-                <input id="recovery-email" name="email" type="email" autocomplete="email" required maxlength="150"
+                <input id="recovery-email" name="email" type="email" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" required maxlength="150" [readOnly]="cargando()"
                   [(ngModel)]="email" placeholder="tu@correo.com"
                   class="min-h-11 w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500" />
               </div>
@@ -108,10 +108,12 @@ export class RecuperarCuentaComponent {
     this.authService.solicitarRecuperacion({ email: this.email.trim() }).subscribe({
       next: response => {
         this.cargando.set(false);
+        if (!response.success || response.data === false) {
+          this.error.set('La recuperación por correo no está disponible ahora. Inténtalo más tarde.');
+          return;
+        }
         this.solicitudEnviada.set(true);
-        this.mensaje.set(response.data === false
-          ? 'La recuperación por correo todavía no está configurada en el servidor.'
-          : response.message || 'Si existe una cuenta con ese correo, enviaremos un enlace para cambiar la contraseña.');
+        this.mensaje.set(response.message || 'Si existe una cuenta con ese correo, enviaremos un enlace para cambiar la contraseña.');
       },
       error: () => {
         this.cargando.set(false);

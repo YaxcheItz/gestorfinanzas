@@ -37,6 +37,24 @@ describe('PerfilService', () => {
 
   afterEach(() => httpMock.verify());
 
+  it('adapta el color del navegador al tema de la app, aunque el sistema use otro', () => {
+    const meta = document.createElement('meta');
+    meta.name = 'theme-color';
+    meta.content = '#176b4c';
+    meta.media = '(prefers-color-scheme: light)';
+    document.head.append(meta);
+    try {
+      service.cargar(7);
+      httpMock.expectOne(esPerfil('GET')).flush({ success: true, message: '', data: { ...perfilBase, tema: 'OSCURO' } });
+      expect(meta.content).toBe('#151615');
+      expect(meta.hasAttribute('media')).toBe(false);
+      service.limpiar();
+      expect(meta.content).toBe('#faf9f6');
+    } finally {
+      meta.remove();
+    }
+  });
+
   it('respeta la preferencia cuando el backend todavia no la envia', () => {
     // Un backend anterior al campo no lo incluye en el JSON. La respuesta llega
     // sin `ocultarMontos` y no debe interpretarse como "el usuario lo apagó".

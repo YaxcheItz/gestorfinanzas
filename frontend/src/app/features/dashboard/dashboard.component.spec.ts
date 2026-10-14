@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { CategoriaPreferidaService } from '../../core/services/categoria-preferida.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
@@ -64,6 +64,29 @@ describe('DashboardComponent movement dialog accessibility', () => {
     const opener = fixture.nativeElement.querySelector('.dashboard-screen__action--chat') as HTMLButtonElement;
     expect(opener).toBeTruthy();
     expect(opener.textContent).toContain('Registrar un movimiento');
+  });
+
+  it('separa efectivo y deuda y muestra presupuesto restante solo en la moneda elegida',()=>{
+    const fixture=TestBed.createComponent(DashboardComponent);fixture.detectChanges();const component=fixture.componentInstance;
+    component.resumen.set({resumenPorMoneda:[{moneda:'MXN',balanceTotal:600,dineroDisponible:1000,deudaTarjetas:400,ingresosMes:100,gastosMes:25,totalCuentas:2},{moneda:'USD',balanceTotal:200,dineroDisponible:200,deudaTarjetas:0,ingresosMes:50,gastosMes:5,totalCuentas:1}],ultimosMovimientos:[]} as any);
+    component.presupuestoResumen.set({presupuestos:[{id:1,moneda:'MXN',categoriaNombre:'Comida',montoLimite:500,montoGastado:200,montoDisponible:300,porcentajeConsumido:40}],resumenPorMoneda:[{moneda:'MXN',totalDisponible:300},{moneda:'USD',totalDisponible:10}]} as any);
+    fixture.detectChanges();const hero=fixture.nativeElement.querySelector('.dashboard-screen__monthly').textContent;
+    expect(hero).toContain('Dinero en cuentas');expect(hero).toContain('1,000');expect(hero).toContain('Deuda de tarjetas');expect(hero).toContain('400');
+    expect(component.presupuestoMonedaSeleccionada()?.totalDisponible).toBe(300);
+    component.monedaResumen.set('USD');expect(component.presupuestoMonedaSeleccionada()?.totalDisponible).toBe(10);
+    fixture.destroy();
+  });
+  it('un error de resumen o gráfico no se muestra como ausencia de cuentas o de gastos',()=>{
+    const fixture=TestBed.createComponent(DashboardComponent);fixture.detectChanges();
+    vi.spyOn(TestBed.inject(FinanzasService),'getDashboardResumen').mockReturnValue(throwError(()=>new Error('sin conexión')));
+    vi.spyOn(TestBed.inject(FinanzasService),'getDashboardAnalitica').mockReturnValue(throwError(()=>new Error('sin conexión')));
+    fixture.componentInstance.cargarDashboard();fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Resumen no disponible');
+    expect(fixture.nativeElement.textContent).not.toContain('Empieza con una cuenta');
+    fixture.componentInstance.resumen.set({totalCuentas:1,resumenPorMoneda:[{moneda:'MXN',balanceTotal:100,ingresosMes:0,gastosMes:25,totalCuentas:1}],ultimosMovimientos:[]} as any);
+    fixture.componentInstance.error.set(null);fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('No pudimos cargar la distribución');
+    expect(fixture.nativeElement.textContent).not.toContain('No hay gastos registrados');fixture.destroy();
   });
   it('retries an uncertain request without opening an editable replacement', () => {
     const component=TestBed.createComponent(DashboardComponent).componentInstance;
