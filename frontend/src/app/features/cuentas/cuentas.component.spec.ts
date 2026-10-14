@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { Cuenta } from '../../core/models/finanzas.models';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { FinanzasService } from '../../core/services/finanzas.service';
@@ -68,6 +68,16 @@ describe('CuentasComponent', () => {
       moneda: 'MXN',
       saldoInicial: 250
     });
+  });
+
+  it('no invita a crear una primera cuenta cuando falla la consulta', async () => {
+    finanzasService.getCuentas.mockReturnValue(throwError(() => new Error('sin conexión')));
+    const fixture = TestBed.createComponent(CuentasComponent);
+    await fixture.whenStable();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('[role="alert"]')).not.toBeNull();
+    expect(el.textContent).not.toContain('Aún no tienes cuentas activas');
+    expect(el.textContent).not.toContain('Crear mi primera cuenta');
   });
 
   it('offers Mexican financial institutions and uses the selected institution name when blank', () => {

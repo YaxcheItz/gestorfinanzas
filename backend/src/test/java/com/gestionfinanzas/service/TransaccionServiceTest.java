@@ -17,6 +17,8 @@ import com.gestionfinanzas.repository.PlantillaRecurrenteRepository;
 import com.gestionfinanzas.repository.TransaccionRepository;
 import com.gestionfinanzas.repository.UsuarioRepository;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -128,7 +130,7 @@ class TransaccionServiceTest {
         assertEquals(11L, response.id());
         assertEquals(new BigDecimal("75.00"), cuenta.getSaldoActual());
         assertEquals(new BigDecimal("25.00"), response.monto());
-        assertEquals("Comida", response.descripcion());
+        assertEquals("Gasto corregido", response.descripcion());
         assertEquals("nota", response.notas());
         assertEquals(LocalDate.of(2026, 9, 26), response.fecha());
     }
@@ -159,6 +161,7 @@ class TransaccionServiceTest {
         assertEquals(new BigDecimal("3160.00"), destino.getSaldoActual());
         assertEquals(new BigDecimal("2160.00"), transaccion.getMontoDestino());
         assertEquals(new BigDecimal("18.00"), transaccion.getTasaCambio());
+        assertEquals("Transferencia corregida", transaccion.getDescripcion());
     }
 
     @Test
@@ -452,6 +455,51 @@ class TransaccionServiceTest {
         assertThrows(IllegalArgumentException.class, () -> transaccionService.exportarCsv(7L, filtro));
 
         verify(transaccionRepository, never()).findAll(any(Specification.class), any(Sort.class));
+    }
+
+    @ParameterizedTest
+    @EnumSource(value=TipoTransaccion.class,names={"GASTO","INGRESO","TRANSFERENCIA"})
+    void crearConservaDescripcionLibreAunqueTengaCategoria(TipoTransaccion tipo) {
+        Usuario usuario=Usuario.builder().id(7L).build();
+        Cuenta origen=cuenta(1L,usuario,"MXN","100.00"),destino=cuenta(2L,usuario,"MXN","0.00");
+        Categoria categoria=Categoria.builder().id(4L).usuario(usuario).nombre("Categoría predeterminada").tipo(tipo).activo(true).build();
+        when(usuarioRepository.findById(7L)).thenReturn(Optional.of(usuario));
+        when(cuentaRepository.findByIdAndUsuarioId(1L,7L)).thenReturn(Optional.of(origen));
+        when(cuentaRepository.findByIdAndUsuarioId(2L,7L)).thenReturn(Optional.of(destino));
+        when(categoriaRepository.findAccessibleById(4L,7L)).thenReturn(Optional.of(categoria));
+        when(transaccionRepository.save(any(Transaccion.class))).thenAnswer(i->i.getArgument(0));
+        var respuesta=transaccionService.crearTransaccion(7L,new TransaccionRequest(1L,tipo==TipoTransaccion.TRANSFERENCIA?2L:null,tipo==TipoTransaccion.TRANSFERENCIA?null:4L,tipo,new BigDecimal("10.00"),null,LocalDate.now(),"  Cena de cumpleaños 😀  ","Nota separada",null,null,null));
+        assertEquals("Cena de cumpleaños 😀",respuesta.descripcion());
+        assertEquals("Nota separada",respuesta.notas());
+        assertEquals(tipo==TipoTransaccion.TRANSFERENCIA?null:4L,respuesta.categoriaId());
+    }
+
+    @ParameterizedTest
+    @EnumSource(value=TipoTransaccion.class,names={"GASTO","INGRESO","TRANSFERENCIA"})
+    void descripcionVaciaUsaCategoriaOTipo(TipoTransaccion tipo) {
+        Usuario usuario=Usuario.builder().id(7L).build();
+        Cuenta origen=cuenta(1L,usuario,"MXN","100.00"),destino=cuenta(2L,usuario,"MXN","0.00");
+        Categoria categoria=Categoria.builder().id(4L).usuario(usuario).nombre("Categoría predeterminada").tipo(tipo).activo(true).build();
+        when(usuarioRepository.findById(7L)).thenReturn(Optional.of(usuario));
+        when(cuentaRepository.findByIdAndUsuarioId(1L,7L)).thenReturn(Optional.of(origen));
+        when(cuentaRepository.findByIdAndUsuarioId(2L,7L)).thenReturn(Optional.of(destino));
+        when(categoriaRepository.findAccessibleById(4L,7L)).thenReturn(Optional.of(categoria));
+        when(transaccionRepository.save(any(Transaccion.class))).thenAnswer(i->i.getArgument(0));
+        var respuesta=transaccionService.crearTransaccion(7L,new TransaccionRequest(1L,tipo==TipoTransaccion.TRANSFERENCIA?2L:null,tipo==TipoTransaccion.TRANSFERENCIA?null:4L,tipo,new BigDecimal("10.00"),null,LocalDate.now(),"  ",null,null,null,null));
+        assertEquals(tipo==TipoTransaccion.TRANSFERENCIA?"Transferencia":"Categoría predeterminada",respuesta.descripcion());
+    }
+
+    @Test
+    void descripcionDe200CaracteresEnMsiNoSeTruncaNiDesbordaLaColumna() {
+        Usuario usuario=Usuario.builder().id(7L).build();
+        Cuenta tarjeta=cuenta(1L,usuario,"MXN","0.00");tarjeta.setTipo(TipoCuenta.CREDITO);tarjeta.setLimiteCredito(new BigDecimal("1000.00"));
+        when(usuarioRepository.findById(7L)).thenReturn(Optional.of(usuario));
+        when(cuentaRepository.findByIdAndUsuarioId(1L,7L)).thenReturn(Optional.of(tarjeta));
+        when(transaccionRepository.save(any(Transaccion.class))).thenAnswer(i->i.getArgument(0));
+        String descripcion="a".repeat(200);
+        var respuesta=transaccionService.crearTransaccion(7L,new TransaccionRequest(1L,null,null,TipoTransaccion.GASTO,new BigDecimal("120.00"),null,LocalDate.now(),descripcion,null,null,null,3));
+        assertEquals(descripcion,respuesta.descripcion());
+        assertEquals(new BigDecimal("40.00"),respuesta.monto());
     }
 
     private Cuenta cuenta(Long id, Usuario usuario, String moneda, String saldo) {

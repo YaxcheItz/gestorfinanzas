@@ -5,6 +5,8 @@ import { CategoriaPreferidaService } from '../../core/services/categoria-preferi
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { FinanzasService } from '../../core/services/finanzas.service';
 import { ToastService } from '../../core/services/toast.service';
+import { PerfilService } from '../../core/services/perfil.service';
+import { PrivacidadService } from '../../core/services/privacidad.service';
 import { Transaccion } from '../../core/models/finanzas.models';
 import { TransaccionesComponent } from './transacciones.component';
 
@@ -16,6 +18,7 @@ describe('TransaccionesComponent history filters', () => {
     getTransaccionesPaginadas: ReturnType<typeof vi.fn>;
     eliminarTransaccion: ReturnType<typeof vi.fn>;
     crearTransaccion: ReturnType<typeof vi.fn>;
+    actualizarTransaccion: ReturnType<typeof vi.fn>;
   };
   let confirm: ReturnType<typeof vi.fn>;
 
@@ -47,7 +50,8 @@ describe('TransaccionesComponent history filters', () => {
         }
       })),
       eliminarTransaccion: vi.fn(() => of({ success: true, message: '', data: undefined })),
-      crearTransaccion: vi.fn()
+      crearTransaccion: vi.fn(),
+      actualizarTransaccion: vi.fn()
     };
     confirm = vi.fn().mockResolvedValue(false);
 
@@ -59,6 +63,7 @@ describe('TransaccionesComponent history filters', () => {
         { provide: FinanzasService, useValue: finanzasService },
         { provide: CategoriaPreferidaService, useValue: { recordar: vi.fn(), preferida: () => null } },
         { provide: ToastService, useValue: { success: vi.fn(), error: vi.fn() } },
+        { provide: PerfilService, useValue: { alternarOcultarMontos: () => TestBed.inject(PrivacidadService).alternarLocal() } },
         { provide: ConfirmDialogService, useValue: { confirm } }
       ]
     }).compileComponents();
@@ -71,6 +76,47 @@ describe('TransaccionesComponent history filters', () => {
   afterEach(() => {
     vi.useRealTimers();
     fixture.destroy();
+  });
+
+  it('conserva los resultados nuevos cuando una búsqueda anterior responde tarde', () => {
+    const antigua = new Subject<any>(), reciente = new Subject<any>();
+    finanzasService.getTransaccionesPaginadas.mockReturnValueOnce(antigua).mockReturnValueOnce(reciente);
+    const component = fixture.componentInstance;
+    component.setTipoFiltro('GASTO');component.setTipoFiltro('INGRESO');
+    reciente.next({success:true,data:{content:[{id:2,tipo:'INGRESO',fecha:'2026-10-13'}],totalElements:1}});
+    antigua.next({success:true,data:{content:[{id:1,tipo:'GASTO',fecha:'2026-10-12'}],totalElements:1}});
+    expect(component.pageData()?.content.map(m=>m.id)).toEqual([2]);
+    expect(component.loading()).toBe(false);
+  });
+
+  it('conserva descripción y notas al editar solamente el monto', () => {
+    const component=fixture.componentInstance;
+    finanzasService.actualizarTransaccion.mockReturnValue(new Subject());
+    component.abrirModalEditar({id:7,cuentaId:1,cuentaNombre:'Efectivo',categoriaId:10,tipo:'GASTO',monto:20,moneda:'MXN',fecha:'2026-10-13',descripcion:'Cena con amigos',notas:'Sin picante',fechaCreacion:'2026-10-13T12:00:00'});
+    component.formMonto=25;component.guardarMovimiento();
+    expect(finanzasService.actualizarTransaccion).toHaveBeenCalledWith(7,expect.objectContaining({monto:25,descripcion:'Cena con amigos',notas:'Sin picante',categoriaId:10}));
+  });
+  it('no repite saldos iniciales, cashback, cuotas MSI ni cuentas eliminadas',()=>{
+    const component=fixture.componentInstance;
+    const base={id:1,tipo:'GASTO',cuentaId:1,cuentaNombre:'Banco',monto:25,moneda:'MXN',fecha:'2020-01-01',descripcion:'Cena',fechaCreacion:'2020-01-01T12:00:00'} as Transaccion;
+    const escuchar=vi.fn();window.addEventListener('kaptal-abrir-registro-rapido',escuchar);
+    try {
+      for(const cambio of [{tipo:'SALDO_INICIAL'},{cashbackAutomatico:true},{compraMsiId:'msi'},{cuentaId:null},{tipo:'TRANSFERENCIA',cuentaDestinoId:null}])component.repetirMovimiento({...base,...cambio} as Transaccion);
+      expect(escuchar).not.toHaveBeenCalled();
+    }finally{window.removeEventListener('kaptal-abrir-registro-rapido',escuchar);}
+  });
+
+  it('quita solo una categoría y conserva búsqueda, cuenta y el resto de los filtros', () => {
+    const component=fixture.componentInstance;
+    (TestBed.inject(ActivatedRoute).snapshot.queryParamMap as unknown as URLSearchParams).set('categoriaId','10');
+    component.filtroBusqueda.set('tacos');component.filtroBusquedaInput.set('tacos');
+    component.filtroCuentaId.set(4);component.filtroCategoriaIds.set([10,20]);component.filtroMontoMin.set(5);component.paginaActual.set(2);
+    component.quitarFiltro(component.filtrosVisibles().find(f=>f.categoriaId===10)!);
+    expect(component.filtroCategoriaIds()).toEqual([20]);
+    expect(component.filtroBusquedaInput()).toBe('tacos');expect(component.filtroCuentaId()).toBe(4);
+    expect(component.filtroMontoMin()).toBe(5);expect(component.paginaActual()).toBe(0);
+    expect(finanzasService.getTransaccionesPaginadas).toHaveBeenLastCalledWith(expect.objectContaining({busqueda:'tacos',categoriaIds:[20],cuentaId:4,montoMin:5}),0,15);
+    expect(TestBed.inject(Router).navigate).toHaveBeenCalledWith([],expect.objectContaining({queryParams:{categoriaId:null},queryParamsHandling:'merge',replaceUrl:true}));
   });
 
   it('bloquea el doble envío y reintenta el mismo gasto tras una respuesta incierta', () => {

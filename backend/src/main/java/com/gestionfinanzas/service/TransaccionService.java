@@ -126,6 +126,10 @@ public class TransaccionService {
                 montoGuardar, datos.montoDestino(), 1);
 
         UUID compraMsiId = isMsi ? UUID.randomUUID() : compraExistente;
+        String descripcion = descripcionMovimiento(datos, request.descripcion());
+        String sufijoCuota = isMsi ? " (Cuota 1/" + request.msi() + ")" : "";
+        // La referencia de cuota no debe truncar el texto ni exceder la columna de 200 caracteres.
+        if (descripcion.length() + sufijoCuota.length() <= 200) descripcion += sufijoCuota;
         Transaccion transaccion = Transaccion.builder()
                 .compraMsiId(compraMsiId)
                 .usuario(datos.usuario())
@@ -141,7 +145,7 @@ public class TransaccionService {
                 .montoDestino(datos.montoDestino())
                 .tasaCambio(datos.tasaCambio())
                 .fecha(request.fecha())
-                .descripcion(descripcionMovimiento(datos, request.descripcion()) + (isMsi ? " (Cuota 1/" + request.msi() + ")" : ""))
+                .descripcion(descripcion)
                 .notas(normalizarNotas(request.notas()))
                 .metodoCaptura(metodoCaptura)
                 .clientRequestId(idempotencyKey)
@@ -399,12 +403,11 @@ public class TransaccionService {
         }
     }
 
-    private String descripcionMovimiento(DatosTransaccion datos, String descripcionAnterior) {
+    private String descripcionMovimiento(DatosTransaccion datos, String descripcionSolicitada) {
+        if (descripcionSolicitada != null && !descripcionSolicitada.isBlank()) return descripcionSolicitada.trim();
         if (datos.categoria() != null) return datos.categoria().getNombre();
         if (datos.tipo() == TipoTransaccion.TRANSFERENCIA) return "Transferencia";
-        return descripcionAnterior != null && !descripcionAnterior.isBlank()
-                ? descripcionAnterior.trim()
-                : (datos.tipo() == TipoTransaccion.INGRESO ? "Ingreso sin categoría" : "Gasto sin categoría");
+        return datos.tipo() == TipoTransaccion.INGRESO ? "Ingreso sin categoría" : "Gasto sin categoría";
     }
 
     private void aplicarImpacto(

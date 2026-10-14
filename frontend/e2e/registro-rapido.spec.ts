@@ -68,7 +68,7 @@ test('registro rápido guarda gastos, ingresos y transferencias; conserva borrad
   expect((await movements()).filter((m:{monto:number})=>m.monto===7.5)).toHaveLength(1);
   await page.context().setOffline(true);await open();await amount.fill('12');
   await expect(dialog.getByText(/Se guardará en este dispositivo/)).toBeVisible();
-  await dialog.getByRole('button',{name:'Guardar gasto',exact:true}).evaluate(button=>{(button as HTMLButtonElement).click();(button as HTMLButtonElement).click();});
+  await dialog.getByRole('button',{name:'Guardar en este dispositivo',exact:true}).evaluate(button=>{(button as HTMLButtonElement).click();(button as HTMLButtonElement).click();});
   await expect(dialog).not.toBeVisible();await page.context().setOffline(false);
   await expect.poll(async()=>(await movements()).filter((m:{monto:number})=>m.monto===12).length,{timeout:30000}).toBe(1);
   const accounts=await page.request.get('/api/cuentas',{headers});expect(accounts.ok()).toBeTruthy();

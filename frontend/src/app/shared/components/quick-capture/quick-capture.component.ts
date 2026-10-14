@@ -2,7 +2,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { PrivacidadService } from '../../../core/services/privacidad.service';
 import { PrivacyToggleComponent } from '../privacy-toggle/privacy-toggle.component';
 import { CommonModule } from '@angular/common';
-import { Component, HostListener, OnDestroy, computed, effect, inject, signal } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, ViewChild, afterRenderEffect, computed, effect, inject, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
@@ -25,7 +25,7 @@ type CaptureMode = 'CAPTURE' | 'REPORT';
 /** Estado del panel de procesamiento de voz */
 type ProcessingStep = 'TRANSCRIBIENDO' | 'CATEGORIZANDO' | null;
 interface AssistantMessage extends AiChatMessage { actions?: AiActionProposal[]; }
-interface CaptureTurn { id: number; user: string; answer: string; actions: AiActionProposal[]; voice: boolean; report?: AiReportWidget | null; suggestions?: string[]; engine?: string; }
+interface CaptureTurn { id: number; user: string; answer: string; actions: AiActionProposal[]; voice: boolean; report?: AiReportWidget | null; suggestions?: string[]; engine?: string; confirmaciones?: {id:string; estado:'SERVIDOR'|'DISPOSITIVO'}[]; }
 interface WeeklyCategory { name: string; amount: number; percent: number; currency: string; }
 @Component({
   selector: 'app-quick-capture',
@@ -99,13 +99,14 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
               <p>Actualizar prepara la propuesta. Confirma después para registrar el movimiento.</p>
             </form>
           } @else {
-          <div id="capture-chat-thread" class="capture-chat" aria-live="polite" aria-relevant="additions text" [attr.aria-busy]="loading()">
+          <div #chatScroll id="capture-chat-thread" class="capture-chat" (scroll)="actualizarSeguimiento($event)" aria-live="polite" aria-relevant="additions text" [attr.aria-busy]="loading()">
             @if (captureTurns().length === 0 && !pendingCaptureText()) {
               <div class="capture-chat__intro"><span class="capture-chat__avatar" aria-hidden="true">✦</span><div><strong>¿Qué anotamos o consultamos?</strong><p>{{ captureHint() }} Ejemplos:</p><div class="capture-chat__suggestions"><button type="button" (click)="usarEjemplo('Gasté 180 en comida')">Gasté $180 en comida</button><button type="button" (click)="usarEjemplo('Recibí 8500 de nómina')">Recibí $8,500 de nómina</button></div></div></div>
             }
             @for (turn of captureTurns(); track turn.id) {
               <article class="capture-chat__user"><span>{{ turn.user | textoFinanciero }}</span></article>
-              <article class="capture-chat__assistant"><span class="capture-chat__avatar" aria-hidden="true">✦</span><div class="capture-chat__reply"><small class="chat-engine">{{ turn.engine === 'IA' ? 'Interpretado con IA' : 'Reglas e historial' }}</small><p>{{ turn.answer | textoFinanciero }}</p>
+              <article class="capture-chat__assistant"><span class="capture-chat__avatar" aria-hidden="true">✦</span><div class="capture-chat__reply"><p>{{ turn.answer | textoFinanciero }}</p>
+                @for (confirmacion of turn.confirmaciones ?? []; track confirmacion.id) {<p class="capture-receipt" [class.capture-receipt--local]="confirmacion.estado === 'DISPOSITIVO'">{{ confirmacion.estado === 'SERVIDOR' ? '✓ Movimiento confirmado en tus cuentas' : '✓ Guardado en este dispositivo. Revisa el estado de envío en pendientes.' }}</p>}
                 @if (turn.report; as report) {
                   <section class="chat-local-report" aria-label="Reporte financiero"><h3>{{ report.title | textoFinanciero }}</h3>
                     @for (label of report.labels; track $index; let i = $index) {<div class="chat-local-report__row"><span>{{ label | textoFinanciero }}</span><strong>{{ report.values[i] | monto:(report.unit || 'MXN') }}</strong><div class="chat-local-report__track"><i [style.width.%]="anchoReporte(report, i)"></i></div></div>}
@@ -157,16 +158,17 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
               </section>
             }
           </div>
+          @if (!seguirFinal()) {<button type="button" class="capture-jump-latest" (click)="irAlFinal()">Ir al último mensaje ↓</button>}
           @if (permisoVoz()) {<section class="voice-permission" role="status"><p>El audio se enviará para transcribirlo. Revisa el movimiento antes de guardarlo.</p><button type="button" (click)="permitirVoz()">Permitir audio y grabar</button></section>}
           <div class="chat-local-prompts" aria-label="Consultas y registros sugeridos"><button type="button" (click)="usarSugerencia('Reporte de hoy')" [disabled]="loading()">Hoy</button><button type="button" (click)="usarSugerencia('Top categorías de este mes')" [disabled]="loading()">Top categorías</button><button type="button" (click)="usarSugerencia('Alertas de presupuesto')" [disabled]="loading()">Presupuestos</button><button type="button" (click)="usarSugerencia('Saldo')" [disabled]="loading()">Saldos</button></div>
           <form class="capture-chat__composer" (ngSubmit)="submit()">
             <label class="sr-only" for="quick-capture-text">Escribe el movimiento que quieres registrar</label>
-            <textarea id="quick-capture-text" name="content" [(ngModel)]="content" (ngModelChange)="alCambiarTexto()" (keydown.enter)="enviarConEnter($event)" rows="1" maxlength="1200" enterkeyhint="send" placeholder="Escribe un movimiento o una pregunta…" [disabled]="loading() || escuchando() || stopping()"></textarea>
+            <textarea id="quick-capture-text" name="content" [(ngModel)]="content" (ngModelChange)="alCambiarTexto()" (keydown.enter)="enviarConEnter($event)" rows="1" maxlength="1200" enterkeyhint="send" placeholder="Movimiento o consulta…" [readOnly]="loading() || escuchando() || stopping()" [attr.aria-busy]="loading()"></textarea>
             <button type="button" class="capture-mic" (click)="toggleVoice()" [class.is-listening]="escuchando()" [disabled]="loading() || transcribiendoVoz() || stopping()" [attr.aria-label]="escuchando() ? 'Detener dictado' : 'Dictar movimiento'"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5m-4 0h8"/></svg></button>
             <button type="submit" class="capture-chat__send" [disabled]="loading() || escuchando() || stopping() || !content.trim()" aria-label="Enviar movimiento"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 14-7-5 14-3-6-6-1Z"/><path d="m11 13 4-4"/></svg></button>
           </form>
           @if (voiceMessage()) { <p class="voice-transcribed" role="status">{{ voiceMessage() }}</p> }
-          <label class="capture-consent capture-chat__consent"><input type="checkbox" [(ngModel)]="consent" name="captureConsent"><span>Permitir IA con mi contexto financiero para consultas complejas</span></label>
+          <details class="capture-options"><summary>IA opcional · {{ consent ? 'permitida' : 'sin permiso' }}</summary><label class="capture-consent capture-chat__consent"><input type="checkbox" [(ngModel)]="consent" name="captureConsent"><span>Permitir IA con mi contexto financiero para consultas complejas</span></label><p>El registro habitual usa reglas. Tú decides cuándo permitir IA.</p></details>
           }
         } @else {
           <div class="report-thread" aria-live="polite" aria-relevant="additions text" [attr.aria-busy]="reportLoading()">
@@ -231,7 +233,33 @@ export class QuickCaptureComponent implements OnDestroy {
   private voiceConsent = false;
   private usuarioChat: number | null = null;
   private destruido = false;
+  @ViewChild('chatScroll') private chatScroll?: ElementRef<HTMLElement>;
+  readonly seguirFinal = signal(true);
+
+  actualizarSeguimiento(event: Event): void {
+    const element = event.target as HTMLElement;
+    this.seguirFinal.set(element.scrollHeight - element.scrollTop - element.clientHeight < 48);
+  }
+
+  irAlFinal(): void {
+    this.seguirFinal.set(true);
+    const element = this.chatScroll?.nativeElement;
+    if (element) element.scrollTop = element.scrollHeight;
+  }
+
   constructor() {
+    afterRenderEffect(onCleanup => {
+      this.open(); this.captureTurns(); this.loading();
+      const element = this.chatScroll?.nativeElement;
+      if (!element) return;
+      const ajustar = () => { if (untracked(this.seguirFinal)) element.scrollTop = element.scrollHeight; };
+      ajustar();
+      if (typeof ResizeObserver !== 'undefined') {
+        const observer = new ResizeObserver(ajustar);
+        observer.observe(element);
+        onCleanup(() => observer.disconnect());
+      }
+    });
     this.quitarProtector=this.actualizacion.proteger(async()=>{
       const generation = this.chatGeneration;
       const estado = () => JSON.stringify({texto:this.content,acciones:this.captureTurns().flatMap(t=>t.actions),contexto:this.contexto,editando:this.editando()?.id,edicion:this.borrador});
@@ -440,6 +468,7 @@ export class QuickCaptureComponent implements OnDestroy {
   submit(): void {
     const value = this.content.trim();
     if (!value || this.loading() || this.listening() || this.stopping() || this.confirming() !== null) return;
+    this.seguirFinal.set(true);
     if(!this.offline.conexion()){
       this.prepararEnDispositivo(value);return;
     }
@@ -502,8 +531,7 @@ export class QuickCaptureComponent implements OnDestroy {
 
   private scrollCaptureToBottom(): void {
     requestAnimationFrame(() => {
-      const thread = document.getElementById('capture-chat-thread');
-      if (thread) thread.scrollTo({ top: thread.scrollHeight, behavior: 'smooth' });
+      if (this.seguirFinal()) this.irAlFinal();
     });
   }
 
@@ -624,7 +652,7 @@ export class QuickCaptureComponent implements OnDestroy {
           return;
         }
         this.captureTurns.update(turns => turns.map(turn => turn.actions.some(action => action.id === proposal.id)
-          ? { ...turn, answer: `${turn.answer}\n${result.message || 'Movimiento guardado.'}`, actions: turn.actions.filter(action => action.id !== proposal.id) }
+          ? { ...turn, confirmaciones: [...(turn.confirmaciones ?? []), {id:proposal.id,estado:'SERVIDOR' as const}], actions: turn.actions.filter(action => action.id !== proposal.id) }
           : turn));
         window.dispatchEvent(new Event('kaptal-movimiento-guardado'));
         this.toast.success('Movimiento guardado con éxito.', '✅ Listo');
@@ -698,6 +726,7 @@ export class QuickCaptureComponent implements OnDestroy {
 
   @HostListener('window:kaptal-abrir-captura-chat', ['$event'])
   abrirCapturaDesdeAcceso(event: Event): void {
+    this.seguirFinal.set(true);
     this.cargarCategoriasCaptura();
     const detail = (event as CustomEvent<{ tipo?: string; content?: string }>).detail;
     this.open.set(true);
@@ -931,7 +960,7 @@ export class QuickCaptureComponent implements OnDestroy {
       if(proposal.local)await this.offline.guardarPendiente(uid,proposal.id,payload);
       else await this.offline.guardarConfirmacion(uid,proposal,payload);
       if(generation!==this.chatGeneration)return;
-      this.captureTurns.update(turns=>turns.map(t=>({...t,actions:t.actions.filter(p=>p.id!==proposal.id)})));
+      this.captureTurns.update(turns=>turns.map(t=>t.actions.some(p=>p.id===proposal.id)?({...t,confirmaciones:[...(t.confirmaciones??[]),{id:proposal.id,estado:'DISPOSITIVO' as const}],actions:t.actions.filter(p=>p.id!==proposal.id)}):t));
       this.toast.info('Guardado en este dispositivo. Falta confirmación del servidor.');
       this.marcarBorrador();if(this.offline.conexion())void this.offline.sincronizar();
     }catch(error){if(generation===this.chatGeneration)this.error.set(error instanceof Error?error.message:'No se pudo guardar localmente. La propuesta sigue disponible.');}

@@ -20,7 +20,7 @@ import { GoogleSignInComponent } from '../google-sign-in/google-sign-in.componen
             </svg>
           </div>
           <h1>Bienvenido de nuevo</h1>
-          <p>Ingresa a tu gestor de finanzas personales</p>
+          <p>Tu dinero, tus planes y tus movimientos.</p>
         </div>
 
         @if (sessionExpiredWarning()) {
@@ -35,7 +35,7 @@ import { GoogleSignInComponent } from '../google-sign-in/google-sign-in.componen
           </div>
         }
 
-        <form (ngSubmit)="onSubmit()" class="login-form">
+        <form (ngSubmit)="onSubmit()" class="login-form" [attr.aria-busy]="loading()">
           <label class="login-field">
             <span>Correo electrónico</span>
             <input
@@ -44,6 +44,10 @@ import { GoogleSignInComponent } from '../google-sign-in/google-sign-in.componen
               type="email"
               autocomplete="email"
               inputmode="email"
+              autocapitalize="none"
+              spellcheck="false"
+              maxlength="150"
+              [readOnly]="loading()"
               required
               [(ngModel)]="email"
               placeholder="tu@correo.com"
@@ -58,6 +62,7 @@ import { GoogleSignInComponent } from '../google-sign-in/google-sign-in.componen
                 name="password"
                 [type]="mostrarPassword() ? 'text' : 'password'"
                 autocomplete="current-password"
+                [readOnly]="loading()"
                 required
                 [(ngModel)]="password"
                 placeholder="••••••••"
@@ -300,6 +305,7 @@ export class LoginComponent {
   }
 
   onSubmit(): void {
+    if (this.loading()) return;
     if (!this.email || !this.password) {
       this.errorMessage.set('Por favor completa todos los campos.');
       return;
@@ -309,15 +315,19 @@ export class LoginComponent {
     this.errorMessage.set(null);
     this.sessionExpiredWarning.set(false);
 
-    this.authService.login({ email: this.email, password: this.password }).subscribe({
-      next: () => {
+    this.authService.login({ email: this.email.trim(), password: this.password }).subscribe({
+      next: response => {
         this.loading.set(false);
+        if (!response.success || !response.data) {
+          this.errorMessage.set(response.message || 'No pudimos iniciar sesión. Revisa tus datos.');
+          return;
+        }
         this.router.navigate(['/dashboard']);
       },
       error: (err) => {
         this.loading.set(false);
         this.errorMessage.set(
-          mensajeDeError(err, 'Error de conexión con el backend o credenciales incorrectas.')
+          mensajeDeError(err, 'No pudimos iniciar sesión. Revisa tus datos y la conexión.')
         );
       }
     });
@@ -328,8 +338,12 @@ export class LoginComponent {
     this.loading.set(true);
     this.errorMessage.set(null);
     this.authService.loginWithGoogle(credential).subscribe({
-      next: () => {
+      next: response => {
         this.loading.set(false);
+        if (!response.success || !response.data) {
+          this.errorMessage.set(response.message || 'No pudimos iniciar sesión con Google.');
+          return;
+        }
         this.router.navigate(['/dashboard']);
       },
       error: error => {

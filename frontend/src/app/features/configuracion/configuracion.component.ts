@@ -1,10 +1,11 @@
 import { CommonModule, DOCUMENT } from '@angular/common';
 import { fechaFinanciera } from '../../core/utils/fecha-financiera';
-import { Component, OnInit, effect, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, effect, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { SwPush } from '@angular/service-worker';
 import { firstValueFrom } from 'rxjs';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { GoogleSignInComponent } from '../auth/google-sign-in/google-sign-in.component';
 import { AuthService } from '../../core/services/auth.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
@@ -26,7 +27,7 @@ import {
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, MontoPipe, GoogleSignInComponent],
   template: `
-    <main class="finance-page mx-auto max-w-4xl space-y-5 px-3 py-5 sm:space-y-7 sm:px-6 sm:py-8">
+    <main class="finance-page settings-page mx-auto max-w-4xl space-y-5 px-3 py-5 sm:space-y-7 sm:px-6 sm:py-8">
       <header class="flex min-w-0 items-center gap-3 sm:gap-4">
         <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700 sm:h-14 sm:w-14">
           <svg aria-hidden="true" class="h-6 w-6 sm:h-7 sm:w-7" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -42,16 +43,16 @@ import {
       </header>
 
       <nav aria-label="Secciones de configuración" class="-mx-3 flex gap-2 overflow-x-auto px-3 pb-1 sm:mx-0 sm:px-0">
-        <a [routerLink]="[]" fragment="appearance" class="inline-flex min-h-11 shrink-0 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Apariencia</a>
-        <a [routerLink]="[]" fragment="profile" class="inline-flex min-h-11 shrink-0 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Perfil</a>
-        <a [routerLink]="[]" fragment="notifications" class="inline-flex min-h-11 shrink-0 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Avisos</a>
-        <a [routerLink]="[]" fragment="security" class="inline-flex min-h-11 shrink-0 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Seguridad</a>
-        <a [routerLink]="[]" fragment="backup" class="inline-flex min-h-11 shrink-0 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Respaldo</a>
-        <a [routerLink]="[]" fragment="categories" class="inline-flex min-h-11 shrink-0 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Categorías</a>
-        <a [routerLink]="[]" fragment="recurring" class="inline-flex min-h-11 shrink-0 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Recurrentes</a>
+        <a [routerLink]="[]" (click)="abrirSeccion($event)" fragment="appearance" class="inline-flex min-h-11 shrink-0 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Apariencia</a>
+        <a [routerLink]="[]" (click)="abrirSeccion($event)" fragment="profile" class="inline-flex min-h-11 shrink-0 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Perfil</a>
+        <a [routerLink]="[]" (click)="abrirSeccion($event)" fragment="notifications" class="inline-flex min-h-11 shrink-0 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Avisos</a>
+        <a [routerLink]="[]" (click)="abrirSeccion($event)" fragment="security" class="inline-flex min-h-11 shrink-0 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Seguridad</a>
+        <a [routerLink]="[]" (click)="abrirSeccion($event)" fragment="backup" class="inline-flex min-h-11 shrink-0 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Respaldo</a>
+        <a [routerLink]="[]" (click)="abrirSeccion($event)" fragment="categories" class="inline-flex min-h-11 shrink-0 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Categorías</a>
+        <a [routerLink]="[]" (click)="abrirSeccion($event)" fragment="recurring" class="inline-flex min-h-11 shrink-0 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Recurrentes</a>
       </nav>
 
-      <section class="settings-management" aria-label="Herramientas financieras"><h2>Organiza tus finanzas</h2><nav><a routerLink="/cuentas">Cuentas y tarjetas <span>›</span></a><a routerLink="/categorias">Categorías <span>›</span></a><a [routerLink]="[]" fragment="recurring">Recurrentes <span>›</span></a><a routerLink="/libro-diario">Libro diario <span>›</span></a><a routerLink="/pareja">Gastos compartidos <span>›</span></a></nav></section>
+      <section class="settings-management" aria-label="Herramientas financieras"><h2>Organiza tus finanzas</h2><nav><a routerLink="/cuentas">Cuentas y tarjetas <span>›</span></a><a routerLink="/categorias">Categorías <span>›</span></a><a [routerLink]="[]" (click)="abrirSeccion($event)" fragment="recurring">Recurrentes <span>›</span></a><a routerLink="/libro-diario">Libro diario <span>›</span></a><a routerLink="/pareja">Gastos compartidos <span>›</span></a></nav></section>
 
       @if (perfilService.error()) {
         <div role="alert" class="flex flex-col gap-3 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 sm:flex-row sm:items-center sm:justify-between">
@@ -225,7 +226,9 @@ import {
         }
       </section>
 
-      <section id="notifications" class="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6 dark:border-slate-700 dark:bg-slate-900">
+      <details id="notifications" class="settings-disclosure scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6 dark:border-slate-700 dark:bg-slate-900" [open]="seccionAbierta() === 'notifications'" (toggle)="alternarSeccion('notifications', $event)">
+        <summary><strong>Avisos</strong><span>Notificaciones de este dispositivo</span></summary>
+        <div class="settings-disclosure__content">
         <div class="mb-4">
           <h2 class="text-base font-bold text-slate-900 dark:text-white">Avisos en tu dispositivo</h2>
           <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">Recibe recordatorios de corte, pago estimado y movimientos programados aunque Kaptal no esté abierto.</p>
@@ -254,9 +257,11 @@ import {
             }
           </div>
         }
-      </section>
+      </div></details>
 
-      <section id="security" class="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6">
+      <details id="security" class="settings-disclosure scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6" [open]="seccionAbierta() === 'security'" (toggle)="alternarSeccion('security', $event)">
+        <summary><strong>Seguridad</strong><span>Contraseña y cierre de sesión</span></summary>
+        <div class="settings-disclosure__content">
         <div class="mb-5">
           <h2 class="text-base font-bold text-slate-900">Seguridad</h2>
           <p class="mt-1 text-xs text-slate-500">Usa entre 8 y 20 caracteres. Puedes incluir símbolos.</p>
@@ -282,9 +287,11 @@ import {
             Cerrar sesión
           </button>
         </div>
-      </section>
+      </div></details>
 
-      <section id="backup" class="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6">
+      <details id="backup" class="settings-disclosure scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6" [open]="seccionAbierta() === 'backup'" (toggle)="alternarSeccion('backup', $event)">
+        <summary><strong>Respaldo y exportación</strong><span>Descarga tus datos o revisa una restauración</span></summary>
+        <div class="settings-disclosure__content">
         <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div class="min-w-0">
             <h2 class="text-base font-bold text-slate-900">Respaldo de tus datos</h2>
@@ -364,9 +371,11 @@ import {
             </div>
           }
         </div>
-      </section>
+      </div></details>
 
-      <section id="categories" class="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6">
+      <details id="categories" class="settings-disclosure scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6" [open]="seccionAbierta() === 'categories'" (toggle)="alternarSeccion('categories', $event)">
+        <summary><strong>Categorías</strong><span>Organiza cómo clasificas tus movimientos</span></summary>
+        <div class="settings-disclosure__content">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 class="text-base font-bold text-slate-900">Categorías</h2>
@@ -376,9 +385,11 @@ import {
             Administrar categorías
           </a>
         </div>
-      </section>
+      </div></details>
 
-      <section id="recurring" class="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6">
+      <details id="recurring" class="settings-disclosure scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6" [open]="seccionAbierta() === 'recurring'" (toggle)="alternarSeccion('recurring', $event)">
+        <summary><strong>Movimientos recurrentes</strong><span>Revisa tus registros programados</span></summary>
+        <div class="settings-disclosure__content">
         <div class="mb-4 flex items-start justify-between gap-3">
           <div>
             <h2 class="text-base font-bold text-slate-900">Movimientos recurrentes</h2>
@@ -444,9 +455,11 @@ import {
             }
           </div>
         }
-      </section>
+      </div></details>
 
-      <section id="danger" class="scroll-mt-24 rounded-2xl border border-rose-200 bg-white p-4 shadow-xs sm:p-6 dark:border-rose-900">
+      <details id="danger" class="settings-disclosure scroll-mt-24 rounded-2xl border border-rose-200 bg-white p-4 shadow-xs sm:p-6 dark:border-rose-900" [open]="seccionAbierta() === 'danger'" (toggle)="alternarSeccion('danger', $event)">
+        <summary><strong>Eliminar cuenta</strong><span>Acción permanente; requiere confirmación</span></summary>
+        <div class="settings-disclosure__content">
         <div class="mb-5">
           <h2 class="text-base font-bold text-rose-700">Eliminar mi cuenta</h2>
           <p class="mt-1 text-sm text-slate-600">
@@ -462,7 +475,7 @@ import {
         </ul>
         <p class="mb-4 text-xs text-slate-600">
           Si quieres conservar tu información, descarga antes el
-          <a [routerLink]="[]" fragment="backup" class="font-semibold text-emerald-700 underline">respaldo de tus datos</a>.
+          <a [routerLink]="[]" (click)="abrirSeccion($event)" fragment="backup" class="font-semibold text-emerald-700 underline">respaldo de tus datos</a>.
         </p>
         <button
           type="button"
@@ -470,7 +483,7 @@ import {
           class="min-h-11 rounded-xl border border-rose-300 bg-white px-4 py-2.5 text-sm font-semibold text-rose-700 hover:bg-rose-50">
           Eliminar mi cuenta y todos sus datos
         </button>
-      </section>
+      </div></details>
 
       @if (modalBorradoAbierto()) {
         <div class="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/60 p-3 sm:items-center" (click)="cerrarConfirmacionBorrado()">
@@ -604,6 +617,19 @@ export class ConfiguracionComponent implements OnInit {
 
   readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
+  readonly seccionAbierta = signal<string | null>(null);
+
+  abrirSeccion(event: Event): void {
+    const fragment = (event.currentTarget as HTMLElement).getAttribute('fragment');
+    if (fragment) this.seccionAbierta.set(fragment);
+  }
+
+  alternarSeccion(id: string, event: Event): void {
+    if ((event.target as HTMLDetailsElement).open) this.seccionAbierta.set(id);
+    else if (this.seccionAbierta() === id) this.seccionAbierta.set(null);
+  }
   private readonly document = inject(DOCUMENT);
   readonly perfilService = inject(PerfilService);
   private readonly finanzasService = inject(FinanzasService);
@@ -626,6 +652,10 @@ export class ConfiguracionComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.seccionAbierta.set(this.route.snapshot.fragment);
+    this.route.fragment?.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(fragment => {
+      if (fragment) this.seccionAbierta.set(fragment);
+    });
     this.cargarPlantillas();
     void this.cargarEstadoPush();
   }
