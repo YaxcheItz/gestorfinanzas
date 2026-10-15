@@ -67,6 +67,12 @@ export interface PinVinculacionWhatsApp {
 }
 
 export interface Transaccion {
+  listaId?: number | null;
+  listaNombre?: string | null;
+  etiquetas?: string[];
+  autorId?: number;
+  autorNombre?: string;
+
   id: number;
   cuentaId: number | null;
   cuentaNombre: string;
@@ -161,6 +167,9 @@ export interface BackfillLibroDiario {
 }
 
 export interface TransaccionPayload {
+  listaId?: number | null;
+  etiquetas?: string[];
+
   cuentaId: number;
   cuentaDestinoId?: number | null;
   categoriaId?: number | null;
@@ -176,6 +185,8 @@ export interface TransaccionPayload {
 }
 
 export interface PlantillaRecurrente {
+  listaId?: number | null;
+  etiquetas?: string[];
   id: number;
   cuentaId: number;
   cuentaNombre: string;
@@ -305,6 +316,10 @@ export interface PresupuestoMonedaResumen {
 }
 
 export interface TransaccionFiltro {
+  listaId?: number | null;
+  etiquetas?: string[];
+  autorId?: number | null;
+
   id?: number | null;
   tipo?: TipoTransaccion | '';
   cuentaId?: number | null;

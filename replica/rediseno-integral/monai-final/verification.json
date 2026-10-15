@@ -1,0 +1,41 @@
+{
+  "branch": "mejoras/rediseno-integral-android",
+  "plan": "docs/PLAN_UI_MONAI.md",
+  "build": {
+    "passed": true,
+    "initialKB": 457.76,
+    "warnings": 0
+  },
+  "frontend": {
+    "files": 35,
+    "passed": 275
+  },
+  "e2e": {
+    "passed": 2,
+    "backend": "isolated H2"
+  },
+  "browser": {
+    "server4300": 161,
+    "mobileWidths": [
+      375,
+      390,
+      393,
+      402,
+      430
+    ],
+    "productionArtifact": 130,
+    "interaction393and1280": 64,
+    "themes": [
+      "CLARO",
+      "OSCURO"
+    ],
+    "fixtures": "synthetic; three category expenses and normal/warning/exceeded budgets",
+    "offlineStyles": 5,
+    "physicalAndroid": false
+  },
+  "scope": {
+    "newExternalIntegrations": false,
+    "deployed": false,
+    "commitOrPush": false
+  }
+}

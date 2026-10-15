@@ -25,10 +25,12 @@ test('inicio separa deuda y monedas, y repetir crea solo un movimiento nuevo con
   const antes=(await movimientos()).length;
   let posts=0;page.on('request',r=>{if(r.method()==='POST' && new URL(r.url()).pathname==='/api/transacciones')posts++;});
   await page.goto('/login');await page.locator('#email').fill(email);await page.locator('#password').fill(password);await page.getByRole('button',{name:'Iniciar sesión',exact:true}).click();await expect(page).toHaveURL(/dashboard/);
-  const hero=page.locator('.dashboard-screen__monthly'),budget=page.locator('.dashboard-budget-remaining');
-  await expect(hero).toContainText('Dinero en cuentas');await expect(hero.locator('.dashboard-screen__amount')).toContainText(/975[.,]00/);
+  await page.getByRole('button',{name:'Detallada',exact:true}).click();
+  await page.locator('.home-account-details > summary').click();
+  const hero=page.locator('.dashboard-screen__monthly'),budget=page.locator('.dashboard-budget-left');
+  await expect(hero).toContainText('Dinero en cuentas');await expect(hero.locator('.dashboard-screen__amount')).toContainText(/225[.,]00/);
   await expect(hero.getByText('Deuda de tarjetas').locator('..')).toContainText(/200[.,]00/);await expect(budget).toContainText(/275[.,]00/);
-  await page.getByRole('combobox',{name:'Moneda del balance'}).selectOption('USD');await expect(hero.locator('.dashboard-screen__amount')).toContainText(/100[.,]00/);await expect(budget).toContainText(/80[.,]00/);
+  await page.getByRole('combobox',{name:'Moneda del balance'}).selectOption('USD');await expect(hero.locator('.dashboard-screen__amount')).toContainText(/0[.,]00/);await expect(budget).toContainText(/80[.,]00/);
   await page.getByRole('combobox',{name:'Moneda del balance'}).selectOption('MXN');
   await page.screenshot({path:testInfo.outputPath('inicio-movil.png'),fullPage:true});
   await page.getByRole('button',{name:'Ver detalle de Cena repetible',exact:true}).press('Enter');await expect(page).toHaveURL(/detalle=/);
@@ -44,10 +46,15 @@ test('inicio separa deuda y monedas, y repetir crea solo un movimiento nuevo con
   expect(posts).toBe(1);const despues=await movimientos();expect(despues.length).toBe(antes+1);
   const copia=despues.find((m:{descripcion:string})=>m.descripcion==='Cena repetida');expect(copia).toMatchObject({monto:30,cuentaId:banco,categoriaId:gastos[0].id,fecha,notas:'Nota original'});expect(copia.id).not.toBe(originalId);
   expect(despues.find((m:{id:number})=>m.id===originalId)).toMatchObject({monto:25,fecha:fechaOriginal,descripcion:'Cena repetible'});
-  await page.setViewportSize({width:390,height:844});await page.getByRole('link',{name:'Inicio',exact:true}).click();await expect(budget).toContainText(/245[.,]00/);
+  await page.setViewportSize({width:390,height:844});await page.getByRole('link',{name:'Inicio',exact:true}).click();await page.getByRole('button',{name:'Detallada',exact:true}).click();await expect(budget).toContainText(/245[.,]00/);
   await page.route('**/api/dashboard/analitica**',r=>r.fulfill({status:503,json:{success:false}}));
-  await page.getByRole('button',{name:'Actualizar resumen'}).click();await expect(page.getByText('No pudimos cargar la distribución de gastos.',{exact:true})).toBeVisible();
-  await page.unroute('**/api/dashboard/analitica**');await page.getByRole('button',{name:'Actualizar resumen'}).click();
-  await expect(page.getByText('No pudimos cargar la distribución de gastos.',{exact:true})).not.toBeVisible();
+  await page.locator('.workspace-selector').click();
+  await page.getByRole('button',{name:/^Herramientas/}).click();
+  await page.getByRole('link', { name: 'Reportes', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'No pudimos cargar tus datos' })).toBeVisible();
+  await page.unroute('**/api/dashboard/analitica**');
+  await page.getByRole('button', { name: 'Reintentar', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'No pudimos cargar tus datos' })).not.toBeVisible();
+  await expect(page.getByRole('heading', { name: '¿En qué gastaste?' })).toBeVisible();
   for(const viewport of [{width:320,height:568},{width:568,height:320},{width:1440,height:900}]){await page.setViewportSize(viewport);await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);}
 });

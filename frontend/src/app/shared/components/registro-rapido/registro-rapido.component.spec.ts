@@ -37,6 +37,13 @@ describe('Registro rapido: guardado y privacidad', () => {
     component.abrir();fixture.detectChanges();
   });
   afterEach(()=>fixture.destroy());
+  it('abre la categoria elegida desde el grafico sin guardar al abrir',()=>{
+    component.cerrar();
+    component.abrir(new CustomEvent('registro',{detail:{tipo:'GASTO',categoriaId:categorias[0].id}}));
+    expect(component.categoriaId).toBe(categorias[0].id);
+    expect(crear).not.toHaveBeenCalled();
+  });
+
   it('conserva monto y cuenta al alternar con escribir',()=>{
     component.monto='45';component.cuentaId=2;component.cerrar();
     component.abrir(new CustomEvent('registro',{detail:{preservar:true}}));

@@ -1,8 +1,12 @@
+import { ListaContextoService } from '../../../core/services/lista-contexto.service';
+import { parsearEtiquetas } from '../../../core/utils/etiquetas';
+import { FeatureStylesService } from '../../../core/services/feature-styles.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { PrivacidadService } from '../../../core/services/privacidad.service';
 import { PrivacyToggleComponent } from '../privacy-toggle/privacy-toggle.component';
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, HostListener, OnDestroy, ViewChild, afterRenderEffect, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Component, DestroyRef, ElementRef, HostListener, OnDestroy, ViewChild, afterNextRender, afterRenderEffect, computed, effect, inject, signal, untracked } from '@angular/core';
+import { CaptureLauncherService } from '../../../core/services/capture-launcher.service';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
@@ -51,18 +55,11 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
     }
 
     <!-- Voice Waveform: solo durante grabación activa -->
-    @if (escuchando()) {
-      <div class="voice-waveform" role="status" aria-live="polite">
-        <span class="voice-waveform__bars" aria-hidden="true">@for (nivel of nivelesAudio(); track $index) { <i [style.height.px]="4 + nivel * 24" style="animation: none"></i> }</span>
-        <span>Escuchando</span><strong>{{ cronometro() }}</strong>
-      </div>
-    }
-
     @if (open()) {
       <div class="voice-dialog-backdrop" (click)="close()"></div>
       <section appDialogViewport role="dialog" aria-modal="true" tabindex="-1" (keydown)="tecladoPanel($event)" id="quick-capture-panel" class="capture-panel" aria-label="Kaptal, captura y reportes">
         <header class="capture-panel__head">
-          <div><span class="capture-panel__spark">✦</span><div><strong>Kaptal</strong><small>{{ mode() === 'CAPTURE' ? 'Tu chat financiero' : 'Tus finanzas, en contexto' }}</small></div></div>
+          <div><strong>{{ escuchando() ? 'Te escucho' : transcribiendoVoz() ? 'Transcribiendo' : loading() ? 'Organizando' : 'Hablar o escribir' }}</strong></div>
           <button type="button" class="capture-clear" (click)="limpiarChat()" [disabled]="loading() || confirming() !== null || escuchando()" aria-label="Limpiar historial del chat" title="Limpiar chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14M10 11v6m4-6v6"/></svg></button><app-privacy-toggle/><button type="button" (click)="close()" aria-label="Cerrar">×</button>
         </header>
         <div class="capture-panel__tools">
@@ -73,7 +70,15 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
             </button>
           }
         </div>
-        <p class="capture-instructions">Escribe, revisa y confirma. Tú decides qué guardar.</p>
+        <p class="capture-instructions">Revisa antes de guardar.</p>
+    @if (escuchando()) {
+      <div class="voice-waveform" role="status" aria-live="polite">
+        <span class="voice-waveform__bars" aria-hidden="true">@for (nivel of nivelesAudio(); track $index) { <i [style.height.px]="4 + nivel * 24" style="animation: none"></i> }</span>
+        <span>Escuchando</span><strong>{{ cronometro() }}</strong>
+      </div>
+    }
+
+
         @if(!offline.conexion()){<p role="status">Sin conexión. Revisa y confirma para guardar en este dispositivo; se enviará al volver la conexión.</p>}
         @if(errorBorrador()){<p class="capture-error" role="alert">{{ errorBorrador() }}</p>}
         @if(offline.pendientes().length){<p role="status">{{ offline.pendientes().length }} movimiento(s) guardados en este dispositivo, pendientes del servidor.</p>}
@@ -101,7 +106,7 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
           } @else {
           <div #chatScroll id="capture-chat-thread" class="capture-chat" (scroll)="actualizarSeguimiento($event)" aria-live="polite" aria-relevant="additions text" [attr.aria-busy]="loading()">
             @if (captureTurns().length === 0 && !pendingCaptureText()) {
-              <div class="capture-chat__intro"><span class="capture-chat__avatar" aria-hidden="true">✦</span><div><strong>¿Qué anotamos o consultamos?</strong><p>{{ captureHint() }} Ejemplos:</p><div class="capture-chat__suggestions"><button type="button" (click)="usarEjemplo('Gasté 180 en comida')">Gasté $180 en comida</button><button type="button" (click)="usarEjemplo('Recibí 8500 de nómina')">Recibí $8,500 de nómina</button></div></div></div>
+              <div class="capture-chat__intro"><span class="capture-chat__avatar" aria-hidden="true">✦</span><div><strong>Cuéntame qué gastaste</strong><p>{{ captureHint() }} Ejemplos:</p><div class="capture-chat__suggestions"><button type="button" (click)="usarEjemplo('Gasté 180 en comida')">Gasté $180 en comida</button><button type="button" (click)="usarEjemplo('Recibí 8500 de nómina')">Recibí $8,500 de nómina</button></div></div></div>
             }
             @for (turn of captureTurns(); track turn.id) {
               <article class="capture-chat__user"><span>{{ turn.user | textoFinanciero }}</span></article>
@@ -163,7 +168,7 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
           <div class="chat-local-prompts" aria-label="Consultas y registros sugeridos"><button type="button" (click)="usarSugerencia('Reporte de hoy')" [disabled]="loading()">Hoy</button><button type="button" (click)="usarSugerencia('Top categorías de este mes')" [disabled]="loading()">Top categorías</button><button type="button" (click)="usarSugerencia('Alertas de presupuesto')" [disabled]="loading()">Presupuestos</button><button type="button" (click)="usarSugerencia('Saldo')" [disabled]="loading()">Saldos</button></div>
           <form class="capture-chat__composer" (ngSubmit)="submit()">
             <label class="sr-only" for="quick-capture-text">Escribe el movimiento que quieres registrar</label>
-            <textarea id="quick-capture-text" name="content" [(ngModel)]="content" (ngModelChange)="alCambiarTexto()" (keydown.enter)="enviarConEnter($event)" rows="1" maxlength="1200" enterkeyhint="send" placeholder="Movimiento o consulta…" [readOnly]="loading() || escuchando() || stopping()" [attr.aria-busy]="loading()"></textarea>
+            <textarea id="quick-capture-text" name="content" [(ngModel)]="content" (ngModelChange)="alCambiarTexto()" (keydown.enter)="enviarConEnter($event)" rows="1" maxlength="1200" enterkeyhint="send" placeholder="¿Qué gastaste?" [readOnly]="loading() || escuchando() || stopping()" [attr.aria-busy]="loading()"></textarea>
             <button type="button" class="capture-mic" (click)="toggleVoice()" [class.is-listening]="escuchando()" [disabled]="loading() || transcribiendoVoz() || stopping()" [attr.aria-label]="escuchando() ? 'Detener dictado' : 'Dictar movimiento'"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5m-4 0h8"/></svg></button>
             <button type="submit" class="capture-chat__send" [disabled]="loading() || escuchando() || stopping() || !content.trim()" aria-label="Enviar movimiento"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 14-7-5 14-3-6-6-1Z"/><path d="m11 13 4-4"/></svg></button>
           </form>
@@ -210,7 +215,10 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
   styles:[`.capture-editor{display:grid;gap:12px;max-height:55dvh;overflow:auto;padding:16px;border:1px solid var(--border-color,#777);border-radius:16px}.capture-editor label{display:grid;gap:4px}.capture-editor input,.capture-editor select{min-height:44px;font-size:16px;padding:8px;background:var(--surface-color,transparent);color:inherit;border:1px solid #888;border-radius:8px}.capture-editor button{min-height:44px}`]
 })
 export class QuickCaptureComponent implements OnDestroy {
+  private readonly styleAssets = inject(FeatureStylesService).load('capture');
+  private readonly captureLauncher = inject(CaptureLauncherService);
   readonly offline=inject(MovimientosOfflineService);
+  readonly listas = inject(ListaContextoService);
   private readonly actualizacion=inject(ActualizacionPwaService);
   readonly errorBorrador=signal('');
   private readonly borradorRestaurado=signal(false);
@@ -248,6 +256,12 @@ export class QuickCaptureComponent implements OnDestroy {
   }
 
   constructor() {
+    const launcher = this.captureLauncher;
+    inject(DestroyRef).onDestroy(() => launcher.detach('chat'));
+    afterNextRender(() => {
+      const pending = launcher.attach('chat');
+      if (pending) this.abrirCapturaDesdeAcceso(pending);
+    });
     afterRenderEffect(onCleanup => {
       this.open(); this.captureTurns(); this.loading();
       const element = this.chatScroll?.nativeElement;
@@ -466,18 +480,20 @@ export class QuickCaptureComponent implements OnDestroy {
   }
 
   submit(): void {
+    const listaId = this.listas.activaId();
+    if (listaId != null && !this.listas.puedeEscribir()) { this.error.set('Elige una lista donde puedas registrar.'); return; }
     const value = this.content.trim();
     if (!value || this.loading() || this.listening() || this.stopping() || this.confirming() !== null) return;
     this.seguirFinal.set(true);
     if(!this.offline.conexion()){
-      this.prepararEnDispositivo(value);return;
+      this.prepararEnDispositivo(value, listaId);return;
     }
     this.aiConsentRequired.set(false);
     this.sourceInput.set(value); this.pendingCaptureText.set(value); this.loading.set(true); this.error.set('');
     const capturedByVoice = this.voiceCapture();
     this.processingStep.set('CATEGORIZANDO');
     this.scrollCaptureToBottom();
-    this.capturaSub = this.finanzas.capturaRapidaAi(value, this.consent, this.voiceCapture(), this.esPedidoNuevo(value) ? null : this.contexto).subscribe({
+    this.capturaSub = this.finanzas.capturaRapidaAi(value, this.consent, this.voiceCapture(), this.esPedidoNuevo(value) ? null : this.contexto, listaId).subscribe({
       next: response => {
         this.processingStep.set(null);
         this.loading.set(false);
@@ -501,7 +517,7 @@ export class QuickCaptureComponent implements OnDestroy {
         // onLine puede seguir siendo true aunque Firefox no alcance el servidor.
         // Preparar una propuesta local nunca registra dinero sin confirmación.
         if (error instanceof HttpErrorResponse && error.status === 0) {
-          this.prepararEnDispositivo(value);return;
+          this.prepararEnDispositivo(value, listaId);return;
         }
         const message = this.errorMessage(error);
         if (/no encontr[eé] una regla local/i.test(message)) this.aiConsentRequired.set(true);
@@ -510,10 +526,14 @@ export class QuickCaptureComponent implements OnDestroy {
     });
   }
 
-  private prepararEnDispositivo(value: string): void {
+  private prepararEnDispositivo(value: string, listaId: number | null): void {
     try {
       if (!this.cuentasEdicion().length) throw new Error('Abre la app con conexión para guardar primero tus cuentas.');
-      const proposal = prepararCapturaOffline(value, this.cuentasEdicion(), this.categories());
+      const tags = value.match(/(?<![\p{L}\p{N}_])#[\p{L}\p{N}][\p{L}\p{N}_-]*/gu) ?? [];
+      const etiquetas = parsearEtiquetas(tags.join(' '));
+      const texto = value.replace(/(?<![\p{L}\p{N}_])#[\p{L}\p{N}][\p{L}\p{N}_-]*/gu, '').trim();
+      const proposal = prepararCapturaOffline(texto, this.cuentasEdicion(), this.categories());
+      proposal.data = { ...proposal.data, ...(listaId == null ? {} : { listaId }), etiquetas };
       this.captureTurns.update(turns => [...turns, {id:++this.captureTurnId,user:value,
         answer:'Preparado en este dispositivo. Revisa la cuenta y la categoría; confirma para guardarlo y enviarlo al recuperar conexión.',
         actions:[proposal],voice:false,engine:'REGLAS'}]);
@@ -726,6 +746,7 @@ export class QuickCaptureComponent implements OnDestroy {
 
   @HostListener('window:kaptal-abrir-captura-chat', ['$event'])
   abrirCapturaDesdeAcceso(event: Event): void {
+    this.captureLauncher.attach('chat');
     this.seguirFinal.set(true);
     this.cargarCategoriasCaptura();
     const detail = (event as CustomEvent<{ tipo?: string; content?: string }>).detail;

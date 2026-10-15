@@ -1,0 +1,462 @@
+[
+  {
+    "route": "dashboard",
+    "width": 393,
+    "theme": "CLARO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "navigation",
+    "width": 393,
+    "theme": "CLARO",
+    "skipKeyboardOnly": true,
+    "menuDismissal": true,
+    "toolsGrouping": true
+  },
+  {
+    "route": "home-context",
+    "width": 393,
+    "theme": "CLARO",
+    "noTabBar": true,
+    "periodFocus": true,
+    "categoryCapture": true,
+    "advanced": true,
+    "voiceLauncher": true
+  },
+  {
+    "route": "transacciones",
+    "width": 393,
+    "theme": "CLARO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "reportes",
+    "width": 393,
+    "theme": "CLARO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "presupuestos",
+    "width": 393,
+    "theme": "CLARO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "cuentas",
+    "width": 393,
+    "theme": "CLARO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "categorias",
+    "width": 393,
+    "theme": "CLARO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "pareja",
+    "width": 393,
+    "theme": "CLARO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "libro-diario",
+    "width": 393,
+    "theme": "CLARO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "configuracion",
+    "width": 393,
+    "theme": "CLARO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "asistente",
+    "width": 393,
+    "theme": "CLARO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "capture",
+    "width": 393,
+    "theme": "CLARO",
+    "keyboardViewport": true
+  },
+  {
+    "route": "login",
+    "width": 393,
+    "theme": "CLARO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "registro",
+    "width": 393,
+    "theme": "CLARO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "recuperar-cuenta",
+    "width": 393,
+    "theme": "CLARO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "dashboard",
+    "width": 393,
+    "theme": "OSCURO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "navigation",
+    "width": 393,
+    "theme": "OSCURO",
+    "skipKeyboardOnly": true,
+    "menuDismissal": true,
+    "toolsGrouping": true
+  },
+  {
+    "route": "home-context",
+    "width": 393,
+    "theme": "OSCURO",
+    "noTabBar": true,
+    "periodFocus": true,
+    "categoryCapture": true,
+    "advanced": true,
+    "voiceLauncher": true
+  },
+  {
+    "route": "transacciones",
+    "width": 393,
+    "theme": "OSCURO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "reportes",
+    "width": 393,
+    "theme": "OSCURO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "presupuestos",
+    "width": 393,
+    "theme": "OSCURO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "cuentas",
+    "width": 393,
+    "theme": "OSCURO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "categorias",
+    "width": 393,
+    "theme": "OSCURO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "pareja",
+    "width": 393,
+    "theme": "OSCURO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "libro-diario",
+    "width": 393,
+    "theme": "OSCURO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "configuracion",
+    "width": 393,
+    "theme": "OSCURO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "asistente",
+    "width": 393,
+    "theme": "OSCURO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "capture",
+    "width": 393,
+    "theme": "OSCURO",
+    "keyboardViewport": true
+  },
+  {
+    "route": "login",
+    "width": 393,
+    "theme": "OSCURO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "registro",
+    "width": 393,
+    "theme": "OSCURO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "recuperar-cuenta",
+    "width": 393,
+    "theme": "OSCURO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "dashboard",
+    "width": 1280,
+    "theme": "CLARO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "navigation",
+    "width": 1280,
+    "theme": "CLARO",
+    "skipKeyboardOnly": true,
+    "menuDismissal": true,
+    "toolsGrouping": true
+  },
+  {
+    "route": "home-context",
+    "width": 1280,
+    "theme": "CLARO",
+    "noTabBar": true,
+    "periodFocus": true,
+    "categoryCapture": true,
+    "advanced": true,
+    "voiceLauncher": true
+  },
+  {
+    "route": "transacciones",
+    "width": 1280,
+    "theme": "CLARO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "reportes",
+    "width": 1280,
+    "theme": "CLARO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "presupuestos",
+    "width": 1280,
+    "theme": "CLARO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "cuentas",
+    "width": 1280,
+    "theme": "CLARO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "categorias",
+    "width": 1280,
+    "theme": "CLARO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "pareja",
+    "width": 1280,
+    "theme": "CLARO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "libro-diario",
+    "width": 1280,
+    "theme": "CLARO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "configuracion",
+    "width": 1280,
+    "theme": "CLARO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "asistente",
+    "width": 1280,
+    "theme": "CLARO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "capture",
+    "width": 1280,
+    "theme": "CLARO",
+    "keyboardViewport": true
+  },
+  {
+    "route": "login",
+    "width": 1280,
+    "theme": "CLARO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "registro",
+    "width": 1280,
+    "theme": "CLARO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "recuperar-cuenta",
+    "width": 1280,
+    "theme": "CLARO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "dashboard",
+    "width": 1280,
+    "theme": "OSCURO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "navigation",
+    "width": 1280,
+    "theme": "OSCURO",
+    "skipKeyboardOnly": true,
+    "menuDismissal": true,
+    "toolsGrouping": true
+  },
+  {
+    "route": "home-context",
+    "width": 1280,
+    "theme": "OSCURO",
+    "noTabBar": true,
+    "periodFocus": true,
+    "categoryCapture": true,
+    "advanced": true,
+    "voiceLauncher": true
+  },
+  {
+    "route": "transacciones",
+    "width": 1280,
+    "theme": "OSCURO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "reportes",
+    "width": 1280,
+    "theme": "OSCURO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "presupuestos",
+    "width": 1280,
+    "theme": "OSCURO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "cuentas",
+    "width": 1280,
+    "theme": "OSCURO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "categorias",
+    "width": 1280,
+    "theme": "OSCURO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "pareja",
+    "width": 1280,
+    "theme": "OSCURO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "libro-diario",
+    "width": 1280,
+    "theme": "OSCURO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "configuracion",
+    "width": 1280,
+    "theme": "OSCURO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "asistente",
+    "width": 1280,
+    "theme": "OSCURO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "capture",
+    "width": 1280,
+    "theme": "OSCURO",
+    "keyboardViewport": true
+  },
+  {
+    "route": "login",
+    "width": 1280,
+    "theme": "OSCURO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "registro",
+    "width": 1280,
+    "theme": "OSCURO",
+    "overflow": false,
+    "errors": 0
+  },
+  {
+    "route": "recuperar-cuenta",
+    "width": 1280,
+    "theme": "OSCURO",
+    "overflow": false,
+    "errors": 0
+  }
+]

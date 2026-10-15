@@ -242,7 +242,7 @@ describe('QuickCaptureComponent processing and gestures', () => {
     const capture=vi.spyOn(TestBed.inject(FinanzasService),'capturaRapidaAi');
     component.open.set(true);
     component.usarSugerencia('Reporte de hoy');
-    expect(capture).toHaveBeenCalledWith('Reporte de hoy',false,false,null);
+    expect(capture).toHaveBeenCalledWith('Reporte de hoy',false,false,null,null);
     result.next({success:true,data:{answer:'Resumen',engine:'REGLAS',actions:[],report:{title:'Hoy',labels:['Gastos'],values:[80],unit:'MXN'}}});
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.chat-local-report').textContent).toContain('Gastos');
@@ -253,10 +253,10 @@ describe('QuickCaptureComponent processing and gestures', () => {
     component.content='Gasto en tacos';component.submit();
     result.next({success:true,data:{answer:'Monto?',actions:[],contexto:'Gasto en tacos'}});
     component.content='80';component.submit();
-    expect(capture).toHaveBeenLastCalledWith('80',false,false,'Gasto en tacos');
+    expect(capture).toHaveBeenLastCalledWith('80',false,false,'Gasto en tacos',null);
     result.next({success:true,data:{answer:'Listo',actions:[],contexto:'Gasto en tacos'}});
     component.content='Reporte de hoy';component.submit();
-    expect(capture).toHaveBeenLastCalledWith('Reporte de hoy',false,false,null);
+    expect(capture).toHaveBeenLastCalledWith('Reporte de hoy',false,false,null,null);
   });
   it('does not require a category for a transfer', () => {
     expect(component.necesitaCategoria({id:'t',type:'CREATE_TRANSACTION',summary:'Transferencia',data:{tipo:'TRANSFERENCIA',monto:80}})).toBe(false);

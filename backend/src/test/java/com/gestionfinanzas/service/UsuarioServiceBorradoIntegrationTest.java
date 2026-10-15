@@ -67,6 +67,7 @@ class UsuarioServiceBorradoIntegrationTest {
     private static final String PASSWORD = "Password123";
 
     @Autowired private UsuarioService usuarioService;
+    @Autowired private ListaService listas;
     @Autowired private UsuarioRepository usuarioRepository;
     @Autowired private PasswordEncoder passwordEncoder;
     @Autowired private LineaAsientoRepository lineaAsientoRepository;
@@ -232,6 +233,21 @@ class UsuarioServiceBorradoIntegrationTest {
         assertEquals("La contraseña es incorrecta", error.getMessage());
         assertTrue(usuarioRepository.findById(usuario.getId()).isPresent());
         assertTrue(cuentaRepository.findById(cuenta.getId()).isPresent());
+    }
+
+    @Test
+    void borrarPropietarioTransfiereListaYConservaMovimientosDelOtroMiembro() {
+        Usuario ana=crearUsuario("listas-owner@example.test"), otro=crearUsuario("listas-member@example.test");
+        var lista=listas.crear(ana.getId(),new com.gestionfinanzas.dto.request.ListaRequest("Viaje","x","MXN"));
+        var invitacion=listas.invitar(ana.getId(),lista.id(),"EDITOR");listas.unirse(otro.getId(),invitacion.codigo());
+        var movimiento=crearTransaccion(otro,crearCuenta(otro,"Banco propio"),crearCategoria(otro,"Comida"),"Hotel");
+        movimiento.setLista(listas.leer(otro.getId(),lista.id()));transaccionRepository.flush();
+        Long movimientoId=movimiento.getId();
+        usuarioService.eliminarCuenta(ana.getId(),new EliminarUsuarioRequest(PASSWORD));
+        assertFalse(usuarioRepository.existsById(ana.getId()));
+        assertTrue(transaccionRepository.existsById(movimientoId));
+        var conservada=listas.listar(otro.getId()).stream().filter(l->l.id().equals(lista.id())).findFirst().orElseThrow();
+        assertEquals("PROPIETARIO",conservada.rol());assertEquals(1,conservada.miembros().size());
     }
 
     private Usuario crearUsuario(String email) {

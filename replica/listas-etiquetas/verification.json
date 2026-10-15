@@ -1,0 +1,85 @@
+{
+  "stage": "Listas, etiquetas y busqueda",
+  "branch": "mejoras/listas-etiquetas",
+  "base": "dce49cdf57dc3a2263357a3e1eac27013ff00cc4",
+  "checkedAt": "2026-10-15T18:39:39.375384+00:00",
+  "frontend": {
+    "build": "pass",
+    "initialBundleKB": 464.15,
+    "tests": 311,
+    "files": 38,
+    "status": "pass"
+  },
+  "backend": {
+    "fullPostgres": {
+      "tests": 357,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "affectedPostgresAfterChanges": {
+      "tests": 115,
+      "failures": 0
+    },
+    "finalPermissionsAndAccountDeletion": {
+      "tests": 32,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "note": "Final focused checks include new owner deletion and revoked pending proposal cases; do not sum overlapping suites."
+  },
+  "e2e": {
+    "tests": 17,
+    "failures": 0,
+    "database": "Dedicated PostgreSQL E2E database with isolated schema",
+    "viewport": "Mobile Chromium emulation"
+  },
+  "visual": {
+    "checks": 66,
+    "widths": [
+      390,
+      1280
+    ],
+    "themes": [
+      "CLARO",
+      "OSCURO"
+    ],
+    "cases": [
+      "routes",
+      "sheets",
+      "capture",
+      "empty/loading/error",
+      "long list name",
+      "offline assets"
+    ],
+    "evidence": "diseno-verificado/browser-checks.json"
+  },
+  "recovery": {
+    "match": true,
+    "tables": 23,
+    "columns": 216,
+    "constraints": 88,
+    "sequences": 19,
+    "indexes": 59,
+    "source": "New synthetic database, DDL V1-V5 and list/tag fixture",
+    "restore": "Separate new database; real pg_dump/pg_restore",
+    "privateDumpInGit": false
+  },
+  "localRuntime": {
+    "status": "pass",
+    "migrationVersion": 5,
+    "privateBackupVerified": true,
+    "financialFingerprintsUnchanged": true,
+    "frontendPort": 4300,
+    "backendPort": 18081,
+    "staticServerPort": 14200,
+    "visualChecks": 33,
+    "corsLocalAndCurrentLan": "pass",
+    "foreignOrigin": "rejected"
+  },
+  "physicalAndroid": "Not tested",
+  "commit": false,
+  "push": false,
+  "productionDeployment": false
+}

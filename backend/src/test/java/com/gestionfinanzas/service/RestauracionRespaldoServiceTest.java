@@ -1,5 +1,7 @@
 package com.gestionfinanzas.service;
 
+import static org.mockito.Mockito.mock;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -146,7 +148,7 @@ class RestauracionRespaldoServiceTest {
                 usuarios, cuentaRepository, categoriaRepository, presupuestoRepository,
                 plantillaRepository, transaccionRepository, auditoriaRepository, asientoRepository,
                 parejaRepository, aportacionRepository, gastoRepository, repartoRepository, pagoRepository,
-                objectMapper);
+                objectMapper, mock(com.gestionfinanzas.repository.ListaRepository.class), mock(com.gestionfinanzas.repository.ListaMiembroRepository.class), mock(ListaService.class));
     }
 
     @Test

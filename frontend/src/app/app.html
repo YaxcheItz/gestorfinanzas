@@ -1,11 +1,14 @@
 <div class="app-shell monai-theme min-h-screen flex flex-col text-slate-900">
+  <a href="#main-content" class="skip-link" (click)="irAlContenido($event)">Ir al contenido</a>
   @if (authService.isAuthenticated()) { <app-navbar /> }
   @else { <a routerLink="/login" class="auth-brand" aria-label="Kaptal, inicio"><img src="kaptal.svg" alt=""><span>Kaptal</span></a> }
-  <main class="flex-1" [class.app-content-with-bottom-nav]="authService.isAuthenticated()">
+  <main id="main-content" tabindex="-1" class="flex-1" [class.app-content-with-bottom-nav]="authService.isAuthenticated()">
     <router-outlet />
   </main>
-  @if (authService.isAuthenticated()) { <app-quick-capture /> }
-  @if (authService.isAuthenticated()) { <app-registro-rapido /> }
+  @if (authService.isAuthenticated()) {
+    @defer (on idle; when captureLauncher.chat()) { <app-quick-capture /> }
+    @defer (on idle; when captureLauncher.manual()) { <app-registro-rapido /> }
+  }
 </div>
 
 <!-- Global UI Layer: Toasts y Diálogos de Confirmación -->

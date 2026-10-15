@@ -22,7 +22,10 @@ public class TransaccionSpecification {
             List<Predicate> predicates = new ArrayList<>();
 
             // 1. Aislamiento estricto de usuario (Seguridad Multi-inquilino)
-            predicates.add(cb.equal(root.get("usuario").get("id"), usuarioId));
+            if (filtro != null && filtro.listaId() != null) {
+                // El servicio autoriza la pertenencia antes de usar este alcance compartido.
+                predicates.add(cb.equal(root.get("lista").get("id"), filtro.listaId()));
+            } else predicates.add(cb.equal(root.get("usuario").get("id"), usuarioId));
 
             if (filtro == null) {
                 return cb.and(predicates.toArray(new Predicate[0]));
@@ -74,17 +77,26 @@ public class TransaccionSpecification {
                 predicates.add(cb.lessThanOrEqualTo(root.get("monto"), filtro.montoMax()));
             }
 
-            // 7. Búsqueda de texto (descripción, notas o nombre de categoría)
-            if (filtro.busqueda() != null && !filtro.busqueda().isBlank()) {
-                if (query != null) {
-                    query.distinct(true);
-                }
-                String pattern = "%" + filtro.busqueda().trim().toLowerCase() + "%";
+            if (filtro.autorId() != null) predicates.add(cb.equal(root.get("usuario").get("id"), filtro.autorId()));
+            var etiquetas = new java.util.LinkedHashSet<>(com.gestionfinanzas.service.EtiquetasFinancieras.normalizar(filtro.etiquetas()));
+            String texto = filtro.busqueda() == null ? "" : filtro.busqueda().trim().toLowerCase(java.util.Locale.ROOT);
+            var hashtags = java.util.regex.Pattern.compile("(?:^|\\s)#([\\p{L}\\p{N}][\\p{L}\\p{N}_-]{0,31})(?=\\s|$)").matcher(texto);
+            while (hashtags.find()) etiquetas.add(hashtags.group(1));
+            texto = hashtags.replaceAll(" ").trim();
+            if (etiquetas.size() > 8) throw new IllegalArgumentException("Busca hasta 8 etiquetas a la vez.");
+            for (String etiqueta : etiquetas) predicates.add(cb.isMember(etiqueta, root.get("etiquetas")));
+            if (!texto.isBlank()) {
                 var categoria = root.join("categoria", JoinType.LEFT);
-                Predicate busquedaDesc = cb.like(cb.lower(root.get("descripcion")), pattern);
-                Predicate busquedaNotas = cb.like(cb.lower(root.get("notas")), pattern);
-                Predicate busquedaCategoria = cb.like(cb.lower(categoria.get("nombre")), pattern);
-                predicates.add(cb.or(busquedaDesc, busquedaNotas, busquedaCategoria));
+                var cuenta = root.join("cuenta", JoinType.LEFT);
+                for (String termino : texto.split("\\s+")) {
+                    String pattern = "%" + termino.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%";
+                    List<Predicate> partes = new ArrayList<>();
+                    for (var campo : List.of(root.<String>get("descripcion"), root.<String>get("notas"), categoria.<String>get("nombre"), cuenta.<String>get("nombre"), root.<String>get("cuentaNombreHistorico"), root.get("usuario").<String>get("nombre"))) {
+                        partes.add(cb.like(cb.lower(campo), pattern, '\\'));
+                    }
+                    if (termino.matches("[0-9]+([.,][0-9]{1,2})?")) partes.add(cb.equal(root.get("monto"), new java.math.BigDecimal(termino.replace(',', '.'))));
+                    predicates.add(cb.or(partes.toArray(new Predicate[0])));
+                }
             }
 
             return cb.and(predicates.toArray(new Predicate[0]));

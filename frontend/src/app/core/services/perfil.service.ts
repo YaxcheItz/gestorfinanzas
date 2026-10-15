@@ -1,3 +1,4 @@
+import { PeriodoConfig } from '../utils/periodo-financiero';
 import { DOCUMENT } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
@@ -89,6 +90,20 @@ export class PerfilService {
         if (usuarioId !== null && this.esMismaSesion(versionSesion, usuarioId)
             && response.success && response.data?.id === usuarioId) {
           this.aplicarPerfil(response.data);
+        }
+      })
+    );
+  }
+
+  actualizarPeriodo(config: PeriodoConfig): Observable<ApiResponse<Perfil>> {
+    const versionSesion = this.perfilSesionVersion;
+    const usuarioId = this.perfilUsuarioId;
+    return this.http.put<ApiResponse<Perfil>>(`${this.baseUrl}/periodo`, config).pipe(
+      tap(response => {
+        if (usuarioId !== null && this.esMismaSesion(versionSesion, usuarioId)
+            && response.success && response.data?.id === usuarioId) {
+          // No sobrescribir cambios de tema/privacidad que pudieran estar en vuelo.
+          this.perfil.update(actual => actual ? { ...actual, periodoPredeterminado: response.data.periodoPredeterminado } : actual);
         }
       })
     );
@@ -264,7 +279,7 @@ export class PerfilService {
     root.style.colorScheme = tema === 'OSCURO' ? 'dark' : 'light';
     // El navegador debe seguir el tema elegido en Kaptal, aunque difiera del sistema.
     for (const meta of this.document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]')) {
-      meta.content = tema === 'OSCURO' ? '#151615' : '#faf9f6';
+      meta.content = tema === 'OSCURO' ? '#111315' : '#F5F6F7';
       meta.removeAttribute('media');
     }
   }

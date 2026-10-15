@@ -57,9 +57,10 @@ public class TransaccionController {
 
     @GetMapping("/recientes")
     public ResponseEntity<ApiResponse<List<TransaccionResponse>>> listarRecientes(
+            @RequestParam(required = false) Long listaId,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        List<TransaccionResponse> recientes = transaccionService.listarRecientes(userDetails.getId());
+        List<TransaccionResponse> recientes = transaccionService.listarRecientes(userDetails.getId(), listaId);
         return ResponseEntity.ok(ApiResponse.ok("Movimientos recientes obtenidos correctamente", recientes));
     }
 
@@ -77,11 +78,14 @@ public class TransaccionController {
             @RequestParam(required = false) @Min(1) Long id,
             @RequestParam(required = false) BigDecimal montoMin,
             @RequestParam(required = false) BigDecimal montoMax,
+            @RequestParam(required = false) Long listaId,
+            @RequestParam(required = false) List<String> etiquetas,
+            @RequestParam(required = false) Long autorId,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "fecha", "id"));
         TransaccionFiltroRequest filtro = new TransaccionFiltroRequest(
-                tipo, cuentaId, categoriaId, categoriaIds, fechaInicio, fechaFin, busqueda, id, montoMin, montoMax
+                tipo, cuentaId, categoriaId, categoriaIds, fechaInicio, fechaFin, busqueda, id, montoMin, montoMax, listaId, etiquetas, autorId
         );
         Page<TransaccionResponse> resultado = transaccionService.listarConFiltros(userDetails.getId(), filtro, pageRequest);
         return ResponseEntity.ok(ApiResponse.ok("Transacciones obtenidas correctamente", resultado));
@@ -99,10 +103,13 @@ public class TransaccionController {
             @RequestParam(required = false) @Min(1) Long id,
             @RequestParam(required = false) BigDecimal montoMin,
             @RequestParam(required = false) BigDecimal montoMax,
+            @RequestParam(required = false) Long listaId,
+            @RequestParam(required = false) List<String> etiquetas,
+            @RequestParam(required = false) Long autorId,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         TransaccionFiltroRequest filtro = new TransaccionFiltroRequest(
-                tipo, cuentaId, categoriaId, categoriaIds, fechaInicio, fechaFin, busqueda, id, montoMin, montoMax
+                tipo, cuentaId, categoriaId, categoriaIds, fechaInicio, fechaFin, busqueda, id, montoMin, montoMax, listaId, etiquetas, autorId
         );
         String filename = fechaInicio != null && fechaFin != null
                 ? "movimientos_" + fechaInicio + "_a_" + fechaFin + ".csv"

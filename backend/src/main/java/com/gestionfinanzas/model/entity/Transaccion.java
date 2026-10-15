@@ -28,6 +28,10 @@ public class Transaccion {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "lista_id")
+    private ListaFinanciera lista;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
 
@@ -84,6 +88,13 @@ public class Transaccion {
 
     @Column(name = "client_request_id", unique = true, updatable = false)
     private UUID clientRequestId;
+
+    @ElementCollection
+    @CollectionTable(name = "transaccion_etiquetas", joinColumns = @JoinColumn(name = "transaccion_id"))
+    @Column(name = "etiqueta", nullable = false, length = 32)
+    @org.hibernate.annotations.OnDelete(action = org.hibernate.annotations.OnDeleteAction.CASCADE)
+    @Builder.Default
+    private java.util.Set<String> etiquetas = new java.util.LinkedHashSet<>();
 
     @Column(length=64,updatable=false)
     private String clientRequestFingerprint;

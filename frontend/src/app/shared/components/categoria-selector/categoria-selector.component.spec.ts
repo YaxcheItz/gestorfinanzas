@@ -80,7 +80,8 @@ describe('CategoriaSelectorComponent', () => {
   it('no rotula el mosaico con la palabra Categoria', () => {
     // El nombre del mosaico ya se lee solo; anteponer "Categoria:" es ruido.
     expect(mosaico().textContent).not.toContain('Categoría');
-    expect(mosaico().textContent.trim()).toBe('Comida');
+    expect(mosaico().textContent.trim()).toContain('Comida');
+    expect(mosaico().querySelector('.category-emoji')).toBeTruthy();
   });
 
   it('abre el menu con todas las categorias al pulsarlo', () => {

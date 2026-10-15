@@ -24,8 +24,18 @@ public record PlantillaRecurrenteResponse(
         Integer cuotasPagadas,
         LocalDate fechaAncla,
         BigDecimal montoPendiente,
-        java.util.UUID compraMsiId
+        java.util.UUID compraMsiId,
+    Long listaId,
+    java.util.Set<String> etiquetas
 ) {
+    public PlantillaRecurrenteResponse(Long id, Long cuentaId, String cuentaNombre,
+            Long categoriaId, String categoriaNombre, TipoTransaccion tipo, BigDecimal monto,
+            String moneda, String notas, FrecuenciaRecurrencia frecuencia, LocalDate siguienteFecha,
+            boolean activa, Integer cuotasTotales, Integer cuotasPagadas, LocalDate fechaAncla,
+            BigDecimal montoPendiente, java.util.UUID compraMsiId) {
+        this(id, cuentaId, cuentaNombre, categoriaId, categoriaNombre, tipo, monto, moneda, notas, frecuencia,
+                siguienteFecha, activa, cuotasTotales, cuotasPagadas, fechaAncla, montoPendiente, compraMsiId, null, java.util.Set.of());
+    }
     public PlantillaRecurrenteResponse(Long id, Long cuentaId, String cuentaNombre,
             Long categoriaId, String categoriaNombre, TipoTransaccion tipo, BigDecimal monto,
             String moneda, String notas, FrecuenciaRecurrencia frecuencia, LocalDate siguienteFecha,
@@ -48,7 +58,8 @@ public record PlantillaRecurrenteResponse(
                 plantilla.getSiguienteFecha(),
                 plantilla.isActiva(),
                 plantilla.getCuotasTotales(), plantilla.getCuotasPagadas(), plantilla.getFechaAncla(),
-                plantilla.getMontoPendiente(), plantilla.getCompraMsiId()
+                plantilla.getMontoPendiente(), plantilla.getCompraMsiId(),
+                plantilla.getLista() != null ? plantilla.getLista().getId() : null, new java.util.TreeSet<>(plantilla.getEtiquetas())
         );
     }
 }

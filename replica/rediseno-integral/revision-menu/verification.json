@@ -1,0 +1,44 @@
+{
+  "date": "2026-10-14",
+  "branch": "mejoras/rediseno-integral-android",
+  "scope": "Corrections to the same redesign delivery",
+  "frontend": {
+    "tests": 271,
+    "files": 35,
+    "failed": 0
+  },
+  "build": {
+    "initialKB": 463.92,
+    "budgetKB": 500,
+    "warnings": 0
+  },
+  "e2e": {
+    "tests": 2,
+    "failed": 0,
+    "database": "H2"
+  },
+  "browser": {
+    "checks": 121,
+    "navigationChecks": 8,
+    "api": "synthetic",
+    "engine": "Chromium",
+    "physicalDevice": false,
+    "serviceWorkerOffline": {
+      "route": "offline-login",
+      "stylesCached": 4,
+      "serviceWorker": true,
+      "reloadOffline": true
+    }
+  },
+  "existingServerCheck": {
+    "port": 14200,
+    "normalSkipLinkClipped": true,
+    "keyboardOnlyVisible": true,
+    "skipKeepsRoute": true,
+    "focusTarget": "main-content"
+  },
+  "backendChangedInThisReview": false,
+  "commit": false,
+  "push": false,
+  "deployment": false
+}

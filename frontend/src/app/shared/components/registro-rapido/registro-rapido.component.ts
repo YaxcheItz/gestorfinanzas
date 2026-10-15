@@ -1,8 +1,12 @@
+import { ListaContextoService } from '../../../core/services/lista-contexto.service';
+import { parsearEtiquetas } from '../../../core/utils/etiquetas';
+import { FeatureStylesService } from '../../../core/services/feature-styles.service';
 import { TextoFinancieroPipe } from '../../../core/pipes/texto-financiero.pipe';
 import { crearIdSolicitud } from '../../../core/utils/request-id';
 import { MontoPrivadoDirective } from '../../directives/monto-privado.directive';
 import { DOCUMENT } from '@angular/common';
-import { Component, HostListener, OnDestroy, effect, inject, signal } from '@angular/core';
+import { Component, DestroyRef, HostListener, OnDestroy, afterNextRender, effect, inject, signal } from '@angular/core';
+import { CaptureLauncherService } from '../../../core/services/capture-launcher.service';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { Subscription, forkJoin } from 'rxjs';
@@ -24,7 +28,7 @@ type TipoRegistro = 'GASTO' | 'INGRESO' | 'TRANSFERENCIA';
   template: `@if (open()) {
     <div appDialogViewport class="quick-entry-backdrop" (click)="cerrar()">
       <section class="quick-entry" role="dialog" aria-modal="true" aria-labelledby="quick-entry-title" (click)="$event.stopPropagation()" (keydown)="teclado($event)">
-        <header><div><small>Un movimiento, en segundos</small><h2 id="quick-entry-title">{{ repitiendo() ? 'Repetir movimiento' : 'Añadir movimiento' }}</h2></div><app-privacy-toggle/><button type="button" class="utility-button" (click)="cerrar()" [disabled]="saving()" aria-label="Cerrar registro">×</button></header>
+        <header><h2 id="quick-entry-title">{{ repitiendo() ? 'Repetir movimiento' : 'Añadir movimiento' }}</h2><app-privacy-toggle/><button type="button" class="utility-button" (click)="cerrar()" [disabled]="saving()" aria-label="Cerrar registro">×</button></header>
         <div class="entry-mode" aria-label="Forma de añadir"><button type="button" class="is-active" aria-pressed="true">Rápido</button><button type="button" (click)="voz()" [disabled]="saving() || incierto">Escribir o dictar</button></div>
         <form (ngSubmit)="guardar()">
           <fieldset [disabled]="saving() || incierto || loading()">
@@ -44,13 +48,14 @@ type TipoRegistro = 'GASTO' | 'INGRESO' | 'TRANSFERENCIA';
               <details class="entry-details"><summary>Más categorías, fecha y detalles</summary>
                 @if (tipo !== 'TRANSFERENCIA') {<label>Todas las categorías<select name="categoria" [(ngModel)]="categoriaId"><option [ngValue]="null">Sin categoría</option>@for (categoria of categoriasDisponibles(); track categoria.id) {<option [ngValue]="categoria.id">{{ categoria.nombre }}</option>}</select></label>}
                 @if(!repitiendo()) {<label>Descripción <span class="entry-optional">opcional</span><input name="descripcion" [(ngModel)]="descripcion" maxlength="200" placeholder="Ej. tacos, sueldo o ahorro" /></label>}
+                <label>Lista<select name="listaMovimiento" [(ngModel)]="listaRegistroId">@for(lista of listasEditables(); track lista.id){<option [ngValue]="lista.id">{{ lista.emoji }} {{ lista.nombre }}</option>}</select></label><label>Etiquetas<input name="etiquetasMovimiento" [(ngModel)]="etiquetasTexto" placeholder="#visa #vacaciones" maxlength="271" /></label>
                 <label>Fecha<input name="fecha" type="date" [(ngModel)]="fecha" required /></label><label>Nota<input name="nota" [(ngModel)]="nota" maxlength="500" /></label><button type="button" class="entry-text-button" (click)="avanzado()">Opciones avanzadas: recurrentes y meses sin intereses</button>
               </details>
             }
           </fieldset>
           <footer class="entry-footer">
           @if(repitiendo()) {<p class="entry-repeat" role="status">{{ fecha === hoyLocal() ? 'Es un movimiento nuevo para hoy.' : 'Es un movimiento nuevo con fecha ' + fecha + '.' }} Revisa los datos antes de guardar.</p>}
-          @if (cuentaActual(); as cuenta) {<p class="entry-summary">{{ cuenta.nombre }}@if(tipo === 'TRANSFERENCIA') { → {{ cuentaDestino()?.nombre || 'Elige destino' }}} @else { · {{ categoriaActual()?.nombre || 'Sin categoría' }}}</p>}
+          @if (cuentaActual(); as cuenta) {<p class="entry-summary">{{ nombreListaRegistro() }} · {{ cuenta.nombre }}@if(tipo === 'TRANSFERENCIA') { → {{ cuentaDestino()?.nombre || 'Elige destino' }}} @else { · {{ categoriaActual()?.nombre || 'Sin categoría' }}}</p>}
           @if (!offline.conexion()) {<p class="entry-offline" role="status">Se guardará en este dispositivo y se enviará al volver la conexión.</p>}
           @if (error()) {<p class="entry-error" role="alert">{{ (error()) | textoFinanciero }}</p>}
           <button type="submit" class="entry-save" [disabled]="saving() || loading() || !cuentas.length || (!incierto && (!monto.trim() || !cuentaActual()))">{{ saving() ? 'Guardando…' : incierto ? 'Reintentar el mismo movimiento' : !offline.conexion() ? 'Guardar en este dispositivo' : 'Guardar ' + (tipo === 'GASTO' ? 'gasto' : tipo === 'INGRESO' ? 'ingreso' : 'transferencia') }}</button>
@@ -61,6 +66,8 @@ type TipoRegistro = 'GASTO' | 'INGRESO' | 'TRANSFERENCIA';
   }`
 })
 export class RegistroRapidoComponent implements OnDestroy {
+  private readonly styleAssets = inject(FeatureStylesService).load('capture');
+  private readonly captureLauncher = inject(CaptureLauncherService);
   private readonly finanzas = inject(FinanzasService);
   private readonly preferida = inject(CategoriaPreferidaService);
   readonly offline = inject(MovimientosOfflineService);
@@ -69,6 +76,11 @@ export class RegistroRapidoComponent implements OnDestroy {
   private readonly document = inject(DOCUMENT);
   private readonly router = inject(Router);
   readonly privacidad = inject(PrivacidadService);
+  readonly contextoLista = inject(ListaContextoService);
+  listaRegistroId: number | null = null;
+  etiquetasTexto = '';
+  listasEditables() { return this.contextoLista.listas().filter(l => !l.archivada && l.rol !== 'LECTOR'); }
+  nombreListaRegistro() { return this.contextoLista.listas().find(l => l.id === this.listaRegistroId)?.nombre ?? 'Personal'; }
   readonly open = signal(false);
   readonly loading = signal(false);
   readonly saving = signal(false);
@@ -90,6 +102,12 @@ export class RegistroRapidoComponent implements OnDestroy {
   private usuarioRegistro: number | null = null;
   private catalogoVersion = 0;
   constructor() {
+    const launcher = this.captureLauncher;
+    inject(DestroyRef).onDestroy(() => launcher.detach('manual'));
+    afterNextRender(() => {
+      const pending = launcher.attach('manual');
+      if (pending) this.abrir(pending);
+    });
     effect(() => {
       const usuarioId = this.auth.currentUser()?.id;
       if (this.usuarioRegistro !== null && usuarioId !== this.usuarioRegistro) {
@@ -101,16 +119,20 @@ export class RegistroRapidoComponent implements OnDestroy {
   }
 
   @HostListener('window:kaptal-abrir-registro-rapido', ['$event']) abrir(event?: Event): void {
+    this.captureLauncher.attach('manual');
     if (this.open()) return;
     this.focoAnterior = this.document.activeElement as HTMLElement;
     if (this.incierto && this.pendiente && this.usuarioRegistro===this.auth.currentUser()?.id) { this.open.set(true); return; }
-    const detail = (event as CustomEvent<{tipo?: TipoRegistro;preservar?:boolean;repetir?:Partial<TransaccionPayload>}> | undefined)?.detail;
+    const detail = (event as CustomEvent<{tipo?: TipoRegistro;categoriaId?:number;preservar?:boolean;repetir?:Partial<TransaccionPayload>}> | undefined)?.detail;
     if(detail?.repetir && !['GASTO','INGRESO','TRANSFERENCIA'].includes(detail.repetir.tipo??''))return;
     if (detail?.preservar && !this.loading() && this.cuentas.length && this.usuarioRegistro === this.auth.currentUser()?.id) { this.open.set(true); this.enfocarMonto();return; }
     this.usuarioRegistro = this.auth.currentUser()?.id ?? null;
+    this.categoriaSolicitada = detail?.categoriaId ?? null;
     this.repeticion=detail?.repetir??null;this.repitiendo.set(!!this.repeticion);
     const solicitado = this.repeticion?.tipo ?? detail?.tipo;
     this.tipo = solicitado === 'INGRESO' || solicitado === 'TRANSFERENCIA' ? solicitado : 'GASTO';
+    this.listaRegistroId = this.repeticion?.listaId ?? this.contextoLista.activaId();
+    this.etiquetasTexto = (this.repeticion?.etiquetas ?? []).map(e => '#' + e).join(' ');
     this.monto = ''; this.descripcion = ''; this.nota = ''; this.tasaCambio = null;
     this.fecha = this.hoyLocal();
     this.key = crearIdSolicitud(); this.pendiente = null; this.incierto = false;
@@ -121,7 +143,7 @@ export class RegistroRapidoComponent implements OnDestroy {
       next: data => {
         this.cuentas = data.cuentas.data.filter(c => c.activo); this.categorias = data.categorias.data.filter(c => c.activo);
         if (this.usuarioRegistro !== null) void this.offline.guardarCatalogo(this.usuarioRegistro,this.cuentas,this.categorias).catch(()=>{});
-        this.cambiarTipo(this.tipo);this.aplicarRepeticion(); this.loading.set(false);
+        this.cambiarTipo(this.tipo);this.aplicarCategoriaSolicitada();this.aplicarRepeticion(); this.loading.set(false);
         this.enfocarMonto();
       },
       error: () => { void this.cargarCatalogoLocal(version); }
@@ -134,6 +156,10 @@ export class RegistroRapidoComponent implements OnDestroy {
     try { anterior = Number(this.document.defaultView?.localStorage.getItem(`kaptal_cuenta_rapida_${this.auth.currentUser()?.id}_${tipo}`)); } catch { /* Preferencia opcional. */ }
     this.cuentaId = this.cuentasDisponibles().find(c => c.id === anterior)?.id ?? this.cuentasDisponibles()[0]?.id ?? null;
     this.ajustarDestino();
+  }
+  private categoriaSolicitada: number | null = null;
+  private aplicarCategoriaSolicitada(): void {
+    if (this.categoriasDisponibles().some(cat => cat.id === this.categoriaSolicitada)) this.categoriaId = this.categoriaSolicitada;
   }
   private aplicarRepeticion(): void {
     const movimiento=this.repeticion;if(!movimiento)return;
@@ -165,6 +191,7 @@ export class RegistroRapidoComponent implements OnDestroy {
       this.cuentas=catalogo?.cuentas.filter(c=>c.activo)??[];
       this.categorias=catalogo?.categorias.filter(c=>c.activo)??[];
       this.cambiarTipo(this.tipo);
+      this.aplicarCategoriaSolicitada();
       this.error.set(this.cuentas.length?'':'Sin cuentas guardadas en este dispositivo. Abre el registro con conexión primero.');
       this.aplicarRepeticion();
     } catch { if(version===this.catalogoVersion){this.cuentas=[];this.error.set('No se pudieron cargar las cuentas. Cierra y vuelve a intentar.');} }
@@ -180,9 +207,11 @@ export class RegistroRapidoComponent implements OnDestroy {
     if (this.saving() || this.loading()) return;
     const numero = Number(this.monto.trim().replace(',', '.'));
     if (!this.pendiente) {
+      let etiquetas: string[];
+      try { etiquetas = parsearEtiquetas(this.etiquetasTexto); } catch (error) { this.error.set((error as Error).message); return; }
       if (!this.cuentasDisponibles().some(c => c.id === this.cuentaId) || !Number.isFinite(numero) || numero <= 0 || !/^\d+(?:[.,]\d{1,2})?$/.test(this.monto.trim()) || !/^\d{4}-\d{2}-\d{2}$/.test(this.fecha)) { this.error.set('Revisa el monto, la cuenta y la fecha.'); return; }
       if (this.tipo === 'TRANSFERENCIA' && (!this.destinos().some(c => c.id === this.destinoId) || (this.distintaMoneda() && (!this.tasaCambio || !Number.isFinite(this.tasaCambio) || this.tasaCambio <= 0)))) { this.error.set('Elige otra cuenta de destino y un tipo de cambio válido.'); return; }
-      this.pendiente = { tipo: this.tipo, cuentaId: this.cuentaId!, monto: numero, fecha: this.fecha, descripcion: this.descripcion.trim() || this.categoriasDisponibles().find(c => c.id === this.categoriaId)?.nombre || (this.tipo === 'TRANSFERENCIA' ? 'Transferencia' : this.tipo === 'INGRESO' ? 'Ingreso' : 'Gasto'), notas: this.nota.trim() || null, categoriaId: this.tipo === 'TRANSFERENCIA' ? null : this.categoriaId, cuentaDestinoId: this.tipo === 'TRANSFERENCIA' ? this.destinoId : null, tasaCambio: this.tipo === 'TRANSFERENCIA' && this.distintaMoneda() ? this.tasaCambio : null };
+      this.pendiente = { ...(this.listaRegistroId == null ? {} : { listaId: this.listaRegistroId }), ...(etiquetas.length ? { etiquetas } : {}), tipo: this.tipo, cuentaId: this.cuentaId!, monto: numero, fecha: this.fecha, descripcion: this.descripcion.trim() || this.categoriasDisponibles().find(c => c.id === this.categoriaId)?.nombre || (this.tipo === 'TRANSFERENCIA' ? 'Transferencia' : this.tipo === 'INGRESO' ? 'Ingreso' : 'Gasto'), notas: this.nota.trim() || null, categoriaId: this.tipo === 'TRANSFERENCIA' ? null : this.categoriaId, cuentaDestinoId: this.tipo === 'TRANSFERENCIA' ? this.destinoId : null, tasaCambio: this.tipo === 'TRANSFERENCIA' && this.distintaMoneda() ? this.tasaCambio : null };
     }
     this.saving.set(true); this.error.set('');
     if (!this.offline.conexion()) { void this.guardarLocal();return; }
@@ -219,7 +248,9 @@ export class RegistroRapidoComponent implements OnDestroy {
   private recordarCuenta(): void { try {this.document.defaultView?.localStorage.setItem(`kaptal_cuenta_rapida_${this.auth.currentUser()?.id}_${this.tipo}`,String(this.cuentaId));}catch{/* Preferencia opcional. */} }
   voz(): void { this.cerrar(); this.document.defaultView?.dispatchEvent(new CustomEvent('kaptal-abrir-captura-chat', { detail: {tipo: this.tipo} })); }
   avanzado(): void {
-    const borrador = { tipo: this.tipo, monto: Number(this.monto.replace(',', '.')) || null, cuentaId: this.cuentaId, cuentaDestinoId: this.destinoId, categoriaId: this.categoriaId, fecha: this.fecha, descripcion: this.descripcion, notas: this.nota || null, tasaCambio: this.tasaCambio };
+    let etiquetas: string[];
+    try { etiquetas = parsearEtiquetas(this.etiquetasTexto); } catch (e) { this.error.set(e instanceof Error ? e.message : 'Revisa las etiquetas.'); return; }
+    const borrador = { listaId: this.listaRegistroId, etiquetas, tipo: this.tipo, monto: Number(this.monto.replace(',', '.')) || null, cuentaId: this.cuentaId, cuentaDestinoId: this.destinoId, categoriaId: this.categoriaId, fecha: this.fecha, descripcion: this.descripcion, notas: this.nota || null, tasaCambio: this.tasaCambio };
     this.cerrar(); void this.router.navigate(['/transacciones']).then(() => this.document.defaultView?.dispatchEvent(new CustomEvent('kaptal-abrir-registro-manual', {detail:borrador})));
   }
   teclado(event: KeyboardEvent): void {

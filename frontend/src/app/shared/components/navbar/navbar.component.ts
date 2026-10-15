@@ -1,25 +1,71 @@
+import { ListasService } from '../../../core/services/listas.service';
+import { ToastService } from '../../../core/services/toast.service';
+import { ListasSheetComponent } from '../listas-sheet/listas-sheet.component';
 import { DOCUMENT } from '@angular/common';
-import { Component, inject } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { PrivacyToggleComponent } from '../privacy-toggle/privacy-toggle.component';
+import { Component, ElementRef, ViewChild, inject, signal } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
+
 @Component({
   selector: 'app-navbar', standalone: true,
-  imports: [RouterLink, RouterLinkActive, PrivacyToggleComponent],
+  imports: [RouterLink, ListasSheetComponent],
   template: `
-    @if (!router.url.startsWith('/dashboard')) {
-      <div class="workspace-tools"><a routerLink="/dashboard" class="workspace-logo"><img src="kaptal.svg" alt=""><span>Kaptal</span></a><div><app-privacy-toggle/><a routerLink="/configuracion" class="utility-button" aria-label="Configuración"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="navigation-icons.svg#settings"/></svg></a></div></div>
-    }
-    <nav class="mobile-bottom-nav stable-bottom-nav" aria-label="Navegación principal">
-      <a routerLink="/dashboard" routerLinkActive="mobile-bottom-nav__link--active" [routerLinkActiveOptions]="{exact:true}" ariaCurrentWhenActive="page" class="mobile-bottom-nav__link" aria-label="Inicio"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="navigation-icons.svg#home"/></svg><span>Inicio</span></a>
-      <a routerLink="/transacciones" routerLinkActive="mobile-bottom-nav__link--active" ariaCurrentWhenActive="page" class="mobile-bottom-nav__link" aria-label="Movimientos"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="navigation-icons.svg#movements"/></svg><span>Actividad</span></a>
-      <button type="button" class="mobile-bottom-nav__link nav-add" (click)="anadir()" aria-label="Añadir movimiento"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Añadir</span></button>
-      <a routerLink="/presupuestos" routerLinkActive="mobile-bottom-nav__link--active" ariaCurrentWhenActive="page" class="mobile-bottom-nav__link" aria-label="Presupuestos"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="navigation-icons.svg#budgets"/></svg><span>Planes</span></a>
-      <button type="button" (click)="reportes()" class="mobile-bottom-nav__link" aria-label="Reportes"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="navigation-icons.svg#assistant"/></svg><span>Reportes</span></button>
-    </nav>`
+    <header class="workspace-tools">
+      <div class="workspace-context">
+        @if (!esInicio()) { <a routerLink="/dashboard" class="glass-icon" aria-label="Inicio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></a> }
+        <button type="button" class="workspace-selector" (click)="listas.abierta.set(true)" aria-label="Cambiar lista" aria-haspopup="dialog" [attr.aria-expanded]="listas.abierta()"><span aria-hidden="true">{{ listas.contexto.activa()?.emoji }}</span><span class="workspace-selector__name">{{ listas.contexto.activa()?.nombre || 'Mis movimientos' }}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 10 4 4 4-4"/></svg></button>
+      </div>
+      <nav class="workspace-shortcuts" aria-label="Accesos principales">
+        <a routerLink="/transacciones" [queryParams]="{listaId: listas.contexto.activaId()}" class="glass-icon" aria-label="Movimientos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M3 6h.01M3 12h.01M3 18h.01"/></svg></a>
+        <a routerLink="/configuracion" class="glass-icon" aria-label="Configuración"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 3-1 3-3 1-3 3v4l3 3 3 1 1 3h4l1-3 3-1 3-3v-4l-3-3-3-1-1-3z"/><circle cx="12" cy="12" r="3"/></svg></a>
+      </nav>
+    </header>
+    <div class="capture-dock" aria-label="Registrar un movimiento">
+      <button type="button" class="capture-dock__manual" (click)="anadir()" aria-label="Añadir movimiento" title="Registro manual"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 4 5 5M4 16l12-12 4 4L8 20H4z"/></svg></button>
+      <button type="button" class="capture-dock__voice" (click)="voz()" aria-label="Registrar por voz o texto" title="Hablar o escribir"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5m-4 0h8"/></svg></button>
+    </div>
+    @defer (when listas.abierta()) {<app-listas-sheet (herramientas)="abrirMenu()"/>}
+    <dialog #menu id="workspace-panel" class="workspace-panel" aria-labelledby="workspace-panel-title" (click)="cerrarAlFondo($event)" (close)="alCerrarMenu()">
+      <header><div><p class="sheet-caption">Kaptal</p><h2 id="workspace-panel-title">Tu espacio</h2></div><button type="button" (click)="cerrarMenu()" aria-label="Cerrar menú" autofocus>&times;</button></header>
+      <nav aria-label="Herramientas de tu espacio">
+        <div class="workspace-panel__primary">
+          <a routerLink="/dashboard" (click)="cerrarMenu()">Inicio <span aria-hidden="true">&#8250;</span></a>
+          <a routerLink="/cuentas" (click)="cerrarMenu()">Cuentas <span aria-hidden="true">&#8250;</span></a>
+          <a routerLink="/presupuestos" (click)="cerrarMenu()">Presupuestos <span aria-hidden="true">&#8250;</span></a>
+          <a routerLink="/pareja" (click)="cerrarMenu()">Compartido <span aria-hidden="true">&#8250;</span></a>
+          <a routerLink="/reportes" (click)="cerrarMenu()">Reportes <span aria-hidden="true">&#8250;</span></a>
+          <a routerLink="/asistente" (click)="cerrarMenu()">Asistente <span aria-hidden="true">&#8250;</span></a>
+        </div>
+        <details class="workspace-menu__tools"><summary>Organizar</summary><a routerLink="/categorias" (click)="cerrarMenu()">Categorías</a><a routerLink="/configuracion" fragment="recurring" (click)="cerrarMenu()">Recurrentes</a><a routerLink="/libro-diario" (click)="cerrarMenu()">Libro diario</a></details>
+        <a routerLink="/configuracion" class="workspace-panel__settings" (click)="cerrarMenu()">Ajustes <span aria-hidden="true">&#8250;</span></a>
+      </nav>
+    </dialog>`
 })
 export class NavbarComponent {
-  readonly router = inject(Router);
+  @ViewChild('menu') private menu?: ElementRef<HTMLDialogElement>;
+  readonly menuAbierto = signal(false);
+  readonly listas = inject(ListasService);
+  private readonly toast = inject(ToastService);
   private readonly document = inject(DOCUMENT);
-  reportes(): void { this.document.defaultView?.dispatchEvent(new CustomEvent('kaptal-abrir-captura-chat', {detail:{content:'Reporte de este mes'}})); }
-  anadir(): void { this.document.defaultView?.dispatchEvent(new CustomEvent('kaptal-abrir-registro-rapido')); }
+  private readonly router = inject(Router);
+
+  esInicio(): boolean { return this.router.url.split(/[?#]/)[0] === '/dashboard'; }
+  abrirMenu(): void {
+    const menu = this.menu?.nativeElement;
+    if (!menu || menu.open) return;
+    menu.showModal();
+    this.menuAbierto.set(true);
+  }
+  cerrarMenu(): void { this.menu?.nativeElement.close(); }
+  alCerrarMenu(): void {
+    this.menuAbierto.set(false);
+    this.menu?.nativeElement.querySelectorAll<HTMLDetailsElement>('details[open]').forEach(group => group.open = false);
+  }
+  cerrarAlFondo(event: MouseEvent): void {
+    const menu = this.menu?.nativeElement;
+    if (event.target !== menu || !menu) return;
+    const rect = menu.getBoundingClientRect();
+    if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) this.cerrarMenu();
+  }
+  voz(): void { if (!this.listas.contexto.puedeEscribir()) { this.toast.error('Elige una lista activa con permiso de editor para registrar.'); return; } this.document.defaultView?.dispatchEvent(new CustomEvent('kaptal-abrir-captura-chat')); }
+  anadir(): void { if (!this.listas.contexto.puedeEscribir()) { this.toast.error('Elige una lista activa con permiso de editor para registrar.'); return; } this.document.defaultView?.dispatchEvent(new CustomEvent('kaptal-abrir-registro-rapido')); }
 }

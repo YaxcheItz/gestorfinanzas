@@ -1,0 +1,21 @@
+id,funcion,referencia,prioridad,estado_kaptal,aceptacion
+F01,Captura manual,MonAi,must,existente y verificada,Guardar y reintentar sin duplicar
+F02,Voz y texto con propuestas,MonAi,must,existente y verificada parcialmente,Multiples movimientos revisables antes de confirmar
+F03,Actividad y repetir,MonAi,must,existente y verificada,Conservar original y crear copia confirmada
+F04,Barras por presupuesto,MonAi,must,restauradas en esta revision,Proporcion y valores separados por moneda
+F05,Reportes graficos,MonAi,should,implementado en etapa actual,Privacidad y recuperacion de errores
+F06,Listas compartidas arbitrarias,MonAi,should,parcial pareja existente,Varias listas privadas y compartidas con permisos
+F07,Etiquetas transversales,MonAi,should,pendiente,Buscar y filtrar sin reemplazar categoria
+F08,Edicion de serie recurrente,MonAi,should,parcial recurrencias existentes,Una instancia o futuras sin duplicar
+F09,Registro desde notificacion bancaria,MonAi Android,must,pendiente nativo,Fuente permitida y propuesta sin duplicados
+F10,Registro desde correo,solicitud usuario,must,pendiente proveedor y OAuth,Consentimiento y desconexion efectivos
+F11,Registro desde SMS,solicitud usuario,must,pendiente nativo y permisos,Filtrar localmente y excluir OTP
+F12,Baldosa Anadir gasto,solicitud usuario,must,pendiente nativo,Abrir captura desde ajustes rapidos
+F13,Widget de escritorio de voz,MonAi iOS,could,pendiente nativo,Acceso rapido sin exponer datos bloqueados
+F14,Periodos con inicio personalizado,Kesef,should,parcial rango libre existente,Inicio propio repetido cada mes
+F15,Reparto flexible en grupos,Kesef,should,parcial pareja existente,Porcentajes y montos conservan suma exacta
+F16,Metas de ahorro,Kesef,should,pendiente,Aportes sin inflar ingresos o gastos
+F17,Integracion Mercado Pago,Kesef,could,pendiente viabilidad API,OAuth y contrato oficial antes de prometer historial
+F18,OCR de comprobantes,referencias previas,could,pendiente validacion,Propuesta editable y deteccion de duplicados
+F19,Consulta financiera por lenguaje natural,MonAi iOS,should,parcial asistente existente,Respuestas basadas en consultas autorizadas del usuario
+F20,Exportacion e importacion,MonAi,must,existente CSV y respaldo,Previsualizar y validar sin mezclar monedas

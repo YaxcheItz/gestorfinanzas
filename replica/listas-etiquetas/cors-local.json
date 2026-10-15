@@ -1,0 +1,14 @@
+[
+  {
+    "origin": "http://localhost:4300",
+    "status": 200
+  },
+  {
+    "origin": "http://10.168.3.76:4300",
+    "status": 200
+  },
+  {
+    "origin": "https://untrusted.example.test",
+    "status": 403
+  }
+]

@@ -12,6 +12,7 @@
           "/manifest.webmanifest",
           "/*.css",
           "/*.js",
+          "/styles/*.css",
           "!/**/runtime-config.js"
         ]
       }

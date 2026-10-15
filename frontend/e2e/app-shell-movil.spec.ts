@@ -20,7 +20,7 @@ test('una descarga interrumpida ofrece reintentar sin recargar automáticamente'
   expect(page.url()).toContain('/dashboard?accion=nuevo-gasto');
 });
 
-test('la carga lenta conserva estructura y la barra se integra al borde en ambas orientaciones', async ({ page }) => {
+test('la carga lenta conserva estructura y los controles contextuales siguen visibles en ambas orientaciones', async ({ page }) => {
   const usuario = { id: 991, nombre: 'Prueba visual', email: 'visual@example.test' };
   await page.addInitScript(user => {
     const claims = btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600, sub: user.email }));
@@ -38,25 +38,31 @@ test('la carga lenta conserva estructura y la barra se integra al borde en ambas
       data = { totalCuentas: 0, resumenPorMoneda: [], ultimosMovimientos: [] };
     }
     if (url.pathname.endsWith('/presupuestos')) data = { presupuestos: [], resumenPorMoneda: [] };
+    if (url.pathname.endsWith('/dashboard/analitica')) data = { gastosPorCategoria: [], ultimosSeisMeses: [] };
     await route.fulfill({ json: { success: true, message: '', data } });
   });
   await page.goto('/dashboard');
-  await expect(page.locator('.dashboard-loading-summary')).toBeVisible();
+  await expect(page.locator('.home-amount-loading')).toBeVisible();
   await expect(page.locator('.dashboard-loading-row')).toHaveCount(3);
-  await expect(page.getByText('Empieza con una cuenta')).toHaveCount(0);
-  await expect(page.locator('meta[name="theme-color"]').first()).toHaveAttribute('content', '#151615');
+  await expect(page.getByRole('heading', {name:'Sin gastos todavía',exact:true})).toHaveCount(0);
+  await expect(page.locator('meta[name="theme-color"]').first()).toHaveAttribute('content', '#111315');
   for (const viewport of [{ width: 320, height: 640 }, { width: 568, height: 320 }, { width: 390, height: 844 }]) {
     await page.setViewportSize(viewport);
-    const bounds = await page.getByRole('navigation', { name: 'Navegación principal' }).boundingBox();
-    expect(bounds?.x).toBe(0);
-    expect(bounds?.width).toBe(viewport.width);
-    expect(Math.round((bounds?.y ?? 0) + (bounds?.height ?? 0))).toBe(viewport.height);
+    const voice = page.getByRole('button', {name:'Registrar por voz o texto',exact:true});
+    await expect(voice).toBeInViewport();
+    await expect(page.getByRole('button',{name:'Añadir movimiento',exact:true})).toBeInViewport();
+    await expect(page.getByRole('link',{name:'Movimientos',exact:true})).toBeInViewport();
+    await expect(page.getByRole('link',{name:'Configuración',exact:true})).toBeInViewport();
+    await expect(page.locator('.mobile-bottom-nav')).toHaveCount(0);
+    const bounds = await voice.boundingBox();
+    expect(bounds!.width).toBeGreaterThanOrEqual(44);
+    expect(bounds!.height).toBeGreaterThanOrEqual(44);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   }
   await page.screenshot({ path: test.info().outputPath('carga-movil.png') });
   liberar();
-  await expect(page.getByText('Empieza con una cuenta')).toBeVisible();
-  await expect(page.locator('.dashboard-loading-summary')).toHaveCount(0);
+  await expect(page.getByRole('heading', {name:'Sin gastos todavía',exact:true})).toBeVisible();
+  await expect(page.locator('.home-amount-loading')).toHaveCount(0);
 });
 
 test('cuentas y presupuestos conservan monedas, acciones y estados en pantallas pequeñas', async ({ page }) => {
@@ -96,6 +102,8 @@ test('cuentas y presupuestos conservan monedas, acciones y estados en pantallas 
   }
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: test.info().outputPath('cuentas-movil.png'), fullPage: true });
+  await page.getByRole('button',{name:'Cambiar lista',exact:true}).click();
+  await page.getByRole('button',{name:/^Herramientas/}).click();
   await page.getByRole('link', { name: 'Presupuestos', exact: true }).click();
   await expect(page.locator('.budget-remaining')).toContainText('Te excediste');
   await expect(page.locator('.budget-remaining')).toContainText(/20[.,]00/);
