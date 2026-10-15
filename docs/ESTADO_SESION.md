@@ -9,10 +9,16 @@
   3. Detalle de presupuesto y umbrales configurables: campo `porcentajeAlerta` (1..100, default 80%), barra de progreso con marca visual del umbral, y modal accesible de detalle con desglose de límite, gastado, disponible y lista de movimientos del período, con acción directa para modificar la meta.
   4. Mejoras de recurrencias: columna `plantilla_id` en `transacciones` y `fecha_fin` en `plantillas_recurrentes`. Selector de modo de edición al modificar movimientos recurrentes («Solo este movimiento», «Este y los siguientes», «Toda la serie»). Posibilidad de fijar fecha final al crear o editar series. Desvinculación limpia al cancelar series sin tocar transacciones históricas ni generar errores de persistencia.
   5. Idempotencia y trazabilidad: huella SHA-256 de solicitudes preservada para reintentos y compatibilidad retroactiva.
-- Verificación técnica:
-  - Frontend: `ng build` exitoso (bundle inicial 466.37 kB), 38 suites y 311 pruebas unitarias en Vitest pasando al 100% sin errores.
-  - Backend: 367 pruebas unitarias e integración en Maven pasando al 100% (0 fallos, 0 errores), incluyendo suite de exactitud financiera y todas las suites de servicios y controladores.
-- Siguiente paso según el plan: Integrar esta etapa (`mejoras/presupuestos-recurrencias`) mediante PR a `develop`, comprobar CI remoto y crear la rama `mejoras/asistente-evidencias` desde `develop` actualizado.
+- Rama `mejoras/presupuestos-recurrencias` subida al remoto y PR #71 creado contra `develop`.
+- Corrección de CI (2026-10-15):
+  1. CORS local: `application.yml`, `application-test.yml`, `CorsConfig.java`, `start-backend.ps1` y `configurar-acceso-lan.ps1` actualizados para aceptar puertos 4200, 4300 y 14200 (localhost, 127.0.0.1 e IPs LAN activas), evitando 403 `Invalid CORS request`.
+  2. Compatibilidad Flyway V6 en CI: `PostgresMigracionesTest.java` actualizado para esperar 5 migraciones desde V1 (hasta V6), versión final '6', y usar `V7__fallo_controlado` para pruebas de reversión DDL sin colisionar con la V6 real.
+- Verificación técnica completa en CI (GitHub Actions run 38818791091 y 38818786996 - commit `2945b22`):
+  - Backend (build + tests): SUCCESS
+  - Frontend (unitarias + build): SUCCESS
+  - PostgreSQL (migraciones + regresiones + recuperación): SUCCESS
+  - E2E Chromium + API + PostgreSQL: SUCCESS
+- Siguiente paso según el plan: Integrar el PR #71 en `develop`, comprobar remoto, y crear la rama `mejoras/asistente-evidencias` desde `develop` actualizado para comenzar la Etapa 3.
 
 
 - Etapa 2 implementada: listas privadas/compartidas, selector real en cabecera y Herramientas dentro de la hoja; creación, edición, archivo, moneda de presentación, roles propietario/editor/lector e invitaciones explícitas con hash, vencimiento y revocación. Los miembros sólo modifican movimientos y cuentas propios. Borrar al propietario transfiere la lista y conserva registros ajenos; quitar un miembro no borra su historial.
