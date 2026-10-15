@@ -190,7 +190,7 @@ export class SwipeActionsDirective {
 
         <div class="tx-item__body">
           <h3 class="tx-item__title">{{ (etiquetaMovimiento) | textoFinanciero }}</h3>
-          <p class="tx-item__account">{{ movimiento.categoriaNombre || nombreCuentaVisible(movimiento.cuentaNombre) }}@if(movimiento.tipo === 'TRANSFERENCIA') { → {{ nombreCuentaVisible(movimiento.cuentaDestinoNombre) }}}</p>
+          <p class="tx-item__account">@if(movimiento.categoriaNombre) {<span>{{ movimiento.categoriaNombre }} · </span>}{{ nombreCuentaVisible(movimiento.cuentaNombre) }}@if(movimiento.tipo === 'TRANSFERENCIA') { → {{ nombreCuentaVisible(movimiento.cuentaDestinoNombre) }}}</p>
           <p class="tx-item__meta">
             @if (metodoCaptura === 'VOZ') {
               <svg class="tx-item__mic" aria-label="Capturado por voz" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5m-4 0h8"/></svg>

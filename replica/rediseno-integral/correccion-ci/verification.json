@@ -1,0 +1,30 @@
+{
+  "branch": "mejoras/rediseno-integral-android",
+  "reviewedCommit": "1405a1b72a8c69a2bc60763d25c1b13bb5f214d0",
+  "remoteRuns": [
+    {
+      "id": 38691541153,
+      "event": "push",
+      "e2e": "4 failed / 11 passed",
+      "otherJobs": "success"
+    },
+    {
+      "id": 38691654811,
+      "event": "pull_request",
+      "e2e": "4 failed / 11 passed",
+      "otherJobs": "success"
+    }
+  ],
+  "local": {
+    "e2ePassed": 15,
+    "backend": "isolated H2; remote CI PostgreSQL not rerun",
+    "unitPassed": 276,
+    "unitFiles": 35,
+    "runnerConfig": "replica/navegacion-captura/vitest.config.mjs",
+    "buildInitialKB": 457.86,
+    "buildWarnings": 0,
+    "disabledTestsAdded": false
+  },
+  "commitOrPush": false,
+  "pr64": "closed without merge"
+}

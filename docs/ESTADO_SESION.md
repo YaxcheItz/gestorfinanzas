@@ -1,5 +1,13 @@
 # Estado para retomar la sesión
 
+## Corrección de CI del rediseño
+
+- Revisados los dos checks rojos del commit `1405a1b`: CI push `38691541153` y PR `38691654811`. En ambos sólo falla E2E: cuatro casos con 11 correctos. Backend, frontend y migraciones/recuperación PostgreSQL pasan en ambos. PR #64 aparece cerrado sin merge; no se cambió su estado.
+- Correcciones locales en la misma rama: recuperar nombre de cuenta junto con categoría en filas; extraer sólo el nombre textual de categoría al buscar por nombre accesible (emoji decorativo excluido); sustituir expectativas antiguas de barra inferior, skeleton, tema y tabla por controles/contextos actuales. Se mantienen las comprobaciones de edición en escritorio, filtros, privacidad, importes e idempotencia; sin omitir ni desactivar casos.
+- Build correcto sin avisos, 457.86 kB; 276 unitarias/35 archivos correctas usando el mismo runner-config de CI. La suite E2E completa se ejecuta en puerto 14220 con backend H2 aislado; no equiparar ese resultado con CI PostgreSQL remoto.
+- Resultado final: las 15 E2E vigentes pasan en 2.1 min. No se añadieron exclusiones ni se alteraron timeouts/reintentos de CI. Evidencia en `replica/rediseno-integral/correccion-ci/verification.json` y logs. Servidores temporales 14220/18080 cerrados; 4300 y 14200 conservados.
+- Sin commit, push, reapertura de PR ni reejecución remota. Los checks antiguos seguirán rojos hasta subir las correcciones y comprobar una ejecución nueva. Skills: playwright-cli y angular-developer. Logs locales en `frontend/.angular/correccion-ci-*.log`.
+
 ## Corrección de ENOENT al cambiar de rama
 
 - Git había cambiado de rediseño a develop, mientras Angular 4300 conservaba el mapa de assets del rediseño; `public/styles/activity.css` no existe en develop. El rediseño está ahora guardado en el commit `bafc5b3` de `mejoras/rediseno-integral-android`, con rama de seguimiento remota; los avisos anteriores de «sin commit» son históricos.
