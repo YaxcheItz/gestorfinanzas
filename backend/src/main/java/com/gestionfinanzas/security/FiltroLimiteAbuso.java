@@ -48,6 +48,7 @@ public class FiltroLimiteAbuso extends OncePerRequestFilter {
                 if (MUTACIONES.contains(request.getMethod())) {
                     limite.comprobar("usuario:"+usuario.getId()+":mutaciones",120,Duration.ofMinutes(1));
                 }
+                if (ruta.equals("/api/listas/unirse")) limite.comprobar("usuario:"+usuario.getId()+":invitaciones",10,Duration.ofMinutes(1));
                 if (ruta.startsWith("/api/asistente/")
                         || (ruta.startsWith("/api/notificaciones/") && MUTACIONES.contains(request.getMethod()))) {
                     limite.comprobar("usuario:"+usuario.getId()+":costosas",20,Duration.ofMinutes(1));

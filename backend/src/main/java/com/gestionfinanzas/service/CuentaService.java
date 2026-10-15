@@ -32,6 +32,7 @@ public class CuentaService {
     private final PlantillaRecurrenteRepository plantillaRepository;
     private final AuditoriaTransaccionService auditoriaService;
     private final LibroDiarioService libroDiarioService;
+    private final ListaService listaService;
 
     private static final Set<String> MONEDAS_DISPONIBLES = Set.of("MXN", "USD", "CAD", "EUR", "GBP");
 
@@ -91,6 +92,7 @@ public class CuentaService {
         Cuenta guardada = cuentaRepository.save(cuenta);
         if (saldoInicial.abs().compareTo(BigDecimal.ZERO) > 0) {
             Transaccion saldoInicialRegistrado = transaccionRepository.save(Transaccion.builder()
+                    .lista(listaService.personal(usuarioId))
                     .usuario(usuario)
                     .cuenta(guardada)
                     .tipo(TipoTransaccion.SALDO_INICIAL)

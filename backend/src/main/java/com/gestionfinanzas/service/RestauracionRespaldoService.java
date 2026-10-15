@@ -63,7 +63,7 @@ import java.util.function.Function;
 @Slf4j
 public class RestauracionRespaldoService {
 
-    private static final int VERSION_COMPATIBLE = 3;
+    private static final int VERSION_COMPATIBLE = 4;
     private static final int MAX_REGISTROS = 20_000;
     private static final Map<String, CategoriaInicial> CATEGORIAS_INICIALES = Map.of(
             "Alimentos y Supermercado", new CategoriaInicial(TipoTransaccion.GASTO, "shopping-cart", "#f59e0b"),
@@ -90,6 +90,9 @@ public class RestauracionRespaldoService {
     private final RepartoGastoRepository repartoRepository;
     private final PagoParejaRepository pagoRepository;
     private final ObjectMapper objectMapper;
+    private final com.gestionfinanzas.repository.ListaRepository listaRepository;
+    private final com.gestionfinanzas.repository.ListaMiembroRepository listaMiembroRepository;
+    private final ListaService listaService;
 
     @Transactional(readOnly = true)
     public RestauracionRespaldoPreviewResponse previsualizar(Long usuarioId, RespaldoFinancieroResponse respaldo) {
@@ -112,6 +115,7 @@ public class RestauracionRespaldoService {
             advertencias.add("El historial de gastos compartidos se restaura como una copia privada de consulta. No reactiva vínculos ni concede acceso a otra persona.");
             advertencias.add("Los otros participantes se conservan según el archivo, con referencias históricas sin acceso. No se consulta su perfil actual.");
         }
+        advertencias.add("Las listas del respaldo se restauran como copias privadas; no se restauran miembros ni invitaciones.");
         advertencias.add("Se conservarán tu correo, contraseña y preferencias actuales del perfil.");
         if (respaldo.cuentas().stream().anyMatch(c -> c.tipo() == TipoCuenta.CREDITO && c.limiteRetenido() == null)) {
             advertencias.add("Este respaldo antiguo no conserva el crédito retenido ni todos los datos MSI. No se puede reconstruir el total original de esas compras automáticamente.");
@@ -146,14 +150,16 @@ public class RestauracionRespaldoService {
         try {
             cuentas = restaurarCuentas(usuario, respaldo.cuentas());
             categorias = restaurarCategorias(usuario, respaldo.categoriasPersonalizadas());
+            etapa = "listas";
+            var listas = restaurarListas(usuario, respaldo.listas());
             etapa = "movimientos";
-            transacciones = restaurarTransacciones(usuario, respaldo.transacciones(), cuentas, categorias);
+            transacciones = restaurarTransacciones(usuario, respaldo.transacciones(), cuentas, categorias, listas);
             etapa = "cashback";
             restaurarCashback(respaldo.relacionesCashback(), transacciones);
             etapa = "presupuestos";
             restaurarPresupuestos(usuario, respaldo.presupuestos(), categorias);
             etapa = "recurrentes";
-            restaurarRecurrencias(usuario, respaldo.recurrencias(), cuentas, categorias);
+            restaurarRecurrencias(usuario, respaldo.recurrencias(), cuentas, categorias, listas);
             etapa = "historial";
             restaurarHistorial(usuario, respaldo.historialMovimientos(), transacciones, cuentas, categorias);
             etapa = "libro diario";
@@ -172,7 +178,8 @@ public class RestauracionRespaldoService {
         List<Categoria> categorias = categoriaRepository.findByUsuarioIdOrderByActivoDescNombreAsc(usuarioId);
         boolean cuentasSinUso = cuentas.isEmpty() || (cuentas.size() == 1 && esBilleteraInicialIntacta(cuentas.getFirst()));
         boolean categoriasSinUso = categorias.isEmpty() || sonCategoriasInicialesIntactas(categorias);
-        return cuentasSinUso
+        return listaRepository.accesibles(usuarioId).stream().allMatch(lista -> "PERSONAL".equals(lista.getClave()))
+                && cuentasSinUso
                 && categoriasSinUso
                 && presupuestoRepository.findAllByUsuarioIdOrderByAnioDescMesDescIdAsc(usuarioId).isEmpty()
                 && plantillaRepository.findAllByUsuarioIdOrderBySiguienteFechaAsc(usuarioId).isEmpty()
@@ -475,7 +482,20 @@ public class RestauracionRespaldoService {
                 throw new IllegalArgumentException("El respaldo contiene una categoría con un icono o color no válido.");
             }
         }
+        Set<Long> listaIds = new HashSet<>();
+        if (respaldo.listas() != null) {
+            if (respaldo.listas().size() > 1000) throw new IllegalArgumentException("El respaldo admite hasta 1000 listas.");
+            long personales = respaldo.listas().stream().filter(java.util.Objects::nonNull).filter(RespaldoFinancieroResponse.ListaRespaldo::personal).count();
+            if (personales > 1) throw new IllegalArgumentException("El respaldo contiene varias listas Personal.");
+            for (var lista : respaldo.listas()) {
+                if (lista == null || lista.id() == null || !listaIds.add(lista.id()) || lista.nombre() == null || lista.nombre().isBlank()
+                        || lista.nombre().length() > 60 || lista.emoji() == null || lista.emoji().isBlank() || lista.emoji().length() > 24
+                        || !java.util.Set.of("MXN","USD","CAD","EUR","GBP").contains(lista.moneda())) throw new IllegalArgumentException("El respaldo contiene una lista no válida.");
+            }
+        }
         for (TransaccionResponse movimiento : respaldo.transacciones()) {
+            EtiquetasFinancieras.normalizar(movimiento.etiquetas());
+            if (movimiento.listaId() != null && respaldo.listas() != null && !listaIds.contains(movimiento.listaId())) throw new IllegalArgumentException("Una lista del movimiento no está en el respaldo.");
             if (movimiento.tipo() == null || movimiento.monto() == null
                     || movimiento.monto().compareTo(BigDecimal.ZERO) <= 0 || movimiento.fecha() == null
                     || movimiento.descripcion() == null || movimiento.descripcion().isBlank()
@@ -529,6 +549,8 @@ public class RestauracionRespaldoService {
         java.util.Set<java.util.UUID> compras = new java.util.HashSet<>();
         java.util.Map<Long, BigDecimal> pendientesMsi = new java.util.HashMap<>();
         for (PlantillaRecurrenteResponse recurrencia : respaldo.recurrencias()) {
+            EtiquetasFinancieras.normalizar(recurrencia.etiquetas());
+            if (recurrencia.listaId() != null && respaldo.listas() != null && !listaIds.contains(recurrencia.listaId())) throw new IllegalArgumentException("Una lista de recurrencia no está en el respaldo.");
             if (recurrencia == null) throw new IllegalArgumentException("El respaldo contiene una recurrencia no válida.");
             if (recurrencia.cuotasTotales() != null) {
                 int pagadas = recurrencia.cuotasPagadas() == null ? 0 : recurrencia.cuotasPagadas();
@@ -715,9 +737,23 @@ public class RestauracionRespaldoService {
         return mapa;
     }
 
+    private Map<Long, com.gestionfinanzas.model.entity.ListaFinanciera> restaurarListas(Usuario usuario, List<RespaldoFinancieroResponse.ListaRespaldo> originales) {
+        Map<Long, com.gestionfinanzas.model.entity.ListaFinanciera> resultado = new HashMap<>();
+        var personal = listaService.personal(usuario.getId()); resultado.put(0L, personal);
+        if (originales == null) return resultado;
+        for (var original : originales) {
+            var lista = original.personal() ? personal : listaRepository.save(com.gestionfinanzas.model.entity.ListaFinanciera.builder()
+                    .propietario(usuario).nombre(original.nombre()).emoji(original.emoji()).moneda(original.moneda()).archivada(original.archivada()).build());
+            if (original.personal()) { lista.setNombre(original.nombre()); lista.setEmoji(original.emoji()); lista.setMoneda(original.moneda()); }
+            if (!original.personal()) listaMiembroRepository.save(com.gestionfinanzas.model.entity.ListaMiembro.builder().lista(lista).usuario(usuario).rol("PROPIETARIO").build());
+            resultado.put(original.id(), lista);
+        }
+        return resultado;
+    }
+
     private Map<Long, Long> restaurarTransacciones(
             Usuario usuario, List<TransaccionResponse> respaldadas,
-            Map<Long, Long> cuentas, Map<Long, Long> categorias
+            Map<Long, Long> cuentas, Map<Long, Long> categorias, Map<Long, com.gestionfinanzas.model.entity.ListaFinanciera> listas
     ) {
         Map<Long, Long> mapa = new HashMap<>();
         for (TransaccionResponse origen : respaldadas) {
@@ -725,6 +761,8 @@ public class RestauracionRespaldoService {
             Cuenta destino = buscarCuenta(origen.cuentaDestinoId(), cuentas);
             Categoria categoria = buscarCategoria(origen.categoriaId(), origen.categoriaNombre(), origen.tipo(), categorias);
             Transaccion guardada = transaccionRepository.save(Transaccion.builder()
+                    .lista(listas.get(origen.listaId() == null ? 0L : origen.listaId()))
+                    .etiquetas(EtiquetasFinancieras.normalizar(origen.etiquetas()))
                     .usuario(usuario)
                     .cuenta(cuenta)
                     .cuentaDestino(destino)
@@ -770,7 +808,7 @@ public class RestauracionRespaldoService {
     }
 
     private void restaurarRecurrencias(Usuario usuario, List<PlantillaRecurrenteResponse> respaldadas,
-                                       Map<Long, Long> cuentas, Map<Long, Long> categorias) {
+                                       Map<Long, Long> cuentas, Map<Long, Long> categorias, Map<Long, com.gestionfinanzas.model.entity.ListaFinanciera> listas) {
         for (PlantillaRecurrenteResponse origen : respaldadas) {
             Long cuentaId = cuentas.get(origen.cuentaId());
             if (cuentaId == null) {
@@ -781,6 +819,8 @@ public class RestauracionRespaldoService {
             Categoria categoria = origen.categoriaId() == null ? null
                     : categoriaRepository.findById(resolverCategoriaId(origen.categoriaId(), categorias)).orElse(null);
             plantillaRepository.save(PlantillaRecurrente.builder()
+                    .lista(listas.get(origen.listaId() == null ? 0L : origen.listaId()))
+                    .etiquetas(EtiquetasFinancieras.normalizar(origen.etiquetas()))
                     .usuario(usuario).cuenta(cuenta).categoria(categoria).tipo(origen.tipo())
                     .monto(origen.monto()).notas(origen.notas()).frecuencia(origen.frecuencia())
                     .cuotasTotales(origen.cuotasTotales())

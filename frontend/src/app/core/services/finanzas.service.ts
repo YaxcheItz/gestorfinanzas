@@ -1,3 +1,4 @@
+import { ListaContextoService } from './lista-contexto.service';
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -39,6 +40,8 @@ import { getApiBaseUrl } from './api-base-url';
 })
 export class FinanzasService {
   private readonly http = inject(HttpClient);
+  private readonly listas = inject(ListaContextoService);
+  private contextoLista(params = new HttpParams(), id = this.listas.activaId()): HttpParams { return id == null ? params : params.set('listaId', id); }
   private readonly baseUrl = getApiBaseUrl();
 
   getConfiguracionPush(): Observable<ApiResponse<{ configurado: boolean; clavePublica: string | null }>> {
@@ -78,11 +81,12 @@ export class FinanzasService {
     return this.http.post<ApiResponse<AiChatResponse>>(`${this.baseUrl}/asistente/chat`, request);
   }
 
-  capturaRapidaAi(content: string, consentimientoDatosFinancieros: boolean, capturaPorVoz = false, contexto?: string | null): Observable<ApiResponse<AiChatResponse>> {
+  capturaRapidaAi(content: string, consentimientoDatosFinancieros: boolean, capturaPorVoz = false, contexto?: string | null, listaId = this.listas.activaId()): Observable<ApiResponse<AiChatResponse>> {
     return this.http.post<ApiResponse<AiChatResponse>>(`${this.baseUrl}/asistente/captura-rapida`, {
       content,
       consentimientoDatosFinancieros,
       capturaPorVoz,
+      ...(listaId == null ? {} : { listaId }),
       contexto
     });
   }
@@ -161,11 +165,11 @@ export class FinanzasService {
 
   // --- Transacciones ---
   getTransaccionesRecientes(): Observable<ApiResponse<Transaccion[]>> {
-    return this.http.get<ApiResponse<Transaccion[]>>(`${this.baseUrl}/transacciones/recientes`);
+    return this.http.get<ApiResponse<Transaccion[]>>(`${this.baseUrl}/transacciones/recientes`, { params: this.contextoLista() });
   }
 
   getTransaccionesPaginadas(filtros?: TransaccionFiltro, page = 0, size = 20): Observable<ApiResponse<PageResponse<Transaccion>>> {
-    let params = new HttpParams()
+    let params = this.contextoLista()
       .set('page', page.toString())
       .set('size', size.toString());
 
@@ -177,7 +181,7 @@ export class FinanzasService {
   }
 
   exportarTransaccionesCsv(filtros?: TransaccionFiltro): Observable<HttpResponse<Blob>> {
-    let params = new HttpParams();
+    let params = this.contextoLista();
     if (filtros) {
       params = this.aplicarParamsFiltroTransaccion(params, filtros);
     }
@@ -189,6 +193,9 @@ export class FinanzasService {
   }
 
   private aplicarParamsFiltroTransaccion(params: HttpParams, filtros: TransaccionFiltro): HttpParams {
+    if (filtros.listaId != null) params = params.set('listaId', filtros.listaId);
+    if (filtros.autorId != null) params = params.set('autorId', filtros.autorId);
+    for (const etiqueta of filtros.etiquetas ?? []) params = params.append('etiquetas', etiqueta);
     if (filtros.id != null) params = params.set('id', filtros.id.toString());
     if (filtros.tipo) params = params.set('tipo', filtros.tipo);
     if (filtros.cuentaId != null) params = params.set('cuentaId', filtros.cuentaId.toString());
@@ -230,24 +237,24 @@ export class FinanzasService {
   }
 
   // --- Dashboard Consolidado ---
-  getDashboardResumen(mes?: number, anio?: number, desde?: string, hasta?: string): Observable<ApiResponse<DashboardResumen>> {
-    let params = new HttpParams();
+  getDashboardResumen(mes?: number, anio?: number, desde?: string, hasta?: string, listaId = this.listas.activaId()): Observable<ApiResponse<DashboardResumen>> {
+    let params = this.contextoLista(new HttpParams(), listaId);
     if (mes) params = params.set('mes', mes);
     if (anio) params = params.set('anio', anio);
     if (desde && hasta) params = params.set('desde', desde).set('hasta', hasta);
     return this.http.get<ApiResponse<DashboardResumen>>(`${this.baseUrl}/dashboard/resumen`, { params });
   }
 
-  getDashboardAnalitica(mes?: number, anio?: number, desde?: string, hasta?: string): Observable<ApiResponse<DashboardAnalitica>> {
-    let params = new HttpParams();
+  getDashboardAnalitica(mes?: number, anio?: number, desde?: string, hasta?: string, listaId = this.listas.activaId()): Observable<ApiResponse<DashboardAnalitica>> {
+    let params = this.contextoLista(new HttpParams(), listaId);
     if (mes) params = params.set('mes', mes);
     if (anio) params = params.set('anio', anio);
     if (desde && hasta) params = params.set('desde', desde).set('hasta', hasta);
     return this.http.get<ApiResponse<DashboardAnalitica>>(`${this.baseUrl}/dashboard/analitica`, { params });
   }
 
-  getDashboardComparacion(mes?: number, anio?: number, desde?: string, hasta?: string, desdeAnterior?: string, hastaAnterior?: string): Observable<ApiResponse<DashboardComparacion>> {
-    let params = new HttpParams();
+  getDashboardComparacion(mes?: number, anio?: number, desde?: string, hasta?: string, desdeAnterior?: string, hastaAnterior?: string, listaId = this.listas.activaId()): Observable<ApiResponse<DashboardComparacion>> {
+    let params = this.contextoLista(new HttpParams(), listaId);
     if (mes) params = params.set('mes', mes);
     if (anio) params = params.set('anio', anio);
     if (desde && hasta) params = params.set('desde', desde).set('hasta', hasta);

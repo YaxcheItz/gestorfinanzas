@@ -1,8 +1,10 @@
+import { ListaContextoService } from '../../core/services/lista-contexto.service';
+import { parsearEtiquetas } from '../../core/utils/etiquetas';
 import { FeatureStylesService } from '../../core/services/feature-styles.service';
 import { TextoFinancieroPipe } from '../../core/pipes/texto-financiero.pipe';
 import { crearIdSolicitud } from '../../core/utils/request-id';
 import { MontoPrivadoDirective } from '../../shared/directives/monto-privado.directive';
-import { Component, HostListener, OnDestroy, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, inject, signal, computed, effect, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -51,7 +53,7 @@ interface FilaImportacionCsv {
 }
 
 interface FiltroVisible {
-  clave: 'tipo' | 'cuenta' | 'categoria' | 'monto' | 'fechas' | 'busqueda' | 'movimiento';
+  clave: 'tipo' | 'cuenta' | 'categoria' | 'monto' | 'fechas' | 'busqueda' | 'movimiento' | 'autor';
   id: string;
   etiqueta: string;
   categoriaId?: number;
@@ -69,6 +71,31 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly finanzasService = inject(FinanzasService);
+  readonly contextoLista = inject(ListaContextoService);
+  readonly filtroAutorId = signal<number | null>(null);
+  readonly borradorAutorId = signal<number | null>(null);
+  private listaConsulta: number | null = null;
+  formListaId: number | null = null;
+  formEtiquetas = '';
+  puedeModificar(movimiento: Transaccion): boolean { const lista = this.contextoLista.listas().find(l => l.id === movimiento.listaId); return !lista?.archivada && lista?.rol !== 'LECTOR' && (!movimiento.autorId || this.contextoLista.usuarioId() == null || movimiento.autorId === this.contextoLista.usuarioId()); }
+  listasEditables() { return this.contextoLista.listas().filter(l => !l.archivada && l.rol !== 'LECTOR'); }
+  constructor() {
+    this.contextoLista.solicitarDesdeRuta(Number(this.route.snapshot.queryParamMap.get('listaId')));
+    let revisionObservada = this.contextoLista.seleccionVersion();
+    let observada = this.contextoLista.activaId();
+    const seleccionInicial = this.contextoLista.seleccionVersion();
+    const listaExplicita = Number(this.route.snapshot.queryParamMap.get('listaId')) > 0;
+    effect(() => {
+      const id = this.contextoLista.activaId(), revision = this.contextoLista.seleccionVersion();
+      if (id === observada && revision === revisionObservada) return;
+      revisionObservada = revision;
+      observada = id;
+      if (listaExplicita && this.contextoLista.seleccionVersion() === seleccionInicial) return;
+      this.listaConsulta = id;
+      untracked(() => { void this.router.navigate([], {relativeTo:this.route,queryParams:{listaId:id},queryParamsHandling:'merge',replaceUrl:true}); this.detalleMovimiento.set(null); this.pageData.set(null); this.filtroAutorId.set(null); this.paginaActual.set(0); this.cargarTransacciones(); });
+    });
+  }
+
   private readonly categoriaPreferida = inject(CategoriaPreferidaService);
   private readonly toastService = inject(ToastService);
   private readonly confirmDialogService = inject(ConfirmDialogService);
@@ -254,6 +281,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
 
   readonly tieneFiltrosActivos = computed(() => {
     return (
+      this.filtroAutorId() !== null ||
       this.filtroTipo() !== '' ||
       this.filtroCuentaId() !== null ||
       this.filtroCategoriaId() !== null ||
@@ -268,7 +296,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
   });
 
   readonly tieneFiltrosAvanzadosActivos = computed(() =>
-    this.filtroTipo() !== ''
+    this.filtroAutorId() !== null || this.filtroTipo() !== ''
     || this.filtroCuentaId() !== null
     || this.filtroCategoriaId() !== null
     || this.filtroCategoriaIds().length > 0
@@ -281,6 +309,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
   readonly filtrosVisibles = computed(() => {
     const filtros: FiltroVisible[] = [];
     const agregar = (clave: FiltroVisible['clave'], etiqueta: string) => filtros.push({clave,id:clave,etiqueta});
+    if (this.filtroAutorId() != null) agregar('autor', 'Autor: ' + (this.contextoLista.activa()?.miembros.find(m => m.id === this.filtroAutorId())?.nombre ?? 'Participante'));
     const tipo = this.filtroTipo();
     if(tipo) agregar('tipo',this.etiquetaTipoDetalle(tipo));
     if(this.filtroCuentaId() !== null) agregar('cuenta','Cuenta: '+(this.cuentas().find(c=>c.id===this.filtroCuentaId())?.nombre ?? 'Cuenta'));
@@ -299,6 +328,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
     let queryParams: Record<string,null> = {};
     switch(filtro.clave) {
       case 'tipo': this.filtroTipo.set('');break;
+      case 'autor': this.filtroAutorId.set(null); break;
       case 'cuenta': this.filtroCuentaId.set(null);queryParams={cuentaId:null};break;
       case 'categoria':
         this.filtroCategoriaIds.update(ids=>ids.filter(id=>id!==filtro.categoriaId));
@@ -317,6 +347,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
   }
 
   abrirPanelFiltros(): void {
+    this.borradorAutorId.set(this.filtroAutorId());
     this.borradorTipo.set(this.filtroTipo());
     this.borradorCuentaId.set(this.filtroCuentaId());
     const categoriasSeleccionadas = this.filtroCategoriaIds();
@@ -338,6 +369,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
   }
 
   resetearBorradorFiltros(): void {
+    this.borradorAutorId.set(null);
     this.borradorTipo.set('');
     this.borradorCuentaId.set(null);
     this.borradorCategoriaIds.set([]);
@@ -397,6 +429,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
       return;
     }
 
+    this.filtroAutorId.set(this.borradorAutorId());
     this.filtroTipo.set(this.borradorTipo());
     this.filtroCuentaId.set(this.borradorCuentaId());
     this.filtroCategoriaId.set(null);
@@ -465,6 +498,8 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    const lista = Number(this.route.snapshot.queryParamMap.get('listaId'));
+    this.listaConsulta = Number.isSafeInteger(lista) && lista > 0 ? lista : this.contextoLista.activaId();
     this.cargarCuentasYCategorias();
     const categoriaId = Number(this.route.snapshot.queryParamMap.get('categoriaId'));
     if (Number.isSafeInteger(categoriaId) && categoriaId > 0) {
@@ -547,6 +582,8 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
     this.error.set(null);
 
     const filtros: TransaccionFiltro = {
+      ...(this.listaConsulta == null ? {} : { listaId: this.listaConsulta }),
+      ...(this.filtroAutorId() == null ? {} : { autorId: this.filtroAutorId() }),
       tipo: this.filtroTipo(),
       cuentaId: this.filtroCuentaId(),
       categoriaId: this.filtroCategoriaId(),
@@ -652,6 +689,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
   limpiarFiltros(): void {
     if (this.busquedaDebounceTimer) clearTimeout(this.busquedaDebounceTimer);
     this.busquedaDebounceTimer = null;
+    this.filtroAutorId.set(null);
     this.filtroTipo.set('');
     this.filtroCuentaId.set(null);
     this.filtroCategoriaId.set(null);
@@ -678,6 +716,8 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
 
   exportarCsv(): void {
     const filtros: TransaccionFiltro = {
+      ...(this.listaConsulta == null ? {} : { listaId: this.listaConsulta }),
+      ...(this.filtroAutorId() == null ? {} : { autorId: this.filtroAutorId() }),
       tipo: this.filtroTipo(),
       cuentaId: this.filtroCuentaId(),
       categoriaId: this.filtroCategoriaId(),
@@ -756,6 +796,9 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
       encabezados.forEach((encabezado, indice) => {
         if (encabezado && !columnas.has(encabezado)) columnas.set(encabezado, indice);
       });
+      for (const [alias, nombre] of [['monto origen','monto'],['moneda origen','moneda'],['cuenta origen','cuenta']]) {
+        if (!columnas.has(nombre) && columnas.has(alias)) columnas.set(nombre,columnas.get(alias)!);
+      }
       const obligatorias = ['fecha', 'tipo', 'monto', 'moneda', 'cuenta'];
       const faltantes = obligatorias.filter(nombre => !columnas.has(nombre));
       if (faltantes.length) {
@@ -781,6 +824,12 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
           const notas = valor('notas');
           const errores: string[] = [];
 
+          let etiquetas: string[] = [];
+          try { etiquetas = parsearEtiquetas(valor('etiquetas')); } catch (error) { errores.push((error as Error).message); }
+          const nombreLista = valor('lista');
+          const listas = nombreLista ? this.listasEditables().filter(l => normalizarTextoCsv(l.nombre) === normalizarTextoCsv(nombreLista)) : [];
+          const listaId = nombreLista ? listas[0]?.id : this.contextoLista.activaId();
+          if (nombreLista && listas.length !== 1) errores.push('La lista no existe, no permite registro o coincide con varias opciones.');
           const fecha = parsearFechaCsv(fechaOriginal);
           if (!fecha) errores.push('La fecha debe ser válida (AAAA-MM-DD o DD/MM/AAAA).');
 
@@ -818,7 +867,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
           if (notas.length > 500) errores.push('Las notas superan los 500 caracteres.');
 
           const payload: TransaccionPayload | null = fecha && tipo && monto !== null && cuenta && errores.length === 0
-            ? {
+            ? { ...(listaId == null ? {} : { listaId }), etiquetas,
                 fecha,
                 tipo,
                 monto,
@@ -959,6 +1008,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
       this.formCategoriaId = borrador.categoriaId ?? this.formCategoriaId;
       this.formFecha = borrador.fecha ?? this.formFecha;
       this.formNotas = borrador.notas ?? '';
+      this.formListaId = borrador.listaId ?? this.formListaId; this.formEtiquetas = (borrador.etiquetas ?? []).map(e => '#' + e).join(' ');
       this.formDescripcion = borrador.descripcion ?? '';
       this.formTasaCambio = borrador.tasaCambio ?? null;
     }
@@ -982,7 +1032,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
     this.transaccionEditando.set(null);
     this.formTipo.set(tipo);
     this.formMonto = null;
-    this.formNotas = '';
+    this.formNotas = ''; this.formEtiquetas = ''; this.formListaId = this.contextoLista.activaId();
     this.formDescripcion = '';
     this.movimientoRecurrente = false;
     this.esCompraMsi = false;
@@ -1014,6 +1064,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
   }
 
   abrirModalEditar(transaccion: Transaccion): void {
+    if (!this.puedeModificar(transaccion)) { this.toastService.error('Cada persona edita sus propios movimientos.'); return; }
     if (this.submitting() || this.movimientoIncierto()) return;
     if (transaccion.cuentaId == null
         || (transaccion.tipo === 'TRANSFERENCIA' && transaccion.cuentaDestinoId == null)) {
@@ -1035,6 +1086,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
     this.formCategoriaId = transaccion.categoriaId ?? null;
     this.formFecha = transaccion.fecha;
     this.formNotas = transaccion.notas ?? '';
+    this.formListaId = transaccion.listaId ?? this.contextoLista.activaId(); this.formEtiquetas = (transaccion.etiquetas ?? []).map(e => '#' + e).join(' ');
     this.formDescripcion = transaccion.descripcion ?? '';
     this.modalError.set(null);
     this.modalAbierto.set(true);
@@ -1139,7 +1191,11 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
       return;
     }
 
+    let etiquetas: string[];
+    try { etiquetas = parsearEtiquetas(this.formEtiquetas); } catch (error) { this.modalError.set((error as Error).message); return; }
     const payload: TransaccionPayload = this.movimientoPendiente ?? {
+      ...(this.formListaId == null ? {} : { listaId: this.formListaId }),
+      etiquetas,
       cuentaId: this.formCuentaId,
       cuentaDestinoId: this.formTipo() === 'TRANSFERENCIA' ? this.formCuentaDestinoId : null,
       categoriaId: this.formTipo() !== 'TRANSFERENCIA' ? this.formCategoriaId : null,

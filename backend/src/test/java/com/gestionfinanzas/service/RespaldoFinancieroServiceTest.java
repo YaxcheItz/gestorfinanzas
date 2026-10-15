@@ -32,7 +32,7 @@ class RespaldoFinancieroServiceTest {
     private final AuditoriaTransaccionService auditoriaService = mock(AuditoriaTransaccionService.class);
     private final LibroDiarioService libroDiarioService = mock(LibroDiarioService.class);
     private final RespaldoFinancieroService respaldoService = new RespaldoFinancieroService(
-            perfilService,
+            perfilService, mock(com.gestionfinanzas.repository.ListaRepository.class),
             cuentaRepository,
             categoriaRepository,
             presupuestoRepository,
@@ -53,7 +53,7 @@ class RespaldoFinancieroServiceTest {
 
         var respaldo = respaldoService.generar(42L);
 
-        assertEquals(3, respaldo.version());
+        assertEquals(4, respaldo.version());
         assertEquals(42L, respaldo.perfil().id());
         assertEquals("ana@example.com", respaldo.perfil().email());
         assertEquals(0, respaldo.cuentas().size());

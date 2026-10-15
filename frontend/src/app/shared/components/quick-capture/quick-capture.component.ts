@@ -1,3 +1,5 @@
+import { ListaContextoService } from '../../../core/services/lista-contexto.service';
+import { parsearEtiquetas } from '../../../core/utils/etiquetas';
 import { FeatureStylesService } from '../../../core/services/feature-styles.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { PrivacidadService } from '../../../core/services/privacidad.service';
@@ -216,6 +218,7 @@ export class QuickCaptureComponent implements OnDestroy {
   private readonly styleAssets = inject(FeatureStylesService).load('capture');
   private readonly captureLauncher = inject(CaptureLauncherService);
   readonly offline=inject(MovimientosOfflineService);
+  readonly listas = inject(ListaContextoService);
   private readonly actualizacion=inject(ActualizacionPwaService);
   readonly errorBorrador=signal('');
   private readonly borradorRestaurado=signal(false);
@@ -477,18 +480,20 @@ export class QuickCaptureComponent implements OnDestroy {
   }
 
   submit(): void {
+    const listaId = this.listas.activaId();
+    if (listaId != null && !this.listas.puedeEscribir()) { this.error.set('Elige una lista donde puedas registrar.'); return; }
     const value = this.content.trim();
     if (!value || this.loading() || this.listening() || this.stopping() || this.confirming() !== null) return;
     this.seguirFinal.set(true);
     if(!this.offline.conexion()){
-      this.prepararEnDispositivo(value);return;
+      this.prepararEnDispositivo(value, listaId);return;
     }
     this.aiConsentRequired.set(false);
     this.sourceInput.set(value); this.pendingCaptureText.set(value); this.loading.set(true); this.error.set('');
     const capturedByVoice = this.voiceCapture();
     this.processingStep.set('CATEGORIZANDO');
     this.scrollCaptureToBottom();
-    this.capturaSub = this.finanzas.capturaRapidaAi(value, this.consent, this.voiceCapture(), this.esPedidoNuevo(value) ? null : this.contexto).subscribe({
+    this.capturaSub = this.finanzas.capturaRapidaAi(value, this.consent, this.voiceCapture(), this.esPedidoNuevo(value) ? null : this.contexto, listaId).subscribe({
       next: response => {
         this.processingStep.set(null);
         this.loading.set(false);
@@ -512,7 +517,7 @@ export class QuickCaptureComponent implements OnDestroy {
         // onLine puede seguir siendo true aunque Firefox no alcance el servidor.
         // Preparar una propuesta local nunca registra dinero sin confirmación.
         if (error instanceof HttpErrorResponse && error.status === 0) {
-          this.prepararEnDispositivo(value);return;
+          this.prepararEnDispositivo(value, listaId);return;
         }
         const message = this.errorMessage(error);
         if (/no encontr[eé] una regla local/i.test(message)) this.aiConsentRequired.set(true);
@@ -521,10 +526,14 @@ export class QuickCaptureComponent implements OnDestroy {
     });
   }
 
-  private prepararEnDispositivo(value: string): void {
+  private prepararEnDispositivo(value: string, listaId: number | null): void {
     try {
       if (!this.cuentasEdicion().length) throw new Error('Abre la app con conexión para guardar primero tus cuentas.');
-      const proposal = prepararCapturaOffline(value, this.cuentasEdicion(), this.categories());
+      const tags = value.match(/(?<![\p{L}\p{N}_])#[\p{L}\p{N}][\p{L}\p{N}_-]*/gu) ?? [];
+      const etiquetas = parsearEtiquetas(tags.join(' '));
+      const texto = value.replace(/(?<![\p{L}\p{N}_])#[\p{L}\p{N}][\p{L}\p{N}_-]*/gu, '').trim();
+      const proposal = prepararCapturaOffline(texto, this.cuentasEdicion(), this.categories());
+      proposal.data = { ...proposal.data, ...(listaId == null ? {} : { listaId }), etiquetas };
       this.captureTurns.update(turns => [...turns, {id:++this.captureTurnId,user:value,
         answer:'Preparado en este dispositivo. Revisa la cuenta y la categoría; confirma para guardarlo y enviarlo al recuperar conexión.',
         actions:[proposal],voice:false,engine:'REGLAS'}]);

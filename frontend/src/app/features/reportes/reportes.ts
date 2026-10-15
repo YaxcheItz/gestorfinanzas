@@ -1,8 +1,9 @@
+import { ListaContextoService } from '../../core/services/lista-contexto.service';
 import { RangoPeriodo, validarRangoPeriodo } from '../../core/utils/periodo-financiero';
 import { of } from 'rxjs';
 import { Component, DestroyRef, computed, effect, inject, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { forkJoin, Subscription } from 'rxjs';
 import { FinanzasService } from '../../core/services/finanzas.service';
@@ -20,6 +21,9 @@ import { AuthService } from '../../core/services/auth.service';
 })
 export class Reportes {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly contextoLista = inject(ListaContextoService);
+  private listaConsulta: number | null = null;
   readonly rangoConsulta = signal<RangoPeriodo | null>(null);
   private rangoAnterior?: RangoPeriodo;
   private sinComparacion = false;
@@ -47,6 +51,9 @@ export class Reportes {
 
   constructor() {
     const parametros = this.route.snapshot.queryParamMap;
+    const listaParam = Number(parametros.get('listaId'));
+    this.listaConsulta = Number.isSafeInteger(listaParam) && listaParam > 0 ? listaParam : null;
+    if (this.listaConsulta != null) this.contextoLista.solicitarDesdeRuta(this.listaConsulta);
     try {
       if (parametros.has('desde') || parametros.has('hasta')) {
         this.rangoConsulta.set(validarRangoPeriodo({ desde: parametros.get('desde') ?? '', hasta: parametros.get('hasta') ?? '' }));
@@ -59,6 +66,19 @@ export class Reportes {
       }
       this.cargar();
     } catch { this.error.set('El rango del informe no es válido. Elige un mes para continuar.'); }
+    let revisionObservada = this.contextoLista.seleccionVersion();
+    let listaObservada = this.contextoLista.activaId();
+    const seleccionInicial = this.contextoLista.seleccionVersion();
+    const listaExplicita = this.listaConsulta != null;
+    effect(() => {
+      const id = this.contextoLista.activaId(), revision = this.contextoLista.seleccionVersion();
+      if (id === listaObservada && revision === revisionObservada) return;
+      revisionObservada = revision;
+      listaObservada = id;
+      if (listaExplicita && this.contextoLista.seleccionVersion() === seleccionInicial) return;
+      this.listaConsulta = id;
+      untracked(() => { void this.router.navigate([], {relativeTo:this.route,queryParams:{listaId:id},queryParamsHandling:'merge',replaceUrl:true}); this.cargar(); });
+    });
     effect(() => {
       const usuarioId = this.auth.currentUser()?.id ?? null;
       if (usuarioId === this.usuarioId) return;
@@ -95,11 +115,11 @@ export class Reportes {
     const [anio, mes] = this.periodo().split('-').map(Number);
     const rango = this.rangoConsulta(), previo = this.rangoAnterior;
     this.request = forkJoin({
-      resumen: this.finanzas.getDashboardResumen(mes, anio, rango?.desde, rango?.hasta),
-      analitica: this.finanzas.getDashboardAnalitica(mes, anio, rango?.desde, rango?.hasta),
+      resumen: this.finanzas.getDashboardResumen(mes, anio, rango?.desde, rango?.hasta, this.listaConsulta ?? this.contextoLista.activaId()),
+      analitica: this.finanzas.getDashboardAnalitica(mes, anio, rango?.desde, rango?.hasta, this.listaConsulta ?? this.contextoLista.activaId()),
       comparacion: this.sinComparacion
         ? of({ success: true, data: { mes, anio, mesAnterior: mes, anioAnterior: anio, porMoneda: [] } })
-        : this.finanzas.getDashboardComparacion(mes, anio, rango?.desde, rango?.hasta, previo?.desde, previo?.hasta)
+        : this.finanzas.getDashboardComparacion(mes, anio, rango?.desde, rango?.hasta, previo?.desde, previo?.hasta, this.listaConsulta ?? this.contextoLista.activaId())
     }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: response => {
         this.loading.set(false);

@@ -338,6 +338,24 @@ public class AiActionService {
         return new AiActionResult(answer, propuestas.dto(propuesta), List.of(), report);
     }
 
+    public void validarListaCaptura(Long userId, Long listaId) {
+        transaccionService.validarListaCaptura(userId, listaId);
+    }
+
+    @Transactional
+    public void marcarContextoCaptura(Long userId, ActionProposal proposal, Long listaId, java.util.Set<String> etiquetas) {
+        if (proposal == null || !"CREATE_TRANSACTION".equals(proposal.type())) return;
+        // El destino se autoriza antes de interpretar y se conserva aunque cambie el acceso.
+        // Confirmar vuelve a comprobar permisos; nunca cambia el destino a Personal.
+        var pendiente = propuestas.bloquear(userId, proposal.id());
+        propuestas.exigirPendiente(pendiente);
+        ObjectNode data = (ObjectNode) propuestas.datos(pendiente);
+        if (listaId != null) data.put("listaId", listaId);
+        else data.remove("listaId");
+        data.set("etiquetas", objectMapper.valueToTree(etiquetas));
+        pendiente.setDatos(data.toString());
+    }
+
     @Transactional
     public void marcarCapturaPorVoz(Long userId, ActionProposal proposal) {
         if (proposal == null || !"CREATE_TRANSACTION".equals(proposal.type())) return;

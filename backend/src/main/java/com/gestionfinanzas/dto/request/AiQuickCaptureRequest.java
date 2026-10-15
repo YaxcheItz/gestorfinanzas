@@ -9,9 +9,13 @@ public record AiQuickCaptureRequest(
         String content,
         boolean consentimientoDatosFinancieros,
         boolean capturaPorVoz,
-        @Size(max = 1200) String contexto
+        @Size(max = 1200) String contexto,
+        @jakarta.validation.constraints.Min(1) Long listaId
 ) {
+    public AiQuickCaptureRequest(String content, boolean consentimientoDatosFinancieros, boolean capturaPorVoz, String contexto) {
+        this(content, consentimientoDatosFinancieros, capturaPorVoz, contexto, null);
+    }
     public AiQuickCaptureRequest(String content, boolean consentimientoDatosFinancieros, boolean capturaPorVoz) {
-        this(content, consentimientoDatosFinancieros, capturaPorVoz, null);
+        this(content, consentimientoDatosFinancieros, capturaPorVoz, null, null);
     }
 }

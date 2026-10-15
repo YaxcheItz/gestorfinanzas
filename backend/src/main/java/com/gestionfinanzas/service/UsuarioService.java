@@ -29,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
+    private final ListaService listaService;
     private final PasswordEncoder passwordEncoder;
     private final GoogleIdentityService googleIdentityService;
     private final LineaAsientoRepository lineaAsientoRepository;
@@ -145,6 +146,7 @@ public class UsuarioService {
 
         // Los borrados en lote anteriores limpian el contexto de persistencia, asi que se
         // vuelve a resolver el usuario en vez de reutilizar la entidad ya desligada.
+        listaService.eliminarUsuario(usuarioId);
         usuarioRepository.deleteById(usuarioId);
     }
 }

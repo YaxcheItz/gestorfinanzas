@@ -1,11 +1,11 @@
 # Plan de continuación de Kaptal
 
-Complementa `PLAN_UI_MONAI.md` y `replica/monai-kesef/recon.md`. Es la secuencia para retomar el proyecto sin repetir lo implementado. La última sección de `ESTADO_SESION.md` prevalece sobre resultados históricos. No confundir una pantalla diseñada con una integración operativa.
+Complementa `PLAN_UI_MONAI.md` y `replica/monai-kesef/recon.md`. Es la secuencia para retomar el proyecto sin repetir lo implementado. El estado vigente al inicio de `ESTADO_SESION.md` prevalece sobre resultados históricos. No confundir una pantalla diseñada con una integración operativa.
 
 ## Reglas para todas las etapas
 
 - Conservar Angular, Spring Boot y PostgreSQL mientras las mediciones no justifiquen cambios. No migrar a otra base, lenguaje u hospedaje por apariencia.
-- Cada etapa nueva empieza en una rama distinta desde develop actualizado y comprobado contra remoto. El rediseño ya se integró en develop; la entrega funcional vigente es periodos flexibles. Integrar cada entrega antes de basar otra etapa en ella.
+- Cada etapa nueva empieza en una rama distinta desde develop actualizado y comprobado contra remoto. El rediseño ya se integró en develop; la entrega funcional vigente es listas, etiquetas y búsqueda. Integrar cada entrega antes de basar otra etapa en ella.
 - Mantener confirmación, idempotencia, separación de monedas, privacidad, aislamiento por usuario y cola offline. No sobrescribir preferencias ni borrar datos para arreglar vistas.
 - Entregar cambios funcionales, migraciones cuando correspondan, pruebas pertinentes, capturas y actualización del estado. No añadir botones simulados ni planes de pago ficticios.
 - Las conexiones privadas necesitan configuración y consentimiento del propietario. Nada de leer correos reales, publicar o modificar producción por inferencia de este plan.
@@ -18,7 +18,7 @@ Pendiente físico: abrir en Android real, probar teclado normal/decimal, giro, p
 
 ## 1. Periodos flexibles
 
-Entrega implementada en `mejoras/periodos-flexibles`, desde develop comprobado. Detalles, contratos y validación: `PERIODOS_FLEXIBLES.md`. Falta revisión/integración del usuario y recorrido físico.
+Entrega implementada en `mejoras/periodos-flexibles`, desde develop comprobado. Detalles, contratos y validación: `PERIODOS_FLEXIBLES.md`. Integrado en develop antes de iniciar la etapa 2; el recorrido físico sigue pendiente.
 
 Definir por usuario un periodo predeterminado y una consulta temporal independiente: semana, bloques de 14 días, quincena con días elegidos, mes con inicio elegido, año, todo el historial y rango libre. Anclar los ciclos a una fecha; «cada 14 días» y «quincenal» son distintos. Especificar zona horaria, límites inclusivos, meses cortos, 29 de febrero y comportamiento de días 29–31. No imponer al corte y pago de tarjetas una separación universal de veinte días.
 
@@ -26,7 +26,7 @@ Backend: resolver rangos de forma común y aplicarlos a resumen, categorías, co
 
 ## 2. Listas, etiquetas y búsqueda
 
-Rama sugerida: `mejoras/listas-etiquetas`.
+Rama vigente: `mejoras/listas-etiquetas`. Implementación y contratos en `LISTAS_ETIQUETAS.md`; resultados de verificación vigentes en `ESTADO_SESION.md`.
 
 Diseñar lista, miembros, rol y etiquetas. Migrar movimientos actuales a una lista Personal sin cambiar importes, cuentas o propietarios. Crear/editar/archivar listas, elegir lista activa y moneda base, y compartir sólo con autorización. Cambiar moneda de presentación no convierte operaciones anteriores.
 

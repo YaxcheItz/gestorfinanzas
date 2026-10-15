@@ -1,3 +1,4 @@
+import { ListaContextoService } from '../../core/services/lista-contexto.service';
 import { PeriodoConfig, TipoPeriodo, PERIODO_MENSUAL, resolverPeriodo, desplazarPeriodo, desplazarRangoLibre, validarRangoPeriodo, validarPeriodo, fechaCivilFinanciera } from '../../core/utils/periodo-financiero';
 import { FeatureStylesService } from '../../core/services/feature-styles.service';
 ﻿import { TextoFinancieroPipe } from '../../core/pipes/texto-financiero.pipe';
@@ -88,6 +89,7 @@ export class DashboardComponent implements OnInit {
   private readonly toastService = inject(ToastService);
   private readonly confirmDialog = inject(ConfirmDialogService);
   private readonly perfilService = inject(PerfilService);
+  readonly contextoLista = inject(ListaContextoService);
   readonly privacidad = inject(PrivacidadService);
   private readonly categoriaPreferida = inject(CategoriaPreferidaService);
   readonly movimientosOffline = inject(MovimientosOfflineService);
@@ -148,7 +150,7 @@ export class DashboardComponent implements OnInit {
       icono: this.categorias().find(cat => cat.id === item.categoriaId)?.icono,
       tono: tonos[(item.categoriaId ?? 0) % tonos.length],
       altura: this.privacidad.ocultarMontos() ? 0 : Math.max(12, item.monto / maximo * 100),
-      presupuesto: this.esMesCalendario() ? this.presupuestosDashboard().find(p => p.categoriaId === item.categoriaId) : undefined
+      presupuesto: this.esMesCalendario() && (!this.contextoLista.activa() || this.contextoLista.activa()?.personal) ? this.presupuestosDashboard().find(p => p.categoriaId === item.categoriaId) : undefined
     }));
   });
   readonly resumenCuentaSelector = (cuenta: Cuenta) => resumenCuentaSelector(cuenta, this.privacidad.ocultarMontos());
@@ -495,6 +497,16 @@ export class DashboardComponent implements OnInit {
       untracked(() => {
         try { this.aplicarConfiguracion(validarPeriodo(perfil.periodoPredeterminado!)); }
         catch { this.errorRango.set('No se pudo aplicar tu periodo guardado. Elige otro periodo.'); }
+      });
+    });
+    let listaObservada = this.contextoLista.activaId();
+    effect(() => {
+      const id = this.contextoLista.activaId();
+      if (id === listaObservada) return;
+      listaObservada = id;
+      untracked(() => {
+        const moneda = this.contextoLista.activa()?.moneda; if (moneda) this.monedaResumen.set(moneda);
+        this.cargarDashboard();
       });
     });
     let sincronizacionesObservadas = this.movimientosOffline.totalSincronizados();
@@ -1086,6 +1098,7 @@ export class DashboardComponent implements OnInit {
     }
 
     const payload: TransaccionPayload = {
+      listaId: this.contextoLista.activaId(),
       cuentaId: this.formCuentaId,
       cuentaDestinoId: this.formTipo() === 'TRANSFERENCIA' ? this.formCuentaDestinoId : null,
       categoriaId: this.formTipo() !== 'TRANSFERENCIA' ? this.formCategoriaId : null,
@@ -1215,6 +1228,7 @@ export class DashboardComponent implements OnInit {
       } catch { /* El primer periodo admitido no tiene un anterior consultable. */ }
     }
     this.router.navigate(['/reportes'], { queryParams: {
+      ...(this.contextoLista.activaId() == null ? {} : { listaId: this.contextoLista.activaId() }),
       desde: rango.desde, hasta: rango.hasta,
       ...(anterior ? { desdeAnterior: anterior.desde, hastaAnterior: anterior.hasta } : {}),
       sinComparacion: !anterior ? 'true' : undefined
@@ -1223,7 +1237,7 @@ export class DashboardComponent implements OnInit {
 
   irATransacciones(categoriaId?: number | null): void {
     const { desde: fechaInicio, hasta: fechaFin } = this.fechasRango();
-    this.router.navigate(['/transacciones'], { queryParams: { ...(categoriaId == null ? {} : { categoriaId }), fechaInicio, fechaFin } });
+    this.router.navigate(['/transacciones'], { queryParams: { ...(this.contextoLista.activaId() == null ? {} : { listaId: this.contextoLista.activaId() }), ...(categoriaId == null ? {} : { categoriaId }), fechaInicio, fechaFin } });
   }
   registrarCategoria(categoria: CategoriaInicio): void {
     this.categoriaContextual.set(null);

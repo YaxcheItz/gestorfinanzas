@@ -50,7 +50,7 @@ class TransaccionServiceTest {
     private final LibroDiarioService libroDiarioService = mock(LibroDiarioService.class);
     private final TransaccionService transaccionService = new TransaccionService(
             transaccionRepository, cuentaRepository, categoriaRepository, usuarioRepository, plantillaRepository,
-            auditoriaService, libroDiarioService
+            auditoriaService, libroDiarioService, mock(ListaService.class)
     );
 
     @Test

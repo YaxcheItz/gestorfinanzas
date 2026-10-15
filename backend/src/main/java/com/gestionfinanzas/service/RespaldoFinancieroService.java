@@ -42,6 +42,7 @@ import java.util.List;
 public class RespaldoFinancieroService {
 
     private final PerfilService perfilService;
+    private final com.gestionfinanzas.repository.ListaRepository listaRepository;
     private final CuentaRepository cuentaRepository;
     private final CategoriaRepository categoriaRepository;
     private final PresupuestoRepository presupuestoRepository;
@@ -69,8 +70,8 @@ public class RespaldoFinancieroService {
                 .findAllByUsuarioIdOrderByAnioDescMesDescIdAsc(usuarioId).stream()
                 .map(RespaldoFinancieroService::mapearPresupuesto)
                 .toList();
-        List<PlantillaRecurrenteResponse> recurrencias = plantillaRepository
-                .findAllByUsuarioIdOrderBySiguienteFechaAsc(usuarioId).stream()
+        var entidadesRecurrencias = plantillaRepository.findAllByUsuarioIdOrderBySiguienteFechaAsc(usuarioId);
+        List<PlantillaRecurrenteResponse> recurrencias = entidadesRecurrencias.stream()
                 .map(PlantillaRecurrenteResponse::fromEntity)
                 .toList();
         List<com.gestionfinanzas.model.entity.Transaccion> entidadesTransacciones = transaccionRepository.findAll(
@@ -87,8 +88,15 @@ public class RespaldoFinancieroService {
                 ))
                 .toList();
 
+        var listasRespaldo = new java.util.LinkedHashMap<Long, com.gestionfinanzas.model.entity.ListaFinanciera>();
+        listaRepository.accesibles(usuarioId).forEach(l -> listasRespaldo.put(l.getId(), l));
+        entidadesTransacciones.stream().map(com.gestionfinanzas.model.entity.Transaccion::getLista)
+                .filter(java.util.Objects::nonNull).forEach(l -> listasRespaldo.put(l.getId(), l));
+        entidadesRecurrencias.stream()
+                .map(com.gestionfinanzas.model.entity.PlantillaRecurrente::getLista).filter(java.util.Objects::nonNull)
+                .forEach(l -> listasRespaldo.put(l.getId(), l));
         return new RespaldoFinancieroResponse(
-                3,
+                4,
                 Instant.now(),
                 perfilService.obtener(usuarioId),
                 cuentas,
@@ -99,7 +107,9 @@ public class RespaldoFinancieroService {
                 libroDiarioService.listarParaRespaldo(usuarioId),
                 transacciones,
                 relacionesCashback,
-                mapearParejas(usuarioId)
+                mapearParejas(usuarioId),
+                listasRespaldo.values().stream().map(l -> new RespaldoFinancieroResponse.ListaRespaldo(
+                        l.getId(), l.getNombre(), l.getEmoji(), l.getMoneda(), l.getClave() != null, l.isArchivada())).toList()
         );
     }
 

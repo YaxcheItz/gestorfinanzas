@@ -36,6 +36,7 @@ public class DashboardService {
 
     private final CuentaRepository cuentaRepository;
     private final TransaccionRepository transaccionRepository;
+    private final ListaService listaService;
 
     @Transactional(readOnly = true)
     public DashboardResumenResponse obtenerResumen(Long usuarioId, Integer mes, Integer anio) {
@@ -45,6 +46,13 @@ public class DashboardService {
     @Transactional(readOnly = true)
     public DashboardResumenResponse obtenerResumen(Long usuarioId, Integer mes, Integer anio,
                                                     LocalDate desde, LocalDate hasta) {
+        return obtenerResumen(usuarioId, mes, anio, desde, hasta, null);
+    }
+
+    @Transactional(readOnly = true)
+    public DashboardResumenResponse obtenerResumen(Long usuarioId, Integer mes, Integer anio,
+                                                    LocalDate desde, LocalDate hasta, Long listaId) {
+        if (listaId != null) listaService.leer(usuarioId, listaId);
         LocalDate hoy = com.gestionfinanzas.service.CalendarioFinanciero.hoy();
         int mesConsulta = (mes != null && mes >= 1 && mes <= 12) ? mes : hoy.getMonthValue();
         int anioConsulta = (anio != null && anio >= 2000 && anio <= 2100) ? anio : hoy.getYear();
@@ -70,11 +78,12 @@ public class DashboardService {
             }
         }
         List<DashboardMonedaTotales> totalesMensuales =
-                transaccionRepository.findTotalesMensualesPorMoneda(usuarioId, inicioPeriodo, finPeriodo);
+                totales(usuarioId, listaId, inicioPeriodo, finPeriodo);
         Map<String, DashboardMonedaTotales> totalesPorMoneda = new HashMap<>();
         totalesMensuales.forEach(total -> totalesPorMoneda.put(total.moneda(), total));
         Set<String> monedas = new TreeSet<>(balancesPorMoneda.keySet());
         monedas.addAll(totalesPorMoneda.keySet());
+        if (listaId != null) monedas.add(listaService.leer(usuarioId, listaId).getMoneda());
         List<DashboardMonedaResumenResponse> resumenPorMoneda = monedas.stream()
                 .map(moneda -> {
                     BigDecimal balance = balancesPorMoneda.getOrDefault(moneda, BigDecimal.ZERO);
@@ -102,8 +111,9 @@ public class DashboardService {
                         BigDecimal.ZERO, BigDecimal.ZERO, 0, BigDecimal.ZERO, BigDecimal.ZERO
                 ));
 
-        List<TransaccionResponse> ultimosMovimientos = transaccionRepository
-                .findTop10ByUsuarioIdAndFechaBetweenOrderByFechaDescIdDesc(usuarioId, inicioPeriodo, finPeriodo)
+        List<TransaccionResponse> ultimosMovimientos = (listaId == null
+                ? transaccionRepository.findTop10ByUsuarioIdAndFechaBetweenOrderByFechaDescIdDesc(usuarioId, inicioPeriodo, finPeriodo)
+                : transaccionRepository.findTop10ByListaIdAndFechaBetweenOrderByFechaDescIdDesc(listaId, inicioPeriodo, finPeriodo))
                 .stream()
                 .map(TransaccionResponse::fromEntity)
                 .toList();
@@ -135,6 +145,13 @@ public class DashboardService {
     @Transactional(readOnly = true)
     public DashboardAnaliticaResponse obtenerAnalitica(Long usuarioId, Integer mesParametro, Integer anioParametro,
                                                        LocalDate desde, LocalDate hasta) {
+        return obtenerAnalitica(usuarioId, mesParametro, anioParametro, desde, hasta, null);
+    }
+
+    @Transactional(readOnly = true)
+    public DashboardAnaliticaResponse obtenerAnalitica(Long usuarioId, Integer mesParametro, Integer anioParametro,
+                                                       LocalDate desde, LocalDate hasta, Long listaId) {
+        if (listaId != null) listaService.leer(usuarioId, listaId);
         LocalDate hoy = com.gestionfinanzas.service.CalendarioFinanciero.hoy();
         int mesConsulta = mesParametro == null ? hoy.getMonthValue() : mesParametro;
         int anioConsulta = anioParametro == null ? hoy.getYear() : anioParametro;
@@ -147,19 +164,15 @@ public class DashboardService {
         LocalDate finMes = mesActual.atEndOfMonth();
         LocalDate[] rango = resolverRango(mesConsulta, anioConsulta, desde, hasta);
         List<DashboardGastoCategoriaResponse> gastosPorCategoria =
-                transaccionRepository.findGastosPorCategoria(
-                        usuarioId, TipoTransaccion.GASTO, rango[0], rango[1]
-                );
+                (listaId == null ? transaccionRepository.findGastosPorCategoria(usuarioId, TipoTransaccion.GASTO, rango[0], rango[1]) : transaccionRepository.findGastosPorCategoriaDeLista(listaId, TipoTransaccion.GASTO, rango[0], rango[1]));
 
         YearMonth primerMes = mesActual.minusMonths(5);
         LocalDate inicioPeriodo = primerMes.atDay(1);
         List<DashboardMesTipoTotal> totalesMensuales =
-                transaccionRepository.sumMontosPorUsuarioYTipoAgrupadosPorMes(
-                        usuarioId,
-                        List.of(TipoTransaccion.INGRESO, TipoTransaccion.GASTO),
-                        inicioPeriodo,
-                        finMes
-                );
+                listaId == null ? transaccionRepository.sumMontosPorUsuarioYTipoAgrupadosPorMes(usuarioId,
+                        List.of(TipoTransaccion.INGRESO, TipoTransaccion.GASTO), inicioPeriodo, finMes)
+                        : transaccionRepository.sumMontosPorUsuarioYTipoAgrupadosPorMesDeLista(listaId,
+                        List.of(TipoTransaccion.INGRESO, TipoTransaccion.GASTO), inicioPeriodo, finMes);
 
         Map<String, Map<YearMonth, BigDecimal[]>> montosPorMonedaYMes = new HashMap<>();
         Set<String> monedas = new TreeSet<>();
@@ -212,6 +225,13 @@ public class DashboardService {
     @Transactional(readOnly = true)
     public DashboardComparacionResponse obtenerComparacion(Long usuarioId, Integer mes, Integer anio,
             LocalDate desde, LocalDate hasta, LocalDate desdeAnterior, LocalDate hastaAnterior) {
+        return obtenerComparacion(usuarioId, mes, anio, desde, hasta, desdeAnterior, hastaAnterior, null);
+    }
+
+    @Transactional(readOnly = true)
+    public DashboardComparacionResponse obtenerComparacion(Long usuarioId, Integer mes, Integer anio,
+            LocalDate desde, LocalDate hasta, LocalDate desdeAnterior, LocalDate hastaAnterior, Long listaId) {
+        if (listaId != null) listaService.leer(usuarioId, listaId);
         LocalDate hoy = com.gestionfinanzas.service.CalendarioFinanciero.hoy();
         int mesConsulta = mes == null ? hoy.getMonthValue() : mes;
         int anioConsulta = anio == null ? hoy.getYear() : anio;
@@ -235,9 +255,9 @@ public class DashboardService {
             previo = resolverRango(periodoAnterior.getMonthValue(), periodoAnterior.getYear(), null, null);
         }
         Map<String, DashboardMonedaTotales> actuales = indexarTotales(
-                transaccionRepository.findTotalesMensualesPorMoneda(usuarioId, rango[0], rango[1]));
+                totales(usuarioId, listaId, rango[0], rango[1]));
         Map<String, DashboardMonedaTotales> anteriores = indexarTotales(
-                transaccionRepository.findTotalesMensualesPorMoneda(usuarioId, previo[0], previo[1]));
+                totales(usuarioId, listaId, previo[0], previo[1]));
 
         Set<String> monedas = new TreeSet<>(actuales.keySet());
         monedas.addAll(anteriores.keySet());
@@ -269,6 +289,11 @@ public class DashboardService {
                 previo[0].getMonthValue(), previo[0].getYear(),
                 comparaciones, rango[0], rango[1], previo[0], previo[1]
         );
+    }
+
+    private List<DashboardMonedaTotales> totales(Long usuarioId, Long listaId, LocalDate desde, LocalDate hasta) {
+        return listaId == null ? transaccionRepository.findTotalesMensualesPorMoneda(usuarioId, desde, hasta)
+                : transaccionRepository.findTotalesMensualesPorMonedaDeLista(listaId, desde, hasta);
     }
 
     private LocalDate[] resolverRango(int mes, int anio, LocalDate desde, LocalDate hasta) {

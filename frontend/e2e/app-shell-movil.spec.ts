@@ -102,7 +102,8 @@ test('cuentas y presupuestos conservan monedas, acciones y estados en pantallas 
   }
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: test.info().outputPath('cuentas-movil.png'), fullPage: true });
-  await page.getByRole('button',{name:'Abrir herramientas de tu espacio personal',exact:true}).click();
+  await page.getByRole('button',{name:'Cambiar lista',exact:true}).click();
+  await page.getByRole('button',{name:/^Herramientas/}).click();
   await page.getByRole('link', { name: 'Presupuestos', exact: true }).click();
   await expect(page.locator('.budget-remaining')).toContainText('Te excediste');
   await expect(page.locator('.budget-remaining')).toContainText(/20[.,]00/);

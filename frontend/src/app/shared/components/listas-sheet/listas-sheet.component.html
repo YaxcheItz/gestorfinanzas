@@ -1,0 +1,45 @@
+<dialog #sheet aria-labelledby="listas-title" (close)="alCerrar()" (cancel)="cancelar($event)" (click)="fondo($event)">
+  <header><h2 id="listas-title">{{ editando() === 'NUEVA' ? 'Nueva lista' : editando() ? 'Tu lista' : mostrarUnion() ? 'Unirte a una lista' : 'Tus listas' }}</h2><button type="button" aria-label="Cerrar listas" (click)="cerrar()" [disabled]="ocupada()" autofocus>&times;</button></header>
+  @if (contexto.error()) {<p role="status">{{ contexto.error() }} <button type="button" (click)="servicio.recargar()">Reintentar</button></p>}
+  @if (!editando() && !mostrarUnion()) {
+    @if(contexto.cargando()){<p role="status">Actualizando listas…</p>}
+    @for(lista of contexto.listas(); track lista.id) {
+      <div class="fila"><button type="button" class="elegir" (click)="seleccionar(lista)" [attr.aria-label]="'Cambiar a ' + lista.nombre"><span class="emoji" aria-hidden="true">{{ lista.emoji }}</span><span class="texto"><strong>{{ lista.nombre }}</strong><small>{{ lista.archivada ? 'Archivada · ' : '' }}{{ lista.miembros.length > 1 ? lista.miembros.length + ' personas' : 'Solo tú' }} · {{ lista.moneda }}{{ lista.rol === 'LECTOR' ? ' · Lectura' : '' }}</small></span>@if(contexto.activaId() === lista.id){<span class="check" aria-label="Seleccionada">✓</span>}</button><button class="opciones" type="button" [attr.aria-label]="'Opciones de lista ' + lista.nombre" (click)="editar(lista)">···</button></div>
+    }
+    <button class="secundario" type="button" (click)="editar('NUEVA')">＋ Nueva lista</button>
+    <button class="secundario" type="button" (click)="mostrarUnion.set(true)">Tengo un código de invitación</button>
+    <button class="herramientas" type="button" (click)="abrirHerramientas()">Herramientas ›</button>
+  } @else if (mostrarUnion()) {
+    <p>Al unirte verás los movimientos compartidos. Cada persona conserva el control de sus propias cuentas.</p>
+    <form (ngSubmit)="unirse()"><label>Código de invitación<input name="codigoUnion" [(ngModel)]="codigoUnion" required maxlength="64" autocomplete="off" /></label><button class="guardar" [disabled]="ocupada()" type="submit">Unirme</button></form>
+    <button type="button" class="secundario" (click)="volver()" [disabled]="ocupada()">Volver</button>
+  } @else {
+    @if(editando() === 'NUEVA' || seleccionEditada()?.rol === 'PROPIETARIO') {
+      <form (ngSubmit)="guardar()">
+        <label>Nombre de la lista<input name="nombreLista" [(ngModel)]="datos.nombre" maxlength="60" required [disabled]="ocupada()" /></label>
+        <label>Emoji<input name="emojiLista" [(ngModel)]="datos.emoji" maxlength="24" required [disabled]="ocupada()" /></label>
+        <label>Moneda de presentación<select name="monedaLista" [(ngModel)]="datos.moneda" [disabled]="ocupada()">@for(codigo of ['MXN','USD','CAD','EUR','GBP']; track codigo){<option [value]="codigo">{{ codigo }}</option>}</select></label>
+        <p>Los movimientos conservan su moneda e importe original. Cambiar esta preferencia no los convierte.</p>
+        <button class="guardar" [disabled]="ocupada()" type="submit">{{ ocupada() ? 'Guardando…' : 'Guardar lista' }}</button>
+      </form>
+    }
+    @if(seleccionEditada(); as lista) {
+      <details><summary>Participantes · {{ lista.miembros.length }}</summary>
+        @for(miembro of lista.miembros; track miembro.id) {<div class="miembro"><span>{{ miembro.nombre }}<small> · {{ miembro.rol === 'PROPIETARIO' ? 'Propietario' : miembro.rol === 'EDITOR' ? 'Editor' : 'Lector' }}</small></span>@if(lista.rol === 'PROPIETARIO' && miembro.rol !== 'PROPIETARIO'){<button type="button" (click)="quitar(miembro.id)" [disabled]="ocupada()" [attr.aria-label]="'Retirar acceso a ' + miembro.nombre">Retirar</button>}</div>}
+      </details>
+      @if(lista.rol === 'PROPIETARIO' && !lista.personal && !lista.archivada) {
+        <details><summary>Compartir lista</summary><p>El código vence en 7 días. Quien se una conserva acceso hasta salir o ser retirado. Crear otro código invalida el anterior.</p><label>Acceso<select name="rolInvitado" [(ngModel)]="rol"><option value="EDITOR">Editor · añade sus movimientos</option><option value="LECTOR">Lector · sólo consulta</option></select></label><button type="button" class="secundario" (click)="invitar()" [disabled]="ocupada()">Crear código de invitación</button>
+          @if(invitacion(); as invitacion){<label>Código para compartir<textarea #codigo class="codigo" readonly rows="3" [value]="invitacion.codigo"></textarea></label><button type="button" (click)="copiar()">Copiar código</button>}
+          <button type="button" class="secundario" (click)="revocar()" [disabled]="ocupada()">Revocar invitación</button>
+        </details>
+      }
+      @if(lista.rol === 'PROPIETARIO' && !lista.personal) {
+        @if(confirmarArchivo()) {<p>Archivar conserva los movimientos y bloquea nuevos registros. Puedes restaurar la lista después.</p><button type="button" class="secundario peligro" (click)="archivar()" [disabled]="ocupada()">Confirmar archivo</button>}
+        @else {<button type="button" class="secundario" (click)="lista.archivada ? archivar() : confirmarArchivo.set(true)" [disabled]="ocupada()">{{ lista.archivada ? 'Restaurar lista' : 'Archivar lista' }}</button>}
+      }
+      @if(lista.rol !== 'PROPIETARIO'){<button type="button" class="secundario" (click)="quitar(contexto.usuarioId()!)" [disabled]="ocupada()">Salir de esta lista</button>}
+    }
+    <button type="button" class="secundario" (click)="volver()" [disabled]="ocupada()">Volver a listas</button>
+  }
+  @if(error()){<p class="error" role="alert">{{ error() }}</p>}
+</dialog>
