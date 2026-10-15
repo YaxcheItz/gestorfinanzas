@@ -42,6 +42,7 @@ class CorsConfigTest {
         CorsConfiguration configuration = buildWith("");
 
         assertThat(configuration.checkOrigin("http://localhost:4200")).isEqualTo("http://localhost:4200");
+        assertThat(configuration.checkOrigin("http://localhost:4300")).isEqualTo("http://localhost:4300");
         assertThat(configuration.checkOrigin("https://kaptalgf.vercel.app")).isEqualTo("https://kaptalgf.vercel.app");
     }
 
