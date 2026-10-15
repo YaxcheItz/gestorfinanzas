@@ -30,8 +30,24 @@ public record TransaccionResponse(
     boolean cashbackAutomatico,
     LocalDateTime fechaCreacion,
     MetodoCaptura metodoCaptura,
-    java.util.UUID compraMsiId
+    java.util.UUID compraMsiId,
+    Long listaId,
+    String listaNombre,
+    java.util.Set<String> etiquetas,
+    Long autorId,
+    String autorNombre
 ) {
+    public TransaccionResponse(Long id, Long cuentaId, String cuentaNombre, Long cuentaDestinoId,
+            String cuentaDestinoNombre, Long categoriaId, String categoriaNombre, String categoriaIcono,
+            String categoriaColor, TipoTransaccion tipo, BigDecimal monto, BigDecimal montoDestino,
+            BigDecimal tasaCambio, String moneda, String monedaDestino, LocalDate fecha,
+            String descripcion, String notas, boolean cashbackAutomatico, LocalDateTime fechaCreacion,
+            MetodoCaptura metodoCaptura, java.util.UUID compraMsiId) {
+        this(id, cuentaId, cuentaNombre, cuentaDestinoId, cuentaDestinoNombre, categoriaId,
+                categoriaNombre, categoriaIcono, categoriaColor, tipo, monto, montoDestino,
+                tasaCambio, moneda, monedaDestino, fecha, descripcion, notas, cashbackAutomatico,
+                fechaCreacion, metodoCaptura, compraMsiId, null, null, java.util.Set.of(), null, null);
+    }
     public TransaccionResponse(Long id, Long cuentaId, String cuentaNombre, Long cuentaDestinoId,
             String cuentaDestinoNombre, Long categoriaId, String categoriaNombre, String categoriaIcono,
             String categoriaColor, TipoTransaccion tipo, BigDecimal monto, BigDecimal montoDestino,
@@ -77,7 +93,12 @@ public record TransaccionResponse(
             t.getCashbackOrigen() != null,
             t.getFechaCreacion(),
             t.getMetodoCaptura(),
-            t.getCompraMsiId()
+            t.getCompraMsiId(),
+            t.getLista() != null ? t.getLista().getId() : null,
+            t.getLista() != null ? t.getLista().getNombre() : null,
+            t.getEtiquetas() == null ? java.util.Set.of() : new java.util.TreeSet<>(t.getEtiquetas()),
+            t.getUsuario() != null ? t.getUsuario().getId() : null,
+            t.getUsuario() != null ? t.getUsuario().getNombre() : null
         );
     }
 }

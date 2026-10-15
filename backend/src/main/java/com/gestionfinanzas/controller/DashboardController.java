@@ -42,9 +42,10 @@ public class DashboardController {
             @RequestParam(required = false) Integer anio,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
+            @RequestParam(required = false) Long listaId,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        DashboardResumenResponse resumen = dashboardService.obtenerResumen(userDetails.getId(), mes, anio, desde, hasta);
+        DashboardResumenResponse resumen = dashboardService.obtenerResumen(userDetails.getId(), mes, anio, desde, hasta, listaId);
         return ResponseEntity.ok(ApiResponse.ok("Resumen del dashboard obtenido correctamente", resumen));
     }
 
@@ -54,9 +55,10 @@ public class DashboardController {
             @RequestParam(required = false) Integer anio,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
+            @RequestParam(required = false) Long listaId,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        DashboardAnaliticaResponse analitica = dashboardService.obtenerAnalitica(userDetails.getId(), mes, anio, desde, hasta);
+        DashboardAnaliticaResponse analitica = dashboardService.obtenerAnalitica(userDetails.getId(), mes, anio, desde, hasta, listaId);
         return ResponseEntity.ok(ApiResponse.ok("Analítica del dashboard obtenida correctamente", analitica));
     }
 
@@ -68,10 +70,11 @@ public class DashboardController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desdeAnterior,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hastaAnterior,
+            @RequestParam(required = false) Long listaId,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         DashboardComparacionResponse comparacion =
-                dashboardService.obtenerComparacion(userDetails.getId(), mes, anio, desde, hasta, desdeAnterior, hastaAnterior);
+                dashboardService.obtenerComparacion(userDetails.getId(), mes, anio, desde, hasta, desdeAnterior, hastaAnterior, listaId);
         return ResponseEntity.ok(ApiResponse.ok("Comparación de periodos obtenida correctamente", comparacion));
     }
 }

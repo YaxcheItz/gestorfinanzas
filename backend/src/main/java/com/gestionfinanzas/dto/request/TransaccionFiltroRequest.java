@@ -19,6 +19,13 @@ public record TransaccionFiltroRequest(
         String busqueda,
         Long id,
         BigDecimal montoMin,
-        BigDecimal montoMax
+        BigDecimal montoMax,
+        Long listaId,
+        List<String> etiquetas,
+        Long autorId
 ) {
+    public TransaccionFiltroRequest(TipoTransaccion tipo, Long cuentaId, Long categoriaId, List<Long> categoriaIds,
+            LocalDate fechaInicio, LocalDate fechaFin, String busqueda, Long id, BigDecimal montoMin, BigDecimal montoMax) {
+        this(tipo, cuentaId, categoriaId, categoriaIds, fechaInicio, fechaFin, busqueda, id, montoMin, montoMax, null, null, null);
+    }
 }

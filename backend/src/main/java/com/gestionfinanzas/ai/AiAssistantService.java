@@ -91,9 +91,15 @@ public class AiAssistantService {
     }
 
     public AiChatResponse quickCapture(Long userId, AiQuickCaptureRequest request) {
-        String mensaje=request.content().strip();
-        if(request.contexto()!=null&&!request.contexto().isBlank()) mensaje=request.contexto().strip()+" "+mensaje;
-        if(mensaje.length()>1200) throw new IllegalArgumentException("El mensaje combinado es demasiado largo; escribe de nuevo el movimiento completo.");
+        actionService.validarListaCaptura(userId, request.listaId());
+        String original = request.content().strip();
+        if (request.contexto() != null && !request.contexto().isBlank()) original = request.contexto().strip() + " " + original;
+        if (original.length() > 1200) throw new IllegalArgumentException("El mensaje combinado es demasiado largo; escribe de nuevo el movimiento completo.");
+        var matcher = java.util.regex.Pattern.compile("(?U)(?<![\\p{L}\\p{N}_])#([\\p{L}\\p{N}][\\p{L}\\p{N}_-]*)").matcher(original);
+        var tags = new java.util.ArrayList<String>();
+        while (matcher.find()) tags.add(matcher.group(1));
+        var etiquetas = com.gestionfinanzas.service.EtiquetasFinancieras.normalizar(tags);
+        String mensaje=matcher.replaceAll("").strip();
         AiActionService.AiActionResult local = actionService.interpretarCapturaRapida(userId, mensaje);
         AiChatResponse response;
         if (local != null) {
@@ -109,12 +115,24 @@ public class AiAssistantService {
                 || response.actions().stream().anyMatch(a -> !"CREATE_TRANSACTION".equals(a.type()))) {
             throw new IllegalArgumentException("Este chat registra movimientos y consulta reportes. Gestiona cuentas y borrados en Configuración.");
         }
+        if (request.listaId() != null || !etiquetas.isEmpty()) {
+            var propuestas = new java.util.LinkedHashMap<String, AiActionService.ActionProposal>();
+            if (response.action() != null) propuestas.put(response.action().id(), response.action());
+            response.actions().forEach(p -> propuestas.put(p.id(), p));
+            propuestas.values().forEach(p -> actionService.marcarContextoCaptura(userId, p, request.listaId(), etiquetas));
+        }
         if (request.capturaPorVoz()) {
             actionService.marcarCapturaPorVoz(userId, response.action());
             response.actions().forEach(proposal -> actionService.marcarCapturaPorVoz(userId, proposal));
+        }
+        if (request.capturaPorVoz() || request.listaId() != null || !etiquetas.isEmpty()) {
             var actuales=actionService.pendientes(userId).stream().collect(java.util.stream.Collectors.toMap(AiActionService.ActionProposal::id,p -> p));
             response=new AiChatResponse(response.answer(),response.action()==null ? null : actuales.get(response.action().id()),
                     response.actions().stream().map(p -> actuales.get(p.id())).toList(),response.report(),response.engine(),response.suggestions(),response.contexto());
+        }
+        if (response.contexto() != null && !etiquetas.isEmpty()) {
+            String contexto = response.contexto() + " " + etiquetas.stream().map(t -> "#" + t).collect(java.util.stream.Collectors.joining(" "));
+            response = new AiChatResponse(response.answer(), response.action(), response.actions(), response.report(), response.engine(), response.suggestions(), contexto);
         }
         return response;
     }

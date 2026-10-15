@@ -59,7 +59,7 @@ class DashboardServiceTest {
 
     private final CuentaRepository cuentaRepository = mock(CuentaRepository.class);
     private final TransaccionRepository transaccionRepository = mock(TransaccionRepository.class);
-    private final DashboardService dashboardService = new DashboardService(cuentaRepository, transaccionRepository);
+    private final DashboardService dashboardService = new DashboardService(cuentaRepository, transaccionRepository, mock(ListaService.class));
 
     @Test
     void balanceTotalSumaSaldosActivosDeDebitoAhorroInversionYDeudaDeCreditoPorMoneda() {

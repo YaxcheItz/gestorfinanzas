@@ -100,7 +100,8 @@ public class PlantillaRecurrenteService {
                 plantilla.getNotas(),
                 null,
                 null,
-                null
+                null,
+                plantilla.getLista() != null ? plantilla.getLista().getId() : null, new java.util.ArrayList<>(plantilla.getEtiquetas())
         ), plantilla.getCompraMsiId());
         if (plantilla.getFechaAncla() == null) plantilla.setFechaAncla(fecha);
         plantilla.setSiguienteFecha(CalendarioFinanciero.siguiente(fecha, plantilla.getFrecuencia(), plantilla.getFechaAncla()));

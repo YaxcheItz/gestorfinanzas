@@ -11,7 +11,8 @@ html .monai-theme :is(.utility-button,.privacy-toggle){min-height:48px;min-width
 .workspace-tools{position:relative;z-index:20;display:flex;align-items:center;justify-content:space-between;width:min(100%,48rem);margin:0 auto;padding:calc(12px + env(safe-area-inset-top)) 20px 8px;gap:16px}
 .workspace-context,.workspace-shortcuts{display:flex;align-items:center;gap:8px;min-width:0}
 .workspace-selector,.glass-icon,.capture-dock__manual{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;border:1px solid var(--kaptal-glass-border);border-radius:999px;background:var(--kaptal-glass);color:var(--kaptal-content);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 2px 12px rgb(0 0 0 / .035);text-decoration:none}
-.workspace-selector{padding:8px 16px;font-size:15px;font-weight:600}
+.workspace-context{flex:1}.workspace-shortcuts{flex:none}.workspace-selector{min-width:0;max-width:100%;padding:8px 16px;font-size:15px;font-weight:600}
+.workspace-selector>.workspace-selector__name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px}.workspace-selector>svg{flex-shrink:0}
 .workspace-selector>span{font-size:17px}.workspace-selector>svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8}
 .glass-icon{width:44px;flex:none;font-size:26px}.glass-icon svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .capture-dock{position:fixed;z-index:35;right:max(20px,calc((100vw - 48rem)/2 + 20px));bottom:calc(20px + env(safe-area-inset-bottom));display:flex;align-items:center;gap:12px}

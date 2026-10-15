@@ -30,6 +30,17 @@ public class PlantillaRecurrente {
     @Builder.Default
     private Long version = 0L;
 
+    @ElementCollection
+    @CollectionTable(name = "plantilla_etiquetas", joinColumns = @JoinColumn(name = "plantilla_id"))
+    @Column(name = "etiqueta", nullable = false, length = 32)
+    @org.hibernate.annotations.OnDelete(action = org.hibernate.annotations.OnDeleteAction.CASCADE)
+    @Builder.Default
+    private java.util.Set<String> etiquetas = new java.util.LinkedHashSet<>();
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "lista_id")
+    private ListaFinanciera lista;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;

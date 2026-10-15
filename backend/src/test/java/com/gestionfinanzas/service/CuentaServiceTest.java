@@ -36,7 +36,7 @@ class CuentaServiceTest {
     private final LibroDiarioService libroDiarioService = mock(LibroDiarioService.class);
     private final CuentaService cuentaService = new CuentaService(
             cuentaRepository, usuarioRepository, transaccionRepository, plantillaRepository, auditoriaService,
-            libroDiarioService
+            libroDiarioService, mock(ListaService.class)
     );
 
     @Test

@@ -1,3 +1,4 @@
+import { ListasService } from './core/services/listas.service';
 import { Component, HostListener, inject } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { effect } from '@angular/core';
@@ -38,6 +39,7 @@ export class App {
   readonly actualizacion=inject(ActualizacionPwaService);
   readonly authService = inject(AuthService);
   private readonly perfilService = inject(PerfilService);
+  private readonly listasService = inject(ListasService);
   private loadedUserId: number | null = null;
 
   constructor() {
@@ -48,6 +50,7 @@ export class App {
         this.captureLauncher.detach('chat');
         this.loadedUserId = null;
         this.perfilService.limpiar();
+        this.listasService.limpiar();
         return;
       }
       if (usuario.id !== this.loadedUserId) {
@@ -57,6 +60,7 @@ export class App {
         }
         this.loadedUserId = usuario.id;
         this.perfilService.cargar(usuario.id);
+        this.listasService.iniciar(usuario.id);
       }
     });
   }

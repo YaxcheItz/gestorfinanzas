@@ -79,13 +79,13 @@
 
       <section #homeHero class="dashboard-screen__monthly" (touchstart)="onHeroTouchStart($event)" (touchmove)="onHeroTouchMove($event)" (touchend)="onHeroTouchEnd($event)" [style.transform]="heroSwipeTransform()" aria-labelledby="dashboard-balance-title">
         <p id="dashboard-balance-title" class="home-total-label">Gastos del periodo</p>
-        @if (loading()) { <div class="home-amount-loading" role="status" aria-label="Cargando gastos"></div> }
+        @if (loading() || contextoLista.cargando()) { <div class="home-amount-loading" role="status" aria-label="Cargando gastos"></div> }
         @else if (resumenMonedaSeleccionada(); as moneda) {
           <p class="dashboard-screen__amount" aria-live="polite">{{ moneda.gastosMes | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</p>
           <label class="home-currency"><span class="sr-only">Moneda del balance</span><select [ngModel]="monedaResumen()" (ngModelChange)="cambiarMoneda($event)" aria-label="Moneda del balance">@for (codigo of monedasResumen(); track codigo) {<option [value]="codigo">{{ codigo }}</option>}</select></label>
           @if (vistaDetallada()) {
             <button type="button" class="dashboard-screen__text-link" (click)="irAReportes()">Informe del periodo</button><div class="home-metrics"><span>Ingresos <strong>{{ moneda.ingresosMes | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong></span><span>Balance del periodo <strong>{{ moneda.ingresosMes - moneda.gastosMes | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong></span></div>
-            <details class="home-account-details"><summary>Saldo de cuentas</summary><div><span>Dinero en cuentas</span><strong>{{ (moneda.dineroDisponible ?? moneda.balanceTotal) | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong></div>@if(moneda.deudaTarjetas != null && moneda.deudaTarjetas > 0){<div><span>Deuda de tarjetas</span><strong>{{ moneda.deudaTarjetas | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong></div><div><span>Saldo neto</span><strong>{{ moneda.balanceTotal | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong></div>}<button type="button" (click)="irACuentas()">{{ moneda.totalCuentas }} cuentas &rsaquo;</button></details>
+            <details class="home-account-details"><summary>Mis cuentas ? todas las listas</summary><div><span>Dinero en cuentas</span><strong>{{ (moneda.dineroDisponible ?? moneda.balanceTotal) | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong></div>@if(moneda.deudaTarjetas != null && moneda.deudaTarjetas > 0){<div><span>Deuda de tarjetas</span><strong>{{ moneda.deudaTarjetas | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong></div><div><span>Saldo neto</span><strong>{{ moneda.balanceTotal | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong></div>}<button type="button" (click)="irACuentas()">{{ moneda.totalCuentas }} cuentas &rsaquo;</button></details>
           }
         } @else if (!error()) { <p class="dashboard-screen__amount">{{ 0 | monto:monedaResumen():'symbol-narrow':'1.2-2' }}</p> }
         <div class="home-period"><button type="button" class="home-period-arrow" (click)="cambiarPeriodo(-1)" [disabled]="!puedeRetroceder()" aria-label="Periodo anterior">&lsaquo;</button><button type="button" class="time-dropdown-btn" (click)="toggleModalRango()" aria-haspopup="dialog" [attr.aria-expanded]="modalRangoAbierto()">{{ etiquetaRangoSeleccionado() }} <span aria-hidden="true">&#8964;</span></button><button type="button" class="home-period-arrow" (click)="cambiarPeriodo(1)" [disabled]="periodoEsActual()" aria-label="Periodo siguiente">&rsaquo;</button></div>
@@ -93,7 +93,7 @@
 
       <section class="home-categories" aria-labelledby="home-categories-title">
         <h2 id="home-categories-title" class="sr-only">Gastos por categoría</h2>
-        @if (graficoLoading()) {<div class="home-chart-loading" role="status" aria-label="Cargando categorías"><span></span><span></span><span></span><span></span></div>}
+        @if (graficoLoading() || contextoLista.cargando()) {<div class="home-chart-loading" role="status" aria-label="Cargando categorías"><span></span><span></span><span></span><span></span></div>}
         @else if (graficoError()) {<p class="home-inline-state" role="alert">No pudimos cargar las categorías. <button type="button" (click)="cargarDashboard()">Reintentar</button></p>}
         @else if (categoriasInicio().length > 0) {
           <div class="home-category-chart" aria-label="Gastos por categoría, desliza para ver más" tabindex="0">
@@ -111,7 +111,7 @@
       </section>
 
       @if (vistaDetallada()) {
-        <section class="dashboard-screen__budgets" aria-labelledby="dashboard-budgets-title"><div class="dashboard-screen__section-heading"><div><h2 id="dashboard-budgets-title">Presupuestos</h2><p class="dashboard-budget-period">{{ periodoResumen() }} · mensual</p></div><button type="button" class="dashboard-screen__text-link" (click)="irAPresupuestos()">Ver todos</button></div>
+        <section class="dashboard-screen__budgets" aria-labelledby="dashboard-budgets-title"><div class="dashboard-screen__section-heading"><div><h2 id="dashboard-budgets-title">Presupuestos</h2><p class="dashboard-budget-period">{{ periodoResumen() }} · mensual · todas mis listas</p></div><button type="button" class="dashboard-screen__text-link" (click)="irAPresupuestos()">Ver todos</button></div>
           @if (presupuestoLoading()) {<p class="home-inline-state">Cargando presupuestos…</p>}
           @else if (presupuestoError()) {<p class="home-inline-state" role="alert">{{ presupuestoError() }} <button type="button" (click)="cargarPresupuestos()">Reintentar</button></p>}
           @else { @for(presupuesto of presupuestosDashboard(); track presupuesto.id){

@@ -56,8 +56,8 @@
             <button type="button" (click)="descargarPlantillaCsv()" class="min-h-11 shrink-0 rounded-xl border border-slate-200 px-4 text-sm font-semibold text-emerald-800 hover:bg-emerald-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600">Descargar plantilla</button>
           </div>
           <p class="rounded-xl bg-slate-50 p-3 text-xs leading-5 text-slate-600">
-            Columnas: <strong>Fecha, Tipo, Monto, Moneda, Cuenta, Categoría, Descripción, Notas</strong>.
-            Fecha en formato AAAA-MM-DD o DD/MM/AAAA; tipo INGRESO o GASTO; usa el nombre exacto de una cuenta activa.
+            Columnas: <strong>Fecha, Tipo, Monto, Moneda, Cuenta, Categoría, Descripción, Notas, Lista, Etiquetas</strong>.
+            Fecha en formato AAAA-MM-DD o DD/MM/AAAA; tipo INGRESO o GASTO; usa el nombre exacto de una cuenta activa. Lista y etiquetas son opcionales; sin lista se usa la seleccionada al leer el archivo.
             Máximo 5 MB y 500 filas. Las filas con errores no se importan.
           </p>
           <label for="archivo-csv-movimientos" class="block text-sm font-semibold text-slate-800">Archivo CSV</label>
@@ -121,6 +121,7 @@
             (ngModelChange)="onBusquedaChange($event)"
             placeholder="Buscar un movimiento…"
             enterkeyhint="search"
+            maxlength="120"
             aria-label="Buscar movimientos"
             autocomplete="off"
             class="ledger-search__input"
@@ -180,6 +181,7 @@
           </header>
 
           <div class="ledger-filter-sheet__body">
+            @if((contextoLista.activa()?.miembros?.length ?? 0) > 1){<section><h3>Persona</h3><label>Registrado por<select aria-label="Filtrar por persona" [ngModel]="borradorAutorId()" (ngModelChange)="borradorAutorId.set($event)"><option [ngValue]="null">Todas las personas</option>@for(miembro of contextoLista.activa()?.miembros; track miembro.id){<option [ngValue]="miembro.id">{{ miembro.nombre }}</option>}</select></label></section>}
             <section aria-labelledby="filtro-tipo-title">
               <h3 id="filtro-tipo-title">Tipo</h3>
               <div class="ledger-chip-row" role="group" aria-label="Filtrar por tipo">
@@ -295,9 +297,10 @@
       </div></details>
 
       <!-- Tabla de Transacciones -->
+      @if(loading() && pageData()){<p role="status" class="text-sm text-slate-500">Actualizando resultados?</p>}
       <div class="history-results bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden" [attr.aria-busy]="loading()">
         
-        @if (loading()) {
+        @if (loading() && !pageData()) {
           <div role="status" class="p-16 text-center text-slate-400 text-sm flex items-center justify-center space-x-2">
             <div class="w-5 h-5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
             <span>Buscando movimientos...</span>
@@ -337,6 +340,7 @@
               @for (m of grupo.movimientos; track m.id) {
               <app-movimiento-mobile-card
                 [movimiento]="m"
+                [soloLectura]="!puedeModificar(m)"
                 (editar)="abrirModalEditar($event)"
                 (eliminar)="eliminarMovimiento($event)"
                 (detalle)="abrirDetalleMovimiento($event)" />
@@ -441,6 +445,10 @@
             }
 
             <fieldset [disabled]="submitting() || movimientoIncierto()" class="min-w-0 space-y-3 border-0 p-0 sm:space-y-4">
+            <div class="space-y-3">
+              <label class="block text-sm">Lista<select name="listaMovimiento" [(ngModel)]="formListaId" class="mt-2 block min-h-11 w-full rounded-xl border p-3">@for(lista of listasEditables(); track lista.id){<option [ngValue]="lista.id">{{ lista.emoji }} {{ lista.nombre }}</option>}</select></label>
+              <label class="block text-sm">Etiquetas<input name="etiquetasMovimiento" [(ngModel)]="formEtiquetas" maxlength="271" placeholder="#visa #vacaciones" class="mt-2 block min-h-11 w-full rounded-xl border p-3" /></label>
+            </div>
             <!-- Monto: sin título. El número grande y el símbolo de la moneda ya dicen todo,
                  y una etiqueta encima solo empuja el resto del formulario hacia abajo. -->
             <div class="rounded-2xl border border-slate-200 bg-white px-4 py-2.5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -719,6 +727,9 @@
           </div>
 
           <dl class="ledger-detail-sheet__meta">
+            @if(det.listaNombre){<div><dt>Lista</dt><dd>{{ det.listaNombre }}</dd></div>}
+            @if(det.autorNombre){<div><dt>Registrado por</dt><dd>{{ det.autorNombre }}</dd></div>}
+            @if(det.etiquetas?.length){<div><dt>Etiquetas</dt><dd>@for(etiqueta of det.etiquetas; track etiqueta){<span class="mr-2">#{{ etiqueta }}</span>}</dd></div>}
             <div>
               <dt>Fecha del movimiento</dt>
               <dd>{{ etiquetaDiaHistorial(det.fecha) }}</dd>
@@ -761,10 +772,10 @@
             @if (puedeRepetirse(det)) {
               <button type="button" class="history-repeat-button" (click)="repetirMovimiento(det)">Repetir movimiento</button>
             }
-            @if (det.cuentaId !== null && (det.tipo !== 'TRANSFERENCIA' || det.cuentaDestinoId != null) && det.tipo !== 'SALDO_INICIAL' && !det.cashbackAutomatico && !det.compraMsiId) {
+            @if (puedeModificar(det) && det.cuentaId !== null && (det.tipo !== 'TRANSFERENCIA' || det.cuentaDestinoId != null) && det.tipo !== 'SALDO_INICIAL' && !det.cashbackAutomatico && !det.compraMsiId) {
               <button type="button" class="ledger-detail-sheet__edit" (click)="cerrarDetalleMovimiento(); abrirModalEditar(det)">Editar</button>
             }
-            @if (det.cuentaId !== null && (det.tipo !== 'TRANSFERENCIA' || det.cuentaDestinoId != null) && !det.cashbackAutomatico && !det.compraMsiId) {
+            @if (puedeModificar(det) && det.cuentaId !== null && (det.tipo !== 'TRANSFERENCIA' || det.cuentaDestinoId != null) && !det.cashbackAutomatico && !det.compraMsiId) {
               <button type="button" class="ledger-detail-sheet__delete" (click)="cerrarDetalleMovimiento(); eliminarMovimiento(det.id)">Eliminar</button>
             }
           </div>

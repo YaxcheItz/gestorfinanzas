@@ -46,6 +46,11 @@ public class TransaccionService {
     private final PlantillaRecurrenteRepository plantillaRepository;
     private final AuditoriaTransaccionService auditoriaService;
     private final LibroDiarioService libroDiarioService;
+    private final ListaService listaService;
+
+    public void validarListaCaptura(Long usuarioId, Long listaId) {
+        if (listaId != null) listaService.escribir(usuarioId, listaId);
+    }
 
     @Transactional
     public TransaccionResponse crearCuotaRecurrente(Long usuarioId, TransaccionRequest request, UUID compraMsiId) {
@@ -74,6 +79,8 @@ public class TransaccionService {
             var contenido=new StringBuilder();
             for(var campo:TransaccionRequest.class.getRecordComponents()) {
                 Object valor=campo.getAccessor().invoke(request);
+                // Conserva la huella de reintentos emitidos antes de listas/etiquetas.
+                if (valor == null && (campo.getName().equals("listaId") || campo.getName().equals("etiquetas"))) continue;
                 String texto=valor instanceof BigDecimal decimal ? decimal.stripTrailingZeros().toPlainString()
                     : valor==null ? "<null>" : valor.toString();
                 contenido.append(campo.getName()).append(':').append(valor==null?'0':'1')
@@ -103,6 +110,8 @@ public class TransaccionService {
         if (request.msi() != null && request.frecuenciaRecurrencia() != null) {
             throw new IllegalArgumentException("Una compra MSI no puede tener otra recurrencia");
         }
+        var lista = listaService.escribir(usuarioId, request.listaId());
+        var etiquetas = EtiquetasFinancieras.normalizar(request.etiquetas());
         DatosTransaccion datos = prepararTransaccion(usuarioId, request);
         validarRecurrencia(request, datos.tipo());
         validarLimiteCredito(datos.cuentaOrigen(), datos.tipo(), request.monto(), null);
@@ -132,6 +141,8 @@ public class TransaccionService {
         if (descripcion.length() + sufijoCuota.length() <= 200) descripcion += sufijoCuota;
         Transaccion transaccion = Transaccion.builder()
                 .compraMsiId(compraMsiId)
+                .lista(lista)
+                .etiquetas(etiquetas)
                 .usuario(datos.usuario())
                 .cuenta(datos.cuentaOrigen())
                 .cuentaDestino(datos.cuentaDestino())
@@ -162,6 +173,8 @@ public class TransaccionService {
         
         if (isMsi) {
             plantillaRepository.save(PlantillaRecurrente.builder()
+                    .lista(guardada.getLista())
+                    .etiquetas(new java.util.LinkedHashSet<>(guardada.getEtiquetas()))
                     .usuario(datos.usuario())
                     .cuenta(datos.cuentaOrigen())
                     .categoria(datos.categoria())
@@ -178,6 +191,8 @@ public class TransaccionService {
                     .build());
         } else if (request.frecuenciaRecurrencia() != null) {
             plantillaRepository.save(PlantillaRecurrente.builder()
+                    .lista(guardada.getLista())
+                    .etiquetas(new java.util.LinkedHashSet<>(guardada.getEtiquetas()))
                     .usuario(datos.usuario())
                     .cuenta(datos.cuentaOrigen())
                     .categoria(datos.categoria())
@@ -197,6 +212,7 @@ public class TransaccionService {
     public TransaccionResponse actualizarTransaccion(Long usuarioId, Long transaccionId, TransaccionRequest request) {
         Transaccion transaccion = transaccionRepository.findByIdAndUsuarioId(transaccionId, usuarioId)
                 .orElseThrow(() -> new IllegalArgumentException("Transacción no encontrada o no autorizada"));
+        if (transaccion.getLista() != null) listaService.escribir(usuarioId, transaccion.getLista().getId());
         if (transaccion.getCompraMsiId() != null) {
             throw new IllegalArgumentException("Las cuotas MSI no se editan individualmente; cancela las cuotas pendientes desde Recurrentes");
         }
@@ -218,6 +234,8 @@ public class TransaccionService {
         if (request.msi() != null || request.frecuenciaRecurrencia() != null || request.siguienteFechaRecurrencia() != null) {
             throw new IllegalArgumentException("Los MSI y las recurrencias se programan al crear un movimiento");
         }
+        if (request.listaId() != null) transaccion.setLista(listaService.escribir(usuarioId, request.listaId()));
+        if (request.etiquetas() != null) transaccion.setEtiquetas(EtiquetasFinancieras.normalizar(request.etiquetas()));
         DatosTransaccion datos = prepararTransaccion(usuarioId, request);
         validarLimiteCredito(datos.cuentaOrigen(), datos.tipo(), request.monto(), transaccion);
         if (tipoAnterior == TipoTransaccion.GASTO) {
@@ -479,6 +497,8 @@ public class TransaccionService {
             cashbackAcumulado = cashbackAcumulado.add(montoCashback);
             if (cashback == null) {
                 cashback = Transaccion.builder()
+                        .lista(gasto.getLista())
+                        .etiquetas(new java.util.LinkedHashSet<>(gasto.getEtiquetas()))
                         .usuario(gasto.getUsuario())
                         .cuenta(cuenta)
                         .tipo(TipoTransaccion.INGRESO)
@@ -498,6 +518,8 @@ public class TransaccionService {
             } else {
                 TransaccionResponse antes = TransaccionResponse.fromEntity(cashback);
                 cambioSaldo = cambioSaldo.add(montoCashback.subtract(cashback.getMonto()));
+                cashback.setLista(gasto.getLista());
+                cashback.setEtiquetas(new java.util.LinkedHashSet<>(gasto.getEtiquetas()));
                 cashback.setMonto(montoCashback);
                 cashback.setFecha(gasto.getFecha());
                 cashback.setDescripcion(descripcionCashback(gasto));
@@ -573,12 +595,21 @@ public class TransaccionService {
     }
 
     @Transactional(readOnly = true)
+    public List<TransaccionResponse> listarRecientes(Long usuarioId, Long listaId) {
+        if (listaId == null) return listarRecientes(usuarioId);
+        listaService.leer(usuarioId, listaId);
+        return transaccionRepository.findTop10ByListaIdOrderByFechaDescIdDesc(listaId).stream().map(TransaccionResponse::fromEntity).toList();
+    }
+
+    @Transactional(readOnly = true)
     public Page<TransaccionResponse> listarPaginadas(Long usuarioId, Pageable pageable) {
         return listarConFiltros(usuarioId, null, pageable);
     }
 
     @Transactional(readOnly = true)
     public Page<TransaccionResponse> listarConFiltros(Long usuarioId, TransaccionFiltroRequest filtro, Pageable pageable) {
+        validarFiltros(usuarioId, filtro);
+        if (pageable.getPageSize() > 100) throw new IllegalArgumentException("La página admite hasta 100 movimientos.");
         Specification<Transaccion> spec = TransaccionSpecification.conFiltros(usuarioId, filtro);
         return transaccionRepository.findAll(spec, pageable)
                 .map(TransaccionResponse::fromEntity);
@@ -591,13 +622,14 @@ public class TransaccionService {
             throw new IllegalArgumentException("La fecha inicial no puede ser posterior a la fecha final");
         }
 
+        validarFiltros(usuarioId, filtro);
         Specification<Transaccion> spec = TransaccionSpecification.conFiltros(usuarioId, filtro);
         List<Transaccion> transacciones = transaccionRepository.findAll(
                 spec, Sort.by(Sort.Direction.DESC, "fecha", "id")
         );
         StringBuilder csv = new StringBuilder("\uFEFF");
         csv.append("ID,Fecha,Tipo,Descripción,Categoría,Cuenta origen,Moneda origen,Monto origen,")
-                .append("Cuenta destino,Moneda destino,Monto destino,Tasa de cambio,Notas\r\n");
+                .append("Cuenta destino,Moneda destino,Monto destino,Tasa de cambio,Notas,Lista,Etiquetas,Autor\r\n");
 
         for (Transaccion transaccion : transacciones) {
             List<String> campos = new ArrayList<>(13);
@@ -614,6 +646,9 @@ public class TransaccionService {
             campos.add(transaccion.getMontoDestino() != null ? transaccion.getMontoDestino().toPlainString() : "");
             campos.add(transaccion.getTasaCambio() != null ? transaccion.getTasaCambio().toPlainString() : "");
             campos.add(transaccion.getNotas() != null ? transaccion.getNotas() : "");
+            campos.add(transaccion.getLista() != null ? transaccion.getLista().getNombre() : "Personal");
+            campos.add(String.join(" ", transaccion.getEtiquetas().stream().sorted().map(e -> "#" + e).toList()));
+            campos.add(transaccion.getUsuario().getNombre());
             csv.append(campos.stream().map(TransaccionService::campoCsv).collect(java.util.stream.Collectors.joining(",")))
                     .append("\r\n");
         }
@@ -658,10 +693,24 @@ public class TransaccionService {
                 : transaccion.getCuentaDestinoMonedaHistorica();
     }
 
+    private void validarFiltros(Long usuarioId, TransaccionFiltroRequest filtro) {
+        if (filtro == null) return;
+        if (filtro.listaId() != null) listaService.leer(usuarioId, filtro.listaId());
+        if (filtro.busqueda() != null && filtro.busqueda().length() > 120) throw new IllegalArgumentException("La búsqueda admite hasta 120 caracteres.");
+        EtiquetasFinancieras.normalizar(filtro.etiquetas());
+        if (filtro.fechaInicio() != null && filtro.fechaFin() != null) new PeriodoFinanciero.Rango(filtro.fechaInicio(), filtro.fechaFin());
+        if ((filtro.montoMin() != null && filtro.montoMin().signum() < 0) || (filtro.montoMax() != null && filtro.montoMax().signum() < 0)
+                || (filtro.montoMin() != null && filtro.montoMax() != null && filtro.montoMin().compareTo(filtro.montoMax()) > 0)) throw new IllegalArgumentException("Revisa el rango de importes.");
+    }
+
     @Transactional(readOnly = true)
     public TransaccionResponse obtenerPorId(Long usuarioId, Long transaccionId) {
-        Transaccion transaccion = transaccionRepository.findByIdAndUsuarioId(transaccionId, usuarioId)
+        Transaccion transaccion = transaccionRepository.findById(transaccionId)
                 .orElseThrow(() -> new IllegalArgumentException("Transacción no encontrada o no autorizada"));
+        if (!transaccion.getUsuario().getId().equals(usuarioId)) {
+            if (transaccion.getLista() == null) throw new PermisoCompartidoException("Movimiento no disponible.");
+            listaService.leer(usuarioId, transaccion.getLista().getId());
+        }
         return TransaccionResponse.fromEntity(transaccion);
     }
 
@@ -669,6 +718,7 @@ public class TransaccionService {
     public void eliminarTransaccion(Long usuarioId, Long transaccionId) {
         Transaccion transaccion = transaccionRepository.findByIdAndUsuarioId(transaccionId, usuarioId)
                 .orElseThrow(() -> new IllegalArgumentException("Transacción no encontrada o no autorizada"));
+        if (transaccion.getLista() != null) listaService.escribir(usuarioId, transaccion.getLista().getId());
         if (transaccion.getCompraMsiId() != null) {
             throw new IllegalArgumentException("Las cuotas MSI registradas conservan su historial; cancela las pendientes desde Recurrentes");
         }
