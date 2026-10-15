@@ -58,36 +58,98 @@ describe('DashboardComponent movement dialog accessibility', () => {
     await TestBed.compileComponents();
   });
 
-  it('shows the accessible primary action for chat based movement capture', () => {
-    const fixture = TestBed.createComponent(DashboardComponent);
-    fixture.detectChanges();
-    const opener = fixture.nativeElement.querySelector('.dashboard-screen__action--chat') as HTMLButtonElement;
-    expect(opener).toBeTruthy();
-    expect(opener.textContent).toContain('Registrar un movimiento');
-  });
-
   it('separa efectivo y deuda y muestra presupuesto restante solo en la moneda elegida',()=>{
     const fixture=TestBed.createComponent(DashboardComponent);fixture.detectChanges();const component=fixture.componentInstance;
     component.resumen.set({resumenPorMoneda:[{moneda:'MXN',balanceTotal:600,dineroDisponible:1000,deudaTarjetas:400,ingresosMes:100,gastosMes:25,totalCuentas:2},{moneda:'USD',balanceTotal:200,dineroDisponible:200,deudaTarjetas:0,ingresosMes:50,gastosMes:5,totalCuentas:1}],ultimosMovimientos:[]} as any);
     component.presupuestoResumen.set({presupuestos:[{id:1,moneda:'MXN',categoriaNombre:'Comida',montoLimite:500,montoGastado:200,montoDisponible:300,porcentajeConsumido:40}],resumenPorMoneda:[{moneda:'MXN',totalDisponible:300},{moneda:'USD',totalDisponible:10}]} as any);
-    fixture.detectChanges();const hero=fixture.nativeElement.querySelector('.dashboard-screen__monthly').textContent;
+    component.vistaDetallada.set(true);fixture.detectChanges();const hero=fixture.nativeElement.querySelector('.dashboard-screen__monthly').textContent;
     expect(hero).toContain('Dinero en cuentas');expect(hero).toContain('1,000');expect(hero).toContain('Deuda de tarjetas');expect(hero).toContain('400');
     expect(component.presupuestoMonedaSeleccionada()?.totalDisponible).toBe(300);
     component.monedaResumen.set('USD');expect(component.presupuestoMonedaSeleccionada()?.totalDisponible).toBe(10);
     fixture.destroy();
   });
-  it('un error de resumen o gráfico no se muestra como ausencia de cuentas o de gastos',()=>{
-    const fixture=TestBed.createComponent(DashboardComponent);fixture.detectChanges();
-    vi.spyOn(TestBed.inject(FinanzasService),'getDashboardResumen').mockReturnValue(throwError(()=>new Error('sin conexión')));
-    vi.spyOn(TestBed.inject(FinanzasService),'getDashboardAnalitica').mockReturnValue(throwError(()=>new Error('sin conexión')));
-    fixture.componentInstance.cargarDashboard();fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('Resumen no disponible');
-    expect(fixture.nativeElement.textContent).not.toContain('Empieza con una cuenta');
-    fixture.componentInstance.resumen.set({totalCuentas:1,resumenPorMoneda:[{moneda:'MXN',balanceTotal:100,ingresosMes:0,gastosMes:25,totalCuentas:1}],ultimosMovimientos:[]} as any);
-    fixture.componentInstance.error.set(null);fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('No pudimos cargar la distribución');
-    expect(fixture.nativeElement.textContent).not.toContain('No hay gastos registrados');fixture.destroy();
+  it('oculta tambien la proporcion y valores accesibles del presupuesto al activar privacidad', () => {
+    const fixture = TestBed.createComponent(DashboardComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    component.monedaResumen.set('MXN');
+    component.vistaDetallada.set(true);
+    component.presupuestoResumen.set({ presupuestos: [{ id: 1, moneda: 'MXN', categoriaNombre: 'Comida', montoLimite: 500, montoGastado: 200, montoDisponible: 300, porcentajeConsumido: 40, estado: 'NORMAL' }], resumenPorMoneda: [] } as any);
+    fixture.detectChanges();
+    const bar = fixture.nativeElement.querySelector('[role="progressbar"]') as HTMLElement;
+    expect(bar.getAttribute('aria-valuenow')).toBe('200');
+    expect(bar.style.getPropertyValue('--budget-fill')).toBe('40%');
+    component.privacidad.alternarLocal();
+    fixture.detectChanges();
+    expect(bar.getAttribute('aria-valuenow')).toBeNull();
+    expect(bar.getAttribute('aria-valuemax')).toBeNull();
+    expect(bar.getAttribute('aria-valuetext')).toBe('Importe oculto');
+    expect(bar.style.getPropertyValue('--budget-fill')).toBe('0%');
+    fixture.destroy();
   });
+
+  it('grafica gastos reales sin exigir presupuesto y oculta las alturas en privacidad', () => {
+    const fixture = TestBed.createComponent(DashboardComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    component.gastosCategoria.set([
+      { categoriaId: 7, categoriaNombre: 'Comida', moneda: 'MXN', monto: 250 },
+      { categoriaId: 8, categoriaNombre: 'Viajes', moneda: 'USD', monto: 900 },
+      { categoriaId: 9, categoriaNombre: 'Transporte', moneda: 'MXN', monto: 125 }
+    ]);
+    component.monedaResumen.set('MXN');
+    expect(component.categoriasInicio().map(item => item.monto)).toEqual([250, 125]);
+    expect(component.categoriasInicio().map(item => item.altura)).toEqual([100, 50]);
+    expect(component.categoriasInicio()[0].presupuesto).toBeUndefined();
+    fixture.detectChanges();
+    const button = fixture.nativeElement.querySelector('.home-category__bar-button') as HTMLButtonElement;
+    button.click();
+    expect(TestBed.inject(Router).navigate).toHaveBeenCalledWith(['/transacciones'], { queryParams: { categoriaId: 7, fechaInicio: component.fechasRango().desde, fechaFin: component.fechasRango().hasta } });
+    component.privacidad.alternarLocal();
+    expect(component.categoriasInicio().every(item => item.altura === 0)).toBe(true);
+    fixture.destroy();
+  });
+
+  it('abre acciones al mantener pulsado, cancela al desplazar y no navega al soltar', () => {
+    vi.useFakeTimers();
+    const fixture = TestBed.createComponent(DashboardComponent);
+    try {
+      const component = fixture.componentInstance;
+      const categoria = { categoriaId: 7, categoriaNombre: 'Comida', moneda: 'MXN', monto: 20, tono: '#fff', altura: 100, icono: null };
+      component.iniciarPresionCategoria({isPrimary: true, button: 0, clientX: 0, clientY: 0} as PointerEvent, categoria);
+      component.moverPresionCategoria({clientX: 20, clientY: 0} as PointerEvent);
+      vi.advanceTimersByTime(600);
+      expect(component.categoriaContextual()).toBeNull();
+      component.iniciarPresionCategoria({isPrimary: true, button: 0, clientX: 0, clientY: 0} as PointerEvent, categoria);
+      vi.advanceTimersByTime(500);
+      expect(component.categoriaContextual()).toEqual(categoria);
+      component.cancelarPresionCategoria();
+      component.tocarCategoria(categoria);
+      expect(TestBed.inject(Router).navigate).not.toHaveBeenCalled();
+    } finally { fixture.destroy(); vi.useRealTimers(); }
+  });
+
+  it('compacta al salir el hero y desconecta el observador al abandonar Inicio', () => {
+    let callback: IntersectionObserverCallback | undefined;
+    const disconnect = vi.fn();
+    const observe = vi.fn();
+    vi.stubGlobal('IntersectionObserver', class {
+      constructor(handler: IntersectionObserverCallback) { callback = handler; }
+      observe = observe;
+      disconnect = disconnect;
+    });
+    const fixture = TestBed.createComponent(DashboardComponent);
+    try {
+      fixture.detectChanges();
+      expect(observe).toHaveBeenCalledOnce();
+      callback!([{isIntersecting:false,boundingClientRect:{top:-200}}] as IntersectionObserverEntry[], {} as IntersectionObserver);
+      expect(fixture.componentInstance.inicioCompacto()).toBe(true);
+      callback!([{isIntersecting:true,boundingClientRect:{top:100}}] as IntersectionObserverEntry[], {} as IntersectionObserver);
+      expect(fixture.componentInstance.inicioCompacto()).toBe(false);
+    } finally { fixture.destroy(); vi.unstubAllGlobals(); }
+    expect(disconnect).toHaveBeenCalled();
+  });
+
   it('retries an uncertain request without opening an editable replacement', () => {
     const component=TestBed.createComponent(DashboardComponent).componentInstance;
     const sincronizar=vi.spyOn(component,'sincronizarPendientes').mockResolvedValue(undefined);
@@ -105,21 +167,9 @@ describe('DashboardComponent movement dialog accessibility', () => {
     expect(component.modalError()).toContain('Revisa Actividad');
   });
 
-  it('includes remaining categories in the total without mixing currencies', () => {
-    const component = TestBed.createComponent(DashboardComponent).componentInstance;
-    component.analitica.set({ gastosPorCategoria: [
-      ...[50, 20, 10, 10, 10].map((monto, index) => ({ categoriaId: index + 1, categoriaNombre: `Cat ${index}`, categoriaColor: '#123456', monto, moneda: 'MXN' })),
-      { categoriaId: 9, categoriaNombre: 'USD', categoriaColor: '#123456', monto: 500, moneda: 'USD' }
-    ], ultimosSeisMeses: [] });
-    expect(component.totalGastosPeriodo()).toBe(100);
-    expect(component.donutCategorias()[0].porcentaje).toBe(50);
-    expect(component.donutCategorias().find(item => item.nombre === 'Otros')?.monto).toBe(10);
-  });
-
   it('loads today and the last seven local dates instead of monthly data', () => {
     const component = TestBed.createComponent(DashboardComponent).componentInstance;
     const resumen = vi.spyOn(TestBed.inject(FinanzasService), 'getDashboardResumen');
-    const analitica = vi.spyOn(TestBed.inject(FinanzasService), 'getDashboardAnalitica');
     component.seleccionarRango('HOY');
     const hoy = component.fechasRango().hasta;
     expect(resumen.mock.calls.at(-1)?.slice(2)).toEqual([hoy, hoy]);
@@ -127,7 +177,6 @@ describe('DashboardComponent movement dialog accessibility', () => {
     const { desde, hasta } = component.fechasRango();
     expect(hasta).toBe(hoy);
     expect(Math.round((Date.parse(hasta) - Date.parse(desde)) / 86400000)).toBe(6);
-    expect(analitica.mock.calls.at(-1)?.slice(2)).toEqual([desde, hasta]);
   });
 
   it('does not change the applied range until valid custom dates are submitted', () => {
@@ -223,20 +272,22 @@ describe('DashboardComponent movement dialog accessibility', () => {
     });
   });
 
-  it('muestra el registro principal, presupuestos y actividad sin gr?ficas de tendencia', () => {
+  it('muestra categorias y recientes sin presupuestos en la vista simple', () => {
     const fixture = TestBed.createComponent(DashboardComponent);
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
     const text = root.textContent ?? '';
 
-    expect(root.querySelector('.dashboard-screen__action--chat')?.textContent).toContain('Registrar un movimiento');
-    expect(root.querySelector('#dashboard-budgets-title')?.textContent).toContain('Presupuestos');
-    expect(root.querySelector('#dashboard-recent-title')?.textContent).toContain('Movimientos recientes');
+    expect(root.querySelector('.dashboard-screen__actions')).toBeNull();
+    expect(root.querySelector('#dashboard-budgets-title')).toBeNull();
+    expect(root.querySelector('#home-categories-title')).toBeTruthy();
+    expect(root.querySelector('#dashboard-recent-title')).toBeNull();
+    expect(root.querySelector('.home-empty')).toBeTruthy();
     expect(text).not.toContain('As? va tu mes');
     expect(text).not.toContain('Tendencia de gastos');
   });
 
-  it('muestra el saldo, los ingresos y los gastos del mes en una sola tarjeta', () => {
+  it('prioriza gasto y revela ingresos y cuentas solo en vista detallada', () => {
     const fixture = TestBed.createComponent(DashboardComponent);
     fixture.detectChanges();
     fixture.componentInstance.resumen.set({
@@ -263,10 +314,13 @@ describe('DashboardComponent movement dialog accessibility', () => {
 
     const controlFinanciero = fixture.nativeElement.querySelector('.dashboard-screen__monthly') as HTMLElement;
     expect(controlFinanciero).toBeTruthy();
-    expect(controlFinanciero.textContent).toContain('Balance Total');
+    expect(controlFinanciero.textContent).toContain('Gastos del periodo');
+    expect(controlFinanciero.querySelector('.dashboard-screen__amount')?.textContent).toContain('2,500');
+    fixture.componentInstance.vistaDetallada.set(true);
+    fixture.detectChanges();
     expect(controlFinanciero.textContent).toContain('12,500');
     expect(controlFinanciero.textContent).toContain('Ingresos');
-    expect(controlFinanciero.textContent).toContain('Gastos');
+    expect(controlFinanciero.textContent).toContain('Balance del periodo');
     expect(controlFinanciero.textContent).toContain('2 cuentas');
 
     // Los montos largos se parten antes de desbordar la tarjeta.

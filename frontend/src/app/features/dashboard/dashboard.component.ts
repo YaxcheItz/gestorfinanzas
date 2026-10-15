@@ -1,7 +1,9 @@
+import { FeatureStylesService } from '../../core/services/feature-styles.service';
 ﻿import { TextoFinancieroPipe } from '../../core/pipes/texto-financiero.pipe';
 import { MontoPrivadoDirective } from '../../shared/directives/monto-privado.directive';
 import {
   Component,
+  DestroyRef,
   ElementRef,
   HostListener,
   OnInit,
@@ -13,6 +15,8 @@ import {
 } from '@angular/core';
 import { CommonModule, DOCUMENT } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Subscription } from 'rxjs';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { CategoriaPreferidaService } from '../../core/services/categoria-preferida.service';
@@ -27,15 +31,15 @@ import { FechaPickerComponent } from '../../shared/components/fecha-picker/fecha
 import { CategoriaIconoComponent } from '../../shared/components/categoria-icono/categoria-icono.component';
 import { MontoPipe } from '../../core/pipes/monto.pipe';
 import { PrivacyToggleComponent } from '../../shared/components/privacy-toggle/privacy-toggle.component';
+import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive';
 import { PrivacidadService } from '../../core/services/privacidad.service';
 import { MovimientosOfflineService, MovimientoPendiente } from '../../core/services/movimientos-offline.service';
 import { nombreCuentaVisible, resumenCuentaSelector } from '../../core/utils/cuenta-financiera';
 import {
   Categoria,
   Cuenta,
-  DashboardAnalitica,
-  DashboardGastoCategoria,
   DashboardResumen,
+  DashboardGastoCategoria,
   FrecuenciaRecurrencia,
   PlantillaRecurrente,
   Presupuesto,
@@ -56,6 +60,12 @@ type SpeechRecognitionLike = {
 };
 
 type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
+interface CategoriaInicio extends DashboardGastoCategoria {
+  icono: string | null | undefined;
+  tono: string;
+  altura: number;
+  presupuesto?: Presupuesto;
+}
 type SpeechRecognitionWindow = Window & {
   SpeechRecognition?: SpeechRecognitionConstructor;
   webkitSpeechRecognition?: SpeechRecognitionConstructor;
@@ -64,725 +74,11 @@ type SpeechRecognitionWindow = Window & {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [TextoFinancieroPipe, MontoPrivadoDirective, CommonModule, FormsModule, CategoriaSelectorComponent, CuentaSelectorComponent, MovimientoMobileCardComponent, MontoPipe, FechaPickerComponent, CategoriaIconoComponent, PrivacyToggleComponent],
-  template: `
-    <div class="dashboard-screen">
-      <header class="dashboard-screen__header">
-        <div>
-          <p class="dashboard-screen__eyebrow">{{ fechaActual }}</p>
-          <div class="dashboard-screen__title-row">
-            <h1 class="sr-only">Resumen financiero</h1>
-            <button type="button" class="utility-button" (click)="cambiarPeriodo(-1)" aria-label="Mes anterior">‹</button>
-            <button
-              type="button"
-              class="time-dropdown-btn"
-              (click)="toggleModalRango()"
-              aria-haspopup="dialog"
-              [attr.aria-expanded]="modalRangoAbierto()">
-              <svg class="time-dropdown-btn__cal" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-              <span>{{ etiquetaRangoSeleccionado() }}</span>
-              <svg class="time-dropdown-btn__chevron" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-            </button>
-            <button type="button" class="utility-button" (click)="cambiarPeriodo(1)" [disabled]="periodoEsActual()" aria-label="Mes siguiente">›</button>
-          </div>
-        </div>
-        <div class="dashboard-utilities"><button type="button" class="dashboard-accounts-link" (click)="irACuentas()">Cuentas</button><app-privacy-toggle/><button type="button" class="utility-button" (click)="irAConfiguracion()" aria-label="Abrir ajustes" title="Configuración"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="navigation-icons.svg#settings"/></svg></button><button type="button" class="dashboard-screen__icon-button" (click)="cargarDashboard()" aria-label="Actualizar resumen" title="Actualizar">
-          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7v5h-5"/><path d="M4 17v-5h5"/><path d="M5.6 9a7 7 0 0 1 11.6-2L20 12M4 12l2.8 5a7 7 0 0 0 11.6-2"/></svg>
-        </button></div>
-      </header>
-
-      <!-- Modal de Selección de Rango de Tiempo (Time Dropdown Modal) -->
-      @if (modalRangoAbierto()) {
-        <div class="time-dropdown-backdrop" (click)="cerrarModalRango()">
-          <div class="time-dropdown-modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-label="Seleccionar rango de tiempo">
-            <header class="time-dropdown-modal__head">
-              <h3>Rango de Tiempo</h3>
-              <button type="button" (click)="cerrarModalRango()" aria-label="Cerrar modal">×</button>
-            </header>
-            <div class="time-dropdown-modal__options">
-              <button type="button" class="time-option-card" [class.is-active]="tipoRango() === 'MES'" (click)="seleccionarRango('MES')">
-                <div class="time-option-card__info">
-                  <strong>Mes Actual</strong>
-                  <small>{{ periodoResumen() }}</small>
-                </div>
-                @if (tipoRango() === 'MES') { <span class="time-option-check" aria-hidden="true">✓</span> }
-              </button>
-              <button type="button" class="time-option-card" [class.is-active]="tipoRango() === 'SEMANA'" (click)="seleccionarRango('SEMANA')">
-                <div class="time-option-card__info">
-                  <strong>Semana</strong>
-                  <small>Últimos 7 días</small>
-                </div>
-                @if (tipoRango() === 'SEMANA') { <span class="time-option-check" aria-hidden="true">✓</span> }
-              </button>
-              <button type="button" class="time-option-card" [class.is-active]="tipoRango() === 'HOY'" (click)="seleccionarRango('HOY')">
-                <div class="time-option-card__info">
-                  <strong>Hoy</strong>
-                  <small>Movimientos de la fecha</small>
-                </div>
-                @if (tipoRango() === 'HOY') { <span class="time-option-check" aria-hidden="true">✓</span> }
-              </button>
-              <button type="button" class="time-option-card" [class.is-active]="tipoRango() === 'PERSONALIZADO'" (click)="seleccionarRango('PERSONALIZADO')">
-                <div class="time-option-card__info">
-                  <strong>Personalizado</strong>
-                  <small>Elegir fechas de inicio y fin</small>
-                </div>
-                @if (tipoRango() === 'PERSONALIZADO') { <span class="time-option-check" aria-hidden="true">✓</span> }
-              </button>
-            </div>
-            @if (editandoRango()) {
-              <div class="time-dropdown-modal__nav">
-                <form (ngSubmit)="aplicarRangoPersonalizado()" class="space-y-3">
-                  <label class="block">Desde<input type="date" name="desde" required min="2000-01-01" [max]="fechaHoy()" [(ngModel)]="borradorDesde" class="block w-full rounded-lg border p-2" /></label>
-                  <label class="block">Hasta<input type="date" name="hasta" required [min]="borradorDesde || '2000-01-01'" [max]="fechaHoy()" [(ngModel)]="borradorHasta" class="block w-full rounded-lg border p-2" /></label>
-                  @if (errorRango()) { <p role="alert">{{ errorRango() }}</p> }
-                  <button type="submit" class="min-h-11 rounded-lg bg-emerald-700 px-4 text-white">Aplicar fechas</button>
-                </form>
-              </div>
-            }
-          </div>
-        </div>
-      }
-
-      @if (movimientosOffline.pendientes().length > 0) {
-        <section class="dashboard-screen__notice dashboard-screen__notice--offline" aria-labelledby="offline-pendientes-title">
-          <div><strong id="offline-pendientes-title">{{ movimientosOffline.pendientes().length }} movimientos sin sincronizar</strong><p>Guardados en este dispositivo.</p></div>
-          <button type="button" (click)="sincronizarPendientes()" [disabled]="movimientosOffline.sincronizando() || !hayConexion()">{{ movimientosOffline.sincronizando() ? 'Sincronizando…' : 'Sincronizar' }}</button>
-          <details><summary>Revisar</summary><ul>@for (pendiente of movimientosOffline.pendientes(); track pendiente.id) {<li><span>{{ etiquetaTipo(pendiente.payload.tipo) }} · {{ (pendiente.payload.notas || 'Sin nota') | textoFinanciero }} · {{ pendiente.payload.fecha }} @if (pendiente.error) {<span class="dashboard-screen__error">{{ pendiente.error }}</span>}</span><span><button type="button" (click)="revisarPendiente(pendiente)">{{ pendiente.estado === 'REVISAR' ? 'Preparar corrección' : 'Reintentar' }}</button> <button type="button" (click)="eliminarPendiente(pendiente.id)">Eliminar</button></span></li>}</ul></details>
-        </section>
-      }
-      @if (!hayConexion() && movimientosOffline.errorAlmacenamiento()) {
-        <p class="dashboard-screen__notice dashboard-screen__notice--error" role="alert">{{ movimientosOffline.errorAlmacenamiento() }} El registro sin conexi&oacute;n necesita almacenamiento local.</p>
-      }
-      @if (catalogoOfflineUsado()) {
-        <p class="dashboard-screen__notice dashboard-screen__notice--info" role="status">Usando cuentas y categor&iacute;as guardadas el {{ fechaCatalogoOffline() }}. Los saldos podr&iacute;an estar desactualizados.</p>
-      }
-      @if (error()) {
-        <p class="dashboard-screen__notice dashboard-screen__notice--error" role="alert">{{ error() }} <button type="button" (click)="cargarDashboard()">Reintentar</button></p>
-      }
-
-      <!-- 2. Gestos sobre el Balance (Swipeable Hero Card) -->
-      <section
-        class="dashboard-screen__monthly dashboard-screen__monthly--swipeable"
-        (touchstart)="onHeroTouchStart($event)"
-        (touchmove)="onHeroTouchMove($event)"
-        (touchend)="onHeroTouchEnd($event)"
-        [style.transform]="heroSwipeTransform()"
-        aria-labelledby="dashboard-balance-title">
-        @if (resumenMonedaSeleccionada(); as moneda) {
-          <div class="dashboard-screen__balance-head">
-            <span id="dashboard-balance-title">{{ moneda.dineroDisponible != null ? 'Dinero en cuentas' : 'Balance Total' }}</span>
-
-          </div>
-
-          <div class="dashboard-screen__balance-value" aria-live="polite">
-            @if (loading()) {
-              <div class="dashboard-screen__amount-skeleton" role="status">Cargando balance</div>
-            } @else {
-              <p class="dashboard-screen__amount">{{ (moneda.dineroDisponible ?? moneda.balanceTotal) | monto:moneda.moneda:'symbol':'1.2-2' }}</p>
-            }
-          </div>
-
-          <p class="dashboard-period-caption">Saldo actual · {{ moneda.moneda }}</p>
-          @if (moneda.deudaTarjetas != null && moneda.deudaTarjetas > 0) {
-            <div class="dashboard-debt-note"><span>Deuda de tarjetas</span><strong>{{ moneda.deudaTarjetas | monto:moneda.moneda:'symbol':'1.2-2' }}</strong></div>
-            <div class="dashboard-debt-note"><span>Saldo neto</span><strong>{{ moneda.balanceTotal | monto:moneda.moneda:'symbol':'1.2-2' }}</strong></div>
-          }
-          <p class="dashboard-period-caption">Ingresos y gastos · {{ etiquetaRangoSeleccionado() }}</p>
-          <div class="dashboard-screen__monthly-stats dashboard-screen__monthly-stats--flow">
-            <div class="dashboard-screen__flow-block">
-              <div class="dashboard-screen__flow-label">
-                <svg aria-hidden="true" viewBox="0 0 24 24" class="is-income"><path d="M12 19V5m0 0-5 5m5-5 5 5"/></svg>
-                <span>Ingresos</span>
-              </div>
-              <strong>{{ moneda.ingresosMes | monto:moneda.moneda:'symbol':'1.2-2' }}</strong>
-            </div>
-            <div class="dashboard-screen__flow-divider" aria-hidden="true"></div>
-            <div class="dashboard-screen__flow-block">
-              <div class="dashboard-screen__flow-label">
-                <svg aria-hidden="true" viewBox="0 0 24 24" class="is-expense"><path d="M12 5v14m0 0 5-5m-5 5-5-5"/></svg>
-                <span>Gastos</span>
-              </div>
-              <strong>{{ moneda.gastosMes | monto:moneda.moneda:'symbol':'1.2-2' }}</strong>
-            </div>
-          </div>
-
-          <div class="dashboard-screen__balance-bottom">
-            <small>{{ moneda.totalCuentas }} {{ moneda.totalCuentas === 1 ? 'cuenta' : 'cuentas' }}</small>
-            <label class="dashboard-screen__currency"><span class="sr-only">Moneda</span><select [ngModel]="monedaResumen()" (ngModelChange)="cambiarMoneda($event)" aria-label="Moneda del balance">@for (codigo of monedasResumen(); track codigo) {<option [value]="codigo">{{ codigo }}</option>}</select></label>
-          </div>
-          <div class="hero-swipe-indicator" aria-hidden="true">
-            <span class="hero-swipe-dot"></span>
-            <span class="hero-swipe-dot is-active"></span>
-            <span class="hero-swipe-dot"></span>
-          </div>
-        } @else if (loading()) {
-          <div class="dashboard-loading-summary" role="status" aria-label="Cargando balance">
-            <span class="sr-only">Cargando balance…</span>
-            <span class="loading-placeholder loading-placeholder--caption" aria-hidden="true"></span>
-            <span class="loading-placeholder loading-placeholder--amount" aria-hidden="true"></span>
-            <div class="dashboard-loading-flow" aria-hidden="true"><span class="loading-placeholder"></span><span class="loading-placeholder"></span></div>
-          </div>
-        } @else if (error()) {
-          <div class="dashboard-screen__empty"><h2>Resumen no disponible</h2><p>Reintenta desde el aviso de arriba. Tus movimientos guardados se conservan.</p></div>
-        } @else {
-          <div class="dashboard-screen__empty"><h2>Empieza con una cuenta</h2><p>Agrega efectivo, banco o tarjeta para ver aqu&iacute; tus gastos e ingresos.</p><button type="button" (click)="irACuentas()">Agregar cuenta</button></div>
-        }
-      </section>
-
-      <section class="dashboard-screen__section dashboard-screen__budgets" aria-labelledby="dashboard-budgets-title">
-        <div class="dashboard-screen__section-heading">
-          <div class="dashboard-screen__title-with-icon"><span class="dashboard-screen__section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 19V5m0 14h17M8 16v-5m5 5V7m5 9V9"/></svg></span><div><p class="dashboard-screen__eyebrow">Límites por categoría</p><h2 id="dashboard-budgets-title">Presupuestos</h2></div></div>
-          <div class="dashboard-screen__carousel-controls">
-            @if (presupuestosDashboard().length > 1) {
-              <button type="button" (click)="moverCarruselPresupuesto(-1)" aria-label="Presupuesto anterior"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></button>
-              <button type="button" (click)="moverCarruselPresupuesto(1)" aria-label="Siguiente presupuesto"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></button>
-            }
-            <button type="button" class="dashboard-screen__text-link" (click)="irAPresupuestos()">Ver todos</button>
-          </div>
-        </div>
-        @if (presupuestoLoading()) {<p class="dashboard-screen__muted" role="status">Cargando presupuestos…</p>}
-        @else if (presupuestoError()) {<p class="dashboard-screen__muted" role="alert">{{ presupuestoError() }} <button type="button" class="dashboard-screen__text-link" (click)="cargarPresupuestos()">Reintentar</button></p>}
-        @else if (presupuestosDashboard().length === 0) {
-          <button type="button" class="dashboard-screen__budget-empty" (click)="irAPresupuestos()"><span>Define un límite para saber cuánto puedes gastar.</span><strong>Crear presupuesto <span aria-hidden="true">→</span></strong></button>
-        } @else {
-          @if (presupuestoMonedaSeleccionada(); as disponible) {
-            <div class="dashboard-budget-remaining"><span>{{ disponible.totalDisponible < 0 ? 'Presupuesto excedido en' : 'Te queda en presupuestos' }}<small>{{ periodoResumen() }} · solo categorías con presupuesto</small></span><strong [class.is-over]="disponible.totalDisponible < 0">{{ (disponible.totalDisponible < 0 ? -disponible.totalDisponible : disponible.totalDisponible) | monto:disponible.moneda:'symbol':'1.2-2' }}</strong></div>
-          }
-          <div #budgetScroller class="dashboard-screen__budget-carousel" aria-label="Presupuestos del mes" tabindex="0">
-            @for (presupuesto of presupuestosDashboard(); track presupuesto.id) {
-              <article class="dashboard-screen__budget-card">
-                <div class="budget-pillar" role="progressbar"
-                  [attr.aria-label]="'Presupuesto de ' + presupuesto.categoriaNombre"
-                  aria-valuemin="0" [attr.aria-valuemax]="presupuesto.montoLimite"
-                  [attr.aria-valuenow]="presupuestoGastadoLimitado(presupuesto.montoGastado, presupuesto.montoLimite)"
-                  [style.--budget-fill]="porcentajePresupuesto(presupuesto.porcentajeConsumido) + '%'"
-                  [style.--budget-tone]="presupuesto.categoriaColor || '#b9c3a6'">
-                  <span class="budget-pillar__fill" aria-hidden="true"></span>
-                  <div class="budget-pillar__content">
-                    <app-categoria-icono [icono]="presupuesto.categoriaIcono" />
-                    <strong>{{ presupuesto.montoGastado | monto:presupuesto.moneda:'symbol':'1.0-2' }}</strong>
-                    <small>{{ presupuesto.porcentajeConsumido | number:'1.0-0' }}%</small>
-                  </div>
-                </div>
-                <div class="budget-pillar__label">
-                  <strong>{{ presupuesto.categoriaNombre }}</strong>
-                  <small>de {{ presupuesto.montoLimite | monto:presupuesto.moneda:'symbol':'1.0-2' }}</small>
-                  <small class="dashboard-budget-left" [class.is-over]="presupuesto.montoDisponible < 0">{{ presupuesto.montoDisponible < 0 ? 'Excedido en' : 'Queda' }} {{ (presupuesto.montoDisponible < 0 ? -presupuesto.montoDisponible : presupuesto.montoDisponible) | monto:presupuesto.moneda:'symbol':'1.2-2' }}</small>
-                  <small [class.is-over]="presupuesto.estado === 'EXCEDIDO'">{{ presupuesto.estado === 'EXCEDIDO' ? 'Excedido' : presupuesto.estado === 'ALERTA' ? 'Cerca del límite' : 'En control' }}</small>
-                </div>
-              </article>
-            }
-          </div>
-          @if (presupuestosDashboard().length > 1) {<p class="dashboard-screen__swipe-hint">Desliza para ver tus otros presupuestos</p>}
-        }
-      </section>
-
-      <section class="dashboard-screen__actions" aria-label="Registrar movimiento">
-        <button type="button" class="dashboard-screen__action--chat" (click)="abrirChatRegistro()">
-          <span class="dashboard-screen__chat-icon"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>
-          <span class="dashboard-screen__chat-copy"><strong>Registrar un movimiento</strong><small>Escribe o dicta el movimiento; tambi&eacute;n puedes pedir reportes.</small></span>
-          <svg class="dashboard-screen__chat-arrow" aria-hidden="true" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>
-        </button>
-      </section>
-
-      @if (plantillasPorAtender().length > 0) {
-        <section class="dashboard-screen__section dashboard-screen__upcoming" aria-labelledby="dashboard-upcoming-title">
-          <div class="dashboard-screen__section-heading"><div class="dashboard-screen__title-with-icon"><span class="dashboard-screen__section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4m8-4v4M4 10h16m-11 4h2m-2 3h5"/></svg></span><div><p class="dashboard-screen__eyebrow">Pr&oacute;ximos 7 d&iacute;as</p><h2 id="dashboard-upcoming-title">Pagos programados</h2></div></div><button type="button" class="dashboard-screen__text-link" (click)="irARecurrentes()">Ver todos</button></div>
-          @for (plantilla of plantillasPorAtender().slice(0, 3); track plantilla.id) {
-            <article class="dashboard-screen__recurring"><div class="dashboard-screen__recurring-copy"><strong>{{ plantilla.categoriaNombre || (plantilla.tipo === 'INGRESO' ? 'Ingreso recurrente' : 'Gasto recurrente') }}</strong><span>{{ plantilla.siguienteFecha <= fechaHoy() ? 'Pendiente de confirmar' : plantilla.siguienteFecha }} · {{ nombreCuentaVisible(plantilla.cuentaNombre) }}</span></div><strong class="dashboard-screen__recurring-amount">{{ plantilla.monto | monto:plantilla.moneda:'symbol':'1.2-2' }}</strong>@if (plantilla.siguienteFecha <= fechaHoy()) {<button type="button" class="dashboard-screen__confirm" (click)="registrarRecurrente(plantilla)" [disabled]="registrandoRecurrenciaId() === plantilla.id">{{ registrandoRecurrenciaId() === plantilla.id ? 'Guardando…' : 'Confirmar' }}</button>}</article>
-          }
-          <p class="dashboard-screen__footnote">Kaptal te recuerda; no registra cargos autom&aacute;ticamente.</p>
-        </section>
-      }
-
-      <!-- 4. Lista de Actividad Reciente con botón Ver Todo -->
-      <section class="dashboard-screen__section dashboard-screen__activity dashboard-screen__recent" aria-labelledby="dashboard-recent-title">
-        <div class="dashboard-screen__section-heading">
-          <div>
-            <p class="dashboard-screen__eyebrow">Actividad · {{ etiquetaRangoSeleccionado() }}</p>
-            <h2 id="dashboard-recent-title">Movimientos recientes</h2>
-          </div>
-          <button type="button" class="dashboard-screen__text-link" (click)="irATransacciones()">
-            Historial completo <span aria-hidden="true">→</span>
-          </button>
-        </div>
-        @if (loading()) {
-          <div class="dashboard-loading-movements" role="status" aria-label="Cargando movimientos">
-            <span class="sr-only">Cargando movimientos…</span>
-            @for (fila of [0, 1, 2]; track fila) {
-              <div class="dashboard-loading-row" aria-hidden="true"><span class="loading-placeholder loading-placeholder--icon"></span><span class="loading-placeholder loading-placeholder--text"></span><span class="loading-placeholder loading-placeholder--value"></span></div>
-            }
-          </div>
-        } @else if (error()) {
-          <p class="dashboard-screen__muted">No pudimos consultar tus movimientos recientes. Usa Reintentar para volver a cargarlos.</p>
-        } @else if ((ultimosMovimientosLimitados().length === 0)) {
-          <div class="dashboard-screen__inline-empty">
-            <p>No hay movimientos en este período. Puedes añadir uno o consultar el historial.</p>
-            @if((resumen()?.totalCuentas??0) === 0) {<button type="button" (click)="irACuentas()">Crear cuenta</button>} @else {<button type="button" (click)="abrirChatRegistro()">Añadir movimiento</button>}
-          </div>
-        } @else {
-          <div class="dashboard-screen__recent-list">
-            @for (movimiento of ultimosMovimientosLimitados(); track movimiento.id) {
-              <app-movimiento-mobile-card [movimiento]="movimiento" (detalle)="verDetalleMovimiento($event.id)" (editar)="editarMovimiento($event.id)" (eliminar)="eliminarMovimiento($event)" />
-            }
-          </div>
-        }
-      </section>
-
-      <!-- 3. Gráfico de Resumen (Donut Chart Widget MonAi) -->
-      @if (resumenMonedaSeleccionada()) {
-        <section class="dashboard-screen__section dashboard-screen__donut-section" aria-labelledby="donut-chart-title">
-          <div class="dashboard-screen__section-heading">
-            <div class="dashboard-screen__title-with-icon">
-              <span class="dashboard-screen__section-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>
-              </span>
-              <div>
-                <p class="dashboard-screen__eyebrow">Distribución de gastos</p>
-                <h2 id="donut-chart-title">Categorías Principales</h2>
-              </div>
-            </div>
-            @if (categoriaDonutSeleccionada()) {
-              <button type="button" class="dashboard-screen__text-link" (click)="resetearDonut()">Ver total</button>
-            }
-          </div>
-
-          @if (analiticaLoading()) {
-            <p class="dashboard-screen__muted" role="status">Cargando distribución de gastos…</p>
-          } @else if (analiticaError()) {
-            <div class="dashboard-screen__inline-empty" role="alert"><p>No pudimos cargar la distribución de gastos.</p><button type="button" (click)="cargarDashboard()">Reintentar</button></div>
-          } @else if (donutCategorias().length === 0) {
-            <div class="dashboard-screen__inline-empty">
-              <p>No hay gastos registrados en este periodo para graficar.</p>
-              <button type="button" (click)="abrirChatRegistro()">Registrar gasto</button>
-            </div>
-          } @else {
-            <div class="donut-widget">
-              <!-- Gráfico circular Donut SVG -->
-              <div class="donut-widget__chart-wrap">
-                <svg class="donut-widget__svg" viewBox="0 0 160 160" width="160" height="160">
-                  <circle cx="80" cy="80" r="64" class="donut-widget__track" />
-                  @for (item of donutCategorias(); track item.id) {
-                    <circle
-                      cx="80"
-                      cy="80"
-                      r="64"
-                      class="donut-widget__segment"
-                      [class.is-active]="categoriaDonutSeleccionada()?.id === item.id"
-                      [attr.stroke]="item.color"
-                      [attr.stroke-dasharray]="item.strokeDasharray"
-                      [attr.stroke-dashoffset]="item.strokeDashoffset"
-                      (click)="seleccionarCategoriaDonut(item)"
-                      (keydown.enter)="seleccionarCategoriaDonut(item)"
-                      (keydown.space)="$event.preventDefault(); seleccionarCategoriaDonut(item)"
-                      tabindex="0"
-                      role="button"
-                      [attr.aria-label]="item.nombre + ': ' + item.porcentaje + '%'"
-                    />
-                  }
-                </svg>
-
-                <!-- Centro interactivo Donut Hole -->
-                 <div class="donut-widget__center" role="button" tabindex="0" aria-label="Mostrar total de gastos" (click)="resetearDonut()" (keydown.enter)="resetearDonut()" (keydown.space)="$event.preventDefault(); resetearDonut()">
-                  @if (categoriaDonutSeleccionada(); as sel) {
-                    <span class="donut-widget__center-tag" [style.color]="sel.color">{{ sel.nombre }}</span>
-                    <strong class="donut-widget__center-val">{{ sel.monto | monto:monedaResumen():'symbol':'1.0-2' }}</strong>
-                    <small class="donut-widget__center-sub">{{ sel.porcentaje }}% del total</small>
-                  } @else {
-                    <span class="donut-widget__center-tag">Total Gastos</span>
-                    <strong class="donut-widget__center-val">{{ totalGastosPeriodo() | monto:monedaResumen():'symbol':'1.0-2' }}</strong>
-                    <small class="donut-widget__center-sub">{{ donutCategorias().length }} categorías</small>
-                  }
-                </div>
-              </div>
-
-              <!-- Leyenda interactiva de categorías -->
-              <div class="donut-widget__legend">
-                @for (item of donutCategorias(); track item.id) {
-                  <button
-                    type="button"
-                    class="donut-legend-item"
-                    [class.is-selected]="categoriaDonutSeleccionada()?.id === item.id"
-                    (click)="seleccionarCategoriaDonut(item)">
-                    <span class="donut-legend-item__color" [style.background-color]="item.color"></span>
-                    <div class="donut-legend-item__info">
-                      <span class="donut-legend-item__name">{{ item.nombre }}</span>
-                      <strong class="donut-legend-item__val">{{ item.monto | monto:monedaResumen():'symbol':'1.0-2' }}</strong>
-                    </div>
-                    <span class="donut-legend-item__percent">{{ item.porcentaje }}%</span>
-                  </button>
-                }
-              </div>
-            </div>
-          }
-        </section>
-      }
-
-
-    </div>
-
-    <!-- Modal Interactivo 'Nuevo Movimiento' -->
-    @if (modalAbierto()) {
-      <div class="fixed inset-0 z-50 flex items-end justify-center overflow-hidden bg-slate-900/60 px-0 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] backdrop-blur-xs sm:items-center sm:p-4">
-        <div #movementDialog tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="dashboard-movement-title" class="dashboard-motion-scope dashboard-movement-dialog flex h-full max-h-full min-h-0 min-w-0 w-full flex-col overflow-hidden rounded-t-3xl border border-slate-200 bg-white shadow-2xl animate-in fade-in zoom-in-95 duration-150 sm:h-[min(90dvh,48rem)] sm:max-h-[min(90dvh,48rem)] sm:max-w-lg sm:rounded-3xl">
-
-          <!-- Encabezado del Modal con Selector de Tipo -->
-          <div class="shrink-0 border-b border-slate-100 p-4 sm:p-6">
-            <div class="flex items-center justify-between gap-3 pb-4">
-              <div>
-                <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Kaptal</p>
-                <h2 id="dashboard-movement-title" class="text-base font-bold text-slate-900 sm:text-lg">Registrar Movimiento</h2>
-              </div>
-              <button
-                type="button"
-                (click)="cerrarModal()"
-                aria-label="Cerrar formulario de movimiento"
-                class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 cursor-pointer">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <!-- Selector de Tipo de Transacción: Segmented Control con color semántico -->
-            <div role="group" aria-label="Tipo de movimiento" class="grid grid-cols-3 gap-1.5 rounded-xl bg-slate-100 p-1 text-[11px] font-semibold sm:text-xs">
-              <button
-                type="button"
-                (click)="cambiarTipo('GASTO')"
-                [attr.aria-pressed]="formTipo() === 'GASTO'"
-                [class]="formTipo() === 'GASTO'
-                  ? 'bg-white text-rose-600 shadow-sm ring-1 ring-rose-100'
-                  : 'text-slate-500 hover:text-slate-700'"
-                class="flex min-h-10 w-full items-center justify-center gap-1.5 rounded-lg px-2 py-2.5 text-center transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 cursor-pointer sm:min-h-11">
-                <span aria-hidden="true" class="text-base leading-none">↓</span> Gasto
-              </button>
-              <button
-                type="button"
-                (click)="cambiarTipo('INGRESO')"
-                [attr.aria-pressed]="formTipo() === 'INGRESO'"
-                [class]="formTipo() === 'INGRESO'
-                  ? 'bg-white text-emerald-600 shadow-sm ring-1 ring-emerald-100'
-                  : 'text-slate-500 hover:text-slate-700'"
-                class="flex min-h-10 w-full items-center justify-center gap-1.5 rounded-lg px-2 py-2.5 text-center transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 cursor-pointer sm:min-h-11">
-                <span aria-hidden="true" class="text-base leading-none">↑</span> Ingreso
-              </button>
-              <button
-                type="button"
-                (click)="cambiarTipo('TRANSFERENCIA')"
-                [attr.aria-pressed]="formTipo() === 'TRANSFERENCIA'"
-                [class]="formTipo() === 'TRANSFERENCIA'
-                  ? 'bg-white text-blue-600 shadow-sm ring-1 ring-blue-100'
-                  : 'text-slate-500 hover:text-slate-700'"
-                class="flex min-h-10 w-full items-center justify-center gap-1.5 rounded-lg px-2 py-2.5 text-center transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 cursor-pointer sm:min-h-11">
-                <span aria-hidden="true" class="text-base leading-none">⇄</span> Transf.<span class="sr-only">Transferencia</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Formulario estructurado con secciones visuales -->
-          <form (ngSubmit)="guardarMovimiento()" class="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain p-4 pb-[max(2rem,env(safe-area-inset-bottom))] sm:p-6 sm:pb-8">
-
-            <!-- Alertas -->
-            @if (modalError()) {
-              <div role="alert" class="flex items-start gap-2.5 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700">
-                <svg class="mt-0.5 h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                <div class="flex-1">
-                  {{ modalError() }}
-                  @if (falloDeRed()) {
-                    <button type="button" (click)="guardarPendienteActual()" [disabled]="submitting()"
-                      class="mt-2 block min-h-10 rounded-lg border border-rose-300 bg-white px-3 py-2 font-semibold text-rose-800">
-                      Guardar pendiente en este dispositivo
-                    </button>
-                  }
-                </div>
-              </div>
-            }
-            @if (!hayConexion() && cuentas().length === 0) {
-              <p class="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800" role="status">
-                <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                Aún no hay una lista local de cuentas. Conéctate y abre Kaptal una vez para habilitar el registro sin conexión.
-              </p>
-            }
-
-            <!-- SECCIÓN: Monto -->
-            <div>
-              <p class="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">¿Cuánto?</p>
-              <div class="rounded-2xl border-2 bg-white px-4 py-3 shadow-sm transition-colors"
-                   [class]="formTipo() === 'GASTO' ? 'border-rose-100' : formTipo() === 'INGRESO' ? 'border-emerald-100' : 'border-blue-100'">
-                <div class="relative flex items-center justify-center">
-                  <span class="absolute left-0 text-xl font-bold text-slate-400">
-                    {{ monedaCuenta(formCuentaId) }}
-                  </span>
-                  <input appMontoPrivado
-                    id="monto"
-                    type="number"
-                    step="0.01"
-                    min="0.01"
-                    required
-                    inputmode="decimal"
-                    [(ngModel)]="formMonto"
-                    name="monto"
-                    placeholder="0.00"
-                    [attr.aria-label]="'Monto a registrar en ' + monedaCuenta(formCuentaId)"
-                    class="w-full bg-transparent py-1 pl-9 pr-2 text-center text-3xl font-black text-slate-900 placeholder:font-bold placeholder:text-slate-300 focus:outline-none dark:text-white dark:placeholder:text-slate-600"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <!-- SECCIÓN: Cuenta(s) -->
-            <div>
-              <p class="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                {{ formTipo() === 'TRANSFERENCIA' ? '¿Entre qué cuentas?' : '¿En qué cuenta?' }}
-              </p>
-              @if (formTipo() === 'TRANSFERENCIA') {
-                <div class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                  <div class="grid grid-cols-[minmax(0,1fr)_1.5rem_minmax(0,1fr)] items-start gap-1.5">
-                    <app-cuenta-selector
-                      [cuentas]="cuentas()"
-                      [selectedId]="formCuentaId"
-                      label="De"
-                      idBase="cuentaId"
-                      [compacto]="true"
-                      (selectedIdChange)="cambiarCuentaOrigen($event)" />
-
-                    <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor"
-                         class="mt-5 h-4 w-4 shrink-0 justify-self-center text-slate-400 dark:text-slate-500">
-                      <path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h9.19L10.72 7.03a.75.75 0 111.06-1.06l3.5 3.5a.75.75 0 010 1.06l-3.5 3.5a.75.75 0 11-1.06-1.06l2.22-2.22H3.75A.75.75 0 013 10z" clip-rule="evenodd" />
-                    </svg>
-
-                    <app-cuenta-selector
-                      [cuentas]="cuentasDestinoDisponibles()"
-                      [selectedId]="formCuentaDestinoId"
-                      label="Para"
-                      idBase="cuentaDestinoId"
-                      [compacto]="true"
-                      [alinearPanelDerecha]="true"
-                      (selectedIdChange)="formCuentaDestinoId = $event" />
-                  </div>
-
-                  @if (cuentasDestinoDisponibles().length === 0) {
-                    <p class="mt-2 text-xs leading-relaxed text-amber-700 dark:text-amber-400">
-                      No puedes transferir entre dos tarjetas de crédito. Elige una cuenta que no sea de crédito.
-                    </p>
-                  }
-                </div>
-              } @else {
-                <div class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                  <app-cuenta-selector
-                    [cuentas]="cuentas()"
-                    [selectedId]="formCuentaId"
-                    label="Cuenta"
-                    [etiquetaVisible]="false"
-                    idBase="cuentaId"
-                    (selectedIdChange)="cambiarCuentaOrigen($event)" />
-                </div>
-              }
-            </div>
-
-            <!-- SECCIÓN: Categoría (no aplica en Transferencia) -->
-            @if (formTipo() !== 'TRANSFERENCIA') {
-              <div>
-                <p class="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">¿En qué categoría?</p>
-                <div class="min-w-0">
-                  @defer (on immediate) {
-                    <app-categoria-selector
-                      [categorias]="categorias()"
-                      [tipo]="formTipo()"
-                      [selectedId]="formCategoriaId"
-                      (selectedIdChange)="formCategoriaId = $event"
-                      (categoriasChange)="categorias.set($event)" />
-                  } @placeholder {
-                    <div class="h-16 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800"></div>
-                  }
-                </div>
-              </div>
-            }
-
-            <!-- SECCIÓN: Fecha y Notas / Tasa de cambio -->
-            <div>
-              <p class="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">¿Cuándo? · Notas</p>
-              <div class="grid grid-cols-2 gap-2">
-                <div class="min-w-0">
-                  <label for="fecha" class="sr-only">Fecha del movimiento</label>
-                  <app-fecha-picker id="fecha" label="Fecha del movimiento" [value]="formFecha" (valueChange)="formFecha = $event; actualizarSiguienteFecha()" />
-                </div>
-
-                @if (formTipo() === 'TRANSFERENCIA') {
-                  @if (monedaCuenta(formCuentaId) !== monedaCuenta(formCuentaDestinoId)) {
-                    <div class="min-w-0">
-                      <label for="tasaCambio" class="sr-only">Tasa de cambio</label>
-                      <input appMontoPrivado
-                        id="tasaCambio"
-                        type="number"
-                        name="tasaCambio"
-                        min="0.00000001"
-                        step="0.00000001"
-                        required
-                        inputmode="decimal"
-                        [(ngModel)]="formTasaCambio"
-                        [attr.aria-label]="'Tasa de cambio de ' + monedaCuenta(formCuentaId) + ' a ' + monedaCuenta(formCuentaDestinoId)"
-                        class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-3 text-sm text-slate-900 transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
-                        placeholder="Ej. 17.25"
-                      />
-                      <p class="mt-1 truncate text-[11px] text-slate-500 dark:text-slate-400">
-                        1 {{ monedaCuenta(formCuentaId) }} = ? {{ monedaCuenta(formCuentaDestinoId) }}
-                        @if (formMonto && formTasaCambio && formTasaCambio > 0) {
-                          · llegan {{ formMonto * formTasaCambio | monto:monedaCuenta(formCuentaDestinoId):'symbol':'1.2-2' }}
-                        }
-                      </p>
-                    </div>
-                  }
-                } @else {
-                  <div class="flex min-w-0 gap-2">
-                    <label for="notas" class="sr-only">Notas adicionales (opcional)</label>
-                    <input
-                      id="notas"
-                      type="text"
-                      maxlength="500"
-                      [(ngModel)]="formNotas"
-                      name="notas"
-                      placeholder="Notas opcionales…"
-                      class="min-w-0 flex-1 rounded-xl border border-slate-300 bg-slate-50 px-3 py-3 text-sm text-slate-900 transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
-                    />
-                    <button type="button" (click)="dictarMovimiento()" [disabled]="dictadoActivo()"
-                      [attr.aria-pressed]="dictadoActivo()" [attr.aria-label]="dictadoActivo() ? 'Escuchando movimiento' : 'Dictar movimiento por voz'"
-                      title="El navegador procesa el dictado. Confirma el resultado antes de guardar."
-                      class="min-h-11 min-w-11 rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 hover:border-emerald-500 hover:text-emerald-800 disabled:text-emerald-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200">
-                      {{ dictadoActivo() ? '🎙 …' : '🎙 Voz' }}
-                    </button>
-                  </div>
-                  @if (dictadoMensaje()) {
-                    <p class="col-span-2 text-xs text-slate-500" role="status">{{ dictadoMensaje() }}</p>
-                  }
-                }
-              </div>
-            </div>
-
-            <!-- Notas para Transferencia -->
-            @if (formTipo() === 'TRANSFERENCIA') {
-              <div>
-                <label for="notas-transferencia" class="sr-only">Notas adicionales (opcional)</label>
-                <input
-                  id="notas-transferencia"
-                  type="text"
-                  maxlength="500"
-                  [(ngModel)]="formNotas"
-                  name="notas"
-                  placeholder="Notas opcionales…"
-                  class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
-                />
-              </div>
-            }
-
-            <!-- SECCIÓN: Opciones adicionales (colapsable) -->
-            @if (formTipo() !== 'TRANSFERENCIA') {
-              <details class="rounded-xl border border-slate-200 px-3 dark:border-slate-700">
-                <summary class="flex min-h-11 cursor-pointer select-none list-none items-center justify-between py-3 text-sm font-semibold text-slate-600 dark:text-slate-300">
-                  <span>Opciones adicionales</span>
-                  <svg class="h-4 w-4 text-slate-400 transition-transform [[open]_&]:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
-                </summary>
-                <div class="space-y-3 pb-3">
-                  <div class="grid grid-cols-2 gap-2">
-                    <label
-                      class="flex min-h-12 cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 transition-colors focus-within:ring-2 focus-within:ring-emerald-500"
-                      [class]="movimientoRecurrente
-                        ? 'border-emerald-500 bg-emerald-50 dark:border-emerald-400 dark:bg-emerald-500/10'
-                        : 'border-slate-200 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900'">
-                      <input type="checkbox" name="movimientoRecurrente" class="h-4 w-4 shrink-0 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
-                             [ngModel]="movimientoRecurrente" (ngModelChange)="alternarRecurrente($event)" />
-                      <span class="min-w-0 text-xs font-semibold text-slate-800 dark:text-slate-200">
-                        Repetir<span class="sr-only"> este movimiento</span>
-                      </span>
-                    </label>
-
-                    @if (formTipo() === 'GASTO' && esCuentaCredito()) {
-                      <label
-                        class="flex min-h-12 cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 transition-colors focus-within:ring-2 focus-within:ring-emerald-500"
-                        [class]="esCompraMsi
-                          ? 'border-emerald-500 bg-emerald-50 dark:border-emerald-400 dark:bg-emerald-500/10'
-                          : 'border-slate-200 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900'">
-                        <input type="checkbox" name="esCompraMsi" class="h-4 w-4 shrink-0 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
-                               [ngModel]="esCompraMsi" (ngModelChange)="alternarMsi($event)" />
-                        <span class="min-w-0 text-xs font-semibold text-slate-800 dark:text-slate-200">
-                          MSI<span class="sr-only">: compra a meses sin intereses</span>
-                        </span>
-                      </label>
-                    }
-                  </div>
-
-                  @if (movimientoRecurrente) {
-                    <div class="grid grid-cols-2 gap-2">
-                      <label class="min-w-0 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-                        Frecuencia
-                        <select name="frecuenciaRecurrencia" [(ngModel)]="frecuenciaRecurrencia"
-                                (ngModelChange)="actualizarSiguienteFecha()"
-                                class="mt-1 w-full rounded-xl border border-slate-300 bg-slate-50 px-2.5 py-2.5 text-sm font-normal text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
-                          <option value="SEMANAL">Cada semana</option>
-                          <option value="QUINCENAL">Cada dos semanas</option>
-                          <option value="MENSUAL">Cada mes</option>
-                          <option value="ANUAL">Cada año</option>
-                        </select>
-                      </label>
-                      <label class="min-w-0 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-                        Siguiente cargo
-                        <app-fecha-picker id="siguienteFechaRecurrencia" label="Siguiente cargo" [value]="siguienteFechaRecurrencia" [min]="formFecha" (valueChange)="siguienteFechaRecurrencia = $event" />
-                      </label>
-                    </div>
-                  } @else if (esCompraMsi) {
-                    <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-                      Plazo en meses
-                      <select name="formMsi" [(ngModel)]="formMsi" required
-                              class="mt-1 w-full rounded-xl border border-slate-300 bg-slate-50 px-2.5 py-2.5 text-sm font-normal text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
-                        <option [ngValue]="null" disabled>Selecciona el plazo</option>
-                        <option [ngValue]="3">3 meses sin intereses</option>
-                        <option [ngValue]="6">6 meses sin intereses</option>
-                        <option [ngValue]="9">9 meses sin intereses</option>
-                        <option [ngValue]="12">12 meses sin intereses</option>
-                        <option [ngValue]="18">18 meses sin intereses</option>
-                        <option [ngValue]="24">24 meses sin intereses</option>
-                      </select>
-                    </label>
-                  }
-                </div>
-              </details>
-            }
-
-            <!-- Botones de Acción -->
-            <div class="grid grid-cols-1 gap-2 border-t border-slate-100 pt-4 sm:flex sm:items-center sm:justify-end sm:space-x-3">
-              <button
-                type="button"
-                (click)="cerrarModal()"
-                class="min-h-11 w-full rounded-xl px-4 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 cursor-pointer sm:w-auto">
-                Cancelar
-              </button>
-
-              <button
-                type="submit"
-                [disabled]="submitting()"
-                [class]="formTipo() === 'GASTO'
-                  ? 'bg-rose-600 shadow-rose-600/20 hover:bg-rose-700 active:bg-rose-800'
-                  : formTipo() === 'INGRESO'
-                    ? 'bg-emerald-600 shadow-emerald-600/20 hover:bg-emerald-700 active:bg-emerald-800'
-                    : 'bg-blue-600 shadow-blue-600/20 hover:bg-blue-700 active:bg-blue-800'"
-                class="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 cursor-pointer sm:w-auto">
-                @if (submitting()) {
-                  <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span>Guardando...</span>
-                } @else {
-                  <span>Guardar {{ formTipo() === 'GASTO' ? 'Gasto' : formTipo() === 'INGRESO' ? 'Ingreso' : 'Transferencia' }}</span>
-                }
-              </button>
-            </div>
-
-          </form>
-
-        </div>
-      </div>
-    }
-  `,
+  imports: [ FocusTrapDirective, TextoFinancieroPipe, MontoPrivadoDirective, CommonModule, FormsModule, CategoriaSelectorComponent, CuentaSelectorComponent, MovimientoMobileCardComponent, MontoPipe, FechaPickerComponent, CategoriaIconoComponent, PrivacyToggleComponent],
+  templateUrl: './dashboard.component.html',
 })
 export class DashboardComponent implements OnInit {
+  private readonly styleAssets = inject(FeatureStylesService).load('dashboard', 'home', 'activity');
   readonly nombreCuentaVisible = nombreCuentaVisible;
   public readonly authService = inject(AuthService);
   private readonly router = inject(Router);
@@ -790,10 +86,69 @@ export class DashboardComponent implements OnInit {
   private readonly toastService = inject(ToastService);
   private readonly confirmDialog = inject(ConfirmDialogService);
   private readonly perfilService = inject(PerfilService);
-  private readonly privacidad = inject(PrivacidadService);
+  readonly privacidad = inject(PrivacidadService);
   private readonly categoriaPreferida = inject(CategoriaPreferidaService);
   readonly movimientosOffline = inject(MovimientosOfflineService);
   private readonly document = inject(DOCUMENT);
+  private readonly destroyRef = inject(DestroyRef);
+  private analiticaSub?: Subscription;
+  readonly vistaDetallada = signal(false);
+  readonly inicioCompacto = signal(false);
+  private observadorHero?: IntersectionObserver;
+  @ViewChild('homeHero')
+  set homeHero(element: ElementRef<HTMLElement> | undefined) {
+    this.observadorHero?.disconnect();
+    if (!element || typeof IntersectionObserver === 'undefined') return;
+    this.observadorHero = new IntersectionObserver(([entry]) => {
+      this.inicioCompacto.set(!entry.isIntersecting && entry.boundingClientRect.top < 0);
+    }, { rootMargin: '-128px 0px 0px 0px', threshold: 0 });
+    this.observadorHero.observe(element.nativeElement);
+  }
+  readonly gastosCategoria = signal<DashboardGastoCategoria[]>([]);
+  readonly graficoLoading = signal(false);
+  readonly graficoError = signal(false);
+  readonly categoriaContextual = signal<CategoriaInicio | null>(null);
+  private temporizadorCategoria?: ReturnType<typeof setTimeout>;
+  private inicioPresionCategoria?: { x: number; y: number };
+  private presionCategoriaConsumida = false;
+
+  iniciarPresionCategoria(event: PointerEvent, categoria: CategoriaInicio): void {
+    if (!event.isPrimary || event.button !== 0) return;
+    this.cancelarPresionCategoria();
+    this.presionCategoriaConsumida = false;
+    this.inicioPresionCategoria = { x: event.clientX, y: event.clientY };
+    this.temporizadorCategoria = setTimeout(() => {
+      this.presionCategoriaConsumida = true;
+      this.categoriaContextual.set(categoria);
+    }, 500);
+  }
+  moverPresionCategoria(event: PointerEvent): void {
+    const inicio = this.inicioPresionCategoria;
+    if (inicio && Math.hypot(event.clientX - inicio.x, event.clientY - inicio.y) > 8) this.cancelarPresionCategoria();
+  }
+  @HostListener('window:pointerup')
+  @HostListener('window:pointercancel')
+  cancelarPresionCategoria(): void {
+    clearTimeout(this.temporizadorCategoria);
+    this.inicioPresionCategoria = undefined;
+  }
+  tocarCategoria(categoria: CategoriaInicio): void {
+    if (this.presionCategoriaConsumida) { this.presionCategoriaConsumida = false; return; }
+    this.irATransacciones(categoria.categoriaId);
+  }
+  readonly categoriasInicio = computed<CategoriaInicio[]>(() => {
+    const gastos = this.gastosCategoria().filter(item => item.moneda === this.monedaResumen() && item.monto > 0)
+      .sort((a, b) => b.monto - a.monto);
+    const maximo = Math.max(...gastos.map(item => item.monto), 1);
+    const tonos = ['#E7F6A5', '#FFD09C', '#C9E8F8', '#F7CBD5', '#DDD7FF', '#FFE38A'];
+    return gastos.map(item => ({
+      ...item,
+      icono: this.categorias().find(cat => cat.id === item.categoriaId)?.icono,
+      tono: tonos[(item.categoriaId ?? 0) % tonos.length],
+      altura: this.privacidad.ocultarMontos() ? 0 : Math.max(12, item.monto / maximo * 100),
+      presupuesto: this.tipoRango() === 'MES' ? this.presupuestosDashboard().find(p => p.categoriaId === item.categoriaId) : undefined
+    }));
+  });
   readonly resumenCuentaSelector = (cuenta: Cuenta) => resumenCuentaSelector(cuenta, this.privacidad.ocultarMontos());
   private monedaPreferidaAplicada = false;
   private accionRapidaPendiente: TipoTransaccion | null = null;
@@ -866,8 +221,6 @@ export class DashboardComponent implements OnInit {
     )
   );
 
-  // ─── Donut Category Item interface ───────────────────────────────────────
-  // Declared here so template @for can use it without a separate model import.
 
   // ─── Time-Range Dropdown ─────────────────────────────────────────────────
   readonly tipoRango = signal<'MES' | 'SEMANA' | 'HOY' | 'PERSONALIZADO'>('MES');
@@ -968,63 +321,8 @@ export class DashboardComponent implements OnInit {
     this.heroSwipeActive.set(false);
   }
 
-  // ─── Donut Chart ─────────────────────────────────────────────────────────
-  private readonly DONUT_PALETTE = [
-    '#6366F1', '#10B981', '#F59E0B', '#EF4444',
-    '#8B5CF6', '#3B82F6', '#EC4899', '#14B8A6'
-  ];
-
-  readonly analitica = signal<DashboardAnalitica | null>(null);
-  readonly analiticaLoading = signal(false);
-  readonly analiticaError = signal(false);
-
-  /** Computed: categorías de gasto para el donut (top 4, en moneda seleccionada). */
-  readonly donutCategorias = computed(() => {
-    const rawCats: DashboardGastoCategoria[] =
-      this.analitica()?.gastosPorCategoria ?? [];
-    const moneda = this.monedaResumen();
-    const gastos = rawCats.filter(c => c.moneda === moneda && c.monto > 0);
-    const ordenados = gastos.slice().sort((a, b) => b.monto - a.monto);
-    const top4 = ordenados.slice(0, 4);
-    const otros = ordenados.slice(4).reduce((s, c) => s + c.monto, 0);
-    if (otros > 0) top4.push({ categoriaId: -1, categoriaNombre: 'Otros', categoriaColor: '#94a3b8', monto: otros, moneda });
-    const total = gastos.reduce((s, c) => s + c.monto, 0);
-    const CIRCUM = 2 * Math.PI * 64; // r=64
-
-    let offsetAcum = 0;
-    return top4.map((cat, idx) => {
-      const fraction = total > 0 ? cat.monto / total : 0;
-      const dash = fraction * CIRCUM;
-      const gap = CIRCUM - dash;
-      const offset = CIRCUM - offsetAcum;
-      offsetAcum += dash;
-      return {
-        id: cat.categoriaId ?? -2,
-        nombre: cat.categoriaNombre,
-        monto: cat.monto,
-        porcentaje: Math.round(fraction * 100),
-        color: cat.categoriaColor ?? this.DONUT_PALETTE[idx % this.DONUT_PALETTE.length],
-        strokeDasharray: `${dash} ${gap}`,
-        strokeDashoffset: offset
-      };
-    });
-  });
-
-  readonly totalGastosPeriodo = computed(() =>
-    this.donutCategorias().reduce((s, c) => s + c.monto, 0)
-  );
-
-  readonly categoriaDonutSeleccionada = signal<ReturnType<typeof this.donutCategorias>[number] | null>(null);
-
-  seleccionarCategoriaDonut(item: ReturnType<typeof this.donutCategorias>[number]): void {
-    this.categoriaDonutSeleccionada.update(prev => prev?.id === item.id ? null : item);
-  }
-
-  resetearDonut(): void { this.categoriaDonutSeleccionada.set(null); }
-
-  // ─── Actividad Reciente limitada ─────────────────────────────────────────
   readonly ultimosMovimientosLimitados = computed(() =>
-    (this.resumen()?.ultimosMovimientos ?? []).slice(0, 8)
+    (this.resumen()?.ultimosMovimientos ?? []).filter(m => m.moneda === this.monedaResumen()).slice(0, this.vistaDetallada() ? 8 : 3)
   );
 
   cuentas = signal<Cuenta[]>([]);
@@ -1119,13 +417,14 @@ export class DashboardComponent implements OnInit {
   }
 
   cambiarMoneda(moneda: string): void {
-    this.resetearDonut();
     this.monedaResumen.set(moneda);
   }
 
   @ViewChild('budgetScroller') budgetScroller?: ElementRef<HTMLDivElement>;
 
   constructor() {
+    this.destroyRef.onDestroy(() => this.observadorHero?.disconnect());
+    this.destroyRef.onDestroy(() => this.cancelarPresionCategoria());
     effect(() => {
       const perfil = this.perfilService.perfil();
       const monedasDisponibles = this.monedasResumen();
@@ -1172,9 +471,6 @@ export class DashboardComponent implements OnInit {
   cargarDashboard(): void {
     this.fechaHoy.set(this.fechaLocal(new Date()));
     const version = ++this.dashboardVersion;
-    this.resetearDonut();
-    this.analitica.set(null);
-    this.analiticaLoading.set(true);this.analiticaError.set(false);
     this.resumen.set(null);
     this.loading.set(true);
     this.error.set(null);
@@ -1185,6 +481,24 @@ export class DashboardComponent implements OnInit {
     this.cargarPresupuestos();
 
     const { desde, hasta } = this.fechasRango();
+    this.analiticaSub?.unsubscribe();
+    this.gastosCategoria.set([]);
+    this.graficoLoading.set(true);
+    this.graficoError.set(false);
+    this.analiticaSub = this.finanzasService.getDashboardAnalitica(mes, anio, desde, hasta)
+      .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+        next: respuesta => {
+          if (version !== this.dashboardVersion) return;
+          this.gastosCategoria.set(respuesta.success ? respuesta.data?.gastosPorCategoria ?? [] : []);
+          this.graficoError.set(!respuesta.success);
+          this.graficoLoading.set(false);
+        },
+        error: () => {
+          if (version !== this.dashboardVersion) return;
+          this.graficoError.set(true);
+          this.graficoLoading.set(false);
+        }
+      });
     this.finanzasService.getDashboardResumen(mes, anio, desde, hasta).subscribe({
       next: (res) => {
         if (version !== this.dashboardVersion) return;
@@ -1208,11 +522,7 @@ export class DashboardComponent implements OnInit {
       }
     });
 
-    // Cargar analítica de categorías para el gráfico donut
-    this.finanzasService.getDashboardAnalitica(mes, anio, desde, hasta).subscribe({
-      next: (res) => { if (version !== this.dashboardVersion) return; this.analiticaLoading.set(false); if(res.success && res.data)this.analitica.set(res.data);else this.analiticaError.set(true); },
-      error: () => { if (version === this.dashboardVersion) {this.analiticaLoading.set(false);this.analiticaError.set(true);} }
-    });
+
   }
 
   @HostListener('window:kaptal-movimiento-guardado')
@@ -1832,6 +1142,10 @@ export class DashboardComponent implements OnInit {
     }
     const { desde: fechaInicio, hasta: fechaFin } = this.fechasRango();
     this.router.navigate(['/transacciones'], { queryParams: { categoriaId, fechaInicio, fechaFin } });
+  }
+  registrarCategoria(categoria: CategoriaInicio): void {
+    this.categoriaContextual.set(null);
+    this.document.defaultView?.dispatchEvent(new CustomEvent('kaptal-abrir-registro-rapido', { detail: { tipo: 'GASTO', categoriaId: categoria.categoriaId } }));
   }
   verDetalleMovimiento(id: number): void { void this.router.navigate(['/transacciones'],{queryParams:{detalle:id}}); }
 

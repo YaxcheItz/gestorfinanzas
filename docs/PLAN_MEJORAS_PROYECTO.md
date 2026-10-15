@@ -1,5 +1,31 @@
 # Mejoras por etapas de Kaptal
 
+Plan detallado de continuación vigente: [PLAN_CONTINUACION_MONAI.md](PLAN_CONTINUACION_MONAI.md). Incluye dependencias, criterios de aceptación y ramas sugeridas. El cierre visual añade compactación de Inicio y estados de captura; periodos flexibles es la siguiente etapa funcional.
+
+## Corrección visual antes de retomar funciones
+
+La guía detallada del usuario sustituye la dirección visual anterior: blanco/coral, Inicio dominante, emoji, captura natural y hojas contextuales. Plan vigente por pantallas, componentes y aceptación: [PLAN_UI_MONAI.md](PLAN_UI_MONAI.md). Implementación en la misma rama de rediseño como corrección, sin iniciar la etapa siguiente.
+
+Se retiran la barra inferior y la tarjeta de balance principal. Inicio simple muestra gasto, periodo, categorías reales y recientes; la variante detallada añade métricas y presupuestos sin convertir cada dato en una tarjeta. Las funciones actuales siguen accesibles. Validar esta entrega en 4300 antes de retomar captura automática/conciliación; las funciones nuevas de la guía siguen el alcance y orden explícitos del plan.
+
+## Ampliación solicitada: MonAi como referencia principal
+
+La petición más reciente prioriza acercar los flujos y el diseño a MonAi y estudiar Kesef. Véase [inventario, viabilidad y orden de construcción](../replica/monai-kesef/recon.md) y [matriz de diferencias](../replica/monai-kesef/features.csv). Inicio vuelve a mostrar barras verticales; captura queda en cabecera y la navegación inferior tiene cuatro destinos.
+
+Después de integrar el rediseño, preparar captura de avisos y conciliación: parser de un banco, propuestas revisables, deduplicación entre canales y pruebas de pagos/devoluciones. Continuar con contenedor Android y baldosa «Añadir gasto», acceso autorizado a notificaciones bancarias y validación física. Incorporar correo según proveedor y SMS según permisos/distribución. La PWA actual no lee notificaciones de otras aplicaciones ni SMS.
+
+Esto amplía el orden anterior: no presentar etiquetas, listas múltiples, edición de series, metas, reparto flexible ni conexiones bancarias como terminados. Tampoco sustituir los saldos reales por un balance mensual para copiar la apariencia de otra aplicación. Cada etapa nueva mantiene rama propia desde develop actualizado; sin despliegue automático desde esta entrega.
+
+## Prioridad vigente: 14 de octubre de 2026
+
+El usuario aprobó el rediseño integral para su uso personal en Android y pidió implementarlo. Primera entrega en `mejoras/rediseno-integral-android`, desde `develop` actualizado `4fb43a1`: diseño oscuro sobrio, variante clara, simplificación de Inicio, Reportes independientes, captura diferida y reducción del bundle. Informe: [rediseño Android](REDISENO_INTEGRAL_ANDROID.md).
+
+Se conserva el stack y el alojamiento durante esta entrega. Las preferencias existentes y las funciones financieras se preservan. Sin publicación, conexiones bancarias ni instalación de nuevas herramientas.
+
+Después de revisar e integrar esta entrega, el orden funcional acordado es: **tarjetas y previsión → captura automática y conciliación → metas de ahorro → notificaciones fiables → integraciones bancarias/Wallet**. Cada bloque se especificará antes de implementarse, en una rama nueva desde `develop` actualizado. No reutilizar la rama de rediseño para esas etapas.
+
+Los apartados inferiores conservan acuerdos e informes históricos. Su descripción del estado de Git, CI y Render debe comprobarse nuevamente antes de cualquier operación.
+
 Actualizado: 8 de octubre de 2026.
 
 ## Acuerdo de trabajo

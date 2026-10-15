@@ -1,0 +1,39 @@
+{
+  "branch": "mejoras/rediseno-integral-android",
+  "frontend": {
+    "tests": 276,
+    "files": 35
+  },
+  "build": {
+    "initialKB": 457.86,
+    "warnings": 0
+  },
+  "browser": {
+    "checks": 65,
+    "origin": "http://localhost:4300",
+    "widths": [
+      390,
+      1280
+    ],
+    "themes": [
+      "CLARO",
+      "OSCURO"
+    ],
+    "includes": [
+      "scroll summary",
+      "chart compaction",
+      "period",
+      "category capture",
+      "privacy",
+      "empty/error"
+    ],
+    "api": "synthetic",
+    "physicalAndroid": false
+  },
+  "e2e": {
+    "passed": 2,
+    "backend": "isolated H2"
+  },
+  "plan": "docs/PLAN_CONTINUACION_MONAI.md",
+  "deployed": false
+}

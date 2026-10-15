@@ -1,3 +1,4 @@
+import { FeatureStylesService } from '../../core/services/feature-styles.service';
 import { TextoFinancieroPipe } from '../../core/pipes/texto-financiero.pipe';
 ﻿import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
@@ -25,8 +26,8 @@ interface ChatEntry extends AiChatMessage {
       <section class="flex w-full min-h-0 flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xs dark:border-slate-700 dark:bg-slate-900">
         <header class="flex items-start justify-between gap-3 border-b border-slate-100 bg-[#f7f8f4] p-4 sm:p-6 dark:border-slate-700 dark:bg-slate-900">
           <div>
-          <p class="text-xs font-semibold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">AI Reports · Chat Financiero</p>
-          <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Informes financieros</h1>
+          <p class="text-xs font-semibold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">Texto y voz</p>
+          <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Asistente</h1>
           <p class="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
             Pregunta sobre tus finanzas o pide una acción. Revisa la propuesta antes de confirmar cualquier cambio.
           </p>
@@ -245,6 +246,7 @@ interface ChatEntry extends AiChatMessage {
   `
 })
 export class AsistenteComponent implements OnInit {
+  private readonly styleAssets = inject(FeatureStylesService).load('capture');
   private readonly finanzasService = inject(FinanzasService);
   private readonly privacidad = inject(PrivacidadService);
   readonly estado = signal<AiConnectionStatus | null>(null);

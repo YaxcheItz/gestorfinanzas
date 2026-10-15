@@ -1,0 +1,55 @@
+{
+  "date": "2026-10-14",
+  "branch": "mejoras/rediseno-integral-android",
+  "base": "4fb43a115efb738f6a090cac79fd79c15ef0edc6",
+  "frontend": {
+    "tests": 272,
+    "files": 35,
+    "failed": 0
+  },
+  "backend": {
+    "suite": "com.gestionfinanzas.service.AuthServiceTest",
+    "tests": 3,
+    "failed": 0,
+    "errors": 0,
+    "database": "H2",
+    "fullSuite": false
+  },
+  "build": {
+    "initialKB": 461.89,
+    "baselineKB": 698.63,
+    "budgetKB": 500,
+    "warnings": 0,
+    "definition": "Angular initial bundle; excludes deferred requests and PWA background prefetch"
+  },
+  "e2e": {
+    "tests": 2,
+    "failed": 0,
+    "database": "H2",
+    "frontendPort": 14220
+  },
+  "browser": {
+    "checks": 113,
+    "api": "synthetic",
+    "engine": "Chromium",
+    "physicalDevice": false,
+    "serviceWorkerOffline": {
+      "route": "offline-login",
+      "stylesCached": 4,
+      "serviceWorker": true,
+      "reloadOffline": true
+    },
+    "screens": 46
+  },
+  "cachedStyleAssets": [
+    "/styles/activity.css",
+    "/styles/capture.css",
+    "/styles/dashboard.css",
+    "/styles/settings.css"
+  ],
+  "productionVerified": false,
+  "commit": false,
+  "push": false,
+  "deployment": false,
+  "newDependencies": false
+}

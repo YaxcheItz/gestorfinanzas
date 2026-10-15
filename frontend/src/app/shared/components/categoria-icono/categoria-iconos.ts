@@ -38,6 +38,19 @@ export function esEmojiCategoria(icono: string | null | undefined): boolean {
   return Boolean(valor && valor.length <= 16 && /\p{Extended_Pictographic}/u.test(valor));
 }
 
+/** Visual adapter only: existing category codes stay unchanged in storage and API. */
+export function emojiCategoria(icono: string | null | undefined, tipo = 'GASTO'): string {
+  const codigo = normalizarIconoCategoria(icono, tipo);
+  if (esEmojiCategoria(codigo)) return codigo;
+  const emojis: Record<string, string> = {
+    utensils: '🍽️', house: '🏠', car: '🚗', 'bus-front': '🚌', 'heart-pulse': '💊',
+    coffee: '☕', 'shopping-cart': '🛒', receipt: '🧾', 'briefcase-business': '💼',
+    'trending-up': '💰', gift: '🎁', 'graduation-cap': '🎓', plane: '✈️',
+    'paw-print': '🐾', wallet: '👛', fuel: '⛽', 'circle-plus': '💵'
+  };
+  return emojis[codigo] ?? (tipo === 'INGRESO' ? '💵' : '🧾');
+}
+
 export function colorIconoCategoria(icono: string | null | undefined, tipo: string): string {
   const codigo = normalizarIconoCategoria(icono, tipo);
   if (esEmojiCategoria(codigo)) return 'inherit';

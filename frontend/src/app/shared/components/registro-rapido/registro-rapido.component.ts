@@ -1,8 +1,10 @@
+import { FeatureStylesService } from '../../../core/services/feature-styles.service';
 import { TextoFinancieroPipe } from '../../../core/pipes/texto-financiero.pipe';
 import { crearIdSolicitud } from '../../../core/utils/request-id';
 import { MontoPrivadoDirective } from '../../directives/monto-privado.directive';
 import { DOCUMENT } from '@angular/common';
-import { Component, HostListener, OnDestroy, effect, inject, signal } from '@angular/core';
+import { Component, DestroyRef, HostListener, OnDestroy, afterNextRender, effect, inject, signal } from '@angular/core';
+import { CaptureLauncherService } from '../../../core/services/capture-launcher.service';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { Subscription, forkJoin } from 'rxjs';
@@ -24,7 +26,7 @@ type TipoRegistro = 'GASTO' | 'INGRESO' | 'TRANSFERENCIA';
   template: `@if (open()) {
     <div appDialogViewport class="quick-entry-backdrop" (click)="cerrar()">
       <section class="quick-entry" role="dialog" aria-modal="true" aria-labelledby="quick-entry-title" (click)="$event.stopPropagation()" (keydown)="teclado($event)">
-        <header><div><small>Un movimiento, en segundos</small><h2 id="quick-entry-title">{{ repitiendo() ? 'Repetir movimiento' : 'Añadir movimiento' }}</h2></div><app-privacy-toggle/><button type="button" class="utility-button" (click)="cerrar()" [disabled]="saving()" aria-label="Cerrar registro">×</button></header>
+        <header><h2 id="quick-entry-title">{{ repitiendo() ? 'Repetir movimiento' : 'Añadir movimiento' }}</h2><app-privacy-toggle/><button type="button" class="utility-button" (click)="cerrar()" [disabled]="saving()" aria-label="Cerrar registro">×</button></header>
         <div class="entry-mode" aria-label="Forma de añadir"><button type="button" class="is-active" aria-pressed="true">Rápido</button><button type="button" (click)="voz()" [disabled]="saving() || incierto">Escribir o dictar</button></div>
         <form (ngSubmit)="guardar()">
           <fieldset [disabled]="saving() || incierto || loading()">
@@ -61,6 +63,8 @@ type TipoRegistro = 'GASTO' | 'INGRESO' | 'TRANSFERENCIA';
   }`
 })
 export class RegistroRapidoComponent implements OnDestroy {
+  private readonly styleAssets = inject(FeatureStylesService).load('capture');
+  private readonly captureLauncher = inject(CaptureLauncherService);
   private readonly finanzas = inject(FinanzasService);
   private readonly preferida = inject(CategoriaPreferidaService);
   readonly offline = inject(MovimientosOfflineService);
@@ -90,6 +94,12 @@ export class RegistroRapidoComponent implements OnDestroy {
   private usuarioRegistro: number | null = null;
   private catalogoVersion = 0;
   constructor() {
+    const launcher = this.captureLauncher;
+    inject(DestroyRef).onDestroy(() => launcher.detach('manual'));
+    afterNextRender(() => {
+      const pending = launcher.attach('manual');
+      if (pending) this.abrir(pending);
+    });
     effect(() => {
       const usuarioId = this.auth.currentUser()?.id;
       if (this.usuarioRegistro !== null && usuarioId !== this.usuarioRegistro) {
@@ -101,13 +111,15 @@ export class RegistroRapidoComponent implements OnDestroy {
   }
 
   @HostListener('window:kaptal-abrir-registro-rapido', ['$event']) abrir(event?: Event): void {
+    this.captureLauncher.attach('manual');
     if (this.open()) return;
     this.focoAnterior = this.document.activeElement as HTMLElement;
     if (this.incierto && this.pendiente && this.usuarioRegistro===this.auth.currentUser()?.id) { this.open.set(true); return; }
-    const detail = (event as CustomEvent<{tipo?: TipoRegistro;preservar?:boolean;repetir?:Partial<TransaccionPayload>}> | undefined)?.detail;
+    const detail = (event as CustomEvent<{tipo?: TipoRegistro;categoriaId?:number;preservar?:boolean;repetir?:Partial<TransaccionPayload>}> | undefined)?.detail;
     if(detail?.repetir && !['GASTO','INGRESO','TRANSFERENCIA'].includes(detail.repetir.tipo??''))return;
     if (detail?.preservar && !this.loading() && this.cuentas.length && this.usuarioRegistro === this.auth.currentUser()?.id) { this.open.set(true); this.enfocarMonto();return; }
     this.usuarioRegistro = this.auth.currentUser()?.id ?? null;
+    this.categoriaSolicitada = detail?.categoriaId ?? null;
     this.repeticion=detail?.repetir??null;this.repitiendo.set(!!this.repeticion);
     const solicitado = this.repeticion?.tipo ?? detail?.tipo;
     this.tipo = solicitado === 'INGRESO' || solicitado === 'TRANSFERENCIA' ? solicitado : 'GASTO';
@@ -121,7 +133,7 @@ export class RegistroRapidoComponent implements OnDestroy {
       next: data => {
         this.cuentas = data.cuentas.data.filter(c => c.activo); this.categorias = data.categorias.data.filter(c => c.activo);
         if (this.usuarioRegistro !== null) void this.offline.guardarCatalogo(this.usuarioRegistro,this.cuentas,this.categorias).catch(()=>{});
-        this.cambiarTipo(this.tipo);this.aplicarRepeticion(); this.loading.set(false);
+        this.cambiarTipo(this.tipo);this.aplicarCategoriaSolicitada();this.aplicarRepeticion(); this.loading.set(false);
         this.enfocarMonto();
       },
       error: () => { void this.cargarCatalogoLocal(version); }
@@ -134,6 +146,10 @@ export class RegistroRapidoComponent implements OnDestroy {
     try { anterior = Number(this.document.defaultView?.localStorage.getItem(`kaptal_cuenta_rapida_${this.auth.currentUser()?.id}_${tipo}`)); } catch { /* Preferencia opcional. */ }
     this.cuentaId = this.cuentasDisponibles().find(c => c.id === anterior)?.id ?? this.cuentasDisponibles()[0]?.id ?? null;
     this.ajustarDestino();
+  }
+  private categoriaSolicitada: number | null = null;
+  private aplicarCategoriaSolicitada(): void {
+    if (this.categoriasDisponibles().some(cat => cat.id === this.categoriaSolicitada)) this.categoriaId = this.categoriaSolicitada;
   }
   private aplicarRepeticion(): void {
     const movimiento=this.repeticion;if(!movimiento)return;
@@ -165,6 +181,7 @@ export class RegistroRapidoComponent implements OnDestroy {
       this.cuentas=catalogo?.cuentas.filter(c=>c.activo)??[];
       this.categorias=catalogo?.categorias.filter(c=>c.activo)??[];
       this.cambiarTipo(this.tipo);
+      this.aplicarCategoriaSolicitada();
       this.error.set(this.cuentas.length?'':'Sin cuentas guardadas en este dispositivo. Abre el registro con conexión primero.');
       this.aplicarRepeticion();
     } catch { if(version===this.catalogoVersion){this.cuentas=[];this.error.set('No se pudieron cargar las cuentas. Cierra y vuelve a intentar.');} }

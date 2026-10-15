@@ -45,6 +45,7 @@ public class AuthService {
                 .nombre(request.nombre().trim())
                 .email(request.email().trim().toLowerCase(Locale.ROOT))
                 .passwordHash(passwordEncoder.encode(request.password()))
+                .temaPreferido("OSCURO")
                 .rol(RolUsuario.ROLE_USER)
                 .activo(true)
                 .build();
@@ -88,6 +89,7 @@ public class AuthService {
                     .passwordHash(passwordEncoder.encode(Base64.getUrlEncoder().withoutPadding()
                             .encodeToString(passwordAleatoria)))
                     .googleSubject(googleSubject)
+                    .temaPreferido("OSCURO")
                     .rol(RolUsuario.ROLE_USER)
                     .activo(true)
                     .build();

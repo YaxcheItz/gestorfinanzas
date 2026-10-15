@@ -22,6 +22,19 @@ describe('TransaccionesComponent history filters', () => {
   };
   let confirm: ReturnType<typeof vi.fn>;
 
+  it('separa el total diario por moneda y excluye transferencias y saldos iniciales', () => {
+    const movimientos = [
+      { tipo: 'GASTO', moneda: 'MXN', monto: 200 },
+      { tipo: 'INGRESO', moneda: 'MXN', monto: 100 },
+      { tipo: 'GASTO', moneda: 'USD', monto: 15 },
+      { tipo: 'TRANSFERENCIA', moneda: 'MXN', monto: 999 },
+      { tipo: 'SALDO_INICIAL', moneda: 'MXN', monto: 1000 }
+    ] as Transaccion[];
+    expect(fixture.componentInstance.totalesGrupo(movimientos)).toEqual([
+      { moneda: 'MXN', monto: -100 }, { moneda: 'USD', monto: -15 }
+    ]);
+  });
+
   it('propone el aniversario de febrero sin saltar a marzo', () => {
     const component = fixture.componentInstance;
     component.movimientoRecurrente = true;

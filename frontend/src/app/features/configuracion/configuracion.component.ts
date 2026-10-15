@@ -1,3 +1,4 @@
+import { FeatureStylesService } from '../../core/services/feature-styles.service';
 import { CommonModule, DOCUMENT } from '@angular/common';
 import { fechaFinanciera } from '../../core/utils/fecha-financiera';
 import { Component, DestroyRef, OnInit, effect, inject, signal } from '@angular/core';
@@ -558,6 +559,7 @@ import {
   `
 })
 export class ConfiguracionComponent implements OnInit {
+  private readonly styleAssets = inject(FeatureStylesService).load('settings');
   readonly nombreCuentaVisible = nombreCuentaVisible;
   readonly monedas = MONEDAS_DISPONIBLES;
   readonly guardandoPerfil = signal(false);

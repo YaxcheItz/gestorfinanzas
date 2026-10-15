@@ -1,0 +1,43 @@
+{
+  "stage": "mejoras/rediseno-integral-android",
+  "frontend": {
+    "files": 35,
+    "tests": 271,
+    "passed": true
+  },
+  "build": {
+    "initialKB": 460.4,
+    "warnings": 0
+  },
+  "e2e": {
+    "passed": 2,
+    "specs": [
+      "dashboard-repetir.spec.ts",
+      "chat-android.spec.ts"
+    ],
+    "backend": "isolated H2"
+  },
+  "browser": {
+    "checks": 121,
+    "widths": [
+      360,
+      390,
+      768,
+      1280
+    ],
+    "themes": [
+      "CLARO",
+      "OSCURO"
+    ],
+    "api": "synthetic",
+    "physicalAndroid": false,
+    "offlineStylesCached": 5
+  },
+  "integrations": {
+    "email": false,
+    "sms": false,
+    "bankNotificationListener": false,
+    "quickSettingsTile": false
+  },
+  "deployed": false
+}

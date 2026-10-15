@@ -1,3 +1,4 @@
+import { FeatureStylesService } from '../../core/services/feature-styles.service';
 import { TextoFinancieroPipe } from '../../core/pipes/texto-financiero.pipe';
 ﻿import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
@@ -255,6 +256,7 @@ import { nombreCuentaVisible } from '../../core/utils/cuenta-financiera';
   `
 })
 export class LibroDiarioComponent implements OnInit {
+  private readonly styleAssets = inject(FeatureStylesService).load('activity');
   readonly nombreCuentaVisible = nombreCuentaVisible;
   private readonly finanzasService = inject(FinanzasService);
 

@@ -113,7 +113,7 @@ import { GoogleSignInComponent } from '../google-sign-in/google-sign-in.componen
       border-radius: 1.25rem;
       padding: 1.25rem;
       background: #ffffff;
-      box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+      box-shadow: none;
     }
     .login-card__intro { text-align: center; }
     .login-card__icon {
@@ -174,7 +174,6 @@ import { GoogleSignInComponent } from '../google-sign-in/google-sign-in.componen
       outline: none;
       border-color: #111827;
       background: #ffffff;
-      box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.12);
     }
     .login-field__password { position: relative; }
     .login-field__password input { padding-right: 3rem; }
@@ -199,11 +198,11 @@ import { GoogleSignInComponent } from '../google-sign-in/google-sign-in.componen
       align-items: center;
       justify-content: center;
       gap: 0.5rem;
-      margin-top: 0.2rem;
+      margin-top: 0;
       border: 0;
       border-radius: 0.85rem;
-      background: #111827 !important;
-      color: #ffffff !important;
+      background: var(--kaptal-brand) !important;
+      color: var(--kaptal-on-brand) !important;
       font-size: 0.95rem;
       font-weight: 700;
       touch-action: manipulation;
@@ -247,7 +246,7 @@ import { GoogleSignInComponent } from '../google-sign-in/google-sign-in.componen
     :host-context(html.dark) .login-card {
       border-color: #27272a;
       background: #121212;
-      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+      box-shadow: none;
     }
     :host-context(html.dark) .login-card__icon { background: #1f1f1f; color: #f4f4f5; }
     :host-context(html.dark) .login-card__intro h1 { color: #f9fafb; }
@@ -262,12 +261,11 @@ import { GoogleSignInComponent } from '../google-sign-in/google-sign-in.componen
     :host-context(html.dark) .login-field input:focus {
       border-color: #e5e7eb;
       background: #111113;
-      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.12);
     }
     :host-context(html.dark) .login-field__password button { color: #d1d5db; }
     :host-context(html.dark) .login-submit {
-      background: #f4f4f5 !important;
-      color: #111827 !important;
+      background: var(--kaptal-brand) !important;
+      color: var(--kaptal-on-brand) !important;
     }
     :host-context(html.dark) .login-link,
     :host-context(html.dark) .login-footer a { color: #f4f4f5; }
