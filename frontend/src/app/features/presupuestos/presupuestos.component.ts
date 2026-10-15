@@ -1,5 +1,5 @@
 import { MontoPrivadoDirective } from '../../shared/directives/monto-privado.directive';
-﻿import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, effect, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DestroyRef } from '@angular/core';
@@ -10,10 +10,12 @@ import { ToastService } from '../../core/services/toast.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { MontoPipe } from '../../core/pipes/monto.pipe';
 import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive';
+import { ListaContextoService } from '../../core/services/lista-contexto.service';
 import {
   Categoria,
   MONEDAS_DISPONIBLES,
   Presupuesto,
+  PresupuestoDetalle,
   PresupuestoPayload,
   PresupuestoResumen
 } from '../../core/models/finanzas.models';
@@ -28,32 +30,32 @@ import {
       <!-- Encabezado y Navegación de Período -->
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
-          <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
+          <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
             Presupuestos
           </h1>
-          <p class="text-sm text-slate-500 mt-1">
+          <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Pon un límite a lo que importa y revisa cuánto te queda.
           </p>
         </div>
 
         <div class="flex w-full sm:w-auto flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
           <!-- Selector de Mes y Año -->
-          <div class="flex items-center bg-white border border-slate-200 rounded-xl p-1 shadow-2xs">
+          <div class="flex items-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-1 shadow-2xs">
             <select
               [ngModel]="mesSeleccionado()"
               (ngModelChange)="cambiarMes($event)"
               aria-label="Mes del presupuesto"
-              class="min-w-0 flex-1 bg-transparent text-xs font-semibold text-slate-700 py-1.5 px-2 focus:outline-hidden cursor-pointer">
+              class="min-w-0 flex-1 bg-transparent text-xs font-semibold text-slate-700 dark:text-slate-200 py-1.5 px-2 focus:outline-hidden cursor-pointer">
               @for (mes of meses; track mes.numero) {
                 <option [value]="mes.numero">{{ mes.nombre }}</option>
               }
             </select>
-            <span class="text-slate-300">|</span>
+            <span class="text-slate-300 dark:text-slate-600">|</span>
             <select
               [ngModel]="anioSeleccionado()"
               (ngModelChange)="cambiarAnio($event)"
               aria-label="Año del presupuesto"
-              class="min-w-0 flex-1 bg-transparent text-xs font-semibold text-slate-700 py-1.5 px-2 focus:outline-hidden cursor-pointer">
+              class="min-w-0 flex-1 bg-transparent text-xs font-semibold text-slate-700 dark:text-slate-200 py-1.5 px-2 focus:outline-hidden cursor-pointer">
               @for (anio of aniosDisponibles; track anio) {
                 <option [value]="anio">{{ anio }}</option>
               }
@@ -92,7 +94,7 @@ import {
       @if (!loading() && !error()) {
       <section class="space-y-4" aria-label="Totales de presupuestos por moneda">
         @for (moneda of resumen()?.resumenPorMoneda ?? []; track moneda.moneda) {
-          <article class="budget-overview rounded-3xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6">
+          <article class="budget-overview rounded-3xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6 dark:border-slate-700 dark:bg-slate-900">
             <div class="flex items-start justify-between gap-4">
               <div><p class="text-xs font-semibold text-slate-500 dark:text-slate-400">Límites del mes</p><h2 class="mt-1 text-sm font-bold text-slate-800 dark:text-slate-100">{{ moneda.moneda }}</h2></div>
               <span class="budget-overview__percent" [class.is-over]="moneda.totalDisponible < 0">{{ moneda.porcentajeConsumido | number:'1.0-0' }}%</span>
@@ -111,8 +113,8 @@ import {
       <!-- Sección de Tarjetas de Presupuesto por Categoría -->
       <div>
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-4">
-          <h2 class="text-lg font-bold text-slate-900">Tus categorías</h2>
-          <span class="text-xs font-medium text-slate-500">
+          <h2 class="text-lg font-bold text-slate-900 dark:text-white">Tus categorías</h2>
+          <span class="text-xs font-medium text-slate-500 dark:text-slate-400">
             Período: {{ nombreMes(mesSeleccionado()) }} {{ anioSeleccionado() }}
           </span>
         </div>
@@ -123,16 +125,16 @@ import {
           <p class="finance-state-note">No pudimos consultar este período. Tus límites guardados se conservan.</p>
         } @else if ((resumen()?.presupuestos?.length || 0) === 0) {
           <!-- Empty State -->
-          <div class="bg-white rounded-2xl border border-dashed border-slate-200 p-12 text-center space-y-4">
-            <div class="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl mx-auto flex items-center justify-center">
+          <div class="bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 p-12 text-center space-y-4">
+            <div class="w-14 h-14 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 rounded-2xl mx-auto flex items-center justify-center">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
               </svg>
             </div>
             <div class="max-w-md mx-auto">
-              <h3 class="text-base font-bold text-slate-800">No hay presupuestos fijados para este mes</h3>
+              <h3 class="text-base font-bold text-slate-800 dark:text-white">No hay presupuestos fijados para este mes</h3>
               <p class="text-xs text-slate-400 mt-1">
-                Fija límites de gasto en tus categorías clave (comida, transporte, ocio) para recibir alertas antes de sobrepasar tu presupuesto.
+                Fija límites de gasto en tus categorías clave para recibir alertas antes de sobrepasar tu presupuesto.
               </p>
             </div>
             <button 
@@ -160,11 +162,18 @@ import {
                       </svg>
                     </div>
                     <div class="min-w-0">
-                      <h3 class="text-sm font-bold text-slate-900 dark:text-white">{{ p.categoriaNombre }}</h3>
+                      <div class="flex items-center gap-1.5 flex-wrap">
+                        <h3 class="text-sm font-bold text-slate-900 dark:text-white">{{ p.categoriaNombre }}</h3>
+                        @if (p.listaNombre) {
+                          <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                            {{ p.listaNombre }}
+                          </span>
+                        }
+                      </div>
                       <span 
                         [class]="obtenerBadgeEstadoClass(p.estado)"
                         class="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider mt-0.5">
-                        {{ p.estado === 'EXCEDIDO' ? 'Excedido' : (p.estado === 'ALERTA' ? 'Cerca del límite' : 'Bajo control') }}
+                        {{ p.estado === 'EXCEDIDO' ? 'Excedido' : (p.estado === 'ALERTA' ? 'Cerca del límite (' + (p.porcentajeAlerta || 80) + '%)' : 'Bajo control') }}
                       </span>
                     </div>
                   </div>
@@ -173,9 +182,20 @@ import {
                   <div class="flex items-center space-x-1">
                     <button 
                       type="button"
+                      (click)="abrirDetalle(p)"
+                      [attr.aria-label]="'Ver detalle y movimientos de ' + p.categoriaNombre"
+                      class="h-10 w-10 inline-flex items-center justify-center text-slate-500 hover:text-emerald-700 rounded-lg hover:bg-emerald-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                      title="Ver detalle de gastos">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    </button>
+                    <button 
+                      type="button"
                       (click)="abrirModalEditar(p)"
                       [attr.aria-label]="'Modificar presupuesto de ' + p.categoriaNombre"
-                      class="h-10 w-10 inline-flex items-center justify-center text-slate-500 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+                      class="h-10 w-10 inline-flex items-center justify-center text-slate-500 hover:text-slate-700 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                       title="Modificar límite">
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -206,16 +226,25 @@ import {
                     <span class="font-bold text-slate-800 dark:text-slate-100">Meta: {{ p.montoLimite | monto:p.moneda:'symbol':'1.2-2' }}</span>
                   </div>
 
-                  <div class="h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800" role="progressbar" [attr.aria-label]="'Uso del presupuesto de ' + p.categoriaNombre" aria-valuemin="0" [attr.aria-valuemax]="p.montoLimite" [attr.aria-valuenow]="gastadoLimitado(p.montoGastado, p.montoLimite)">
+                  <div class="relative h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800" role="progressbar" [attr.aria-label]="'Uso del presupuesto de ' + p.categoriaNombre" aria-valuemin="0" [attr.aria-valuemax]="p.montoLimite" [attr.aria-valuenow]="gastadoLimitado(p.montoGastado, p.montoLimite)">
                     <div 
                       [style.width.%]="obtenerAnchoBarra(p.porcentajeConsumido)"
                       [class]="obtenerColorBarra(p.porcentajeConsumido)"
                       class="h-full rounded-full transition-all duration-500">
                     </div>
+                    @if (p.porcentajeAlerta && p.porcentajeAlerta < 100) {
+                      <div class="absolute top-0 bottom-0 w-0.5 bg-amber-500/80 pointer-events-none"
+                           [style.left.%]="p.porcentajeAlerta"
+                           [title]="'Aviso al ' + p.porcentajeAlerta + '%'">
+                      </div>
+                    }
                   </div>
 
                   <div class="flex items-center justify-between text-xs pt-1">
-                    <span class="text-slate-500 dark:text-slate-400">Del límite mensual</span>
+                    <span class="text-slate-500 dark:text-slate-400">
+                      Del límite mensual
+                      @if (p.porcentajeAlerta) { · aviso al {{ p.porcentajeAlerta }}% }
+                    </span>
                     <span class="font-bold text-slate-700 dark:text-slate-200">
                       {{ p.porcentajeConsumido | number:'1.0-0' }}%
                     </span>
@@ -244,7 +273,7 @@ import {
               type="button"
               (click)="cerrarModal()" 
               aria-label="Cerrar formulario de presupuesto"
-              class="inline-flex min-h-11 min-w-11 items-center justify-center text-slate-600 hover:text-slate-900 p-1 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600">
+              class="inline-flex min-h-11 min-w-11 items-center justify-center text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -261,7 +290,7 @@ import {
 
             <!-- Categoría -->
             <div>
-              <label for="modalCat" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+              <label for="modalCat" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                 Categoría
               </label>
               <select
@@ -270,7 +299,7 @@ import {
                 [disabled]="modoEdicion()"
                 [(ngModel)]="formCategoriaId"
                 name="categoriaId"
-                class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all disabled:opacity-60 disabled:cursor-not-allowed">
+                class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all disabled:opacity-60 disabled:cursor-not-allowed dark:bg-slate-800 dark:border-slate-600 dark:text-white">
                 <option [ngValue]="null" disabled>Selecciona una categoría de gasto</option>
                 @for (cat of categorias(); track cat.id) {
                   <option [ngValue]="cat.id">{{ cat.nombre }}</option>
@@ -278,9 +307,26 @@ import {
               </select>
             </div>
 
+            <!-- Lista financiera -->
             <div>
-              <label for="modalMoneda" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Moneda del presupuesto</label>
-              <select id="modalMoneda" [(ngModel)]="formMoneda" name="moneda" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm">
+              <label for="modalLista" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                Lista financiera
+              </label>
+              <select
+                id="modalLista"
+                [(ngModel)]="formListaId"
+                name="listaId"
+                class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all dark:bg-slate-800 dark:border-slate-600 dark:text-white">
+                <option [ngValue]="null">Personal (Sin lista específica)</option>
+                @for (lista of listasEditables(); track lista.id) {
+                  <option [ngValue]="lista.id">{{ lista.emoji }} {{ lista.nombre }}</option>
+                }
+              </select>
+            </div>
+
+            <div>
+              <label for="modalMoneda" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Moneda del presupuesto</label>
+              <select id="modalMoneda" [(ngModel)]="formMoneda" name="moneda" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm dark:bg-slate-800 dark:border-slate-600 dark:text-white">
                 @for (moneda of monedasDisponibles; track moneda.codigo) {
                   <option [ngValue]="moneda.codigo">{{ moneda.codigo }} — {{ moneda.nombre }}</option>
                 }
@@ -289,7 +335,7 @@ import {
 
             <!-- Monto Límite -->
             <div>
-              <label for="modalMonto" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+              <label for="modalMonto" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                 Monto límite mensual ({{ formMoneda }})
               </label>
               <div class="relative rounded-xl shadow-2xs">
@@ -305,23 +351,46 @@ import {
                   [(ngModel)]="formMontoLimite"
                   name="montoLimite"
                   placeholder="0.00"
-                  class="w-full pl-8 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 font-bold text-lg focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
+                  class="w-full pl-8 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 font-bold text-lg focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all dark:bg-slate-800 dark:border-slate-600 dark:text-white"
                 />
               </div>
             </div>
 
+            <!-- Umbral de aviso -->
+            <div>
+              <label for="modalAlerta" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                Avisar al alcanzar (% del límite)
+              </label>
+              <div class="relative rounded-xl shadow-2xs">
+                <input
+                  id="modalAlerta"
+                  type="number"
+                  min="1"
+                  max="100"
+                  step="1"
+                  required
+                  [(ngModel)]="formPorcentajeAlerta"
+                  name="porcentajeAlerta"
+                  placeholder="80"
+                  class="w-full pl-4 pr-10 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all dark:bg-slate-800 dark:border-slate-600 dark:text-white"
+                />
+                <span class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400 font-semibold">%</span>
+              </div>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Aviso preventivo al alcanzar este porcentaje de consumo.</p>
+            </div>
+
             <!-- Período informativo -->
-            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-600 flex items-center justify-between">
+            <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 flex items-center justify-between">
               <span>Período de aplicación:</span>
-              <span class="font-bold text-slate-800">{{ nombreMes(mesSeleccionado()) }} {{ anioSeleccionado() }}</span>
+              <span class="font-bold text-slate-800 dark:text-white">{{ nombreMes(mesSeleccionado()) }} {{ anioSeleccionado() }}</span>
             </div>
 
             <!-- Botones de Acción -->
-            <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 pt-4 border-t border-slate-100">
+            <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 pt-4 border-t border-slate-100 dark:border-slate-700">
               <button 
                 type="button"
                 (click)="cerrarModal()"
-                class="px-4 py-2.5 border border-slate-300 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
+                class="px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer">
                 Cancelar
               </button>
               
@@ -343,6 +412,148 @@ import {
         </div>
       </div>
     }
+
+    <!-- Modal Detalle del Presupuesto y Movimientos -->
+    @if (modalDetalleAbierto()) {
+      <div class="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-slate-900/60 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] backdrop-blur-xs sm:items-center sm:p-4">
+        <div appFocusTrap (focusTrapEscape)="cerrarDetalle()" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="detalle-modal-titulo" class="budget-entry-sheet max-h-[calc(100dvh_-_env(safe-area-inset-top)_-_env(safe-area-inset-bottom))] w-full max-w-lg overflow-y-auto rounded-t-3xl border border-slate-200 bg-white shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-200 dark:border-slate-700 dark:bg-slate-900 sm:rounded-3xl">
+          
+          <div class="flex items-center justify-between border-b border-slate-100 p-4 dark:border-slate-700 sm:p-6">
+            <div>
+              <h2 id="detalle-modal-titulo" class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <span>Detalle del Presupuesto</span>
+                @if (detallePresupuesto()?.presupuesto?.listaNombre; as ln) {
+                  <span class="text-xs font-normal px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                    {{ ln }}
+                  </span>
+                }
+              </h2>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                {{ detallePresupuesto()?.presupuesto?.categoriaNombre }} · {{ nombreMes(mesSeleccionado()) }} {{ anioSeleccionado() }}
+              </p>
+            </div>
+            <button 
+              type="button"
+              (click)="cerrarDetalle()" 
+              aria-label="Cerrar detalle"
+              class="inline-flex min-h-11 min-w-11 items-center justify-center text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-600">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <div class="p-4 sm:p-6 space-y-5">
+            @if (loadingDetalle()) {
+              <div class="flex items-center justify-center py-10 text-sm text-slate-500">
+                <div class="w-5 h-5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin mr-2"></div>
+                Cargando movimientos del presupuesto...
+              </div>
+            } @else if (errorDetalle()) {
+              <div class="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs">
+                {{ errorDetalle() }}
+              </div>
+            } @else if (detallePresupuesto(); as det) {
+              <!-- Resumen de montos -->
+              <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700">
+                  <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Límite mensual</p>
+                  <p class="text-base font-bold text-slate-800 dark:text-white tabular-nums mt-0.5">
+                    {{ det.presupuesto.montoLimite | monto:det.presupuesto.moneda:'symbol':'1.2-2' }}
+                  </p>
+                </div>
+                <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700">
+                  <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Total gastado</p>
+                  <p class="text-base font-bold text-slate-900 dark:text-white tabular-nums mt-0.5">
+                    {{ det.presupuesto.montoGastado | monto:det.presupuesto.moneda:'symbol':'1.2-2' }}
+                  </p>
+                </div>
+                <div class="p-3 col-span-2 sm:col-span-1 rounded-xl border"
+                     [ngClass]="det.presupuesto.montoDisponible >= 0 ? 'bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-200' : 'bg-rose-50 border-rose-200 text-rose-800 dark:bg-rose-950/40 dark:border-rose-800 dark:text-rose-200'">
+                  <p class="text-[11px] font-medium opacity-80">{{ det.presupuesto.montoDisponible >= 0 ? 'Disponible restante' : 'Excedido por' }}</p>
+                  <p class="text-base font-bold tabular-nums mt-0.5">
+                    {{ (det.presupuesto.montoDisponible >= 0 ? det.presupuesto.montoDisponible : -det.presupuesto.montoDisponible) | monto:det.presupuesto.moneda:'symbol':'1.2-2' }}
+                  </p>
+                </div>
+              </div>
+
+              <!-- Barra visual con umbral de alerta -->
+              <div class="space-y-1.5">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="font-medium text-slate-600 dark:text-slate-400">
+                    Consumido: {{ det.presupuesto.porcentajeConsumido | number:'1.0-0' }}%
+                  </span>
+                  <span class="text-slate-500 text-[11px]">
+                    Umbral de aviso: {{ det.presupuesto.porcentajeAlerta || 80 }}%
+                  </span>
+                </div>
+                <div class="relative h-3 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                  <div 
+                    [style.width.%]="obtenerAnchoBarra(det.presupuesto.porcentajeConsumido)"
+                    [class]="obtenerColorBarra(det.presupuesto.porcentajeConsumido)"
+                    class="h-full rounded-full transition-all duration-300">
+                  </div>
+                  @if (det.presupuesto.porcentajeAlerta && det.presupuesto.porcentajeAlerta < 100) {
+                    <span class="absolute top-0 bottom-0 w-0.5 bg-amber-500 z-10 pointer-events-none" [style.left.%]="det.presupuesto.porcentajeAlerta" [title]="'Aviso al ' + det.presupuesto.porcentajeAlerta + '%'"></span>
+                  }
+                </div>
+              </div>
+
+              <!-- Lista de movimientos del periodo -->
+              <div>
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">
+                  Movimientos del período ({{ det.movimientos.length }})
+                </h3>
+                @if (det.movimientos.length === 0) {
+                  <div class="p-6 text-center rounded-xl border border-dashed border-slate-200 dark:border-slate-700 text-xs text-slate-500">
+                    No hay gastos registrados en esta categoría durante este período.
+                  </div>
+                } @else {
+                  <div class="divide-y divide-slate-100 dark:divide-slate-800 max-h-60 overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30">
+                    @for (m of det.movimientos; track m.id) {
+                      <div class="p-3 flex items-center justify-between text-xs hover:bg-white dark:hover:bg-slate-800/80 transition-colors">
+                        <div class="min-w-0 pr-3">
+                          <p class="font-semibold text-slate-800 dark:text-white truncate">
+                            {{ m.descripcion || det.presupuesto.categoriaNombre }}
+                          </p>
+                          <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                            <span>{{ m.fecha }}</span>
+                            @if (m.cuentaNombre) { <span>· {{ m.cuentaNombre }}</span> }
+                            @for (tag of m.etiquetas ?? []; track tag) {
+                              <span class="bg-slate-200/70 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-1 py-0.2 rounded text-[10px]">#{{ tag }}</span>
+                            }
+                          </p>
+                        </div>
+                        <span class="font-bold tabular-nums text-slate-900 dark:text-white shrink-0">
+                          {{ m.monto | monto:det.presupuesto.moneda:'symbol':'1.2-2' }}
+                        </span>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+
+              <!-- Acciones del detalle -->
+              <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+                <button 
+                  type="button"
+                  (click)="editarDesdeDetalle(det.presupuesto)"
+                  class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700 rounded-xl text-xs font-semibold transition-colors cursor-pointer">
+                  Modificar límite
+                </button>
+                <button 
+                  type="button"
+                  (click)="cerrarDetalle()"
+                  class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold transition-colors cursor-pointer">
+                  Cerrar
+                </button>
+              </div>
+            }
+          </div>
+
+        </div>
+      </div>
+    }
   `
 })
 export class PresupuestosComponent implements OnInit {
@@ -350,6 +561,7 @@ export class PresupuestosComponent implements OnInit {
   private readonly toastService = inject(ToastService);
   private readonly confirmDialogService = inject(ConfirmDialogService);
   private readonly destroyRef = inject(DestroyRef);
+  readonly contextoLista = inject(ListaContextoService);
   private presupuestoRequest?: Subscription;
 
   readonly meses = [
@@ -383,11 +595,39 @@ export class PresupuestosComponent implements OnInit {
   readonly submitting = signal<boolean>(false);
   readonly modalError = signal<string | null>(null);
 
+  // Detalle Signals
+  readonly modalDetalleAbierto = signal<boolean>(false);
+  readonly detallePresupuesto = signal<PresupuestoDetalle | null>(null);
+  readonly loadingDetalle = signal<boolean>(false);
+  readonly errorDetalle = signal<string | null>(null);
+
   // Form Fields
   formCategoriaId: number | null = null;
   formMontoLimite: number | null = null;
   formMoneda = 'MXN';
+  formListaId: number | null = null;
+  formPorcentajeAlerta: number = 80;
   readonly monedasDisponibles = MONEDAS_DISPONIBLES;
+
+  private listaObservada: number | null | undefined = undefined;
+
+  constructor() {
+    effect(() => {
+      const actual = this.contextoLista.activaId();
+      if (this.listaObservada === undefined) {
+        this.listaObservada = actual;
+        return;
+      }
+      if (this.listaObservada !== actual) {
+        this.listaObservada = actual;
+        untracked(() => this.cargarPresupuestos());
+      }
+    });
+  }
+
+  listasEditables() {
+    return this.contextoLista.listas().filter(l => !l.archivada && l.rol !== 'LECTOR');
+  }
 
   ngOnInit(): void {
     this.cargarCategorias();
@@ -399,7 +639,11 @@ export class PresupuestosComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
 
-    this.presupuestoRequest = this.finanzasService.getPresupuestos(this.mesSeleccionado(), this.anioSeleccionado()).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.presupuestoRequest = this.finanzasService.getPresupuestos(
+      this.mesSeleccionado(),
+      this.anioSeleccionado(),
+      this.contextoLista.activaId()
+    ).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => {
         this.loading.set(false);
         if (res.success && res.data) {
@@ -419,7 +663,6 @@ export class PresupuestosComponent implements OnInit {
     this.finanzasService.getCategorias().subscribe({
       next: (res) => {
         if (res.success && res.data) {
-          // Filtrar categorías aplicables a gastos
           const deGasto = res.data.filter(c => c.tipo === 'GASTO');
           this.categorias.set(deGasto);
         }
@@ -442,6 +685,8 @@ export class PresupuestosComponent implements OnInit {
     this.modalError.set(null);
     this.formMontoLimite = null;
     this.formMoneda = 'MXN';
+    this.formListaId = this.contextoLista.activaId();
+    this.formPorcentajeAlerta = 80;
     const cats = this.categorias();
     this.formCategoriaId = cats.length > 0 ? cats[0].id : null;
     this.modalAbierto.set(true);
@@ -453,12 +698,46 @@ export class PresupuestosComponent implements OnInit {
     this.formCategoriaId = p.categoriaId;
     this.formMontoLimite = p.montoLimite;
     this.formMoneda = p.moneda;
+    this.formListaId = p.listaId ?? null;
+    this.formPorcentajeAlerta = p.porcentajeAlerta ?? 80;
     this.modalAbierto.set(true);
   }
 
   cerrarModal(): void {
     this.modalAbierto.set(false);
     this.modalError.set(null);
+  }
+
+  abrirDetalle(p: Presupuesto): void {
+    this.modalDetalleAbierto.set(true);
+    this.loadingDetalle.set(true);
+    this.errorDetalle.set(null);
+    this.detallePresupuesto.set(null);
+    this.finanzasService.getPresupuestoDetalle(p.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (res) => {
+        this.loadingDetalle.set(false);
+        if (res.success && res.data) {
+          this.detallePresupuesto.set(res.data);
+        } else {
+          this.errorDetalle.set('No pudimos cargar los movimientos del presupuesto.');
+        }
+      },
+      error: (err) => {
+        this.loadingDetalle.set(false);
+        this.errorDetalle.set(err.error?.message || 'Error al cargar los movimientos del presupuesto');
+      }
+    });
+  }
+
+  cerrarDetalle(): void {
+    this.modalDetalleAbierto.set(false);
+    this.detallePresupuesto.set(null);
+    this.errorDetalle.set(null);
+  }
+
+  editarDesdeDetalle(p: Presupuesto): void {
+    this.cerrarDetalle();
+    this.abrirModalEditar(p);
   }
 
   guardarPresupuesto(): void {
@@ -470,20 +749,26 @@ export class PresupuestosComponent implements OnInit {
       this.modalError.set('Ingresa un monto límite válido mayor a 0');
       return;
     }
+    if (!this.formPorcentajeAlerta || this.formPorcentajeAlerta < 1 || this.formPorcentajeAlerta > 100) {
+      this.modalError.set('El porcentaje de alerta debe estar entre 1% y 100%');
+      return;
+    }
 
     const payload: PresupuestoPayload = {
       categoriaId: this.formCategoriaId,
       montoLimite: this.formMontoLimite,
       moneda: this.formMoneda,
       mes: this.mesSeleccionado(),
-      anio: this.anioSeleccionado()
+      anio: this.anioSeleccionado(),
+      listaId: this.formListaId,
+      porcentajeAlerta: this.formPorcentajeAlerta
     };
 
     this.submitting.set(true);
     this.modalError.set(null);
 
     this.finanzasService.guardarPresupuesto(payload).subscribe({
-      next: (res) => {
+      next: () => {
         this.submitting.set(false);
         this.cerrarModal();
         this.cargarPresupuestos();

@@ -70,6 +70,9 @@ public class PlantillaRecurrente {
     @Column(name = "siguiente_fecha", nullable = false)
     private LocalDate siguienteFecha;
 
+    @Column(name = "fecha_fin")
+    private LocalDate fechaFin;
+
     @Column(nullable = false)
     @Builder.Default
     private boolean activa = true;

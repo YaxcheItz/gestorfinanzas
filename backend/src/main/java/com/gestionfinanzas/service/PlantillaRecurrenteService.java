@@ -18,6 +18,7 @@ public class PlantillaRecurrenteService {
 
     private final PlantillaRecurrenteRepository plantillaRepository;
     private final TransaccionService transaccionService;
+    private final com.gestionfinanzas.repository.TransaccionRepository transaccionRepository;
 
     @Transactional(readOnly = true)
     public List<PlantillaRecurrenteResponse> listar(Long usuarioId) {
@@ -49,6 +50,11 @@ public class PlantillaRecurrenteService {
                 throw new IllegalArgumentException("La retención MSI no coincide con las cuotas pendientes; revisa la cuenta antes de cancelar");
             }
             cuenta.setLimiteRetenido(retenido.subtract(pendiente));
+        }
+        List<com.gestionfinanzas.model.entity.Transaccion> vinculadas =
+                transaccionRepository.findAllByPlantillaRecurrenteIdOrderByFechaAsc(plantillaId);
+        for (var t : vinculadas) {
+            t.setPlantillaRecurrente(null);
         }
         plantillaRepository.delete(plantilla);
     }
@@ -101,11 +107,28 @@ public class PlantillaRecurrenteService {
                 null,
                 null,
                 null,
-                plantilla.getLista() != null ? plantilla.getLista().getId() : null, new java.util.ArrayList<>(plantilla.getEtiquetas())
-        ), plantilla.getCompraMsiId());
+                plantilla.getLista() != null ? plantilla.getLista().getId() : null,
+                new java.util.ArrayList<>(plantilla.getEtiquetas()),
+                null,
+                plantilla.getFechaFin()
+        ), plantilla.getCompraMsiId(), plantilla.getId());
         if (plantilla.getFechaAncla() == null) plantilla.setFechaAncla(fecha);
-        plantilla.setSiguienteFecha(CalendarioFinanciero.siguiente(fecha, plantilla.getFrecuencia(), plantilla.getFechaAncla()));
+        LocalDate sig = CalendarioFinanciero.siguiente(fecha, plantilla.getFrecuencia(), plantilla.getFechaAncla());
+        plantilla.setSiguienteFecha(sig);
+        if (plantilla.getFechaFin() != null && sig.isAfter(plantilla.getFechaFin())) {
+            plantilla.setActiva(false);
+        }
         plantillaRepository.save(plantilla);
+    }
+
+    @Transactional
+    public PlantillaRecurrenteResponse actualizarFechaFin(Long usuarioId, Long plantillaId, LocalDate fechaFin) {
+        PlantillaRecurrente plantilla = buscar(usuarioId, plantillaId);
+        plantilla.setFechaFin(fechaFin);
+        if (fechaFin != null && plantilla.getSiguienteFecha().isAfter(fechaFin)) {
+            plantilla.setActiva(false);
+        }
+        return PlantillaRecurrenteResponse.fromEntity(plantillaRepository.save(plantilla));
     }
 
     private PlantillaRecurrente buscar(Long usuarioId, Long plantillaId) {

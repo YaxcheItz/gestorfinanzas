@@ -105,6 +105,10 @@ public class Transaccion {
 
     private java.util.UUID compraMsiId;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "plantilla_id")
+    private PlantillaRecurrente plantillaRecurrente;
+
     @CreationTimestamp
     @Column(name = "fecha_creacion", updatable = false)
     private LocalDateTime fechaCreacion;

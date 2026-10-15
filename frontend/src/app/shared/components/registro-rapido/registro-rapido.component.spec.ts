@@ -26,7 +26,7 @@ describe('Registro rapido: guardado y privacidad', () => {
     conexion.set(true);
     offline={conexion,guardarCatalogo:vi.fn(async()=>{}),leerCatalogo:vi.fn(async()=>({cuentas,categorias})),guardarPendiente:vi.fn(async()=>{}),sincronizar:vi.fn(async()=>0)};
     TestBed.configureTestingModule({imports:[RegistroRapidoComponent], providers:[provideRouter([]),
-      {provide:FinanzasService,useValue:{getCuentas:()=>of({data:cuentas}),getCategorias:()=>of({data:categorias}),crearTransaccion:crear}},
+      {provide:FinanzasService,useValue:{getCuentas:()=>of({data:cuentas}),getCategorias:()=>of({data:categorias}),crearTransaccion:crear,getPresupuestoDisponible:()=>of({success:true,data:{tienePresupuesto:false}})}},
       {provide:AuthService,useValue:{currentUser:usuario}},
       {provide:CategoriaPreferidaService,useValue:{preferida:()=>null,recientes:()=>[],recordar:vi.fn()}},
       {provide:MovimientosOfflineService,useValue:offline},

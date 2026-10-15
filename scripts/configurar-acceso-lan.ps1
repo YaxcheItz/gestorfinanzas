@@ -27,7 +27,7 @@ if (![System.Net.IPAddress]::TryParse($DireccionIp, [ref]$ipLan) -or
     throw 'Indica una IPv4 privada de tu red local.'
 }
 $origenLan = "http://${DireccionIp}:$PuertoFrontend"
-$entornoLan.APP_CORS_ALLOWED_ORIGINS = "http://localhost:$PuertoFrontend,http://127.0.0.1:$PuertoFrontend,$origenLan"
+$entornoLan.APP_CORS_ALLOWED_ORIGINS = "http://localhost:4200,http://127.0.0.1:4200,http://localhost:$PuertoFrontend,http://127.0.0.1:$PuertoFrontend,http://${DireccionIp}:4200,http://${DireccionIp}:$PuertoFrontend,http://localhost:14200,http://127.0.0.1:14200"
 $entornoLan.JWT_REFRESH_SAME_SITE = 'Lax'
 $entornoLan.JWT_REFRESH_SECURE = 'false'
 [System.IO.File]::WriteAllText($archivoEntorno, ($entornoLan | ConvertTo-Json -Depth 10), [System.Text.UTF8Encoding]::new($false))

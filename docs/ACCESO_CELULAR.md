@@ -4,6 +4,13 @@ El frontend de desarrollo escucha en `0.0.0.0:4300` y reenvía `/api` al backend
 
 El 15 de octubre de 2026 se reprodujo un 403 de CORS: la configuración privada permitía `192.168.0.12`, pero la dirección activa era `192.168.0.93`. Se actualizó el origen exacto y se reinició únicamente el backend. La URL comprobada es `http://192.168.0.93:4300`.
 
+También el 15 de octubre de 2026 se detectó y corrigió un segundo bug: el backend arrancado sin `start-backend.ps1` (p.ej. directamente con `mvnw`) solo tenía `http://localhost:4200` como origen permitido, rechazando cualquier petición desde el puerto 4300 (Angular dev server) o 14200 (dist server). Se aplicó una corrección multicapa:
+
+- `application.yml`: la propiedad `app.cors.allowed-origins` ahora resuelve `APP_CORS_ALLOWED_ORIGINS` primero, luego `CORS_ORIGINS`, y su valor por defecto incluye los tres puertos locales estándar (4200, 4300, 14200) tanto en `localhost` como en `127.0.0.1`.
+- `CorsConfig.java`: el fallback de código cuando la propiedad llega vacía también incluye los tres puertos.
+- `start-backend.ps1`: calcula los orígenes sumando el fallback de puertos, los del archivo privado y todos los de las IPs LAN activas, sin dejar fuera ningún puerto.
+- `configurar-acceso-lan.ps1`: genera la lista completa con puertos 4200, 4300 y 14200 para localhost, 127.0.0.1 y la IP LAN.
+
 ## Si cambia la dirección de red
 
 Desde la raíz del proyecto:
@@ -14,7 +21,7 @@ Desde la raíz del proyecto:
 
 El comando detecta la interfaz con ruta por defecto y actualiza exclusivamente `.local/android-lan/backend-env.private.json`. Si hay VPN o varias interfaces, especificar `-DireccionIp` con la IPv4 privada correcta. Después hay que reiniciar el backend local cargando ese archivo de entorno; el proceso que ya está abierto no recibe cambios de variables automáticamente.
 
-Se mantienen orígenes explícitos para localhost, 127.0.0.1 y la IP elegida, con el puerto del frontend. No se abren comodines ni se modifican producción o firewall. La cookie sin Secure y con SameSite=Lax pertenece exclusivamente a este entorno HTTP local; producción conserva su configuración.
+Se mantienen orígenes explícitos para localhost, 127.0.0.1 y la IP elegida, con todos los puertos locales (4200, 4300, 14200). No se abren comodines ni se modifican producción o firewall. La cookie sin Secure y con SameSite=Lax pertenece exclusivamente a este entorno HTTP local; producción conserva su configuración.
 
 ## Comprobación de acceso y sesión
 

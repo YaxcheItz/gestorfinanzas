@@ -29,6 +29,15 @@ public record PresupuestoRequest(
         @NotNull(message = "El año es obligatorio")
         @Min(value = 2000, message = "El año debe ser válido (>= 2000)")
         @Max(value = 2100, message = "El año debe ser válido (<= 2100)")
-        Integer anio
+        Integer anio,
+
+        Long listaId,
+
+        @Min(value = 1, message = "El porcentaje de alerta debe ser al menos 1%")
+        @Max(value = 100, message = "El porcentaje de alerta no puede exceder 100%")
+        Integer porcentajeAlerta
 ) {
+    public PresupuestoRequest(Long categoriaId, BigDecimal montoLimite, String moneda, Integer mes, Integer anio) {
+        this(categoriaId, montoLimite, moneda, mes, anio, null, 80);
+    }
 }
