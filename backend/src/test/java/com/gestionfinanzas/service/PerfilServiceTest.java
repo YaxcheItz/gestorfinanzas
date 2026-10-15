@@ -25,6 +25,20 @@ class PerfilServiceTest {
     private final PerfilService perfilService = new PerfilService(usuarioRepository, passwordEncoder, sesionService);
 
     @Test
+    void periodoSeGuardaSoloEnElUsuarioAutenticadoYSinCambiarElRestoDelPerfil() {
+        Usuario usuario = Usuario.builder().id(17L).nombre("Ana").email("ana@example.com").ocultarMontos(true).build();
+        when(usuarioRepository.findById(17L)).thenReturn(Optional.of(usuario));
+        when(usuarioRepository.save(any(Usuario.class))).thenAnswer(i -> i.getArgument(0));
+        var config = new PeriodoFinanciero.Config("CATORCENA", java.time.LocalDate.of(2025, 1, 3), 1, 16);
+        var response = perfilService.actualizarPeriodo(17L, config);
+        assertEquals(config, response.periodoPredeterminado());
+        assertTrue(response.ocultarMontos());
+        assertEquals("ana@example.com", response.email());
+        verify(usuarioRepository).findById(17L);
+        verify(usuarioRepository).save(usuario);
+    }
+
+    @Test
     void cambiarPasswordIncrementaLaVersionQueRevocaTokensPrevios() {
         Usuario usuario = Usuario.builder()
                 .id(17L)

@@ -128,7 +128,7 @@ try {
         await page.locator('.home-period .time-dropdown-btn').click();
         const period = page.getByRole('dialog', { name: 'Seleccionar rango de tiempo', exact: true });
         await expect(period).toBeVisible();
-        if(width === 390) await page.screenshot({path:`${output}/screens/period-${width}-${theme}.png`});
+        if(width === 390) await page.screenshot({path:`${output}/screens/period-${width}-${theme}.png`,animations:'disabled'});
         await page.keyboard.press('Escape');
         await expect(period).not.toBeVisible();
         await expect(page.locator('.home-period .time-dropdown-btn')).toBeFocused();

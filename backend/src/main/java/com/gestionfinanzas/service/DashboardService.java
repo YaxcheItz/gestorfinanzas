@@ -206,6 +206,12 @@ public class DashboardService {
 
     @Transactional(readOnly = true)
     public DashboardComparacionResponse obtenerComparacion(Long usuarioId, Integer mes, Integer anio) {
+        return obtenerComparacion(usuarioId, mes, anio, null, null, null, null);
+    }
+
+    @Transactional(readOnly = true)
+    public DashboardComparacionResponse obtenerComparacion(Long usuarioId, Integer mes, Integer anio,
+            LocalDate desde, LocalDate hasta, LocalDate desdeAnterior, LocalDate hastaAnterior) {
         LocalDate hoy = com.gestionfinanzas.service.CalendarioFinanciero.hoy();
         int mesConsulta = mes == null ? hoy.getMonthValue() : mes;
         int anioConsulta = anio == null ? hoy.getYear() : anio;
@@ -215,16 +221,23 @@ public class DashboardService {
 
         YearMonth periodo = YearMonth.of(anioConsulta, mesConsulta);
         YearMonth periodoAnterior = periodo.minusMonths(1);
+        LocalDate[] rango = resolverRango(mesConsulta, anioConsulta, desde, hasta);
+        LocalDate[] previo;
+        if (desdeAnterior != null || hastaAnterior != null) {
+            if (desde == null) throw new IllegalArgumentException("Indica el rango actual de la comparación.");
+            previo = resolverRango(mesConsulta, anioConsulta, desdeAnterior, hastaAnterior);
+            if (!previo[1].isBefore(rango[0])) throw new IllegalArgumentException("Los periodos de comparación no pueden solaparse.");
+        } else if (desde != null) {
+            long dias = java.time.temporal.ChronoUnit.DAYS.between(rango[0], rango[1]) + 1;
+            var anterior = new PeriodoFinanciero.Rango(rango[0].minusDays(dias), rango[0].minusDays(1));
+            previo = new LocalDate[] { anterior.desde(), anterior.hasta() };
+        } else {
+            previo = resolverRango(periodoAnterior.getMonthValue(), periodoAnterior.getYear(), null, null);
+        }
         Map<String, DashboardMonedaTotales> actuales = indexarTotales(
-                transaccionRepository.findTotalesMensualesPorMoneda(
-                        usuarioId, periodo.atDay(1), periodo.atEndOfMonth()
-                )
-        );
+                transaccionRepository.findTotalesMensualesPorMoneda(usuarioId, rango[0], rango[1]));
         Map<String, DashboardMonedaTotales> anteriores = indexarTotales(
-                transaccionRepository.findTotalesMensualesPorMoneda(
-                        usuarioId, periodoAnterior.atDay(1), periodoAnterior.atEndOfMonth()
-                )
-        );
+                transaccionRepository.findTotalesMensualesPorMoneda(usuarioId, previo[0], previo[1]));
 
         Set<String> monedas = new TreeSet<>(actuales.keySet());
         monedas.addAll(anteriores.keySet());
@@ -252,9 +265,9 @@ public class DashboardService {
                 .toList();
 
         return new DashboardComparacionResponse(
-                periodo.getMonthValue(), periodo.getYear(),
-                periodoAnterior.getMonthValue(), periodoAnterior.getYear(),
-                comparaciones
+                rango[0].getMonthValue(), rango[0].getYear(),
+                previo[0].getMonthValue(), previo[0].getYear(),
+                comparaciones, rango[0], rango[1], previo[0], previo[1]
         );
     }
 
@@ -262,14 +275,10 @@ public class DashboardService {
         if ((desde == null) != (hasta == null)) {
             throw new IllegalArgumentException("Indica ambas fechas del periodo.");
         }
-        if (desde != null) {
-            if (desde.isAfter(hasta) || desde.getYear() < 2000 || hasta.getYear() > 2100) {
-                throw new IllegalArgumentException("El rango de fechas no es válido.");
-            }
-            return new LocalDate[] { desde, hasta };
-        }
-        YearMonth periodo = YearMonth.of(anio, mes);
-        return new LocalDate[] { periodo.atDay(1), periodo.atEndOfMonth() };
+        PeriodoFinanciero.Rango rango = desde == null
+                ? PeriodoFinanciero.resolver(PeriodoFinanciero.Config.mensual(), LocalDate.of(anio, mes, 1))
+                : new PeriodoFinanciero.Rango(desde, hasta);
+        return new LocalDate[] { rango.desde(), rango.hasta() };
     }
 
     private Map<String, DashboardMonedaTotales> indexarTotales(List<DashboardMonedaTotales> totales) {

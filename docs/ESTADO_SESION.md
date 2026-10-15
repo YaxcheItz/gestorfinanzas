@@ -1,5 +1,26 @@
 # Estado para retomar la sesión
 
+## Correccion vigente: acceso del celular por LAN (2026-10-15)
+
+- Corrección de operación dentro de la misma entrega `mejoras/periodos-flexibles`, conservando todos los cambios de la etapa. No se inició otra etapa funcional.
+- Reproducido CORS 403 desde el proxy 4300 con Origin `http://192.168.0.93:4300`. El entorno privado del backend tenía la IP antigua .12. Se actualizó a la IP Wi-Fi activa .93 y se reinició sólo backend 18081; frontend 4300 y servidor 14200 conservados. Cookies HTTP locales Lax/sin Secure ya eran correctas.
+- Herramienta nueva `scripts/configurar-acceso-lan.ps1`: detecta IP privada de la ruta activa o acepta IP explícita, verifica que sea el entorno Android LAN, actualiza sólo orígenes exactos locales y recuerda reiniciar el backend. No modifica producción ni abre comodines/firewall.
+- Verificación real por LAN con Chromium móvil emulado: preflight login/refresh/logout, rechazo de origen ajeno, login, cookie HttpOnly/Lax, protección CSRF, refresh, recarga y logout correctos. Cero errores JavaScript, sin overlay ni desbordamiento. Cuenta QA temporal eliminada, sin usar credenciales del usuario. Evidencia `replica/acceso-lan/verification.json`; instrucciones `docs/ACCESO_CELULAR.md`.
+- Skills seleccionadas: seguridad, Angular y playwright-cli. No cambió el código de la aplicación respecto a la entrega anterior: sus builds y suites de abajo no se presentan como repetidos en esta corrección. Se agregaron scripts operativos y se ejecutó el nuevo recorrido de sesión contra el backend real. Sin commit/push ni despliegue.
+- Se pidió al usuario URL y texto exacto por si usaba otro acceso. La corrección comprobada es la local `http://192.168.0.93:4300`; confirmación en el celular físico pendiente.
+
+
+## Etapa vigente: periodos flexibles (2026-10-15)
+
+- El rediseño y sus correcciones ya están integrados en develop mediante PR #65. Se comprobó `develop == origin/develop == f2b4cdf98357f29944ef94350ef65fd90270cf4f`, con árbol limpio antes de crear `mejoras/periodos-flexibles`. Los apartados inferiores describen sesiones anteriores.
+- Implementada la etapa 1: semana anclada, cada 14 días, dos inicios mensuales, mes con inicio elegido, año, hoy, todo el historial y rango libre. Hoja accesible, navegación conservando ciclo y preferencia persistida por usuario independiente de consulta temporal. Límites inclusivos y zona de Ciudad de México; calendario compartido Java/TypeScript con fixtures. No se cambiaron fechas de tarjetas.
+- Inicio, categorías, recientes e historial comparten rango. La vista detallada abre Informe del periodo con comparación contra el ciclo anterior real. Presupuestos permanecen mensuales y se etiquetan como tales. Contratos, decisiones y recorrido en `docs/PERIODOS_FLEXIBLES.md`.
+- Migración V4 agrega configuración de periodo con valores iniciales y restricciones. Se ampliaron pruebas V1→V4, rollback V5 y checksum, conservando pruebas y datos sintéticos existentes. Configuración Playwright admite esquema PostgreSQL aislado mediante E2E_DATABASE_SCHEMA; se mantienen protecciones que exigen base E2E dedicada.
+- Verificación: build sin avisos, 306 pruebas frontend/36 archivos, 344 pruebas backend con PostgreSQL y Flyway (sin fallos ni omisiones) y las 16 E2E vigentes contra PostgreSQL, todas correctas. Auditoría Chromium de dist: 66 comprobaciones, claro/oscuro y 390/1280, incluida caché offline. Evidencia final en `replica/periodos-flexibles/verification.json`; la auditoría adicional de 4300 terminó con 65 comprobaciones correctas, sin overlay ni desbordamientos.
+- Backend local 18081 actualizado tras respaldo privado legible `.local/periodos-antes-v4.private.dump`; API accesible a través de 4300. Angular 4300 se reinició para limpiar un overlay de Vite observado en la comprobación real, conservando puerto/host/proxy; servidor 14200 conservado. No se tocó producción ni se imprimieron credenciales. Credenciales y respaldos permanecen ignorados por Git.
+- Cambios locales sin commit, push ni despliegue. Skills: angular-developer, ecc-security-review, ecc-verification-loop y playwright-cli. Pendientes: recorrido Android físico y revisión/integración de esta entrega. Después, etapa 2 listas/etiquetas en otra rama desde develop nuevamente actualizado y comprobado; no empezar esa etapa en esta rama.
+
+
 ## Corrección de CI del rediseño
 
 - Revisados los dos checks rojos del commit `1405a1b`: CI push `38691541153` y PR `38691654811`. En ambos sólo falla E2E: cuatro casos con 11 correctos. Backend, frontend y migraciones/recuperación PostgreSQL pasan en ambos. PR #64 aparece cerrado sin merge; no se cambió su estado.

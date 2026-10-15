@@ -246,10 +246,12 @@ export class FinanzasService {
     return this.http.get<ApiResponse<DashboardAnalitica>>(`${this.baseUrl}/dashboard/analitica`, { params });
   }
 
-  getDashboardComparacion(mes?: number, anio?: number): Observable<ApiResponse<DashboardComparacion>> {
+  getDashboardComparacion(mes?: number, anio?: number, desde?: string, hasta?: string, desdeAnterior?: string, hastaAnterior?: string): Observable<ApiResponse<DashboardComparacion>> {
     let params = new HttpParams();
     if (mes) params = params.set('mes', mes);
     if (anio) params = params.set('anio', anio);
+    if (desde && hasta) params = params.set('desde', desde).set('hasta', hasta);
+    if (desdeAnterior && hastaAnterior) params = params.set('desdeAnterior', desdeAnterior).set('hastaAnterior', hastaAnterior);
     return this.http.get<ApiResponse<DashboardComparacion>>(`${this.baseUrl}/dashboard/comparacion`, { params });
   }
 

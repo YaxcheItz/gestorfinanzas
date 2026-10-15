@@ -48,6 +48,18 @@ public class PerfilService {
     }
 
     @Transactional
+    public PerfilResponse actualizarPeriodo(Long usuarioId, PeriodoFinanciero.Config config) {
+        if (config == null) throw new IllegalArgumentException("Indica el periodo predeterminado.");
+        PeriodoFinanciero.resolver(config, CalendarioFinanciero.hoy());
+        Usuario usuario = buscarUsuario(usuarioId);
+        usuario.setPeriodoTipo(config.tipo());
+        usuario.setPeriodoAncla(config.ancla());
+        usuario.setPeriodoDiaInicio(config.diaInicio());
+        usuario.setPeriodoDiaQuincena(config.diaQuincena());
+        return PerfilResponse.fromEntity(usuarioRepository.save(usuario));
+    }
+
+    @Transactional
     public void cambiarPassword(Long usuarioId, CambiarPasswordRequest request) {
         Usuario usuario = buscarUsuario(usuarioId);
         if (!passwordEncoder.matches(request.passwordActual(), usuario.getPasswordHash())) {

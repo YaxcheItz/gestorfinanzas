@@ -37,6 +37,26 @@ describe('PerfilService', () => {
 
   afterEach(() => httpMock.verify());
 
+  it('guarda periodo sin sobrescribir privacidad y descarta respuestas de otra sesion', () => {
+    service.cargar(7);
+    httpMock.expectOne(esPerfil('GET')).flush({ success: true, data: perfilBase });
+    const config = { tipo: 'MES' as const, ancla: '2026-01-05', diaInicio: 20, diaQuincena: 16 };
+    service.actualizarPeriodo(config).subscribe();
+    const solicitud = httpMock.expectOne(req => req.url.endsWith('/perfil/periodo'));
+    expect(solicitud.request.method).toBe('PUT');
+    service.perfil.update(actual => actual ? { ...actual, ocultarMontos: true } : actual);
+    solicitud.flush({ success: true, data: { ...perfilBase, periodoPredeterminado: config } });
+    expect(service.perfil()?.ocultarMontos).toBe(true);
+    expect(service.perfil()?.periodoPredeterminado).toEqual(config);
+    service.actualizarPeriodo({ ...config, diaInicio: 15 }).subscribe();
+    const vieja = httpMock.expectOne(req => req.url.endsWith('/perfil/periodo'));
+    service.cargar(9);
+    httpMock.expectOne(esPerfil('GET')).flush({ success: true, data: { ...perfilBase, id: 9 } });
+    vieja.flush({ success: true, data: { ...perfilBase, periodoPredeterminado: config } });
+    expect(service.perfil()?.id).toBe(9);
+    expect(service.perfil()?.periodoPredeterminado).toBeUndefined();
+  });
+
   it('adapta el color del navegador al tema de la app, aunque el sistema use otro', () => {
     const meta = document.createElement('meta');
     meta.name = 'theme-color';

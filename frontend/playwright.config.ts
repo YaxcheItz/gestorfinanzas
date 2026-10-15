@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const postgres = process.env['E2E_DATABASE_URL'];
+const postgresSchema = process.env['E2E_DATABASE_SCHEMA'] ?? 'finanzas';
 const frontendPort = process.env['E2E_FRONTEND_PORT'] ?? '14200';
 const backendCommand = process.platform === 'win32' ? '.\\mvnw.cmd' : 'sh ./mvnw';
 
@@ -38,10 +39,10 @@ export default defineConfig({
         SPRING_DATASOURCE_PASSWORD: process.env['E2E_DATABASE_PASSWORD'] ?? '',
         SPRING_DATASOURCE_DRIVER_CLASS_NAME: postgres ? 'org.postgresql.Driver' : 'org.h2.Driver',
         SPRING_JPA_HIBERNATE_DDL_AUTO: postgres ? 'validate' : 'create-drop',
-        SPRING_JPA_PROPERTIES_HIBERNATE_DEFAULT_SCHEMA: postgres ? 'finanzas' : 'PUBLIC',
+        SPRING_JPA_PROPERTIES_HIBERNATE_DEFAULT_SCHEMA: postgres ? postgresSchema : 'PUBLIC',
         SPRING_FLYWAY_ENABLED: postgres ? 'true' : 'false',
-        SPRING_FLYWAY_DEFAULT_SCHEMA: postgres ? 'finanzas' : 'PUBLIC',
-        SPRING_FLYWAY_SCHEMAS: postgres ? 'finanzas' : 'PUBLIC',
+        SPRING_FLYWAY_DEFAULT_SCHEMA: postgres ? postgresSchema : 'PUBLIC',
+        SPRING_FLYWAY_SCHEMAS: postgres ? postgresSchema : 'PUBLIC',
         JWT_SECRET: '0123456789abcdef0123456789abcdef',
         SERVER_PORT: '18080',
         APP_CORS_ALLOWED_ORIGINS: `http://localhost:${frontendPort}`

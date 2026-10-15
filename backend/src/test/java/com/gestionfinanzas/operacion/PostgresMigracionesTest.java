@@ -29,7 +29,7 @@ class PostgresMigracionesTest {
                 .locations(locations).target(target).baselineOnMigrate(false).cleanDisabled(true).load();
     }
 
-    @Test void actualizacionV1AV3ConservaDatosYEsRepetible() throws Exception {
+    @Test void actualizacionV1AV4ConservaDatosYEsRepetible() throws Exception {
         String schema = "mig_" + UUID.randomUUID().toString().replace("-", "");
         try (var c = conectar(); var sql = c.createStatement()) {
             var base = flyway(schema, "1", "classpath:db/migration");
@@ -37,13 +37,26 @@ class PostgresMigracionesTest {
             sql.execute("INSERT INTO " + schema + ".usuarios(nombre,email,password_hash,rol,activo) "
                     + "VALUES('Prueba','mig@example.test','hash-sintetico','ROLE_USER',true)");
             var actual = flyway(schema, "latest", "classpath:db/migration");
-            assertEquals(2, actual.migrate().migrationsExecuted);
+            assertEquals(3, actual.migrate().migrationsExecuted);
             assertEquals(0, actual.migrate().migrationsExecuted);
             actual.validate();
             try (var rows = sql.executeQuery("SELECT count(*) FROM " + schema + ".usuarios")) {
                 rows.next(); assertEquals(1, rows.getInt(1));
             }
-            assertEquals("3", actual.info().current().getVersion().getVersion());
+            try (var rows = sql.executeQuery("SELECT periodo_tipo, periodo_ancla, periodo_dia_inicio, periodo_dia_quincena FROM " + schema + ".usuarios")) {
+                assertTrue(rows.next());
+                assertEquals("MES", rows.getString(1));
+                assertEquals(java.time.LocalDate.of(2026, 1, 5), rows.getDate(2).toLocalDate());
+                assertEquals(1, rows.getInt(3));
+                assertEquals(16, rows.getInt(4));
+            }
+            assertThrows(java.sql.SQLException.class, () -> sql.executeUpdate("UPDATE " + schema + ".usuarios SET periodo_dia_inicio=0"));
+            sql.executeUpdate("UPDATE " + schema + ".usuarios SET periodo_dia_inicio=31");
+            assertEquals(0, actual.migrate().migrationsExecuted);
+            try (var rows = sql.executeQuery("SELECT periodo_dia_inicio FROM " + schema + ".usuarios")) {
+                assertTrue(rows.next()); assertEquals(31, rows.getInt(1));
+            }
+            assertEquals("4", actual.info().current().getVersion().getVersion());
         } finally {
             eliminarEsquema(schema);
         }
@@ -66,16 +79,16 @@ class PostgresMigracionesTest {
         var directorio = Files.createTempDirectory("kaptal-migracion-");
         try (var c = conectar(); var sql = c.createStatement()) {
             flyway(schema, "latest", "classpath:db/migration").migrate();
-            Files.writeString(directorio.resolve("V4__fallo_controlado.sql"),
+            Files.writeString(directorio.resolve("V5__fallo_controlado.sql"),
                     "CREATE TABLE \"${flyway:defaultSchema}\".no_debe_existir(id bigint); SELECT 1/0;");
             assertThrows(org.flywaydb.core.api.FlywayException.class,
                     () -> flyway(schema, "latest", "classpath:db/migration", "filesystem:" + directorio).migrate());
             try (var rows = sql.executeQuery("SELECT to_regclass('" + schema + ".no_debe_existir')")) {
                 rows.next(); assertNull(rows.getString(1));
             }
-            assertEquals("3", flyway(schema, "latest", "classpath:db/migration").info().current().getVersion().getVersion());
-            Files.delete(directorio.resolve("V4__fallo_controlado.sql"));
-            for (String archivo : new String[]{"V1__base_etapas_1_3.sql", "V2__chat_offline_y_cuenta_opcional.sql", "V3__limites_abuso_compartidos.sql"}) {
+            assertEquals("4", flyway(schema, "latest", "classpath:db/migration").info().current().getVersion().getVersion());
+            Files.delete(directorio.resolve("V5__fallo_controlado.sql"));
+            for (String archivo : new String[]{"V1__base_etapas_1_3.sql", "V2__chat_offline_y_cuenta_opcional.sql", "V3__limites_abuso_compartidos.sql", "V4__periodo_predeterminado.sql"}) {
                 try (var recurso = getClass().getResourceAsStream("/db/migration/" + archivo)) {
                     assertNotNull(recurso);
                     Files.copy(recurso, directorio.resolve(archivo));

@@ -1,3 +1,4 @@
+import { PeriodoConfig } from '../utils/periodo-financiero';
 export interface Usuario {
   id: number;
   nombre: string;
@@ -6,6 +7,7 @@ export interface Usuario {
 }
 
 export interface Perfil {
+  periodoPredeterminado?: PeriodoConfig;
   id: number;
   nombre: string;
   email: string;
