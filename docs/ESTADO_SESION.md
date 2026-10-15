@@ -1,5 +1,11 @@
 # Estado para retomar la sesión
 
+## Corrección de ENOENT al cambiar de rama
+
+- Git había cambiado de rediseño a develop, mientras Angular 4300 conservaba el mapa de assets del rediseño; `public/styles/activity.css` no existe en develop. El rediseño está ahora guardado en el commit `bafc5b3` de `mejoras/rediseno-integral-android`, con rama de seguimiento remota; los avisos anteriores de «sin commit» son históricos.
+- Se volvió a `mejoras/rediseno-integral-android` con árbol limpio y se reinició sólo Angular 4300 conservando host/proxy. El servidor recompiló correctamente. Chromium aislado comprobó login, cinco CSS con HTTP 200 y tipo text/css, cero errores JavaScript y ausencia de overlay Vite. No se cambió código ni se borraron datos.
+- Al cambiar de rama con diferencias en angular.json o assets, reiniciar el servidor correspondiente. Estado documentado localmente; sin nuevo commit, push o despliegue en esta corrección.
+
 ## Cierre visual y plan de continuación
 
 - El usuario autorizó cerrar los ajustes visuales y pidió todo el plan detallado para continuar con pocos tokens. Sigue la misma rama `mejoras/rediseno-integral-android`; no se abrió una etapa funcional nueva.
