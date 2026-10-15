@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -500,6 +501,62 @@ class TransaccionServiceTest {
         var respuesta=transaccionService.crearTransaccion(7L,new TransaccionRequest(1L,null,null,TipoTransaccion.GASTO,new BigDecimal("120.00"),null,LocalDate.now(),descripcion,null,null,null,3));
         assertEquals(descripcion,respuesta.descripcion());
         assertEquals(new BigDecimal("40.00"),respuesta.monto());
+    }
+
+    @Test
+    void editarTransaccionRecurrenteSoloEstaDesvinculaDeLaPlantilla() {
+        Usuario usuario = Usuario.builder().id(7L).build();
+        Cuenta cuenta = cuenta(1L, usuario, "MXN", "500.00");
+        PlantillaRecurrente plantilla = PlantillaRecurrente.builder().id(40L).usuario(usuario).monto(new BigDecimal("100.00")).build();
+        Transaccion t = Transaccion.builder()
+                .id(10L).usuario(usuario).cuenta(cuenta)
+                .tipo(TipoTransaccion.GASTO).monto(new BigDecimal("100.00"))
+                .fecha(LocalDate.now()).descripcion("Gimnasio").plantillaRecurrente(plantilla).build();
+
+        when(transaccionRepository.findByIdAndUsuarioId(10L, 7L)).thenReturn(Optional.of(t));
+        when(usuarioRepository.findById(7L)).thenReturn(Optional.of(usuario));
+        when(cuentaRepository.findByIdAndUsuarioId(1L, 7L)).thenReturn(Optional.of(cuenta));
+        when(transaccionRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        TransaccionRequest request = new TransaccionRequest(
+                1L, null, null, TipoTransaccion.GASTO, new BigDecimal("120.00"), null,
+                LocalDate.now(), "Gimnasio ajuste", null, null, null, null,
+                null, null, com.gestionfinanzas.model.enums.ModoEdicionRecurrencia.SOLO_ESTA, null
+        );
+
+        var resp = transaccionService.actualizarTransaccion(7L, 10L, request);
+
+        assertEquals(new BigDecimal("120.00"), resp.monto());
+        assertNull(t.getPlantillaRecurrente(), "Debe desvincularse al editar solo esta ocurrencia");
+        verify(plantillaRepository, never()).save(any());
+    }
+
+    @Test
+    void editarTransaccionRecurrenteEstaYSiguientesActualizaPlantilla() {
+        Usuario usuario = Usuario.builder().id(7L).build();
+        Cuenta cuenta = cuenta(1L, usuario, "MXN", "500.00");
+        PlantillaRecurrente plantilla = PlantillaRecurrente.builder().id(40L).usuario(usuario).monto(new BigDecimal("100.00")).build();
+        Transaccion t = Transaccion.builder()
+                .id(10L).usuario(usuario).cuenta(cuenta)
+                .tipo(TipoTransaccion.GASTO).monto(new BigDecimal("100.00"))
+                .fecha(LocalDate.now()).descripcion("Internet").plantillaRecurrente(plantilla).build();
+
+        when(transaccionRepository.findByIdAndUsuarioId(10L, 7L)).thenReturn(Optional.of(t));
+        when(usuarioRepository.findById(7L)).thenReturn(Optional.of(usuario));
+        when(cuentaRepository.findByIdAndUsuarioId(1L, 7L)).thenReturn(Optional.of(cuenta));
+        when(transaccionRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        TransaccionRequest request = new TransaccionRequest(
+                1L, null, null, TipoTransaccion.GASTO, new BigDecimal("150.00"), null,
+                LocalDate.now(), "Internet Fibra", "Nueva tarifa", null, null, null,
+                null, null, com.gestionfinanzas.model.enums.ModoEdicionRecurrencia.ESTA_Y_SIGUIENTES, null
+        );
+
+        transaccionService.actualizarTransaccion(7L, 10L, request);
+
+        verify(plantillaRepository).save(plantilla);
+        assertEquals(new BigDecimal("150.00"), plantilla.getMonto());
+        assertEquals("Nueva tarifa", plantilla.getNotas());
     }
 
     private Cuenta cuenta(Long id, Usuario usuario, String moneda, String saldo) {

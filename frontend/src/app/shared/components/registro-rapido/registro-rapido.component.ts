@@ -21,10 +21,14 @@ import { DialogViewportDirective } from '../../directives/dialog-viewport.direct
 import { MovimientosOfflineService } from '../../../core/services/movimientos-offline.service';
 import { CategoriaIconoComponent } from '../categoria-icono/categoria-icono.component';
 
+import { MontoPipe } from '../../../core/pipes/monto.pipe';
+import { CommonModule } from '@angular/common';
+import { PresupuestoDisponible } from '../../../core/models/finanzas.models';
+
 type TipoRegistro = 'GASTO' | 'INGRESO' | 'TRANSFERENCIA';
 @Component({
   selector: 'app-registro-rapido', standalone: true,
-  imports: [TextoFinancieroPipe, MontoPrivadoDirective, FormsModule, RouterLink, PrivacyToggleComponent, DialogViewportDirective, CategoriaIconoComponent],
+  imports: [CommonModule, MontoPipe, TextoFinancieroPipe, MontoPrivadoDirective, FormsModule, RouterLink, PrivacyToggleComponent, DialogViewportDirective, CategoriaIconoComponent],
   template: `@if (open()) {
     <div appDialogViewport class="quick-entry-backdrop" (click)="cerrar()">
       <section class="quick-entry" role="dialog" aria-modal="true" aria-labelledby="quick-entry-title" (click)="$event.stopPropagation()" (keydown)="teclado($event)">
@@ -38,18 +42,49 @@ type TipoRegistro = 'GASTO' | 'INGRESO' | 'TRANSFERENCIA';
             @else if (!cuentas.length) {<p>Necesitas una cuenta para registrar movimientos. <a routerLink="/cuentas" (click)="cerrar()">Crear cuenta</a></p>}
             @else {
               @if(repitiendo()) {<label>Descripción <span class="entry-optional">opcional</span><input name="descripcion" [(ngModel)]="descripcion" maxlength="200" /></label>}
-              <div class="entry-accounts"><label>{{ tipo === 'TRANSFERENCIA' ? 'Desde' : 'Cuenta' }}<select name="cuenta" [(ngModel)]="cuentaId" (ngModelChange)="ajustarDestino()">@if(cuentaId === null) {<option [ngValue]="null" disabled>Elige una cuenta</option>}@for (cuenta of cuentasDisponibles(); track cuenta.id) {<option [ngValue]="cuenta.id">{{ cuenta.nombre }} · {{ cuenta.moneda }}</option>}</select></label>
+              <div class="entry-accounts"><label>{{ tipo === 'TRANSFERENCIA' ? 'Desde' : 'Cuenta' }}<select name="cuenta" [(ngModel)]="cuentaId" (ngModelChange)="ajustarDestino(); consultarPresupuestoDisponible()">@if(cuentaId === null) {<option [ngValue]="null" disabled>Elige una cuenta</option>}@for (cuenta of cuentasDisponibles(); track cuenta.id) {<option [ngValue]="cuenta.id">{{ cuenta.nombre }} · {{ cuenta.moneda }}</option>}</select></label>
               @if (tipo === 'TRANSFERENCIA') {<label>Hacia<select name="destino" [(ngModel)]="destinoId">@for (cuenta of destinos(); track cuenta.id) {<option [ngValue]="cuenta.id">{{ cuenta.nombre }} · {{ cuenta.moneda }}</option>}</select></label>}</div>
               @if (tipo === 'TRANSFERENCIA' && distintaMoneda()) {<label>Tipo de cambio ({{ cuentaActual()?.moneda }} → {{ cuentaDestino()?.moneda }})<input appMontoPrivado name="tasa" type="number" inputmode="decimal" min="0.000001" step="any" [(ngModel)]="tasaCambio" required /></label>}
               @if (tipo !== 'TRANSFERENCIA') {
-                <div class="entry-categories"><span>Categoría</span><div class="entry-category-chips" aria-label="Categorías recientes">@for (categoria of categoriasRapidas(); track categoria.id) {<button type="button" [class.is-active]="categoriaId === categoria.id" [attr.aria-pressed]="categoriaId === categoria.id" (click)="categoriaId = categoria.id"><app-categoria-icono [icono]="categoria.icono" [tipo]="categoria.tipo"/><span>{{ categoria.nombre }}</span></button>}</div></div>
+                <div class="entry-categories"><span>Categoría</span><div class="entry-category-chips" aria-label="Categorías recientes">@for (categoria of categoriasRapidas(); track categoria.id) {<button type="button" [class.is-active]="categoriaId === categoria.id" [attr.aria-pressed]="categoriaId === categoria.id" (click)="seleccionarCategoria(categoria.id)"><app-categoria-icono [icono]="categoria.icono" [tipo]="categoria.tipo"/><span>{{ categoria.nombre }}</span></button>}</div></div>
+                @if (presupuestoDisponible(); as prep) {
+                  @if (prep.tienePresupuesto) {
+                    <div class="rounded-2xl p-2.5 sm:p-3 border text-xs transition-all"
+                         [ngClass]="{
+                           'bg-rose-50 border-rose-200 text-rose-800 dark:bg-rose-950/40 dark:border-rose-900 dark:text-rose-200': prep.estado === 'EXCEDIDO',
+                           'bg-amber-50 border-amber-200 text-amber-800 dark:bg-amber-950/40 dark:border-amber-900 dark:text-amber-200': prep.estado === 'ALERTA',
+                           'bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-950/40 dark:border-emerald-900 dark:text-emerald-200': prep.estado === 'NORMAL'
+                         }">
+                      <div class="flex items-center justify-between font-semibold">
+                        <span class="flex items-center gap-1.5">
+                          @if (prep.estado === 'EXCEDIDO') { <span>⛔</span> <span>Límite mensual excedido</span> }
+                          @else if (prep.estado === 'ALERTA') { <span>⚠️</span> <span>Cerca del límite ({{ prep.porcentajeAlerta }}%)</span> }
+                          @else { <span>🌿</span> <span>Presupuesto disponible</span> }
+                        </span>
+                        <span class="tabular-nums font-bold">
+                          {{ prep.montoDisponible >= 0 ? 'Te queda: ' : 'Excedido por: ' }}
+                          {{ (prep.montoDisponible >= 0 ? prep.montoDisponible : -prep.montoDisponible) | monto:prep.moneda:'symbol':'1.2-2' }}
+                        </span>
+                      </div>
+                      <div class="mt-1 text-[11px] opacity-80 flex items-center justify-between">
+                        <span>Gastado {{ prep.montoGastado | monto:prep.moneda:'symbol':'1.2-2' }} de {{ prep.montoLimite | monto:prep.moneda:'symbol':'1.2-2' }}</span>
+                        <span>{{ prep.porcentajeConsumido | number:'1.0-0' }}%</span>
+                      </div>
+                      @if (montoExcedeDisponible(prep.montoDisponible)) {
+                        <p class="mt-1 text-[11px] font-bold text-rose-700 dark:text-rose-300">
+                          ⚠️ Este gasto superará lo disponible para el mes.
+                        </p>
+                      }
+                    </div>
+                  }
+                }
               }
               <p class="entry-date">{{ fecha === hoyLocal() ? 'Hoy' : fecha }} · {{ tipo === 'TRANSFERENCIA' ? 'Entre tus cuentas' : 'Descripción opcional' }}</p>
               <details class="entry-details"><summary>Más categorías, fecha y detalles</summary>
-                @if (tipo !== 'TRANSFERENCIA') {<label>Todas las categorías<select name="categoria" [(ngModel)]="categoriaId"><option [ngValue]="null">Sin categoría</option>@for (categoria of categoriasDisponibles(); track categoria.id) {<option [ngValue]="categoria.id">{{ categoria.nombre }}</option>}</select></label>}
+                @if (tipo !== 'TRANSFERENCIA') {<label>Todas las categorías<select name="categoria" [(ngModel)]="categoriaId" (ngModelChange)="consultarPresupuestoDisponible()"><option [ngValue]="null">Sin categoría</option>@for (categoria of categoriasDisponibles(); track categoria.id) {<option [ngValue]="categoria.id">{{ categoria.nombre }}</option>}</select></label>}
                 @if(!repitiendo()) {<label>Descripción <span class="entry-optional">opcional</span><input name="descripcion" [(ngModel)]="descripcion" maxlength="200" placeholder="Ej. tacos, sueldo o ahorro" /></label>}
-                <label>Lista<select name="listaMovimiento" [(ngModel)]="listaRegistroId">@for(lista of listasEditables(); track lista.id){<option [ngValue]="lista.id">{{ lista.emoji }} {{ lista.nombre }}</option>}</select></label><label>Etiquetas<input name="etiquetasMovimiento" [(ngModel)]="etiquetasTexto" placeholder="#visa #vacaciones" maxlength="271" /></label>
-                <label>Fecha<input name="fecha" type="date" [(ngModel)]="fecha" required /></label><label>Nota<input name="nota" [(ngModel)]="nota" maxlength="500" /></label><button type="button" class="entry-text-button" (click)="avanzado()">Opciones avanzadas: recurrentes y meses sin intereses</button>
+                <label>Lista<select name="listaMovimiento" [(ngModel)]="listaRegistroId" (ngModelChange)="consultarPresupuestoDisponible()">@for(lista of listasEditables(); track lista.id){<option [ngValue]="lista.id">{{ lista.emoji }} {{ lista.nombre }}</option>}</select></label><label>Etiquetas<input name="etiquetasMovimiento" [(ngModel)]="etiquetasTexto" placeholder="#visa #vacaciones" maxlength="271" /></label>
+                <label>Fecha<input name="fecha" type="date" [(ngModel)]="fecha" (ngModelChange)="consultarPresupuestoDisponible()" required /></label><label>Nota<input name="nota" [(ngModel)]="nota" maxlength="500" /></label><button type="button" class="entry-text-button" (click)="avanzado()">Opciones avanzadas: recurrentes y meses sin intereses</button>
               </details>
             }
           </fieldset>
@@ -86,6 +121,7 @@ export class RegistroRapidoComponent implements OnDestroy {
   readonly saving = signal(false);
   readonly error = signal('');
   readonly repitiendo = signal(false);
+  readonly presupuestoDisponible = signal<PresupuestoDisponible | null>(null);
   private repeticion: Partial<TransaccionPayload> | null = null;
   readonly tipos: { value: TipoRegistro; label: string }[] = [{value:'GASTO',label:'Gasto'}, {value:'INGRESO',label:'Ingreso'}, {value:'TRANSFERENCIA',label:'Transferencia'}];
   cuentas: Cuenta[] = [];
@@ -98,6 +134,7 @@ export class RegistroRapidoComponent implements OnDestroy {
   private pendiente: TransaccionPayload | null = null;
   private catalogoSub?: Subscription;
   private guardarSub?: Subscription;
+  private presupuestoSub?: Subscription;
   private focoAnterior: HTMLElement | null = null;
   private usuarioRegistro: number | null = null;
   private catalogoVersion = 0;
@@ -144,6 +181,7 @@ export class RegistroRapidoComponent implements OnDestroy {
         this.cuentas = data.cuentas.data.filter(c => c.activo); this.categorias = data.categorias.data.filter(c => c.activo);
         if (this.usuarioRegistro !== null) void this.offline.guardarCatalogo(this.usuarioRegistro,this.cuentas,this.categorias).catch(()=>{});
         this.cambiarTipo(this.tipo);this.aplicarCategoriaSolicitada();this.aplicarRepeticion(); this.loading.set(false);
+        this.consultarPresupuestoDisponible();
         this.enfocarMonto();
       },
       error: () => { void this.cargarCatalogoLocal(version); }
@@ -156,6 +194,41 @@ export class RegistroRapidoComponent implements OnDestroy {
     try { anterior = Number(this.document.defaultView?.localStorage.getItem(`kaptal_cuenta_rapida_${this.auth.currentUser()?.id}_${tipo}`)); } catch { /* Preferencia opcional. */ }
     this.cuentaId = this.cuentasDisponibles().find(c => c.id === anterior)?.id ?? this.cuentasDisponibles()[0]?.id ?? null;
     this.ajustarDestino();
+    this.consultarPresupuestoDisponible();
+  }
+
+  seleccionarCategoria(id: number): void {
+    this.categoriaId = id;
+    this.consultarPresupuestoDisponible();
+  }
+
+  consultarPresupuestoDisponible(): void {
+    this.presupuestoSub?.unsubscribe();
+    if (this.tipo !== 'GASTO' || !this.categoriaId || typeof this.finanzas.getPresupuestoDisponible !== 'function') {
+      this.presupuestoDisponible.set(null);
+      return;
+    }
+    const cuenta = this.cuentaActual();
+    this.presupuestoSub = this.finanzas.getPresupuestoDisponible(
+      this.categoriaId,
+      this.listaRegistroId,
+      this.fecha || undefined,
+      cuenta?.moneda
+    ).subscribe({
+      next: res => {
+        if (res.success && res.data) {
+          this.presupuestoDisponible.set(res.data);
+        } else {
+          this.presupuestoDisponible.set(null);
+        }
+      },
+      error: () => this.presupuestoDisponible.set(null)
+    });
+  }
+
+  montoExcedeDisponible(disponible: number): boolean {
+    const num = Number(this.monto.trim().replace(',', '.'));
+    return Number.isFinite(num) && num > 0 && num > disponible;
   }
   private categoriaSolicitada: number | null = null;
   private aplicarCategoriaSolicitada(): void {
@@ -230,7 +303,15 @@ export class RegistroRapidoComponent implements OnDestroy {
       }
     });
   }
-  cerrar(): void { if (this.saving()) return; this.open.set(false); this.catalogoVersion++;this.catalogoSub?.unsubscribe(); this.focoAnterior?.focus(); }
+  cerrar(): void {
+    if (this.saving()) return;
+    this.open.set(false);
+    this.catalogoVersion++;
+    this.catalogoSub?.unsubscribe();
+    this.presupuestoSub?.unsubscribe();
+    this.presupuestoDisponible.set(null);
+    this.focoAnterior?.focus();
+  }
   private async guardarLocal(): Promise<void> {
     const usuario=this.usuarioRegistro;
     try {
@@ -262,5 +343,5 @@ export class RegistroRapidoComponent implements OnDestroy {
     if (event.shiftKey && this.document.activeElement === primero) { event.preventDefault(); ultimo?.focus(); }
     else if (!event.shiftKey && this.document.activeElement === ultimo) { event.preventDefault(); primero?.focus(); }
   }
-  ngOnDestroy(): void { this.catalogoSub?.unsubscribe(); this.guardarSub?.unsubscribe(); }
+  ngOnDestroy(): void { this.catalogoSub?.unsubscribe(); this.guardarSub?.unsubscribe(); this.presupuestoSub?.unsubscribe(); }
 }

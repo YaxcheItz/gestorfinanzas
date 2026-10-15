@@ -93,6 +93,7 @@ export interface Transaccion {
   notas?: string | null;
   cashbackAutomatico?: boolean;
   compraMsiId?: string | null;
+  plantillaId?: number | null;
   metodoCaptura?: 'TEXTO' | 'VOZ' | 'WHATSAPP' | null;
   fechaCreacion: string;
 }
@@ -182,6 +183,8 @@ export interface TransaccionPayload {
   frecuenciaRecurrencia?: FrecuenciaRecurrencia | null;
   siguienteFechaRecurrencia?: string | null;
   msi?: number | null;
+  modoEdicionRecurrencia?: 'SOLO_ESTA' | 'ESTA_Y_SIGUIENTES' | 'TODA_LA_SERIE';
+  fechaFinRecurrencia?: string | null;
 }
 
 export interface PlantillaRecurrente {
@@ -204,6 +207,7 @@ export interface PlantillaRecurrente {
   fechaAncla?: string | null;
   montoPendiente?: number | null;
   compraMsiId?: string | null;
+  fechaFin?: string | null;
 }
 
 export interface DashboardResumen {
@@ -270,7 +274,7 @@ export interface DashboardAnalitica {
   ultimosSeisMeses: DashboardMes[];
 }
 
-export type EstadoPresupuesto = 'NORMAL' | 'ALERTA' | 'EXCEDIDO';
+export type EstadoPresupuesto = 'NORMAL' | 'ALERTA' | 'EXCEDIDO' | 'SIN_PRESUPUESTO';
 
 export interface Presupuesto {
   id: number;
@@ -286,6 +290,9 @@ export interface Presupuesto {
   mes: number;
   anio: number;
   estado: EstadoPresupuesto;
+  porcentajeAlerta?: number;
+  listaId?: number | null;
+  listaNombre?: string | null;
 }
 
 export interface PresupuestoPayload {
@@ -294,6 +301,29 @@ export interface PresupuestoPayload {
   moneda: string;
   mes: number;
   anio: number;
+  listaId?: number | null;
+  porcentajeAlerta?: number;
+}
+
+export interface PresupuestoDisponible {
+  categoriaId: number;
+  categoriaNombre: string;
+  categoriaIcono?: string | null;
+  moneda: string;
+  montoLimite: number;
+  montoGastado: number;
+  montoDisponible: number;
+  porcentajeConsumido: number;
+  porcentajeAlerta: number;
+  estado: EstadoPresupuesto;
+  tienePresupuesto: boolean;
+  listaId?: number | null;
+  listaNombre?: string | null;
+}
+
+export interface PresupuestoDetalle {
+  presupuesto: Presupuesto;
+  movimientos: Transaccion[];
 }
 
 export interface PresupuestoResumen {

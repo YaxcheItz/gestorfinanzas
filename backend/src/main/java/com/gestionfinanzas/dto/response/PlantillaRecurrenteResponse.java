@@ -26,7 +26,8 @@ public record PlantillaRecurrenteResponse(
         BigDecimal montoPendiente,
         java.util.UUID compraMsiId,
     Long listaId,
-    java.util.Set<String> etiquetas
+    java.util.Set<String> etiquetas,
+    LocalDate fechaFin
 ) {
     public PlantillaRecurrenteResponse(Long id, Long cuentaId, String cuentaNombre,
             Long categoriaId, String categoriaNombre, TipoTransaccion tipo, BigDecimal monto,
@@ -34,14 +35,14 @@ public record PlantillaRecurrenteResponse(
             boolean activa, Integer cuotasTotales, Integer cuotasPagadas, LocalDate fechaAncla,
             BigDecimal montoPendiente, java.util.UUID compraMsiId) {
         this(id, cuentaId, cuentaNombre, categoriaId, categoriaNombre, tipo, monto, moneda, notas, frecuencia,
-                siguienteFecha, activa, cuotasTotales, cuotasPagadas, fechaAncla, montoPendiente, compraMsiId, null, java.util.Set.of());
+                siguienteFecha, activa, cuotasTotales, cuotasPagadas, fechaAncla, montoPendiente, compraMsiId, null, java.util.Set.of(), null);
     }
     public PlantillaRecurrenteResponse(Long id, Long cuentaId, String cuentaNombre,
             Long categoriaId, String categoriaNombre, TipoTransaccion tipo, BigDecimal monto,
             String moneda, String notas, FrecuenciaRecurrencia frecuencia, LocalDate siguienteFecha,
             boolean activa) {
         this(id, cuentaId, cuentaNombre, categoriaId, categoriaNombre, tipo, monto, moneda,
-                notas, frecuencia, siguienteFecha, activa, null, null, null, null, null);
+                notas, frecuencia, siguienteFecha, activa, null, null, null, null, null, null, java.util.Set.of(), null);
     }
     public static PlantillaRecurrenteResponse fromEntity(PlantillaRecurrente plantilla) {
         return new PlantillaRecurrenteResponse(
@@ -59,7 +60,8 @@ public record PlantillaRecurrenteResponse(
                 plantilla.isActiva(),
                 plantilla.getCuotasTotales(), plantilla.getCuotasPagadas(), plantilla.getFechaAncla(),
                 plantilla.getMontoPendiente(), plantilla.getCompraMsiId(),
-                plantilla.getLista() != null ? plantilla.getLista().getId() : null, new java.util.TreeSet<>(plantilla.getEtiquetas())
+                plantilla.getLista() != null ? plantilla.getLista().getId() : null, new java.util.TreeSet<>(plantilla.getEtiquetas()),
+                plantilla.getFechaFin()
         );
     }
 }
