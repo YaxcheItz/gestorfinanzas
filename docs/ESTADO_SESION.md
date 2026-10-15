@@ -1,5 +1,15 @@
 # Estado para retomar la sesión
 
+## Corrección CI de periodos flexibles (2026-10-15)
+
+- El usuario publicó la etapa en `ce2f70b78f65574ffe2f60cc795c16c83e2a5dc4`. Al iniciar esta revisión estaba develop limpio; se comprobó el remoto y se volvió a `mejoras/periodos-flexibles`, coincidente con su remoto. Es corrección de la misma etapa, no una etapa nueva.
+- Dos runs rojos del mismo commit: push 38755240473 y PR 38755327861. En ambos pasan backend, frontend, migraciones PostgreSQL y E2E. Falla solamente Respaldo y restauración en base nueva.
+- Artefacto de CI inspeccionado: todos los datos, columnas, índices y secuencias coinciden. Sólo cambia el texto de casts equivalentes del array de tipos en ck_usuario_periodo. El comparador sólo normalizaba CHECKs de enum completos; ahora admite ese subárbol dentro de CHECKs compuestos, conservando el resto de condiciones y sin reescribir literales/identificadores citados. No se modifica ninguna migración publicada.
+- Regresión del CHECK exacto descargado de GitHub: falla antes y pasa después. Cambios reales de valores, columna, fechas, límites y operadores siguen detectándose. Se comprueba también que el manifiesto completo de CI coincide al normalizar únicamente esa diferencia.
+- Verificación nueva: 6 tests de recovery y 2 de comparación de esquema correctos; pg_dump/pg_restore reales PostgreSQL 17 en dos bases nuevas aisladas, con V1-V4 y fixture sintético. Coinciden 19 tablas/datos, 196 columnas, 72 restricciones, 17 secuencias y 47 índices. Datos locales del usuario y producción sin modificar. Informe `replica/periodos-flexibles/correccion-ci/verification.json`.
+- Skill aplicada: ecc-verification-loop. Cambios locales sin commit/push ni reejecución remota; hace falta subirlos para obtener checks nuevos. Las suites de frontend/backend/E2E no se repitieron en esta corrección: ya están verdes remotamente y el cambio sólo afecta al comparador Python. Servidores conservados; al cambiar de rama, revisar/reiniciar Angular si conserva un mapa antiguo de assets.
+
+
 ## Correccion vigente: acceso del celular por LAN (2026-10-15)
 
 - Corrección de operación dentro de la misma entrega `mejoras/periodos-flexibles`, conservando todos los cambios de la etapa. No se inició otra etapa funcional.
