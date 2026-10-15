@@ -1,5 +1,82 @@
 # Estado para retomar la sesión
 
+## Corrección de CI del rediseño
+
+- Revisados los dos checks rojos del commit `1405a1b`: CI push `38691541153` y PR `38691654811`. En ambos sólo falla E2E: cuatro casos con 11 correctos. Backend, frontend y migraciones/recuperación PostgreSQL pasan en ambos. PR #64 aparece cerrado sin merge; no se cambió su estado.
+- Correcciones locales en la misma rama: recuperar nombre de cuenta junto con categoría en filas; extraer sólo el nombre textual de categoría al buscar por nombre accesible (emoji decorativo excluido); sustituir expectativas antiguas de barra inferior, skeleton, tema y tabla por controles/contextos actuales. Se mantienen las comprobaciones de edición en escritorio, filtros, privacidad, importes e idempotencia; sin omitir ni desactivar casos.
+- Build correcto sin avisos, 457.86 kB; 276 unitarias/35 archivos correctas usando el mismo runner-config de CI. La suite E2E completa se ejecuta en puerto 14220 con backend H2 aislado; no equiparar ese resultado con CI PostgreSQL remoto.
+- Resultado final: las 15 E2E vigentes pasan en 2.1 min. No se añadieron exclusiones ni se alteraron timeouts/reintentos de CI. Evidencia en `replica/rediseno-integral/correccion-ci/verification.json` y logs. Servidores temporales 14220/18080 cerrados; 4300 y 14200 conservados.
+- Sin commit, push, reapertura de PR ni reejecución remota. Los checks antiguos seguirán rojos hasta subir las correcciones y comprobar una ejecución nueva. Skills: playwright-cli y angular-developer. Logs locales en `frontend/.angular/correccion-ci-*.log`.
+
+## Corrección de ENOENT al cambiar de rama
+
+- Git había cambiado de rediseño a develop, mientras Angular 4300 conservaba el mapa de assets del rediseño; `public/styles/activity.css` no existe en develop. El rediseño está ahora guardado en el commit `bafc5b3` de `mejoras/rediseno-integral-android`, con rama de seguimiento remota; los avisos anteriores de «sin commit» son históricos.
+- Se volvió a `mejoras/rediseno-integral-android` con árbol limpio y se reinició sólo Angular 4300 conservando host/proxy. El servidor recompiló correctamente. Chromium aislado comprobó login, cinco CSS con HTTP 200 y tipo text/css, cero errores JavaScript y ausencia de overlay Vite. No se cambió código ni se borraron datos.
+- Al cambiar de rama con diferencias en angular.json o assets, reiniciar el servidor correspondiente. Estado documentado localmente; sin nuevo commit, push o despliegue en esta corrección.
+
+## Cierre visual y plan de continuación
+
+- El usuario autorizó cerrar los ajustes visuales y pidió todo el plan detallado para continuar con pocos tokens. Sigue la misma rama `mejoras/rediseno-integral-android`; no se abrió una etapa funcional nueva.
+- Añadidos: cabecera persistente, resumen compacto del gasto/periodo al salir el hero de la vista y reducción del gráfico. IntersectionObserver se desconecta al salir; privacidad se aplica también al resumen. Entrada del resumen y emoji con transform/opacity y alternativa de movimiento reducido; no se animan cifras ni altura de layout.
+- Captura: indicador de audio real dentro del panel; encabezado distingue escucha, transcripción y procesamiento. Confirmación y permisos se conservan. Skills aplicadas: animate y angular-developer.
+- Build nuevo sin avisos: 457.86 kB iniciales. Frontend: 276 pruebas/35 archivos. Verificación y evidencias nuevas en `replica/rediseno-integral/cierre-ui/`; los informes de apartados siguientes corresponden al estado anterior.
+- Completadas 65 comprobaciones Chromium sobre 4300 en 390/1280, claro/oscuro, incluidas compactación/restauración al scroll, privacidad y estados. Dos E2E seleccionados pasan con H2. Informe `replica/rediseno-integral/cierre-ui/verification.json`. El offline con SW de la revisión anterior no se presenta como repetido en este cierre.
+- Plan completo de continuación: `docs/PLAN_CONTINUACION_MONAI.md`. Orden: cerrar recorrido físico, periodos, listas/tags, presupuestos/recurrencias, asistente con evidencias, bandeja de avisos, Android/cortina, notificaciones bancarias, correo/SMS/WhatsApp, metas/compartido/divisas y publicación comprobada. Cada etapa nueva requiere rama desde develop comprobado después de integrar la anterior.
+- El Android físico sigue pendiente: no se puede certificar micrófono, teclado, permisos, haptics ni sensación táctil desde Chromium emulado. Sin conexiones privadas nuevas, dependencias, commit, push ni despliegue. Mantener servidores 4300 y 14200.
+
+## Dirección vigente: guía detallada MonAi del usuario
+
+- El usuario pidió estructurar el plan y corregir el diseño antes de seguir con integraciones. Se aplican redesign-existing-projects, apple-design y angular-developer. Es corrección de la misma etapa en `mejoras/rediseno-integral-android`; no abrir ni reutilizarla para otra etapa funcional.
+- Plan maestro nuevo: `docs/PLAN_UI_MONAI.md`, con fundamentos, orden de implementación, matriz de pantallas, flujos de aceptación y límites reales. Sustituye la estética carbón/verde y la barra inferior descritas más abajo.
+- Implementado: sistema blanco/coral y oscuro neutro, fuente nativa, Inicio sin tarjeta de saldo ni navegación inferior, selector Personal que abre herramientas reales, accesos a historial/ajustes, micrófono coral y alternativa manual. El selector no simula un modelo de múltiples listas.
+- Inicio simple/detallado: gasto del periodo como cifra principal, moneda explícita, barras de gasto real por categoría aunque no haya presupuesto, emoji, colores estables y tres recientes. Vista detallada muestra flujos, cuentas desplegables y presupuestos mensuales. No confundir gráfico de gasto con progreso del presupuesto.
+- Barras: tap abre historial con categoría/fechas; pulsación prolongada, clic contextual y botón de opciones abren hoja accesible. Registro preselecciona categoría online/offline sin guardar al abrir. Periodo en hoja con foco/Escape; rangos soportados conservados, sin nuevas opciones ficticias.
+- Historial ligero también en escritorio, por días; total por moneda de los registros cargados, excluyendo transferencias/saldo inicial y con aviso de paginación. Resumen de página opcional. Categorías ahora se representan con emoji sin migrar códigos de datos. Captura y ajustes comparten superficies/controles nuevos.
+- Pruebas frontend: 275/35 archivos. Build final sin avisos, 457.76 kB iniciales. Dos E2E seleccionados correctos con backend aislado/H2. El script visual comprueba navegación contextual, periodo, categoría→captura, privacidad, modo detallado, vacío/error y tamaños del brief en 4300; evidencias de esta revisión bajo `replica/rediseno-integral/monai-*`.
+- Cierre de verificación: `monai-final` 161 comprobaciones en 4300 (375/390/393/402/430, claro/oscuro); `monai-final-dist` 130 con offline; `monai-interactions` 64 en 393/1280 con cierre por clic. Datos sintéticos coherentes para tres categorías y presupuestos normal/alerta/exceso. Informe consolidado `replica/rediseno-integral/monai-final/verification.json`. No sumar capturas históricas como pruebas adicionales de la última versión.
+- Servidor Angular 4300 permanece activo con la configuración correcta; 14200 conserva dist actualizado. No se borraron datos ni se modificó producción. No hay commit/push/despliegue ni dependencias nuevas.
+- Pendientes explícitos de la guía: listas múltiples, tags, periodos de nómina, autoguardado, compacción física del gráfico al scroll, haptics/biometría/widgets nativos e integraciones. No están implementados por tener especificación visual. Mantener confirmación de propuestas y preferencias de tema existentes. Sin Android físico disponible.
+
+## Corrección del servidor de desarrollo
+
+- Ante el reporte de diseño descuadrado se detectó otro frontend activo en 4300 (Angular dev server), además del servidor de dist en 14200. Las comprobaciones anteriores no habían cubierto 4300.
+- Evidencia antes de corregir: `http://localhost:4300/styles.css` contenía tokens de tema pero no `.workspace-panel` ni `.workspace-tools`. El proceso no había recogido la nueva lista de estilos de angular.json.
+- Se reinició únicamente el proceso Angular de 4300 conservando host `0.0.0.0` y proxy `../.local/android-lan/proxy.conf.json`. Arranque correcto; ambos selectores aparecen ahora en su CSS. Servidor 14200 conservado, datos y almacenamiento sin borrar.
+- El script visual admite `DESIGN_REVIEW_ORIGIN` para comprobar el servidor efectivo y `DESIGN_REVIEW_SKIP_SW=1` para desarrollo sin service worker. Evidencias separadas en `replica/rediseno-integral/servidor-14200/` y `servidor-4300/`. APIs interceptadas con datos sintéticos, sin acceder a datos privados.
+- Verificación completada después del reinicio: 120 comprobaciones visuales/de interacción sobre 4300 (cuatro anchos, dos temas, sin SW de desarrollo); 121 sobre 14200 incluyendo offline. Capturas del inicio inspeccionadas. Servidor Angular queda activo en 4300.
+
+## Última revisión: inicio, navegación y alcance MonAi/Kesef
+
+- Misma etapa de rediseño, rama `mejoras/rediseno-integral-android`. Se conservan cambios locales anteriores. No hay commit, push ni despliegue.
+- Navegación vigente: cabecera con marca y Añadir; barra inferior con Inicio, Actividad, Reportes y Más. Más abre dialog nativo con Cuentas, Presupuestos, Compartido, Asistente, Organizar y Ajustes. Sustituye las descripciones de navegación anteriores.
+- Inicio compacto y barras verticales restauradas. Nueva hoja `home.css`, disponible offline; estilos antiguos de inicio/navegación retirados. Privacidad oculta también porcentaje, proporción y valores ARIA de presupuestos.
+- Build actual 460.40 kB sin avisos; 271 pruebas frontend/35 archivos y dos E2E seleccionados correctos. Revisión Chromium en `replica/rediseno-integral/inicio-monai/`, datos sintéticos con presupuestos normal/alerta/exceso, claro/oscuro y cuatro anchos. Sin validación en Android físico. Se conserva servidor del usuario 14200; servidores E2E propios cerrados.
+- Skills aplicadas en esta revisión: ui-ux-pro-max, mobile-native y replica-recon, además de las de rediseño/Angular/verificación previas. MonAi pasa a referencia principal; Kesef complementa funciones. Inventario y matriz en `replica/monai-kesef/`, enlazados desde recon y plan maestro.
+- Petición nueva: registro desde correo/SMS/avisos bancarios y acceso desde cortina Android. Investigación y arquitectura documentadas; no implementadas. MonAi Android usa notificaciones, mientras SMS/correo de su FAQ son iOS. PWA actual no tiene contenedor Android. Pregunta enviada sobre bancos y proveedor de correo; no asumir respuesta ni acceso autorizado a correos privados.
+- Próxima etapa funcional requiere integrar/revisar ésta y rama nueva desde develop comprobado; comenzar por parser y propuestas bancarias, después Android/baldosa/notificaciones y proveedor de correo. No montar otra etapa sobre esta rama ni afirmar paridad completa con MonAi.
+
+## Estado vigente: rediseño integral Android (2026-10-14)
+
+- Revisión posterior solicitada por el usuario: corregir texto sobrante y decidir la organización del menú. Es una corrección de esta misma entrega, conservada en `mejoras/rediseno-integral-android`; no inicia otra etapa.
+- Enlace para saltar al contenido oculto mediante recorte, visible sólo con `:focus-visible`, primero en el orden de teclado. Su acción mueve el foco a `main` sin navegación ni recarga; se corrigió el comportamiento de `href` relativo al base de Angular. Verificado también en el servidor existente 14200, con API interceptada y contexto aislado.
+- Barra: Inicio, Actividad, Añadir, Presupuestos (antes “Planes”) y Reportes. “Más”: Cuentas, Compartido, Asistente, grupo desplegable Organizar (Categorías, Recurrentes y Libro diario), y Ajustes. Cierra al tocar fuera, navegar o pulsar Escape; Escape devuelve foco al activador. Todas las rutas se conservan.
+- Inicio sin la tarjeta redundante de Reportes, botones duplicados de Cuentas/Ajustes, fecha decorativa ni flechas de un carrusel que ahora es rejilla. Cabecera más compacta. Reportes y captura sin eslóganes redundantes; mensajes financieros y de confirmación conservados.
+- Verificación vigente de esta revisión: 271 pruebas frontend / 35 archivos; 2 E2E seleccionados; 121 comprobaciones Chromium con API sintética y service worker real para offline. Build sin avisos, 463.92 kB iniciales. Evidencia en `replica/rediseno-integral/revision-menu/`. El test de la tarjeta eliminada se retiró; su navegación se comprueba ahora en el menú real. Sin cambios nuevos de backend ni suite backend repetida en esta revisión.
+- Las cifras de la primera entrega de los puntos inferiores describen el estado previo a estas correcciones. Sin commit, push ni publicación de la revisión.
+
+- El usuario aprobó el plan de rediseño y pidió implementarlo. Prioridad: diseño y facilidad para uso personal en Android, estilo Walti/MonAi con tema oscuro sobrio. Decisión técnica delegada: conservar Angular, Java y PostgreSQL. Confirmó ramas nuevas por etapa.
+- Se comprobó `develop` limpio y actualizado contra el remoto en `4fb43a1`; se creó `mejoras/rediseno-integral-android`. El documento anterior estaba desactualizado: ya se habían integrado cierre de etapa 6, seguridad/Android, diseño móvil y chat. La consulta remota de cierre mantiene `develop` en `4fb43a1`. No se comprobó el estado operativo de producción.
+- Primera entrega implementada: tema carbón/verde y variante clara, navegación completa, inicio simplificado, presupuestos compactos, ruta `/reportes` con APIs existentes, captura diferida con conservación del primer evento, limpieza de solicitudes al cambiar de sesión, plantillas separadas y estilos por función disponibles offline.
+- Perfiles nuevos en oscuro; preferencias existentes conservadas. Sin cambios de esquema ni contratos de API. IndexedDB e idempotencia existentes se conservan.
+- Frontend: 272 pruebas / 35 archivos. Build de producción correcto, 461.89 kB iniciales frente a 698.63 kB, sin avisos de presupuesto. La cifra no incluye solicitudes posteriores ni prefetch PWA.
+- Backend: tres pruebas de AuthService con H2 correctas. E2E seleccionados contra H2 y revisión visual/PWA con datos sintéticos documentados en `docs/REDISENO_INTEGRAL_ANDROID.md`; evidencias finales en `replica/rediseno-integral/`. No equiparar Chromium emulado con un Android físico.
+- Skills aplicadas: redesign-existing-projects, angular-developer, ecc-verification-loop, playwright-cli y security-review. Sin nuevas dependencias ni instalaciones.
+- Cambios locales en rama propia, sin commit, push ni despliegue. Se preservó el servidor existente en 14200; los E2E usaron 14220. Los servidores de verificación propios se cierran al terminar.
+- Backlog en orden acordado: tarjetas/previsión, captura automática/conciliación, metas, notificaciones e integraciones externas. Cada etapa tendrá especificación y rama nueva después de revisar/integrar la anterior. Esta entrega no conecta bancos ni Wallet.
+- Las secciones siguientes son registros históricos; sus ramas, pruebas y pendientes no describen automáticamente el estado vigente.
+
+## Registro histórico de sesiones anteriores
+
 ## Estado vigente: cierre operativo de etapa 6 (2026-10-08)
 
 - Usuario integró etapa 6. Develop local/remoto `e1e3189`, main local/remoto `77a4511`; árboles iguales. CI remoto de ambos pasó sus cuatro jobs. El push pendiente de las secciones inferiores quedó resuelto por el usuario.

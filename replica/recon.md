@@ -1,5 +1,9 @@
 # Referencia visual: MonAi → Kaptal
 
+La guía detallada posterior del usuario se implementa mediante [PLAN_UI_MONAI.md](../docs/PLAN_UI_MONAI.md): Inicio dominante, blanco/coral, emoji, barras de gasto real y paneles contextuales. Las capturas previas y las descripciones de barra inferior de este archivo son históricas.
+
+Actualización 2026-10-14: [revisión funcional MonAi/Kesef y automatizaciones Android](monai-kesef/recon.md), con [matriz de funciones](monai-kesef/features.csv). Las observaciones inferiores son históricas.
+
 Objetivo autorizado: dar a la aplicación existente una apariencia inspirada en Expense Tracker - MonAi de Florian Vates. Stack conservado: Angular 21, Tailwind y backend Spring Boot.
 
 Fuentes públicas: [sitio oficial](https://www.get-monai.app/index.html), [App Store](https://apps.apple.com/us/app/expense-tracker-monai/id6447112647), capturas oficiales `hero-en.webp`, `minimalist-en.webp`, `manual-en.webp` y `voice-en.webp` en `images/mockups/`. Las capturas se usaron como referencia de lectura; los recursos de MonAi no se incluyeron en el frontend.

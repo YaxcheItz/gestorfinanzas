@@ -35,9 +35,23 @@ class AuthServiceTest {
         assertThat(response.refreshToken()).isNotBlank();
 
         var usuario = usuarioRepository.findByEmail("ana.nueva@example.com").orElseThrow();
+        assertThat(usuario.getTemaPreferido()).isEqualTo("OSCURO");
         assertThat(cuentaRepository.findByUsuarioIdOrderByActivoDescNombreAsc(usuario.getId()))
                 .extracting("nombre")
                 .containsExactly("Billetera / Efectivo");
+    }
+
+    @Test
+    @DisplayName("Google conserva preferencias existentes y crea perfiles oscuros")
+    void temaGoogleNuevoYExistente() {
+        authService.autenticarGoogle("nuevo-tema", "Nueva", "nueva.tema@example.com", true);
+        var nuevo = usuarioRepository.findByEmail("nueva.tema@example.com").orElseThrow();
+        assertThat(nuevo.getTemaPreferido()).isEqualTo("OSCURO");
+        nuevo.setTemaPreferido("CLARO");
+        usuarioRepository.saveAndFlush(nuevo);
+        authService.autenticarGoogle("nuevo-tema", "Nueva", "nueva.tema@example.com", true);
+        assertThat(usuarioRepository.findByEmail("nueva.tema@example.com").orElseThrow().getTemaPreferido())
+                .isEqualTo("CLARO");
     }
 
     @Test

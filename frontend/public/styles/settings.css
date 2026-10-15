@@ -1,0 +1,21 @@
+
+
+html .monai-theme .settings-page { max-width: 56rem; padding: 1.25rem 1.25rem 2rem; }
+html .monai-theme .settings-page > nav { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0; padding: 0; overflow: visible; }
+html .monai-theme .settings-page > nav a { justify-content: center; min-width: 0; border-color: var(--kaptal-border); background: var(--kaptal-surface); color: var(--kaptal-content); font-size: .8rem; }
+html .monai-theme .settings-page :is(button, select) { min-height: 44px; }
+html .monai-theme .settings-page :is(input:not([type="checkbox"]), select) { font-size: 1rem; }
+.settings-disclosure { border-color: var(--kaptal-border) !important; box-shadow: none !important; }
+.settings-disclosure > summary { display: grid; grid-template-columns: minmax(0, 1fr) 20px; align-items: center; gap: .35rem .75rem; min-height: 44px; cursor: pointer; list-style: none; touch-action: manipulation; }
+.settings-disclosure > summary::-webkit-details-marker { display: none; }
+.settings-disclosure > summary strong { color: var(--kaptal-content); font-size: 1rem; line-height: 1.35; }
+.settings-disclosure > summary span { grid-column: 1; color: var(--kaptal-content-muted); font-size: .8rem; line-height: 1.5; }
+.settings-disclosure > summary::after { content: '＋'; grid-column: 2; grid-row: 1 / 3; color: var(--kaptal-content-muted); text-align: center; }
+.settings-disclosure[open] > summary::after { content: '−'; }
+.settings-disclosure > summary:focus-visible { outline: 2px solid var(--kaptal-focus); outline-offset: 4px; border-radius: .5rem; }
+.settings-disclosure__content { min-width: 0; margin-top: 1.25rem; border-top: 1px solid var(--kaptal-border); padding-top: 1.25rem; }
+.settings-disclosure__content > div:first-child h2 { font-size: .875rem; }
+.settings-management { padding: 1rem; border: 1px solid var(--kaptal-border); border-radius: 1rem; background: var(--kaptal-surface); }
+.settings-management h2 { font-weight: 700; margin-bottom: .75rem; }
+.settings-management nav { display: grid; gap: .5rem; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+.settings-management a { display: flex; justify-content: space-between; align-items: center; min-height: 48px; padding: .7rem; border-radius: .75rem; background: var(--kaptal-surface-subtle); color: var(--kaptal-content); }

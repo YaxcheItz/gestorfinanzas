@@ -1,0 +1,43 @@
+/* Shared surfaces and controls; layout-specific rules stay with their features. */
+.page-eyebrow{font-size:.7rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--kaptal-content-muted);margin-bottom:.45rem}
+#main-content{outline:none;min-width:0}
+html .monai-theme .finance-page :is(h1,h2){letter-spacing:-.035em}
+html .monai-theme :is(input,select,textarea){font-variant-numeric:tabular-nums}
+html .monai-theme :is(input:not([type="checkbox"]):not([type="radio"]),select,textarea){background-color:var(--kaptal-surface-subtle);color:var(--kaptal-content);border-color:var(--kaptal-border)}
+html .monai-theme :is(button,[role="button"],summary){touch-action:manipulation}
+html .monai-theme :is(.utility-button,.privacy-toggle){min-height:48px;min-width:48px}
+
+/* Contextual shell: a dominant Home, with tools in a sheet rather than a tab bar. */
+.workspace-tools{position:relative;z-index:20;display:flex;align-items:center;justify-content:space-between;width:min(100%,48rem);margin:0 auto;padding:calc(12px + env(safe-area-inset-top)) 20px 8px;gap:16px}
+.workspace-context,.workspace-shortcuts{display:flex;align-items:center;gap:8px;min-width:0}
+.workspace-selector,.glass-icon,.capture-dock__manual{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;border:1px solid var(--kaptal-glass-border);border-radius:999px;background:var(--kaptal-glass);color:var(--kaptal-content);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 2px 12px rgb(0 0 0 / .035);text-decoration:none}
+.workspace-selector{padding:8px 16px;font-size:15px;font-weight:600}
+.workspace-selector>span{font-size:17px}.workspace-selector>svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8}
+.glass-icon{width:44px;flex:none;font-size:26px}.glass-icon svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.capture-dock{position:fixed;z-index:35;right:max(20px,calc((100vw - 48rem)/2 + 20px));bottom:calc(20px + env(safe-area-inset-bottom));display:flex;align-items:center;gap:12px}
+.capture-dock__manual{width:48px;height:48px}.capture-dock svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.capture-dock__voice{display:grid;place-items:center;width:64px;height:64px;border:0;border-radius:50%;background:var(--kaptal-voice);color:#fff;box-shadow:0 8px 26px rgb(255 116 107 / .24);transition:transform 180ms ease-out}
+.capture-dock__voice svg{width:27px;height:27px}.capture-dock__voice:active{transform:scale(.94)}
+html:has(.capture-panel,.quick-entry,.home-sheet-backdrop,.time-dropdown-backdrop) .capture-dock{visibility:hidden}
+.workspace-panel{position:fixed;inset:auto 0 0;width:min(100%,32rem);max-height:85dvh;margin:0 auto;padding:24px 20px calc(24px + env(safe-area-inset-bottom));overflow:auto;border:0;border-radius:30px 30px 0 0;background:var(--kaptal-surface);color:var(--kaptal-content);box-sizing:border-box}
+.workspace-panel::before{content:'';position:absolute;top:8px;left:calc(50% - 18px);width:36px;height:5px;border-radius:99px;background:var(--kaptal-border)}
+.workspace-panel::backdrop{background:rgb(0 0 0 / .28)}
+.workspace-panel>header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:24px}
+.workspace-panel h2{margin:0;font-size:28px;font-weight:700;letter-spacing:-.04em}.sheet-caption{font-size:12px;color:var(--kaptal-content-muted);margin:0 0 4px}
+.workspace-panel>header button{display:grid;place-items:center;width:44px;height:44px;border:0;border-radius:50%;font-size:28px;background:var(--kaptal-surface-subtle);color:inherit}
+.workspace-panel a{display:flex;align-items:center;justify-content:space-between;min-height:52px;padding:12px 16px;color:inherit;text-decoration:none;gap:8px;font-size:15px}
+.workspace-panel a:hover{background:var(--kaptal-surface-subtle)}
+.workspace-panel__primary{display:grid;grid-template-columns:1fr;margin-bottom:16px;background:var(--kaptal-surface-subtle);border-radius:18px;overflow:hidden}
+.workspace-panel__primary span,.workspace-panel__settings span{color:var(--kaptal-content-muted)}
+.workspace-menu__tools{padding:4px 0}.workspace-menu__tools summary{min-height:52px;align-content:center;cursor:pointer;padding:12px 16px;color:var(--kaptal-content-muted)}
+.workspace-panel__settings{margin-top:8px;border-radius:16px;background:var(--kaptal-surface-subtle)}
+html:has(.workspace-panel[open],.home-sheet-backdrop,.time-dropdown-backdrop){overflow:hidden}
+.category-emoji{font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif;font-size:22px}.category-emoji-large{font-size:28px;line-height:1.25}
+html .monai-theme .finance-page{max-width:48rem;padding-inline:20px}
+html .monai-theme .finance-page h1{font-size:30px;line-height:1.2}
+@media(min-width:768px){.workspace-tools{padding-top:24px}.workspace-panel{bottom:16px;border-radius:30px}}
+@supports not (backdrop-filter:blur(20px)){.workspace-selector,.glass-icon,.capture-dock__manual{background:var(--kaptal-surface-subtle)}}
+@media(prefers-reduced-motion:reduce){.capture-dock__voice{transition:none}}
+
+app-navbar{display:contents}
+.workspace-tools{position:sticky;top:0;background:var(--kaptal-canvas)}

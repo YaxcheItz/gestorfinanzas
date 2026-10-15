@@ -1,0 +1,533 @@
+
+    <div class="dashboard-screen" [class.home-is-compact]="inicioCompacto()">
+      <div class="home-scroll-summary" [class.is-visible]="inicioCompacto()" aria-hidden="true"><span>Gastos · {{ etiquetaRangoSeleccionado() }}</span>@if(resumenMonedaSeleccionada(); as moneda){<strong>{{ moneda.gastosMes | monto:moneda.moneda:'symbol-narrow':'1.2-2' }} <small>{{ moneda.moneda }}</small></strong>}</div>
+      <header class="dashboard-screen__header">
+        <h1 class="sr-only">Resumen financiero</h1>
+        <div class="home-view-switch" role="group" aria-label="Vista del inicio"><button type="button" [attr.aria-pressed]="!vistaDetallada()" (click)="vistaDetallada.set(false)">Simple</button><button type="button" [attr.aria-pressed]="vistaDetallada()" (click)="vistaDetallada.set(true)">Detallada</button></div>
+        <app-privacy-toggle/>
+      </header>
+
+      <!-- Modal de Selección de Rango de Tiempo (Time Dropdown Modal) -->
+      @if (modalRangoAbierto()) {
+        <div class="time-dropdown-backdrop" (click)="cerrarModalRango()">
+          <div class="time-dropdown-modal" appFocusTrap tabindex="-1" (focusTrapEscape)="cerrarModalRango()" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-label="Seleccionar rango de tiempo">
+            <header class="time-dropdown-modal__head">
+              <h3>Periodo</h3>
+              <button type="button" (click)="cerrarModalRango()" aria-label="Cerrar modal">×</button>
+            </header>
+            <div class="period-month-stepper"><button type="button" (click)="cambiarPeriodo(-1)" aria-label="Mes anterior">&lsaquo;</button><span>{{ periodoResumen() }}</span><button type="button" (click)="cambiarPeriodo(1)" [disabled]="periodoEsActual()" aria-label="Mes siguiente">&rsaquo;</button></div>
+            <div class="time-dropdown-modal__options">
+              <button type="button" class="time-option-card" [class.is-active]="tipoRango() === 'MES'" (click)="seleccionarRango('MES')">
+                <div class="time-option-card__info">
+                  <strong>Mes completo</strong>
+                  <small>{{ periodoResumen() }}</small>
+                </div>
+                @if (tipoRango() === 'MES') { <span class="time-option-check" aria-hidden="true">✓</span> }
+              </button>
+              <button type="button" class="time-option-card" [class.is-active]="tipoRango() === 'SEMANA'" (click)="seleccionarRango('SEMANA')">
+                <div class="time-option-card__info">
+                  <strong>Semana</strong>
+                  <small>Últimos 7 días</small>
+                </div>
+                @if (tipoRango() === 'SEMANA') { <span class="time-option-check" aria-hidden="true">✓</span> }
+              </button>
+              <button type="button" class="time-option-card" [class.is-active]="tipoRango() === 'HOY'" (click)="seleccionarRango('HOY')">
+                <div class="time-option-card__info">
+                  <strong>Hoy</strong>
+                  <small>Movimientos de la fecha</small>
+                </div>
+                @if (tipoRango() === 'HOY') { <span class="time-option-check" aria-hidden="true">✓</span> }
+              </button>
+              <button type="button" class="time-option-card" [class.is-active]="tipoRango() === 'PERSONALIZADO'" (click)="seleccionarRango('PERSONALIZADO')">
+                <div class="time-option-card__info">
+                  <strong>Personalizado</strong>
+                  <small>Elegir fechas de inicio y fin</small>
+                </div>
+                @if (tipoRango() === 'PERSONALIZADO') { <span class="time-option-check" aria-hidden="true">✓</span> }
+              </button>
+            </div>
+            @if (editandoRango()) {
+              <div class="time-dropdown-modal__nav">
+                <form (ngSubmit)="aplicarRangoPersonalizado()" class="space-y-3">
+                  <label class="block">Desde<input type="date" name="desde" required min="2000-01-01" [max]="fechaHoy()" [(ngModel)]="borradorDesde" class="block w-full rounded-lg border p-2" /></label>
+                  <label class="block">Hasta<input type="date" name="hasta" required [min]="borradorDesde || '2000-01-01'" [max]="fechaHoy()" [(ngModel)]="borradorHasta" class="block w-full rounded-lg border p-2" /></label>
+                  @if (errorRango()) { <p role="alert">{{ errorRango() }}</p> }
+                  <button type="submit" class="min-h-11 rounded-lg bg-emerald-700 px-4 text-white">Aplicar fechas</button>
+                </form>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      @if (movimientosOffline.pendientes().length > 0) {
+        <section class="dashboard-screen__notice dashboard-screen__notice--offline" aria-labelledby="offline-pendientes-title">
+          <div><strong id="offline-pendientes-title">{{ movimientosOffline.pendientes().length }} movimientos sin sincronizar</strong><p>Guardados en este dispositivo.</p></div>
+          <button type="button" (click)="sincronizarPendientes()" [disabled]="movimientosOffline.sincronizando() || !hayConexion()">{{ movimientosOffline.sincronizando() ? 'Sincronizando…' : 'Sincronizar' }}</button>
+          <details><summary>Revisar</summary><ul>@for (pendiente of movimientosOffline.pendientes(); track pendiente.id) {<li><span>{{ etiquetaTipo(pendiente.payload.tipo) }} · {{ (pendiente.payload.notas || 'Sin nota') | textoFinanciero }} · {{ pendiente.payload.fecha }} @if (pendiente.error) {<span class="dashboard-screen__error">{{ pendiente.error }}</span>}</span><span><button type="button" (click)="revisarPendiente(pendiente)">{{ pendiente.estado === 'REVISAR' ? 'Preparar corrección' : 'Reintentar' }}</button> <button type="button" (click)="eliminarPendiente(pendiente.id)">Eliminar</button></span></li>}</ul></details>
+        </section>
+      }
+      @if (!hayConexion() && movimientosOffline.errorAlmacenamiento()) {
+        <p class="dashboard-screen__notice dashboard-screen__notice--error" role="alert">{{ movimientosOffline.errorAlmacenamiento() }} El registro sin conexi&oacute;n necesita almacenamiento local.</p>
+      }
+      @if (catalogoOfflineUsado()) {
+        <p class="dashboard-screen__notice dashboard-screen__notice--info" role="status">Usando cuentas y categor&iacute;as guardadas el {{ fechaCatalogoOffline() }}. Los saldos podr&iacute;an estar desactualizados.</p>
+      }
+      @if (error()) {
+        <p class="dashboard-screen__notice dashboard-screen__notice--error" role="alert">{{ error() }} <button type="button" (click)="cargarDashboard()">Reintentar</button></p>
+      }
+
+      <section #homeHero class="dashboard-screen__monthly" (touchstart)="onHeroTouchStart($event)" (touchmove)="onHeroTouchMove($event)" (touchend)="onHeroTouchEnd($event)" [style.transform]="heroSwipeTransform()" aria-labelledby="dashboard-balance-title">
+        <p id="dashboard-balance-title" class="home-total-label">Gastos del periodo</p>
+        @if (loading()) { <div class="home-amount-loading" role="status" aria-label="Cargando gastos"></div> }
+        @else if (resumenMonedaSeleccionada(); as moneda) {
+          <p class="dashboard-screen__amount" aria-live="polite">{{ moneda.gastosMes | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</p>
+          <label class="home-currency"><span class="sr-only">Moneda del balance</span><select [ngModel]="monedaResumen()" (ngModelChange)="cambiarMoneda($event)" aria-label="Moneda del balance">@for (codigo of monedasResumen(); track codigo) {<option [value]="codigo">{{ codigo }}</option>}</select></label>
+          @if (vistaDetallada()) {
+            <div class="home-metrics"><span>Ingresos <strong>{{ moneda.ingresosMes | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong></span><span>Balance del periodo <strong>{{ moneda.ingresosMes - moneda.gastosMes | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong></span></div>
+            <details class="home-account-details"><summary>Saldo de cuentas</summary><div><span>Dinero en cuentas</span><strong>{{ (moneda.dineroDisponible ?? moneda.balanceTotal) | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong></div>@if(moneda.deudaTarjetas != null && moneda.deudaTarjetas > 0){<div><span>Deuda de tarjetas</span><strong>{{ moneda.deudaTarjetas | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong></div><div><span>Saldo neto</span><strong>{{ moneda.balanceTotal | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong></div>}<button type="button" (click)="irACuentas()">{{ moneda.totalCuentas }} cuentas &rsaquo;</button></details>
+          }
+        } @else if (!error()) { <p class="dashboard-screen__amount">{{ 0 | monto:monedaResumen():'symbol-narrow':'1.2-2' }}</p> }
+        <div class="home-period"><button type="button" class="home-period-arrow" (click)="cambiarPeriodo(-1)" aria-label="Mes anterior">&lsaquo;</button><button type="button" class="time-dropdown-btn" (click)="toggleModalRango()" aria-haspopup="dialog" [attr.aria-expanded]="modalRangoAbierto()">{{ etiquetaRangoSeleccionado() }} <span aria-hidden="true">&#8964;</span></button><button type="button" class="home-period-arrow" (click)="cambiarPeriodo(1)" [disabled]="periodoEsActual()" aria-label="Mes siguiente">&rsaquo;</button></div>
+      </section>
+
+      <section class="home-categories" aria-labelledby="home-categories-title">
+        <h2 id="home-categories-title" class="sr-only">Gastos por categoría</h2>
+        @if (graficoLoading()) {<div class="home-chart-loading" role="status" aria-label="Cargando categorías"><span></span><span></span><span></span><span></span></div>}
+        @else if (graficoError()) {<p class="home-inline-state" role="alert">No pudimos cargar las categorías. <button type="button" (click)="cargarDashboard()">Reintentar</button></p>}
+        @else if (categoriasInicio().length > 0) {
+          <div class="home-category-chart" aria-label="Gastos por categoría, desliza para ver más" tabindex="0">
+            @for (categoria of categoriasInicio(); track categoria.categoriaId) {
+              <article class="home-category" [style.--category-tone]="categoria.tono">
+                <button type="button" class="home-category__bar-button" (pointerdown)="iniciarPresionCategoria($event,categoria)" (pointermove)="moverPresionCategoria($event)" (pointerleave)="cancelarPresionCategoria()" (click)="tocarCategoria(categoria)" (contextmenu)="$event.preventDefault(); categoriaContextual.set(categoria)" [attr.aria-label]="'Ver movimientos de ' + categoria.categoriaNombre">
+                  <span class="home-category__track"><span class="home-category__bar" [style.height.%]="categoria.altura" aria-hidden="true"></span><span class="home-category__emoji"><app-categoria-icono [icono]="categoria.icono" clase="category-emoji-large"/></span></span>
+                  <strong>{{ categoria.monto | monto:categoria.moneda:'symbol-narrow':'1.0-2' }}</strong><span class="home-category__name">{{ categoria.categoriaNombre }}</span>
+                </button>
+                <button type="button" class="home-category__more" (click)="categoriaContextual.set(categoria)" [attr.aria-label]="'Opciones de ' + categoria.categoriaNombre">&middot;&middot;&middot;</button>
+              </article>
+            }
+          </div>
+        } @else if (!loading() && !error()) {<div class="home-empty"><span aria-hidden="true">&#127793;</span><h2>Sin gastos todavía</h2><p>Cuéntanos qué gastaste, hablando o escribiendo.</p><button type="button" (click)="abrirChatRegistro()">Prefiero registrarlo a mano</button></div>}
+      </section>
+
+      @if (vistaDetallada()) {
+        <section class="dashboard-screen__budgets" aria-labelledby="dashboard-budgets-title"><div class="dashboard-screen__section-heading"><div><h2 id="dashboard-budgets-title">Presupuestos</h2><p class="dashboard-budget-period">{{ periodoResumen() }} · mensual</p></div><button type="button" class="dashboard-screen__text-link" (click)="irAPresupuestos()">Ver todos</button></div>
+          @if (presupuestoLoading()) {<p class="home-inline-state">Cargando presupuestos…</p>}
+          @else if (presupuestoError()) {<p class="home-inline-state" role="alert">{{ presupuestoError() }} <button type="button" (click)="cargarPresupuestos()">Reintentar</button></p>}
+          @else { @for(presupuesto of presupuestosDashboard(); track presupuesto.id){
+            <div class="home-budget-row"><app-categoria-icono [icono]="presupuesto.categoriaIcono"/><div><strong>{{ presupuesto.categoriaNombre }}</strong><small class="dashboard-budget-left" [class.is-over]="presupuesto.montoDisponible < 0">{{ presupuesto.montoDisponible < 0 ? 'Excedido en' : 'Queda' }} {{ (presupuesto.montoDisponible < 0 ? -presupuesto.montoDisponible : presupuesto.montoDisponible) | monto:presupuesto.moneda:'symbol-narrow':'1.2-2' }}</small><div class="home-budget-progress" role="progressbar" [attr.aria-label]="'Presupuesto de ' + presupuesto.categoriaNombre" aria-valuemin="0" [attr.aria-valuemax]="privacidad.ocultarMontos() ? null : presupuesto.montoLimite" [attr.aria-valuenow]="privacidad.ocultarMontos() ? null : presupuestoGastadoLimitado(presupuesto.montoGastado,presupuesto.montoLimite)" [attr.aria-valuetext]="privacidad.ocultarMontos() ? 'Importe oculto' : null" [style.--budget-fill]="(privacidad.ocultarMontos() ? 0 : porcentajePresupuesto(presupuesto.porcentajeConsumido)) + '%'"><span [style.width]="'var(--budget-fill)'" [class.is-over]="presupuesto.estado === 'EXCEDIDO'"></span></div></div></div>
+          } @empty {<button type="button" class="dashboard-screen__text-link" (click)="irAPresupuestos()">Crear presupuesto</button>} }
+        </section>
+      }
+
+      @if (vistaDetallada() && plantillasPorAtender().length > 0) {
+        <section class="dashboard-screen__section dashboard-screen__upcoming" aria-labelledby="dashboard-upcoming-title">
+          <div class="dashboard-screen__section-heading"><div class="dashboard-screen__title-with-icon"><span class="dashboard-screen__section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4m8-4v4M4 10h16m-11 4h2m-2 3h5"/></svg></span><div><p class="dashboard-screen__eyebrow">Pr&oacute;ximos 7 d&iacute;as</p><h2 id="dashboard-upcoming-title">Pagos programados</h2></div></div><button type="button" class="dashboard-screen__text-link" (click)="irARecurrentes()">Ver todos</button></div>
+          @for (plantilla of plantillasPorAtender().slice(0, 3); track plantilla.id) {
+            <article class="dashboard-screen__recurring"><div class="dashboard-screen__recurring-copy"><strong>{{ plantilla.categoriaNombre || (plantilla.tipo === 'INGRESO' ? 'Ingreso recurrente' : 'Gasto recurrente') }}</strong><span>{{ plantilla.siguienteFecha <= fechaHoy() ? 'Pendiente de confirmar' : plantilla.siguienteFecha }} · {{ nombreCuentaVisible(plantilla.cuentaNombre) }}</span></div><strong class="dashboard-screen__recurring-amount">{{ plantilla.monto | monto:plantilla.moneda:'symbol':'1.2-2' }}</strong>@if (plantilla.siguienteFecha <= fechaHoy()) {<button type="button" class="dashboard-screen__confirm" (click)="registrarRecurrente(plantilla)" [disabled]="registrandoRecurrenciaId() === plantilla.id">{{ registrandoRecurrenciaId() === plantilla.id ? 'Guardando…' : 'Confirmar' }}</button>}</article>
+          }
+          <p class="dashboard-screen__footnote">Kaptal te recuerda; no registra cargos autom&aacute;ticamente.</p>
+        </section>
+      }
+
+      <!-- 4. Lista de Actividad Reciente con botón Ver Todo -->
+      @if (loading() || error() || ultimosMovimientosLimitados().length > 0 || vistaDetallada()) {
+      <section class="dashboard-screen__section dashboard-screen__activity dashboard-screen__recent" aria-labelledby="dashboard-recent-title">
+        <div class="dashboard-screen__section-heading">
+          <div>
+            <h2 id="dashboard-recent-title">Recientes</h2>
+          </div>
+          <button type="button" class="dashboard-screen__text-link" (click)="irATransacciones()">
+            Ver todos <span aria-hidden="true">→</span>
+          </button>
+        </div>
+        @if (loading()) {
+          <div class="dashboard-loading-movements" role="status" aria-label="Cargando movimientos">
+            <span class="sr-only">Cargando movimientos…</span>
+            @for (fila of [0, 1, 2]; track fila) {
+              <div class="dashboard-loading-row" aria-hidden="true"><span class="loading-placeholder loading-placeholder--icon"></span><span class="loading-placeholder loading-placeholder--text"></span><span class="loading-placeholder loading-placeholder--value"></span></div>
+            }
+          </div>
+        } @else if (error()) {
+          <p class="dashboard-screen__muted">No pudimos consultar tus movimientos recientes. Usa Reintentar para volver a cargarlos.</p>
+        } @else if ((ultimosMovimientosLimitados().length === 0)) {
+          <div class="dashboard-screen__inline-empty">
+            <p>No hay movimientos en este período. Puedes añadir uno o consultar el historial.</p>
+            @if((resumen()?.totalCuentas??0) === 0) {<button type="button" (click)="irACuentas()">Crear cuenta</button>} @else {<button type="button" (click)="abrirChatRegistro()">Añadir movimiento</button>}
+          </div>
+        } @else {
+          <div class="dashboard-screen__recent-list">
+            @for (movimiento of ultimosMovimientosLimitados(); track movimiento.id) {
+              <app-movimiento-mobile-card [movimiento]="movimiento" (detalle)="verDetalleMovimiento($event.id)" (editar)="editarMovimiento($event.id)" (eliminar)="eliminarMovimiento($event)" />
+            }
+          </div>
+        }
+      </section>
+      }
+
+    </div>
+
+    @if (categoriaContextual(); as categoria) {
+      <div class="home-sheet-backdrop" (click)="categoriaContextual.set(null)"><section class="home-context-sheet" role="dialog" aria-modal="true" aria-labelledby="category-context-title" appFocusTrap tabindex="-1" (focusTrapEscape)="categoriaContextual.set(null)" (click)="$event.stopPropagation()"><header><div><app-categoria-icono [icono]="categoria.icono" clase="category-emoji-large"/><h2 id="category-context-title">{{ categoria.categoriaNombre }}</h2></div><button type="button" class="glass-icon" (click)="categoriaContextual.set(null)" aria-label="Cerrar opciones de categoría">&times;</button></header><p>Gastado <strong>{{ categoria.monto | monto:categoria.moneda:'symbol-narrow':'1.2-2' }}</strong></p>@if(categoria.presupuesto; as presupuesto){<p>Presupuesto mensual <strong>{{ presupuesto.montoLimite | monto:presupuesto.moneda:'symbol-narrow':'1.2-2' }}</strong></p><p>{{ presupuesto.montoDisponible < 0 ? 'Excedido en' : 'Disponible' }} <strong>{{ (presupuesto.montoDisponible < 0 ? -presupuesto.montoDisponible : presupuesto.montoDisponible) | monto:presupuesto.moneda:'symbol-narrow':'1.2-2' }}</strong></p>}<nav><button type="button" (click)="registrarCategoria(categoria)">Añadir gasto</button><button type="button" (click)="categoriaContextual.set(null); irATransacciones(categoria.categoriaId)">Ver movimientos</button><button type="button" (click)="categoriaContextual.set(null); irAPresupuestos()">{{ categoria.presupuesto ? 'Editar presupuesto' : 'Definir presupuesto' }}</button></nav></section></div>
+    }
+
+    <!-- Modal Interactivo 'Nuevo Movimiento' -->
+    @if (modalAbierto()) {
+      <div class="fixed inset-0 z-50 flex items-end justify-center overflow-hidden bg-slate-900/60 px-0 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] backdrop-blur-xs sm:items-center sm:p-4">
+        <div #movementDialog tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="dashboard-movement-title" class="dashboard-motion-scope dashboard-movement-dialog flex h-full max-h-full min-h-0 min-w-0 w-full flex-col overflow-hidden rounded-t-3xl border border-slate-200 bg-white shadow-2xl animate-in fade-in zoom-in-95 duration-150 sm:h-[min(90dvh,48rem)] sm:max-h-[min(90dvh,48rem)] sm:max-w-lg sm:rounded-3xl">
+
+          <!-- Encabezado del Modal con Selector de Tipo -->
+          <div class="shrink-0 border-b border-slate-100 p-4 sm:p-6">
+            <div class="flex items-center justify-between gap-3 pb-4">
+              <div>
+                <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Kaptal</p>
+                <h2 id="dashboard-movement-title" class="text-base font-bold text-slate-900 sm:text-lg">Registrar Movimiento</h2>
+              </div>
+              <button
+                type="button"
+                (click)="cerrarModal()"
+                aria-label="Cerrar formulario de movimiento"
+                class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 cursor-pointer">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <!-- Selector de Tipo de Transacción: Segmented Control con color semántico -->
+            <div role="group" aria-label="Tipo de movimiento" class="grid grid-cols-3 gap-1.5 rounded-xl bg-slate-100 p-1 text-[11px] font-semibold sm:text-xs">
+              <button
+                type="button"
+                (click)="cambiarTipo('GASTO')"
+                [attr.aria-pressed]="formTipo() === 'GASTO'"
+                [class]="formTipo() === 'GASTO'
+                  ? 'bg-white text-rose-600 shadow-sm ring-1 ring-rose-100'
+                  : 'text-slate-500 hover:text-slate-700'"
+                class="flex min-h-10 w-full items-center justify-center gap-1.5 rounded-lg px-2 py-2.5 text-center transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 cursor-pointer sm:min-h-11">
+                <span aria-hidden="true" class="text-base leading-none">↓</span> Gasto
+              </button>
+              <button
+                type="button"
+                (click)="cambiarTipo('INGRESO')"
+                [attr.aria-pressed]="formTipo() === 'INGRESO'"
+                [class]="formTipo() === 'INGRESO'
+                  ? 'bg-white text-emerald-600 shadow-sm ring-1 ring-emerald-100'
+                  : 'text-slate-500 hover:text-slate-700'"
+                class="flex min-h-10 w-full items-center justify-center gap-1.5 rounded-lg px-2 py-2.5 text-center transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 cursor-pointer sm:min-h-11">
+                <span aria-hidden="true" class="text-base leading-none">↑</span> Ingreso
+              </button>
+              <button
+                type="button"
+                (click)="cambiarTipo('TRANSFERENCIA')"
+                [attr.aria-pressed]="formTipo() === 'TRANSFERENCIA'"
+                [class]="formTipo() === 'TRANSFERENCIA'
+                  ? 'bg-white text-blue-600 shadow-sm ring-1 ring-blue-100'
+                  : 'text-slate-500 hover:text-slate-700'"
+                class="flex min-h-10 w-full items-center justify-center gap-1.5 rounded-lg px-2 py-2.5 text-center transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 cursor-pointer sm:min-h-11">
+                <span aria-hidden="true" class="text-base leading-none">⇄</span> Transf.<span class="sr-only">Transferencia</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Formulario estructurado con secciones visuales -->
+          <form (ngSubmit)="guardarMovimiento()" class="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain p-4 pb-[max(2rem,env(safe-area-inset-bottom))] sm:p-6 sm:pb-8">
+
+            <!-- Alertas -->
+            @if (modalError()) {
+              <div role="alert" class="flex items-start gap-2.5 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700">
+                <svg class="mt-0.5 h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <div class="flex-1">
+                  {{ modalError() }}
+                  @if (falloDeRed()) {
+                    <button type="button" (click)="guardarPendienteActual()" [disabled]="submitting()"
+                      class="mt-2 block min-h-10 rounded-lg border border-rose-300 bg-white px-3 py-2 font-semibold text-rose-800">
+                      Guardar pendiente en este dispositivo
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+            @if (!hayConexion() && cuentas().length === 0) {
+              <p class="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800" role="status">
+                <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                Aún no hay una lista local de cuentas. Conéctate y abre Kaptal una vez para habilitar el registro sin conexión.
+              </p>
+            }
+
+            <!-- SECCIÓN: Monto -->
+            <div>
+              <p class="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">¿Cuánto?</p>
+              <div class="rounded-2xl border-2 bg-white px-4 py-3 shadow-sm transition-colors"
+                   [class]="formTipo() === 'GASTO' ? 'border-rose-100' : formTipo() === 'INGRESO' ? 'border-emerald-100' : 'border-blue-100'">
+                <div class="relative flex items-center justify-center">
+                  <span class="absolute left-0 text-xl font-bold text-slate-400">
+                    {{ monedaCuenta(formCuentaId) }}
+                  </span>
+                  <input appMontoPrivado
+                    id="monto"
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    required
+                    inputmode="decimal"
+                    [(ngModel)]="formMonto"
+                    name="monto"
+                    placeholder="0.00"
+                    [attr.aria-label]="'Monto a registrar en ' + monedaCuenta(formCuentaId)"
+                    class="w-full bg-transparent py-1 pl-9 pr-2 text-center text-3xl font-black text-slate-900 placeholder:font-bold placeholder:text-slate-300 focus:outline-none dark:text-white dark:placeholder:text-slate-600"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- SECCIÓN: Cuenta(s) -->
+            <div>
+              <p class="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                {{ formTipo() === 'TRANSFERENCIA' ? '¿Entre qué cuentas?' : '¿En qué cuenta?' }}
+              </p>
+              @if (formTipo() === 'TRANSFERENCIA') {
+                <div class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                  <div class="grid grid-cols-[minmax(0,1fr)_1.5rem_minmax(0,1fr)] items-start gap-1.5">
+                    <app-cuenta-selector
+                      [cuentas]="cuentas()"
+                      [selectedId]="formCuentaId"
+                      label="De"
+                      idBase="cuentaId"
+                      [compacto]="true"
+                      (selectedIdChange)="cambiarCuentaOrigen($event)" />
+
+                    <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor"
+                         class="mt-5 h-4 w-4 shrink-0 justify-self-center text-slate-400 dark:text-slate-500">
+                      <path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h9.19L10.72 7.03a.75.75 0 111.06-1.06l3.5 3.5a.75.75 0 010 1.06l-3.5 3.5a.75.75 0 11-1.06-1.06l2.22-2.22H3.75A.75.75 0 013 10z" clip-rule="evenodd" />
+                    </svg>
+
+                    <app-cuenta-selector
+                      [cuentas]="cuentasDestinoDisponibles()"
+                      [selectedId]="formCuentaDestinoId"
+                      label="Para"
+                      idBase="cuentaDestinoId"
+                      [compacto]="true"
+                      [alinearPanelDerecha]="true"
+                      (selectedIdChange)="formCuentaDestinoId = $event" />
+                  </div>
+
+                  @if (cuentasDestinoDisponibles().length === 0) {
+                    <p class="mt-2 text-xs leading-relaxed text-amber-700 dark:text-amber-400">
+                      No puedes transferir entre dos tarjetas de crédito. Elige una cuenta que no sea de crédito.
+                    </p>
+                  }
+                </div>
+              } @else {
+                <div class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                  <app-cuenta-selector
+                    [cuentas]="cuentas()"
+                    [selectedId]="formCuentaId"
+                    label="Cuenta"
+                    [etiquetaVisible]="false"
+                    idBase="cuentaId"
+                    (selectedIdChange)="cambiarCuentaOrigen($event)" />
+                </div>
+              }
+            </div>
+
+            <!-- SECCIÓN: Categoría (no aplica en Transferencia) -->
+            @if (formTipo() !== 'TRANSFERENCIA') {
+              <div>
+                <p class="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">¿En qué categoría?</p>
+                <div class="min-w-0">
+                  @defer (on immediate) {
+                    <app-categoria-selector
+                      [categorias]="categorias()"
+                      [tipo]="formTipo()"
+                      [selectedId]="formCategoriaId"
+                      (selectedIdChange)="formCategoriaId = $event"
+                      (categoriasChange)="categorias.set($event)" />
+                  } @placeholder {
+                    <div class="h-16 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800"></div>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- SECCIÓN: Fecha y Notas / Tasa de cambio -->
+            <div>
+              <p class="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">¿Cuándo? · Notas</p>
+              <div class="grid grid-cols-2 gap-2">
+                <div class="min-w-0">
+                  <label for="fecha" class="sr-only">Fecha del movimiento</label>
+                  <app-fecha-picker id="fecha" label="Fecha del movimiento" [value]="formFecha" (valueChange)="formFecha = $event; actualizarSiguienteFecha()" />
+                </div>
+
+                @if (formTipo() === 'TRANSFERENCIA') {
+                  @if (monedaCuenta(formCuentaId) !== monedaCuenta(formCuentaDestinoId)) {
+                    <div class="min-w-0">
+                      <label for="tasaCambio" class="sr-only">Tasa de cambio</label>
+                      <input appMontoPrivado
+                        id="tasaCambio"
+                        type="number"
+                        name="tasaCambio"
+                        min="0.00000001"
+                        step="0.00000001"
+                        required
+                        inputmode="decimal"
+                        [(ngModel)]="formTasaCambio"
+                        [attr.aria-label]="'Tasa de cambio de ' + monedaCuenta(formCuentaId) + ' a ' + monedaCuenta(formCuentaDestinoId)"
+                        class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-3 text-sm text-slate-900 transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+                        placeholder="Ej. 17.25"
+                      />
+                      <p class="mt-1 truncate text-[11px] text-slate-500 dark:text-slate-400">
+                        1 {{ monedaCuenta(formCuentaId) }} = ? {{ monedaCuenta(formCuentaDestinoId) }}
+                        @if (formMonto && formTasaCambio && formTasaCambio > 0) {
+                          · llegan {{ formMonto * formTasaCambio | monto:monedaCuenta(formCuentaDestinoId):'symbol':'1.2-2' }}
+                        }
+                      </p>
+                    </div>
+                  }
+                } @else {
+                  <div class="flex min-w-0 gap-2">
+                    <label for="notas" class="sr-only">Notas adicionales (opcional)</label>
+                    <input
+                      id="notas"
+                      type="text"
+                      maxlength="500"
+                      [(ngModel)]="formNotas"
+                      name="notas"
+                      placeholder="Notas opcionales…"
+                      class="min-w-0 flex-1 rounded-xl border border-slate-300 bg-slate-50 px-3 py-3 text-sm text-slate-900 transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+                    />
+                    <button type="button" (click)="dictarMovimiento()" [disabled]="dictadoActivo()"
+                      [attr.aria-pressed]="dictadoActivo()" [attr.aria-label]="dictadoActivo() ? 'Escuchando movimiento' : 'Dictar movimiento por voz'"
+                      title="El navegador procesa el dictado. Confirma el resultado antes de guardar."
+                      class="min-h-11 min-w-11 rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 hover:border-emerald-500 hover:text-emerald-800 disabled:text-emerald-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200">
+                      {{ dictadoActivo() ? '🎙 …' : '🎙 Voz' }}
+                    </button>
+                  </div>
+                  @if (dictadoMensaje()) {
+                    <p class="col-span-2 text-xs text-slate-500" role="status">{{ dictadoMensaje() }}</p>
+                  }
+                }
+              </div>
+            </div>
+
+            <!-- Notas para Transferencia -->
+            @if (formTipo() === 'TRANSFERENCIA') {
+              <div>
+                <label for="notas-transferencia" class="sr-only">Notas adicionales (opcional)</label>
+                <input
+                  id="notas-transferencia"
+                  type="text"
+                  maxlength="500"
+                  [(ngModel)]="formNotas"
+                  name="notas"
+                  placeholder="Notas opcionales…"
+                  class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+                />
+              </div>
+            }
+
+            <!-- SECCIÓN: Opciones adicionales (colapsable) -->
+            @if (formTipo() !== 'TRANSFERENCIA') {
+              <details class="rounded-xl border border-slate-200 px-3 dark:border-slate-700">
+                <summary class="flex min-h-11 cursor-pointer select-none list-none items-center justify-between py-3 text-sm font-semibold text-slate-600 dark:text-slate-300">
+                  <span>Opciones adicionales</span>
+                  <svg class="h-4 w-4 text-slate-400 transition-transform [[open]_&]:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+                </summary>
+                <div class="space-y-3 pb-3">
+                  <div class="grid grid-cols-2 gap-2">
+                    <label
+                      class="flex min-h-12 cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 transition-colors focus-within:ring-2 focus-within:ring-emerald-500"
+                      [class]="movimientoRecurrente
+                        ? 'border-emerald-500 bg-emerald-50 dark:border-emerald-400 dark:bg-emerald-500/10'
+                        : 'border-slate-200 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900'">
+                      <input type="checkbox" name="movimientoRecurrente" class="h-4 w-4 shrink-0 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                             [ngModel]="movimientoRecurrente" (ngModelChange)="alternarRecurrente($event)" />
+                      <span class="min-w-0 text-xs font-semibold text-slate-800 dark:text-slate-200">
+                        Repetir<span class="sr-only"> este movimiento</span>
+                      </span>
+                    </label>
+
+                    @if (formTipo() === 'GASTO' && esCuentaCredito()) {
+                      <label
+                        class="flex min-h-12 cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 transition-colors focus-within:ring-2 focus-within:ring-emerald-500"
+                        [class]="esCompraMsi
+                          ? 'border-emerald-500 bg-emerald-50 dark:border-emerald-400 dark:bg-emerald-500/10'
+                          : 'border-slate-200 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900'">
+                        <input type="checkbox" name="esCompraMsi" class="h-4 w-4 shrink-0 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                               [ngModel]="esCompraMsi" (ngModelChange)="alternarMsi($event)" />
+                        <span class="min-w-0 text-xs font-semibold text-slate-800 dark:text-slate-200">
+                          MSI<span class="sr-only">: compra a meses sin intereses</span>
+                        </span>
+                      </label>
+                    }
+                  </div>
+
+                  @if (movimientoRecurrente) {
+                    <div class="grid grid-cols-2 gap-2">
+                      <label class="min-w-0 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                        Frecuencia
+                        <select name="frecuenciaRecurrencia" [(ngModel)]="frecuenciaRecurrencia"
+                                (ngModelChange)="actualizarSiguienteFecha()"
+                                class="mt-1 w-full rounded-xl border border-slate-300 bg-slate-50 px-2.5 py-2.5 text-sm font-normal text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+                          <option value="SEMANAL">Cada semana</option>
+                          <option value="QUINCENAL">Cada dos semanas</option>
+                          <option value="MENSUAL">Cada mes</option>
+                          <option value="ANUAL">Cada año</option>
+                        </select>
+                      </label>
+                      <label class="min-w-0 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                        Siguiente cargo
+                        <app-fecha-picker id="siguienteFechaRecurrencia" label="Siguiente cargo" [value]="siguienteFechaRecurrencia" [min]="formFecha" (valueChange)="siguienteFechaRecurrencia = $event" />
+                      </label>
+                    </div>
+                  } @else if (esCompraMsi) {
+                    <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                      Plazo en meses
+                      <select name="formMsi" [(ngModel)]="formMsi" required
+                              class="mt-1 w-full rounded-xl border border-slate-300 bg-slate-50 px-2.5 py-2.5 text-sm font-normal text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+                        <option [ngValue]="null" disabled>Selecciona el plazo</option>
+                        <option [ngValue]="3">3 meses sin intereses</option>
+                        <option [ngValue]="6">6 meses sin intereses</option>
+                        <option [ngValue]="9">9 meses sin intereses</option>
+                        <option [ngValue]="12">12 meses sin intereses</option>
+                        <option [ngValue]="18">18 meses sin intereses</option>
+                        <option [ngValue]="24">24 meses sin intereses</option>
+                      </select>
+                    </label>
+                  }
+                </div>
+              </details>
+            }
+
+            <!-- Botones de Acción -->
+            <div class="grid grid-cols-1 gap-2 border-t border-slate-100 pt-4 sm:flex sm:items-center sm:justify-end sm:space-x-3">
+              <button
+                type="button"
+                (click)="cerrarModal()"
+                class="min-h-11 w-full rounded-xl px-4 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 cursor-pointer sm:w-auto">
+                Cancelar
+              </button>
+
+              <button
+                type="submit"
+                [disabled]="submitting()"
+                [class]="formTipo() === 'GASTO'
+                  ? 'bg-rose-600 shadow-rose-600/20 hover:bg-rose-700 active:bg-rose-800'
+                  : formTipo() === 'INGRESO'
+                    ? 'bg-emerald-600 shadow-emerald-600/20 hover:bg-emerald-700 active:bg-emerald-800'
+                    : 'bg-blue-600 shadow-blue-600/20 hover:bg-blue-700 active:bg-blue-800'"
+                class="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 cursor-pointer sm:w-auto">
+                @if (submitting()) {
+                  <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Guardando...</span>
+                } @else {
+                  <span>Guardar {{ formTipo() === 'GASTO' ? 'Gasto' : formTipo() === 'INGRESO' ? 'Ingreso' : 'Transferencia' }}</span>
+                }
+              </button>
+            </div>
+
+          </form>
+
+        </div>
+      </div>
+    }
+  

@@ -1,0 +1,96 @@
+# Corrección de diseño: Kaptal con Inicio dominante
+
+Cierre posterior: compactación de Inicio y estado de captura implementados. La secuencia funcional completa para retomar está en [PLAN_CONTINUACION_MONAI.md](PLAN_CONTINUACION_MONAI.md). La validación física sigue pendiente.
+
+Especificación vigente del usuario, 14 de octubre de 2026. Corrige la misma entrega local en `mejoras/rediseno-integral-android`; no abre la etapa de automatizaciones. Los documentos anteriores que describen una barra inferior o estética carbón/verde quedan sustituidos por éste en cuestiones visuales.
+
+## Objetivo y decisiones
+
+Al abrir Inicio deben entenderse gasto, periodo, categorías y cómo registrar en menos de tres segundos. La referencia es el lenguaje visual descrito por el usuario: blanco, coral, emoji, barras pastel y controles contextuales. Se conserva Kaptal, el stack y la contabilidad. No se copian logos ni recursos de MonAi.
+
+[Historial oficial consultado](https://get-monai.app/whats-new): confirma cambios de interfaz, búsqueda global y periodos flexibles; no supone que Kaptal ya tenga todas sus funciones. El diseño sigue la especificación proporcionada, sin depender de reproducir un efecto propietario del sistema operativo. Las medidas son objetivos de Kaptal, no valores oficiales extraídos de MonAi.
+
+## Orden de trabajo de esta corrección
+
+1. **Fundamentos:** tokens blanco/coral y oscuro neutro, sistema de fuente nativa, espaciado de 8 puntos, contraste, círculos/hojas y materiales de vidrio con alternativa opaca. Conservar preferencias de tema de cada usuario.
+2. **Estructura:** retirar navegación inferior permanente. Cabecera contextual con acceso a Inicio, herramientas, historial y configuración; micrófono coral flotante y alternativa manual. Todas las rutas existentes siguen accesibles. «Personal» representa el espacio personal actual, no listas ficticias.
+3. **Inicio:** total de gastos del periodo sobre el fondo, selector de moneda explícito, periodo, gráfico de gasto real por categoría incluso sin presupuesto y tres movimientos recientes. Vista detallada opcional para ingresos, balance del periodo y datos de cuentas. No confundir gasto, presupuesto y saldo bancario.
+4. **Interacción:** barras estrechas redondeadas, emoji, importe fuera de la barra; tap abre movimientos filtrados y acción contextual abre hoja para captura/presupuesto. Selector de periodo en hoja con foco contenido, Escape y retorno de foco. Mostrar solamente opciones de periodo soportadas por la API actual.
+5. **Coherencia:** filas sin tarjetas pesadas, categorías con emoji sin migrar datos, historial agrupado por día y moneda, buscador limpio; paneles de captura y formularios con estilo común. Ajustes organiza herramientas y preferencias sin rutas duplicadas en Inicio.
+6. **Verificación:** probar Inicio simple/detallado, estados vacío/error/privacidad y categorías sin presupuesto. Probar captura manual/voz disponible, filtros, repetición, temas y navegación con teclado. Build, unitarias, E2E pertinentes y capturas en el servidor real 4300. No cambiar de etapa hasta revisar esta entrega.
+
+## Fundamentos
+
+| Token | Claro | Oscuro |
+|---|---|---|
+| Fondo | #FFFFFF | #000000 |
+| Superficie secundaria | #F7F7F7 | #1C1C1E |
+| Control | #F2F2F2 | #2C2C2E |
+| Texto | #111111 | #FFFFFF |
+| Texto secundario | #737373 | #A1A1A6 |
+| Coral visual | #FF746B | #FF8A80 |
+| Acción con texto pequeño | Coral oscuro para contraste | Coral claro con texto oscuro |
+| Categorías | Verde, amarillo, naranja, rosa, azul y lavanda pastel | Mismos tonos sobre fondo neutro |
+
+Fuente: `-apple-system`, `BlinkMacSystemFont`, `Segoe UI`, sans-serif; emoji del sistema. No descargar SF Pro ni añadir fuentes de procedencia dudosa. Números tabulares. Importe principal 48/52 px, reducido según ancho y longitud; títulos 28–30 px; filas 15–16 px; secundarios 12–13 px. Márgenes 20–24 px. Controles táctiles al menos 44 px; FAB 64 px. Hoja con radio 30 px. Safe areas mediante `env()`, sin reservar artificialmente 59 px en un navegador.
+
+Vidrio sólo en controles flotantes: mezcla opaca legible, blur moderado y borde sutil. No apilar blur en contenido. Movimiento de entrada breve, respetando `prefers-reduced-motion`; ninguna función exige gesto oculto, haptic o animación para ser usada.
+
+## Inventario de pantallas y alcance real
+
+| Pantalla / componente | Resolución en esta entrega | Función adicional que queda para su etapa |
+|---|---|---|
+| Inicio simple | Gasto, periodo, barras, recientes, voz/manual | — |
+| Inicio detallado | Métricas inline, saldo/deuda de cuentas separados | Previsión financiera |
+| Periodo | Hoja accesible con mes, semana, hoy y rango real | Quincenas, año/todo y periodos de nómina con pruebas contables |
+| Categorías del Inicio | Gasto real, tap filtra, hoja contextual | Compacción física del gráfico al scroll si no perjudica lectura |
+| Historial | Filas ligeras, búsqueda/filtros existentes, totales del día por moneda en página cargada | Búsqueda por tags y totales completos del día desde servidor |
+| Captura natural/voz | Mantener motor y propuestas confirmables, micrófono principal y alternativa manual | Autoguardado opcional y transiciones de campos reconocidos |
+| Captura manual/detalle | Formularios existentes, hojas y controles coherentes | Nuevos campos sólo cuando exista modelo |
+| Categorías | Emoji visible para códigos existentes; editor actual conservado | Presupuesto disponible dentro del selector |
+| Presupuestos/detalle | Funciones actuales y acceso contextual desde Inicio | Umbrales configurables y navegación directa desde avisos |
+| Recurrentes | Editor actual en Ajustes | Una instancia/futuras/todas, sin mutar historia |
+| Listas | Acceso a personal y compartido real | Modelo de múltiples listas privadas/compartidas y monedas |
+| Compartido | Experiencia actual conservada | Grupos arbitrarios, avatares e invitaciones por lista |
+| Reportes | Gráficas actuales accesibles desde herramientas | Conversación con evidencias y filtros verificables |
+| Asistente | Captura/consulta existente conservada | Respuestas financieras sustentadas en consultas específicas |
+| Divisas | Monedas separadas; ninguna equivalencia inventada | Tipo de cambio, fecha y trazabilidad de conversión |
+| WhatsApp | Configuración existente, sin prometer recepción donde no exista | Conexión y captura entrante de texto/audio |
+| Apple Pay / notificaciones | Especificación en recon; sin controles ficticios | Integración por plataforma y consentimiento |
+| Ajustes / cuenta | Temas, seguridad, respaldo y herramientas reales | Biometría nativa y bloqueo al volver del fondo |
+| CSV | Importación/exportación existentes, errores reales | Importación de recurrencias y múltiples listas |
+| Suscripción / prueba | No mostrar planes ni cobros ficticios en una app personal | Sólo si se decide comercializar |
+| Onboarding | No bloquear usuarios actuales | Introducción contextual al terminar flujos definitivos |
+| Widgets | No simularlos dentro de la web | Aplicación nativa: voz/presupuesto/compartido |
+| Offline / pendientes | Mantener cola, confirmación y reintento actuales | Automatizaciones externas y conciliación multicanal |
+| Loading / vacío / error | Mensajes breves, skeletons inline y reintento | — |
+| Confirmaciones | Conservar confirmación de acciones irreversibles | — |
+
+## Flujos de aceptación
+
+- Inicio → micrófono → captura → propuestas → confirmar → Inicio actualizado. No iniciar grabación sin acción explícita ni autoguardar por cambiar de aspecto.
+- Inicio → escribir → importe/categoría/cuenta → guardar → registro único. Alternativa usable sin micrófono y offline.
+- Inicio → categoría → historial filtrado por categoría y fechas actuales. Ninguna cifra mezcla MXN con USD.
+- Inicio → acciones de categoría → registrar o presupuesto. Long press tiene alternativa por botón y teclado; cerrar devuelve foco.
+- Inicio → periodo → seleccionar/aplicar → gasto y gráfico del mismo rango. Presupuesto mensual se etiqueta como tal cuando se consulta fuera del mes completo.
+- Inicio → detallado → saldo actual/deuda aparecen separados del flujo del periodo. Volver a simple elimina información secundaria, no los datos.
+- Historial → búsqueda → filtros → detalle → repetir → confirmación. No saltos de layout ni guardados dobles.
+- Privacidad oculta importes, alturas y valores accesibles. Datos vacíos o fallo analítico nunca se presentan como gasto cero conocido.
+
+## Cierre y siguiente etapa
+
+Documentar capturas, comandos y resultados efectivos; comprobar 4300 además de dist. No declarar terminadas listas, widgets, Apple Pay, periodos nuevos ni integraciones por haber diseñado sus pantallas. Después de revisar/integrar esta corrección, retomar la etapa funcional de captura automática descrita en `replica/monai-kesef/recon.md`, en rama nueva desde develop comprobado.
+
+## Resultado de esta corrección
+
+Aplicados los seis bloques dentro del alcance de funciones existentes. Las ampliaciones de la matriz siguen pendientes. Backend sin cambios nuevos en esta corrección.
+
+- Build sin avisos: 457.76 kB iniciales; 275 pruebas frontend en 35 archivos.
+- Dos E2E con backend aislado/H2: chat offline sin duplicados y repetición con monedas/cuentas; incluyen recuperación de Reportes ante error.
+- Servidor real 4300: 161 comprobaciones Chromium, anchos 375/390/393/402/430 con alturas del brief y temas claro/oscuro. Estados vacío/error, privacidad, navegación contextual, periodo y preselección de categoría comprobados.
+- Artefacto compilado: 130 comprobaciones, incluidos escritorio y recarga offline con cinco hojas de estilos en caché. Revisión adicional 393/1280: 64 comprobaciones de interacción, incluido cierre por clic de la captura.
+- APIs sintéticas para la revisión visual; no equivale a probar datos privados, un Android físico ni integraciones externas. No hay nueva instalación, commit, push o despliegue.
+
+Evidencia: [verificación](../replica/rediseno-integral/monai-final/verification.json), [Inicio claro 393](../replica/rediseno-integral/monai-interactions/screens/dashboard-393-CLARO.png), [Inicio oscuro 393](../replica/rediseno-integral/monai-interactions/screens/dashboard-393-OSCURO.png). Logs y capturas en esos directorios; las revisiones anteriores se conservan como historia.
+
+Reproducir desde `frontend`: `npm run build`, `npm test -- --watch=false`, E2E con `E2E_FRONTEND_PORT=14220`. Para la revisión local, establecer `DESIGN_REVIEW_ORIGIN=http://localhost:4300`, `DESIGN_REVIEW_SKIP_SW=1`, `DESIGN_REVIEW_WIDTHS=375,390,393,402,430` y ejecutar `node scripts/review-design.mjs`. Sin origen/skip, el script sirve dist en un puerto temporal y comprueba también service worker. No lanzar un rebuild mientras se revisa dist.

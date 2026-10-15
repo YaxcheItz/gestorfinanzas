@@ -32,7 +32,7 @@ test('registro rápido guarda gastos, ingresos y transferencias; conserva borrad
   await dialog.locator('summary').click();
   await selectBank();await amount.fill('25,50');
   const category=dialog.locator('.entry-category-chips button').first();await category.click();
-  const categoryName=await category.innerText();
+  const categoryName=await category.locator(':scope > span').innerText();
   await amount.focus();
   await page.setViewportSize({width:390,height:360});
   await expect.poll(()=>amount.evaluate(e=>{

@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const postgres = process.env['E2E_DATABASE_URL'];
+const frontendPort = process.env['E2E_FRONTEND_PORT'] ?? '14200';
 const backendCommand = process.platform === 'win32' ? '.\\mvnw.cmd' : 'sh ./mvnw';
 
 export default defineConfig({
@@ -13,7 +14,7 @@ export default defineConfig({
   reporter: 'list',
   retries: 0,
   use: {
-    baseURL: 'http://localhost:14200',
+    baseURL: `http://localhost:${frontendPort}`,
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure'
   },
@@ -43,13 +44,13 @@ export default defineConfig({
         SPRING_FLYWAY_SCHEMAS: postgres ? 'finanzas' : 'PUBLIC',
         JWT_SECRET: '0123456789abcdef0123456789abcdef',
         SERVER_PORT: '18080',
-        APP_CORS_ALLOWED_ORIGINS: 'http://localhost:14200'
+        APP_CORS_ALLOWED_ORIGINS: `http://localhost:${frontendPort}`
       },
       timeout: 120_000
     },
     {
-      command: 'npm run start:e2e -- --host localhost --port 14200',
-      url: 'http://localhost:14200',
+      command: `npm run start:e2e -- --host localhost --port ${frontendPort}`,
+      url: `http://localhost:${frontendPort}`,
       reuseExistingServer: false,
       timeout: 120_000
     }

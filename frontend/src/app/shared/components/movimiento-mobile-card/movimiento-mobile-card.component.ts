@@ -190,7 +190,7 @@ export class SwipeActionsDirective {
 
         <div class="tx-item__body">
           <h3 class="tx-item__title">{{ (etiquetaMovimiento) | textoFinanciero }}</h3>
-          <p class="tx-item__account">{{ nombreCuentaVisible(movimiento.cuentaNombre) }}@if(movimiento.tipo === 'TRANSFERENCIA') { → {{ nombreCuentaVisible(movimiento.cuentaDestinoNombre) }}}</p>
+          <p class="tx-item__account">@if(movimiento.categoriaNombre) {<span>{{ movimiento.categoriaNombre }} · </span>}{{ nombreCuentaVisible(movimiento.cuentaNombre) }}@if(movimiento.tipo === 'TRANSFERENCIA') { → {{ nombreCuentaVisible(movimiento.cuentaDestinoNombre) }}}</p>
           <p class="tx-item__meta">
             @if (metodoCaptura === 'VOZ') {
               <svg class="tx-item__mic" aria-label="Capturado por voz" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5m-4 0h8"/></svg>
@@ -356,7 +356,7 @@ export class SwipeActionsDirective {
     }
     .tx-item__amount.is-income strong { color: #10b981; }
     .tx-item__account { margin: .15rem 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .72rem; color: var(--kaptal-content-muted, #6b7280); }
-    .tx-item__amount.is-expense strong { color: #ef4444; }
+    .tx-item__amount.is-expense strong { color: var(--kaptal-content, #111111); }
     .tx-item__amount small {
       display: block;
       overflow: hidden;
@@ -369,7 +369,7 @@ export class SwipeActionsDirective {
     }
     :host-context(html.dark) .tx-item {
       border-color: var(--kaptal-border, #1f1f1f);
-      background: var(--kaptal-surface, #121212);
+      background: transparent;
     }
     :host-context(html.dark) .tx-item__title { color: var(--kaptal-content, #f9fafb); }
     :host-context(html.dark) .tx-item__meta,
@@ -377,7 +377,7 @@ export class SwipeActionsDirective {
     :host-context(html.dark) .tx-item__amount small { color: var(--kaptal-content-muted, #9ca3af); }
     :host-context(html.dark) .tx-item__amount strong { color: var(--kaptal-content, #f3f4f6); }
     :host-context(html.dark) .tx-item__amount.is-income strong { color: var(--kaptal-income, #10b981); }
-    :host-context(html.dark) .tx-item__amount.is-expense strong { color: var(--kaptal-expense, #f87171); }
+    :host-context(html.dark) .tx-item__amount.is-expense strong { color: var(--kaptal-content, #ffffff); }
   `]
 })
 export class MovimientoMobileCardComponent {

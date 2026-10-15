@@ -46,10 +46,10 @@ describe('PerfilService', () => {
     try {
       service.cargar(7);
       httpMock.expectOne(esPerfil('GET')).flush({ success: true, message: '', data: { ...perfilBase, tema: 'OSCURO' } });
-      expect(meta.content).toBe('#151615');
+      expect(meta.content).toBe('#111315');
       expect(meta.hasAttribute('media')).toBe(false);
       service.limpiar();
-      expect(meta.content).toBe('#faf9f6');
+      expect(meta.content).toBe('#F5F6F7');
     } finally {
       meta.remove();
     }
