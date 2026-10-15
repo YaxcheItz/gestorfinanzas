@@ -10,10 +10,11 @@ public record PerfilResponse(
         String monedaPredeterminada,
         String telefono,
         boolean notificacionesWhatsapp,
-        boolean ocultarMontos
+        boolean ocultarMontos,
+        com.gestionfinanzas.service.PeriodoFinanciero.Config periodoPredeterminado
 ) {
     public PerfilResponse(Long id, String nombre, String email, String tema, String monedaPredeterminada) {
-        this(id, nombre, email, tema, monedaPredeterminada, null, false, false);
+        this(id, nombre, email, tema, monedaPredeterminada, null, false, false, com.gestionfinanzas.service.PeriodoFinanciero.Config.mensual());
     }
 
     public static PerfilResponse fromEntity(Usuario usuario) {
@@ -25,7 +26,8 @@ public record PerfilResponse(
                 usuario.getMonedaPreferida(),
                 usuario.getTelefono(),
                 usuario.isNotificacionesWhatsapp(),
-                usuario.isOcultarMontos()
+                usuario.isOcultarMontos(),
+                new com.gestionfinanzas.service.PeriodoFinanciero.Config(usuario.getPeriodoTipo(), usuario.getPeriodoAncla(), usuario.getPeriodoDiaInicio(), usuario.getPeriodoDiaQuincena())
         );
     }
 }

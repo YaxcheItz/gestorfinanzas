@@ -1,3 +1,4 @@
+import { PeriodoConfig, TipoPeriodo, PERIODO_MENSUAL, resolverPeriodo, desplazarPeriodo, desplazarRangoLibre, validarRangoPeriodo, validarPeriodo, fechaCivilFinanciera } from '../../core/utils/periodo-financiero';
 import { FeatureStylesService } from '../../core/services/feature-styles.service';
 ﻿import { TextoFinancieroPipe } from '../../core/pipes/texto-financiero.pipe';
 import { MontoPrivadoDirective } from '../../shared/directives/monto-privado.directive';
@@ -11,7 +12,8 @@ import {
   inject,
   signal,
   computed,
-  effect
+  effect,
+  untracked
 } from '@angular/core';
 import { CommonModule, DOCUMENT } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -146,7 +148,7 @@ export class DashboardComponent implements OnInit {
       icono: this.categorias().find(cat => cat.id === item.categoriaId)?.icono,
       tono: tonos[(item.categoriaId ?? 0) % tonos.length],
       altura: this.privacidad.ocultarMontos() ? 0 : Math.max(12, item.monto / maximo * 100),
-      presupuesto: this.tipoRango() === 'MES' ? this.presupuestosDashboard().find(p => p.categoriaId === item.categoriaId) : undefined
+      presupuesto: this.esMesCalendario() ? this.presupuestosDashboard().find(p => p.categoriaId === item.categoriaId) : undefined
     }));
   });
   readonly resumenCuentaSelector = (cuenta: Cuenta) => resumenCuentaSelector(cuenta, this.privacidad.ocultarMontos());
@@ -190,14 +192,23 @@ export class DashboardComponent implements OnInit {
   readonly plantillasRecurrentes = signal<PlantillaRecurrente[]>([]);
   readonly errorRecurrencias = signal<string | null>(null);
   readonly registrandoRecurrenciaId = signal<number | null>(null);
-  readonly fechaHoy = signal(this.fechaLocal(new Date()));
+  readonly fechaHoy = signal(fechaCivilFinanciera());
   readonly fechaLimiteRecurrencias = computed(() => this.agregarDias(this.fechaHoy(), 7));
   readonly monedaResumen = signal('MXN');
-  readonly periodoSeleccionado = signal(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
+  readonly periodoSeleccionado = signal(new Date(fechaCivilFinanciera().slice(0, 7) + '-01T12:00:00'));
   readonly periodoEsActual = computed(() => {
-    const periodo = this.periodoSeleccionado();
-    const ahora = new Date();
-    return periodo.getFullYear() === ahora.getFullYear() && periodo.getMonth() === ahora.getMonth();
+    if (this.tipoRango() === 'TODO' || this.fechasRango().hasta >= this.fechaHoy()) return true;
+    if (this.tipoRango() !== 'PERSONALIZADO') return false;
+    try { return desplazarRangoLibre(this.fechasRango(), 1).hasta > this.fechaHoy(); }
+    catch { return true; }
+  });
+  readonly puedeRetroceder = computed(() => {
+    if (this.tipoRango() === 'TODO') return false;
+    try {
+      if (this.tipoRango() === 'PERSONALIZADO') desplazarRangoLibre(this.fechasRango(), -1);
+      else desplazarPeriodo(this.configuracionPeriodo(), this.fechasRango(), -1);
+      return true;
+    } catch { return false; }
   });
   readonly periodoResumen = computed(() => {
     const fecha = this.periodoSeleccionado();
@@ -223,66 +234,107 @@ export class DashboardComponent implements OnInit {
 
 
   // ─── Time-Range Dropdown ─────────────────────────────────────────────────
-  readonly tipoRango = signal<'MES' | 'SEMANA' | 'HOY' | 'PERSONALIZADO'>('MES');
+  readonly tipoRango = signal<TipoPeriodo | 'PERSONALIZADO'>('MES');
+  readonly configuracionPeriodo = signal<PeriodoConfig>({ ...PERIODO_MENSUAL });
+  readonly referenciaPeriodo = signal(fechaCivilFinanciera());
   readonly rangoPersonalizado = signal<{ desde: string; hasta: string } | null>(null);
   readonly errorRango = signal('');
   readonly editandoRango = signal(false);
-  borradorDesde = this.fechaLocal(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
-  borradorHasta = this.fechaLocal(new Date());
-  private dashboardVersion = 0;
-  readonly fechasRango = computed(() => {
-    const hoy = this.fechaHoy();
-    if (this.tipoRango() === 'HOY') return { desde: hoy, hasta: hoy };
-    if (this.tipoRango() === 'SEMANA') return { desde: this.agregarDias(hoy, -6), hasta: hoy };
-    if (this.tipoRango() === 'PERSONALIZADO' && this.rangoPersonalizado()) return this.rangoPersonalizado()!;
-    const mes = this.periodoSeleccionado();
-    return { desde: this.fechaLocal(mes), hasta: this.fechaLocal(new Date(mes.getFullYear(), mes.getMonth() + 1, 0)) };
-  });
+  readonly guardandoPeriodo = signal(false);
   readonly modalRangoAbierto = signal(false);
+  readonly opcionesPeriodo: { tipo: TipoPeriodo; nombre: string; detalle: string }[] = [
+    { tipo: 'MES', nombre: 'Mes', detalle: 'Inicio del mes a tu medida' },
+    { tipo: 'SEMANA', nombre: 'Semana', detalle: '7 días desde el anclaje' },
+    { tipo: 'CATORCENA', nombre: 'Cada 14 días', detalle: 'Bloques continuos de dos semanas' },
+    { tipo: 'QUINCENA', nombre: 'Quincena', detalle: 'Dos inicios por mes' },
+    { tipo: 'ANIO', nombre: 'Año', detalle: 'Enero a diciembre' },
+    { tipo: 'TODO', nombre: 'Todo el historial', detalle: 'Todos los movimientos' },
+    { tipo: 'HOY', nombre: 'Hoy', detalle: 'Movimientos del día' }
+  ];
+  borradorPeriodo: PeriodoConfig = { ...PERIODO_MENSUAL };
+  guardarComoPredeterminado = false;
+  borradorDesde = this.fechaLocal(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
+  borradorHasta = fechaCivilFinanciera();
+  private preferenciaPeriodoLeida = false;
+  private periodoModificado = false;
+  private dashboardVersion = 0;
+  readonly fechasRango = computed(() => this.tipoRango() === 'PERSONALIZADO' && this.rangoPersonalizado()
+    ? this.rangoPersonalizado()!
+    : resolverPeriodo({ ...this.configuracionPeriodo(), tipo: this.tipoRango() as TipoPeriodo }, this.referenciaPeriodo()));
+  readonly esMesCalendario = computed(() => this.tipoRango() === 'MES' && this.configuracionPeriodo().diaInicio === 1);
   readonly etiquetaRangoSeleccionado = computed(() => {
-    switch (this.tipoRango()) {
-      case 'MES': return this.periodoResumen();
-      case 'SEMANA': return 'Últimos 7 días';
-      case 'HOY': return 'Hoy';
-      case 'PERSONALIZADO': {
-        const rango = this.rangoPersonalizado();
-        if (!rango) return this.periodoResumen();
-        const formato = new Intl.DateTimeFormat('es-MX', { day: 'numeric', month: 'short', ...(rango.desde.slice(0,4) !== rango.hasta.slice(0,4) ? {year: '2-digit' as const} : {}) });
-        const desde = formato.format(new Date(`${rango.desde}T12:00:00`));
-        const hasta = formato.format(new Date(`${rango.hasta}T12:00:00`));
-        return `${desde} – ${hasta}`;
-      }
-    }
+    if (this.tipoRango() === 'TODO') return 'Todo el historial';
+    if (this.tipoRango() === 'HOY' && this.referenciaPeriodo() === this.fechaHoy()) return 'Hoy';
+    if (this.esMesCalendario()) return this.periodoResumen();
+    const rango = this.fechasRango();
+    const formato = new Intl.DateTimeFormat('es-MX', { timeZone: 'UTC', day: 'numeric', month: 'short', year: '2-digit' });
+    return `${formato.format(new Date(rango.desde + 'T12:00:00Z'))} – ${formato.format(new Date(rango.hasta + 'T12:00:00Z'))}`;
   });
 
-  toggleModalRango(): void { this.modalRangoAbierto.update(v => !v); }
-  cerrarModalRango(): void { this.modalRangoAbierto.set(false); this.editandoRango.set(false); }
-  seleccionarRango(rango: 'MES' | 'SEMANA' | 'HOY' | 'PERSONALIZADO'): void {
-    if (rango === 'PERSONALIZADO') {
+  toggleModalRango(): void {
+    if (this.modalRangoAbierto()) { this.cerrarModalRango(); return; }
+    this.borradorPeriodo = { ...this.configuracionPeriodo() };
+    this.guardarComoPredeterminado = false;
+    if (this.tipoRango() === 'PERSONALIZADO') {
       this.editandoRango.set(true);
-      this.errorRango.set('');
-      return;
+      this.borradorDesde = this.fechasRango().desde; this.borradorHasta = this.fechasRango().hasta;
     }
-    this.tipoRango.set(rango);
-    this.periodoSeleccionado.set(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
+    this.errorRango.set('');
+    this.modalRangoAbierto.set(true);
+  }
+  cerrarModalRango(): void { if (this.guardandoPeriodo()) return; this.modalRangoAbierto.set(false); this.editandoRango.set(false); }
+  seleccionarRango(rango: TipoPeriodo | 'PERSONALIZADO'): void {
+    if (rango === 'PERSONALIZADO') { this.editandoRango.set(true); this.errorRango.set(''); return; }
+    this.aplicarConfiguracion({ ...this.configuracionPeriodo(), tipo: rango });
+    this.periodoModificado = true;
     this.cerrarModalRango();
+  }
+  aplicarPeriodo(): void {
+    try {
+      const config = validarPeriodo(this.borradorPeriodo);
+      resolverPeriodo(config, this.fechaHoy());
+      this.errorRango.set('');
+      if (!this.guardarComoPredeterminado) {
+        this.aplicarConfiguracion(config); this.periodoModificado = true; this.cerrarModalRango(); return;
+      }
+      if (!this.perfilService.perfil()) { this.errorRango.set('Espera a que cargue tu perfil para guardar la preferencia.'); return; }
+      const usuarioId = this.perfilService.perfil()!.id;
+      this.guardandoPeriodo.set(true);
+      this.perfilService.actualizarPeriodo(config).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+        next: response => {
+          this.guardandoPeriodo.set(false);
+          if (this.perfilService.perfil()?.id !== usuarioId) return;
+          if (!response.success) { this.errorRango.set('No se pudo guardar el periodo. Inténtalo otra vez.'); return; }
+          this.periodoModificado = true; this.aplicarConfiguracion(config); this.cerrarModalRango();
+          this.toastService.success('Periodo predeterminado guardado.');
+        },
+        error: () => { this.guardandoPeriodo.set(false); this.errorRango.set('No se pudo guardar. Revisa la conexión e inténtalo otra vez.'); }
+      });
+    } catch (error) { this.errorRango.set((error as Error).message); }
+  }
+  private aplicarConfiguracion(config: PeriodoConfig): void {
+    const rango = resolverPeriodo(config, this.fechaHoy());
+    this.configuracionPeriodo.set({ ...config });
+    this.tipoRango.set(config.tipo);
+    this.referenciaPeriodo.set(this.fechaHoy());
+    this.actualizarMesPresupuesto(rango.desde);
     this.cargarDashboard();
   }
-
+  private actualizarMesPresupuesto(desde: string): void {
+    const [anio, mes] = desde.split('-').map(Number);
+    // Todo el historial no tiene un mes propio: mostrar presupuesto del mes vigente.
+    this.periodoSeleccionado.set(this.tipoRango() === 'TODO'
+      ? new Date(Number(this.fechaHoy().slice(0, 4)), Number(this.fechaHoy().slice(5, 7)) - 1, 1)
+      : new Date(anio, mes - 1, 1));
+  }
   aplicarRangoPersonalizado(): void {
-    const desde = this.borradorDesde;
-    const hasta = this.borradorHasta;
-    if (!desde || !hasta || desde < '2000-01-01' || desde > hasta || hasta > this.fechaLocal(new Date())) {
-      this.errorRango.set('Elige fechas válidas, ordenadas y no posteriores a hoy.');
-      return;
-    }
-    this.rangoPersonalizado.set({ desde, hasta });
-    this.tipoRango.set('PERSONALIZADO');
-    const [anio, mes] = hasta.split('-').map(Number);
-    this.periodoSeleccionado.set(new Date(anio, mes - 1, 1));
-    this.errorRango.set('');
-    this.cerrarModalRango();
-    this.cargarDashboard();
+    try {
+      const rango = validarRangoPeriodo({ desde: this.borradorDesde, hasta: this.borradorHasta });
+      if (rango.hasta > this.fechaHoy()) throw new Error('Elige fechas no posteriores a hoy.');
+      this.rangoPersonalizado.set(rango); this.tipoRango.set('PERSONALIZADO');
+      this.actualizarMesPresupuesto(rango.desde);
+      this.periodoModificado = true; this.errorRango.set(''); this.cerrarModalRango(); this.cargarDashboard();
+    } catch (error) { this.errorRango.set((error as Error).message); }
   }
 
   // ─── Hero-Swipe Gesture Tracking ─────────────────────────────────────────
@@ -435,6 +487,16 @@ export class DashboardComponent implements OnInit {
       this.monedaResumen.set(preferida);
       this.monedaPreferidaAplicada = true;
     });
+    effect(() => {
+      const perfil = this.perfilService.perfil();
+      if (!perfil || this.preferenciaPeriodoLeida) return;
+      this.preferenciaPeriodoLeida = true;
+      if (this.periodoModificado || !perfil.periodoPredeterminado) return;
+      untracked(() => {
+        try { this.aplicarConfiguracion(validarPeriodo(perfil.periodoPredeterminado!)); }
+        catch { this.errorRango.set('No se pudo aplicar tu periodo guardado. Elige otro periodo.'); }
+      });
+    });
     let sincronizacionesObservadas = this.movimientosOffline.totalSincronizados();
     effect(() => {
       const total = this.movimientosOffline.totalSincronizados();
@@ -469,7 +531,10 @@ export class DashboardComponent implements OnInit {
   }
 
   cargarDashboard(): void {
-    this.fechaHoy.set(this.fechaLocal(new Date()));
+    const hoy = fechaCivilFinanciera();
+    if (this.referenciaPeriodo() === this.fechaHoy()) this.referenciaPeriodo.set(hoy);
+    this.fechaHoy.set(hoy);
+    this.actualizarMesPresupuesto(this.fechasRango().desde);
     const version = ++this.dashboardVersion;
     this.resumen.set(null);
     this.loading.set(true);
@@ -572,12 +637,17 @@ export class DashboardComponent implements OnInit {
   }
 
   cambiarPeriodo(desplazamiento: number): void {
-    const actual = this.periodoSeleccionado();
-    const siguiente = new Date(actual.getFullYear(), actual.getMonth() + desplazamiento, 1);
-    if (siguiente.getTime() > new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime()) return;
-    this.periodoSeleccionado.set(siguiente);
-    this.tipoRango.set('MES');
-    this.cargarDashboard();
+    if (this.tipoRango() === 'TODO' || (desplazamiento > 0 && this.periodoEsActual())) return;
+    try {
+      const rango = this.tipoRango() === 'PERSONALIZADO'
+        ? desplazarRangoLibre(this.fechasRango(), desplazamiento < 0 ? -1 : 1)
+        : desplazarPeriodo(this.configuracionPeriodo(), this.fechasRango(), desplazamiento);
+      if (rango.desde > this.fechaHoy() || (this.tipoRango() === 'PERSONALIZADO' && rango.hasta > this.fechaHoy())) return;
+      if (this.tipoRango() === 'PERSONALIZADO') this.rangoPersonalizado.set(rango);
+      else this.referenciaPeriodo.set(rango.desde);
+      this.actualizarMesPresupuesto(rango.desde);
+      this.periodoModificado = true; this.cargarDashboard();
+    } catch { this.errorRango.set('No hay más periodos dentro de 2000–2100.'); }
   }
 
   moverCarruselPresupuesto(direccion: number): void {
@@ -1135,13 +1205,25 @@ export class DashboardComponent implements OnInit {
     });
   }
 
-  irATransacciones(categoriaId?: number | null): void {
-    if (categoriaId == null) {
-      this.router.navigate(['/transacciones']);
-      return;
+  irAReportes(): void {
+    const rango = this.fechasRango();
+    let anterior: { desde: string; hasta: string } | undefined;
+    if (this.tipoRango() !== 'TODO') {
+      try {
+        anterior = this.tipoRango() === 'PERSONALIZADO'
+          ? desplazarRangoLibre(rango, -1) : desplazarPeriodo(this.configuracionPeriodo(), rango, -1);
+      } catch { /* El primer periodo admitido no tiene un anterior consultable. */ }
     }
+    this.router.navigate(['/reportes'], { queryParams: {
+      desde: rango.desde, hasta: rango.hasta,
+      ...(anterior ? { desdeAnterior: anterior.desde, hastaAnterior: anterior.hasta } : {}),
+      sinComparacion: !anterior ? 'true' : undefined
+    } });
+  }
+
+  irATransacciones(categoriaId?: number | null): void {
     const { desde: fechaInicio, hasta: fechaFin } = this.fechasRango();
-    this.router.navigate(['/transacciones'], { queryParams: { categoriaId, fechaInicio, fechaFin } });
+    this.router.navigate(['/transacciones'], { queryParams: { ...(categoriaId == null ? {} : { categoriaId }), fechaInicio, fechaFin } });
   }
   registrarCategoria(categoria: CategoriaInicio): void {
     this.categoriaContextual.set(null);

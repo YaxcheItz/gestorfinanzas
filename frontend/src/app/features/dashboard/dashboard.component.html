@@ -15,47 +15,47 @@
               <h3>Periodo</h3>
               <button type="button" (click)="cerrarModalRango()" aria-label="Cerrar modal">×</button>
             </header>
-            <div class="period-month-stepper"><button type="button" (click)="cambiarPeriodo(-1)" aria-label="Mes anterior">&lsaquo;</button><span>{{ periodoResumen() }}</span><button type="button" (click)="cambiarPeriodo(1)" [disabled]="periodoEsActual()" aria-label="Mes siguiente">&rsaquo;</button></div>
-            <div class="time-dropdown-modal__options">
-              <button type="button" class="time-option-card" [class.is-active]="tipoRango() === 'MES'" (click)="seleccionarRango('MES')">
-                <div class="time-option-card__info">
-                  <strong>Mes completo</strong>
-                  <small>{{ periodoResumen() }}</small>
+            <p class="period-help">Fechas de Ciudad de México. El inicio y el fin se incluyen.</p>
+            <form (ngSubmit)="aplicarPeriodo()" class="period-form">
+              <fieldset [disabled]="guardandoPeriodo()">
+                <legend class="sr-only">Tipo de periodo</legend>
+                <div class="period-options">
+                  @for (opcion of opcionesPeriodo; track opcion.tipo) {
+                    <label class="period-choice" [class.is-active]="!editandoRango() && borradorPeriodo.tipo === opcion.tipo">
+                      <input type="radio" name="tipoPeriodo" [value]="opcion.tipo" [checked]="!editandoRango() && borradorPeriodo.tipo === opcion.tipo" (change)="borradorPeriodo.tipo = opcion.tipo; editandoRango.set(false)" />
+                      <span><strong>{{ opcion.nombre }}</strong><small>{{ opcion.detalle }}</small></span>
+                    </label>
+                  }
                 </div>
-                @if (tipoRango() === 'MES') { <span class="time-option-check" aria-hidden="true">✓</span> }
-              </button>
-              <button type="button" class="time-option-card" [class.is-active]="tipoRango() === 'SEMANA'" (click)="seleccionarRango('SEMANA')">
-                <div class="time-option-card__info">
-                  <strong>Semana</strong>
-                  <small>Últimos 7 días</small>
-                </div>
-                @if (tipoRango() === 'SEMANA') { <span class="time-option-check" aria-hidden="true">✓</span> }
-              </button>
-              <button type="button" class="time-option-card" [class.is-active]="tipoRango() === 'HOY'" (click)="seleccionarRango('HOY')">
-                <div class="time-option-card__info">
-                  <strong>Hoy</strong>
-                  <small>Movimientos de la fecha</small>
-                </div>
-                @if (tipoRango() === 'HOY') { <span class="time-option-check" aria-hidden="true">✓</span> }
-              </button>
-              <button type="button" class="time-option-card" [class.is-active]="tipoRango() === 'PERSONALIZADO'" (click)="seleccionarRango('PERSONALIZADO')">
-                <div class="time-option-card__info">
-                  <strong>Personalizado</strong>
-                  <small>Elegir fechas de inicio y fin</small>
-                </div>
-                @if (tipoRango() === 'PERSONALIZADO') { <span class="time-option-check" aria-hidden="true">✓</span> }
-              </button>
-            </div>
+                @if (!editandoRango()) {
+                  @if (borradorPeriodo.tipo === 'SEMANA' || borradorPeriodo.tipo === 'CATORCENA') {
+                    <label class="period-field">Fecha de anclaje<input type="date" name="anclaPeriodo" min="2000-01-01" max="2100-12-31" required [(ngModel)]="borradorPeriodo.ancla" /></label>
+                    <p class="period-help">Cada ciclo empieza a partir de esta fecha, también hacia atrás.</p>
+                  }
+                  @if (borradorPeriodo.tipo === 'MES' || borradorPeriodo.tipo === 'QUINCENA') {
+                    <label class="period-field">Día de inicio<input type="number" name="diaInicioPeriodo" min="1" [max]="borradorPeriodo.tipo === 'QUINCENA' ? 27 : 31" required [(ngModel)]="borradorPeriodo.diaInicio" /></label>
+                  }
+                  @if (borradorPeriodo.tipo === 'QUINCENA') {
+                    <label class="period-field">Segundo inicio del mes<input type="number" name="diaQuincenaPeriodo" [min]="borradorPeriodo.diaInicio + 1" max="31" required [(ngModel)]="borradorPeriodo.diaQuincena" /></label>
+                  }
+                  @if (borradorPeriodo.tipo === 'MES' || borradorPeriodo.tipo === 'QUINCENA') {
+                    <p class="period-help">Los días que no existan se ajustan al último del mes. La elección original se conserva.</p>
+                  }
+                  <label class="period-default"><input type="checkbox" name="guardarPeriodo" [(ngModel)]="guardarComoPredeterminado" /> Usar al abrir Inicio</label>
+                  <p class="period-help">Sin marcar, sólo cambia esta consulta. Puedes guardar otra preferencia cuando quieras.</p>
+                  <button type="submit" class="period-apply">{{ guardandoPeriodo() ? 'Guardando…' : 'Aplicar periodo' }}</button>
+                }
+              </fieldset>
+            </form>
+            <button type="button" class="period-custom" [attr.aria-pressed]="editandoRango()" (click)="seleccionarRango('PERSONALIZADO')" [disabled]="guardandoPeriodo()">Rango personalizado</button>
             @if (editandoRango()) {
-              <div class="time-dropdown-modal__nav">
-                <form (ngSubmit)="aplicarRangoPersonalizado()" class="space-y-3">
-                  <label class="block">Desde<input type="date" name="desde" required min="2000-01-01" [max]="fechaHoy()" [(ngModel)]="borradorDesde" class="block w-full rounded-lg border p-2" /></label>
-                  <label class="block">Hasta<input type="date" name="hasta" required [min]="borradorDesde || '2000-01-01'" [max]="fechaHoy()" [(ngModel)]="borradorHasta" class="block w-full rounded-lg border p-2" /></label>
-                  @if (errorRango()) { <p role="alert">{{ errorRango() }}</p> }
-                  <button type="submit" class="min-h-11 rounded-lg bg-emerald-700 px-4 text-white">Aplicar fechas</button>
-                </form>
-              </div>
+              <form (ngSubmit)="aplicarRangoPersonalizado()" class="period-form">
+                <label class="period-field">Desde<input type="date" name="desde" required min="2000-01-01" [max]="fechaHoy()" [(ngModel)]="borradorDesde" /></label>
+                <label class="period-field">Hasta<input type="date" name="hasta" required [min]="borradorDesde || '2000-01-01'" [max]="fechaHoy()" [(ngModel)]="borradorHasta" /></label>
+                <button type="submit" class="period-apply">Aplicar fechas</button>
+              </form>
             }
+            @if (errorRango()) { <p class="period-error" role="alert">{{ errorRango() }}</p> }
           </div>
         </div>
       }
@@ -84,11 +84,11 @@
           <p class="dashboard-screen__amount" aria-live="polite">{{ moneda.gastosMes | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</p>
           <label class="home-currency"><span class="sr-only">Moneda del balance</span><select [ngModel]="monedaResumen()" (ngModelChange)="cambiarMoneda($event)" aria-label="Moneda del balance">@for (codigo of monedasResumen(); track codigo) {<option [value]="codigo">{{ codigo }}</option>}</select></label>
           @if (vistaDetallada()) {
-            <div class="home-metrics"><span>Ingresos <strong>{{ moneda.ingresosMes | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong></span><span>Balance del periodo <strong>{{ moneda.ingresosMes - moneda.gastosMes | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong></span></div>
+            <button type="button" class="dashboard-screen__text-link" (click)="irAReportes()">Informe del periodo</button><div class="home-metrics"><span>Ingresos <strong>{{ moneda.ingresosMes | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong></span><span>Balance del periodo <strong>{{ moneda.ingresosMes - moneda.gastosMes | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong></span></div>
             <details class="home-account-details"><summary>Saldo de cuentas</summary><div><span>Dinero en cuentas</span><strong>{{ (moneda.dineroDisponible ?? moneda.balanceTotal) | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong></div>@if(moneda.deudaTarjetas != null && moneda.deudaTarjetas > 0){<div><span>Deuda de tarjetas</span><strong>{{ moneda.deudaTarjetas | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong></div><div><span>Saldo neto</span><strong>{{ moneda.balanceTotal | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong></div>}<button type="button" (click)="irACuentas()">{{ moneda.totalCuentas }} cuentas &rsaquo;</button></details>
           }
         } @else if (!error()) { <p class="dashboard-screen__amount">{{ 0 | monto:monedaResumen():'symbol-narrow':'1.2-2' }}</p> }
-        <div class="home-period"><button type="button" class="home-period-arrow" (click)="cambiarPeriodo(-1)" aria-label="Mes anterior">&lsaquo;</button><button type="button" class="time-dropdown-btn" (click)="toggleModalRango()" aria-haspopup="dialog" [attr.aria-expanded]="modalRangoAbierto()">{{ etiquetaRangoSeleccionado() }} <span aria-hidden="true">&#8964;</span></button><button type="button" class="home-period-arrow" (click)="cambiarPeriodo(1)" [disabled]="periodoEsActual()" aria-label="Mes siguiente">&rsaquo;</button></div>
+        <div class="home-period"><button type="button" class="home-period-arrow" (click)="cambiarPeriodo(-1)" [disabled]="!puedeRetroceder()" aria-label="Periodo anterior">&lsaquo;</button><button type="button" class="time-dropdown-btn" (click)="toggleModalRango()" aria-haspopup="dialog" [attr.aria-expanded]="modalRangoAbierto()">{{ etiquetaRangoSeleccionado() }} <span aria-hidden="true">&#8964;</span></button><button type="button" class="home-period-arrow" (click)="cambiarPeriodo(1)" [disabled]="periodoEsActual()" aria-label="Periodo siguiente">&rsaquo;</button></div>
       </section>
 
       <section class="home-categories" aria-labelledby="home-categories-title">

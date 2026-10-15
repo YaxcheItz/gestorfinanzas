@@ -1,0 +1,79 @@
+{
+  "fechaUTC": "2026-10-15T13:13:40.882565+00:00",
+  "rama": "mejoras/periodos-flexibles",
+  "baseDevelop": "f2b4cdf98357f29944ef94350ef65fd90270cf4f",
+  "estado": "verificado-localmente-sin-commit-ni-push",
+  "frontend": {
+    "build": "PASS",
+    "initialKB": 458.26,
+    "tests": 306,
+    "archivos": 36,
+    "log": "frontend/.angular/periodos-unit.log"
+  },
+  "backend": {
+    "build": "PASS",
+    "tests": 344,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "base": "PostgreSQL 17.9 local, esquema aislado",
+    "flyway": true,
+    "migracion": "V4",
+    "log": ".local/periodos-postgres-real-tests.log"
+  },
+  "e2e": {
+    "resultado": "PASS",
+    "tests": 16,
+    "backend": "PostgreSQL local dedicado E2E, esquema aislado, Flyway y limites compartidos",
+    "puertosAislados": [
+      14220,
+      18080
+    ],
+    "log": "frontend/.angular/periodos-e2e.log"
+  },
+  "visual": {
+    "visual": {
+      "comprobaciones": 66,
+      "anchos": [
+        390,
+        1280
+      ],
+      "temas": [
+        "CLARO",
+        "OSCURO"
+      ],
+      "datos": "API sintetica; Chromium",
+      "offline": true
+    },
+    "servidor-4300": {
+      "comprobaciones": 65,
+      "anchos": [
+        390,
+        1280
+      ],
+      "temas": [
+        "CLARO",
+        "OSCURO"
+      ],
+      "datos": "API sintetica; Chromium",
+      "offline": false
+    }
+  },
+  "operacionLocal": {
+    "frontend": 4300,
+    "frontendReiniciadoPorOverlay": true,
+    "proxyConservado": true,
+    "backend": 18081,
+    "backendActualizado": true,
+    "backupPrevioPrivado": ".local/periodos-antes-v4.private.dump",
+    "backupLegible": true,
+    "servidorArtefactosConservado": 14200,
+    "produccionModificada": false
+  },
+  "limites": [
+    "Sin Android fisico",
+    "Cobertura porcentual no medida",
+    "Lint no configurado en package.json",
+    "Preferencia requiere conexion; no se agrego cola offline de preferencias"
+  ]
+}

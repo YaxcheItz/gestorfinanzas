@@ -69,3 +69,19 @@ html .monai-theme .time-option-card{border:0;border-radius:18px;background:var(-
 .home-category__emoji{transition:transform 180ms cubic-bezier(.23,1,.32,1);transform-origin:bottom}
 @media(min-width:768px){.home-scroll-summary{top:76px}}
 @media(prefers-reduced-motion:reduce){.home-scroll-summary,.home-scroll-summary.is-visible{transform:translateX(-50%);transition:opacity 150ms linear}.home-category__emoji{transition:none}}
+
+/* Period sheet: choices remain comfortable at 375px and when the keyboard opens. */
+.period-form fieldset{border:0;margin:0;padding:0;min-width:0}
+.period-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:16px 0}
+.period-choice{display:flex;align-items:flex-start;gap:8px;padding:12px;border-radius:16px;background:var(--kaptal-surface-subtle);border:1px solid transparent;min-height:64px;cursor:pointer;min-width:0}
+.period-choice.is-active{border-color:var(--kaptal-brand)}
+.period-choice input{margin-top:4px;accent-color:var(--kaptal-brand);flex-shrink:0}
+.period-choice strong{display:block;font-size:14px}.period-choice small{display:block;font-size:12px;color:var(--kaptal-content-muted);line-height:1.5;margin-top:4px}
+.period-field{display:grid;gap:8px;margin:16px 0;font-size:14px;font-weight:600}
+.period-field input{min-height:48px;width:100%;min-width:0;max-width:100%;box-sizing:border-box;border:1px solid var(--kaptal-border);border-radius:14px;padding:12px;background:var(--kaptal-surface-subtle);color:var(--kaptal-content);font:inherit;font-size:16px}
+.period-help{font-size:12px;color:var(--kaptal-content-muted);line-height:1.5}
+.period-default{display:flex;align-items:center;gap:12px;min-height:44px;font-size:14px;margin-top:16px}.period-default input{width:20px;height:20px;accent-color:var(--kaptal-brand)}
+.period-apply{width:100%;min-height:52px;border-radius:16px;margin-top:16px;background:var(--kaptal-brand);color:var(--kaptal-on-brand);font-weight:650}
+.period-custom{width:100%;min-height:48px;border-radius:16px;background:var(--kaptal-surface-subtle);margin-top:16px;font-size:14px}
+.period-error{font-size:14px;line-height:1.5;color:var(--kaptal-expense);margin-top:12px}
+.period-form :focus-visible{outline:2px solid var(--kaptal-brand);outline-offset:3px}.period-form :disabled{opacity:.6}

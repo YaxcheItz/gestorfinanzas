@@ -1,0 +1,13 @@
+{
+  "origin": "http://192.168.0.93:4300",
+  "browser": "Chromium movil emulado",
+  "physicalDevice": false,
+  "preflight": true,
+  "untrustedOriginBlocked": true,
+  "loginAndCookie": true,
+  "csrfPreserved": true,
+  "refreshAndReload": true,
+  "logout": true,
+  "jsErrors": 0,
+  "temporaryAccountRemoved": true
+}

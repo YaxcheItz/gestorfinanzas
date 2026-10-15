@@ -96,6 +96,14 @@ public class PerfilController {
                 perfilService.actualizar(userDetails.getId(), request)));
     }
 
+    @PutMapping("/periodo")
+    public ResponseEntity<ApiResponse<PerfilResponse>> actualizarPeriodo(
+            @RequestBody com.gestionfinanzas.service.PeriodoFinanciero.Config config,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(ApiResponse.ok("Periodo predeterminado guardado",
+                perfilService.actualizarPeriodo(userDetails.getId(), config)));
+    }
+
     @PutMapping("/password")
     public ResponseEntity<ApiResponse<Void>> cambiarPassword(
             @Valid @RequestBody CambiarPasswordRequest request,

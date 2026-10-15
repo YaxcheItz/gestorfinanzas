@@ -71,6 +71,22 @@ public class Usuario {
     @Builder.Default
     private boolean ocultarMontos = false;
 
+    @Column(name = "periodo_tipo", nullable = false, length = 16)
+    @Builder.Default
+    private String periodoTipo = "MES";
+
+    @Column(name = "periodo_ancla", nullable = false)
+    @Builder.Default
+    private java.time.LocalDate periodoAncla = java.time.LocalDate.of(2026, 1, 5);
+
+    @Column(name = "periodo_dia_inicio", nullable = false)
+    @Builder.Default
+    private int periodoDiaInicio = 1;
+
+    @Column(name = "periodo_dia_quincena", nullable = false)
+    @Builder.Default
+    private int periodoDiaQuincena = 16;
+
     @Column(name = "whatsapp_pin_hash", length = 100)
     private String whatsappPinHash;
 

@@ -1,0 +1,254 @@
+[
+  {
+    "nombre": "mes normal",
+    "config": {
+      "tipo": "MES",
+      "ancla": "2026-01-05",
+      "diaInicio": 1,
+      "diaQuincena": 16
+    },
+    "referencia": "2026-10-15",
+    "esperado": {
+      "desde": "2026-10-01",
+      "hasta": "2026-10-31"
+    }
+  },
+  {
+    "nombre": "inicio31 febrero bisiesto",
+    "config": {
+      "tipo": "MES",
+      "ancla": "2026-01-05",
+      "diaInicio": 31,
+      "diaQuincena": 16
+    },
+    "referencia": "2024-02-29",
+    "esperado": {
+      "desde": "2024-02-29",
+      "hasta": "2024-03-30"
+    }
+  },
+  {
+    "nombre": "antes inicio febrero",
+    "config": {
+      "tipo": "MES",
+      "ancla": "2026-01-05",
+      "diaInicio": 31,
+      "diaQuincena": 16
+    },
+    "referencia": "2025-02-27",
+    "esperado": {
+      "desde": "2025-01-31",
+      "hasta": "2025-02-27"
+    }
+  },
+  {
+    "nombre": "recuperar31 marzo",
+    "config": {
+      "tipo": "MES",
+      "ancla": "2026-01-05",
+      "diaInicio": 31,
+      "diaQuincena": 16
+    },
+    "referencia": "2025-03-31",
+    "esperado": {
+      "desde": "2025-03-31",
+      "hasta": "2025-04-29"
+    }
+  },
+  {
+    "nombre": "mes cruza anio",
+    "config": {
+      "tipo": "MES",
+      "ancla": "2026-01-05",
+      "diaInicio": 20,
+      "diaQuincena": 16
+    },
+    "referencia": "2026-01-10",
+    "esperado": {
+      "desde": "2025-12-20",
+      "hasta": "2026-01-19"
+    }
+  },
+  {
+    "nombre": "semana cruza anio",
+    "config": {
+      "tipo": "SEMANA",
+      "ancla": "2026-01-05",
+      "diaInicio": 1,
+      "diaQuincena": 16
+    },
+    "referencia": "2026-01-01",
+    "esperado": {
+      "desde": "2025-12-29",
+      "hasta": "2026-01-04"
+    }
+  },
+  {
+    "nombre": "catorcena antes ancla",
+    "config": {
+      "tipo": "CATORCENA",
+      "ancla": "2026-01-05",
+      "diaInicio": 1,
+      "diaQuincena": 16
+    },
+    "referencia": "2026-01-01",
+    "esperado": {
+      "desde": "2025-12-22",
+      "hasta": "2026-01-04"
+    }
+  },
+  {
+    "nombre": "catorcena incluye ancla",
+    "config": {
+      "tipo": "CATORCENA",
+      "ancla": "2026-01-05",
+      "diaInicio": 1,
+      "diaQuincena": 16
+    },
+    "referencia": "2026-01-18",
+    "esperado": {
+      "desde": "2026-01-05",
+      "hasta": "2026-01-18"
+    }
+  },
+  {
+    "nombre": "catorcena siguiente",
+    "config": {
+      "tipo": "CATORCENA",
+      "ancla": "2026-01-05",
+      "diaInicio": 1,
+      "diaQuincena": 16
+    },
+    "referencia": "2026-01-19",
+    "esperado": {
+      "desde": "2026-01-19",
+      "hasta": "2026-02-01"
+    }
+  },
+  {
+    "nombre": "quincena primera",
+    "config": {
+      "tipo": "QUINCENA",
+      "ancla": "2026-01-05",
+      "diaInicio": 1,
+      "diaQuincena": 16
+    },
+    "referencia": "2026-01-15",
+    "esperado": {
+      "desde": "2026-01-01",
+      "hasta": "2026-01-15"
+    }
+  },
+  {
+    "nombre": "quincena segunda",
+    "config": {
+      "tipo": "QUINCENA",
+      "ancla": "2026-01-05",
+      "diaInicio": 1,
+      "diaQuincena": 16
+    },
+    "referencia": "2026-01-31",
+    "esperado": {
+      "desde": "2026-01-16",
+      "hasta": "2026-01-31"
+    }
+  },
+  {
+    "nombre": "quincena personalizada cruza mes",
+    "config": {
+      "tipo": "QUINCENA",
+      "ancla": "2026-01-05",
+      "diaInicio": 5,
+      "diaQuincena": 20
+    },
+    "referencia": "2026-01-03",
+    "esperado": {
+      "desde": "2025-12-20",
+      "hasta": "2026-01-04"
+    }
+  },
+  {
+    "nombre": "quincena febrero31",
+    "config": {
+      "tipo": "QUINCENA",
+      "ancla": "2026-01-05",
+      "diaInicio": 15,
+      "diaQuincena": 31
+    },
+    "referencia": "2025-02-28",
+    "esperado": {
+      "desde": "2025-02-28",
+      "hasta": "2025-03-14"
+    }
+  },
+  {
+    "nombre": "quincena bisiesta31",
+    "config": {
+      "tipo": "QUINCENA",
+      "ancla": "2026-01-05",
+      "diaInicio": 15,
+      "diaQuincena": 31
+    },
+    "referencia": "2024-02-28",
+    "esperado": {
+      "desde": "2024-02-15",
+      "hasta": "2024-02-28"
+    }
+  },
+  {
+    "nombre": "quincena bisiesta segundo",
+    "config": {
+      "tipo": "QUINCENA",
+      "ancla": "2026-01-05",
+      "diaInicio": 15,
+      "diaQuincena": 31
+    },
+    "referencia": "2024-02-29",
+    "esperado": {
+      "desde": "2024-02-29",
+      "hasta": "2024-03-14"
+    }
+  },
+  {
+    "nombre": "anio bisiesto",
+    "config": {
+      "tipo": "ANIO",
+      "ancla": "2026-01-05",
+      "diaInicio": 1,
+      "diaQuincena": 16
+    },
+    "referencia": "2024-02-29",
+    "esperado": {
+      "desde": "2024-01-01",
+      "hasta": "2024-12-31"
+    }
+  },
+  {
+    "nombre": "todo",
+    "config": {
+      "tipo": "TODO",
+      "ancla": "2026-01-05",
+      "diaInicio": 1,
+      "diaQuincena": 16
+    },
+    "referencia": "2026-10-15",
+    "esperado": {
+      "desde": "2000-01-01",
+      "hasta": "2100-12-31"
+    }
+  },
+  {
+    "nombre": "hoy bisiesto",
+    "config": {
+      "tipo": "HOY",
+      "ancla": "2026-01-05",
+      "diaInicio": 1,
+      "diaQuincena": 16
+    },
+    "referencia": "2024-02-29",
+    "esperado": {
+      "desde": "2024-02-29",
+      "hasta": "2024-02-29"
+    }
+  }
+]

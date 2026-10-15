@@ -167,7 +167,7 @@ describe('DashboardComponent movement dialog accessibility', () => {
     expect(component.modalError()).toContain('Revisa Actividad');
   });
 
-  it('loads today and the last seven local dates instead of monthly data', () => {
+  it('loads today and an anchored calendar week instead of monthly data', () => {
     const component = TestBed.createComponent(DashboardComponent).componentInstance;
     const resumen = vi.spyOn(TestBed.inject(FinanzasService), 'getDashboardResumen');
     component.seleccionarRango('HOY');
@@ -175,7 +175,8 @@ describe('DashboardComponent movement dialog accessibility', () => {
     expect(resumen.mock.calls.at(-1)?.slice(2)).toEqual([hoy, hoy]);
     component.seleccionarRango('SEMANA');
     const { desde, hasta } = component.fechasRango();
-    expect(hasta).toBe(hoy);
+    expect(desde <= hoy && hoy <= hasta).toBe(true);
+    expect(new Date(desde + 'T12:00:00Z').getUTCDay()).toBe(1);
     expect(Math.round((Date.parse(hasta) - Date.parse(desde)) / 86400000)).toBe(6);
   });
 
@@ -193,6 +194,54 @@ describe('DashboardComponent movement dialog accessibility', () => {
     expect(component.fechasRango()).toEqual({ desde: '2025-02-02', hasta: '2025-03-04' });
     component.seleccionarRango('MES');
     expect(component.periodoEsActual()).toBe(true);
+  });
+
+  it('navega catorcenas sin volver al mes y propaga fechas al historial e informe', () => {
+    const component = TestBed.createComponent(DashboardComponent).componentInstance;
+    component.seleccionarRango('CATORCENA');
+    const actual = component.fechasRango();
+    component.cambiarPeriodo(-1);
+    const anterior = component.fechasRango();
+    expect(component.tipoRango()).toBe('CATORCENA');
+    expect(Date.parse(actual.desde) - Date.parse(anterior.desde)).toBe(14 * 86400000);
+    component.cambiarPeriodo(1);
+    expect(component.fechasRango()).toEqual(actual);
+    component.irATransacciones();
+    expect(TestBed.inject(Router).navigate).toHaveBeenLastCalledWith(['/transacciones'], { queryParams: { fechaInicio: actual.desde, fechaFin: actual.hasta } });
+    component.irAReportes();
+    expect(TestBed.inject(Router).navigate).toHaveBeenLastCalledWith(['/reportes'], { queryParams: { desde: actual.desde, hasta: actual.hasta, desdeAnterior: anterior.desde, hastaAnterior: anterior.hasta, sinComparacion: undefined } });
+  });
+
+  it('todo el historial desactiva flechas y no inventa una comparacion anterior', () => {
+    const component = TestBed.createComponent(DashboardComponent).componentInstance;
+    component.seleccionarRango('TODO');
+    expect(component.puedeRetroceder()).toBe(false);
+    expect(component.periodoEsActual()).toBe(true);
+    const anterior = component.fechasRango();
+    component.cambiarPeriodo(-1);
+    expect(component.fechasRango()).toEqual(anterior);
+    component.irAReportes();
+    expect(TestBed.inject(Router).navigate).toHaveBeenLastCalledWith(['/reportes'], { queryParams: { ...anterior, sinComparacion: 'true' } });
+  });
+
+  it('aplicar un borrador invalido no cambia el rango ni guarda preferencias', () => {
+    const component = TestBed.createComponent(DashboardComponent).componentInstance;
+    const inicial = component.fechasRango();
+    component.borradorPeriodo = { tipo: 'QUINCENA', ancla: '2026-01-05', diaInicio: 28, diaQuincena: 31 };
+    component.aplicarPeriodo();
+    expect(component.errorRango()).toBeTruthy();
+    expect(component.fechasRango()).toEqual(inicial);
+  });
+
+  it('una consulta temporal no cambia el periodo guardado al volver a cargar el perfil', () => {
+    const perfil = signal<any>(null);
+    TestBed.overrideProvider(PerfilService, { useValue: { perfil } });
+    const fixture = TestBed.createComponent(DashboardComponent);
+    fixture.componentInstance.seleccionarRango('CATORCENA');
+    perfil.set({ id: 7, monedaPredeterminada: 'MXN', periodoPredeterminado: { tipo: 'MES', ancla: '2026-01-05', diaInicio: 20, diaQuincena: 16 } });
+    fixture.detectChanges();
+    expect(fixture.componentInstance.tipoRango()).toBe('CATORCENA');
+    fixture.destroy();
   });
 
   it('exposes the selected movement type as a pressed state', () => {

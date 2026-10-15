@@ -1,0 +1,27 @@
+{
+  "fechaUTC": "2026-10-15T15:01:00.829490+00:00",
+  "branch": "mejoras/periodos-flexibles",
+  "commitRevisado": "ce2f70b78f65574ffe2f60cc795c16c83e2a5dc4",
+  "runs": [
+    38755240473,
+    38755327861
+  ],
+  "failedJob": "PostgreSQL / Respaldo y restauracion en base nueva",
+  "otrosJobs": "Frontend, backend, migraciones y E2E correctos en ambos runs",
+  "cause": "Casts equivalentes de array varchar a text en CHECK compuesto de periodos",
+  "ciArtifactMatchesAfterNormalization": true,
+  "pythonTests": 8,
+  "realPostgresRecovery": {
+    "match": true,
+    "tables": 19,
+    "columns": 196,
+    "constraints": 72,
+    "sequences": 17,
+    "indexes": 47,
+    "sourceAndRestore": "Bases nuevas aisladas con migraciones V1-V4 y fixture sintetico; sin datos del usuario"
+  },
+  "changes": "Solo comparador, fixture, pruebas y documentacion; migraciones sin alterar",
+  "remoteReRun": false,
+  "commit": false,
+  "push": false
+}

@@ -36,7 +36,22 @@ def canonical_constraint(definition):
     literal = r"'(?:[^']|'')*'::character varying(?:::text)?"
     if match and re.fullmatch(literal + r"(?:, " + literal + r")*", match[2]):
         return {"enumColumn": match[1], "allowed": re.findall(r"'(?:[^']|'')*'", match[2])}
-    return definition
+    # El mismo enum puede estar dentro de un CHECK compuesto (p. ej. los periodos).
+    # Normalizar solo ese subarbol; conservar fechas, operadores y otros limites.
+    # Consumir antes strings/identificadores citados evita reescribir texto SQL
+    # que sea un valor literal, en vez de una expresion de la restriccion.
+    quoted = r"'(?:[^']|'')*'|\"(?:[^\"]|\"\")*\""
+    enum = (r"(?P<column>\b\w+)::text = ANY \(ARRAY\["
+            + r"(?P<values>" + literal + r"(?:, " + literal + r")*)"
+            + r"\](?:::text\[\])?\)")
+
+    def normalize(match):
+        if match.group('column') is None:
+            return match[0]
+        values = re.findall(r"'(?:[^']|'')*'", match.group('values'))
+        return match.group('column') + '::text = ANY (ARRAY[' + ', '.join(value + '::text' for value in values) + '])'
+
+    return re.sub(quoted + '|' + enum, normalize, definition)
 
 
 def manifest(database, include_data=True, schemas=None, query_function=None):

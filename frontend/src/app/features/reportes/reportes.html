@@ -1,10 +1,11 @@
 <div class="reports-page finance-page">
   <header class="reports-heading"><h1>Reportes</h1><app-privacy-toggle /></header>
   <div class="reports-filters">
-    <label>Periodo<input type="month" [ngModel]="periodo()" (ngModelChange)="cambiarPeriodo($event)" /></label>
+    <label>Mes<input type="month" [ngModel]="periodo()" (ngModelChange)="cambiarPeriodo($event)" /></label>
     @if (monedas().length > 0) {<label>Moneda<select [ngModel]="moneda()" (ngModelChange)="moneda.set($event)">@for (codigo of monedas(); track codigo) {<option [value]="codigo">{{ codigo }}</option>}</select></label>}
     <button type="button" (click)="cargar()" [disabled]="loading()">Actualizar</button>
   </div>
+  @if (rangoConsulta(); as rango) {<p class="reports-comparison">Del {{ rango.desde }} al {{ rango.hasta }} · fechas incluidas</p>}
   @if (loading()) {
     <section class="reports-skeleton" role="status" aria-label="Cargando reportes"><span></span><span></span><span></span></section>
   } @else if (error()) {
@@ -15,7 +16,7 @@
       <article><span>↓ Gastos</span><strong>{{ datos.gastosMes | monto:moneda():'symbol':'1.2-2' }}</strong></article>
       <article><span>Diferencia del periodo</span><strong>{{ datos.balanceMes | monto:moneda():'symbol':'1.2-2' }}</strong><small>Ingresos menos gastos; no es el saldo de tus cuentas.</small></article>
     </section>
-    @if (anterior(); as previo) {<p class="reports-comparison">Frente al mes anterior: {{ previo.variacionGastos | monto:moneda():'symbol':'1.2-2' }} de diferencia en gastos.</p>}
+    @if (anterior(); as previo) {<p class="reports-comparison">Frente al {{ rangoConsulta() ? 'periodo' : 'mes' }} anterior: {{ previo.variacionGastos | monto:moneda():'symbol':'1.2-2' }} de diferencia en gastos.</p>}
     <div class="reports-grid">
       <section class="report-panel" aria-labelledby="categories-title"><h2 id="categories-title">¿En qué gastaste?</h2>
         @if (categorias().length === 0) {<p class="reports-empty">No hay gastos en esta moneda y periodo.</p>}

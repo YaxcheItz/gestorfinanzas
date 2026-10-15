@@ -1,6 +1,8 @@
+import { RangoPeriodo, validarRangoPeriodo } from '../../core/utils/periodo-financiero';
+import { of } from 'rxjs';
 import { Component, DestroyRef, computed, effect, inject, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { forkJoin, Subscription } from 'rxjs';
 import { FinanzasService } from '../../core/services/finanzas.service';
@@ -17,6 +19,10 @@ import { AuthService } from '../../core/services/auth.service';
   styleUrl: './reportes.css',
 })
 export class Reportes {
+  private readonly route = inject(ActivatedRoute);
+  readonly rangoConsulta = signal<RangoPeriodo | null>(null);
+  private rangoAnterior?: RangoPeriodo;
+  private sinComparacion = false;
   private readonly finanzas = inject(FinanzasService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly auth = inject(AuthService);
@@ -40,7 +46,19 @@ export class Reportes {
   private request?: Subscription;
 
   constructor() {
-    this.cargar();
+    const parametros = this.route.snapshot.queryParamMap;
+    try {
+      if (parametros.has('desde') || parametros.has('hasta')) {
+        this.rangoConsulta.set(validarRangoPeriodo({ desde: parametros.get('desde') ?? '', hasta: parametros.get('hasta') ?? '' }));
+        if (parametros.has('desdeAnterior') || parametros.has('hastaAnterior')) {
+          this.rangoAnterior = validarRangoPeriodo({ desde: parametros.get('desdeAnterior') ?? '', hasta: parametros.get('hastaAnterior') ?? '' });
+          if (this.rangoAnterior.hasta >= this.rangoConsulta()!.desde) throw new Error('Los periodos no pueden solaparse.');
+        }
+        this.sinComparacion = parametros.get('sinComparacion') === 'true';
+        this.periodo.set(this.rangoConsulta()!.desde.slice(0, 7));
+      }
+      this.cargar();
+    } catch { this.error.set('El rango del informe no es válido. Elige un mes para continuar.'); }
     effect(() => {
       const usuarioId = this.auth.currentUser()?.id ?? null;
       if (usuarioId === this.usuarioId) return;
@@ -62,6 +80,7 @@ export class Reportes {
 
   cambiarPeriodo(value: string): void {
     if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(value)) return;
+    this.rangoConsulta.set(null); this.rangoAnterior = undefined; this.sinComparacion = false;
     this.periodo.set(value);
     this.cargar();
   }
@@ -74,10 +93,13 @@ export class Reportes {
     this.analitica.set(null);
     this.comparacion.set(null);
     const [anio, mes] = this.periodo().split('-').map(Number);
+    const rango = this.rangoConsulta(), previo = this.rangoAnterior;
     this.request = forkJoin({
-      resumen: this.finanzas.getDashboardResumen(mes, anio),
-      analitica: this.finanzas.getDashboardAnalitica(mes, anio),
-      comparacion: this.finanzas.getDashboardComparacion(mes, anio)
+      resumen: this.finanzas.getDashboardResumen(mes, anio, rango?.desde, rango?.hasta),
+      analitica: this.finanzas.getDashboardAnalitica(mes, anio, rango?.desde, rango?.hasta),
+      comparacion: this.sinComparacion
+        ? of({ success: true, data: { mes, anio, mesAnterior: mes, anioAnterior: anio, porMoneda: [] } })
+        : this.finanzas.getDashboardComparacion(mes, anio, rango?.desde, rango?.hasta, previo?.desde, previo?.hasta)
     }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: response => {
         this.loading.set(false);

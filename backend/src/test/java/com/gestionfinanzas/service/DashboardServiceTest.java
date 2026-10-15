@@ -38,6 +38,18 @@ class DashboardServiceTest {
     }
 
     @Test
+    void comparacionAceptaCiclosYExponeLasFechasReales() {
+        var actual = PeriodoFinanciero.resolver(new PeriodoFinanciero.Config("MES", LocalDate.of(2026, 1, 5), 31, 16), LocalDate.of(2024, 3, 31));
+        var previo = PeriodoFinanciero.desplazar(new PeriodoFinanciero.Config("MES", LocalDate.of(2026, 1, 5), 31, 16), actual, -1);
+        var respuesta = dashboardService.obtenerComparacion(7L, 3, 2024, actual.desde(), actual.hasta(), previo.desde(), previo.hasta());
+        assertEquals(actual.desde(), respuesta.desde());
+        assertEquals(previo.desde(), respuesta.desdeAnterior());
+        verify(transaccionRepository).findTotalesMensualesPorMoneda(7L, actual.desde(), actual.hasta());
+        verify(transaccionRepository).findTotalesMensualesPorMoneda(7L, previo.desde(), previo.hasta());
+        assertThrows(IllegalArgumentException.class, () -> dashboardService.obtenerComparacion(7L, 3, 2024, actual.desde(), actual.hasta(), actual.desde(), actual.hasta()));
+    }
+
+    @Test
     void rechazaRangosIncompletosOInvertidos() {
         LocalDate desde = LocalDate.of(2026, 1, 4);
         LocalDate hasta = LocalDate.of(2025, 12, 29);
