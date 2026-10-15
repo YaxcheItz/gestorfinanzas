@@ -101,6 +101,44 @@ public interface TransaccionRepository extends JpaRepository<Transaccion, Long>,
             @Param("fin") LocalDate fin
     );
 
+    @Query("SELECT COALESCE(SUM(t.monto), 0) FROM Transaccion t " +
+           "LEFT JOIN t.cuenta cuenta " +
+           "WHERE t.usuario.id = :usuarioId AND t.categoria.id = :categoriaId " +
+           "AND (:listaId IS NULL OR t.lista.id = :listaId) " +
+           "AND t.tipo = com.gestionfinanzas.model.enums.TipoTransaccion.GASTO " +
+           "AND COALESCE(cuenta.moneda, t.cuentaMonedaHistorica) = :moneda " +
+           "AND t.fecha BETWEEN :inicio AND :fin")
+    BigDecimal sumGastosPorUsuarioYCategoriaYListaYPeriodo(
+            @Param("usuarioId") Long usuarioId,
+            @Param("categoriaId") Long categoriaId,
+            @Param("listaId") Long listaId,
+            @Param("moneda") String moneda,
+            @Param("inicio") LocalDate inicio,
+            @Param("fin") LocalDate fin
+    );
+
+    @Query("SELECT t FROM Transaccion t " +
+           "LEFT JOIN FETCH t.cuenta cuenta " +
+           "LEFT JOIN FETCH t.categoria c " +
+           "WHERE t.usuario.id = :usuarioId AND t.categoria.id = :categoriaId " +
+           "AND (:listaId IS NULL OR t.lista.id = :listaId) " +
+           "AND t.tipo = com.gestionfinanzas.model.enums.TipoTransaccion.GASTO " +
+           "AND COALESCE(cuenta.moneda, t.cuentaMonedaHistorica) = :moneda " +
+           "AND t.fecha BETWEEN :inicio AND :fin " +
+           "ORDER BY t.fecha DESC, t.id DESC")
+    List<Transaccion> findTransaccionesPresupuesto(
+            @Param("usuarioId") Long usuarioId,
+            @Param("categoriaId") Long categoriaId,
+            @Param("listaId") Long listaId,
+            @Param("moneda") String moneda,
+            @Param("inicio") LocalDate inicio,
+            @Param("fin") LocalDate fin
+    );
+
+    List<Transaccion> findAllByPlantillaRecurrenteIdOrderByFechaAsc(Long plantillaId);
+
+    List<Transaccion> findAllByPlantillaRecurrenteIdAndFechaGreaterThanEqualOrderByFechaAsc(Long plantillaId, LocalDate fecha);
+
     @Query("SELECT new com.gestionfinanzas.dto.response.DashboardGastoCategoriaResponse(" +
     "c.id, COALESCE(c.nombre, 'Sin categoría'), c.color, SUM(t.monto), COALESCE(cuenta.moneda, t.cuentaMonedaHistorica)) " +
     "FROM Transaccion t LEFT JOIN t.categoria c LEFT JOIN t.cuenta cuenta " +

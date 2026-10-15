@@ -45,6 +45,16 @@ public class PlantillaRecurrenteController {
                 plantillaService.cambiarEstado(userDetails.getId(), id, activa)));
     }
 
+    @PatchMapping("/{id}/fecha-fin")
+    public ResponseEntity<ApiResponse<PlantillaRecurrenteResponse>> actualizarFechaFin(
+            @PathVariable Long id,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate fechaFin,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        return ResponseEntity.ok(ApiResponse.ok("Fecha de finalización actualizada correctamente",
+                plantillaService.actualizarFechaFin(userDetails.getId(), id, fechaFin)));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> eliminar(
             @PathVariable Long id,

@@ -54,8 +54,13 @@ public class TransaccionService {
 
     @Transactional
     public TransaccionResponse crearCuotaRecurrente(Long usuarioId, TransaccionRequest request, UUID compraMsiId) {
+        return crearCuotaRecurrente(usuarioId, request, compraMsiId, null);
+    }
+
+    @Transactional
+    public TransaccionResponse crearCuotaRecurrente(Long usuarioId, TransaccionRequest request, UUID compraMsiId, Long plantillaId) {
         return crearInterna(usuarioId, request, null,
-                com.gestionfinanzas.model.enums.MetodoCaptura.TEXTO, compraMsiId);
+                com.gestionfinanzas.model.enums.MetodoCaptura.TEXTO, compraMsiId, plantillaId);
     }
 
     @Transactional
@@ -70,8 +75,8 @@ public class TransaccionService {
 
     @Transactional
     public TransaccionResponse crearTransaccion(Long usuarioId, TransaccionRequest request, UUID idempotencyKey,
-                                               com.gestionfinanzas.model.enums.MetodoCaptura metodoCaptura) {
-        return crearInterna(usuarioId, request, idempotencyKey, metodoCaptura, null);
+                                                com.gestionfinanzas.model.enums.MetodoCaptura metodoCaptura) {
+        return crearInterna(usuarioId, request, idempotencyKey, metodoCaptura, null, null);
     }
 
     private static String huellaSolicitud(TransaccionRequest request) {
@@ -79,8 +84,9 @@ public class TransaccionService {
             var contenido=new StringBuilder();
             for(var campo:TransaccionRequest.class.getRecordComponents()) {
                 Object valor=campo.getAccessor().invoke(request);
-                // Conserva la huella de reintentos emitidos antes de listas/etiquetas.
-                if (valor == null && (campo.getName().equals("listaId") || campo.getName().equals("etiquetas"))) continue;
+                // Conserva la huella de reintentos emitidos antes de listas/etiquetas y recurrencias.
+                if (valor == null && (campo.getName().equals("listaId") || campo.getName().equals("etiquetas")
+                        || campo.getName().equals("modoEdicionRecurrencia") || campo.getName().equals("fechaFinRecurrencia"))) continue;
                 String texto=valor instanceof BigDecimal decimal ? decimal.stripTrailingZeros().toPlainString()
                     : valor==null ? "<null>" : valor.toString();
                 contenido.append(campo.getName()).append(':').append(valor==null?'0':'1')
@@ -93,6 +99,11 @@ public class TransaccionService {
 
     private TransaccionResponse crearInterna(Long usuarioId, TransaccionRequest request, UUID idempotencyKey,
             com.gestionfinanzas.model.enums.MetodoCaptura metodoCaptura, UUID compraExistente) {
+        return crearInterna(usuarioId, request, idempotencyKey, metodoCaptura, compraExistente, null);
+    }
+
+    private TransaccionResponse crearInterna(Long usuarioId, TransaccionRequest request, UUID idempotencyKey,
+            com.gestionfinanzas.model.enums.MetodoCaptura metodoCaptura, UUID compraExistente, Long plantillaOrigenId) {
         if (idempotencyKey != null) {
             Transaccion existente = transaccionRepository.findByClientRequestId(idempotencyKey).orElse(null);
             if (existente != null) {
@@ -134,6 +145,9 @@ public class TransaccionService {
         aplicarImpacto(datos.tipo(), datos.cuentaOrigen(), datos.cuentaDestino(),
                 montoGuardar, datos.montoDestino(), 1);
 
+        PlantillaRecurrente plantillaOrigen = plantillaOrigenId != null
+                ? plantillaRepository.findById(plantillaOrigenId).orElse(null) : null;
+
         UUID compraMsiId = isMsi ? UUID.randomUUID() : compraExistente;
         String descripcion = descripcionMovimiento(datos, request.descripcion());
         String sufijoCuota = isMsi ? " (Cuota 1/" + request.msi() + ")" : "";
@@ -141,6 +155,7 @@ public class TransaccionService {
         if (descripcion.length() + sufijoCuota.length() <= 200) descripcion += sufijoCuota;
         Transaccion transaccion = Transaccion.builder()
                 .compraMsiId(compraMsiId)
+                .plantillaRecurrente(plantillaOrigen)
                 .lista(lista)
                 .etiquetas(etiquetas)
                 .usuario(datos.usuario())
@@ -172,7 +187,7 @@ public class TransaccionService {
         }
         
         if (isMsi) {
-            plantillaRepository.save(PlantillaRecurrente.builder()
+            PlantillaRecurrente plantillaMsi = plantillaRepository.save(PlantillaRecurrente.builder()
                     .lista(guardada.getLista())
                     .etiquetas(new java.util.LinkedHashSet<>(guardada.getEtiquetas()))
                     .usuario(datos.usuario())
@@ -189,8 +204,10 @@ public class TransaccionService {
                     .cuotasTotales(request.msi() - 1)
                     .cuotasPagadas(0)
                     .build());
+            guardada.setPlantillaRecurrente(plantillaMsi);
+            guardada = transaccionRepository.save(guardada);
         } else if (request.frecuenciaRecurrencia() != null) {
-            plantillaRepository.save(PlantillaRecurrente.builder()
+            PlantillaRecurrente plantillaRec = plantillaRepository.save(PlantillaRecurrente.builder()
                     .lista(guardada.getLista())
                     .etiquetas(new java.util.LinkedHashSet<>(guardada.getEtiquetas()))
                     .usuario(datos.usuario())
@@ -203,7 +220,10 @@ public class TransaccionService {
                     .fechaAncla(CalendarioFinanciero.siguiente(request.fecha(), request.frecuenciaRecurrencia(), request.fecha())
                             .equals(request.siguienteFechaRecurrencia()) ? request.fecha() : request.siguienteFechaRecurrencia())
                     .siguienteFecha(request.siguienteFechaRecurrencia())
+                    .fechaFin(request.fechaFinRecurrencia())
                     .build());
+            guardada.setPlantillaRecurrente(plantillaRec);
+            guardada = transaccionRepository.save(guardada);
         }
         return TransaccionResponse.fromEntity(guardada);
     }
@@ -260,6 +280,40 @@ public class TransaccionService {
         transaccion.setFecha(request.fecha());
         transaccion.setDescripcion(descripcionMovimiento(datos, request.descripcion()));
         transaccion.setNotas(normalizarNotas(request.notas()));
+
+        PlantillaRecurrente plantillaAsociada = transaccion.getPlantillaRecurrente();
+        if (plantillaAsociada != null) {
+            com.gestionfinanzas.model.enums.ModoEdicionRecurrencia modo = request.modoEdicionRecurrencia() != null
+                    ? request.modoEdicionRecurrencia() : com.gestionfinanzas.model.enums.ModoEdicionRecurrencia.SOLO_ESTA;
+            if (modo == com.gestionfinanzas.model.enums.ModoEdicionRecurrencia.SOLO_ESTA) {
+                transaccion.setPlantillaRecurrente(null);
+            } else if (modo == com.gestionfinanzas.model.enums.ModoEdicionRecurrencia.ESTA_Y_SIGUIENTES
+                    || modo == com.gestionfinanzas.model.enums.ModoEdicionRecurrencia.TODA_LA_SERIE) {
+                plantillaAsociada.setMonto(request.monto());
+                plantillaAsociada.setCategoria(datos.categoria());
+                plantillaAsociada.setCuenta(datos.cuentaOrigen());
+                plantillaAsociada.setNotas(normalizarNotas(request.notas()));
+                plantillaAsociada.setLista(transaccion.getLista());
+                plantillaAsociada.setEtiquetas(new java.util.LinkedHashSet<>(transaccion.getEtiquetas()));
+                if (request.fechaFinRecurrencia() != null) {
+                    plantillaAsociada.setFechaFin(request.fechaFinRecurrencia());
+                }
+                plantillaRepository.save(plantillaAsociada);
+
+                if (modo == com.gestionfinanzas.model.enums.ModoEdicionRecurrencia.TODA_LA_SERIE) {
+                    List<Transaccion> serie = transaccionRepository.findAllByPlantillaRecurrenteIdOrderByFechaAsc(plantillaAsociada.getId());
+                    for (Transaccion tSerie : serie) {
+                        if (!tSerie.getId().equals(transaccion.getId())) {
+                            tSerie.setCategoria(datos.categoria());
+                            tSerie.setNotas(normalizarNotas(request.notas()));
+                            tSerie.setLista(transaccion.getLista());
+                            tSerie.setEtiquetas(new java.util.LinkedHashSet<>(transaccion.getEtiquetas()));
+                            transaccionRepository.save(tSerie);
+                        }
+                    }
+                }
+            }
+        }
 
         Transaccion actualizada = transaccionRepository.save(transaccion);
         libroDiarioService.registrarActualizacion(

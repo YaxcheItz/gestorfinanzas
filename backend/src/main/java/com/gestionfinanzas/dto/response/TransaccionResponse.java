@@ -35,7 +35,8 @@ public record TransaccionResponse(
     String listaNombre,
     java.util.Set<String> etiquetas,
     Long autorId,
-    String autorNombre
+    String autorNombre,
+    Long plantillaId
 ) {
     public TransaccionResponse(Long id, Long cuentaId, String cuentaNombre, Long cuentaDestinoId,
             String cuentaDestinoNombre, Long categoriaId, String categoriaNombre, String categoriaIcono,
@@ -46,7 +47,7 @@ public record TransaccionResponse(
         this(id, cuentaId, cuentaNombre, cuentaDestinoId, cuentaDestinoNombre, categoriaId,
                 categoriaNombre, categoriaIcono, categoriaColor, tipo, monto, montoDestino,
                 tasaCambio, moneda, monedaDestino, fecha, descripcion, notas, cashbackAutomatico,
-                fechaCreacion, metodoCaptura, compraMsiId, null, null, java.util.Set.of(), null, null);
+                fechaCreacion, metodoCaptura, compraMsiId, null, null, java.util.Set.of(), null, null, null);
     }
     public TransaccionResponse(Long id, Long cuentaId, String cuentaNombre, Long cuentaDestinoId,
             String cuentaDestinoNombre, Long categoriaId, String categoriaNombre, String categoriaIcono,
@@ -98,7 +99,8 @@ public record TransaccionResponse(
             t.getLista() != null ? t.getLista().getNombre() : null,
             t.getEtiquetas() == null ? java.util.Set.of() : new java.util.TreeSet<>(t.getEtiquetas()),
             t.getUsuario() != null ? t.getUsuario().getId() : null,
-            t.getUsuario() != null ? t.getUsuario().getNombre() : null
+            t.getUsuario() != null ? t.getUsuario().getNombre() : null,
+            t.getPlantillaRecurrente() != null ? t.getPlantillaRecurrente().getId() : null
         );
     }
 }

@@ -1,8 +1,26 @@
 # Estado para retomar la sesión
 
-## Etapa vigente: listas, etiquetas y búsqueda (2026-10-15)
+## Etapa vigente: presupuestos y recurrencias (2026-10-15)
 
-- Rama nueva mejoras/listas-etiquetas creada desde develop == origin/develop == dce49cdf57dc3a2263357a3e1eac27013ff00cc4, comprobados al inicio. Cambios locales sin commit, push ni despliegue de producción.
+- Rama nueva `mejoras/presupuestos-recurrencias` creada desde `develop` == `origin/develop` (`e033387 Merge pull request #68 from YaxcheItz/mejoras/listas-etiquetas`), comprobados al inicio. Cambios locales sin commit ni push.
+- Implementada la Etapa 2 de continuación MonAi:
+  1. Relación de presupuestos con listas: columna `lista_id` nullable con FK ON DELETE SET NULL, unique constraint `uk_presupuesto_usuario_cat_periodo_lista` admitiendo límites por lista o Personal, y migración V6 que preserva datos previos.
+  2. Presupuesto disponible en registro rápido: indicador en tiempo real al elegir categoría de gasto con aviso textual y badge de estado (Normal, Cerca del límite con porcentaje configurable, o Excedido), alertando si el monto ingresado sobrepasará el disponible mensual.
+  3. Detalle de presupuesto y umbrales configurables: campo `porcentajeAlerta` (1..100, default 80%), barra de progreso con marca visual del umbral, y modal accesible de detalle con desglose de límite, gastado, disponible y lista de movimientos del período, con acción directa para modificar la meta.
+  4. Mejoras de recurrencias: columna `plantilla_id` en `transacciones` y `fecha_fin` en `plantillas_recurrentes`. Selector de modo de edición al modificar movimientos recurrentes («Solo este movimiento», «Este y los siguientes», «Toda la serie»). Posibilidad de fijar fecha final al crear o editar series. Desvinculación limpia al cancelar series sin tocar transacciones históricas ni generar errores de persistencia.
+  5. Idempotencia y trazabilidad: huella SHA-256 de solicitudes preservada para reintentos y compatibilidad retroactiva.
+- Rama `mejoras/presupuestos-recurrencias` subida al remoto y PR #71 creado contra `develop`.
+- Corrección de CI (2026-10-15):
+  1. CORS local: `application.yml`, `application-test.yml`, `CorsConfig.java`, `start-backend.ps1` y `configurar-acceso-lan.ps1` actualizados para aceptar puertos 4200, 4300 y 14200 (localhost, 127.0.0.1 e IPs LAN activas), evitando 403 `Invalid CORS request`.
+  2. Compatibilidad Flyway V6 en CI: `PostgresMigracionesTest.java` actualizado para esperar 5 migraciones desde V1 (hasta V6), versión final '6', y usar `V7__fallo_controlado` para pruebas de reversión DDL sin colisionar con la V6 real.
+- Verificación técnica completa en CI (GitHub Actions run 38818791091 y 38818786996 - commit `2945b22`):
+  - Backend (build + tests): SUCCESS
+  - Frontend (unitarias + build): SUCCESS
+  - PostgreSQL (migraciones + regresiones + recuperación): SUCCESS
+  - E2E Chromium + API + PostgreSQL: SUCCESS
+- Siguiente paso según el plan: Integrar el PR #71 en `develop`, comprobar remoto, y crear la rama `mejoras/asistente-evidencias` desde `develop` actualizado para comenzar la Etapa 3.
+
+
 - Etapa 2 implementada: listas privadas/compartidas, selector real en cabecera y Herramientas dentro de la hoja; creación, edición, archivo, moneda de presentación, roles propietario/editor/lector e invitaciones explícitas con hash, vencimiento y revocación. Los miembros sólo modifican movimientos y cuentas propios. Borrar al propietario transfiere la lista y conserva registros ajenos; quitar un miembro no borra su historial.
 - V5 asigna movimientos y recurrencias anteriores a Personal sin tocar dinero. Inicio, informes, recientes, historial y exportación respetan lista; búsqueda paginada por texto/importe/categoría/etiquetas/autor/fechas, con índices. URL, selector y recarga conservan el mismo contexto. Cabecera comprobada con nombres largos.
 - Registro manual, captura natural, borradores offline y recurrencias conservan lista y etiquetas. La confirmación revalida permisos: una propuesta revocada no se redirige a Personal ni mueve dinero. CSV admite listas/etiquetas opcionales; respaldo JSON v4 conserva contexto y restaura listas privadas, sin miembros ni invitaciones, compatible con versiones previas.

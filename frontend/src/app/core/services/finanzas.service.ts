@@ -27,6 +27,8 @@ import {
   PageResponse,
   PinVinculacionWhatsApp,
   Presupuesto,
+  PresupuestoDetalle,
+  PresupuestoDisponible,
   PresupuestoPayload,
   PresupuestoResumen,
   Transaccion,
@@ -330,12 +332,40 @@ export class FinanzasService {
     return this.http.delete<ApiResponse<void>>(`${this.baseUrl}/recurrencias/${id}`);
   }
 
+  actualizarFechaFinPlantillaRecurrente(id: number, fechaFin?: string | null): Observable<ApiResponse<PlantillaRecurrente>> {
+    let params = new HttpParams();
+    if (fechaFin) params = params.set('fechaFin', fechaFin);
+    return this.http.patch<ApiResponse<PlantillaRecurrente>>(
+      `${this.baseUrl}/recurrencias/${id}/fecha-fin`,
+      {},
+      { params }
+    );
+  }
+
   // --- Presupuestos ---
-  getPresupuestos(mes?: number, anio?: number): Observable<ApiResponse<PresupuestoResumen>> {
+  getPresupuestos(mes?: number, anio?: number, listaId?: number | null): Observable<ApiResponse<PresupuestoResumen>> {
     let params = new HttpParams();
     if (mes) params = params.set('mes', mes);
     if (anio) params = params.set('anio', anio);
+    if (listaId) params = params.set('listaId', listaId);
     return this.http.get<ApiResponse<PresupuestoResumen>>(`${this.baseUrl}/presupuestos`, { params });
+  }
+
+  getPresupuestoDetalle(id: number): Observable<ApiResponse<PresupuestoDetalle>> {
+    return this.http.get<ApiResponse<PresupuestoDetalle>>(`${this.baseUrl}/presupuestos/${id}/detalle`);
+  }
+
+  getPresupuestoDisponible(
+    categoriaId: number,
+    listaId?: number | null,
+    fecha?: string,
+    moneda?: string
+  ): Observable<ApiResponse<PresupuestoDisponible>> {
+    let params = new HttpParams().set('categoriaId', categoriaId);
+    if (listaId) params = params.set('listaId', listaId);
+    if (fecha) params = params.set('fecha', fecha);
+    if (moneda) params = params.set('moneda', moneda);
+    return this.http.get<ApiResponse<PresupuestoDisponible>>(`${this.baseUrl}/presupuestos/disponible`, { params });
   }
 
   guardarPresupuesto(payload: PresupuestoPayload): Observable<ApiResponse<Presupuesto>> {

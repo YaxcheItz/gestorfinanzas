@@ -200,6 +200,14 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
   formMsi: number | null = null;
   frecuenciaRecurrencia: FrecuenciaRecurrencia = 'MENSUAL';
   siguienteFechaRecurrencia = '';
+  formModoEdicion: 'SOLO_ESTA' | 'ESTA_Y_SIGUIENTES' | 'TODA_LA_SERIE' = 'SOLO_ESTA';
+  formFechaFinRecurrencia: string = '';
+
+  readonly modoEdicionOpciones: { value: 'SOLO_ESTA' | 'ESTA_Y_SIGUIENTES' | 'TODA_LA_SERIE'; label: string; descripcion: string }[] = [
+    { value: 'SOLO_ESTA', label: 'Solo este movimiento', descripcion: 'Los anteriores y posteriores no se tocan.' },
+    { value: 'ESTA_Y_SIGUIENTES', label: 'Este y los siguientes', descripcion: 'Modifica desde este movimiento en adelante.' },
+    { value: 'TODA_LA_SERIE', label: 'Toda la serie', descripcion: 'Aplica el cambio a todos los movimientos de la serie.' },
+  ];
 
   // Categorías filtradas por tipo para el modal
   readonly categoriasModal = computed(() => {
@@ -1088,6 +1096,8 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
     this.formNotas = transaccion.notas ?? '';
     this.formListaId = transaccion.listaId ?? this.contextoLista.activaId(); this.formEtiquetas = (transaccion.etiquetas ?? []).map(e => '#' + e).join(' ');
     this.formDescripcion = transaccion.descripcion ?? '';
+    this.formModoEdicion = 'SOLO_ESTA';
+    this.formFechaFinRecurrencia = '';
     this.modalError.set(null);
     this.modalAbierto.set(true);
   }
@@ -1193,6 +1203,8 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
 
     let etiquetas: string[];
     try { etiquetas = parsearEtiquetas(this.formEtiquetas); } catch (error) { this.modalError.set((error as Error).message); return; }
+    const transaccionEditar = this.transaccionEditando();
+    const esRecurrenteEnEdicion = this.modoEdicion() && transaccionEditar?.plantillaId != null;
     const payload: TransaccionPayload = this.movimientoPendiente ?? {
       ...(this.formListaId == null ? {} : { listaId: this.formListaId }),
       etiquetas,
@@ -1209,7 +1221,12 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
       descripcion: this.formDescripcion.trim() || undefined,
       notas: this.formNotas.trim() || null,
       frecuenciaRecurrencia: this.movimientoRecurrente ? this.frecuenciaRecurrencia : null,
-      siguienteFechaRecurrencia: this.movimientoRecurrente ? this.siguienteFechaRecurrencia : null, msi: this.esCompraMsi ? this.formMsi : null
+      siguienteFechaRecurrencia: this.movimientoRecurrente ? this.siguienteFechaRecurrencia : null,
+      msi: this.esCompraMsi ? this.formMsi : null,
+      ...(esRecurrenteEnEdicion ? { modoEdicionRecurrencia: this.formModoEdicion } : {}),
+      ...(this.movimientoRecurrente && this.formFechaFinRecurrencia
+        ? { fechaFinRecurrencia: this.formFechaFinRecurrencia }
+        : {})
     };
 
     this.submitting.set(true);

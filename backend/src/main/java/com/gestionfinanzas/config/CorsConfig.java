@@ -44,7 +44,15 @@ public class CorsConfig {
      */
     private List<String> parseOrigins(String raw) {
         if (raw == null || raw.isBlank()) {
-            return List.of("http://localhost:4200", "https://kaptalgf.vercel.app");
+            return List.of(
+                    "http://localhost:4200",
+                    "http://localhost:4300",
+                    "http://localhost:14200",
+                    "http://127.0.0.1:4200",
+                    "http://127.0.0.1:4300",
+                    "http://127.0.0.1:14200",
+                    "https://kaptalgf.vercel.app"
+            );
         }
         return Arrays.stream(raw.split(","))
                 .map(String::trim)

@@ -47,12 +47,21 @@ public record TransaccionRequest(
     @jakarta.validation.constraints.Max(value = 60, message = "Los MSI admiten hasta 60 cuotas")
     Integer msi,
     @jakarta.validation.constraints.Min(1) Long listaId,
-    @Size(max = 8) java.util.List<@Size(max = 33) String> etiquetas
+    @Size(max = 8) java.util.List<@Size(max = 33) String> etiquetas,
+    com.gestionfinanzas.model.enums.ModoEdicionRecurrencia modoEdicionRecurrencia,
+    LocalDate fechaFinRecurrencia
 ) {
     public TransaccionRequest(Long cuentaId, Long cuentaDestinoId, Long categoriaId, TipoTransaccion tipo,
             BigDecimal monto, BigDecimal tasaCambio, LocalDate fecha, String descripcion, String notas,
             FrecuenciaRecurrencia frecuenciaRecurrencia, LocalDate siguienteFechaRecurrencia, Integer msi) {
         this(cuentaId, cuentaDestinoId, categoriaId, tipo, monto, tasaCambio, fecha, descripcion, notas,
-                frecuenciaRecurrencia, siguienteFechaRecurrencia, msi, null, null);
+                frecuenciaRecurrencia, siguienteFechaRecurrencia, msi, null, null, null, null);
+    }
+    public TransaccionRequest(Long cuentaId, Long cuentaDestinoId, Long categoriaId, TipoTransaccion tipo,
+            BigDecimal monto, BigDecimal tasaCambio, LocalDate fecha, String descripcion, String notas,
+            FrecuenciaRecurrencia frecuenciaRecurrencia, LocalDate siguienteFechaRecurrencia, Integer msi,
+            Long listaId, java.util.List<String> etiquetas) {
+        this(cuentaId, cuentaDestinoId, categoriaId, tipo, monto, tasaCambio, fecha, descripcion, notas,
+                frecuenciaRecurrencia, siguienteFechaRecurrencia, msi, listaId, etiquetas, null, null);
     }
 }
