@@ -1,5 +1,13 @@
 # Estado para retomar la sesión
 
+## Estado actual: sincronizacion de canales con develop (2026-10-17)
+
+- El usuario integro recurrencias mediante PR #74: origin/develop = 1a30415. Se incorporo ese develop a mejoras/integraciones-canales; unico conflicto en este documento, conservando el historial de ambas entregas. El codigo se combino automaticamente.
+- Checks previos correctos: correcciones 39059262591 y canales 39059148161. La nueva combinacion debe completar su propia ejecucion de CI antes de integrar canales a develop.
+- Siguiente: integrar canales cuando GitHub permita el merge y los checks sean correctos; despues autenticar Kapso, configurar webhook HTTPS y consentir Gmail con ejemplos bancarios para las reglas. El puente sigue sin conexiones externas activas ni movimientos reales registrados.
+- Los apartados siguientes son historial de sesiones, incluidas referencias a ramas sin commit/push que ya fueron publicadas. No interpretar esas referencias como estado actual.
+
+
 ## Correccion de CI remoto (2026-10-17)
 
 - Ejecucion 39058043967: backend, frontend y PostgreSQL correctos; E2E fallo en chat-android y dashboard-repetir. La rama integraciones tenia CI 39057920843 correcto, pero comparte el codigo afectado.
@@ -26,6 +34,19 @@
 - Contratos y pasos de activacion: docs/HERRAMIENTAS_CANALES_2026-10-17.md. Evidencia: replica/integraciones-canales/verification.json y auditorias. Manifiesto global privado sin secretos: ~/.codex/tooling-review/2026-10-17.json.
 - Siguiente: integrar correccion previa; revisar esta rama; autenticar Kapso y configurar numero/webhook HTTPS; consentir Gmail y obtener ejemplos bancarios para habilitar reglas una por una. Luego integracion multiusuario y UI/bandeja, y retomar asistente-evidencias. Mantener Angular/Spring/PostgreSQL; evaluar Pages para frontend y Containers ya preparado, sin migrar a Convex ahora.
 
+
+
+## Cierre vigente: presupuestos y recurrencias (2026-10-16, verificado)
+
+- PR #71 integrado. Base comprobada mediante fetch: develop == origin/develop == e947227ba1a21f4ef6b9ad0d13c12ad8285d0990. Rama actual: correcciones/presupuestos-recurrencias. Sin commit ni push.
+- Cuatro correcciones completadas: respaldo JSON v5 conserva presupuestos por lista, umbral, fecha final y enlaces remapeados de recurrencias (compatible v1-v4); disponible sin mezcla de listas/monedas; toda la serie genera auditoria/libro diario para cada cambio historico y mantiene el contexto del cashback; fecha final validada antes de registrar/reactivar.
+- Base Flyway V6, sin cambios de migraciones. Las listas restauradas siguen siendo copias privadas. Toda la serie conserva importes/cuentas/tipos de las otras operaciones historicas; la interfaz lo explica.
+- Backend: 376 pruebas PostgreSQL completas correctas; despues 39 pruebas contables finales correctas, incluidas 11 regresiones nuevas. Son suites solapadas, no sumar sus totales. Frontend: 312 pruebas en 38 archivos correctas, build 466.37 kB sin avisos.
+- E2E: 17 flujos existentes correctos y nuevo flujo de presupuestos correcto en ejecucion independiente tras corregir un nombre QA demasiado largo, sin relajar expectativas. Comprueba listas, monedas, privacidad, anchos 320/390 y restauracion de limites/umbrales.
+- Navegador: 66 comprobaciones dist (390/1280, claro/oscuro) y 33 en el servidor efectivo 4300 (390, claro/oscuro). API sintetica, Chromium; sin prueba en Android fisico. Captura nueva de presupuesto inspeccionada.
+- Entorno local actualizado con respaldo privado legible .local/cierre-presupuestos-20261016.private.dump. Huellas de siete tablas financieras identicas antes/despues. Backend 18081 PID 17292, Angular 4300 PID 18388; servidor 14200 PID 18968 conservado. Health por 4300 correcto, CORS local/LAN permitido y origen ajeno rechazado. LAN verificada: 192.168.0.93; comprobar de nuevo en futuras sesiones.
+- Evidencia: replica/cierre-presupuestos-recurrencias/verification.json. Contratos: docs/CIERRE_PRESUPUESTOS_RECURRENCIAS.md. Logs .local/cierre-presupuestos-*.log y frontend/.angular/cierre-presupuestos-*.log. Skills Angular, seguridad, verificacion y Playwright. Sin cambios de dependencias ni produccion.
+- Siguiente etapa: integrar este cierre y comprobar develop contra remoto; crear otra rama para asistente-evidencias siguiendo docs/PLAN_CONTINUACION_MONAI.md. No se ha iniciado esa etapa ni publicado esta correccion.
 
 ## Etapa vigente: presupuestos y recurrencias (2026-10-15)
 
