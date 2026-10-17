@@ -74,6 +74,23 @@ describe('QuickCaptureComponent processing and gestures', () => {
     expect(component.captureTurns()[0].actions).toHaveLength(0);
   });
 
+  it('waits for the account catalogue before accepting a capture', async () => {
+    usuario.set({id:1});fixture.detectChanges();
+    await vi.waitFor(()=>expect((component as any).borradorRestaurado()).toBe(true));
+    const accounts=new Subject<any>(), categories=new Subject<any>();
+    vi.spyOn(TestBed.inject(FinanzasService),'getCuentas').mockReturnValue(accounts);
+    vi.spyOn(TestBed.inject(FinanzasService),'getCategorias').mockReturnValue(categories);
+    (component as any).cargarCatalogoChat();
+    component.content='Gasto 25';
+    const api=vi.spyOn(TestBed.inject(FinanzasService),'capturaRapidaAi');
+    component.submit();expect(api).not.toHaveBeenCalled();
+    categories.next({success:true,data:[]});categories.complete();
+    expect(component.catalogoCargando()).toBe(true);
+    accounts.next({success:true,data:[{id:1,nombre:'Banco',tipo:'DEBITO',moneda:'MXN',activo:true}]});accounts.complete();
+    expect(component.catalogoCargando()).toBe(false);
+    component.submit();expect(api).toHaveBeenCalledOnce();
+  });
+
   it('prepares an offline proposal without sending text or recording money', () => {
     conexion.set(false);
     component.cuentasEdicion.set([{id:1,nombre:'Efectivo',tipo:'EFECTIVO',moneda:'MXN',saldoActual:0,activo:true} as any]);

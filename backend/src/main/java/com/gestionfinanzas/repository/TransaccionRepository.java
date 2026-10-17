@@ -24,6 +24,9 @@ import java.util.UUID;
 
 @Repository
 public interface TransaccionRepository extends JpaRepository<Transaccion, Long>, JpaSpecificationExecutor<Transaccion> {
+    @Query("select t from Transaccion t where t.usuario.id=:uid and t.cuenta.id=:cuenta and t.tipo=:tipo and t.fecha=:fecha and t.monto=:monto order by t.id desc")
+    List<Transaccion> buscarCoincidenciasAviso(@Param("uid") Long uid,@Param("cuenta") Long cuenta,@Param("tipo") TipoTransaccion tipo,@Param("fecha") LocalDate fecha,@Param("monto") BigDecimal monto,Pageable pagina);
+
 
     Optional<Transaccion> findByIdAndUsuarioId(Long id, Long usuarioId);
 

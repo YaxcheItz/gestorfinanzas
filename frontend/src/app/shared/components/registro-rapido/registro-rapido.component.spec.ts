@@ -37,6 +37,18 @@ describe('Registro rapido: guardado y privacidad', () => {
     component.abrir();fixture.detectChanges();
   });
   afterEach(()=>fixture.destroy());
+  it('oculta proporciones financieras y retira el presupuesto anterior al cambiar de cuenta',()=>{
+    const pendientes=new Subject<any>();
+    const api=vi.spyOn(TestBed.inject(FinanzasService),'getPresupuestoDisponible').mockReturnValue(pendientes);
+    component.categoriaId=10;component.consultarPresupuestoDisponible();
+    pendientes.next({success:true,data:{tienePresupuesto:true,estado:'ALERTA',moneda:'MXN',montoDisponible:20,montoGastado:80,montoLimite:100,porcentajeAlerta:75,porcentajeConsumido:80}});
+    fixture.detectChanges();expect(fixture.nativeElement.querySelector('.entry-budget').textContent).toContain('80%');
+    TestBed.inject(PrivacidadService).alternarLocal();fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.entry-budget').textContent).not.toContain('80%');
+    api.mockReturnValue(new Subject<any>());component.cuentaId=3;component.consultarPresupuestoDisponible();
+    pendientes.next({success:true,data:{tienePresupuesto:true,moneda:'MXN'}});fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.entry-budget')).toBeNull();
+  });
   it('abre la categoria elegida desde el grafico sin guardar al abrir',()=>{
     component.cerrar();
     component.abrir(new CustomEvent('registro',{detail:{tipo:'GASTO',categoriaId:categorias[0].id}}));

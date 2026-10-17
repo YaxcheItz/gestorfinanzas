@@ -1,0 +1,42 @@
+import {expect,test} from '@playwright/test';
+import {registrarPrueba} from './registro-helper';
+
+test.use({viewport:{width:390,height:844},hasTouch:true,serviceWorkers:'block'});
+test('bandeja revisa avisos y separa posibles duplicados sin repetir confirmaciones',async({page},testInfo)=>{
+  const email=`avisos-${crypto.randomUUID()}@example.test`,password='Password123';
+  const registro=await registrarPrueba(page.request,{nombre:'QA avisos',email,password});expect(registro.ok()).toBeTruthy();
+  const headers={Authorization:`Bearer ${(await registro.json()).data.token}`};
+  const cuenta=await page.request.post('/api/cuentas',{headers,data:{nombre:'Banco bandeja',tipo:'DEBITO',moneda:'MXN',saldoInicial:1000}});expect(cuenta.ok()).toBeTruthy();
+  const cuentaId=(await cuenta.json()).data.id;
+  const fecha=new Date().toLocaleDateString('en-CA',{timeZone:'America/Mexico_City'});
+  const datos={cuentaId,tipo:'GASTO',monto:25,fecha,descripcion:'Tacos del aviso'};
+  const entrada={origen:'GMAIL',identificador:'correo-qa',resumen:'Compra seleccionada',clase:'COMPRA',moneda:'MXN',datos};
+  const recibir=async(body:object)=>{const r=await page.request.post('/api/avisos',{headers,data:body});expect(r.ok()).toBeTruthy();return (await r.json()).data;};
+  const primero=await recibir(entrada);expect((await recibir(entrada)).id).toBe(primero.id);
+  const gastos=async()=>{const r=await page.request.get('/api/transacciones?size=100',{headers});expect(r.ok()).toBeTruthy();return (await r.json()).data.content.filter((t:{descripcion:string})=>t.descripcion==='Tacos del aviso');};
+  expect(await gastos()).toHaveLength(0);
+  await page.goto('/login');await page.locator('#email').fill(email);await page.locator('#password').fill(password);await page.getByRole('button',{name:'Iniciar sesión',exact:true}).click();await expect(page).toHaveURL(/dashboard/);
+  await page.goto('/avisos');await expect(page.getByRole('heading',{name:'Bandeja de avisos'})).toBeVisible();
+  await expect(page.locator('.row')).toHaveCount(1);
+  await page.getByRole('button',{name:'Guardar movimiento',exact:true}).click();
+  await expect(page.getByText('Movimiento registrado.',{exact:true})).toBeVisible();expect(await gastos()).toHaveLength(1);
+  const repetido=await page.request.post(`/api/avisos/${primero.id}/confirmar`,{headers,data:{version:primero.version}});expect(repetido.ok()).toBeTruthy();expect(await gastos()).toHaveLength(1);
+  const segundo=await recibir({...entrada,origen:'WHATSAPP',identificador:'mensaje-qa'});expect(segundo.coincidencias).toHaveLength(1);
+  await page.reload();await expect(page.getByText(/Hay 1 movimiento/)).toBeVisible();
+  await page.getByRole('button',{name:'Guardar movimiento',exact:true}).click();
+  const dialog=page.getByRole('dialog',{name:'¿Es otra operación?'});await expect(dialog).toBeVisible();
+  await dialog.getByRole('button',{name:'Volver',exact:true}).click();expect(await gastos()).toHaveLength(1);
+  await page.getByRole('button',{name:'Guardar movimiento',exact:true}).click();await dialog.getByRole('button',{name:'Es una operación distinta',exact:true}).click();
+  await expect(page.getByText('No hay avisos pendientes',{exact:true})).toBeVisible();expect(await gastos()).toHaveLength(2);
+  await page.getByRole('button',{name:'Registrados',exact:true}).click();await expect(page.locator('.row')).toHaveCount(2);
+  for(const width of [320,390]){await page.setViewportSize({width,height:844});await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);}
+  await page.screenshot({path:testInfo.outputPath('bandeja-movil.png'),fullPage:true});
+  await page.getByRole('button',{name:'Pendientes',exact:true}).click();await page.getByRole('button',{name:'Añadir aviso',exact:true}).click();
+  const form=page.getByRole('dialog',{name:'Añadir aviso'});await form.locator('textarea[name="resumen"]').fill('Aviso incompleto');await form.getByRole('button',{name:'Guardar revisión',exact:true}).click();
+  await expect(form).not.toBeVisible();await expect(page.locator('.row')).toHaveCount(1);
+  await page.getByRole('button',{name:'Revisar y corregir',exact:true}).click();
+  const edit=page.getByRole('dialog',{name:'Revisar aviso'});await edit.locator('input[name="descripcion"]').fill('Compra corregida');await edit.locator('input[name="monto"]').fill('13');await edit.locator('select[name="cuenta"]').selectOption({label:'Banco bandeja · MXN'});await edit.getByRole('button',{name:'Guardar revisión',exact:true}).click();
+  await expect(edit).not.toBeVisible();await expect(page.getByRole('heading',{name:'Compra corregida',exact:true})).toBeVisible();
+  await page.getByRole('button',{name:'Descartar',exact:true}).click();await expect(page.getByText('No hay avisos pendientes',{exact:true})).toBeVisible();
+  expect(await gastos()).toHaveLength(2);
+});

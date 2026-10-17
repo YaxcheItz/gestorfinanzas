@@ -1,5 +1,66 @@
 # Estado para retomar la sesión
 
+## Estado actual: bandeja de avisos (2026-10-17)
+
+- Revision de CI tras publicar `7ede72f`: ejecucion `39068489152`, fallo exclusivo de backend H2; PostgreSQL, frontend, E2E y Python correctos. Reproducido localmente: borrar usuario falla por FK de avisos sin cascada en el DDL generado. La entidad declara ahora `@OnDelete(CASCADE)`, igual que V7 y otras entidades del proyecto. Se conserva la prueba de borrado sin omitirla ni modificar la migracion publicada. Resultados de cierre de esta correccion en `replica/captura-avisos/ci-fix.json`.
+
+- Rama `mejoras/captura-avisos` creada desde `develop == origin/develop == ce7bcfb`, comprobado mediante fetch. Incluye los merges de recurrencias y canales (PR #74 y #75). Entrega publicada en `7ede72f`; consultar Git para el estado de la correccion posterior.
+- Implementada `/avisos`, accesible en Herramientas: pendientes, registrados y descartados; recibir, revisar, corregir, confirmar y descartar. API autenticada por usuario, control de versiones, bloqueo, claves estables y guardado contable transaccional. Recibir/editar no altera dinero. Coincidencias requieren aceptar expresamente otra compra real; reintentar no duplica.
+- Migracion V7 crea `avisos_financieros`. No modifica importes historicos. Respaldo JSON v5 conserva su contrato y NO incluye la bandeja; PostgreSQL completo si la incluye. Se bloquea restaurar sobre pendientes. Ver `BANDEJA_AVISOS.md`.
+- Puente personal adaptado a la bandeja: guardado automatico solo con `autoSaveRecognized` explicito, datos reconocidos y ninguna coincidencia. Avisos ambiguos quedan sin clasificar para revisar; no se guarda correo bruto. No se han activado proveedores externos ni registrado movimientos reales.
+- Verificacion backend PostgreSQL: 392 pruebas correctas. Frontend: 316 pruebas correctas. Puente: 22 pruebas correctas y Ruff correcto. Cierre E2E y entorno local en `replica/captura-avisos/verification.json`.
+- Cierre final: 19 E2E completos correctos y build de produccion correcto. Backend local 18081 actualizado a V7 con respaldo privado legible `.local/avisos-antes-v7.private.dump`; huellas de siete tablas financieras identicas. Health por 4300 correcto, CORS local/LAN permitido y origen ajeno rechazado. UI servida en 4300 comprobada con API sintetica en 320/390/1280, sin escrituras reales. Frontend existente conservado; backend reiniciado. Capturas en `replica/captura-avisos/`. Scripts globales de `canales-personales` sincronizados. Pendiente prueba fisica Android y CI remoto cuando se publique.
+- Siguiente: revisar/integrar esta rama y crear otra desde develop actualizado para activar WhatsApp/Kapso con numero y webhook HTTPS; luego Gmail readonly con ejemplos anonimizados y reglas bancarias exactas. Despues retomar asistente con evidencias, Android y demas etapas de `PLAN_CONTINUACION_MONAI.md`.
+- Los apartados siguientes son historial y no sustituyen este estado vigente.
+
+## Historial: sincronizacion de canales con develop (2026-10-17)
+
+- El usuario integro recurrencias mediante PR #74: origin/develop = 1a30415. Se incorporo ese develop a mejoras/integraciones-canales; unico conflicto en este documento, conservando el historial de ambas entregas. El codigo se combino automaticamente.
+- Checks previos correctos: correcciones 39059262591 y canales 39059148161. La nueva combinacion debe completar su propia ejecucion de CI antes de integrar canales a develop.
+- Siguiente: integrar canales cuando GitHub permita el merge y los checks sean correctos; despues autenticar Kapso, configurar webhook HTTPS y consentir Gmail con ejemplos bancarios para las reglas. El puente sigue sin conexiones externas activas ni movimientos reales registrados.
+- Los apartados siguientes son historial de sesiones, incluidas referencias a ramas sin commit/push que ya fueron publicadas. No interpretar esas referencias como estado actual.
+
+
+## Correccion de CI remoto (2026-10-17)
+
+- Ejecucion 39058043967: backend, frontend y PostgreSQL correctos; E2E fallo en chat-android y dashboard-repetir. La rama integraciones tenia CI 39057920843 correcto, pero comparte el codigo afectado.
+- Chat espera a que finalice la carga del catalogo antes de permitir enviar: evita fallback local sin cuentas cuando la red falla durante el arranque. Regresion unitaria nueva para respuestas demoradas.
+- Inicio compacta visualmente las barras sin cambiar su altura de layout: evita el bucle de scroll anchoring/IntersectionObserver y controles inestables.
+- Verificado localmente: 313 pruebas frontend correctas y los dos E2E afectados correctos contra PostgreSQL, esquema aislado ci_remote_20261017 y puertos de prueba 14220/18080. Sin ampliar timeouts, forzar clics ni omitir expectativas. Logs privados frontend/.angular/ci-remote-*.log en copia principal. Revisar ejecucion remota nueva tras el push.
+
+
+## Publicacion autorizada (2026-10-17)
+
+- El usuario autorizo subir las dos entregas por separado, solo con su autoria Git configurada: YaxcheItz <yaxtibla1@gmail.com>, sin coautoria.
+- Ramas: correcciones/presupuestos-recurrencias y mejoras/integraciones-canales. Consultar git log y origin para los hashes/estado remoto actuales. No se integra develop en esta operacion.
+- Los estados sin commit/push y las banderas de evidencia mas abajo corresponden a la verificacion previa a esta publicacion.
+
+
+## Etapa vigente: herramientas y canales (2026-10-17)
+
+- Rama mejoras/integraciones-canales desde origin/develop e947227 comprobado mediante fetch, en worktree .local/integraciones-worktree. La rama principal correcciones/presupuestos-recurrencias sigue con sus cambios locales intactos; no confundir las entregas ni mover cambios entre ellas.
+- Peticion actual: herramientas globales de Codex, WhatsApp/Kapso y correos bancarios Gmail. Usuario eligio guardar automaticamente los reconocidos; ambiguos y posibles duplicados quedan pendientes. Bancos mencionados BBVA/Nu/Santander/Mercado Pago, sin ejemplos transaccionales verificados.
+- Instaladas 14 skills globales (Ponytail seis, Addy cuatro, Prompt Master, Graphify, catalogo Public APIs y canales-personales). Graphify CLI 0.9.92 aislado con uv, usado en AST local del backend. MCP Kapso preparado globalmente pero desactivado hasta autenticar. No se cambiaron proveedores/modelos ni se activaron hooks.
+- OmniRoute no instalado: auditoria del lockfile, tres paquetes de produccion afectados con severidad alta. Graphify: 30 distribuciones auditadas sin avisos conocidos. Revisiones acotadas, no garantia de seguridad absoluta. Coucou no aporta al runtime del proyecto; no instalado.
+- Puente tools/canales implementado: webhook Kapso v2 firmado y limitado a propietario, cola SQLite, guardado via API existente con idempotencia, validacion de cuenta/moneda/usuario, refresh de sesion, acuses genericos. /codex es bandeja, no ejecucion remota. Gmail readonly con OAuth PKCE, etiqueta y fecha inicial, plantillas exactas + DMARC + referencia estable; reglas reales todavia vacias. No se ha autenticado ningun proveedor ni registrado dinero real.
+- Verificacion: 21 pruebas correctas, Ruff y compilacion Python correctos. HTTP firmado probado con API simulada. Sin E2E con proveedores reales. No cambios Java/Angular/migraciones/servidores. No commit/push ni despliegue.
+- Contratos y pasos de activacion: docs/HERRAMIENTAS_CANALES_2026-10-17.md. Evidencia: replica/integraciones-canales/verification.json y auditorias. Manifiesto global privado sin secretos: ~/.codex/tooling-review/2026-10-17.json.
+- Siguiente: integrar correccion previa; revisar esta rama; autenticar Kapso y configurar numero/webhook HTTPS; consentir Gmail y obtener ejemplos bancarios para habilitar reglas una por una. Luego integracion multiusuario y UI/bandeja, y retomar asistente-evidencias. Mantener Angular/Spring/PostgreSQL; evaluar Pages para frontend y Containers ya preparado, sin migrar a Convex ahora.
+
+
+
+## Cierre vigente: presupuestos y recurrencias (2026-10-16, verificado)
+
+- PR #71 integrado. Base comprobada mediante fetch: develop == origin/develop == e947227ba1a21f4ef6b9ad0d13c12ad8285d0990. Rama actual: correcciones/presupuestos-recurrencias. Sin commit ni push.
+- Cuatro correcciones completadas: respaldo JSON v5 conserva presupuestos por lista, umbral, fecha final y enlaces remapeados de recurrencias (compatible v1-v4); disponible sin mezcla de listas/monedas; toda la serie genera auditoria/libro diario para cada cambio historico y mantiene el contexto del cashback; fecha final validada antes de registrar/reactivar.
+- Base Flyway V6, sin cambios de migraciones. Las listas restauradas siguen siendo copias privadas. Toda la serie conserva importes/cuentas/tipos de las otras operaciones historicas; la interfaz lo explica.
+- Backend: 376 pruebas PostgreSQL completas correctas; despues 39 pruebas contables finales correctas, incluidas 11 regresiones nuevas. Son suites solapadas, no sumar sus totales. Frontend: 312 pruebas en 38 archivos correctas, build 466.37 kB sin avisos.
+- E2E: 17 flujos existentes correctos y nuevo flujo de presupuestos correcto en ejecucion independiente tras corregir un nombre QA demasiado largo, sin relajar expectativas. Comprueba listas, monedas, privacidad, anchos 320/390 y restauracion de limites/umbrales.
+- Navegador: 66 comprobaciones dist (390/1280, claro/oscuro) y 33 en el servidor efectivo 4300 (390, claro/oscuro). API sintetica, Chromium; sin prueba en Android fisico. Captura nueva de presupuesto inspeccionada.
+- Entorno local actualizado con respaldo privado legible .local/cierre-presupuestos-20261016.private.dump. Huellas de siete tablas financieras identicas antes/despues. Backend 18081 PID 17292, Angular 4300 PID 18388; servidor 14200 PID 18968 conservado. Health por 4300 correcto, CORS local/LAN permitido y origen ajeno rechazado. LAN verificada: 192.168.0.93; comprobar de nuevo en futuras sesiones.
+- Evidencia: replica/cierre-presupuestos-recurrencias/verification.json. Contratos: docs/CIERRE_PRESUPUESTOS_RECURRENCIAS.md. Logs .local/cierre-presupuestos-*.log y frontend/.angular/cierre-presupuestos-*.log. Skills Angular, seguridad, verificacion y Playwright. Sin cambios de dependencias ni produccion.
+- Siguiente etapa: integrar este cierre y comprobar develop contra remoto; crear otra rama para asistente-evidencias siguiendo docs/PLAN_CONTINUACION_MONAI.md. No se ha iniciado esa etapa ni publicado esta correccion.
+
 ## Etapa vigente: presupuestos y recurrencias (2026-10-15)
 
 - Rama nueva `mejoras/presupuestos-recurrencias` creada desde `develop` == `origin/develop` (`e033387 Merge pull request #68 from YaxcheItz/mejoras/listas-etiquetas`), comprobados al inicio. Cambios locales sin commit ni push.

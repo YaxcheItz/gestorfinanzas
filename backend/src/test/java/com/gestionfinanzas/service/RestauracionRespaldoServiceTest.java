@@ -148,7 +148,7 @@ class RestauracionRespaldoServiceTest {
                 usuarios, cuentaRepository, categoriaRepository, presupuestoRepository,
                 plantillaRepository, transaccionRepository, auditoriaRepository, asientoRepository,
                 parejaRepository, aportacionRepository, gastoRepository, repartoRepository, pagoRepository,
-                objectMapper, mock(com.gestionfinanzas.repository.ListaRepository.class), mock(com.gestionfinanzas.repository.ListaMiembroRepository.class), mock(ListaService.class));
+                objectMapper, mock(com.gestionfinanzas.repository.ListaRepository.class), mock(com.gestionfinanzas.repository.ListaMiembroRepository.class), mock(ListaService.class), mock(com.gestionfinanzas.repository.AvisoFinancieroRepository.class));
     }
 
     @Test

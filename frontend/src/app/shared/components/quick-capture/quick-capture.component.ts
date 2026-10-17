@@ -9,7 +9,7 @@ import { Component, DestroyRef, ElementRef, HostListener, OnDestroy, ViewChild, 
 import { CaptureLauncherService } from '../../../core/services/capture-launcher.service';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs';
+import { Subscription, finalize } from 'rxjs';
 import { Router } from '@angular/router';
 import { AiActionProposal, AiChatMessage, AiReportWidget } from '../../../core/models/ai.models';
 import { Categoria, Cuenta, Transaccion } from '../../../core/models/finanzas.models';
@@ -170,7 +170,7 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
             <label class="sr-only" for="quick-capture-text">Escribe el movimiento que quieres registrar</label>
             <textarea id="quick-capture-text" name="content" [(ngModel)]="content" (ngModelChange)="alCambiarTexto()" (keydown.enter)="enviarConEnter($event)" rows="1" maxlength="1200" enterkeyhint="send" placeholder="¿Qué gastaste?" [readOnly]="loading() || escuchando() || stopping()" [attr.aria-busy]="loading()"></textarea>
             <button type="button" class="capture-mic" (click)="toggleVoice()" [class.is-listening]="escuchando()" [disabled]="loading() || transcribiendoVoz() || stopping()" [attr.aria-label]="escuchando() ? 'Detener dictado' : 'Dictar movimiento'"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5m-4 0h8"/></svg></button>
-            <button type="submit" class="capture-chat__send" [disabled]="loading() || escuchando() || stopping() || !content.trim()" aria-label="Enviar movimiento"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 14-7-5 14-3-6-6-1Z"/><path d="m11 13 4-4"/></svg></button>
+            <button type="submit" class="capture-chat__send" [disabled]="loading() || catalogoCargando() || escuchando() || stopping() || !content.trim()" aria-label="Enviar movimiento"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 14-7-5 14-3-6-6-1Z"/><path d="m11 13 4-4"/></svg></button>
           </form>
           @if (voiceMessage()) { <p class="voice-transcribed" role="status">{{ voiceMessage() }}</p> }
           <details class="capture-options"><summary>IA opcional · {{ consent ? 'permitida' : 'sin permiso' }}</summary><label class="capture-consent capture-chat__consent"><input type="checkbox" [(ngModel)]="consent" name="captureConsent"><span>Permitir IA con mi contexto financiero para consultas complejas</span></label><p>El registro habitual usa reglas. Tú decides cuándo permitir IA.</p></details>
@@ -339,9 +339,11 @@ export class QuickCaptureComponent implements OnDestroy {
   private cargarCatalogoChat():void{
     const generation=this.chatGeneration,uid=this.usuarioChat;if(uid===null)return;
     let cuentasListas=false,categoriasListas=false;
+    let pendientes=2;this.catalogoCargando.set(true);
+    const terminar=()=>{if(generation===this.chatGeneration && --pendientes===0)this.catalogoCargando.set(false);};
     const persistir=()=>{if(cuentasListas&&categoriasListas)this.persistirCatalogo();};
-    this.operaciones.add(this.finanzas.getCuentas().subscribe({next:r=>{if(generation!==this.chatGeneration||!r.success||!r.data)return;this.cuentasEdicion.set(r.data);cuentasListas=true;persistir();},error:()=>{}}));
-    this.operaciones.add(this.finanzas.getCategorias().subscribe({next:r=>{if(generation!==this.chatGeneration||!r.success||!r.data)return;this.categories.set(r.data);categoriasListas=true;persistir();},error:()=>{}}));
+    this.operaciones.add(this.finanzas.getCuentas().pipe(finalize(terminar)).subscribe({next:r=>{if(generation!==this.chatGeneration||!r.success||!r.data)return;this.cuentasEdicion.set(r.data);cuentasListas=true;persistir();},error:()=>{}}));
+    this.operaciones.add(this.finanzas.getCategorias().pipe(finalize(terminar)).subscribe({next:r=>{if(generation!==this.chatGeneration||!r.success||!r.data)return;this.categories.set(r.data);categoriasListas=true;persistir();},error:()=>{}}));
   }
   private persistirCatalogo():void{
     const uid=this.usuarioChat;if(uid!==null)void this.offline.guardarCatalogo(uid,this.cuentasEdicion(),this.categories()).catch(()=>{});
@@ -366,6 +368,7 @@ export class QuickCaptureComponent implements OnDestroy {
   readonly open = signal(false);
   readonly mode = signal<CaptureMode>('CAPTURE');
   readonly loading = signal(false);
+  readonly catalogoCargando = signal(false);
   readonly reportLoading = signal(false);
   readonly confirming = signal<string | null>(null);
   readonly aiConsentRequired = signal(false);
@@ -483,7 +486,7 @@ export class QuickCaptureComponent implements OnDestroy {
     const listaId = this.listas.activaId();
     if (listaId != null && !this.listas.puedeEscribir()) { this.error.set('Elige una lista donde puedas registrar.'); return; }
     const value = this.content.trim();
-    if (!value || this.loading() || this.listening() || this.stopping() || this.confirming() !== null) return;
+    if (!value || this.loading() || this.catalogoCargando() || this.listening() || this.stopping() || this.confirming() !== null) return;
     this.seguirFinal.set(true);
     if(!this.offline.conexion()){
       this.prepararEnDispositivo(value, listaId);return;

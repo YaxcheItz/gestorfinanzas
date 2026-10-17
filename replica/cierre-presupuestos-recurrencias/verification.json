@@ -1,0 +1,75 @@
+{
+  "branch": "correcciones/presupuestos-recurrencias",
+  "base": "e947227ba1a21f4ef6b9ad0d13c12ad8285d0990",
+  "date": "2026-10-16",
+  "changes": [
+    "JSON backup v5 with per-list budgets, threshold, recurrence end date and remapped links; v1-v4 supported",
+    "Strict list/currency budget lookup",
+    "Audit and ledger for every historical edit, preserving original amounts/accounts; cashback context follows its expense",
+    "End date checked before recording/reactivating"
+  ],
+  "backend": {
+    "postgresFull": {
+      "tests": 376,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "focusedFinalLedger": {
+      "tests": 39,
+      "failures": 0,
+      "includesNewRegressionTests": 11
+    },
+    "note": "Suites overlap; do not sum totals. Focused run covers final ledger/cashback safeguards."
+  },
+  "frontend": {
+    "unitTests": 312,
+    "files": 38,
+    "status": "pass",
+    "build": "pass",
+    "initialKB": 466.37
+  },
+  "e2e": {
+    "existingFlows": 17,
+    "existingStatus": "pass",
+    "newBudgetFlow": 1,
+    "newStatus": "pass",
+    "note": "New case rerun independently after correcting an invalid QA category name; no assertions disabled. Same dedicated PostgreSQL E2E database with separate schemas."
+  },
+  "visual": {
+    "distChecks": 66,
+    "widths": [
+      390,
+      1280
+    ],
+    "themes": [
+      "CLARO",
+      "OSCURO"
+    ],
+    "evidence": "diseno/browser-checks.json",
+    "newBudgetViewportWidths": [
+      320,
+      390
+    ],
+    "server4300Checks": 33,
+    "server4300Evidence": "servidor-4300/browser-checks.json"
+  },
+  "localRuntime": {
+    "status": "pass",
+    "privateBackupVerified": true,
+    "frontendPort": 4300,
+    "backendPort": 18081,
+    "staticPort": 14200,
+    "financialTablesUnchanged": 7,
+    "healthThrough4300": "pass",
+    "corsLocalAndLan": "pass",
+    "foreignOrigin": "rejected"
+  },
+  "databaseMigrationsChanged": false,
+  "backupFormatVersion": 5,
+  "databaseMigrationVersion": 6,
+  "physicalAndroidTested": false,
+  "commit": false,
+  "push": false,
+  "productionChanged": false
+}

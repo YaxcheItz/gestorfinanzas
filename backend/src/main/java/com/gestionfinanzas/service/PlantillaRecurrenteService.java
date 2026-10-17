@@ -34,6 +34,7 @@ public class PlantillaRecurrenteService {
                 && plantilla.getCuotasPagadas() >= plantilla.getCuotasTotales()) {
             throw new IllegalArgumentException("Esta compra MSI ya terminó");
         }
+        if (activa) validarFechaSiguiente(plantilla);
         plantilla.setActiva(activa);
         return PlantillaRecurrenteResponse.fromEntity(plantillaRepository.save(plantilla));
     }
@@ -65,6 +66,7 @@ public class PlantillaRecurrenteService {
         if (!plantilla.isActiva()) {
             throw new IllegalArgumentException("La plantilla recurrente está pausada");
         }
+        validarFechaSiguiente(plantilla);
         LocalDate fecha = plantilla.getSiguienteFecha();
         if (fecha.isAfter(CalendarioFinanciero.hoy())) {
             throw new IllegalArgumentException("Este movimiento recurrente aún no vence");
@@ -129,6 +131,12 @@ public class PlantillaRecurrenteService {
             plantilla.setActiva(false);
         }
         return PlantillaRecurrenteResponse.fromEntity(plantillaRepository.save(plantilla));
+    }
+
+    private void validarFechaSiguiente(PlantillaRecurrente plantilla) {
+        if (plantilla.getFechaFin() != null && plantilla.getSiguienteFecha().isAfter(plantilla.getFechaFin())) {
+            throw new IllegalArgumentException("La siguiente ocurrencia supera la fecha final. Cambia la fecha final antes de reactivar la serie.");
+        }
     }
 
     private PlantillaRecurrente buscar(Long usuarioId, Long plantillaId) {

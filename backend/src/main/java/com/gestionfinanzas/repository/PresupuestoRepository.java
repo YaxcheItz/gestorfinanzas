@@ -26,7 +26,7 @@ public interface PresupuestoRepository extends JpaRepository<Presupuesto, Long> 
             @Param("anio") int anio
     );
 
-    @Query("SELECT p FROM Presupuesto p WHERE p.usuario.id = :usuarioId AND p.categoria.id = :categoriaId AND (:listaId IS NULL OR p.lista.id = :listaId) AND p.mes = :mes AND p.anio = :anio")
+    @Query("SELECT p FROM Presupuesto p WHERE p.usuario.id = :usuarioId AND p.categoria.id = :categoriaId AND ((:listaId IS NULL AND p.lista IS NULL) OR p.lista.id = :listaId) AND p.mes = :mes AND p.anio = :anio")
     List<Presupuesto> findCandidatosParaDisponible(
             @Param("usuarioId") Long usuarioId,
             @Param("categoriaId") Long categoriaId,

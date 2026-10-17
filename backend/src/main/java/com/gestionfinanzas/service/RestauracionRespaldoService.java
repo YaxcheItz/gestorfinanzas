@@ -63,7 +63,7 @@ import java.util.function.Function;
 @Slf4j
 public class RestauracionRespaldoService {
 
-    private static final int VERSION_COMPATIBLE = 4;
+    private static final int VERSION_COMPATIBLE = 5;
     private static final int MAX_REGISTROS = 20_000;
     private static final Map<String, CategoriaInicial> CATEGORIAS_INICIALES = Map.of(
             "Alimentos y Supermercado", new CategoriaInicial(TipoTransaccion.GASTO, "shopping-cart", "#f59e0b"),
@@ -93,6 +93,7 @@ public class RestauracionRespaldoService {
     private final com.gestionfinanzas.repository.ListaRepository listaRepository;
     private final com.gestionfinanzas.repository.ListaMiembroRepository listaMiembroRepository;
     private final ListaService listaService;
+    private final com.gestionfinanzas.repository.AvisoFinancieroRepository avisoRepository;
 
     @Transactional(readOnly = true)
     public RestauracionRespaldoPreviewResponse previsualizar(Long usuarioId, RespaldoFinancieroResponse respaldo) {
@@ -157,9 +158,10 @@ public class RestauracionRespaldoService {
             etapa = "cashback";
             restaurarCashback(respaldo.relacionesCashback(), transacciones);
             etapa = "presupuestos";
-            restaurarPresupuestos(usuario, respaldo.presupuestos(), categorias);
+            restaurarPresupuestos(usuario, respaldo.presupuestos(), categorias, listas, respaldo.version());
             etapa = "recurrentes";
-            restaurarRecurrencias(usuario, respaldo.recurrencias(), cuentas, categorias, listas);
+            var recurrentes = restaurarRecurrencias(usuario, respaldo.recurrencias(), cuentas, categorias, listas);
+            restaurarVinculosRecurrencias(respaldo.transacciones(), transacciones, recurrentes);
             etapa = "historial";
             restaurarHistorial(usuario, respaldo.historialMovimientos(), transacciones, cuentas, categorias);
             etapa = "libro diario";
@@ -178,7 +180,8 @@ public class RestauracionRespaldoService {
         List<Categoria> categorias = categoriaRepository.findByUsuarioIdOrderByActivoDescNombreAsc(usuarioId);
         boolean cuentasSinUso = cuentas.isEmpty() || (cuentas.size() == 1 && esBilleteraInicialIntacta(cuentas.getFirst()));
         boolean categoriasSinUso = categorias.isEmpty() || sonCategoriasInicialesIntactas(categorias);
-        return listaRepository.accesibles(usuarioId).stream().allMatch(lista -> "PERSONAL".equals(lista.getClave()))
+        return !avisoRepository.existsByUsuarioIdAndEstado(usuarioId,"PENDIENTE")
+                && listaRepository.accesibles(usuarioId).stream().allMatch(lista -> "PERSONAL".equals(lista.getClave()))
                 && cuentasSinUso
                 && categoriasSinUso
                 && presupuestoRepository.findAllByUsuarioIdOrderByAnioDescMesDescIdAsc(usuarioId).isEmpty()
@@ -444,6 +447,7 @@ public class RestauracionRespaldoService {
 
         Set<Long> cuentaIds = idsUnicos(respaldo.cuentas(), CuentaResponse::id, "cuentas");
         Set<Long> categoriaIds = idsUnicos(respaldo.categoriasPersonalizadas(), CategoriaResponse::id, "categorías");
+        Set<Long> recurrenciaIds = idsUnicos(respaldo.recurrencias(), PlantillaRecurrenteResponse::id, "recurrencias");
         Set<Long> transaccionIds = idsUnicos(respaldo.transacciones(), TransaccionResponse::id, "movimientos");
         validarNombresCuentas(respaldo.cuentas());
 
@@ -495,6 +499,7 @@ public class RestauracionRespaldoService {
         }
         for (TransaccionResponse movimiento : respaldo.transacciones()) {
             EtiquetasFinancieras.normalizar(movimiento.etiquetas());
+            if (movimiento.plantillaId() != null && !recurrenciaIds.contains(movimiento.plantillaId())) throw new IllegalArgumentException("La recurrencia del movimiento no existe en el respaldo.");
             if (movimiento.listaId() != null && respaldo.listas() != null && !listaIds.contains(movimiento.listaId())) throw new IllegalArgumentException("Una lista del movimiento no está en el respaldo.");
             if (movimiento.tipo() == null || movimiento.monto() == null
                     || movimiento.monto().compareTo(BigDecimal.ZERO) <= 0 || movimiento.fecha() == null
@@ -542,16 +547,18 @@ public class RestauracionRespaldoService {
             if (presupuesto.moneda() == null || presupuesto.moneda().length() != 3) {
                 throw new IllegalArgumentException("El respaldo contiene un presupuesto con una moneda no válida.");
             }
-            if (!periodosDePresupuesto.add(presupuesto.categoriaId() + "|" + presupuesto.anio() + "|" + presupuesto.mes())) {
+            if (presupuesto.listaId() != null && !listaIds.contains(presupuesto.listaId())) throw new IllegalArgumentException("La lista del presupuesto no existe en el respaldo.");
+            if (presupuesto.porcentajeAlerta() != null && (presupuesto.porcentajeAlerta() < 1 || presupuesto.porcentajeAlerta() > 100)) throw new IllegalArgumentException("El umbral del presupuesto debe estar entre 1 y 100.");
+            if (!periodosDePresupuesto.add(presupuesto.categoriaId() + "|" + presupuesto.anio() + "|" + presupuesto.mes() + "|" + presupuesto.listaId())) {
                 throw new IllegalArgumentException("El respaldo contiene dos presupuestos para la misma categoría y periodo.");
             }
         }
         java.util.Set<java.util.UUID> compras = new java.util.HashSet<>();
         java.util.Map<Long, BigDecimal> pendientesMsi = new java.util.HashMap<>();
         for (PlantillaRecurrenteResponse recurrencia : respaldo.recurrencias()) {
+            if (recurrencia == null) throw new IllegalArgumentException("El respaldo contiene una recurrencia no válida.");
             EtiquetasFinancieras.normalizar(recurrencia.etiquetas());
             if (recurrencia.listaId() != null && respaldo.listas() != null && !listaIds.contains(recurrencia.listaId())) throw new IllegalArgumentException("Una lista de recurrencia no está en el respaldo.");
-            if (recurrencia == null) throw new IllegalArgumentException("El respaldo contiene una recurrencia no válida.");
             if (recurrencia.cuotasTotales() != null) {
                 int pagadas = recurrencia.cuotasPagadas() == null ? 0 : recurrencia.cuotasPagadas();
                 if (recurrencia.cuotasTotales() < 1 || recurrencia.cuotasTotales() > 59
@@ -797,18 +804,21 @@ public class RestauracionRespaldoService {
     }
 
     private void restaurarPresupuestos(Usuario usuario, List<RespaldoFinancieroResponse.PresupuestoRespaldo> respaldados,
-                                       Map<Long, Long> categorias) {
+                                       Map<Long, Long> categorias, Map<Long, com.gestionfinanzas.model.entity.ListaFinanciera> listas, int version) {
         for (var origen : respaldados) {
             Categoria categoria = categoriaRepository.findById(resolverCategoriaId(origen.categoriaId(), categorias))
                     .orElseThrow(() -> new IllegalArgumentException("No se pudo encontrar una categoría del presupuesto."));
             presupuestoRepository.save(Presupuesto.builder()
                     .usuario(usuario).categoria(categoria).montoLimite(origen.montoLimite())
+                    .lista(origen.listaId() != null ? listas.get(origen.listaId()) : version < 5 ? listas.get(0L) : null)
+                    .porcentajeAlerta(origen.porcentajeAlerta() == null ? 80 : origen.porcentajeAlerta())
                     .moneda(origen.moneda()).mes(origen.mes()).anio(origen.anio()).build());
         }
     }
 
-    private void restaurarRecurrencias(Usuario usuario, List<PlantillaRecurrenteResponse> respaldadas,
+    private Map<Long, Long> restaurarRecurrencias(Usuario usuario, List<PlantillaRecurrenteResponse> respaldadas,
                                        Map<Long, Long> cuentas, Map<Long, Long> categorias, Map<Long, com.gestionfinanzas.model.entity.ListaFinanciera> listas) {
+        Map<Long, Long> resultado = new HashMap<>();
         for (PlantillaRecurrenteResponse origen : respaldadas) {
             Long cuentaId = cuentas.get(origen.cuentaId());
             if (cuentaId == null) {
@@ -818,16 +828,27 @@ public class RestauracionRespaldoService {
                     .orElseThrow(() -> new IllegalArgumentException("No se pudo recuperar una cuenta ya restaurada."));
             Categoria categoria = origen.categoriaId() == null ? null
                     : categoriaRepository.findById(resolverCategoriaId(origen.categoriaId(), categorias)).orElse(null);
-            plantillaRepository.save(PlantillaRecurrente.builder()
+            var guardada = plantillaRepository.save(PlantillaRecurrente.builder()
                     .lista(listas.get(origen.listaId() == null ? 0L : origen.listaId()))
                     .etiquetas(EtiquetasFinancieras.normalizar(origen.etiquetas()))
                     .usuario(usuario).cuenta(cuenta).categoria(categoria).tipo(origen.tipo())
                     .monto(origen.monto()).notas(origen.notas()).frecuencia(origen.frecuencia())
                     .cuotasTotales(origen.cuotasTotales())
                     .cuotasPagadas(origen.cuotasPagadas() == null ? 0 : origen.cuotasPagadas())
+                    .fechaFin(origen.fechaFin())
                     .fechaAncla(origen.fechaAncla()).montoPendiente(origen.montoPendiente())
                     .compraMsiId(origen.compraMsiId())
                     .siguienteFecha(origen.siguienteFecha()).activa(origen.activa()).build());
+            resultado.put(origen.id(), guardada.getId());
+        }
+        return resultado;
+    }
+
+    private void restaurarVinculosRecurrencias(List<TransaccionResponse> originales, Map<Long, Long> movimientos, Map<Long, Long> recurrentes) {
+        for (var origen : originales) {
+            if (origen.plantillaId() == null) continue;
+            var movimiento = buscarMovimientoRestaurado(movimientos.get(origen.id()));
+            movimiento.setPlantillaRecurrente(plantillaRepository.findById(recurrentes.get(origen.plantillaId())).orElseThrow());
         }
     }
 

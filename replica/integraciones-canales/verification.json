@@ -1,0 +1,58 @@
+{
+  "date": "2026-10-17",
+  "branch": "mejoras/integraciones-canales",
+  "base": "e947227ba1a21f4ef6b9ad0d13c12ad8285d0990",
+  "installedSkills": [
+    "ponytail",
+    "ponytail-review",
+    "ponytail-audit",
+    "ponytail-debt",
+    "ponytail-help",
+    "ponytail-gain",
+    "prompt-master",
+    "api-and-interface-design",
+    "source-driven-development",
+    "debugging-and-error-recovery",
+    "documentation-and-adrs",
+    "graphify",
+    "public-api-catalog",
+    "canales-personales"
+  ],
+  "snapshots": {
+    "ponytail": "16352ac229eb08a9598dcae48fe9f2b342567d86",
+    "OmniRoute": "dc9cab36b74b317f841d6c92755be46c96b9ff5d",
+    "graphify": "86c57be8204673c2a1b9849a3292a7dd3ab373d8",
+    "agent-skills": "aeac41d4d005999432bb7312f7ff06383a91d59d",
+    "prompt-master": "a2ad174bf968b47ab11981b9dd5c84d4f14773ba",
+    "public-apis": "065455eda4bec6b61984e98b85a585851f7b8cbd",
+    "coucou": "434d6a2b4af2e5ce117fa425170abe25620130b9"
+  },
+  "checks": {
+    "pythonTests": 21,
+    "ruff": "pass",
+    "compileall": "pass",
+    "liveProviderE2E": false,
+    "realFinancialWrites": 0
+  },
+  "graphify": {
+    "version": "0.9.92",
+    "mode": "code-only",
+    "files": 193,
+    "nodes": 1649,
+    "edges": 5560,
+    "communities": 85,
+    "auditedDistributions": 30,
+    "knownVulnerabilities": 0
+  },
+  "omniroute": {
+    "installed": false,
+    "productionAffectedPackages": 3,
+    "severity": "high",
+    "note": "Lockfile audit, not three independent advisories or proof of malware."
+  },
+  "kapsoMcp": "prepared-disabled",
+  "gmailRulesEnabled": 0,
+  "externalConnectionsActive": false,
+  "commit": false,
+  "push": false
+}
