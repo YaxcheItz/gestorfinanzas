@@ -49,14 +49,14 @@ type TipoRegistro = 'GASTO' | 'INGRESO' | 'TRANSFERENCIA';
                 <div class="entry-categories"><span>Categoría</span><div class="entry-category-chips" aria-label="Categorías recientes">@for (categoria of categoriasRapidas(); track categoria.id) {<button type="button" [class.is-active]="categoriaId === categoria.id" [attr.aria-pressed]="categoriaId === categoria.id" (click)="seleccionarCategoria(categoria.id)"><app-categoria-icono [icono]="categoria.icono" [tipo]="categoria.tipo"/><span>{{ categoria.nombre }}</span></button>}</div></div>
                 @if (presupuestoDisponible(); as prep) {
                   @if (prep.tienePresupuesto) {
-                    <div class="rounded-2xl p-2.5 sm:p-3 border text-xs transition-all"
+                    <div class="entry-budget rounded-2xl p-2.5 sm:p-3 border text-xs transition-all"
                          [ngClass]="{
                            'bg-rose-50 border-rose-200 text-rose-800 dark:bg-rose-950/40 dark:border-rose-900 dark:text-rose-200': prep.estado === 'EXCEDIDO',
                            'bg-amber-50 border-amber-200 text-amber-800 dark:bg-amber-950/40 dark:border-amber-900 dark:text-amber-200': prep.estado === 'ALERTA',
                            'bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-950/40 dark:border-emerald-900 dark:text-emerald-200': prep.estado === 'NORMAL'
                          }">
-                      <div class="flex items-center justify-between font-semibold">
-                        <span class="flex items-center gap-1.5">
+                      <div class="flex flex-wrap items-center justify-between gap-2 font-semibold">
+                        <span class="flex min-w-0 items-center gap-1.5">
                           @if (prep.estado === 'EXCEDIDO') { <span>⛔</span> <span>Límite mensual excedido</span> }
                           @else if (prep.estado === 'ALERTA') { <span>⚠️</span> <span>Cerca del límite ({{ prep.porcentajeAlerta }}%)</span> }
                           @else { <span>🌿</span> <span>Presupuesto disponible</span> }
@@ -68,7 +68,7 @@ type TipoRegistro = 'GASTO' | 'INGRESO' | 'TRANSFERENCIA';
                       </div>
                       <div class="mt-1 text-[11px] opacity-80 flex items-center justify-between">
                         <span>Gastado {{ prep.montoGastado | monto:prep.moneda:'symbol':'1.2-2' }} de {{ prep.montoLimite | monto:prep.moneda:'symbol':'1.2-2' }}</span>
-                        <span>{{ prep.porcentajeConsumido | number:'1.0-0' }}%</span>
+                        <span>@if(privacidad.ocultarMontos()){•••} @else { {{ prep.porcentajeConsumido | number:'1.0-0' }}% }</span>
                       </div>
                       @if (montoExcedeDisponible(prep.montoDisponible)) {
                         <p class="mt-1 text-[11px] font-bold text-rose-700 dark:text-rose-300">
@@ -204,6 +204,7 @@ export class RegistroRapidoComponent implements OnDestroy {
 
   consultarPresupuestoDisponible(): void {
     this.presupuestoSub?.unsubscribe();
+    this.presupuestoDisponible.set(null);
     if (this.tipo !== 'GASTO' || !this.categoriaId || typeof this.finanzas.getPresupuestoDisponible !== 'function') {
       this.presupuestoDisponible.set(null);
       return;

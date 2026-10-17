@@ -206,7 +206,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
   readonly modoEdicionOpciones: { value: 'SOLO_ESTA' | 'ESTA_Y_SIGUIENTES' | 'TODA_LA_SERIE'; label: string; descripcion: string }[] = [
     { value: 'SOLO_ESTA', label: 'Solo este movimiento', descripcion: 'Los anteriores y posteriores no se tocan.' },
     { value: 'ESTA_Y_SIGUIENTES', label: 'Este y los siguientes', descripcion: 'Modifica desde este movimiento en adelante.' },
-    { value: 'TODA_LA_SERIE', label: 'Toda la serie', descripcion: 'Aplica el cambio a todos los movimientos de la serie.' },
+    { value: 'TODA_LA_SERIE', label: 'Toda la serie', descripcion: 'Actualiza categoría, notas, lista y etiquetas del historial. Los importes y cuentas anteriores se conservan.' },
   ];
 
   // Categorías filtradas por tipo para el modal

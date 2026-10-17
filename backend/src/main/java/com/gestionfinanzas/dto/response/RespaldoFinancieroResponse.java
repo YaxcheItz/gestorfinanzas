@@ -98,6 +98,12 @@ public record RespaldoFinancieroResponse(
             BigDecimal montoLimite,
             String moneda,
             int mes,
-            int anio
-    ) {}
+            int anio,
+        Long listaId,
+        Integer porcentajeAlerta
+    ) {
+        public PresupuestoRespaldo(Long id, Long categoriaId, BigDecimal montoLimite, String moneda, int mes, int anio) {
+            this(id, categoriaId, montoLimite, moneda, mes, anio, null, null);
+        }
+    }
 }
