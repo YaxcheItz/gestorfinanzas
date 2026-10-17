@@ -1,5 +1,13 @@
 # Estado para retomar la sesión
 
+## Estado actual: sincronizacion de canales con develop (2026-10-17)
+
+- El usuario integro recurrencias mediante PR #74: origin/develop = 1a30415. Se incorporo ese develop a mejoras/integraciones-canales; unico conflicto en este documento, conservando el historial de ambas entregas. El codigo se combino automaticamente.
+- Checks previos correctos: correcciones 39059262591 y canales 39059148161. La nueva combinacion debe completar su propia ejecucion de CI antes de integrar canales a develop.
+- Siguiente: integrar canales cuando GitHub permita el merge y los checks sean correctos; despues autenticar Kapso, configurar webhook HTTPS y consentir Gmail con ejemplos bancarios para las reglas. El puente sigue sin conexiones externas activas ni movimientos reales registrados.
+- Los apartados siguientes son historial de sesiones, incluidas referencias a ramas sin commit/push que ya fueron publicadas. No interpretar esas referencias como estado actual.
+
+
 ## Correccion de CI remoto (2026-10-17)
 
 - Ejecucion 39058043967: backend, frontend y PostgreSQL correctos; E2E fallo en chat-android y dashboard-repetir. La rama integraciones tenia CI 39057920843 correcto, pero comparte el codigo afectado.
@@ -15,11 +23,17 @@
 - Los estados sin commit/push y las banderas de evidencia mas abajo corresponden a la verificacion previa a esta publicacion.
 
 
-## Trabajo separado en curso (2026-10-17)
+## Etapa vigente: herramientas y canales (2026-10-17)
 
-- Herramientas y canales estan en la rama mejoras/integraciones-canales, worktree .local/integraciones-worktree, desde origin/develop e947227 verificado. Leer su docs/ESTADO_SESION.md y docs/HERRAMIENTAS_CANALES_2026-10-17.md para continuar esa tarea.
-- Esta copia principal conserva intacta la correccion presupuestos-recurrencias sin commit. No mezclarla con la nueva rama. Ambas entregas siguen sin commit/push.
-- Skills globales instaladas; Kapso MCP preparado/desactivado. WhatsApp/Gmail requieren autenticacion y configuracion, sin movimientos reales ni servidores modificados.
+- Rama mejoras/integraciones-canales desde origin/develop e947227 comprobado mediante fetch, en worktree .local/integraciones-worktree. La rama principal correcciones/presupuestos-recurrencias sigue con sus cambios locales intactos; no confundir las entregas ni mover cambios entre ellas.
+- Peticion actual: herramientas globales de Codex, WhatsApp/Kapso y correos bancarios Gmail. Usuario eligio guardar automaticamente los reconocidos; ambiguos y posibles duplicados quedan pendientes. Bancos mencionados BBVA/Nu/Santander/Mercado Pago, sin ejemplos transaccionales verificados.
+- Instaladas 14 skills globales (Ponytail seis, Addy cuatro, Prompt Master, Graphify, catalogo Public APIs y canales-personales). Graphify CLI 0.9.92 aislado con uv, usado en AST local del backend. MCP Kapso preparado globalmente pero desactivado hasta autenticar. No se cambiaron proveedores/modelos ni se activaron hooks.
+- OmniRoute no instalado: auditoria del lockfile, tres paquetes de produccion afectados con severidad alta. Graphify: 30 distribuciones auditadas sin avisos conocidos. Revisiones acotadas, no garantia de seguridad absoluta. Coucou no aporta al runtime del proyecto; no instalado.
+- Puente tools/canales implementado: webhook Kapso v2 firmado y limitado a propietario, cola SQLite, guardado via API existente con idempotencia, validacion de cuenta/moneda/usuario, refresh de sesion, acuses genericos. /codex es bandeja, no ejecucion remota. Gmail readonly con OAuth PKCE, etiqueta y fecha inicial, plantillas exactas + DMARC + referencia estable; reglas reales todavia vacias. No se ha autenticado ningun proveedor ni registrado dinero real.
+- Verificacion: 21 pruebas correctas, Ruff y compilacion Python correctos. HTTP firmado probado con API simulada. Sin E2E con proveedores reales. No cambios Java/Angular/migraciones/servidores. No commit/push ni despliegue.
+- Contratos y pasos de activacion: docs/HERRAMIENTAS_CANALES_2026-10-17.md. Evidencia: replica/integraciones-canales/verification.json y auditorias. Manifiesto global privado sin secretos: ~/.codex/tooling-review/2026-10-17.json.
+- Siguiente: integrar correccion previa; revisar esta rama; autenticar Kapso y configurar numero/webhook HTTPS; consentir Gmail y obtener ejemplos bancarios para habilitar reglas una por una. Luego integracion multiusuario y UI/bandeja, y retomar asistente-evidencias. Mantener Angular/Spring/PostgreSQL; evaluar Pages para frontend y Containers ya preparado, sin migrar a Convex ahora.
+
 
 
 ## Cierre vigente: presupuestos y recurrencias (2026-10-16, verificado)
