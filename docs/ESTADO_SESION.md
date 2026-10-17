@@ -1,5 +1,13 @@
 # Estado para retomar la sesión
 
+## Correccion de CI remoto (2026-10-17)
+
+- Ejecucion 39058043967: backend, frontend y PostgreSQL correctos; E2E fallo en chat-android y dashboard-repetir. La rama integraciones tenia CI 39057920843 correcto, pero comparte el codigo afectado.
+- Chat espera a que finalice la carga del catalogo antes de permitir enviar: evita fallback local sin cuentas cuando la red falla durante el arranque. Regresion unitaria nueva para respuestas demoradas.
+- Inicio compacta visualmente las barras sin cambiar su altura de layout: evita el bucle de scroll anchoring/IntersectionObserver y controles inestables.
+- Verificado localmente: 313 pruebas frontend correctas y los dos E2E afectados correctos contra PostgreSQL, esquema aislado ci_remote_20261017 y puertos de prueba 14220/18080. Sin ampliar timeouts, forzar clics ni omitir expectativas. Logs privados frontend/.angular/ci-remote-*.log en copia principal. Revisar ejecucion remota nueva tras el push.
+
+
 ## Publicacion autorizada (2026-10-17)
 
 - El usuario autorizo subir las dos entregas por separado, solo con su autoria Git configurada: YaxcheItz <yaxtibla1@gmail.com>, sin coautoria.
