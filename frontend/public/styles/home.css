@@ -64,7 +64,8 @@ html .monai-theme .time-option-card{border:0;border-radius:18px;background:var(-
 .home-scroll-summary{position:fixed;z-index:19;top:calc(64px + env(safe-area-inset-top));left:50%;transform:translate(-50%,-4px);width:min(calc(100% - 40px),42rem);padding:8px 16px;border-radius:18px;background:var(--kaptal-glass);backdrop-filter:blur(20px);color:var(--kaptal-content);box-shadow:0 2px 12px rgb(0 0 0 / .04);opacity:0;visibility:hidden;pointer-events:none;transition:opacity 150ms cubic-bezier(.23,1,.32,1),transform 150ms cubic-bezier(.23,1,.32,1),visibility 150ms}
 .home-scroll-summary.is-visible{opacity:1;visibility:visible;transform:translate(-50%,0)}
 .home-scroll-summary>span{display:block;font-size:11px;color:var(--kaptal-content-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.home-scroll-summary>strong{display:block;font-size:22px;font-weight:700;letter-spacing:-.035em;font-variant-numeric:tabular-nums}.home-scroll-summary small{font-size:10px;font-weight:500;letter-spacing:0;color:var(--kaptal-content-muted)}
-.home-is-compact .home-category__track{height:88px}
+/* Preserve layout height to avoid scroll anchoring feedback in the hero observer. */
+.home-is-compact .home-category__bar{transform:scaleY(.55);transform-origin:bottom}
 .home-is-compact .home-category__emoji{transform:scale(.85);transform-origin:bottom}
 .home-category__emoji{transition:transform 180ms cubic-bezier(.23,1,.32,1);transform-origin:bottom}
 @media(min-width:768px){.home-scroll-summary{top:76px}}

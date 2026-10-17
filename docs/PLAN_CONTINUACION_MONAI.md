@@ -5,7 +5,7 @@ Complementa `PLAN_UI_MONAI.md` y `replica/monai-kesef/recon.md`. Es la secuencia
 ## Reglas para todas las etapas
 
 - Conservar Angular, Spring Boot y PostgreSQL mientras las mediciones no justifiquen cambios. No migrar a otra base, lenguaje u hospedaje por apariencia.
-- Cada etapa nueva empieza en una rama distinta desde develop actualizado y comprobado contra remoto. El rediseño ya se integró en develop; la entrega funcional vigente es listas, etiquetas y búsqueda. Integrar cada entrega antes de basar otra etapa en ella.
+- Cada etapa nueva empieza en una rama distinta desde develop actualizado y comprobado contra remoto. El rediseño ya se integró en develop; la entrega funcional integrada es presupuestos y recurrencias; su cierre correctivo se documenta en `CIERRE_PRESUPUESTOS_RECURRENCIAS.md`. Integrar cada entrega antes de basar otra etapa en ella.
 - Mantener confirmación, idempotencia, separación de monedas, privacidad, aislamiento por usuario y cola offline. No sobrescribir preferencias ni borrar datos para arreglar vistas.
 - Entregar cambios funcionales, migraciones cuando correspondan, pruebas pertinentes, capturas y actualización del estado. No añadir botones simulados ni planes de pago ficticios.
 - Las conexiones privadas necesitan configuración y consentimiento del propietario. Nada de leer correos reales, publicar o modificar producción por inferencia de este plan.
@@ -26,7 +26,7 @@ Backend: resolver rangos de forma común y aplicarlos a resumen, categorías, co
 
 ## 2. Listas, etiquetas y búsqueda
 
-Rama vigente: `mejoras/listas-etiquetas`. Implementación y contratos en `LISTAS_ETIQUETAS.md`; resultados de verificación vigentes en `ESTADO_SESION.md`.
+Integrado mediante PR #68 desde `mejoras/listas-etiquetas`. Implementación y contratos en `LISTAS_ETIQUETAS.md`; resultados de verificación vigentes en `ESTADO_SESION.md`.
 
 Diseñar lista, miembros, rol y etiquetas. Migrar movimientos actuales a una lista Personal sin cambiar importes, cuentas o propietarios. Crear/editar/archivar listas, elegir lista activa y moneda base, y compartir sólo con autorización. Cambiar moneda de presentación no convierte operaciones anteriores.
 
@@ -34,7 +34,7 @@ Persistir tags por movimiento y añadir filtros por texto, importe, categoría, 
 
 ## 3. Presupuestos y recurrencias
 
-Rama sugerida: `mejoras/presupuestos-recurrencias`.
+Integrado mediante PR #71 desde `mejoras/presupuestos-recurrencias`. Cierre correctivo en `correcciones/presupuestos-recurrencias`; ver `CIERRE_PRESUPUESTOS_RECURRENCIAS.md`.
 
 Mostrar restante al elegir categoría, detalle del presupuesto y umbrales de aviso configurables. Definir edición de una instancia, futuras o toda la serie; cancelación, fecha final, meses cortos y reintentos sin duplicación. No modificar historia silenciosamente. Mantener la confirmación actual hasta especificar un modo automático explícito. Aceptación: sumas verificables, exceso legible sin depender del color y ninguna alerta repetida por reintento.
 
@@ -90,4 +90,4 @@ Antes de publicar: revisar el estado histórico de Render/Flyway, probar migraci
 
 ## Forma de retomar con poco contexto
 
-Leer `AGENTS.md`, `ESTADO_SESION.md`, este plan y el informe de la etapa que toque. Comprobar Git, develop/remoto y servidores actuales. No volver a instalar skills ni rehacer funciones ya presentes. Trabajar una etapa, comprobarla, documentar resultados y límites, y dejar un punto de continuación claro. El siguiente trabajo funcional es periodos flexibles después del cierre visual y su integración.
+Leer `AGENTS.md`, `ESTADO_SESION.md`, este plan y el informe de la etapa que toque. Comprobar Git, develop/remoto y servidores actuales. No volver a instalar skills ni rehacer funciones ya presentes. Trabajar una etapa, comprobarla, documentar resultados y límites, y dejar un punto de continuación claro. El siguiente trabajo funcional es el asistente con evidencias, después de integrar el cierre correctivo de presupuestos y recurrencias.

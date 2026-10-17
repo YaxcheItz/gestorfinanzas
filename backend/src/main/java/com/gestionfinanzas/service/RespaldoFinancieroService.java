@@ -66,8 +66,8 @@ public class RespaldoFinancieroService {
                 .findByUsuarioIdOrderByActivoDescNombreAsc(usuarioId).stream()
                 .map(CategoriaResponse::fromEntity)
                 .toList();
-        List<RespaldoFinancieroResponse.PresupuestoRespaldo> presupuestos = presupuestoRepository
-                .findAllByUsuarioIdOrderByAnioDescMesDescIdAsc(usuarioId).stream()
+        var entidadesPresupuestos = presupuestoRepository.findAllByUsuarioIdOrderByAnioDescMesDescIdAsc(usuarioId);
+        List<RespaldoFinancieroResponse.PresupuestoRespaldo> presupuestos = entidadesPresupuestos.stream()
                 .map(RespaldoFinancieroService::mapearPresupuesto)
                 .toList();
         var entidadesRecurrencias = plantillaRepository.findAllByUsuarioIdOrderBySiguienteFechaAsc(usuarioId);
@@ -90,13 +90,16 @@ public class RespaldoFinancieroService {
 
         var listasRespaldo = new java.util.LinkedHashMap<Long, com.gestionfinanzas.model.entity.ListaFinanciera>();
         listaRepository.accesibles(usuarioId).forEach(l -> listasRespaldo.put(l.getId(), l));
+        entidadesPresupuestos.stream()
+                .map(Presupuesto::getLista).filter(java.util.Objects::nonNull)
+                .forEach(l -> listasRespaldo.put(l.getId(), l));
         entidadesTransacciones.stream().map(com.gestionfinanzas.model.entity.Transaccion::getLista)
                 .filter(java.util.Objects::nonNull).forEach(l -> listasRespaldo.put(l.getId(), l));
         entidadesRecurrencias.stream()
                 .map(com.gestionfinanzas.model.entity.PlantillaRecurrente::getLista).filter(java.util.Objects::nonNull)
                 .forEach(l -> listasRespaldo.put(l.getId(), l));
         return new RespaldoFinancieroResponse(
-                4,
+                5,
                 Instant.now(),
                 perfilService.obtener(usuarioId),
                 cuentas,
@@ -184,7 +187,9 @@ public class RespaldoFinancieroService {
                 presupuesto.getMontoLimite(),
                 presupuesto.getMoneda(),
                 presupuesto.getMes(),
-                presupuesto.getAnio()
+                presupuesto.getAnio(),
+                presupuesto.getLista() != null ? presupuesto.getLista().getId() : null,
+                presupuesto.getPorcentajeAlerta()
         );
     }
 }

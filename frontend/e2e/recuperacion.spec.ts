@@ -101,7 +101,7 @@ test('ingreso, transferencia y restauración financiera conservan importes y pro
   const archivoResponse = await page.request.get('/api/perfil/respaldo', { headers });
   expect(archivoResponse.ok()).toBeTruthy();
   const archivo = await archivoResponse.json();
-  expect(archivo.version).toBe(4);
+  expect(archivo.version).toBe(5);
   const nuevoResponse = await registrarPrueba(page.request, {
     nombre: 'Destino respaldo', email: `restore-${crypto.randomUUID()}@example.test`, password
   });

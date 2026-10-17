@@ -121,6 +121,10 @@ public class TransaccionService {
         if (request.msi() != null && request.frecuenciaRecurrencia() != null) {
             throw new IllegalArgumentException("Una compra MSI no puede tener otra recurrencia");
         }
+        if (request.fechaFinRecurrencia() != null) {
+            LocalDate primera = request.frecuenciaRecurrencia() != null ? request.siguienteFechaRecurrencia() : request.fecha();
+            if (primera != null && request.fechaFinRecurrencia().isBefore(primera)) throw new IllegalArgumentException("La fecha final no puede ser anterior a la primera ocurrencia pendiente.");
+        }
         var lista = listaService.escribir(usuarioId, request.listaId());
         var etiquetas = EtiquetasFinancieras.normalizar(request.etiquetas());
         DatosTransaccion datos = prepararTransaccion(usuarioId, request);
@@ -256,6 +260,9 @@ public class TransaccionService {
         }
         if (request.listaId() != null) transaccion.setLista(listaService.escribir(usuarioId, request.listaId()));
         if (request.etiquetas() != null) transaccion.setEtiquetas(EtiquetasFinancieras.normalizar(request.etiquetas()));
+        if (transaccion.getPlantillaRecurrente() != null && request.modoEdicionRecurrencia() != null
+                && request.modoEdicionRecurrencia() != com.gestionfinanzas.model.enums.ModoEdicionRecurrencia.SOLO_ESTA
+                && request.tipo() == TipoTransaccion.TRANSFERENCIA) throw new IllegalArgumentException("Una serie no puede convertirse en transferencia.");
         DatosTransaccion datos = prepararTransaccion(usuarioId, request);
         validarLimiteCredito(datos.cuentaOrigen(), datos.tipo(), request.monto(), transaccion);
         if (tipoAnterior == TipoTransaccion.GASTO) {
@@ -289,6 +296,7 @@ public class TransaccionService {
                 transaccion.setPlantillaRecurrente(null);
             } else if (modo == com.gestionfinanzas.model.enums.ModoEdicionRecurrencia.ESTA_Y_SIGUIENTES
                     || modo == com.gestionfinanzas.model.enums.ModoEdicionRecurrencia.TODA_LA_SERIE) {
+                plantillaAsociada.setTipo(request.tipo());
                 plantillaAsociada.setMonto(request.monto());
                 plantillaAsociada.setCategoria(datos.categoria());
                 plantillaAsociada.setCuenta(datos.cuentaOrigen());
@@ -297,6 +305,7 @@ public class TransaccionService {
                 plantillaAsociada.setEtiquetas(new java.util.LinkedHashSet<>(transaccion.getEtiquetas()));
                 if (request.fechaFinRecurrencia() != null) {
                     plantillaAsociada.setFechaFin(request.fechaFinRecurrencia());
+                    if (plantillaAsociada.getSiguienteFecha().isAfter(request.fechaFinRecurrencia())) plantillaAsociada.setActiva(false);
                 }
                 plantillaRepository.save(plantillaAsociada);
 
@@ -304,11 +313,26 @@ public class TransaccionService {
                     List<Transaccion> serie = transaccionRepository.findAllByPlantillaRecurrenteIdOrderByFechaAsc(plantillaAsociada.getId());
                     for (Transaccion tSerie : serie) {
                         if (!tSerie.getId().equals(transaccion.getId())) {
+                            if (!tSerie.getUsuario().getId().equals(usuarioId)) throw new PermisoCompartidoException("La serie contiene movimientos que no puedes modificar.");
+                            if (tSerie.getLista() != null) listaService.escribir(usuarioId, tSerie.getLista().getId());
+                            if (datos.categoria() != null && datos.categoria().getTipo() != tSerie.getTipo()) throw new IllegalArgumentException("La categor\u00eda no corresponde a todos los tipos del historial. Edita solo este movimiento o los siguientes.");
+                            var antesSerie = TransaccionResponse.fromEntity(tSerie);
                             tSerie.setCategoria(datos.categoria());
                             tSerie.setNotas(normalizarNotas(request.notas()));
                             tSerie.setLista(transaccion.getLista());
                             tSerie.setEtiquetas(new java.util.LinkedHashSet<>(transaccion.getEtiquetas()));
-                            transaccionRepository.save(tSerie);
+                            var guardadaSerie = transaccionRepository.save(tSerie);
+                            var despuesSerie = TransaccionResponse.fromEntity(guardadaSerie);
+                            libroDiarioService.registrarActualizacion(usuarioId, antesSerie, despuesSerie);
+                            auditoriaService.registrar(usuarioId, guardadaSerie.getId(), "ACTUALIZAR", antesSerie, despuesSerie);
+                            transaccionRepository.findByCashbackOrigenId(guardadaSerie.getId()).ifPresent(cashback -> {
+                                var antesCashback = TransaccionResponse.fromEntity(cashback);
+                                cashback.setLista(guardadaSerie.getLista());
+                                cashback.setEtiquetas(new java.util.LinkedHashSet<>(guardadaSerie.getEtiquetas()));
+                                var despuesCashback = TransaccionResponse.fromEntity(transaccionRepository.save(cashback));
+                                libroDiarioService.registrarActualizacion(usuarioId, antesCashback, despuesCashback);
+                                auditoriaService.registrar(usuarioId, cashback.getId(), "ACTUALIZAR", antesCashback, despuesCashback);
+                            });
                         }
                     }
                 }

@@ -44,11 +44,10 @@ public class PresupuestoService {
                 : presupuestoRepository.findByUsuarioIdAndCategoriaIdAndMesAndAnioAndListaIsNull(
                         usuarioId, request.categoriaId(), request.mes(), request.anio());
 
-        // Si no se encontró por lista nula pero hay uno sin lista o viceversa, buscar el primero del usuario
-        if (existente.isEmpty() && request.listaId() == null) {
-            existente = presupuestoRepository.findByUsuarioIdAndCategoriaIdAndMesAndAnio(
-                    usuarioId, request.categoriaId(), request.mes(), request.anio()
-            );
+        // Solo adoptar un presupuesto legado sin lista; nunca uno de otra lista.
+        if (existente.isEmpty() && request.listaId() == null && listaIdEfectivo != null) {
+            existente = presupuestoRepository.findByUsuarioIdAndCategoriaIdAndMesAndAnioAndListaIsNull(
+                    usuarioId, request.categoriaId(), request.mes(), request.anio());
         }
 
         int porcentajeAlerta = (request.porcentajeAlerta() != null && request.porcentajeAlerta() >= 1 && request.porcentajeAlerta() <= 100)
@@ -94,6 +93,7 @@ public class PresupuestoService {
 
     @Transactional(readOnly = true)
     public PresupuestoResumenResponse obtenerResumenPeriodo(Long usuarioId, Long listaId, Integer mes, Integer anio) {
+        if (listaId != null) listaService.leer(usuarioId, listaId);
         LocalDate hoy = CalendarioFinanciero.hoy();
         int mesConsulta = (mes != null && mes >= 1 && mes <= 12) ? mes : hoy.getMonthValue();
         int anioConsulta = (anio != null && anio >= 2000 && anio <= 2100) ? anio : hoy.getYear();
@@ -173,10 +173,15 @@ public class PresupuestoService {
         return new PresupuestoDetalleResponse(response, movimientos);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public PresupuestoDisponibleResponse obtenerDisponibleCategoria(
             Long usuarioId, Long categoriaId, Long listaId, LocalDate fecha, String moneda
     ) {
+        if (listaId != null) listaService.leer(usuarioId, listaId);
+        else {
+            var personal = listaService.personal(usuarioId);
+            if (personal != null) listaId = personal.getId();
+        }
         Categoria categoria = categoriaRepository.findAccessibleById(categoriaId, usuarioId)
                 .orElseThrow(() -> new IllegalArgumentException("Categoría no encontrada o no accesible"));
 
@@ -195,7 +200,7 @@ public class PresupuestoService {
         );
 
         if (candidatos.isEmpty() && listaId != null) {
-            // Si no hay específico de la lista, buscar si hay uno global/personal del usuario
+            // Compatibilidad: solo presupuestos globales legados realmente sin lista
             candidatos = presupuestoRepository.findCandidatosParaDisponible(
                     usuarioId, categoriaId, null, mes, anio
             );
@@ -207,11 +212,11 @@ public class PresupuestoService {
             );
         }
 
-        // Si se especificó moneda, buscar coincidencia de moneda; si no, tomar el primero
         Presupuesto presupuesto = candidatos.stream()
                 .filter(p -> moneda == null || p.getMoneda().equalsIgnoreCase(moneda))
-                .findFirst()
-                .orElse(candidatos.get(0));
+                .findFirst().orElse(null);
+        if (presupuesto == null) return PresupuestoDisponibleResponse.sinPresupuesto(
+                categoria.getId(), categoria.getNombre(), categoria.getIcono(), moneda, listaId, null);
 
         PresupuestoResponse metricas = calcularMetricasPresupuesto(presupuesto, usuarioId);
 
