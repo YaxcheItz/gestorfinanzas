@@ -1,0 +1,44 @@
+{
+  "date": "2026-10-17",
+  "branch": "mejoras/whatsapp-kapso",
+  "baseDevelop": "a31d95ec64468c897526c14b1e3741e091176ed3",
+  "tests": {
+    "command": "python -m unittest discover -s tools/canales -p 'test_*.py' -q",
+    "total": 30,
+    "failures": 0,
+    "ruffCheck": "passed",
+    "ruffFormat": "passed",
+    "compileall": "passed"
+  },
+  "coverageScenarios": [
+    "signed HTTP receipt returns 200 after durable enqueue",
+    "slow worker does not delay receipt",
+    "worker queue initialization failure prevents receiver startup",
+    "pending financial event has no false delivered receipt",
+    "malformed signed event rejected",
+    "init preserves existing configuration and webhook secret",
+    "only approved environment names loaded; existing environment wins",
+    "wrong authenticated owner rejected before provider request",
+    "online diagnostics use reads and enforce list permissions"
+  ],
+  "localSetup": {
+    "privateFilesPrepared": true,
+    "noCredentialsPrinted": true,
+    "doctorExit": 1,
+    "doctorReportsMissingProvider": true,
+    "realProviderAuthenticated": true,
+    "receiverStarted": false,
+    "tunnelStarted": false,
+    "realFinancialWrites": false,
+    "providerNumberGetVerified": true
+  },
+  "limitations": [
+    "Sandbox active and number read verified; Kaptal production session/account mapping and public webhook still pending",
+    "No real provider delivery test",
+    "No tunnel or always-on service deployed",
+    "Audio requires manual review",
+    "Online diagnostics mocked in automated tests; actual credentials pending"
+  ],
+  "committed": false,
+  "pushed": false
+}

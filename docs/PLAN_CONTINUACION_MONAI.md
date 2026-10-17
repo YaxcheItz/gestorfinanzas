@@ -4,6 +4,8 @@ Complementa `PLAN_UI_MONAI.md` y `replica/monai-kesef/recon.md`. Es la secuencia
 
 ## Reglas para todas las etapas
 
+Actualizacion WhatsApp: PR #76 integrado en `a31d95e`. Preparacion del canal en `mejoras/whatsapp-kapso`; el usuario aun no tiene cuenta Kapso. Ver `WHATSAPP_KAPSO.md`: completar cuenta/proyecto/numero y prueba real antes de marcar conectado. La bandeja ya esta integrada; las siguientes referencias a entrega sin publicar corresponden al historial.
+
 Prioridad actual (2026-10-17): se adelanto la etapa 5 por peticion del usuario. La bandeja esta implementada en `mejoras/captura-avisos`, aun sin publicar. Secuencia siguiente: integrar bandeja → WhatsApp/Kapso real → Gmail bancario con reglas verificadas → etapa 4, asistente con evidencias → etapas 6 en adelante. No se descarta el plan anterior: se cambia el orden para dar soporte seguro a los canales primero. Consultar `BANDEJA_AVISOS.md` y `ESTADO_SESION.md`.
 
 - Conservar Angular, Spring Boot y PostgreSQL mientras las mediciones no justifiquen cambios. No migrar a otra base, lenguaje u hospedaje por apariencia.

@@ -1,6 +1,14 @@
 # Estado para retomar la sesión
 
-## Estado actual: bandeja de avisos (2026-10-17)
+## Estado actual: preparacion WhatsApp/Kapso (2026-10-17)
+
+- Usuario confirmo develop actualizado y autorizo continuar WhatsApp. `develop == origin/develop == a31d95ec64468c897526c14b1e3741e091176ed3`, comprobado mediante fetch; incluye PR #76 y su correccion CI. Copia inicial limpia en main; creada rama nueva `mejoras/whatsapp-kapso` desde develop. Sin commit/push de esta etapa.
+- Actualizacion del propietario: sandbox activo y numero verificado mediante GET autenticado a Kapso. Clave e identificadores guardados solo en configuracion privada; no se enviaron mensajes. El usuario usa Kaptal publicado en `https://kaptalgf.vercel.app/`, no la base local. Falta autenticar su cuenta publicada, seleccionar cuenta/lista y configurar webhook HTTPS. No trasladar IDs de la base local a produccion.
+- Preparador local `tools/canales/whatsapp_setup.py`: init sin sobrescribir, clave por entrada oculta, login, doctor local y lecturas online que verifican propietario/cuenta/lista/numero/bandeja. Archivos `.local/canales/config.private.json` y `secrets.private.json` preparados, ignorados por Git, sin cuenta financiera elegida. Secreto generado sin mostrarlo. No se inicio receptor ni tunel.
+- Receptor corregido a HTTP 200 tras persistir; procesador con SQLite/sesion separados en otro hilo para no bloquear acuses. No anuncia aviso entregado mientras solo esta pendiente de red. Rechaza estructuras malformadas y no inicia si el procesador no puede abrir la cola. Regresiones de concurrencia y configuracion, sin cambiar Java/Angular/migraciones/servidores existentes.
+- Evidencia de esta etapa: `replica/whatsapp-kapso/verification.json`. Guia operativa y limites: `WHATSAPP_KAPSO.md`. Despues de activacion y prueba real: Gmail con reglas bancarias verificadas y asistente con evidencias; conservar el resto de `PLAN_CONTINUACION_MONAI.md`.
+
+## Historial: bandeja de avisos (2026-10-17)
 
 - Revision de CI tras publicar `7ede72f`: ejecucion `39068489152`, fallo exclusivo de backend H2; PostgreSQL, frontend, E2E y Python correctos. Reproducido localmente: borrar usuario falla por FK de avisos sin cascada en el DDL generado. La entidad declara ahora `@OnDelete(CASCADE)`, igual que V7 y otras entidades del proyecto. Se conserva la prueba de borrado sin omitirla ni modificar la migracion publicada. Resultados de cierre de esta correccion en `replica/captura-avisos/ci-fix.json`.
 
