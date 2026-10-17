@@ -2,6 +2,8 @@ package com.gestionfinanzas.model.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -9,7 +11,9 @@ import java.util.UUID;
 @Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor
 public class AvisoFinanciero {
     @Id @Column(length=36) private String id;
-    @ManyToOne(fetch=FetchType.LAZY) @JoinColumn(name="usuario_id",nullable=false) private Usuario usuario;
+    @ManyToOne(fetch=FetchType.LAZY) @JoinColumn(name="usuario_id",nullable=false)
+    @OnDelete(action=OnDeleteAction.CASCADE)
+    private Usuario usuario;
     @Column(nullable=false,length=20) private String origen;
     @Column(nullable=false,length=64) private String identificadorHash;
     @Column(nullable=false,length=64) private String recepcionHash;

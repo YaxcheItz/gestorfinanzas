@@ -2,7 +2,9 @@
 
 ## Estado actual: bandeja de avisos (2026-10-17)
 
-- Rama `mejoras/captura-avisos` creada desde `develop == origin/develop == ce7bcfb`, comprobado mediante fetch. Incluye los merges de recurrencias y canales (PR #74 y #75). Cambios locales sin commit ni push.
+- Revision de CI tras publicar `7ede72f`: ejecucion `39068489152`, fallo exclusivo de backend H2; PostgreSQL, frontend, E2E y Python correctos. Reproducido localmente: borrar usuario falla por FK de avisos sin cascada en el DDL generado. La entidad declara ahora `@OnDelete(CASCADE)`, igual que V7 y otras entidades del proyecto. Se conserva la prueba de borrado sin omitirla ni modificar la migracion publicada. Resultados de cierre de esta correccion en `replica/captura-avisos/ci-fix.json`.
+
+- Rama `mejoras/captura-avisos` creada desde `develop == origin/develop == ce7bcfb`, comprobado mediante fetch. Incluye los merges de recurrencias y canales (PR #74 y #75). Entrega publicada en `7ede72f`; consultar Git para el estado de la correccion posterior.
 - Implementada `/avisos`, accesible en Herramientas: pendientes, registrados y descartados; recibir, revisar, corregir, confirmar y descartar. API autenticada por usuario, control de versiones, bloqueo, claves estables y guardado contable transaccional. Recibir/editar no altera dinero. Coincidencias requieren aceptar expresamente otra compra real; reintentar no duplica.
 - Migracion V7 crea `avisos_financieros`. No modifica importes historicos. Respaldo JSON v5 conserva su contrato y NO incluye la bandeja; PostgreSQL completo si la incluye. Se bloquea restaurar sobre pendientes. Ver `BANDEJA_AVISOS.md`.
 - Puente personal adaptado a la bandeja: guardado automatico solo con `autoSaveRecognized` explicito, datos reconocidos y ninguna coincidencia. Avisos ambiguos quedan sin clasificar para revisar; no se guarda correo bruto. No se han activado proveedores externos ni registrado movimientos reales.
