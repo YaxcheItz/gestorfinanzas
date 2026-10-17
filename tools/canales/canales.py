@@ -15,7 +15,7 @@ import os
 import re
 import sqlite3
 import sys
-import time
+import threading
 import uuid
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
@@ -202,6 +202,7 @@ def parse_bank(mail, rules, accounts):
 class Bridge:
     def __init__(self, config, database):
         self.config = config
+        self.database = database
         self.token = os.environ.get("KAPTAL_API_TOKEN")
         self.session = Path(database + ".session")
         self.cookies = http.cookiejar.MozillaCookieJar()
@@ -393,7 +394,9 @@ class Bridge:
             return 0
         sent = 0
         for key, source, state in self.db.execute(
-            "SELECT key,source,state FROM events WHERE replied=0 AND source IN ('whatsapp','codex') AND state IN ('saved','pending','inbox')"
+            "SELECT key,source,state FROM events WHERE replied=0 AND ("
+            "(source='whatsapp' AND state IN ('saved','inbox')) OR "
+            "(source='codex' AND state='pending'))"
         ).fetchall():
             body = (
                 "Movimiento registrado en Kaptal."
@@ -437,6 +440,10 @@ class Bridge:
         if not isinstance(event, dict) or event.get("batch"):
             raise ValueError("Desactiva buffering: se requiere evento individual v2")
         message = event.get("message", {})
+        if not isinstance(message, dict) or not isinstance(
+            message.get("kapso", {}), dict
+        ):
+            raise TypeError("Mensaje no valido")
         sender = phone(message.get("from"))
         if event.get("phone_number_id") != self.config["kapsoPhoneNumberId"]:
             raise PermissionError("Numero del bot no permitido")
@@ -456,6 +463,8 @@ class Bridge:
                 message.get("id"),
                 note="Audio u otro medio: revisar en Kapso",
             )
+        if not isinstance(message.get("text", {}), dict):
+            raise TypeError("Texto no valido")
         text = message.get("text", {}).get("body", "")
         if not isinstance(text, str) or len(text) > 1200:
             raise ValueError("Texto demasiado largo")
@@ -539,7 +548,7 @@ def make_server(bridge, port):
             pass  # No bodies, headers, phone numbers, tokens or financial details in access logs.
 
         def do_POST(self):
-            status = 202
+            status = 200
             self.connection.settimeout(5)
             try:
                 if self.path != "/webhooks/kapso":
@@ -572,23 +581,51 @@ def make_server(bridge, port):
 
 
 def serve(bridge, port):
-    # One process owns SQLite; worker API calls run between requests, never in the ack.
+    # The receiver persists first; slow provider/API calls cannot block the next ack.
+    if len(os.environ.get("KAPSO_WEBHOOK_SECRET", "")) < 32:
+        raise ValueError("Configura el secreto de webhook antes de iniciar")
     server = make_server(bridge, port)
-    server.timeout = 1
-    next_attempt = 0.0
-    while True:
-        server.handle_request()
-        if time.monotonic() < next_attempt:
-            continue
+    stop = threading.Event()
+    ready = threading.Event()
+    startup = []
+
+    def work():
+        # SQLite connections and cookie jars are confined to their own thread.
         try:
-            bridge.flush()
-            bridge.reply()
+            worker = Bridge(bridge.config, bridge.database)
         except (OSError, ValueError, KeyError, sqlite3.Error):
-            next_attempt = time.monotonic() + 60
-            print(
-                "Registro pendiente de reintento; revisar conexion/configuracion.",
-                file=sys.stderr,
+            ready.set()
+            return
+        startup.append(True)
+        ready.set()
+        try:
+            while not stop.is_set():
+                delay = 1
+                try:
+                    worker.flush()
+                    worker.reply()
+                except (OSError, ValueError, KeyError, sqlite3.Error):
+                    delay = 60
+                    print(
+                        "Registro pendiente de reintento; revisar conexion/configuracion.",
+                        file=sys.stderr,
+                    )
+                stop.wait(delay)
+        finally:
+            worker.db.close()
+
+    thread = threading.Thread(target=work, daemon=True)
+    thread.start()
+    try:
+        if not ready.wait(10) or not startup:
+            raise ValueError(
+                "No se pudo iniciar el procesador; revisa la bandeja local"
             )
+        server.serve_forever(poll_interval=0.5)
+    finally:
+        stop.set()
+        server.server_close()
+        thread.join(timeout=5)
 
 
 def main():

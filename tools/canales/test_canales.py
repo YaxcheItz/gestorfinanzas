@@ -8,7 +8,7 @@ import threading
 import unittest
 from datetime import date, datetime
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 from urllib.request import Request, urlopen
 
 from canales import (
@@ -18,6 +18,7 @@ from canales import (
     make_server,
     parse_bank,
     parse_whatsapp,
+    serve,
 )
 
 
@@ -372,6 +373,82 @@ class ChannelsTest(unittest.TestCase):
         self.assertNotIn("180", send.call_args.args[1]["text"]["body"])
         self.assertEqual(send.call_args.args[1]["to"], self.config["ownerPhone"])
 
+    def test_pending_financial_notice_has_no_false_delivery_receipt(self):
+        self.bridge.receive("whatsapp", "pending", note="Texto ambiguo")
+        with (
+            patch.dict(os.environ, {"KAPSO_API_KEY": "test"}),
+            patch("canales.request_json") as send,
+        ):
+            self.assertEqual(self.bridge.reply(), 0)
+            send.assert_not_called()
+
+    def test_malformed_signed_message_is_rejected(self):
+        for message in (
+            [],
+            {"kapso": []},
+            {"kapso": {"direction": "inbound"}, "text": []},
+        ):
+            event = json.loads(self.event())
+            if isinstance(message, dict):
+                event["message"].update(message)
+            else:
+                event["message"] = message
+            raw = json.dumps(event).encode()
+            with self.subTest(message=message), self.assertRaises(TypeError):
+                self.bridge.whatsapp(raw, self.signed(raw))
+
+    def test_slow_worker_does_not_block_webhook_ack(self):
+        server = make_server(self.bridge, 0)
+        entered, release = threading.Event(), threading.Event()
+        worker = MagicMock()
+        worker.flush.side_effect = lambda: (entered.set(), release.wait(3))
+        raw = self.event()
+        result = []
+
+        def client():
+            request = Request(
+                f"http://127.0.0.1:{server.server_port}/webhooks/kapso",
+                raw,
+                {
+                    "Content-Type": "application/json",
+                    "X-Webhook-Signature": self.signed(raw),
+                },
+            )
+            with urlopen(request, timeout=2) as response:
+                result.append(response.status)
+
+        def receive_while_busy(**kwargs):
+            self.assertTrue(entered.wait(2))
+            thread = threading.Thread(target=client)
+            thread.start()
+            server.handle_request()
+            thread.join(timeout=2)
+            self.assertEqual(result, [200])
+            self.assertFalse(release.is_set())
+            release.set()
+
+        with (
+            patch("canales.make_server", return_value=server),
+            patch("canales.Bridge", return_value=worker),
+            patch.object(server, "serve_forever", side_effect=receive_while_busy),
+        ):
+            try:
+                serve(self.bridge, 0)
+            finally:
+                release.set()
+                server.server_close()
+
+    def test_receiver_does_not_start_if_worker_cannot_open_its_queue(self):
+        server = MagicMock()
+        with (
+            patch("canales.make_server", return_value=server),
+            patch("canales.Bridge", side_effect=ValueError("Otra cuenta")),
+            self.assertRaises(ValueError),
+        ):
+            serve(self.bridge, 0)
+        server.serve_forever.assert_not_called()
+        server.server_close.assert_called_once()
+
     def test_refresh_rotates_session_without_persisting_password_or_access_token(self):
         with patch(
             "canales.request_json",
@@ -436,7 +513,7 @@ class ChannelsTest(unittest.TestCase):
             worker.join(timeout=4)
             api.assert_not_called()
         server.server_close()
-        self.assertEqual(result, [202])
+        self.assertEqual(result, [200])
         self.assertEqual(
             self.bridge.db.execute("SELECT state FROM events").fetchone()[0], "ready"
         )
