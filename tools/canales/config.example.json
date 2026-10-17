@@ -7,7 +7,13 @@
   "gmailLabelId": "REEMPLAZAR_CON_ID_ETIQUETA_EXCLUSIVA",
   "gmailSince": "2026-10-17",
   "accounts": {
-    "personal": {"id": 1, "listId": 1, "currency": "MXN", "categoryId": null}
+    "personal": {
+      "id": 1,
+      "listId": 1,
+      "currency": "MXN",
+      "categoryId": null
+    }
   },
-  "bankRules": []
+  "bankRules": [],
+  "autoSaveRecognized": true
 }

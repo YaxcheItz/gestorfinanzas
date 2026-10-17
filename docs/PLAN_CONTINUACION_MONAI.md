@@ -4,6 +4,8 @@ Complementa `PLAN_UI_MONAI.md` y `replica/monai-kesef/recon.md`. Es la secuencia
 
 ## Reglas para todas las etapas
 
+Prioridad actual (2026-10-17): se adelanto la etapa 5 por peticion del usuario. La bandeja esta implementada en `mejoras/captura-avisos`, aun sin publicar. Secuencia siguiente: integrar bandeja → WhatsApp/Kapso real → Gmail bancario con reglas verificadas → etapa 4, asistente con evidencias → etapas 6 en adelante. No se descarta el plan anterior: se cambia el orden para dar soporte seguro a los canales primero. Consultar `BANDEJA_AVISOS.md` y `ESTADO_SESION.md`.
+
 - Conservar Angular, Spring Boot y PostgreSQL mientras las mediciones no justifiquen cambios. No migrar a otra base, lenguaje u hospedaje por apariencia.
 - Cada etapa nueva empieza en una rama distinta desde develop actualizado y comprobado contra remoto. El rediseño ya se integró en develop; la entrega funcional integrada es presupuestos y recurrencias; su cierre correctivo se documenta en `CIERRE_PRESUPUESTOS_RECURRENCIAS.md`. Integrar cada entrega antes de basar otra etapa en ella.
 - Mantener confirmación, idempotencia, separación de monedas, privacidad, aislamiento por usuario y cola offline. No sobrescribir preferencias ni borrar datos para arreglar vistas.
@@ -45,6 +47,8 @@ Rama sugerida: `mejoras/asistente-evidencias`.
 Reutilizar captura natural, reglas, propuestas y chat existentes. Añadir consultas por periodo/lista/moneda: gasto por categoría, comparación y presupuesto disponible. Calcular cifras mediante consultas autorizadas; IA para interpretar y explicar. Cada respuesta incluye rango, moneda, cantidad de operaciones y acceso al historial filtrado. La interfaz distingue consulta de propuesta de escritura. Aceptación: las cifras coinciden con reportes/historial, errores no inventan respuestas y ninguna consulta modifica saldos.
 
 ## 5. Bandeja común de avisos y conciliación
+
+Implementada en `mejoras/captura-avisos`; contratos y limites en `BANDEJA_AVISOS.md`. La UI y API ya reciben propuestas estructuradas y permiten revision. Los canales reales, las reglas bancarias y la administracion multiusuario de credenciales siguen pendientes. No confundir el origen indicado por el cliente con una prueba de autenticidad del banco.
 
 Rama sugerida: `mejoras/captura-avisos`.
 

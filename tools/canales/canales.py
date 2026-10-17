@@ -319,43 +319,73 @@ class Bridge:
 
     def flush(self):
         saved = 0
-        for key, raw in self.db.execute(
-            "SELECT key,payload FROM events WHERE state='ready'"
-        ).fetchall():
-            tx = json.loads(raw)
+        rows = self.db.execute(
+            "SELECT key,source,state,payload FROM events WHERE state IN ('ready','pending') AND source IN ('whatsapp','gmail-bank','gmail-review')"
+        ).fetchall()
+        for key, source, state, raw in rows:
+            original = json.loads(raw)
+            tx = original if "cuentaId" in original else None
             profile = self.api("/perfil")
             if profile["id"] != self.config["ownerId"]:
                 raise ValueError("El token pertenece a otro usuario")
-            accounts = self.api("/cuentas")
-            actual = next(
-                (a for a in accounts if a["id"] == tx["cuentaId"] and a["activo"]), None
-            )
-            expected = next(
-                (
-                    a
-                    for a in self.config["accounts"].values()
-                    if a["id"] == tx["cuentaId"]
-                ),
-                None,
-            )
+            if tx:
+                accounts = self.api("/cuentas")
+                actual = next(
+                    (a for a in accounts if a["id"] == tx["cuentaId"] and a["activo"]),
+                    None,
+                )
+                expected = next(
+                    (
+                        a
+                        for a in self.config["accounts"].values()
+                        if a["id"] == tx["cuentaId"]
+                    ),
+                    None,
+                )
+                if (
+                    actual is None
+                    or expected is None
+                    or actual["moneda"] != expected["currency"]
+                    or actual["moneda"] != tx["_currency"]
+                ):
+                    raise ValueError("La cuenta cambio: revisar configuracion")
+            origen = "WHATSAPP" if source == "whatsapp" else "GMAIL"
+            body = {
+                "origen": origen,
+                "identificador": key,
+                "claveRegistro": key,
+                "resumen": tx["descripcion"]
+                if tx
+                else "Aviso por revisar desde " + origen,
+                "clase": ("COMPRA" if tx["tipo"] == "GASTO" else "INGRESO")
+                if tx
+                else "SIN_CLASIFICAR",
+                "moneda": tx["_currency"]
+                if tx
+                else profile.get("monedaPredeterminada", "MXN"),
+                "datos": {k: v for k, v in tx.items() if not k.startswith("_")}
+                if tx
+                else None,
+            }
+            # Keep the original key/payload through retries; the server owns deduplication.
+            aviso = self.api("/avisos", body)
             if (
-                actual is None
-                or expected is None
-                or actual["moneda"] != expected["currency"]
-                or actual["moneda"] != tx["_currency"]
+                state == "ready"
+                and self.config.get("autoSaveRecognized", False)
+                and not aviso["coincidencias"]
+                and aviso["estado"] == "PENDIENTE"
             ):
-                raise ValueError("La cuenta cambio: revisar configuracion")
-            response = self.api(
-                "/transacciones",
-                {k: v for k, v in tx.items() if not k.startswith("_")},
-                key,
-            )
+                aviso = self.api(
+                    "/avisos/" + aviso["id"] + "/confirmar",
+                    {"version": aviso["version"], "aceptarPosibleDuplicado": False},
+                )
+            registered = aviso["estado"] == "REGISTRADO"
             with self.db:
                 self.db.execute(
-                    "UPDATE events SET state='saved',result=? WHERE key=?",
-                    (str(response["id"]), key),
+                    "UPDATE events SET state=?,result=? WHERE key=?",
+                    ("saved" if registered else "inbox", aviso["id"], key),
                 )
-            saved += 1
+            saved += int(registered)
         return saved
 
     def reply(self):
@@ -363,14 +393,14 @@ class Bridge:
             return 0
         sent = 0
         for key, source, state in self.db.execute(
-            "SELECT key,source,state FROM events WHERE replied=0 AND source IN ('whatsapp','codex') AND state IN ('saved','pending')"
+            "SELECT key,source,state FROM events WHERE replied=0 AND source IN ('whatsapp','codex') AND state IN ('saved','pending','inbox')"
         ).fetchall():
             body = (
                 "Movimiento registrado en Kaptal."
                 if state == "saved"
                 else "Solicitud recibida para Codex; requiere revisar la bandeja local."
                 if source == "codex"
-                else "Pendiente de revisar. Formato automatico: gasto 180.00 MXN comida @personal"
+                else "Aviso pendiente en la bandeja de Kaptal. Formato automatico: gasto 180.00 MXN comida @personal"
             )
             # At-most-once attempt: an ambiguous send timeout must not spam the user.
             with self.db:

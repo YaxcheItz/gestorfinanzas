@@ -1,0 +1,59 @@
+{
+  "date": "2026-10-17",
+  "branch": "mejoras/captura-avisos",
+  "baseDevelop": "ce7bcfb6c38d82b8a569c1b4e768dbe871fc8084",
+  "committed": false,
+  "pushed": false,
+  "backend": {
+    "command": "mvnw.cmd -q verify",
+    "postgresql": true,
+    "tests": 392,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "log": ".local/avisos-backend-final.log"
+  },
+  "frontend": {
+    "unitTests": 316,
+    "unitFiles": 39,
+    "unitLog": "frontend/.angular/avisos-unit.log",
+    "build": "passed",
+    "buildLog": "frontend/.angular/avisos-build-final.log",
+    "e2eTests": 19,
+    "e2eResult": "passed",
+    "e2eLog": "frontend/.angular/avisos-e2e-final.log",
+    "newFlow": "receive, replay, confirm, replay confirmation, cross-channel match, explicit separate purchase, edit incomplete, discard, 320/390 widths"
+  },
+  "bridge": {
+    "tests": 22,
+    "ruff": "passed",
+    "globalCopySynced": true,
+    "realProviderConnections": false
+  },
+  "localRuntime": {
+    "frontend": 4300,
+    "backend": 18081,
+    "migration": "V7",
+    "backup": ".local/avisos-antes-v7.private.dump",
+    "backupReadable": true,
+    "sevenFinancialTablesUnchanged": true,
+    "healthThrough4300": 200,
+    "corsLocalAndLan": "accepted",
+    "corsForeignOrigin": "rejected",
+    "uiSmokeWidths": [
+      320,
+      390,
+      1280
+    ],
+    "uiSmokeUsesSyntheticApi": true,
+    "realFinancialWrites": false
+  },
+  "limitations": [
+    "Not tested on physical Android",
+    "Kapso and Gmail are not authenticated; no real messages or emails read",
+    "JSON backup v5 excludes notices and deduplication hashes; use complete PostgreSQL backup",
+    "Provider-origin metadata is not proof of bank authenticity",
+    "Remote CI not run for these uncommitted changes"
+  ],
+  "next": "Integrate this stage; create fresh branch from verified develop for Kapso activation, then verified Gmail bank rules, then assistant evidence."
+}
