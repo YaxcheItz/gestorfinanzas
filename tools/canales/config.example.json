@@ -1,0 +1,13 @@
+{
+  "apiUrl": "http://127.0.0.1:18081",
+  "ownerId": 1,
+  "ownerPhone": "REEMPLAZAR_CON_NUMERO_E164",
+  "kapsoPhoneNumberId": "REEMPLAZAR_CON_ID_KAPSO",
+  "gmailEmail": "REEMPLAZAR_CON_TU_GMAIL",
+  "gmailLabelId": "REEMPLAZAR_CON_ID_ETIQUETA_EXCLUSIVA",
+  "gmailSince": "2026-10-17",
+  "accounts": {
+    "personal": {"id": 1, "listId": 1, "currency": "MXN", "categoryId": null}
+  },
+  "bankRules": []
+}

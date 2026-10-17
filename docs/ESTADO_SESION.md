@@ -1,5 +1,24 @@
 # Estado para retomar la sesión
 
+## Publicacion autorizada (2026-10-17)
+
+- El usuario autorizo subir las dos entregas por separado, solo con su autoria Git configurada: YaxcheItz <yaxtibla1@gmail.com>, sin coautoria.
+- Ramas: correcciones/presupuestos-recurrencias y mejoras/integraciones-canales. Consultar git log y origin para los hashes/estado remoto actuales. No se integra develop en esta operacion.
+- Los estados sin commit/push y las banderas de evidencia mas abajo corresponden a la verificacion previa a esta publicacion.
+
+
+## Etapa vigente: herramientas y canales (2026-10-17)
+
+- Rama mejoras/integraciones-canales desde origin/develop e947227 comprobado mediante fetch, en worktree .local/integraciones-worktree. La rama principal correcciones/presupuestos-recurrencias sigue con sus cambios locales intactos; no confundir las entregas ni mover cambios entre ellas.
+- Peticion actual: herramientas globales de Codex, WhatsApp/Kapso y correos bancarios Gmail. Usuario eligio guardar automaticamente los reconocidos; ambiguos y posibles duplicados quedan pendientes. Bancos mencionados BBVA/Nu/Santander/Mercado Pago, sin ejemplos transaccionales verificados.
+- Instaladas 14 skills globales (Ponytail seis, Addy cuatro, Prompt Master, Graphify, catalogo Public APIs y canales-personales). Graphify CLI 0.9.92 aislado con uv, usado en AST local del backend. MCP Kapso preparado globalmente pero desactivado hasta autenticar. No se cambiaron proveedores/modelos ni se activaron hooks.
+- OmniRoute no instalado: auditoria del lockfile, tres paquetes de produccion afectados con severidad alta. Graphify: 30 distribuciones auditadas sin avisos conocidos. Revisiones acotadas, no garantia de seguridad absoluta. Coucou no aporta al runtime del proyecto; no instalado.
+- Puente tools/canales implementado: webhook Kapso v2 firmado y limitado a propietario, cola SQLite, guardado via API existente con idempotencia, validacion de cuenta/moneda/usuario, refresh de sesion, acuses genericos. /codex es bandeja, no ejecucion remota. Gmail readonly con OAuth PKCE, etiqueta y fecha inicial, plantillas exactas + DMARC + referencia estable; reglas reales todavia vacias. No se ha autenticado ningun proveedor ni registrado dinero real.
+- Verificacion: 21 pruebas correctas, Ruff y compilacion Python correctos. HTTP firmado probado con API simulada. Sin E2E con proveedores reales. No cambios Java/Angular/migraciones/servidores. No commit/push ni despliegue.
+- Contratos y pasos de activacion: docs/HERRAMIENTAS_CANALES_2026-10-17.md. Evidencia: replica/integraciones-canales/verification.json y auditorias. Manifiesto global privado sin secretos: ~/.codex/tooling-review/2026-10-17.json.
+- Siguiente: integrar correccion previa; revisar esta rama; autenticar Kapso y configurar numero/webhook HTTPS; consentir Gmail y obtener ejemplos bancarios para habilitar reglas una por una. Luego integracion multiusuario y UI/bandeja, y retomar asistente-evidencias. Mantener Angular/Spring/PostgreSQL; evaluar Pages para frontend y Containers ya preparado, sin migrar a Convex ahora.
+
+
 ## Etapa vigente: presupuestos y recurrencias (2026-10-15)
 
 - Rama nueva `mejoras/presupuestos-recurrencias` creada desde `develop` == `origin/develop` (`e033387 Merge pull request #68 from YaxcheItz/mejoras/listas-etiquetas`), comprobados al inicio. Cambios locales sin commit ni push.

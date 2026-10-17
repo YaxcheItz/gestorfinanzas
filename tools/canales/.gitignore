@@ -1,0 +1,6 @@
+*.private.json
+*.sqlite
+*.sqlite-*
+*.session
+*.session.tmp
+__pycache__/
