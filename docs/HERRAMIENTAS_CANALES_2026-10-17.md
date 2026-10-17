@@ -1,5 +1,9 @@
 # Herramientas de Codex, WhatsApp y correo bancario
 
+## Actualizacion: bandeja comun
+
+La entrega posterior `mejoras/captura-avisos` sustituye el envio directo del puente a `/transacciones`: ahora recibe mediante `/api/avisos` y confirma con la misma API autenticada. La UI `/avisos` muestra propuestas financieras propias; SQLite conserva recepcion y solicitudes `/codex`, que nunca ejecutan instrucciones. Automatico requiere `autoSaveRecognized: true`, datos reconocidos y ausencia de coincidencias. Los ambiguos permanecen pendientes. No se activaron conexiones reales. Ver [BANDEJA_AVISOS.md](BANDEJA_AVISOS.md) para el contrato vigente; las secciones siguientes describen la entrega original y sus comprobaciones historicas.
+
 Revisión del 17 de octubre de 2026. Rama `mejoras/integraciones-canales`, creada desde `origin/develop` comprobado mediante fetch (`e947227`). Worktree separado: `.local/integraciones-worktree`. La corrección anterior permanece intacta y sin commit en `correcciones/presupuestos-recurrencias`.
 
 La preferencia del usuario es guardar automáticamente los movimientos reconocidos. Las entradas ambiguas y los posibles duplicados requieren revisión. **No hay cuentas externas autenticadas ni automatización activa todavía.**

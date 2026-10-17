@@ -1,6 +1,19 @@
 # Estado para retomar la sesión
 
-## Estado actual: sincronizacion de canales con develop (2026-10-17)
+## Estado actual: bandeja de avisos (2026-10-17)
+
+- Revision de CI tras publicar `7ede72f`: ejecucion `39068489152`, fallo exclusivo de backend H2; PostgreSQL, frontend, E2E y Python correctos. Reproducido localmente: borrar usuario falla por FK de avisos sin cascada en el DDL generado. La entidad declara ahora `@OnDelete(CASCADE)`, igual que V7 y otras entidades del proyecto. Se conserva la prueba de borrado sin omitirla ni modificar la migracion publicada. Resultados de cierre de esta correccion en `replica/captura-avisos/ci-fix.json`.
+
+- Rama `mejoras/captura-avisos` creada desde `develop == origin/develop == ce7bcfb`, comprobado mediante fetch. Incluye los merges de recurrencias y canales (PR #74 y #75). Entrega publicada en `7ede72f`; consultar Git para el estado de la correccion posterior.
+- Implementada `/avisos`, accesible en Herramientas: pendientes, registrados y descartados; recibir, revisar, corregir, confirmar y descartar. API autenticada por usuario, control de versiones, bloqueo, claves estables y guardado contable transaccional. Recibir/editar no altera dinero. Coincidencias requieren aceptar expresamente otra compra real; reintentar no duplica.
+- Migracion V7 crea `avisos_financieros`. No modifica importes historicos. Respaldo JSON v5 conserva su contrato y NO incluye la bandeja; PostgreSQL completo si la incluye. Se bloquea restaurar sobre pendientes. Ver `BANDEJA_AVISOS.md`.
+- Puente personal adaptado a la bandeja: guardado automatico solo con `autoSaveRecognized` explicito, datos reconocidos y ninguna coincidencia. Avisos ambiguos quedan sin clasificar para revisar; no se guarda correo bruto. No se han activado proveedores externos ni registrado movimientos reales.
+- Verificacion backend PostgreSQL: 392 pruebas correctas. Frontend: 316 pruebas correctas. Puente: 22 pruebas correctas y Ruff correcto. Cierre E2E y entorno local en `replica/captura-avisos/verification.json`.
+- Cierre final: 19 E2E completos correctos y build de produccion correcto. Backend local 18081 actualizado a V7 con respaldo privado legible `.local/avisos-antes-v7.private.dump`; huellas de siete tablas financieras identicas. Health por 4300 correcto, CORS local/LAN permitido y origen ajeno rechazado. UI servida en 4300 comprobada con API sintetica en 320/390/1280, sin escrituras reales. Frontend existente conservado; backend reiniciado. Capturas en `replica/captura-avisos/`. Scripts globales de `canales-personales` sincronizados. Pendiente prueba fisica Android y CI remoto cuando se publique.
+- Siguiente: revisar/integrar esta rama y crear otra desde develop actualizado para activar WhatsApp/Kapso con numero y webhook HTTPS; luego Gmail readonly con ejemplos anonimizados y reglas bancarias exactas. Despues retomar asistente con evidencias, Android y demas etapas de `PLAN_CONTINUACION_MONAI.md`.
+- Los apartados siguientes son historial y no sustituyen este estado vigente.
+
+## Historial: sincronizacion de canales con develop (2026-10-17)
 
 - El usuario integro recurrencias mediante PR #74: origin/develop = 1a30415. Se incorporo ese develop a mejoras/integraciones-canales; unico conflicto en este documento, conservando el historial de ambas entregas. El codigo se combino automaticamente.
 - Checks previos correctos: correcciones 39059262591 y canales 39059148161. La nueva combinacion debe completar su propia ejecucion de CI antes de integrar canales a develop.

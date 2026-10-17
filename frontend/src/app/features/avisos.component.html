@@ -1,0 +1,43 @@
+<section class="inbox">
+  <header><div><p class="muted">Entradas externas</p><h1>Bandeja de avisos</h1></div><button class="pill" (click)="nuevo()">Añadir aviso</button></header>
+  <p class="muted intro">Tus avisos de todas las listas. Revísalos antes de guardarlos. Recibir un aviso no cambia tu dinero.</p>
+  <nav aria-label="Estado de avisos" class="filters">@for(f of filtros;track f.valor){<button class="pill" [attr.aria-pressed]="estado()===f.valor" (click)="filtrar(f.valor)">{{f.texto}}</button>}</nav>
+  @if(error()){<div role="alert" class="notice">{{error()}} <button (click)="cargar()">Recargar bandeja</button></div>}
+  @if(mensaje()){<p role="status">{{mensaje()}}</p>}
+  @if(cargando()){<p role="status" class="muted">Cargando avisos…</p>}
+  @else if(!avisos().length && !error()){<section class="empty"><span aria-hidden="true">📨</span><h2>{{estado()==='PENDIENTE'?'No hay avisos pendientes':'Sin avisos en esta vista'}}</h2><p class="muted">Los avisos que añadas aparecerán aquí. WhatsApp y Gmail necesitan una conexión configurada.</p></section>}
+  <div [attr.aria-busy]="cargando()">@for(a of avisos();track a.id){<article class="row">
+    <div class="row-top"><span class="emoji" aria-hidden="true">{{a.origen==='WHATSAPP'?'💬':'📨'}}</span><div class="copy"><h2>{{(a.datos?.descripcion || a.resumen) | textoFinanciero}}</h2><p class="muted">{{etiquetaOrigen(a.origen)}} · {{etiquetaClase(a.clase)}} · {{etiquetaEstado(a.estado)}}</p></div>@if(a.datos?.monto!=null){<strong>{{a.datos!.monto! | monto:a.moneda:'symbol':'1.2-2'}}</strong>}</div>
+    @if(a.coincidencias.length){<p class="notice">Hay {{a.coincidencias.length}} movimiento(s) parecido(s). Podría ser otra compra: revísalo antes de guardar.</p><a routerLink="/transacciones" [queryParams]="{detalle:a.coincidencias[0]}">Revisar movimiento parecido</a>}
+    <div class="actions">@if(a.estado==='PENDIENTE'){
+      <button class="pill" (click)="editar(a)" [disabled]="ocupado()">Revisar y corregir</button><button class="pill" (click)="prepararConfirmacion(a)" [disabled]="ocupado()">Guardar movimiento</button><button class="quiet" (click)="ejecutar(a,'descartar',false)" [disabled]="ocupado()">Descartar</button>
+    }@else if(a.transaccionId){<a routerLink="/transacciones" [queryParams]="{detalle:a.transaccionId}">Ver movimiento</a>}</div>
+  </article>}</div>
+  @if(paginas()>1){<nav aria-label="Páginas de avisos" class="actions"><button class="pill" (click)="pagina.set(pagina()-1);cargar()" [disabled]="pagina()===0||cargando()">Anterior</button><span>{{pagina()+1}} / {{paginas()}}</span><button class="pill" (click)="pagina.set(pagina()+1);cargar()" [disabled]="pagina()+1>=paginas()||cargando()">Siguiente</button></nav>}
+</section>
+@if(formulario()){
+<div class="backdrop"><section class="sheet" role="dialog" aria-modal="true" aria-labelledby="aviso-title" appFocusTrap tabindex="-1" (focusTrapEscape)="cerrar()">
+  <header><h2 id="aviso-title">{{seleccionado()?'Revisar aviso':'Añadir aviso'}}</h2><button class="pill" aria-label="Cerrar aviso" (click)="cerrar()" [disabled]="ocupado()">×</button></header>
+  @if(seleccionado();as seleccionado){<p class="notice">{{seleccionado.resumen | textoFinanciero}}</p>}
+  <form (ngSubmit)="guardarDatos()">
+    @if(errorFormulario()){<p role="alert" class="notice">{{errorFormulario()}}</p>}
+    @if(!seleccionado()){
+      <label>Origen<select name="origen" [(ngModel)]="origen"><option value="MANUAL">Manual</option><option value="GMAIL">Gmail</option><option value="WHATSAPP">WhatsApp</option><option value="SMS">SMS</option><option value="NOTIFICACION">Notificación</option></select></label>
+      <label>Resumen del aviso<textarea name="resumen" [(ngModel)]="resumen" maxlength="200" required rows="2" placeholder="Comercio y motivo del movimiento"></textarea></label><p class="muted">Sólo el movimiento, sin contraseñas, códigos ni datos completos de tarjeta.</p>
+    }
+    <label>Tipo de aviso<select name="clase" [(ngModel)]="clase" (ngModelChange)="cambiarClase()">@for(c of clases;track c.valor){<option [ngValue]="c.valor">{{c.texto}}</option>}</select></label>
+    @if(clase==='AUTORIZACION'){<p class="notice">Es una autorización pendiente. Espera el cargo definitivo antes de guardarlo como movimiento.</p>}
+    <label>Descripción<input name="descripcion" [(ngModel)]="datos.descripcion" maxlength="200" /></label>
+    <div class="fields"><label>Importe<input name="monto" type="number" inputmode="decimal" min="0.01" step="0.01" [(ngModel)]="datos.monto" /></label><label>Moneda<input name="moneda" [(ngModel)]="moneda" maxlength="3" pattern="[A-Z]{3}" required /></label></div>
+    <label>Cuenta<select name="cuenta" [(ngModel)]="datos.cuentaId"><option [ngValue]="null">Por elegir</option>@for(c of cuentas();track c.id){<option [ngValue]="c.id">{{c.nombre}} · {{c.moneda}}</option>}</select></label>
+    @if(datos.tipo==='TRANSFERENCIA'){
+      <label>Cuenta de destino<select name="destino" [(ngModel)]="datos.cuentaDestinoId"><option [ngValue]="null">Por elegir</option>@for(c of cuentas();track c.id){<option [ngValue]="c.id">{{c.nombre}} · {{c.moneda}}</option>}</select></label><label>Tipo de cambio, si las monedas difieren<input name="tasa" type="number" inputmode="decimal" min="0.00000001" step="0.00000001" [(ngModel)]="datos.tasaCambio" /></label>
+    }@else{<label>Categoría<select name="categoria" [(ngModel)]="datos.categoriaId"><option [ngValue]="null">Sin categoría</option>@for(c of categorias();track c.id){@if(c.tipo===datos.tipo){<option [ngValue]="c.id">{{c.nombre}}</option>}}</select></label>}
+    <label>Lista<select name="lista" [(ngModel)]="datos.listaId">@for(l of listas.listas();track l.id){@if(!l.archivada && l.rol!=='LECTOR'){<option [ngValue]="l.id">{{l.nombre}}</option>}}</select></label>
+    <label>Fecha<input name="fecha" type="date" [(ngModel)]="datos.fecha" /></label>
+    <button class="primary" type="submit" [disabled]="ocupado()||cargandoCatalogo()">{{ocupado()?'Guardando…':'Guardar revisión'}}</button><p class="muted">Guardar la revisión conserva un aviso pendiente. No registra dinero.</p>
+  </form>
+</section></div>}
+@if(confirmacion();as a){<div class="backdrop"><section class="sheet" role="dialog" aria-modal="true" aria-labelledby="confirmar-title" appFocusTrap tabindex="-1" (focusTrapEscape)="confirmacion.set(null)">
+  <h2 id="confirmar-title">¿Es otra operación?</h2><p>Ya hay movimientos con la misma cuenta, tipo, fecha e importe. Guardar éste añadirá otro movimiento.</p><div class="actions"><button class="pill" (click)="confirmacion.set(null)" [disabled]="ocupado()">Volver</button><button class="primary" (click)="ejecutar(a,'confirmar',true)" [disabled]="ocupado()">Es una operación distinta</button></div>
+</section></div>}

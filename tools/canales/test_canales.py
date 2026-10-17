@@ -25,6 +25,7 @@ class ChannelsTest(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.config = {
+            "autoSaveRecognized": True,
             "apiUrl": "http://127.0.0.1:18081",
             "ownerId": 7,
             "ownerPhone": "5215555555555",
@@ -137,10 +138,17 @@ class ChannelsTest(unittest.TestCase):
                 return {"id": 7}
             if path == "/cuentas":
                 return [{"id": 10, "activo": True, "moneda": "MXN"}]
-            calls.append((payload, key))
+            if path.endswith("/confirmar"):
+                return {"id": "entry", "estado": "REGISTRADO"}
+            calls.append(payload)
             if len(calls) == 1:
                 raise TimeoutError()
-            return {"id": 22}
+            return {
+                "id": "entry",
+                "version": 0,
+                "estado": "PENDIENTE",
+                "coincidencias": [],
+            }
 
         with patch.object(self.bridge, "api", side_effect=api):
             with self.assertRaises(TimeoutError):
@@ -148,6 +156,29 @@ class ChannelsTest(unittest.TestCase):
             self.assertEqual(self.bridge.flush(), 1)
             self.assertEqual(self.bridge.flush(), 0)
         self.assertEqual(calls[0], calls[1])
+        self.assertIn("claveRegistro", calls[0])
+
+    def test_server_duplicate_is_never_auto_confirmed(self):
+        self.bridge.receive("whatsapp", "a", self.tx)
+
+        def api(path, payload=None, key=None):
+            if path == "/perfil":
+                return {"id": 7}
+            if path == "/cuentas":
+                return [{"id": 10, "activo": True, "moneda": "MXN"}]
+            self.assertEqual(path, "/avisos")
+            return {
+                "id": "entry",
+                "version": 0,
+                "estado": "PENDIENTE",
+                "coincidencias": [22],
+            }
+
+        with patch.object(self.bridge, "api", side_effect=api):
+            self.assertEqual(self.bridge.flush(), 0)
+        self.assertEqual(
+            self.bridge.db.execute("SELECT state FROM events").fetchone()[0], "inbox"
+        )
 
     def test_wrong_user_or_currency_cannot_write(self):
         self.bridge.receive("whatsapp", "a", self.tx)
@@ -235,10 +266,28 @@ class ChannelsTest(unittest.TestCase):
                 },
             ),
             patch("canales.request_json", side_effect=api),
-            patch.object(self.bridge, "api") as financial_api,
+            patch.object(
+                self.bridge,
+                "api",
+                side_effect=lambda path, payload=None: (
+                    {"id": 7}
+                    if path == "/perfil"
+                    else {
+                        "id": "pending",
+                        "version": 0,
+                        "estado": "PENDIENTE",
+                        "coincidencias": [],
+                    }
+                ),
+            ) as financial_api,
         ):
             self.assertEqual(self.bridge.gmail_once(), 0)
-            financial_api.assert_not_called()
+            self.assertTrue(
+                all(
+                    c.args[0] in ("/perfil", "/avisos")
+                    for c in financial_api.call_args_list
+                )
+            )
         self.assertEqual(
             self.bridge.db.execute("SELECT count(*) FROM events").fetchone()[0], 2
         )

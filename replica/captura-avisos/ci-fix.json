@@ -1,0 +1,20 @@
+{
+  "date": "2026-10-17",
+  "branch": "mejoras/captura-avisos",
+  "failedRun": 39068489152,
+  "failedCommit": "7ede72f",
+  "cause": "V7 declares ON DELETE CASCADE for notice ownership; Hibernate-generated H2 schema lacked equivalent mapping.",
+  "fix": "@OnDelete(CASCADE) on AvisoFinanciero.usuario; published migration unchanged.",
+  "regression": "Existing borrarCuentaEliminaAvisosPropios reproduced failing on H2 before fix and passes after fix.",
+  "localVerification": {
+    "command": "mvnw.cmd -B verify",
+    "exit": 0,
+    "tests": 392,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 6,
+    "skippedReason": "PostgreSQL-only migration checks; run separately in remote PostgreSQL job.",
+    "log": ".local/ci-avisos-h2-verified.log"
+  },
+  "remoteVerification": "Pending push and new CI execution."
+}

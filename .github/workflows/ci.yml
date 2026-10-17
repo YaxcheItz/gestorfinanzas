@@ -14,6 +14,19 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  canales:
+    name: Canales personales (Python)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Probar bandeja y conectores sin credenciales reales
+        run: python -m unittest discover -s tools/canales -p 'test_*.py' -v
+      - name: Comprobar sintaxis
+        run: python -m compileall -q tools/canales
+
   backend:
     name: Backend (build + tests)
     runs-on: ubuntu-latest

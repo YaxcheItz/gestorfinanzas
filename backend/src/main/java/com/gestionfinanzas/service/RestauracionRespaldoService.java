@@ -93,6 +93,7 @@ public class RestauracionRespaldoService {
     private final com.gestionfinanzas.repository.ListaRepository listaRepository;
     private final com.gestionfinanzas.repository.ListaMiembroRepository listaMiembroRepository;
     private final ListaService listaService;
+    private final com.gestionfinanzas.repository.AvisoFinancieroRepository avisoRepository;
 
     @Transactional(readOnly = true)
     public RestauracionRespaldoPreviewResponse previsualizar(Long usuarioId, RespaldoFinancieroResponse respaldo) {
@@ -179,7 +180,8 @@ public class RestauracionRespaldoService {
         List<Categoria> categorias = categoriaRepository.findByUsuarioIdOrderByActivoDescNombreAsc(usuarioId);
         boolean cuentasSinUso = cuentas.isEmpty() || (cuentas.size() == 1 && esBilleteraInicialIntacta(cuentas.getFirst()));
         boolean categoriasSinUso = categorias.isEmpty() || sonCategoriasInicialesIntactas(categorias);
-        return listaRepository.accesibles(usuarioId).stream().allMatch(lista -> "PERSONAL".equals(lista.getClave()))
+        return !avisoRepository.existsByUsuarioIdAndEstado(usuarioId,"PENDIENTE")
+                && listaRepository.accesibles(usuarioId).stream().allMatch(lista -> "PERSONAL".equals(lista.getClave()))
                 && cuentasSinUso
                 && categoriasSinUso
                 && presupuestoRepository.findAllByUsuarioIdOrderByAnioDescMesDescIdAsc(usuarioId).isEmpty()
