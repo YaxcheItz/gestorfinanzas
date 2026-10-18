@@ -16,6 +16,8 @@ import re
 import sqlite3
 import sys
 import threading
+import time
+import unicodedata
 import uuid
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
@@ -83,6 +85,18 @@ def amount(value, decimal="."):
 
 def phone(value):
     return str(value or "").removeprefix("+")
+
+
+def normalized(value):
+    return " ".join(
+        "".join(
+            c
+            for c in unicodedata.normalize("NFD", value.casefold())
+            if not unicodedata.combining(c)
+        )
+        .strip()
+        .split()
+    )
 
 
 def transaction(fields, account, currency, source):
@@ -201,6 +215,8 @@ def parse_bank(mail, rules, accounts):
 
 class Bridge:
     def __init__(self, config, database):
+        if type(config.get("ownerId")) is not int or config["ownerId"] <= 0:
+            raise ValueError("Vincula tu cuenta antes de abrir la bandeja")
         self.config = config
         self.database = database
         self.token = os.environ.get("KAPTAL_API_TOKEN")
@@ -222,6 +238,29 @@ class Bridge:
             "state TEXT NOT NULL, payload TEXT, fingerprint TEXT, result TEXT, replied INTEGER NOT NULL DEFAULT 0)"
         )
         self.db.execute("CREATE TABLE IF NOT EXISTS owner (identity TEXT PRIMARY KEY)")
+        if "response" not in {
+            c[1] for c in self.db.execute("PRAGMA table_info(events)")
+        }:
+            self.db.execute("ALTER TABLE events ADD COLUMN response TEXT")
+        self.db.execute(
+            "CREATE TABLE IF NOT EXISTS chat_context (id INTEGER PRIMARY KEY CHECK(id=1),text TEXT NOT NULL,expires INTEGER NOT NULL)"
+        )
+        self.db.execute(
+            "CREATE TABLE IF NOT EXISTS channel_owner (identity TEXT PRIMARY KEY)"
+        )
+        if config.get("ownerPhone") and config.get("kapsoPhoneNumberId"):
+            binding = json.dumps(
+                [phone(config["ownerPhone"]), config["kapsoPhoneNumberId"]]
+            )
+            old_binding = self.db.execute(
+                "SELECT identity FROM channel_owner"
+            ).fetchone()
+            if old_binding and old_binding[0] != binding:
+                self.db.close()
+                raise ValueError("Esta cola pertenece a otro telefono o numero Kapso")
+            self.db.execute(
+                "INSERT OR IGNORE INTO channel_owner VALUES (?)", (binding,)
+            )
         identity = json.dumps([config["apiUrl"], config["ownerId"]])
         previous = self.db.execute("SELECT identity FROM owner").fetchone()
         if previous and previous[0] != identity:
@@ -242,6 +281,7 @@ class Bridge:
         result = request_json(
             self.config["apiUrl"].rstrip("/") + "/api/auth/refresh",
             {},
+            headers={"X-Gestion-Sesion": "1"},
             opener=self.opener,
         )
         if not result.get("success") or result["data"]["id"] != self.config["ownerId"]:
@@ -321,11 +361,13 @@ class Bridge:
     def flush(self):
         saved = 0
         rows = self.db.execute(
-            "SELECT key,source,state,payload FROM events WHERE state IN ('ready','pending') AND source IN ('whatsapp','gmail-bank','gmail-review')"
+            "SELECT key,source,state,payload FROM events WHERE state IN ('ready','pending') AND source IN ('whatsapp','whatsapp-chat','gmail-bank','gmail-review') ORDER BY rowid"
         ).fetchall()
         for key, source, state, raw in rows:
             original = json.loads(raw)
             tx = original if "cuentaId" in original else None
+            if source == "whatsapp-chat" and tx is None:
+                continue
             profile = self.api("/perfil")
             if profile["id"] != self.config["ownerId"]:
                 raise ValueError("El token pertenece a otro usuario")
@@ -335,13 +377,19 @@ class Bridge:
                     (a for a in accounts if a["id"] == tx["cuentaId"] and a["activo"]),
                     None,
                 )
-                expected = next(
-                    (
-                        a
-                        for a in self.config["accounts"].values()
-                        if a["id"] == tx["cuentaId"]
-                    ),
-                    None,
+                expected = (
+                    {"currency": actual["moneda"]}
+                    if actual
+                    and self.config.get("allAccounts")
+                    and source == "whatsapp-chat"
+                    else next(
+                        (
+                            a
+                            for a in self.config["accounts"].values()
+                            if a["id"] == tx["cuentaId"]
+                        ),
+                        None,
+                    )
                 )
                 if (
                     actual is None
@@ -349,8 +397,18 @@ class Bridge:
                     or actual["moneda"] != expected["currency"]
                     or actual["moneda"] != tx["_currency"]
                 ):
+                    if source == "whatsapp-chat":
+                        with self.db:
+                            self.db.execute(
+                                "UPDATE events SET state='answered',response=? WHERE key=?",
+                                (
+                                    "La cuenta ya no esta disponible o cambio de moneda. No se registro dinero; envia el movimiento corregido.",
+                                    key,
+                                ),
+                            )
+                        continue
                     raise ValueError("La cuenta cambio: revisar configuracion")
-            origen = "WHATSAPP" if source == "whatsapp" else "GMAIL"
+            origen = "WHATSAPP" if source in ("whatsapp", "whatsapp-chat") else "GMAIL"
             body = {
                 "origen": origen,
                 "identificador": key,
@@ -358,7 +416,11 @@ class Bridge:
                 "resumen": tx["descripcion"]
                 if tx
                 else "Aviso por revisar desde " + origen,
-                "clase": ("COMPRA" if tx["tipo"] == "GASTO" else "INGRESO")
+                "clase": {
+                    "GASTO": "COMPRA",
+                    "INGRESO": "INGRESO",
+                    "TRANSFERENCIA": "TRANSFERENCIA",
+                }[tx["tipo"]]
                 if tx
                 else "SIN_CLASIFICAR",
                 "moneda": tx["_currency"]
@@ -376,34 +438,156 @@ class Bridge:
                 and not aviso["coincidencias"]
                 and aviso["estado"] == "PENDIENTE"
             ):
-                aviso = self.api(
-                    "/avisos/" + aviso["id"] + "/confirmar",
-                    {"version": aviso["version"], "aceptarPosibleDuplicado": False},
-                )
+                try:
+                    aviso = self.api(
+                        "/avisos/" + aviso["id"] + "/confirmar",
+                        {"version": aviso["version"], "aceptarPosibleDuplicado": False},
+                    )
+                except HTTPError as error:
+                    if error.code not in (400, 409, 422):
+                        raise
+                    error.close()  # A rejected confirmation remains a reviewable notice.
             registered = aviso["estado"] == "REGISTRADO"
             with self.db:
+                response = None
+                if source == "whatsapp-chat":
+                    response = (
+                        "Movimiento registrado en Kaptal."
+                        if registered
+                        else "Aviso pendiente en Kaptal; revisalo antes de guardar. Si hay movimientos parecidos, confirma en la app si es otra operacion."
+                    )
                 self.db.execute(
-                    "UPDATE events SET state=?,result=? WHERE key=?",
-                    ("saved" if registered else "inbox", aviso["id"], key),
+                    "UPDATE events SET state=?,result=?,response=? WHERE key=?",
+                    ("saved" if registered else "inbox", aviso["id"], response, key),
                 )
             saved += int(registered)
         return saved
+
+    def process_chats(self):
+        """Interpret once, freeze the candidate, then use the existing notices flow."""
+        rows = self.db.execute(
+            "SELECT key,payload FROM events WHERE source='whatsapp-chat' AND state='pending' ORDER BY rowid"
+        ).fetchall()
+        for key, raw in rows:
+            original = json.loads(raw)
+            if "cuentaId" in original:
+                continue
+            profile = self.api("/perfil")
+            if profile["id"] != self.config["ownerId"]:
+                raise ValueError("El token pertenece a otro usuario")
+            text = original["note"]
+            if normalized(text) == "cancelar":
+                with self.db:
+                    self.db.execute("DELETE FROM chat_context")
+                    self.db.execute(
+                        "UPDATE events SET state='answered',response=? WHERE key=?",
+                        ("Borrador cancelado. No se registro dinero.", key),
+                    )
+                continue
+            context = self.db.execute(
+                "SELECT text FROM chat_context WHERE expires>?", (int(time.time()),)
+            ).fetchone()
+            if context:
+                accounts = self.api("/cuentas")
+                names = {
+                    normalized(a["nombre"]): a["nombre"]
+                    for a in accounts
+                    if a["activo"]
+                }
+                selection = normalized(text)
+                for prefix in ("con ", "desde ", "cuenta "):
+                    selection = selection.removeprefix(prefix)
+                if selection in names:
+                    text = context[0] + " desde " + names[selection]
+            if len(text) > 1200:
+                text = original["note"]
+            result = self.api("/canales/whatsapp/interpretar", {"texto": text})
+            if not isinstance(result, dict) or result.get("tipo") not in {
+                "CONSULTA",
+                "ACLARACION",
+                "PROPUESTA",
+            }:
+                raise ValueError("La interpretacion no tiene un formato valido")
+            proposal = result.get("propuesta")
+            with self.db:
+                self.db.execute("DELETE FROM chat_context")
+                if result.get("contexto"):
+                    self.db.execute(
+                        "INSERT INTO chat_context VALUES (1,?,?)",
+                        (result["contexto"], int(time.time()) + 900),
+                    )
+                if result["tipo"] == "PROPUESTA" and proposal:
+                    proposal["_currency"] = result["moneda"]
+                    fingerprint = hashlib.sha256(
+                        json.dumps(
+                            [
+                                proposal[k]
+                                for k in (
+                                    "cuentaId",
+                                    "tipo",
+                                    "monto",
+                                    "fecha",
+                                    "_currency",
+                                )
+                            ]
+                        ).encode()
+                    ).hexdigest()
+                    duplicate = self.db.execute(
+                        "SELECT 1 FROM events WHERE fingerprint=? AND key<>?",
+                        (fingerprint, key),
+                    ).fetchone()
+                    self.db.execute(
+                        "UPDATE events SET payload=?,fingerprint=?,state=? WHERE key=?",
+                        (
+                            json.dumps(proposal),
+                            fingerprint,
+                            "pending" if duplicate else "ready",
+                            key,
+                        ),
+                    )
+                else:
+                    response = result["respuesta"]
+                    if result.get("sugerencias"):
+                        response += "\n" + "\n".join(
+                            str(s)[:100] for s in result["sugerencias"][:8]
+                        )
+                    if result.get("contexto"):
+                        response += "\nSi falta la cuenta, responde con su nombre. Tambien puedes enviar el movimiento completo o escribir cancelar. El borrador dura 15 minutos."
+                    if len(response) > 3800:
+                        response = (
+                            response[:3700]
+                            + "\nRespuesta abreviada. Consulta el detalle en Kaptal."
+                        )
+                    self.db.execute(
+                        "UPDATE events SET state='answered',response=? WHERE key=?",
+                        (response[:3800], key),
+                    )
 
     def reply(self):
         if not os.environ.get("KAPSO_API_KEY"):
             return 0
         sent = 0
-        for key, source, state in self.db.execute(
-            "SELECT key,source,state FROM events WHERE replied=0 AND ("
+        verified = False
+        for key, source, state, response in self.db.execute(
+            "SELECT key,source,state,response FROM events WHERE replied=0 AND ("
             "(source='whatsapp' AND state IN ('saved','inbox')) OR "
+            "(source='whatsapp-chat' AND state IN ('saved','inbox','answered')) OR "
             "(source='codex' AND state='pending'))"
         ).fetchall():
+            if source == "whatsapp-chat" and not verified:
+                if self.api("/perfil")["id"] != self.config["ownerId"]:
+                    raise ValueError("La sesion no pertenece al propietario")
+                verified = True
             body = (
-                "Movimiento registrado en Kaptal."
-                if state == "saved"
-                else "Solicitud recibida para Codex; requiere revisar la bandeja local."
-                if source == "codex"
-                else "Aviso pendiente en la bandeja de Kaptal. Formato automatico: gasto 180.00 MXN comida @personal"
+                response
+                if source == "whatsapp-chat"
+                else (
+                    "Movimiento registrado en Kaptal."
+                    if state == "saved"
+                    else "Solicitud recibida para Codex; requiere revisar la bandeja local."
+                    if source == "codex"
+                    else "Aviso pendiente en la bandeja de Kaptal. Formato automatico: gasto 180.00 MXN comida @personal"
+                )
             )
             # At-most-once attempt: an ambiguous send timeout must not spam the user.
             with self.db:
@@ -470,6 +654,8 @@ class Bridge:
             raise ValueError("Texto demasiado largo")
         if text.startswith("/codex "):
             return self.receive("codex", message.get("id"), note=text[7:])
+        if self.config.get("allAccounts"):
+            return self.receive("whatsapp-chat", message.get("id"), note=text)
         try:
             tx = parse_whatsapp(text, self.config["accounts"])
         except ValueError:
@@ -602,9 +788,10 @@ def serve(bridge, port):
             while not stop.is_set():
                 delay = 1
                 try:
+                    worker.process_chats()
                     worker.flush()
                     worker.reply()
-                except (OSError, ValueError, KeyError, sqlite3.Error):
+                except (OSError, ValueError, KeyError, TypeError, sqlite3.Error):
                     delay = 60
                     print(
                         "Registro pendiente de reintento; revisar conexion/configuracion.",
@@ -663,6 +850,7 @@ def main():
     elif args.command == "gmail-once":
         print("Movimientos guardados:", bridge.gmail_once())
     elif args.command == "flush":
+        bridge.process_chats()
         print("Movimientos guardados:", bridge.flush())
     elif args.command in ("show", "approve", "discard"):
         row = bridge.db.execute(

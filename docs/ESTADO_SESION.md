@@ -1,6 +1,17 @@
 # Estado para retomar la sesión
 
-## Estado actual: preparacion WhatsApp/Kapso (2026-10-17)
+## Estado actual: WhatsApp con todas las cuentas y consultas (2026-10-17)
+
+- Usuario autorizo ampliar el canal a todas sus cuentas e informacion financiera. Rama `mejoras/whatsapp-cuentas-consultas` desde develop comprobado `a31d95e`; incorpora `3e44069` del PR #78 como dependencia. No reutilizar la rama de preparacion para esta etapa. Consultar Git/PR para el estado de publicacion de esta ampliacion.
+- Durante la validacion se confirmo #78 integrado: `origin/develop = 70f8caa`. La rama nueva se avanzo por fast-forward a ese merge (arbol identico a su dependencia previa), conservando los cambios de esta ampliacion. No se mezclan etapas en la rama antigua.
+- API autenticada de interpretacion, solo lectura y por reglas: cuenta explicita obligatoria al registrar, consultas de saldo por cuenta/todas, resumen, categorias, presupuestos, recurrentes y movimientos recientes. No LLM externo ni acceso entre usuarios. Registro conserva bandeja/idempotencia/moneda y revision de coincidencias.
+- Puente con catalogo dinamico (`allAccounts`), pregunta de cuenta y borrador SQLite de 15 minutos; puede cancelarse. Resultado/propuesta congelados antes del registro. Respuestas financieras al telefono vinculado con sesion verificada; cola ligada tambien a telefono/numero Kapso. No es una integracion multiusuario.
+- Verificacion de sesion solicitada por el usuario: todavia no habia cookie/ID en el archivo privado; no marcar conectado por confirmacion verbal. Un intento de comprobacion creo una cola vacia con propietario sin configurar; se archivo privadamente sin eliminar datos. Bridge ahora rechaza IDs no positivos antes de crear archivos. Pendiente confirmar el resultado real del comando connect.
+- Configuracion privada apunta a Kaptal publicado y al correo proporcionado por el usuario. Sin IDs locales ni login real. Nuevo `whatsapp_setup.py connect` solicita contraseña oculta, verifica correo/perfil e identifica el usuario desde la autenticacion. Refresh corregido con cabecera CSRF. No se han leido movimientos reales ni enviado mensajes.
+- Cierre local: 407 pruebas backend PostgreSQL correctas sin omisiones, 48 pruebas Python correctas, Ruff/formato/compileall correctos y 20 E2E completos correctos. El E2E nuevo ejecuta el puente Python contra API/PG reales; solo se simula el envio final a Kapso. Sin cambios de migraciones ni dependencias. No se reiniciaron los servidores personales ni se desplego produccion.
+- Contratos y limites: `WHATSAPP_CUENTAS_CONSULTAS.md`. Evidencia: `replica/whatsapp-cuentas-consultas/verification.json`. Pendientes de activacion: integrar/publicar endpoint backend, ejecutar connect localmente, configurar webhook HTTPS y comprobar sandbox real. Las consultas avanzadas del asistente siguen en el plan posterior.
+
+## Historial: preparacion WhatsApp/Kapso (2026-10-17)
 
 - Usuario confirmo develop actualizado y autorizo continuar WhatsApp. `develop == origin/develop == a31d95ec64468c897526c14b1e3741e091176ed3`, comprobado mediante fetch; incluye PR #76 y su correccion CI. Copia inicial limpia en main; creada rama nueva `mejoras/whatsapp-kapso` desde develop. Sin commit/push de esta etapa.
 - Actualizacion del propietario: sandbox activo y numero verificado mediante GET autenticado a Kapso. Clave e identificadores guardados solo en configuracion privada; no se enviaron mensajes. El usuario usa Kaptal publicado en `https://kaptalgf.vercel.app/`, no la base local. Falta autenticar su cuenta publicada, seleccionar cuenta/lista y configurar webhook HTTPS. No trasladar IDs de la base local a produccion.

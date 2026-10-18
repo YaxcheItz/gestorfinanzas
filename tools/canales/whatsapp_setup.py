@@ -2,6 +2,7 @@
 
 import argparse
 import getpass
+import http.cookiejar
 import json
 import os
 import re
@@ -9,8 +10,9 @@ import secrets
 import sys
 from pathlib import Path
 from urllib.parse import urlsplit
+from urllib.request import HTTPCookieProcessor, build_opener
 
-from canales import Bridge, phone, request_json, serve
+from canales import Bridge, NoRedirect, phone, request_json, serve
 
 
 def initialize(directory):
@@ -24,6 +26,7 @@ def initialize(directory):
         "accounts": {},
         "bankRules": [],
         "autoSaveRecognized": True,
+        "allAccounts": False,
     }
     values = {
         "config.private.json": config,
@@ -73,7 +76,8 @@ def checks(config, directory):
         "kapso_number": bool(
             re.fullmatch(r"\d+", str(config.get("kapsoPhoneNumberId", "")))
         ),
-        "accounts": isinstance(accounts, dict)
+        "accounts": config.get("allAccounts") is True
+        or isinstance(accounts, dict)
         and bool(accounts)
         and all(
             re.fullmatch(r"[a-z0-9_-]+", alias)
@@ -124,12 +128,61 @@ def online_checks(bridge):
     if str(number.get("id")) != bridge.config["kapsoPhoneNumberId"]:
         raise ValueError("El numero Kapso no coincide")
     bridge.api("/avisos?estado=PENDIENTE&page=0")
+    if bridge.config.get("allAccounts"):
+        bridge.api("/canales/whatsapp/interpretar", {"texto": "ayuda"})
+
+
+def connect(config, directory):
+    """Bind only the identity proven by a successful local password login."""
+    if not checks(config, directory)["api_url"]:
+        raise ValueError("URL de Kaptal no valida")
+    expected = config.get("ownerEmail", "").strip().casefold()
+    if not expected:
+        expected = input("Correo de tu cuenta Kaptal: ").strip().casefold()
+    password = getpass.getpass("Contrasena de Kaptal (no se guarda): ")
+    cookies = http.cookiejar.MozillaCookieJar()
+    opener = build_opener(NoRedirect, HTTPCookieProcessor(cookies))
+    result = request_json(
+        config["apiUrl"].rstrip("/") + "/api/auth/login",
+        {"email": expected, "password": password},
+        opener=opener,
+    )
+    data = result.get("data") or {}
+    if (
+        not result.get("success")
+        or data.get("email", "").casefold() != expected
+        or type(data.get("id")) is not int
+        or data["id"] <= 0
+    ):
+        raise ValueError("No se pudo verificar tu cuenta")
+    if config.get("ownerId") not in (None, 0, data["id"]):
+        raise ValueError("La configuracion pertenece a otra cuenta")
+    updated = dict(config, ownerId=data["id"], ownerEmail=expected)
+    bridge = Bridge(updated, str(directory / "inbox.sqlite"))
+    try:
+        bridge.cookies, bridge.opener, bridge.token = cookies, opener, data["token"]
+        profile = bridge.api("/perfil")
+        if (
+            profile["id"] != updated["ownerId"]
+            or profile["email"].casefold() != expected
+        ):
+            raise ValueError("La sesion no coincide con tu cuenta")
+        temporary = directory / "config.private.tmp"
+        fd = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with os.fdopen(fd, "w", encoding="utf-8") as stream:
+            json.dump(updated, stream, indent=2)
+            stream.write("\n")
+        bridge.save_session()
+        temporary.replace(directory / "config.private.json")
+    finally:
+        bridge.db.close()
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "command", choices=("init", "key", "doctor", "login", "serve", "flush")
+        "command",
+        choices=("init", "key", "doctor", "connect", "login", "serve", "flush"),
     )
     parser.add_argument("--directory", type=Path, default=Path(".local/canales"))
     parser.add_argument("--online", action="store_true")
@@ -151,6 +204,12 @@ def main():
         print("Clave guardada localmente. No se probo ni envio ningun mensaje.")
         return 0
     config = load(directory)
+    if args.command == "connect":
+        connect(config, directory)
+        print(
+            "Tu cuenta quedo vinculada. No se guardo la contrasena ni se registro dinero."
+        )
+        return 0
     status = checks(config, directory)
     if args.command == "doctor":
         for name, valid in status.items():
@@ -176,6 +235,7 @@ def main():
             online_checks(bridge)
             serve(bridge, args.port)
         else:
+            bridge.process_chats()
             print("Movimientos registrados:", bridge.flush())
     finally:
         bridge.db.close()

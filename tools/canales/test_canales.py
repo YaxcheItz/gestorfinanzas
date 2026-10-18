@@ -456,8 +456,9 @@ class ChannelsTest(unittest.TestCase):
                 "success": True,
                 "data": {"id": 7, "token": "access-example"},
             },
-        ):
+        ) as request:
             self.bridge.refresh()
+        self.assertEqual(request.call_args.kwargs["headers"], {"X-Gestion-Sesion": "1"})
         self.assertEqual(self.bridge.token, "access-example")
         self.assertTrue(self.bridge.session.exists())
         self.assertNotIn("access-example", self.bridge.session.read_text())

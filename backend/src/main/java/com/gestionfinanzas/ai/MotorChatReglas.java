@@ -45,6 +45,11 @@ public final class MotorChatReglas {
     }
     public Resultado interpretar(String mensaje, List<CuentaResponse> cuentasEntrada,
                                   List<CategoriaResponse> categorias, List<TransaccionResponse> recientes, LocalDate hoy) {
+        return interpretar(mensaje, cuentasEntrada, categorias, recientes, hoy, false);
+    }
+    public Resultado interpretar(String mensaje, List<CuentaResponse> cuentasEntrada,
+                                  List<CategoriaResponse> categorias, List<TransaccionResponse> recientes, LocalDate hoy,
+                                  boolean exigirCuenta) {
         String texto=normalizar(mensaje);
         if (texto.isBlank()) return pregunta(mensaje,"Escribe un movimiento o pide un reporte.",List.of("Gasté 80 en tacos","Reporte de este mes"));
         if (Set.of("hola","ayuda","que puedes hacer","buenas").contains(texto)) return new Resultado(null,"Escribe un gasto, ingreso o transferencia, o pide un resumen, saldo, categor\u00edas o presupuestos. La fecha predeterminada es hoy.",List.of("Gast\u00e9 80 en tacos","Recib\u00ed 900 de sueldo","Reporte de este mes"),null,null,null,null,null);
@@ -88,19 +93,19 @@ public final class MotorChatReglas {
         }
         if (cuentas.isEmpty()) return pregunta(mensaje,"Primero crea una cuenta en Configuraci\u00f3n \u2192 Cuentas.",List.of());
         CuentaResponse origen=null,destino=null;
-        List<CuentaResponse> mencionadas=cuentas.stream().filter(c -> coincideCuenta(texto,c)).toList();
+        List<CuentaResponse> mencionadas=cuentasMencionadas(texto,cuentas,exigirCuenta);
         boolean cuentaExplicita=texto.matches(".*\\b(desde|con|usando|cuenta|tarjeta)\\b.*");
         if (transfer) {
             int posicion=texto.lastIndexOf(" a ");
             String izquierdo=posicion>=0?texto.substring(0,posicion):texto;
             String derecho=posicion>=0?texto.substring(posicion+3):"";
-            List<CuentaResponse> origenes=cuentas.stream().filter(c -> coincideCuenta(izquierdo,c)).toList();
+            List<CuentaResponse> origenes=cuentasMencionadas(izquierdo,cuentas,exigirCuenta);
             if (origenes.isEmpty() && texto.contains("desde ")) {
                 String explicito=texto.substring(texto.lastIndexOf("desde ")+6);
-                origenes=cuentas.stream().filter(c -> coincideCuenta(explicito,c)).toList();
+                origenes=cuentasMencionadas(explicito,cuentas,exigirCuenta);
             }
             final Long origenId=origenes.size()==1?origenes.get(0).id():null;
-            List<CuentaResponse> destinos=cuentas.stream().filter(c -> coincideCuenta(derecho,c)&&!c.id().equals(origenId)).toList();
+            List<CuentaResponse> destinos=cuentasMencionadas(derecho,cuentas,exigirCuenta).stream().filter(c -> !c.id().equals(origenId)).toList();
             if (origenes.size()==1) origen=origenes.get(0);
             if (destinos.size()==1) destino=destinos.get(0);
             if (origen==null) return pregunta(mensaje+" desde","\u00bfDesde qu\u00e9 cuenta transfieres? Escribe: transfer\u00ed "+monto+" de Cuenta A a Cuenta B.",cuentas.stream().map(c -> mensaje+" desde "+c.nombre()).limit(6).toList());
@@ -112,6 +117,7 @@ public final class MotorChatReglas {
             if (mencionadas.size()==1) origen=mencionadas.get(0);
             else if (cuentaExplicita) return pregunta(mensaje,"No pude identificar esa cuenta. Estas son tus cuentas activas:",cuentas.stream().map(c -> mensaje+" desde "+c.nombre()).limit(6).toList());
             if (origen==null) {
+                if (exigirCuenta) return pregunta(FECHA.matcher(mensaje).find()?mensaje:mensaje+" "+periodo.hasta(),"¿De qué cuenta salió o a cuál llegó el dinero? Indica el nombre de la cuenta.",cuentas.stream().map(c -> c.nombre()).limit(20).toList());
                 final TipoTransaccion tipoFinal=tipo;
                 origen=recientes.stream().filter(t -> t.tipo()==tipoFinal).map(t -> cuentas.stream().filter(c -> c.id().equals(t.cuentaId())).findFirst().orElse(null)).filter(Objects::nonNull).filter(c -> moneda==null||c.moneda().equals(moneda)).findFirst().orElse(null);
                 if (origen==null) origen=cuentas.stream().filter(c -> moneda==null||c.moneda().equals(moneda)).min(Comparator.comparingInt(c -> c.tipo()==TipoCuenta.EFECTIVO?0:1)).orElse(null);
@@ -145,6 +151,13 @@ public final class MotorChatReglas {
         if(transfer) {datos.put("cuentaDestinoId",destino.id());if(tasa!=null)datos.put("tasaCambio",tasa);}
         String resumen=(transfer?"Transferencia":tipo==TipoTransaccion.GASTO?"Gasto":"Ingreso")+" de "+monto.toPlainString()+" "+origen.moneda()+" \u00b7 "+origen.nombre()+(destino==null?"":" \u2192 "+destino.nombre())+" \u00b7 "+periodo.hasta()+(categoria==null?"":" \u00b7 "+categoria.nombre());
         return new Resultado(datos,resumen,List.of(),null,null,null,null,null);
+    }
+    private static List<CuentaResponse> cuentasMencionadas(String texto,List<CuentaResponse> cuentas,boolean exigirCuenta) {
+        if(exigirCuenta) {
+            var exactas=cuentas.stream().filter(c->palabra(texto,normalizar(c.nombre()))).toList();
+            if(!exactas.isEmpty()) return exactas.stream().filter(c->exactas.stream().noneMatch(otra->normalizar(otra.nombre()).length()>normalizar(c.nombre()).length()&&palabra(normalizar(otra.nombre()),normalizar(c.nombre())))).toList();
+        }
+        return cuentas.stream().filter(c->coincideCuenta(texto,c)).toList();
     }
     private static boolean coincideCuenta(String texto,CuentaResponse cuenta) {
         String nombre=normalizar(cuenta.nombre());

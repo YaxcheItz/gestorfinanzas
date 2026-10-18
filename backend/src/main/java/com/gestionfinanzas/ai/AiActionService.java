@@ -197,6 +197,14 @@ public class AiActionService {
                 transaccionService.listarRecientes(userId), com.gestionfinanzas.service.CalendarioFinanciero.hoy());
         if (reglas == null) return null;
         if (reglas.reporte() != null) {
+            return resolverReporteLocal(userId, reglas);
+        }
+        if (reglas.datos() == null) return new AiActionResult(reglas.respuesta(), null, List.of(), null, reglas.sugerencias(), reglas.contexto());
+        return crearPropuesta(userId, "CREATE_TRANSACTION", reglas.respuesta(), objectMapper.valueToTree(reglas.datos()),
+                "Revisa los datos. Todav\u00eda no se ha guardado el movimiento; se interpret\u00f3 con reglas y tu historial.");
+    }
+
+    public AiActionResult resolverReporteLocal(Long userId, MotorChatReglas.Resultado reglas) {
             if ("PRESUPUESTOS".equals(reglas.reporte())) {
                 var resumen = presupuestoService.obtenerResumenPeriodo(userId, reglas.hasta().getMonthValue(), reglas.hasta().getYear());
                 String texto = resumen.presupuestos().stream().filter(p -> reglas.moneda()==null || reglas.moneda().equals(p.moneda()))
@@ -211,10 +219,6 @@ public class AiActionService {
                 return new AiActionResult(texto.isBlank()?"No hay movimientos recurrentes activos.":"Movimientos recurrentes:\n"+texto, null);
             }
             return financialContextService.reporteLocal(userId, reglas.reporte(), reglas.desde(), reglas.hasta(), reglas.moneda());
-        }
-        if (reglas.datos() == null) return new AiActionResult(reglas.respuesta(), null, List.of(), null, reglas.sugerencias(), reglas.contexto());
-        return crearPropuesta(userId, "CREATE_TRANSACTION", reglas.respuesta(), objectMapper.valueToTree(reglas.datos()),
-                "Revisa los datos. Todav\u00eda no se ha guardado el movimiento; se interpret\u00f3 con reglas y tu historial.");
     }
 
     /** Resuelve comandos sencillos con un diccionario local y sin enviar el mensaje al proveedor de IA. */
