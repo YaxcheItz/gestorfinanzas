@@ -24,6 +24,8 @@ El bot muestra lo entendido y una instruccion como `confirmar audio 1234abcd`. R
 
 La cola SQLite se guarda antes del HTTP 200. Un error de Kaptal conserva la propuesta y su clave; el servidor decide la deduplicacion contable. La renovacion de cookies usa bloqueo entre procesos. El receptor adquiere ademas un bloqueo de trabajador durante toda su vida: ejecutar una sola instancia por cola, nunca dos replicas sobre discos distintos para el mismo bot.
 
+Si un texto aun no interpretado se recupera en otro dia, se pide enviarlo de nuevo con fecha explicita en lugar de reinterpretar hoy/ayer. Una propuesta ya congelada conserva su fecha original y clave. El contenedor usa `America/Mexico_City`, igual que el calendario financiero del backend.
+
 En local, desde la raiz:
 
 ```powershell

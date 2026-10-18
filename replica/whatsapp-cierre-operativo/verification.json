@@ -3,8 +3,8 @@
   "baseDevelop": "1736526d3e5dff0e384f1344e864da7f29d43ee2",
   "branch": "mejoras/whatsapp-cierre-operativo",
   "python": {
-    "windowsPassed": 71,
-    "linuxPassed": 71
+    "windowsPassed": 73,
+    "linuxPassed": 73
   },
   "realApiPostgresE2E": {
     "passed": 2,
@@ -20,7 +20,8 @@
     "persistentRestart": true,
     "syntheticDataOnly": true,
     "composeValidated": true,
-    "caddyValidated": true
+    "caddyValidated": true,
+    "financialTimezone": "America/Mexico_City"
   },
   "ruff": true,
   "format": true,
@@ -46,5 +47,6 @@
   },
   "globalSkillSync": "blocked by automatic tool policy; project files updated",
   "newDependencies": false,
-  "backendOrFinancialSchemaChanges": false
+  "backendOrFinancialSchemaChanges": false,
+  "recoveryRejectsUninterpretedPriorDayText": true
 }

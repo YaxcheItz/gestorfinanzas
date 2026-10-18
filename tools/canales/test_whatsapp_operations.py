@@ -125,6 +125,41 @@ class OperationsTest(unittest.TestCase):
             self.bridge.db.execute("SELECT count(*) FROM events").fetchone()[0], 0
         )
 
+    def test_uninterpreted_message_from_another_day_requires_fresh_input(self):
+        self.bridge.receive(
+            "whatsapp-chat",
+            "old",
+            note="gaste 25 ayer con Nu",
+            received_at=int(time.time()) - 172800,
+        )
+        self.bridge.process_chats()
+        self.bridge.api.assert_not_called()
+        self.assertEqual(self.bridge.flush(), 0)
+        self.assertIn(
+            "fecha explicita",
+            self.bridge.db.execute("SELECT response FROM events").fetchone()[0],
+        )
+
+    def test_frozen_proposal_keeps_original_date_when_recovering_later(self):
+        frozen = {
+            "cuentaId": 10,
+            "tipo": "GASTO",
+            "monto": "25.00",
+            "fecha": "2026-10-17",
+            "_currency": "MXN",
+        }
+        self.bridge.receive(
+            "whatsapp-chat", "frozen", tx=frozen, received_at=int(time.time()) - 172800
+        )
+        with self.bridge.db:
+            self.bridge.db.execute("UPDATE events SET state='pending'")
+        self.bridge.process_chats()
+        self.bridge.api.assert_not_called()
+        payload = json.loads(
+            self.bridge.db.execute("SELECT payload FROM events").fetchone()[0]
+        )
+        self.assertEqual(payload, frozen)
+
     def test_cancel_invalidates_audio_without_financial_calls(self):
         self.audio()
         self.bridge.process_audio()

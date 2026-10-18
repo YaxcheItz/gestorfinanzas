@@ -535,11 +535,24 @@ class Bridge:
     def process_chats(self):
         """Interpret once, freeze the candidate, then use the existing notices flow."""
         rows = self.db.execute(
-            "SELECT key,payload FROM events WHERE source='whatsapp-chat' AND state='pending' ORDER BY rowid"
+            "SELECT key,payload,received_at FROM events WHERE source='whatsapp-chat' AND state='pending' ORDER BY rowid"
         ).fetchall()
-        for key, raw in rows:
+        for key, raw, received_at in rows:
             original = json.loads(raw)
             if "cuentaId" in original:
+                continue
+            if (
+                not received_at
+                or datetime.fromtimestamp(received_at).date() != date.today()
+            ):
+                with self.db:
+                    self.db.execute(
+                        "UPDATE events SET state='answered',response=? WHERE key=?",
+                        (
+                            "Tu mensaje quedo pendiente desde otro dia. No se registro dinero. Envialo de nuevo con fecha explicita para evitar interpretar mal hoy o ayer; si era una consulta, vuelve a pedirla.",
+                            key,
+                        ),
+                    )
                 continue
             profile = self.api("/perfil")
             if profile["id"] != self.config["ownerId"]:
