@@ -32,6 +32,29 @@ public class AuthController {
     private final RecuperacionCuentaService recuperacionCuentaService;
     private final SesionService sesionService;
     private final GoogleIdentityService googleIdentityService;
+    private final com.gestionfinanzas.service.VinculacionCanalService vinculacionCanalService;
+
+    public record IntercambioCanal(
+            @jakarta.validation.constraints.NotNull
+            @jakarta.validation.constraints.Pattern(regexp = "[A-Za-z0-9_-]{43}") String codigo,
+            @jakarta.validation.constraints.NotNull
+            @jakarta.validation.constraints.Pattern(regexp = "[A-Za-z0-9._~-]{43,128}") String verifier,
+            @jakarta.validation.constraints.NotBlank @jakarta.validation.constraints.Email
+            @jakarta.validation.constraints.Size(max = 150) String email) {}
+
+    @GetMapping("/canal/config")
+    public ResponseEntity<ApiResponse<Boolean>> configuracionCanal() {
+        return ResponseEntity.ok().cacheControl(org.springframework.http.CacheControl.noStore())
+                .body(ApiResponse.ok("Vinculacion por navegador disponible", true));
+    }
+
+    @PostMapping("/canal/intercambiar")
+    public ResponseEntity<ApiResponse<AuthResponse>> intercambiarCanal(@Valid @RequestBody IntercambioCanal body) {
+        var sesion = vinculacionCanalService.intercambiar(body.codigo(), body.verifier(), body.email());
+        return ResponseEntity.ok().cacheControl(org.springframework.http.CacheControl.noStore())
+                .header(HttpHeaders.SET_COOKIE, cookieRefresh(sesion.refreshToken()).toString())
+                .body(ApiResponse.ok("Cuenta vinculada", sesion.auth()));
+    }
 
     @Value("${jwt.refresh.cookie-name:finanzas_refresh}")
     private String cookieName;

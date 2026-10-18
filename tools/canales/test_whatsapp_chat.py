@@ -291,6 +291,13 @@ class ChatTest(unittest.TestCase):
         self.bridge.db.close()
         self.config.update(ownerEmail="owner@example.test")
         with (
+            patch(
+                "canales.request_json",
+                return_value={
+                    "success": True,
+                    "data": {"id": 7, "token": "refreshed-access"},
+                },
+            ),
             patch("whatsapp_setup.getpass.getpass", return_value="private-password"),
             patch(
                 "whatsapp_setup.request_json",
@@ -307,7 +314,7 @@ class ChatTest(unittest.TestCase):
                 Bridge, "api", return_value={"id": 7, "email": "owner@example.test"}
             ),
         ):
-            connect(self.config, self.directory)
+            connect(self.config, self.directory, password_login=True)
         saved = (self.directory / "config.private.json").read_text() + (
             self.directory / "inbox.sqlite.session"
         ).read_text()
@@ -332,7 +339,7 @@ class ChatTest(unittest.TestCase):
             ),
             self.assertRaises(ValueError),
         ):
-            connect(self.config, self.directory)
+            connect(self.config, self.directory, password_login=True)
         self.assertFalse((self.directory / "config.private.json").exists())
 
 

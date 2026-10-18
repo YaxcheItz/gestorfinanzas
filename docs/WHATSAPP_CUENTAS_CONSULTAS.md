@@ -48,13 +48,13 @@ La tabla SQLite existente se amplia de forma aditiva con `response`, `chat_conte
 
 ## Vincular la cuenta publicada
 
-La configuracion privada ya apunta a `https://kaptalgf.vercel.app`, con el correo indicado por el propietario y `allAccounts: true`. No se copian IDs de la base local a produccion. Aun falta iniciar sesion: el comando siguiente solicita la contraseña mediante entrada oculta y verifica que correo, ID y perfil coincidan antes de guardar la cookie de refresh.
+La configuracion privada ya apunta a `https://kaptalgf.vercel.app`, con el correo indicado por el propietario y `allAccounts: true`. No se copian IDs de la base local a produccion. Tras publicar la etapa de [vinculacion por navegador](WHATSAPP_VINCULACION_GOOGLE.md), el comando siguiente abre Kaptal y permite autorizar con Google sin contrasena. Verifica correo, ID, perfil y renovacion antes de guardar la conexion.
 
 ```powershell
 python tools/canales/whatsapp_setup.py connect
 ```
 
-No guarda contraseña ni access token. Conserva la configuracion y la identidad de una cola existente; no las reemplaza para otro usuario o servidor. Si la cuenta solo utiliza Google y no tiene contraseña, debera habilitar un metodo de acceso compatible en Kaptal; no enviar tokens ni contraseñas al chat. La renovacion ahora incluye `X-Gestion-Sesion`, que exige el backend.
+No guarda contrasena ni access token. Conserva la configuracion y la identidad de una cola existente; no las reemplaza para otro usuario o servidor. Las cuentas Google usan el navegador y un codigo de un solo uso; no necesitan habilitar una contrasena. `connect --password` queda disponible solo para cuentas con contrasena propia de Kaptal. La renovacion incluye `X-Gestion-Sesion`, que exige el backend.
 
 Despues de publicar el nuevo endpoint en el backend correcto y configurar HTTPS segun `WHATSAPP_KAPSO.md`:
 
@@ -68,3 +68,6 @@ El diagnostico del modo nuevo incluye una interpretacion de `ayuda` sin guardar 
 ## Verificacion
 
 Resultados y limites en `replica/whatsapp-cuentas-consultas/verification.json`. Incluye aislamiento entre usuarios, varias cuentas y monedas, cuenta obligatoria/ambigua/inactiva, consultas sin escritura, actualizacion dinamica de cuentas, renovacion de sesion, caducidad/cancelacion de borrador y reintentos. El nuevo E2E ejecuta el puente Python contra API y PostgreSQL reales con usuarios sinteticos: solo el envio a Kapso esta simulado. No sustituye la prueba posterior del sandbox con el telefono real.
+## Actualización de vinculación
+
+Si inicias con Google, `connect` abre ahora Kaptal para autorizar y copiar un código de un solo uso. No solicita la contraseña de Google. Requiere publicar también la etapa descrita en [WHATSAPP_VINCULACION_GOOGLE.md](WHATSAPP_VINCULACION_GOOGLE.md); `connect --password` conserva la alternativa con contraseña propia de Kaptal.

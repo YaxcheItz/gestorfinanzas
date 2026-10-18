@@ -20,6 +20,15 @@
   ],
   "headers": [
     {
+      "source": "/vincular-canal",
+      "headers": [
+        { "key": "Content-Security-Policy", "value": "frame-ancestors 'none'" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "Cache-Control", "value": "no-store" },
+        { "key": "Referrer-Policy", "value": "no-referrer" }
+      ]
+    },
+    {
       "source": "/runtime-config.js",
       "headers": [
         { "key": "Cache-Control", "value": "no-store, must-revalidate" }

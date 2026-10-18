@@ -1,6 +1,16 @@
 # Estado para retomar la sesión
 
-## Estado actual: WhatsApp con todas las cuentas y consultas (2026-10-17)
+## Estado actual: vincular WhatsApp con Google (2026-10-17)
+
+- Usuario confirmo que entra con Google; no existe una contrasena propia que deba pedir el puente. Autorizo implementar vinculacion mediante navegador. No solicitar ni usar la contrasena de Google en scripts.
+- Rama nueva `mejoras/whatsapp-vinculacion-google` desde `origin/develop = 70f8caa` comprobado mediante fetch. Se incorpora como dependencia el commit original `94712fc` de consultas (PR #80), sin reutilizar su rama. Primero integrar #80; esta etapa se revisa aparte. Consultar GitHub para estado actual de PR/publicacion.
+- `connect` abre Kaptal; el usuario inicia con Google, comprueba cuenta/referencia y autoriza. Codigo aleatorio de un uso, cinco minutos y S256; canje transaccional emite cookie independiente de la del navegador. V8 guarda hashes/autorizaciones temporales, sin modificar finanzas. Ver `WHATSAPP_VINCULACION_GOOGLE.md`.
+- Se conserva `connect --password` para cuentas con contrasena propia. Mensajes de error distinguen codigo, autenticacion, conectividad y endpoint no publicado. Se verifica renovacion antes de anunciar vinculada. No existe aun sesion real, webhook ni prueba del sandbox; no inferir conexion por recuerdos del usuario. No se han enviado mensajes ni registrado dinero real.
+- La entrega anterior #80 completo todos los checks remotos, incluido E2E, comprobado en esta etapa. Resultados finales de esta etapa en `replica/whatsapp-vinculacion-google/verification.json`; no reutilizar evidencia antigua como si verificara el nuevo flujo.
+- Cierre local comprobado: 416 pruebas backend PostgreSQL sin errores ni omisiones, 9 de vinculacion H2, 322 frontend, 54 Python y 21 E2E completos correctos. Build, Ruff, formato, compileall y diff correctos. Se revirtio un override de Secure en pruebas; cookies conservan Secure y solo el helper E2E adapta transporte HTTP loopback para Python. Scripts/guias globales sincronizados. Sin despliegue ni sesion personal.
+- Siguiente tras integrar y publicar frontend/backend: ejecutar connect con el propietario, autorizar desde Google, verificar sesion; despues webhook HTTPS y prueba sandbox. Mantener Gmail y asistente con evidencias como etapas posteriores del plan existente.
+
+## Historial: WhatsApp con todas las cuentas y consultas (2026-10-17)
 
 - Usuario autorizo ampliar el canal a todas sus cuentas e informacion financiera. Rama `mejoras/whatsapp-cuentas-consultas` desde develop comprobado `a31d95e`; incorpora `3e44069` del PR #78 como dependencia. No reutilizar la rama de preparacion para esta etapa. Consultar Git/PR para el estado de publicacion de esta ampliacion.
 - Durante la validacion se confirmo #78 integrado: `origin/develop = 70f8caa`. La rama nueva se avanzo por fast-forward a ese merge (arbol identico a su dependencia previa), conservando los cambios de esta ampliacion. No se mezclan etapas en la rama antigua.
