@@ -221,13 +221,12 @@ def connect(config, directory, password_login=False):
         ):
             raise SetupError("La sesion no coincide con tu cuenta")
         # Prove the independent refresh cookie works before reporting a saved connection.
-        bridge.refresh()
+        bridge.refresh(reload_saved=False)
         temporary = directory / "config.private.tmp"
         fd = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
         with os.fdopen(fd, "w", encoding="utf-8") as stream:
             json.dump(updated, stream, indent=2)
             stream.write("\n")
-        bridge.save_session()
         temporary.replace(directory / "config.private.json")
     finally:
         bridge.db.close()
