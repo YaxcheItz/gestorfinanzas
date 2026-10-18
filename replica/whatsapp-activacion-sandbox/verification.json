@@ -12,6 +12,8 @@
   "onlineDoctor": "passed",
   "whatsappMessagesSentBySetup": 0,
   "realFinancialRecordsCreatedBySetup": 0,
-  "pending": ["Owner sends saldo to the sandbox bot", "Verify actual inbound delivery and owner-only reply", "Keep tunnel and PC running for this temporary test", "Stable hosting remains a later decision"],
+  "realMessages": { "inboundDelivered": 2, "outboundDeliveredToOwner": 2, "queueState": "answered", "ownerVisualConfirmation": "pending" },
+  "sessionFix": { "previousFailure": "Stale cookie in idle receiver after another process rotated it; refresh returned 401", "regressionFailsWithPreviousCode": true, "coordination": "OS file lock, reload latest cookie before rotating, atomic save", "pythonTests": 58, "focusedE2E": { "passed": 2, "failed": 0, "database": "PostgreSQL", "realApi": true, "idleWorkerAfterDoctorRotation": true }, "ruff": true, "format": true, "compileall": true },
+  "pending": ["Owner visually confirms the two delivered replies", "User chooses a capture test", "Keep tunnel and PC running for this temporary test", "Stable hosting remains a later decision"],
   "privateDetails": "Tunnel URL, provider response, signing secrets, session, process ID and logs stay in ignored local files."
 }

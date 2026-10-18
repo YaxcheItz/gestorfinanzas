@@ -57,13 +57,18 @@ def main():
         with patch.dict(os.environ):
             os.environ.pop("KAPTAL_API_TOKEN", None)
             bridge = Bridge(saved, str(path / "inbox.sqlite"))
+            doctor = Bridge(saved, str(path / "inbox.sqlite"))
             try:
+                # A doctor runs after an idle worker has loaded the previous cookie.
+                # Both must keep working without revoking each other's session.
+                assert doctor.api("/perfil")["id"] == fixture["ownerId"]
                 assert all(cookie.secure for cookie in bridge.cookies)
                 profile = bridge.api("/perfil")
                 assert profile["id"] == fixture["ownerId"]
                 assert profile["email"] == fixture["email"]
             finally:
                 bridge.db.close()
+                doctor.db.close()
     print(
         json.dumps(
             {"browserApproved": True, "sessionReloaded": True, "passwordUsed": False}

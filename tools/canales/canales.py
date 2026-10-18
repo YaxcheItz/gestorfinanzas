@@ -19,6 +19,7 @@ import threading
 import time
 import unicodedata
 import uuid
+from contextlib import contextmanager
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 from email.utils import parseaddr
@@ -34,6 +35,44 @@ from urllib.request import (
 )
 
 MAX_BODY = 65536
+
+
+@contextmanager
+def session_lock(path):
+    """OS lock released on process exit; serialize rotating cookies across processes."""
+    fd = os.open(str(path) + ".lock", os.O_CREAT | os.O_RDWR, 0o600)
+    locked = False
+    try:
+        if os.fstat(fd).st_size == 0:
+            os.write(fd, b"0")
+        deadline = time.monotonic() + 10
+        while not locked:
+            try:
+                if os.name == "nt":
+                    import msvcrt
+
+                    os.lseek(fd, 0, os.SEEK_SET)
+                    msvcrt.locking(fd, msvcrt.LK_NBLCK, 1)
+                else:
+                    import fcntl
+
+                    fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                locked = True
+            except (BlockingIOError, PermissionError):
+                if time.monotonic() >= deadline:
+                    raise TimeoutError(
+                        "Otra operacion esta renovando la sesion"
+                    ) from None
+                time.sleep(0.05)
+        yield
+    finally:
+        if locked:
+            if os.name == "nt":
+                os.lseek(fd, 0, os.SEEK_SET)
+                msvcrt.locking(fd, msvcrt.LK_UNLCK, 1)
+            else:
+                fcntl.flock(fd, fcntl.LOCK_UN)
+        os.close(fd)
 
 
 class NoRedirect(HTTPRedirectHandler):
@@ -277,30 +316,43 @@ class Bridge:
         self.cookies.save(str(temporary), ignore_discard=True)
         temporary.replace(self.session)
 
-    def refresh(self):
-        result = request_json(
-            self.config["apiUrl"].rstrip("/") + "/api/auth/refresh",
-            {},
-            headers={"X-Gestion-Sesion": "1"},
-            opener=self.opener,
-        )
-        if not result.get("success") or result["data"]["id"] != self.config["ownerId"]:
-            raise ValueError("Sesion no valida para este usuario")
-        self.token = result["data"]["token"]
-        self.save_session()
+    def refresh(self, reload_saved=True):
+        with session_lock(self.session):
+            if reload_saved and self.session.exists():
+                cookies = http.cookiejar.MozillaCookieJar()
+                cookies.load(str(self.session), ignore_discard=True)
+                self.cookies = cookies
+                self.opener = build_opener(NoRedirect, HTTPCookieProcessor(cookies))
+            result = request_json(
+                self.config["apiUrl"].rstrip("/") + "/api/auth/refresh",
+                {},
+                headers={"X-Gestion-Sesion": "1"},
+                opener=self.opener,
+            )
+            if (
+                not result.get("success")
+                or result["data"]["id"] != self.config["ownerId"]
+            ):
+                raise ValueError("Sesion no valida para este usuario")
+            self.token = result["data"]["token"]
+            self.save_session()
 
     def login(self):
         email = input("Correo de Kaptal: ").strip()
         password = getpass.getpass("Contrasena de Kaptal (no se guarda): ")
-        result = request_json(
-            self.config["apiUrl"].rstrip("/") + "/api/auth/login",
-            {"email": email, "password": password},
-            opener=self.opener,
-        )
-        if not result.get("success") or result["data"]["id"] != self.config["ownerId"]:
-            raise ValueError("Cuenta distinta al propietario configurado")
-        self.token = result["data"]["token"]
-        self.save_session()
+        with session_lock(self.session):
+            result = request_json(
+                self.config["apiUrl"].rstrip("/") + "/api/auth/login",
+                {"email": email, "password": password},
+                opener=self.opener,
+            )
+            if (
+                not result.get("success")
+                or result["data"]["id"] != self.config["ownerId"]
+            ):
+                raise ValueError("Cuenta distinta al propietario configurado")
+            self.token = result["data"]["token"]
+            self.save_session()
 
     def api(self, path, payload=None, key=None):
         if not self.token:
