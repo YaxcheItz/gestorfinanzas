@@ -1,0 +1,24 @@
+{
+  "date": "2026-10-18",
+  "pullRequest": 83,
+  "originalFailedRun": 39152462783,
+  "originalHead": "fbce343285b8da8e92f26532d559de8549a18f11",
+  "rootCause": "Period draft opened before asynchronous profile loaded saved preference",
+  "traceSavedPreferenceCorrect": true,
+  "preFixRegressionFailed": true,
+  "frontendTests": {
+    "passed": 324,
+    "failed": 0
+  },
+  "productionBuild": "passed",
+  "e2e": {
+    "passed": 21,
+    "failed": 0,
+    "realApiAndPostgres": true,
+    "schema": "pr83_periodo_20261018"
+  },
+  "deterministicProfileGate": true,
+  "timeoutsOrRetriesIncreased": false,
+  "assertionsWeakened": false,
+  "backendSessionOrFinancialWriteChanges": false
+}

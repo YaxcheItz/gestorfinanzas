@@ -1,5 +1,12 @@
 # Estado para retomar la sesión
 
+## Correccion de CI del PR #83: periodo inicial (2026-10-18)
+
+- Fallo remoto confirmado en `39152462783`: solo E2E periodos-flexibles, linea 60. El push del mismo commit paso en `39152434313`. La traza confirma PUT correcto de CATORCENA y GET posterior correcto, pero el usuario abre el selector mientras el perfil aun esta pendiente; el borrador conserva MES aunque luego cambie el rango global.
+- Corregido Inicio para esperar la carga inicial del perfil antes de abrir/cambiar periodo (incluidos gestos). Si la carga falla, se permite elegir un periodo temporal. No se cambian calculos, preferencias guardadas ni controles de sesiones/WhatsApp.
+- La regresion unitaria de perfil demorado falla con el codigo anterior. Se conserva la prueba E2E existente y se fuerza la espera del perfil mediante una compuerta controlada, sin sleeps, reintentos ni ampliacion de timeouts. Tambien se prueba la alternativa si falla la carga del perfil.
+- Validacion local completa: 324 pruebas frontend, 21 E2E contra API/PostgreSQL reales y build de produccion correctos. Evidencia y publicacion en `replica/whatsapp-activacion-sandbox/ci-periodo-fix.json` y GitHub; no inferirlo de los resultados previos del puente.
+
 ## Estado actual: WhatsApp respondio; correccion de rotacion de sesion (2026-10-18)
 
 - Kapso entrego dos mensajes reales al webhook (200), pero quedaron pendientes porque el receptor usaba una cookie anterior: una comprobacion doctor renovaba la cookie en disco mientras el worker inactivo conservaba su copia. La posterior reutilizacion daba 401. El caso se reprodujo con una prueba que falla con el codigo anterior.

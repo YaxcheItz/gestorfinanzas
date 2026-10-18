@@ -55,7 +55,17 @@ test('periodos: preferencia persistida, rangos coherentes, comparacion e histori
   await dialog.getByLabel('Usar al abrir Inicio').check();
   await dialog.getByRole('button', { name: 'Aplicar periodo', exact: true }).click();
   await expect(dialog).not.toBeVisible();
-  await page.reload();
+  let liberarPerfil!: () => void;
+  const perfilPendiente = new Promise<void>(resolve => { liberarPerfil = resolve; });
+  await page.route('**/api/perfil', async route => { await perfilPendiente; await route.continue(); });
+  try {
+    await page.reload();
+    await expect(page.locator('.time-dropdown-btn')).toBeDisabled();
+  } finally {
+    liberarPerfil();
+  }
+  await expect(page.locator('.time-dropdown-btn')).toBeEnabled();
+  await page.unroute('**/api/perfil');
   await page.locator('.time-dropdown-btn').click();
   await expect(dialog.getByLabel('Cada 14 días', { exact: false })).toBeChecked();
   await expect(dialog.getByLabel('Fecha de anclaje')).toHaveValue('2024-02-26');
