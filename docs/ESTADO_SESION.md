@@ -1,5 +1,15 @@
 # Estado para retomar la sesión
 
+## Etapa vigente: cierre de WhatsApp antes de Gmail (2026-10-18)
+
+- PR #83 integrado; `develop == origin/develop == 1736526` comprobado mediante fetch. Nueva rama `mejoras/whatsapp-cierre-operativo`. El propietario pide terminar WhatsApp antes de Gmail y enviara el gasto autentico al bot cuando este listo; no inventar movimientos reales.
+- Voz: transcripcion firmada de Kapso o consulta autenticada al mensaje, sin descargar medios. Confirmacion explicita ligada al audio, 15 minutos, consumo unico y cancelacion. Si no hay transcripcion en dos minutos, alternativa por texto. Disponibilidad real depende de Kapso/sandbox y sigue por comprobar con el propietario.
+- Recuperacion: se conserva propuesta/clave tras perder el acuse financiero; respuestas inciertas se distinguen de aceptadas y no se reenvian automaticamente. Bloqueo de un trabajador por cola, ventana de atencion y verificaciones de salud separadas de la conectividad con Kaptal. Desconexion revoca la cookie en el servidor antes de retirarla; mantiene cola.
+- Alojamiento portable preparado: contenedor no root, volumen persistente, Docker Compose con Caddy/HTTPS y plantilla Render separada opcional de pago. El propietario pide gratis: Render Free no tiene disco persistente; alternativa propuesta Oracle Always Free, sujeta a cupo y recuperacion por inactividad. No se creo cuenta/VM ni se contrato/desplego nada. Ver `WHATSAPP_ALOJAMIENTO_GRATUITO.md` y `WHATSAPP_OPERACION.md`.
+- Validacion: 71 pruebas Python en Windows y Linux, dos E2E con API/PostgreSQL reales (voz confirmada, reinicio tras commit con acuse perdido, no duplicar y revocacion real de sesion sintetica). Build Docker y prueba de reinicio persistente sin root correctos. Ruff/formato/compileall/diff correctos. Evidencia de cierre/publicacion en `replica/whatsapp-cierre-operativo/verification.json`; comprobarla antes de asumir operaciones personales activas o CI remoto.
+- Receptor personal actualizado con respaldo privado consistente. Sesion/propietario, health/ready locales, HTTPS publico y rechazo de firma invalida comprobados; el propietario puede enviar ayuda, gasto autentico y nota de voz. No se generaron movimientos reales de prueba. Sincronizacion de scripts globales bloqueada por revision automatica de herramientas; los archivos del proyecto si estan actualizados. El propietario necesita crear cuenta Oracle; guia de registro incluida.
+- Pendientes reales: confirmar gasto y nota de voz del propietario, cuenta/VM gratuita disponible, traslado de cola/sesion, actualizar el webhook existente, probar reinicio remoto y retirar tunel. Gmail y el resto del plan quedan despues del cierre real de WhatsApp. No presentar preparacion local como servicio 24/7 desplegado.
+
 ## Correccion de CI del PR #83: periodo inicial (2026-10-18)
 
 - Fallo remoto confirmado en `39152462783`: solo E2E periodos-flexibles, linea 60. El push del mismo commit paso en `39152434313`. La traza confirma PUT correcto de CATORCENA y GET posterior correcto, pero el usuario abre el selector mientras el perfil aun esta pendiente; el borrador conserva MES aunque luego cambie el rango global.

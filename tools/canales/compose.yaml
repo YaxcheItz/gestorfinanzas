@@ -1,0 +1,34 @@
+# Portable single-owner deployment, including an Always Free VM when available.
+services:
+  whatsapp:
+    build: .
+    restart: unless-stopped
+    init: true
+    env_file:
+      - ${KAPTAL_WHATSAPP_ENV_FILE:?Indica la ruta del archivo privado del servicio}
+    volumes:
+      - whatsapp-state:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:10000/health',timeout=3).close()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+  https:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      KAPTAL_WHATSAPP_DOMAIN: ${KAPTAL_WHATSAPP_DOMAIN:?Indica un dominio que apunte a esta VM}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      whatsapp:
+        condition: service_healthy
+volumes:
+  whatsapp-state:
+  caddy-data:
+  caddy-config:
