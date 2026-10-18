@@ -1,6 +1,17 @@
 # Estado para retomar la sesión
 
-## Estado actual: vincular WhatsApp con Google (2026-10-17)
+## Estado actual: webhook WhatsApp activo; pendiente mensaje real (2026-10-18)
+
+- Usuario integro #80 y #81 en develop y #82 en main. Base comprobada `origin/develop = d016d34`; rama nueva de operacion `mejoras/whatsapp-activacion-sandbox`. No se modifica codigo ni se despliega otro backend en esta etapa.
+- Sesion real iniciada por el propietario con Google y verificada via perfil (ID/correo coinciden), renovacion guardada y acceso al numero Kapso comprobado. No volver a pedir contrasena ni repetir connect sin necesidad.
+- Usuario instalo cloudflared y mantiene el tunel temporal abierto. URL exacta solo en `.local/canales/config.private.json`. Configuracion anterior respaldada privadamente; no copiar URLs de tunel, credenciales, cookies ni datos bancarios a Git.
+- Receptor Python iniciado oculto en loopback 18765; proceso y logs privados bajo `.local/canales/receiver.*`. Comprobar el puerto/proceso antes de iniciar otro. No ejecutar doctor --online concurrentemente con mensajes en curso si ambos procesos pueden renovar la misma cookie.
+- Registrado webhook del numero configurado mediante API oficial Kapso: evento whatsapp.message.received, activo, formato v2, buffering desactivado y secreto privado coincidente. No habia webhooks anteriores. Identificador/respuesta privados en `.local/canales/webhook.active.private.json`.
+- Pruebas reales de transporte HTTPS: firma invalida -> 401; evento pasivo firmado -> 200 sin encolar ni guardar dinero. Doctor online correcto. Cola vacia al cierre de la comprobacion; no se enviaron mensajes de WhatsApp desde esta configuracion ni se registraron movimientos reales.
+- Siguiente: el propietario envia `saldo` al bot del sandbox desde su telefono autorizado; revisar solo entrega/estado y confirmar respuesta sin publicar contenido financiero. Despues probar captura elegida por el usuario. Mantener PC y tunel encendidos; es una prueba temporal, no alojamiento continuo. Si cambia/cierra el tunel, actualizar o desactivar el webhook remoto, no crear duplicados.
+- Evidencia sin secretos en `replica/whatsapp-activacion-sandbox/verification.json`. Gmail y asistente con evidencias siguen pendientes tras validar WhatsApp real.
+
+## Historial: vincular WhatsApp con Google (2026-10-17)
 
 - Usuario confirmo que entra con Google; no existe una contrasena propia que deba pedir el puente. Autorizo implementar vinculacion mediante navegador. No solicitar ni usar la contrasena de Google en scripts.
 - Rama nueva `mejoras/whatsapp-vinculacion-google` desde `origin/develop = 70f8caa` comprobado mediante fetch. Se incorpora como dependencia el commit original `94712fc` de consultas (PR #80), sin reutilizar su rama. Primero integrar #80; esta etapa se revisa aparte. Consultar GitHub para estado actual de PR/publicacion.

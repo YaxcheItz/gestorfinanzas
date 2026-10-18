@@ -1,0 +1,17 @@
+{
+  "date": "2026-10-18",
+  "branch": "mejoras/whatsapp-activacion-sandbox",
+  "baseDevelop": "d016d34",
+  "codeChanged": false,
+  "ownerProfileVerified": true,
+  "savedSessionVerified": true,
+  "kapsoNumberAccessVerified": true,
+  "localReceiver": { "address": "127.0.0.1", "port": 18765, "backgroundProcessStarted": true },
+  "httpsProbe": { "invalidSignatureStatus": 401, "signedPassiveEventStatus": 200, "eventsCreated": 0 },
+  "kapsoWebhook": { "registered": true, "active": true, "event": "whatsapp.message.received", "payloadVersion": "v2", "buffering": false, "previousWebhooks": 0 },
+  "onlineDoctor": "passed",
+  "whatsappMessagesSentBySetup": 0,
+  "realFinancialRecordsCreatedBySetup": 0,
+  "pending": ["Owner sends saldo to the sandbox bot", "Verify actual inbound delivery and owner-only reply", "Keep tunnel and PC running for this temporary test", "Stable hosting remains a later decision"],
+  "privateDetails": "Tunnel URL, provider response, signing secrets, session, process ID and logs stay in ignored local files."
+}
