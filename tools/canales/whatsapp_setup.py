@@ -1,16 +1,26 @@
 """Local WhatsApp setup and read-only diagnostics. Never prints credentials."""
 
 import argparse
+import base64
 import getpass
+import hashlib
+import http.cookiejar
 import json
 import os
 import re
 import secrets
 import sys
+import webbrowser
 from pathlib import Path
+from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
+from urllib.request import HTTPCookieProcessor, build_opener
 
-from canales import Bridge, phone, request_json, serve
+from canales import Bridge, NoRedirect, phone, request_json, serve
+
+
+class SetupError(ValueError):
+    """A deliberate user-facing error containing no private server response."""
 
 
 def initialize(directory):
@@ -24,6 +34,7 @@ def initialize(directory):
         "accounts": {},
         "bankRules": [],
         "autoSaveRecognized": True,
+        "allAccounts": False,
     }
     values = {
         "config.private.json": config,
@@ -73,7 +84,8 @@ def checks(config, directory):
         "kapso_number": bool(
             re.fullmatch(r"\d+", str(config.get("kapsoPhoneNumberId", "")))
         ),
-        "accounts": isinstance(accounts, dict)
+        "accounts": config.get("allAccounts") is True
+        or isinstance(accounts, dict)
         and bool(accounts)
         and all(
             re.fullmatch(r"[a-z0-9_-]+", alias)
@@ -124,15 +136,116 @@ def online_checks(bridge):
     if str(number.get("id")) != bridge.config["kapsoPhoneNumberId"]:
         raise ValueError("El numero Kapso no coincide")
     bridge.api("/avisos?estado=PENDIENTE&page=0")
+    if bridge.config.get("allAccounts"):
+        bridge.api("/canales/whatsapp/interpretar", {"texto": "ayuda"})
+
+
+def connect(config, directory, password_login=False):
+    """Authorize in the browser; passwords are an explicit legacy option only."""
+    if not checks(config, directory)["api_url"]:
+        raise SetupError("URL de Kaptal no valida")
+    expected = config.get("ownerEmail", "").strip().casefold()
+    if not expected:
+        expected = input("Correo de tu cuenta Kaptal: ").strip().casefold()
+    cookies = http.cookiejar.MozillaCookieJar()
+    opener = build_opener(NoRedirect, HTTPCookieProcessor(cookies))
+    base = config["apiUrl"].rstrip("/")
+    if password_login:
+        password = getpass.getpass("Contrasena de Kaptal (no se guarda): ")
+        result = request_json(
+            base + "/api/auth/login",
+            {"email": expected, "password": password},
+            opener=opener,
+        )
+    else:
+        try:
+            available = request_json(base + "/api/auth/canal/config", opener=opener)
+        except HTTPError as error:
+            if error.code not in (404, 405, 500):
+                raise
+            error.close()
+            raise SetupError(
+                "No se pudo comprobar la vinculacion. Verifica que frontend y backend de esta etapa esten publicados."
+            ) from None
+        if available.get("data") is not True:
+            raise SetupError(
+                "La vinculacion por navegador aun no esta disponible en este servidor."
+            )
+        verifier = secrets.token_urlsafe(32)
+        challenge = (
+            base64.urlsafe_b64encode(hashlib.sha256(verifier.encode("ascii")).digest())
+            .decode("ascii")
+            .rstrip("=")
+        )
+        # Only the challenge reaches the URL. The verifier never leaves this process until exchange.
+        url = base + "/vincular-canal#challenge=" + challenge
+        print(
+            "Abre Kaptal, inicia con Google y pulsa Autorizar conexion. Cuenta esperada: "
+            + expected
+        )
+        print("Comprueba que la pagina muestra esta referencia: " + challenge[:8])
+        print("Si no se abre el navegador, visita: " + url)
+        webbrowser.open(url)
+        code = getpass.getpass("Pega el codigo de Kaptal (entrada oculta): ").strip()
+        if not re.fullmatch(r"[A-Za-z0-9_-]{43}", code):
+            raise SetupError(
+                "Codigo incompleto. Ejecuta connect de nuevo y copia el codigo de Kaptal; no tu contrasena."
+            )
+        result = request_json(
+            base + "/api/auth/canal/intercambiar",
+            {"codigo": code, "verifier": verifier, "email": expected},
+            opener=opener,
+        )
+    data = result.get("data") or {}
+    if (
+        not result.get("success")
+        or data.get("email", "").casefold() != expected
+        or type(data.get("id")) is not int
+        or data["id"] <= 0
+    ):
+        raise SetupError(
+            "No se pudo verificar tu cuenta. Autoriza con el correo configurado en Kaptal."
+        )
+    if config.get("ownerId") not in (None, 0, data["id"]):
+        raise SetupError(
+            "La configuracion pertenece a otra cuenta. No se reemplazo la vinculacion."
+        )
+    updated = dict(config, ownerId=data["id"], ownerEmail=expected)
+    bridge = Bridge(updated, str(directory / "inbox.sqlite"))
+    try:
+        bridge.cookies, bridge.opener, bridge.token = cookies, opener, data["token"]
+        profile = bridge.api("/perfil")
+        if (
+            profile["id"] != updated["ownerId"]
+            or profile["email"].casefold() != expected
+        ):
+            raise SetupError("La sesion no coincide con tu cuenta")
+        # Prove the independent refresh cookie works before reporting a saved connection.
+        bridge.refresh()
+        temporary = directory / "config.private.tmp"
+        fd = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with os.fdopen(fd, "w", encoding="utf-8") as stream:
+            json.dump(updated, stream, indent=2)
+            stream.write("\n")
+        bridge.save_session()
+        temporary.replace(directory / "config.private.json")
+    finally:
+        bridge.db.close()
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "command", choices=("init", "key", "doctor", "login", "serve", "flush")
+        "command",
+        choices=("init", "key", "doctor", "connect", "login", "serve", "flush"),
     )
     parser.add_argument("--directory", type=Path, default=Path(".local/canales"))
     parser.add_argument("--online", action="store_true")
+    parser.add_argument(
+        "--password",
+        action="store_true",
+        help="Solo cuentas que usan una contrasena propia de Kaptal; nunca la de Google",
+    )
     parser.add_argument("--port", type=int, default=18765)
     args = parser.parse_args()
     directory = args.directory.resolve()
@@ -151,6 +264,12 @@ def main():
         print("Clave guardada localmente. No se probo ni envio ningun mensaje.")
         return 0
     config = load(directory)
+    if args.command == "connect":
+        connect(config, directory, password_login=args.password)
+        print(
+            "Tu cuenta quedo vinculada. No se guardo la contrasena ni se registro dinero."
+        )
+        return 0
     status = checks(config, directory)
     if args.command == "doctor":
         for name, valid in status.items():
@@ -176,6 +295,7 @@ def main():
             online_checks(bridge)
             serve(bridge, args.port)
         else:
+            bridge.process_chats()
             print("Movimientos registrados:", bridge.flush())
     finally:
         bridge.db.close()
@@ -185,6 +305,31 @@ def main():
 if __name__ == "__main__":
     try:
         sys.exit(main())
+    except HTTPError as error:
+        messages = {
+            400: "El codigo no es valido, vencio o corresponde a otra cuenta. Ejecuta connect de nuevo.",
+            401: "No se pudo autenticar la cuenta. Si usas Google, ejecuta connect sin --password.",
+            404: "La vinculacion aun no esta publicada en el servidor de Kaptal.",
+            429: "Demasiados intentos. Espera un minuto antes de reintentar.",
+        }
+        print(
+            messages.get(
+                error.code,
+                "Kaptal no pudo completar la conexion. Reintenta en unos minutos.",
+            )
+            + " No compartas codigos ni claves.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    except (URLError, TimeoutError):
+        print(
+            "No se pudo conectar con Kaptal. Revisa internet y que el servidor este disponible.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    except SetupError as error:
+        print(str(error), file=sys.stderr)
+        sys.exit(1)
     except (OSError, ValueError, KeyError, TypeError):
         print(
             "No se completo la configuracion. Revisa archivos privados, sesion y conectividad; no compartas claves ni logs bancarios.",

@@ -4,6 +4,10 @@ Complementa `PLAN_UI_MONAI.md` y `replica/monai-kesef/recon.md`. Es la secuencia
 
 ## Reglas para todas las etapas
 
+Vinculacion Google: el propietario entra con Google, por lo que el puente debe abrir Kaptal y usar consentimiento/codigo de un solo uso, no pedirle una contrasena. Etapa `mejoras/whatsapp-vinculacion-google`, dependiente del PR #80. Ver `WHATSAPP_VINCULACION_GOOGLE.md`. Publicar frontend y backend antes de la prueba personal; despues siguen webhook HTTPS, sandbox, Gmail y asistente con evidencias.
+
+Ampliacion vigente: `mejoras/whatsapp-cuentas-consultas` depende del PR #78. Anade consultas deterministas y registro con todas las cuentas del propietario; ver `WHATSAPP_CUENTAS_CONSULTAS.md`. No marca completada la etapa 4 de asistente avanzado ni la activacion del proveedor: siguen pendientes publicacion del backend, login y prueba HTTPS real.
+
 Actualizacion WhatsApp: PR #76 integrado en `a31d95e`. Preparacion del canal en `mejoras/whatsapp-kapso`; el usuario aun no tiene cuenta Kapso. Ver `WHATSAPP_KAPSO.md`: completar cuenta/proyecto/numero y prueba real antes de marcar conectado. La bandeja ya esta integrada; las siguientes referencias a entrega sin publicar corresponden al historial.
 
 Prioridad actual (2026-10-17): se adelanto la etapa 5 por peticion del usuario. La bandeja esta implementada en `mejoras/captura-avisos`, aun sin publicar. Secuencia siguiente: integrar bandeja → WhatsApp/Kapso real → Gmail bancario con reglas verificadas → etapa 4, asistente con evidencias → etapas 6 en adelante. No se descarta el plan anterior: se cambia el orden para dar soporte seguro a los canales primero. Consultar `BANDEJA_AVISOS.md` y `ESTADO_SESION.md`.

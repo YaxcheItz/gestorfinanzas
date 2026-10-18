@@ -15,5 +15,6 @@
     }
   },
   "bankRules": [],
-  "autoSaveRecognized": true
+  "autoSaveRecognized": true,
+  "allAccounts": false
 }

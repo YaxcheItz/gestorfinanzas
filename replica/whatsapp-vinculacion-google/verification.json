@@ -1,0 +1,16 @@
+{
+  "date": "2026-10-18",
+  "branch": "mejoras/whatsapp-vinculacion-google",
+  "baseDevelop": "70f8caa",
+  "dependency": { "commit": "94712fc", "pr": 80 },
+  "backendPostgres": { "tests": 416, "failures": 0, "errors": 0, "skipped": 0, "mavenVerify": true, "schema": "vinculacion_google_20261017", "migration": "V8" },
+  "backendH2Focused": { "tests": 9, "failures": 0, "errors": 0, "skipped": 0 },
+  "frontend": { "tests": 322, "failures": 0, "productionBuild": true },
+  "python": { "tests": 54, "failures": 0, "ruff": true, "format": true, "compileall": true },
+  "e2e": { "tests": 21, "failures": 0, "browser": "chromium", "api": "real Spring Boot", "database": "PostgreSQL", "schema": "vinculacion_google_e2e_final_20261017", "googleExternalLogin": "not exercised; synthetic authenticated Kaptal session", "browserCodeExchangeAndSessionReload": true, "secureCookiesPreserved": true },
+  "securityChecks": ["authenticated explicit consent", "S256 RFC 7636 test vector", "single-use code stored only as hash", "expiry", "wrong verifier", "wrong email", "inactive user", "token-version revocation", "concurrent exchange issues one session", "no secrets in config", "refresh verified before saved confirmation", "no delayed code shown to another user"],
+  "initialE2EFailure": "A test-only Secure=false override conflicted with an existing Secure cookie assertion. Removed the override; only the synthetic Python loopback transport is adapted. Both assertions pass in the final full suite.",
+  "globalSkillScriptSynchronized": true,
+  "live": { "personalSessionLinked": false, "webhookActivated": false, "whatsappSent": false, "financialRecordsWritten": false, "productionDeployed": false },
+  "pending": ["Integrate PR 80 then this stage", "Deploy frontend and backend with V8", "Owner authorizes browser connection with Google", "HTTPS webhook and real Kapso sandbox verification"]
+}

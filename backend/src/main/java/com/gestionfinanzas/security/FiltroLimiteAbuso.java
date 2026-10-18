@@ -28,7 +28,8 @@ public class FiltroLimiteAbuso extends OncePerRequestFilter {
     private static final Map<String,Integer> PUBLICOS = Map.of(
         "/api/auth/login",20, "/api/auth/registro",5, "/api/auth/google",20,
         "/api/auth/recuperacion",5, "/api/auth/recuperacion/confirmar",10,
-        "/api/auth/refresh",120, "/api/notificaciones/whatsapp/verificar-pin",10);
+        "/api/auth/refresh",120, "/api/notificaciones/whatsapp/verificar-pin",10,
+        "/api/auth/canal/intercambiar",10);
     private static final Set<String> MUTACIONES = Set.of("POST","PUT","PATCH","DELETE");
 
     @Override protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,

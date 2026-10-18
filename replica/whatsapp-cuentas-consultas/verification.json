@@ -1,0 +1,62 @@
+{
+  "date": "2026-10-17",
+  "branch": "mejoras/whatsapp-cuentas-consultas",
+  "effectiveBase": "70f8caa6dabf1113bdb050c6da7b7785c93f7ded",
+  "dependencyPr78": "merged",
+  "backend": {
+    "command": "mvnw.cmd -B verify",
+    "database": "isolated PostgreSQL",
+    "counts": {
+      "tests": 407,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "log": ".local/whatsapp-cuentas-postgres-final.log"
+  },
+  "bridge": {
+    "tests": 48,
+    "ruff": "passed",
+    "format": "passed",
+    "compileall": "passed"
+  },
+  "e2e": {
+    "tests": 20,
+    "result": "passed",
+    "log": "frontend/.angular/whatsapp-cuentas-e2e-final.log",
+    "newFlow": "real Python bridge -> authenticated API -> PostgreSQL: all balances, missing account, follow-up name, one write, event replay, possible duplicate pending, financial query without writing, one-time reply",
+    "kapsoSend": "mocked; no real outbound messages",
+    "openingLedger": "compares against opening-movement baseline instead of assuming empty history"
+  },
+  "security": [
+    "authenticated-user scoped read-only interpreter",
+    "explicit account required",
+    "currencies separate",
+    "inactive/foreign/ambiguous accounts do not generate transactions",
+    "owner/session verified before financial processing and reply",
+    "queue bound to user, server, sender and bot",
+    "stable candidate and idempotency keys",
+    "duplicate confirmation never forced",
+    "invalid confirmations remain reviewable",
+    "unknown commands cannot execute shell or administrative actions",
+    "no LLM provider receives financial data"
+  ],
+  "liveState": {
+    "privateConfigPrepared": true,
+    "providerNumberReadVerifiedPreviously": true,
+    "kaptalSessionVerified": false,
+    "lastSessionCheck": "No owner ID or cookie was present; authenticated check returned 401; waiting for actual connect command result",
+    "receiverStarted": false,
+    "publicWebhookConfigured": false,
+    "productionDeployed": false,
+    "realFinancialWrites": false
+  },
+  "limitations": [
+    "Personal single-owner bridge; not multiuser enrolment",
+    "Supported deterministic queries, not arbitrary AI answers",
+    "No audio transcription",
+    "Live account login/webhook and provider round-trip remain pending",
+    "No physical phone QA"
+  ],
+  "frontend": "No Angular UI changes; existing screens covered by full E2E"
+}
