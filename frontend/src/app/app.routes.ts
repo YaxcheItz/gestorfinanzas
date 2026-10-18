@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
+  { path: 'vincular-canal', loadComponent: () => import('./features/vincular-canal.component').then(m => m.VincularCanalComponent) },
   { path: 'avisos', loadComponent: () => import('./features/avisos.component').then(m => m.AvisosComponent), canActivate: [authGuard] },
   {
     path: 'reportes',
