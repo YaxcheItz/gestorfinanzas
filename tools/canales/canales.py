@@ -13,19 +13,21 @@ import http.cookiejar
 import json
 import os
 import re
+import signal
 import sqlite3
 import sys
 import threading
 import time
 import unicodedata
 import uuid
+from contextlib import contextmanager
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 from email.utils import parseaddr
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from urllib.error import HTTPError
-from urllib.parse import urlencode, urlsplit
+from urllib.parse import quote, urlencode, urlsplit
 from urllib.request import (
     HTTPCookieProcessor,
     HTTPRedirectHandler,
@@ -34,6 +36,44 @@ from urllib.request import (
 )
 
 MAX_BODY = 65536
+
+
+@contextmanager
+def session_lock(path):
+    """OS lock released on process exit; serialize rotating cookies across processes."""
+    fd = os.open(str(path) + ".lock", os.O_CREAT | os.O_RDWR, 0o600)
+    locked = False
+    try:
+        if os.fstat(fd).st_size == 0:
+            os.write(fd, b"0")
+        deadline = time.monotonic() + 10
+        while not locked:
+            try:
+                if os.name == "nt":
+                    import msvcrt
+
+                    os.lseek(fd, 0, os.SEEK_SET)
+                    msvcrt.locking(fd, msvcrt.LK_NBLCK, 1)
+                else:
+                    import fcntl
+
+                    fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                locked = True
+            except (BlockingIOError, PermissionError):
+                if time.monotonic() >= deadline:
+                    raise TimeoutError(
+                        "Otra operacion esta renovando la sesion"
+                    ) from None
+                time.sleep(0.05)
+        yield
+    finally:
+        if locked:
+            if os.name == "nt":
+                os.lseek(fd, 0, os.SEEK_SET)
+                msvcrt.locking(fd, msvcrt.LK_UNLCK, 1)
+            else:
+                fcntl.flock(fd, fcntl.LOCK_UN)
+        os.close(fd)
 
 
 class NoRedirect(HTTPRedirectHandler):
@@ -242,6 +282,12 @@ class Bridge:
             c[1] for c in self.db.execute("PRAGMA table_info(events)")
         }:
             self.db.execute("ALTER TABLE events ADD COLUMN response TEXT")
+        if "received_at" not in {
+            c[1] for c in self.db.execute("PRAGMA table_info(events)")
+        }:
+            self.db.execute(
+                "ALTER TABLE events ADD COLUMN received_at INTEGER NOT NULL DEFAULT 0"
+            )
         self.db.execute(
             "CREATE TABLE IF NOT EXISTS chat_context (id INTEGER PRIMARY KEY CHECK(id=1),text TEXT NOT NULL,expires INTEGER NOT NULL)"
         )
@@ -277,30 +323,43 @@ class Bridge:
         self.cookies.save(str(temporary), ignore_discard=True)
         temporary.replace(self.session)
 
-    def refresh(self):
-        result = request_json(
-            self.config["apiUrl"].rstrip("/") + "/api/auth/refresh",
-            {},
-            headers={"X-Gestion-Sesion": "1"},
-            opener=self.opener,
-        )
-        if not result.get("success") or result["data"]["id"] != self.config["ownerId"]:
-            raise ValueError("Sesion no valida para este usuario")
-        self.token = result["data"]["token"]
-        self.save_session()
+    def refresh(self, reload_saved=True):
+        with session_lock(self.session):
+            if reload_saved and self.session.exists():
+                cookies = http.cookiejar.MozillaCookieJar()
+                cookies.load(str(self.session), ignore_discard=True)
+                self.cookies = cookies
+                self.opener = build_opener(NoRedirect, HTTPCookieProcessor(cookies))
+            result = request_json(
+                self.config["apiUrl"].rstrip("/") + "/api/auth/refresh",
+                {},
+                headers={"X-Gestion-Sesion": "1"},
+                opener=self.opener,
+            )
+            if (
+                not result.get("success")
+                or result["data"]["id"] != self.config["ownerId"]
+            ):
+                raise ValueError("Sesion no valida para este usuario")
+            self.token = result["data"]["token"]
+            self.save_session()
 
     def login(self):
         email = input("Correo de Kaptal: ").strip()
         password = getpass.getpass("Contrasena de Kaptal (no se guarda): ")
-        result = request_json(
-            self.config["apiUrl"].rstrip("/") + "/api/auth/login",
-            {"email": email, "password": password},
-            opener=self.opener,
-        )
-        if not result.get("success") or result["data"]["id"] != self.config["ownerId"]:
-            raise ValueError("Cuenta distinta al propietario configurado")
-        self.token = result["data"]["token"]
-        self.save_session()
+        with session_lock(self.session):
+            result = request_json(
+                self.config["apiUrl"].rstrip("/") + "/api/auth/login",
+                {"email": email, "password": password},
+                opener=self.opener,
+            )
+            if (
+                not result.get("success")
+                or result["data"]["id"] != self.config["ownerId"]
+            ):
+                raise ValueError("Cuenta distinta al propietario configurado")
+            self.token = result["data"]["token"]
+            self.save_session()
 
     def api(self, path, payload=None, key=None):
         if not self.token:
@@ -322,8 +381,10 @@ class Bridge:
             raise ValueError("La API rechazo la operacion")
         return result["data"]
 
-    def receive(self, source, event_id, tx=None, note=None):
-        if not event_id or len(event_id) > 512:
+    def receive(
+        self, source, event_id, tx=None, note=None, metadata=None, received_at=None
+    ):
+        if not isinstance(event_id, str) or not event_id or len(event_id) > 512:
             raise ValueError("Identificador externo no valido")
         # Namespace includes the local owner's ID; changing users never reuses a key.
         key = str(
@@ -348,13 +409,21 @@ class Bridge:
             ).fetchone()
             state = "pending" if duplicate else "ready"
         payload = json.dumps(
-            tx if tx else {"note": str(note or "")[:1200]}, ensure_ascii=False
+            tx if tx else {"note": str(note or "")[:1200], **(metadata or {})},
+            ensure_ascii=False,
         )
         # Persist before network I/O. An interrupted send is retried with identical bytes/key.
         with self.db:
             self.db.execute(
-                "INSERT INTO events (key,source,state,payload,fingerprint) VALUES (?,?,?,?,?)",
-                (key, source, state, payload, fingerprint),
+                "INSERT INTO events (key,source,state,payload,fingerprint,received_at) VALUES (?,?,?,?,?,?)",
+                (
+                    key,
+                    source,
+                    state,
+                    payload,
+                    fingerprint,
+                    int(received_at or time.time()),
+                ),
             )
         return state
 
@@ -466,19 +535,73 @@ class Bridge:
     def process_chats(self):
         """Interpret once, freeze the candidate, then use the existing notices flow."""
         rows = self.db.execute(
-            "SELECT key,payload FROM events WHERE source='whatsapp-chat' AND state='pending' ORDER BY rowid"
+            "SELECT key,payload,received_at FROM events WHERE source='whatsapp-chat' AND state='pending' ORDER BY rowid"
         ).fetchall()
-        for key, raw in rows:
+        for key, raw, received_at in rows:
             original = json.loads(raw)
             if "cuentaId" in original:
+                continue
+            if (
+                not received_at
+                or datetime.fromtimestamp(received_at).date() != date.today()
+            ):
+                with self.db:
+                    self.db.execute(
+                        "UPDATE events SET state='answered',response=? WHERE key=?",
+                        (
+                            "Tu mensaje quedo pendiente desde otro dia. No se registro dinero. Envialo de nuevo con fecha explicita para evitar interpretar mal hoy o ayer; si era una consulta, vuelve a pedirla.",
+                            key,
+                        ),
+                    )
                 continue
             profile = self.api("/perfil")
             if profile["id"] != self.config["ownerId"]:
                 raise ValueError("El token pertenece a otro usuario")
             text = original["note"]
+            if normalized(text) in ("ayuda", "/ayuda"):
+                with self.db:
+                    self.db.execute(
+                        "UPDATE events SET state='answered',response=? WHERE key=?",
+                        (
+                            "Puedes pedir: saldo, saldo de Nombre de cuenta, resumen de este mes, categorias, presupuestos o movimientos recientes.\nPara registrar: gaste 180 en comida con Nombre de cuenta. Si falta la cuenta, te la preguntare.\nPuedes enviar una nota de voz: revisaras la transcripcion antes de confirmar. Escribe cancelar para descartar el borrador. Los posibles duplicados se revisan en Avisos de Kaptal.",
+                            key,
+                        ),
+                    )
+                continue
+            if normalized(text).startswith("confirmar audio "):
+                code = normalized(text).removeprefix("confirmar audio ")
+                audio = self.db.execute(
+                    "SELECT key,payload FROM events WHERE source='whatsapp-audio' AND state='answered' AND substr(key,1,8)=?",
+                    (code,),
+                ).fetchall()
+                data = json.loads(audio[0][1]) if len(audio) == 1 else {}
+                if not data.get("transcript") or data.get("expires", 0) < time.time():
+                    with self.db:
+                        self.db.execute(
+                            "UPDATE events SET state='answered',response=? WHERE key=?",
+                            (
+                                "Ese audio ya no esta disponible. Envia el movimiento por texto o una nueva nota de voz.",
+                                key,
+                            ),
+                        )
+                    continue
+                text = data["transcript"]
+                # Freeze the confirmed text before interpretation; retries never consume it twice.
+                with self.db:
+                    self.db.execute(
+                        "UPDATE events SET state='confirmed' WHERE key=?",
+                        (audio[0][0],),
+                    )
+                    self.db.execute(
+                        "UPDATE events SET payload=? WHERE key=?",
+                        (json.dumps({"note": text}), key),
+                    )
             if normalized(text) == "cancelar":
                 with self.db:
                     self.db.execute("DELETE FROM chat_context")
+                    self.db.execute(
+                        "UPDATE events SET state='cancelled' WHERE source='whatsapp-audio' AND state IN ('pending','answered')"
+                    )
                     self.db.execute(
                         "UPDATE events SET state='answered',response=? WHERE key=?",
                         ("Borrador cancelado. No se registro dinero.", key),
@@ -563,24 +686,85 @@ class Bridge:
                         (response[:3800], key),
                     )
 
+    def process_audio(self):
+        """Use only Kapso's transcript; never download media or follow supplied URLs."""
+        for key, raw in self.db.execute(
+            "SELECT key,payload FROM events WHERE source='whatsapp-audio' AND state='pending' ORDER BY rowid"
+        ).fetchall():
+            data = json.loads(raw)
+            if data.get("nextAttempt", 0) > time.time():
+                continue
+            text = data.get("transcript")
+            if not text and data["expires"] > time.time():
+                message = request_json(
+                    "https://api.kapso.ai/meta/whatsapp/v24.0/"
+                    + quote(self.config["kapsoPhoneNumberId"], safe="")
+                    + "/messages/"
+                    + quote(data["messageId"], safe=""),
+                    headers={"X-API-Key": os.environ["KAPSO_API_KEY"]},
+                )
+                if (
+                    message.get("id") != data["messageId"]
+                    or phone(message.get("from")) != phone(self.config["ownerPhone"])
+                    or message.get("type") != "audio"
+                    or message.get("kapso", {}).get("direction") != "inbound"
+                    or message.get("kapso", {}).get("passive")
+                ):
+                    raise ValueError("El audio no pertenece al canal autorizado")
+                transcript = message.get("kapso", {}).get("transcript")
+                text = transcript.get("text") if isinstance(transcript, dict) else None
+            if text is not None and (
+                not isinstance(text, str) or not 1 <= len(text.strip()) <= 1200
+            ):
+                text = None
+                data["expires"] = 0
+            if not text and data["expires"] > time.time():
+                data["nextAttempt"] = time.time() + 15
+                with self.db:
+                    self.db.execute(
+                        "UPDATE events SET payload=? WHERE key=?",
+                        (json.dumps(data), key),
+                    )
+                continue
+            data["transcript"] = text.strip() if text else None
+            data["expires"] = time.time() + 900 if text else 0
+            response = (
+                'Entendi: "'
+                + text.strip()
+                + '"\nRevisa importe y cuenta. Para usar este texto responde: confirmar audio '
+                + key[:8]
+                + "\nSi esta mal, envia el movimiento corregido por texto. Puedes escribir cancelar. Caduca en 15 minutos."
+                if text
+                else "No pude obtener una transcripcion de ese audio. No se registro dinero. Envia el movimiento por texto."
+            )
+            with self.db:
+                self.db.execute(
+                    "UPDATE events SET payload=?,state='answered',response=? WHERE key=?",
+                    (json.dumps(data), response, key),
+                )
+
     def reply(self):
         if not os.environ.get("KAPSO_API_KEY"):
             return 0
         sent = 0
         verified = False
-        for key, source, state, response in self.db.execute(
-            "SELECT key,source,state,response FROM events WHERE replied=0 AND ("
+        for key, source, state, response, received_at in self.db.execute(
+            "SELECT key,source,state,response,received_at FROM events WHERE replied=0 AND ("
             "(source='whatsapp' AND state IN ('saved','inbox')) OR "
-            "(source='whatsapp-chat' AND state IN ('saved','inbox','answered')) OR "
+            "(source IN ('whatsapp-chat','whatsapp-audio') AND state IN ('saved','inbox','answered')) OR "
             "(source='codex' AND state='pending'))"
         ).fetchall():
-            if source == "whatsapp-chat" and not verified:
+            if not received_at or time.time() - received_at > 86100:
+                with self.db:
+                    self.db.execute("UPDATE events SET replied=-2 WHERE key=?", (key,))
+                continue  # No free-form messages outside the customer-service window.
+            if source in ("whatsapp-chat", "whatsapp-audio") and not verified:
                 if self.api("/perfil")["id"] != self.config["ownerId"]:
                     raise ValueError("La sesion no pertenece al propietario")
                 verified = True
             body = (
                 response
-                if source == "whatsapp-chat"
+                if source in ("whatsapp-chat", "whatsapp-audio")
                 else (
                     "Movimiento registrado en Kaptal."
                     if state == "saved"
@@ -591,7 +775,7 @@ class Bridge:
             )
             # At-most-once attempt: an ambiguous send timeout must not spam the user.
             with self.db:
-                self.db.execute("UPDATE events SET replied=1 WHERE key=?", (key,))
+                self.db.execute("UPDATE events SET replied=-1 WHERE key=?", (key,))
             request_json(
                 "https://api.kapso.ai/meta/whatsapp/v24.0/"
                 + self.config["kapsoPhoneNumberId"]
@@ -604,6 +788,8 @@ class Bridge:
                 },
                 {"X-API-Key": os.environ["KAPSO_API_KEY"]},
             )
+            with self.db:
+                self.db.execute("UPDATE events SET replied=1 WHERE key=?", (key,))
             sent += 1
         return sent
 
@@ -641,6 +827,21 @@ class Bridge:
         age = datetime.now().timestamp() - timestamp
         if age < -300 or age > 86400:
             return "ignored"  # Do not send replies outside the customer-service window.
+        if message.get("type") == "audio" and self.config.get("allAccounts"):
+            transcript = message.get("kapso", {}).get("transcript")
+            text = transcript.get("text") if isinstance(transcript, dict) else None
+            if text is not None and (not isinstance(text, str) or len(text) > 1200):
+                raise ValueError("Transcripcion no valida")
+            return self.receive(
+                "whatsapp-audio",
+                message.get("id"),
+                received_at=timestamp,
+                metadata={
+                    "messageId": message.get("id"),
+                    "transcript": text,
+                    "expires": time.time() + 120,
+                },
+            )
         if message.get("type") != "text":
             return self.receive(
                 "whatsapp",
@@ -653,15 +854,23 @@ class Bridge:
         if not isinstance(text, str) or len(text) > 1200:
             raise ValueError("Texto demasiado largo")
         if text.startswith("/codex "):
-            return self.receive("codex", message.get("id"), note=text[7:])
+            return self.receive(
+                "codex", message.get("id"), note=text[7:], received_at=timestamp
+            )
         if self.config.get("allAccounts"):
-            return self.receive("whatsapp-chat", message.get("id"), note=text)
+            return self.receive(
+                "whatsapp-chat", message.get("id"), note=text, received_at=timestamp
+            )
         try:
             tx = parse_whatsapp(text, self.config["accounts"])
         except ValueError:
             tx = None
         return self.receive(
-            "whatsapp", message.get("id"), tx, text if tx is None else None
+            "whatsapp",
+            message.get("id"),
+            tx,
+            text if tx is None else None,
+            received_at=timestamp,
         )
 
     def gmail_once(self):
@@ -728,10 +937,29 @@ class Bridge:
         return self.flush()
 
 
-def make_server(bridge, port):
+def make_server(bridge, port, host="127.0.0.1"):
+    class Server(HTTPServer):
+        def get_request(self):
+            connection, address = super().get_request()
+            connection.settimeout(5)
+            return connection, address
+
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *args):
             pass  # No bodies, headers, phone numbers, tokens or financial details in access logs.
+
+        def do_GET(self):
+            healthy = getattr(self.server, "worker_alive", True)
+            if self.path == "/ready":
+                healthy = healthy and getattr(self.server, "worker_healthy", False)
+            status = (
+                (200 if healthy else 503) if self.path in ("/health", "/ready") else 404
+            )
+            self.send_response(status)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            self.wfile.write(b'{"ok":true}' if status == 200 else b'{"ok":false}')
 
         def do_POST(self):
             status = 200
@@ -763,17 +991,36 @@ def make_server(bridge, port):
             self.send_response(status)
             self.end_headers()
 
-    return HTTPServer(("127.0.0.1", port), Handler)
+    return Server((host, port), Handler)
 
 
-def serve(bridge, port):
+def serve(bridge, port, host="127.0.0.1"):
+    # One worker owns a queue for its entire lifetime, including across containers.
+    with session_lock(Path(bridge.database + ".worker")):
+        _serve(bridge, port, host)
+
+
+def _serve(bridge, port, host):
     # The receiver persists first; slow provider/API calls cannot block the next ack.
     if len(os.environ.get("KAPSO_WEBHOOK_SECRET", "")) < 32:
         raise ValueError("Configura el secreto de webhook antes de iniciar")
-    server = make_server(bridge, port)
+    server = (
+        make_server(bridge, port)
+        if host == "127.0.0.1"
+        else make_server(bridge, port, host)
+    )
+    server.worker_healthy = False
+    server.worker_alive = False
     stop = threading.Event()
     ready = threading.Event()
     startup = []
+    previous_signal = None
+    if threading.current_thread() is threading.main_thread():
+        previous_signal = signal.getsignal(signal.SIGTERM)
+        signal.signal(
+            signal.SIGTERM,
+            lambda *_: threading.Thread(target=server.shutdown, daemon=True).start(),
+        )
 
     def work():
         # SQLite connections and cookie jars are confined to their own thread.
@@ -783,22 +1030,41 @@ def serve(bridge, port):
             ready.set()
             return
         startup.append(True)
+        server.worker_alive = True
         ready.set()
         try:
+            last_verified = 0
             while not stop.is_set():
                 delay = 1
-                try:
-                    worker.process_chats()
-                    worker.flush()
-                    worker.reply()
-                except (OSError, ValueError, KeyError, TypeError, sqlite3.Error):
-                    delay = 60
-                    print(
-                        "Registro pendiente de reintento; revisar conexion/configuracion.",
-                        file=sys.stderr,
-                    )
+                healthy = True
+                if time.monotonic() - last_verified > 300:
+                    try:
+                        if worker.api("/perfil")["id"] != bridge.config["ownerId"]:
+                            raise ValueError("Propietario no valido")
+                        last_verified = time.monotonic()
+                    except (OSError, ValueError, KeyError, TypeError):
+                        healthy = False
+                        delay = 60
+                for action in (
+                    worker.process_audio,
+                    worker.process_chats,
+                    worker.flush,
+                    worker.reply,
+                ):
+                    try:
+                        action()
+                    except (OSError, ValueError, KeyError, TypeError, sqlite3.Error):
+                        healthy = False
+                        delay = 60
+                        print(
+                            "Operacion pendiente; revisar conexion/autorizacion y estado del canal.",
+                            file=sys.stderr,
+                        )
+                server.worker_healthy = healthy
                 stop.wait(delay)
         finally:
+            server.worker_healthy = False
+            server.worker_alive = False
             worker.db.close()
 
     thread = threading.Thread(target=work, daemon=True)
@@ -813,6 +1079,8 @@ def serve(bridge, port):
         stop.set()
         server.server_close()
         thread.join(timeout=5)
+        if previous_signal is not None:
+            signal.signal(signal.SIGTERM, previous_signal)
 
 
 def main():

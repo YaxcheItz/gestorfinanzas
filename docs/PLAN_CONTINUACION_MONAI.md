@@ -2,7 +2,11 @@
 
 Complementa `PLAN_UI_MONAI.md` y `replica/monai-kesef/recon.md`. Es la secuencia para retomar el proyecto sin repetir lo implementado. El estado vigente al inicio de `ESTADO_SESION.md` prevalece sobre resultados históricos. No confundir una pantalla diseñada con una integración operativa.
 
+Prioridad vigente (2026-10-18): cerrar WhatsApp antes de Gmail por peticion del propietario. Voz confirmada, recuperacion y alojamiento portable en `mejoras/whatsapp-cierre-operativo`; preferencia de hosting gratuito, ver `WHATSAPP_ALOJAMIENTO_GRATUITO.md`. No marcar cerrado hasta prueba personal y receptor persistente remoto comprobados.
+
 ## Reglas para todas las etapas
+
+Actualizacion de hosting: Oracle no permitio el registro; se prepara el receptor personal en Workers + D1 dentro de `mejoras/whatsapp-cloudflare`. Seguir `WHATSAPP_CLOUDFLARE.md`: desplegar pausado, autorizar Google con sesion propia, trasladar cola sin duplicar, cambiar el webhook existente y validar WhatsApp real antes de Gmail. No cambiar Angular/Spring/PostgreSQL por este alojamiento del canal.
 
 Vinculacion Google: el propietario entra con Google, por lo que el puente debe abrir Kaptal y usar consentimiento/codigo de un solo uso, no pedirle una contrasena. Etapa `mejoras/whatsapp-vinculacion-google`, dependiente del PR #80. Ver `WHATSAPP_VINCULACION_GOOGLE.md`. Publicar frontend y backend antes de la prueba personal; despues siguen webhook HTTPS, sandbox, Gmail y asistente con evidencias.
 

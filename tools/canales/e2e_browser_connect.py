@@ -8,9 +8,11 @@ import os
 import tempfile
 from pathlib import Path
 from unittest.mock import patch
+from urllib.error import HTTPError
 from urllib.parse import urlsplit
 
 from canales import Bridge
+from whatsapp_host import disconnect
 from whatsapp_setup import connect
 
 
@@ -57,13 +59,32 @@ def main():
         with patch.dict(os.environ):
             os.environ.pop("KAPTAL_API_TOKEN", None)
             bridge = Bridge(saved, str(path / "inbox.sqlite"))
+            doctor = Bridge(saved, str(path / "inbox.sqlite"))
             try:
+                # A doctor runs after an idle worker has loaded the previous cookie.
+                # Both must keep working without revoking each other's session.
+                assert doctor.api("/perfil")["id"] == fixture["ownerId"]
                 assert all(cookie.secure for cookie in bridge.cookies)
                 profile = bridge.api("/perfil")
                 assert profile["id"] == fixture["ownerId"]
                 assert profile["email"] == fixture["email"]
+                observer = Bridge(saved, str(path / "inbox.sqlite"))
+                try:
+                    disconnect(bridge)
+                    assert not bridge.session.exists()
+                    try:
+                        observer.refresh(reload_saved=False)
+                        raise AssertionError(
+                            "Disconnected cookie must be revoked on the server"
+                        )
+                    except HTTPError as error:
+                        assert error.code == 401
+                        error.close()
+                finally:
+                    observer.db.close()
             finally:
                 bridge.db.close()
+                doctor.db.close()
     print(
         json.dumps(
             {"browserApproved": True, "sessionReloaded": True, "passwordUsed": False}

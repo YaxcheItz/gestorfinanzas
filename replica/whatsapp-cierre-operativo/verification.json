@@ -1,0 +1,52 @@
+{
+  "date": "2026-10-18",
+  "baseDevelop": "1736526d3e5dff0e384f1344e864da7f29d43ee2",
+  "branch": "mejoras/whatsapp-cierre-operativo",
+  "python": {
+    "windowsPassed": 73,
+    "linuxPassed": 73
+  },
+  "realApiPostgresE2E": {
+    "passed": 2,
+    "schema": "whatsapp_cierre_final_20261018",
+    "audioExplicitConfirmation": true,
+    "lostServerAcknowledgementRecoveredOnce": true,
+    "sessionRevocationVerified": true,
+    "providerSendMocked": true
+  },
+  "container": {
+    "build": true,
+    "nonRoot": true,
+    "persistentRestart": true,
+    "syntheticDataOnly": true,
+    "composeValidated": true,
+    "caddyValidated": true,
+    "financialTimezone": "America/Mexico_City"
+  },
+  "ruff": true,
+  "format": true,
+  "compileall": true,
+  "diffCheck": true,
+  "personal": {
+    "ownerSessionVerified": true,
+    "queueBackedUpPrivately": true,
+    "receiverUpdated": true,
+    "localHealth": true,
+    "localReady": true,
+    "publicHealth": true,
+    "invalidSignatureRejected": true,
+    "realCaptureVerified": false,
+    "realAudioVerified": false
+  },
+  "hosting": {
+    "deployed": false,
+    "paidResourcesCreated": false,
+    "preference": "free",
+    "candidate": "Oracle Always Free subject to capacity and idle reclamation",
+    "accountCreationPendingOwner": true
+  },
+  "globalSkillSync": "blocked by automatic tool policy; project files updated",
+  "newDependencies": false,
+  "backendOrFinancialSchemaChanges": false,
+  "recoveryRejectsUninterpretedPriorDayText": true
+}

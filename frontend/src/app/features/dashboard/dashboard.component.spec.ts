@@ -51,7 +51,7 @@ describe('DashboardComponent movement dialog accessibility', () => {
         },
         { provide: ToastService, useValue: { success: vi.fn(), error: vi.fn() } },
         { provide: ConfirmDialogService, useValue: { confirm: vi.fn() } },
-        { provide: PerfilService, useValue: { perfil: signal(null) } },
+        { provide: PerfilService, useValue: { perfil: signal(null), cargando: signal(false) } },
         { provide: Router, useValue: { navigate: vi.fn(), parseUrl: () => ({ queryParams: {} }) } }
       ]
     });
@@ -235,12 +235,48 @@ describe('DashboardComponent movement dialog accessibility', () => {
 
   it('una consulta temporal no cambia el periodo guardado al volver a cargar el perfil', () => {
     const perfil = signal<any>(null);
-    TestBed.overrideProvider(PerfilService, { useValue: { perfil } });
+    TestBed.overrideProvider(PerfilService, { useValue: { perfil, cargando: signal(false) } });
     const fixture = TestBed.createComponent(DashboardComponent);
     fixture.componentInstance.seleccionarRango('CATORCENA');
     perfil.set({ id: 7, monedaPredeterminada: 'MXN', periodoPredeterminado: { tipo: 'MES', ancla: '2026-01-05', diaInicio: 20, diaQuincena: 16 } });
     fixture.detectChanges();
     expect(fixture.componentInstance.tipoRango()).toBe('CATORCENA');
+    fixture.destroy();
+  });
+
+  it('espera el perfil demorado antes de abrir el selector con el periodo guardado', async () => {
+    const perfil = signal<any>(null);
+    const cargando = signal(true);
+    TestBed.overrideProvider(PerfilService, { useValue: { perfil, cargando } });
+    const fixture = TestBed.createComponent(DashboardComponent);
+    fixture.detectChanges();
+    const selector = fixture.nativeElement.querySelector('.time-dropdown-btn') as HTMLButtonElement;
+    expect(selector.disabled).toBe(true);
+    const rangoInicial = fixture.componentInstance.fechasRango();
+    fixture.componentInstance.cambiarPeriodo(-1);
+    expect(fixture.componentInstance.fechasRango()).toEqual(rangoInicial);
+    fixture.componentInstance.toggleModalRango();
+    expect(fixture.componentInstance.modalRangoAbierto()).toBe(false);
+    perfil.set({ id: 7, monedaPredeterminada: 'MXN', periodoPredeterminado: { tipo: 'CATORCENA', ancla: '2024-02-26', diaInicio: 20, diaQuincena: 16 } });
+    cargando.set(false);
+    fixture.detectChanges();
+    expect(selector.disabled).toBe(false);
+    selector.click(); fixture.detectChanges();
+    await fixture.whenStable(); fixture.detectChanges();
+    expect((fixture.nativeElement.querySelector('input[value="CATORCENA"]') as HTMLInputElement).checked).toBe(true);
+    expect((fixture.nativeElement.querySelector('input[name="anclaPeriodo"]') as HTMLInputElement).value).toBe('2024-02-26');
+    fixture.destroy();
+  });
+
+  it('permite elegir un periodo temporal si la carga inicial del perfil falla', () => {
+    const cargando = signal(true);
+    TestBed.overrideProvider(PerfilService, { useValue: { perfil: signal(null), cargando } });
+    const fixture = TestBed.createComponent(DashboardComponent); fixture.detectChanges();
+    cargando.set(false); fixture.detectChanges();
+    const selector = fixture.nativeElement.querySelector('.time-dropdown-btn') as HTMLButtonElement;
+    expect(selector.disabled).toBe(false);
+    selector.click(); fixture.detectChanges();
+    expect(fixture.componentInstance.modalRangoAbierto()).toBe(true);
     fixture.destroy();
   });
 

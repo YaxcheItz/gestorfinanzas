@@ -244,6 +244,7 @@ export class DashboardComponent implements OnInit {
   readonly editandoRango = signal(false);
   readonly guardandoPeriodo = signal(false);
   readonly modalRangoAbierto = signal(false);
+  readonly cargandoPeriodoInicial = computed(() => this.perfilService.cargando() && !this.perfilService.perfil());
   readonly opcionesPeriodo: { tipo: TipoPeriodo; nombre: string; detalle: string }[] = [
     { tipo: 'MES', nombre: 'Mes', detalle: 'Inicio del mes a tu medida' },
     { tipo: 'SEMANA', nombre: 'Semana', detalle: '7 días desde el anclaje' },
@@ -274,6 +275,7 @@ export class DashboardComponent implements OnInit {
   });
 
   toggleModalRango(): void {
+    if (this.cargandoPeriodoInicial()) return;
     if (this.modalRangoAbierto()) { this.cerrarModalRango(); return; }
     this.borradorPeriodo = { ...this.configuracionPeriodo() };
     this.guardarComoPredeterminado = false;
@@ -649,6 +651,7 @@ export class DashboardComponent implements OnInit {
   }
 
   cambiarPeriodo(desplazamiento: number): void {
+    if (this.cargandoPeriodoInicial()) return;
     if (this.tipoRango() === 'TODO' || (desplazamiento > 0 && this.periodoEsActual())) return;
     try {
       const rango = this.tipoRango() === 'PERSONALIZADO'

@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-18",
+  "branch": "mejoras/whatsapp-cloudflare",
+  "base": "1736526d3e5dff0e384f1344e864da7f29d43ee2",
+  "dependency": "PR #84",
+  "workerTests": {"passed": 27, "database": "Miniflare D1"},
+  "apiE2E": {"passed": 1, "database": "isolated PostgreSQL", "api": "real Kaptal", "provider": "mocked Kapso", "persistentRestart": true, "lostAcknowledgement": true},
+  "audit": {"knownVulnerabilities": 0, "scope": "worker and development tooling"},
+  "dryRun": "passed",
+  "remote": {"workerDeployed": true, "d1Created": true, "paused": false, "sessionVerified": true, "webhookSwitched": true, "sameWebhookPreserved": true, "https": "verified", "healthStatus": 200, "readyStatus": 200, "missingSignatureStatus": 401, "adminStatus": 404, "localReceiverStopped": true, "privateBackup": true, "originalEventsMigrated": 10, "financialKeysPreserved": true},
+  "personalFinancialWritesByAgent": 0,
+  "ci": {"pullRequest": 85, "checksPassedBeforeOperationalUpdate": 14},
+  "pending": ["owner-selected real query, text and audio tests", "merge dependency PR #84 before PR #85", "confirm checks for operational documentation update"]
+}
