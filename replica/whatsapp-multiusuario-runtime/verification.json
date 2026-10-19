@@ -1,0 +1,39 @@
+{
+  "date": "2026-10-19",
+  "branch": "mejoras/whatsapp-multiusuario-runtime",
+  "dependsOnPr": 87,
+  "author": "YaxcheItz <yaxtibla1@gmail.com>",
+  "backend": {
+    "command": "mvnw verify",
+    "database": "isolated local PostgreSQL 17",
+    "tests": 444,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "flyway": "V1-V10; published migrations unchanged"
+  },
+  "frontend": {
+    "unitTests": 332,
+    "build": "passed",
+    "e2eTests": 23,
+    "e2eDatabase": "isolated PostgreSQL",
+    "newFlow": "mobile UI, two owners, unknown sender, lost acknowledgement, persistent restart, disconnect",
+    "providerDelivery": "mocked only in synthetic E2E"
+  },
+  "worker": {
+    "tests": 39,
+    "dryRun": "passed",
+    "setupSyntax": "passed",
+    "migrationGuards": "legacy pending/live drafts, archive ciphertext, same UUID, backup export and recheck before enabling",
+    "remoteMigrationRun": false
+  },
+  "production": {
+    "changed": false,
+    "personalHealth": 200,
+    "personalReady": 200,
+    "multiuserEnabled": false,
+    "realTwoUserTest": "pending activation",
+    "audioLimit": "signed initial transcription only; asks for text if absent"
+  },
+  "ci": "Check current PR for this branch; local results do not attest remote CI."
+}

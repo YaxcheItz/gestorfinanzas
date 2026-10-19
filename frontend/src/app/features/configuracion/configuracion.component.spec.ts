@@ -1,3 +1,4 @@
+import { WhatsappConnectionService } from '../../core/services/whatsapp-connection.service';
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { SwPush } from '@angular/service-worker';
@@ -51,6 +52,7 @@ describe('ConfiguracionComponent data safety', () => {
     await TestBed.configureTestingModule({
       imports: [ConfiguracionComponent],
       providers: [
+        {provide: WhatsappConnectionService, useValue: {estado: () => of({success:true,data:{disponible:false,operativo:false,estado:'DESCONECTADA'}})}},
         { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: new URLSearchParams(), fragment: null } } },
         { provide: Router, useValue: { navigate: vi.fn(), navigateByUrl: vi.fn() } },
         { provide: FinanzasService, useValue: finanzas },
@@ -99,15 +101,8 @@ describe('ConfiguracionComponent data safety', () => {
     Reflect.deleteProperty(window.navigator, 'canShare');
   });
 
-  it('requests the verified PIN and builds the WhatsApp deep link for the configured bot', () => {
-    const component = fixture.componentInstance;
-
-    component.generarPinWhatsApp();
-    fixture.detectChanges();
-
-    expect(finanzas.obtenerPinVinculacionWhatsApp).toHaveBeenCalledOnce();
-    expect(component.pinCodigo()).toBe('123456');
-    expect(component.enlaceWhatsApp()).toContain('https://wa.me/5219515791240?text=');
-    expect(decodeURIComponent(component.enlaceWhatsApp())).toContain('VINCULAR 123456');
+  it('uses the dedicated account connection instead of the old PIN control', () => {
+    expect(fixture.nativeElement.querySelector('app-whatsapp-connection')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).not.toContain('Obtener PIN');
   });
 });

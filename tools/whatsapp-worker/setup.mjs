@@ -6,8 +6,9 @@ import {spawnSync} from 'node:child_process';
 import {randomBytes} from 'node:crypto';
 import {createConnection} from 'node:net';
 import {binding, seal, open} from './src/worker.mjs';
-import {importRow} from './src/migration.mjs';
+import {importRow,hasLiveLegacyDrafts} from './src/migration.mjs';
 import {parseCliJson} from './src/cli-output.mjs';
+import {relayBinding} from './src/relay.mjs';
 
 class SetupError extends Error {}
 
@@ -47,7 +48,7 @@ async function config(state) {
 }
 
 function variables(state) {
-  return {API_URL:state.apiUrl,OWNER_ID:String(state.ownerId),OWNER_PHONE:state.ownerPhone,KAPSO_NUMBER_ID:state.numberId,AUTO_SAVE:String(state.autoSave)};
+  return {API_URL:state.apiUrl,OWNER_ID:String(state.ownerId),OWNER_PHONE:state.ownerPhone,KAPSO_NUMBER_ID:state.numberId,AUTO_SAVE:String(state.autoSave),MULTIUSER_ENABLED:String(state.multiuserEnabled===true)};
 }
 async function credentials(state) {
   const secrets=await readJson(join(state.sourceDirectory,'secrets.private.json'));
@@ -99,6 +100,7 @@ async function initialize() {
 }
 
 async function deploy(state) {
+  if(state.multiuserEnabled)await relayMaintenance(state);
   if(!state.databaseId){
     const before=await cli(['d1','list','--json','--config',privateConfig],{json:true});
     if(before.some(d=>d.name===state.name))throw new SetupError('Ya existe una base con ese nombre. No se reutiliza ni sobrescribe por inferencia.');
@@ -122,6 +124,7 @@ async function deploy(state) {
 }
 
 async function connect(state) {
+  if(state.multiuserEnabled)throw new SetupError('Vincula cada numero desde Kaptal. El relay no usa sesiones personales.');
   await maintenance(state);
   await saveJson(join(directory,'config.private.json'),{
     apiUrl:state.apiUrl,ownerId:state.ownerId,ownerEmail:state.ownerEmail,ownerPhone:state.ownerPhone,
@@ -141,6 +144,7 @@ async function connect(state) {
 }
 
 async function migrate(state) {
+  if(state.multiuserEnabled)throw new SetupError('El archivo personal ya se conserva en D1; no se reimporta en modo multiusuario.');
   await maintenance(state);await localReceiverStopped();
   const extraction=spawnSync(python,['-c',`
 import json,sqlite3,sys
@@ -171,14 +175,85 @@ print(json.dumps({'events':rows,'context':dict(context) if context else None}));
   state.migrated=true;await saveJson(stateFile,state);console.log('Cola trasladada sin cambiar claves ni borrar el origen. Worker aun pausado.');
 }
 
+async function relayState(state){
+  const row=results(await execute(state,'SELECT binding,paused FROM relay_control WHERE id=1;'))[0];
+  if(!row||row.binding!==relayBinding({...variables(state),...await credentials(state)}))throw new SetupError('El relay no pertenece al servidor/bot configurado.');
+  return row;
+}
+async function relayMaintenance(state){
+  const row=await relayState(state);
+  const leases=results(await execute(state,'SELECT count(*) AS n FROM relay_lanes WHERE lease_until>='+Date.now()+';'))[0];
+  if(!row.paused||leases.n)throw new SetupError('Pausa el relay y espera a que terminen sus operaciones activas.');
+}
+async function backendReady(state){
+  const r=await fetch(state.apiUrl+'/api/canales/whatsapp/disponibilidad',{redirect:'manual',signal:AbortSignal.timeout(10000)});
+  if(!r.ok)throw new SetupError('Publica primero el backend nuevo y configura su canal. El receptor actual no se cambia.');
+  const body=await r.json();
+  if(!body.success||body.data!==true)throw new SetupError('El backend no habilito el canal multiusuario. Revisa sus variables privadas antes de cambiar Cloudflare.');
+}
+async function legacyIdle(state){
+  const pending=results(await execute(state,"SELECT count(*) AS n FROM events WHERE state IN ('pending','ready','audio_wait','probe') OR (replied=0 AND state IN ('answered','saved','inbox','audio_review'));"))[0];
+  if(pending.n)throw new SetupError('La cola personal aun tiene operaciones. Terminalas antes de cambiar de modo; no se descartan ni reinterpretan.');
+  const env={...variables(state),...await credentials(state)};
+  const contexts=results(await execute(state,"SELECT ciphertext FROM secrets WHERE name='context';"));
+  const audioRows=results(await execute(state,"SELECT key,payload FROM events WHERE source='whatsapp-audio' AND state='audio_review';"));
+  const context=contexts.length?await open(env,'secret:context',contexts[0].ciphertext):null;
+  const audios=await Promise.all(audioRows.map(row=>open(env,'event:'+row.key,row.payload)));
+  if(hasLiveLegacyDrafts(context,audios,timestamp()))throw new SetupError('Hay un borrador o audio personal vigente. Confirmalo, cancelalo o espera su caducidad antes de migrar.');
+}
+async function prepareMultiuser(state){
+  await backendReady(state);await maintenance(state);await localReceiverStopped();
+  if(state.multiuserEnabled)await relayMaintenance(state);
+  await legacyIdle(state);
+  if(!state.multiuserEnabled)await saveJson(join(directory,'state.pre-multiuser.private.json'),state);
+  await cli(['d1','export',state.name,'--remote','--skip-confirmation','--output',join(directory,'d1.pre-multiuser.'+Date.now()+'.private.sql'),'--config',privateConfig]);
+  await cli(['d1','migrations','apply',state.name,'--remote','--config',privateConfig]);
+  const binding=relayBinding({...variables(state),...await credentials(state)});
+  await execute(state,'INSERT OR IGNORE INTO relay_control(id,binding,paused) VALUES(1,'+literal(binding)+',1);');
+  state.multiuserEnabled=true;await saveJson(stateFile,state);await config(state);await relayMaintenance(state);
+  await deploy(state);
+  // A paused legacy receiver can still accept an in-flight webhook during the switch.
+  await legacyIdle(state);
+  console.log('Relay multiusuario preparado y pausado. Archivo personal, cifrado y claves conservados. No cambies el webhook: conserva la misma URL.');
+}
+async function resumeRelay(state){
+  await maintenance(state);await relayMaintenance(state);await localReceiverStopped();await backendReady(state);
+  await legacyIdle(state);
+  await execute(state,'UPDATE relay_control SET paused=0 WHERE id=1;');
+  console.log('Relay habilitado. Verifica /ready y vincula cada numero desde la app; no se comparte la sesion personal.');
+}
+
 async function main(){
   if(command==='init')return initialize();
   const state=await readJson(stateFile);await config(state);
+  if(command==='backend-env'){
+    const phone=option('--bot-phone');
+    if(!/^\+[1-9][0-9]{7,14}$/.test(phone??''))throw new SetupError('Indica --bot-phone con el numero visible DEL BOT, incluido + y pais; no el tuyo ni el identificador.');
+    const secrets=await credentials(state);
+    await writeFile(join(directory,'backend-multiuser.private.env'),['WHATSAPP_CHANNEL_ENABLED=true','WHATSAPP_CHANNEL_RUNTIME_ENABLED=true','WHATSAPP_CHANNEL_BOT_PHONE='+phone,'WHATSAPP_CHANNEL_PHONE_NUMBER_ID='+state.numberId,'WHATSAPP_CHANNEL_WEBHOOK_SECRET='+secrets.KAPSO_WEBHOOK_SECRET,''].join('\n'),{mode:0o600});
+    console.log('Variables preparadas en backend-multiuser.private.env dentro del directorio privado. Configuralas en el host del backend; no compartas ese archivo ni su contenido.');return;
+  }
+  if(command==='prepare-multiuser')return prepareMultiuser(state);
   if(command==='deploy')return deploy(state);
   if(command==='connect')return connect(state);
   if(command==='migrate')return migrate(state);
-  if(command==='pause'){await execute(state,'UPDATE channel SET paused=1 WHERE id=1;');console.log('Worker pausado; espera a que termine su lease antes de mantenimiento.');return;}
+  if(command==='pause'){await execute(state,'UPDATE channel SET paused=1 WHERE id=1;'+(state.multiuserEnabled?'UPDATE relay_control SET paused=1 WHERE id=1;':''));console.log('Worker pausado; espera a que terminen sus operaciones antes de mantenimiento.');return;}
+  if(command==='retire-personal-session'){
+    if(!state.multiuserEnabled)throw new SetupError('Primero termina la migracion y valida el relay.');
+    await maintenance(state);
+    const ready=await fetch(state.workerUrl+'/ready',{signal:AbortSignal.timeout(10000)});
+    if(ready.status!==200)throw new SetupError('El relay aun no esta listo. La sesion personal cifrada se conserva.');
+    const rows=results(await execute(state,"SELECT ciphertext FROM secrets WHERE name='auth';"));
+    if(rows.length){
+      const auth=await open({...variables(state),...await credentials(state)},'secret:auth',rows[0].ciphertext);
+      const r=await fetch(state.apiUrl+'/api/auth/logout',{method:'POST',redirect:'manual',signal:AbortSignal.timeout(15000),headers:{'Content-Type':'application/json','X-Gestion-Sesion':'1',Cookie:'finanzas_refresh='+auth.cookie},body:'{}'});
+      if(!r.ok||!(await r.json()).success)throw new SetupError('No se pudo confirmar la revocacion; se conserva la sesion para revisarla.');
+      await execute(state,"DELETE FROM secrets WHERE name='auth';");
+    }
+    console.log('Sesion personal anterior retirada del servidor y D1. Archivo de eventos conservado; cada usuario mantiene su vinculacion en Kaptal.');return;
+  }
   if(command==='disconnect'){
+    if(state.multiuserEnabled)throw new SetupError('Cada usuario se desconecta desde Kaptal. Para mantenimiento global usa pause.');
     await maintenance(state);
     const rows=results(await execute(state,"SELECT ciphertext FROM secrets WHERE name='auth';"));
     if(rows.length){
@@ -190,12 +265,19 @@ async function main(){
     console.log('Sesion del Worker revocada; cola conservada. Desactiva tambien el webhook de Kapso.');return;
   }
   if(command==='retry-response'){
+    if(state.multiuserEnabled){
+      await relayMaintenance(state);
+      if(!argv.includes('--accept-duplicate-risk')||!/^[0-9a-f]{64}$/.test(option('--id')??''))throw new SetupError('Revisa la entrega en Kapso e indica --id y --accept-duplicate-risk.');
+      await execute(state,"UPDATE relay_events SET state='answered',next_attempt=0 WHERE id="+literal(option('--id'))+" AND state='sending';");
+      console.log('Respuesta preparada para revision; se verifica vinculacion antes de reenviar y no se repite el registro financiero.');return;
+    }
     await maintenance(state);
     if(!argv.includes('--accept-duplicate-risk')||!/^[-0-9a-f]{36}$/.test(option('--id')??''))throw new SetupError('Revisa la entrega en Kapso e indica --id y --accept-duplicate-risk.');
     await execute(state,"UPDATE events SET replied=0,next_attempt=0 WHERE key="+literal(option('--id'))+" AND replied=-1;");
     console.log('Respuesta preparada para revision/reintento; no se repite el registro financiero.');return;
   }
   if(command==='resume'){
+    if(state.multiuserEnabled)return resumeRelay(state);
     await maintenance(state);await localReceiverStopped();if(!state.migrated)throw new SetupError('Primero traslada la cola local.');
     const key=crypto.randomUUID(),env={...variables(state),...await credentials(state)};
     await execute(state,`INSERT INTO events(key,source,state,payload,received_at) VALUES(${literal(key)},'probe','probe',${literal(await seal(env,'event:'+key,{}))},${timestamp()});UPDATE channel SET paused=0 WHERE id=1 AND refresh_pending=0 AND EXISTS(SELECT 1 FROM secrets WHERE name='auth');`);
@@ -203,9 +285,13 @@ async function main(){
     console.log('Procesador habilitado. Espera la comprobacion de sesion y verifica /ready antes de cambiar Kapso.');return;
   }
   if(command==='status'){
+    if(state.multiuserEnabled){
+      const row=await relayState(state),counts=results(await execute(state,'SELECT state,count(*) AS total FROM relay_events GROUP BY state;'));
+      console.log(JSON.stringify({mode:'multiuser',paused:!!row.paused,events:counts}));return;
+    }
     const row=await channel(state);const counts=results(await execute(state,'SELECT state,replied,count(*) AS total FROM events GROUP BY state,replied;'));
     console.log(JSON.stringify({paused:!!row.paused,reconnectRequired:!!row.refresh_pending,sessionVerified:row.verified_at>0,pendingError:!!row.last_error,events:counts}));return;
   }
-  throw new SetupError('Usa init, deploy, connect, migrate, pause, resume, disconnect, retry-response o status.');
+  throw new SetupError('Usa init, deploy, connect, migrate, backend-env, prepare-multiuser, pause, resume, disconnect, retire-personal-session, retry-response o status.');
 }
 main().catch(error=>{console.error(error instanceof SetupError?error.message:'No se completo la operacion. Revisa configuracion, autorizacion y registros privados; no compartas secretos.');process.exitCode=1;});

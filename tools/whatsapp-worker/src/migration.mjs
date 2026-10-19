@@ -1,4 +1,8 @@
 /** Translate only the personal bridge's metadata; financial keys and dates stay intact. */
+export function hasLiveLegacyDrafts(context,audios,at){
+  return Number(context?.expires??0)>at||audios.some(audio=>Number(audio.audioExpires??0)>at);
+}
+
 export function importRow(row) {
   if (!/^[0-9a-f-]{36}$/.test(row.key) || !['whatsapp','whatsapp-chat','whatsapp-audio','codex'].includes(row.source)) throw new Error('Invalid queue row');
   if (![-2,-1,0,1].includes(Number(row.replied)) || !Number.isSafeInteger(Number(row.received_at??0))) throw new Error('Invalid queue metadata');

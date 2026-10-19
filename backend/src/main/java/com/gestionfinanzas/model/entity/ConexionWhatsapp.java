@@ -27,4 +27,11 @@ public class ConexionWhatsapp {
     private Instant verificada;
     private Instant revocada;
     @Column(nullable=false) private long generacion;
+    @Column(name="guardar_automaticamente",nullable=false) private boolean guardarAutomaticamente;
+    @Column(columnDefinition="text") private String contexto;
+    @Column(name="contexto_vence") private Instant contextoVence;
+    @Column(name="audio_texto",columnDefinition="text") private String audioTexto;
+    @Column(name="audio_codigo",length=8) private String audioCodigo;
+    @Column(name="audio_vence") private Instant audioVence;
+    @Column(name="audio_fecha") private java.time.LocalDate audioFecha;
 }

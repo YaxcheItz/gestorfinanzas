@@ -79,6 +79,7 @@ jwt:
 whatsapp:
   channel:
     enabled: ${WHATSAPP_CHANNEL_ENABLED:false}
+    runtime-enabled: ${WHATSAPP_CHANNEL_RUNTIME_ENABLED:false}
     bot-phone: ${WHATSAPP_CHANNEL_BOT_PHONE:}
     phone-number-id: ${WHATSAPP_CHANNEL_PHONE_NUMBER_ID:}
     webhook-secret: ${WHATSAPP_CHANNEL_WEBHOOK_SECRET:}
