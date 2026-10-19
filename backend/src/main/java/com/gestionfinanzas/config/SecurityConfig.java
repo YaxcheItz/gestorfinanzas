@@ -51,6 +51,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**", "/api/health", "/error").permitAll()
                 .requestMatchers("/api/notificaciones/whatsapp/verificar-pin").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.POST,"/api/canales/whatsapp/vinculacion/evento").permitAll()
                 // Enviar WhatsApp a un numero arbitrario o disparar la revision global de
                 // recordatorios son acciones de administracion: cualquier usuario registrado
                 // podia abusar de ellas para gastar creditos de Twilio o avisar a todos.

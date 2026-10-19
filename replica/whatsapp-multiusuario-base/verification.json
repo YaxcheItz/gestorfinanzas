@@ -1,0 +1,24 @@
+{
+  "date": "2026-10-19",
+  "branch": "mejoras/whatsapp-multiusuario-base",
+  "base": "origin/develop at 7c3e2ad",
+  "scope": "part 1A: account-owned phone verification and revocation; no financial delegation",
+  "postgres": {
+    "command": "mvnw -q verify",
+    "database": "isolated local PostgreSQL 17",
+    "migrations": "V1-V9",
+    "tests": 434,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "newTests": 18,
+    "concurrencyTestsWithSeparateTransactions": 3,
+    "build": "passed"
+  },
+  "h2": {"focusedHttpAndConfigurationTests": 15, "failures": 0, "errors": 0},
+  "regressionEvidence": "Before implementing the endpoints, 11 of the 12 initial HTTP cases failed; after implementation and added cases all passed.",
+  "diffCheck": "passed",
+  "production": {"deployed": false, "newFeatureEnabled": false, "personalWorkerHealth": 200, "personalWorkerReady": 200, "webhookChanged": false, "financialWritesByAgent": 0},
+  "remoteCI": "Check the current pull request for this branch; local evidence does not imply remote checks have passed.",
+  "next": ["review and merge part 1A", "part 1B: app connection UI and Worker transport", "restricted per-connection authorization and revocation", "versioned personal connection migration preserving keys and ciphertext", "two-user real test with eligible Kapso phones", "AI fallback, then Gmail and remaining master plan"]
+}

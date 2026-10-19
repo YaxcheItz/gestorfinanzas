@@ -6,3 +6,5 @@
 - Usa skills cuando aporten valor a la tarea; no ejecutes todas por el simple hecho de estar instaladas.
 - Comunica en español.
 - Trabaja cada etapa en una rama distinta, creada desde `develop` actualizado y comprobado contra el remoto. No implementes etapas nuevas directamente sobre `develop` ni reutilices la rama de una etapa anterior.
+- Al terminar cada parte, actualiza `docs/PLAN_MAESTRO_KAPTAL.md` y `docs/ESTADO_SESION.md` con lo realizado, las comprobaciones y los pendientes. Mantén sincronizado el plan local si existe.
+- Al finalizar cada tarea, incluye un texto breve listo para pegar en un nuevo chat, indicando la etapa siguiente y los documentos que debe leer.
