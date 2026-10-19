@@ -26,14 +26,22 @@ const python = process.platform === 'win32' ? 'python' : 'python3';
 const readJson = async path => JSON.parse((await readFile(path,'utf8')).replace(/^\uFEFF/,''));
 const saveJson = (path,data) => writeFile(path,JSON.stringify(data,null,2)+'\n',{mode:0o600});
 
-async function cli(args,{input, json=false}={}) {
-  const result=spawnSync(process.execPath,[join(here,'node_modules/wrangler/bin/wrangler.js'),...args],{
-    cwd:here,encoding:'utf8',input,maxBuffer:32*1024*1024,
-    env:{...process.env,WRANGLER_SEND_METRICS:'false',CI:'true'}
-  });
-  await writeFile(join(directory,'wrangler-last.private.log'),(result.stdout??'')+(result.stderr??''),{mode:0o600});
-  if(result.status!==0)throw new SetupError('Wrangler no completo la operacion. Revisa el registro privado, sin compartirlo completo.');
-  return json?parseCliJson(result.stdout):result.stdout;
+async function cli(args,{input, json=false, retries=3}={}) {
+  for(let attempt=1; attempt<=retries; attempt++) {
+    const result=spawnSync(process.execPath,[join(here,'node_modules/wrangler/bin/wrangler.js'),...args],{
+      cwd:here,encoding:'utf8',input,maxBuffer:32*1024*1024,
+      env:{...process.env,WRANGLER_SEND_METRICS:'false',CI:'true'}
+    });
+    await writeFile(join(directory,'wrangler-last.private.log'),(result.stdout??'')+(result.stderr??''),{mode:0o600});
+    if(result.status===0) {
+      return json?parseCliJson(result.stdout):result.stdout;
+    }
+    if(attempt < retries) {
+      await new Promise(r => setTimeout(r, 2000));
+    } else {
+      throw new SetupError('Wrangler no completo la operacion. Revisa el registro privado, sin compartirlo completo.');
+    }
+  }
 }
 
 async function config(state) {
@@ -55,11 +63,7 @@ async function credentials(state) {
   return {SESSION_ENCRYPTION_KEY:state.encryptionKey,KAPSO_API_KEY:secrets.KAPSO_API_KEY,KAPSO_WEBHOOK_SECRET:secrets.KAPSO_WEBHOOK_SECRET};
 }
 async function execute(state,text) {
-  // Remote --file imports return a summary, not SELECT rows. Read-only queries
-  // contain no credentials and must use the query endpoint (--command).
-  if(/^SELECT\b/i.test(text.trim()))return cli(['d1','execute',state.name,'--remote','--yes','--json','--command',text,'--config',privateConfig],{json:true});
-  const file=join(directory,'operation.private.sql');await writeFile(file,text,{mode:0o600});
-  return cli(['d1','execute',state.name,'--remote','--yes','--json','--file',file,'--config',privateConfig],{json:true});
+  return cli(['d1','execute',state.name,'--remote','--yes','--json','--command',text,'--config',privateConfig],{json:true});
 }
 const results = output => output.flatMap(x=>x.results??[]);
 async function channel(state) {
