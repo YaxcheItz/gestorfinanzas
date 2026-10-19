@@ -5,7 +5,7 @@
 - Integración completada: PR #87 (base 1A) y PR #88 (runtime 1B) integrados en `develop` y pasados a `main` mediante PR #89. Backend desplegado en Render con variables de canal configuradas; `/api/canales/whatsapp/disponibilidad` responde `data: true`.
 - Activación en Cloudflare: Base D1 respaldada en `.local/canales-cloudflare/d1.pre-multiuser.1792434489673.private.sql`, migración D1 0002 aplicada y Worker desplegado en modo multiusuario activo (`paused: false`).
 - Verificación operativa: `/health` 200 y `/ready` 200 confirmados en el Worker remoto. 39 pruebas del Worker ejecutadas y pasadas al 100%. `setup.mjs` optimizado con reintentos para conexiones con latencia y uso síncrono de `--command`.
-- Rama actual: `mejoras/whatsapp-multiusuario-activacion`, creada desde `develop` actualizado (`e837bd1`).
+- Rama actual: `mejoras/whatsapp-multiusuario-activacion`, registrada en [PR #90](https://github.com/YaxcheItz/gestorfinanzas/pull/90).
 - Siguiente paso: Probar con dos personas reales:
   1. El propietario vincula su número desde Configuración en la app (`https://kaptalgf.vercel.app/`) y envía el código generado al bot de WhatsApp (+56 9 2040 3095).
   2. Confirmar estado «Conectado» y probar una consulta de saldo propia.

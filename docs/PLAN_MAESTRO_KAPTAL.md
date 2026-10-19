@@ -26,7 +26,7 @@ Integración completada mediante [PR #87](https://github.com/YaxcheItz/gestorfin
 - Backend: desplegado en Render con variables `WHATSAPP_CHANNEL_ENABLED=true`, `WHATSAPP_CHANNEL_RUNTIME_ENABLED=true`, `BOT_PHONE=+56920403095`, `PHONE_NUMBER_ID=597907523413541` y secreto verificado; disponibilidad activa comprobada en `/api/canales/whatsapp/disponibilidad` (`data: true`).
 - Worker Cloudflare: respaldada base D1 a `.local/canales-cloudflare/d1.pre-multiuser.1792434489673.private.sql`, aplicada migración 0002, desplegado y reanudado en modo multiusuario activo (`paused: false`). `/health` y `/ready` responden `200 OK` (`{"ok": true}`).
 - Pruebas: 39 pruebas del Worker pasadas al 100%. `setup.mjs` optimizado con reintentos para conexiones con latencia y uso síncrono de `--command`.
-- Rama actual: `mejoras/whatsapp-multiusuario-activacion`.
+- Rama actual: `mejoras/whatsapp-multiusuario-activacion`, registrada en [PR #90](https://github.com/YaxcheItz/gestorfinanzas/pull/90).
 - Siguiente paso: Probar con dos personas reales desde la app (`https://kaptalgf.vercel.app/`), retirar la sesión personal antigua con `setup.mjs retire-personal-session`, y continuar con la Etapa 2 (IA rápida de respaldo).
 - Texto para el siguiente chat: «Continua Kaptal desde AGENTS.md, ESTADO_SESION.md y PLAN_MAESTRO_KAPTAL.md. WhatsApp multiusuario ya esta desplegado y activo en Cloudflare Workers con /health y /ready en 200; backend disponible en produccion. Siguiente: probar vinculacion y consulta de dos personas reales (propietario y segunda cuenta) desde la app, luego ejecutar retire-personal-session y continuar con la Etapa 2 (IA de respaldo rapida). Conserva mi autoria exclusiva y actualiza los MD al cerrar cada paso.»
 
