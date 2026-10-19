@@ -1,0 +1,13 @@
+{
+  "date": "2026-10-18",
+  "branch": "mejoras/whatsapp-cloudflare",
+  "base": "1736526d3e5dff0e384f1344e864da7f29d43ee2",
+  "dependency": "PR #84",
+  "workerTests": {"passed": 27, "database": "Miniflare D1"},
+  "apiE2E": {"passed": 1, "database": "isolated PostgreSQL", "api": "real Kaptal", "provider": "mocked Kapso", "persistentRestart": true, "lostAcknowledgement": true},
+  "audit": {"knownVulnerabilities": 0, "scope": "worker and development tooling"},
+  "dryRun": "passed",
+  "remote": {"workerDeployed": true, "d1Created": true, "paused": true, "sessionVerified": false, "webhookSwitched": false, "https": "initial TLS handshake failure; requires verification"},
+  "personalFinancialWritesByAgent": 0,
+  "pending": ["independent Google authorization", "public HTTPS check", "stop only the local receiver and back up queue", "migrate queue preserving keys", "resume and verify owner", "update existing Kapso webhook", "owner-selected real text and audio tests", "remote CI"]
+}

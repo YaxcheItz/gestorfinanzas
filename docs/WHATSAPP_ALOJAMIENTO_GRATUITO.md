@@ -1,5 +1,7 @@
 # WhatsApp sin la PC: alternativa gratuita
 
+Actualizacion 2026-10-18: el propietario no pudo completar el registro de Oracle. La opcion vigente es Cloudflare Workers + D1, con receptor adaptado y almacenamiento cifrado; ver [WHATSAPP_CLOUDFLARE.md](WHATSAPP_CLOUDFLARE.md). La comparacion siguiente conserva la investigacion del contenedor Python, no describe el estado actual de activacion. No se contrata ningun plan de pago.
+
 Preferencia del propietario: alojamiento sin coste. Investigacion oficial del 2026-10-18; revisar los limites mostrados en la cuenta al crear recursos. No se ha creado ninguna cuenta, contratado nada ni movido el webhook.
 
 ## Resultado

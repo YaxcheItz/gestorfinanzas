@@ -14,6 +14,24 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  whatsapp-worker:
+    name: WhatsApp Cloudflare (D1 + contratos)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tools/whatsapp-worker
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: tools/whatsapp-worker/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm run check
+        env:
+          WRANGLER_SEND_METRICS: 'false'
   canales:
     name: Canales personales (Python)
     runs-on: ubuntu-latest
@@ -179,6 +197,9 @@ jobs:
         run: |
           npm ci
           npx playwright install --with-deps chromium
+      - name: Instalar pruebas del Worker
+        working-directory: tools/whatsapp-worker
+        run: npm ci
       - name: Flujos con API real
         working-directory: frontend
         env:

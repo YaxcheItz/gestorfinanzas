@@ -6,6 +6,8 @@ Prioridad vigente (2026-10-18): cerrar WhatsApp antes de Gmail por peticion del 
 
 ## Reglas para todas las etapas
 
+Actualizacion de hosting: Oracle no permitio el registro; se prepara el receptor personal en Workers + D1 dentro de `mejoras/whatsapp-cloudflare`. Seguir `WHATSAPP_CLOUDFLARE.md`: desplegar pausado, autorizar Google con sesion propia, trasladar cola sin duplicar, cambiar el webhook existente y validar WhatsApp real antes de Gmail. No cambiar Angular/Spring/PostgreSQL por este alojamiento del canal.
+
 Vinculacion Google: el propietario entra con Google, por lo que el puente debe abrir Kaptal y usar consentimiento/codigo de un solo uso, no pedirle una contrasena. Etapa `mejoras/whatsapp-vinculacion-google`, dependiente del PR #80. Ver `WHATSAPP_VINCULACION_GOOGLE.md`. Publicar frontend y backend antes de la prueba personal; despues siguen webhook HTTPS, sandbox, Gmail y asistente con evidencias.
 
 Ampliacion vigente: `mejoras/whatsapp-cuentas-consultas` depende del PR #78. Anade consultas deterministas y registro con todas las cuentas del propietario; ver `WHATSAPP_CUENTAS_CONSULTAS.md`. No marca completada la etapa 4 de asistente avanzado ni la activacion del proveedor: siguen pendientes publicacion del backend, login y prueba HTTPS real.
