@@ -1,5 +1,14 @@
 # Estado para retomar la sesión
 
+## Etapa vigente: WhatsApp multiusuario, parte 1A (2026-10-19)
+
+- El propietario confirmo que WhatsApp personal funciona y pidio altas desde un boton en la app, luego IA rapida de respaldo y despues Gmail/resto del plan. Plan completo versionado en `PLAN_MAESTRO_KAPTAL.md`; debe actualizarse al cerrar cada parte. Al final de cada tarea entregar texto para retomar en un nuevo chat; preferencia incorporada a `AGENTS.md`.
+- Fetch comprobado: `origin/develop = 7c3e2ad` (#85), `origin/main = c077b5e` (#86). Rama nueva `mejoras/whatsapp-multiusuario-base` desde develop remoto. Se conserva la rama/worktree anterior; no volver a usarla para esta etapa.
+- Parte 1A implementa contrato/modelo y prueba de control del telefono: API autenticada por propietario, desafio de 192 bits con solo hash persistido, 10 minutos, enlace wa.me, callback HMAC sobre bytes originales, exclusividad al verificar y desconexion/generacion revocable. Migracion aditiva V9 y borrado en cascada. Ver `WHATSAPP_MULTIUSUARIO.md`.
+- La prueba de telefono NO emite una sesion financiera ni habilita por si sola el runtime multiusuario. Feature deshabilitada por defecto. No se cambia configuracion, webhook, credenciales ni despliegue personal. Health/ready remoto 200 comprobados durante esta entrega.
+- Cierre local: 434 pruebas PostgreSQL correctas, sin fallos ni omisiones, incluidas 18 nuevas (14 HTTP/persistencia, 3 carreras con transacciones separadas y 1 configuracion deshabilitada). `mvnw verify` correcto sobre esquema aislado con V1-V9. Las 15 HTTP/configuracion tambien pasaron en H2. Se actualizaron expectativas de V8 a V9 y el fallo controlado de migracion a V10; no se modificaron migraciones publicadas. Evidencia en `replica/whatsapp-multiusuario-base/verification.json`. CI remoto: consultar PR de la rama; no asumirlo por la evidencia local.
+- Siguiente entrega, tras revisar/integrar esta base: UI de vinculacion y Worker por conexion con autorizacion limitada, revocacion y migracion conservando UUID/cifrado de la conexion personal; dos usuarios reales antes de IA/Gmail. No mandar consultas ajenas con la cookie personal ni mostrar VERIFICADA como servicio financiero completo.
+
 ## Etapa vigente: WhatsApp en Cloudflare Workers + D1 (2026-10-18)
 
 - Oracle no permitio completar el registro del propietario. Cloudflare autorizado mediante Wrangler con permisos acotados; no habilitar plan de pago ni desplegar la propuesta separada de Containers.

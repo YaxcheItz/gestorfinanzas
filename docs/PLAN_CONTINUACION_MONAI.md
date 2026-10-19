@@ -1,5 +1,7 @@
 # Plan de continuación de Kaptal
 
+Actualizacion vigente 2026-10-19: el plan completo y su seguimiento estan en [PLAN_MAESTRO_KAPTAL.md](PLAN_MAESTRO_KAPTAL.md). WhatsApp personal ya funciona en Cloudflare; el propietario adelanto WhatsApp multiusuario desde la app y despues IA de respaldo, antes de Gmail y el asistente avanzado. La primera entrega es contrato/modelo/verificacion del telefono (`WHATSAPP_MULTIUSUARIO.md`); UI/runtime/migracion son la siguiente parte. Las referencias posteriores a WhatsApp sin activar, Oracle o entrega #85 pendiente son historicas.
+
 Complementa `PLAN_UI_MONAI.md` y `replica/monai-kesef/recon.md`. Es la secuencia para retomar el proyecto sin repetir lo implementado. El estado vigente al inicio de `ESTADO_SESION.md` prevalece sobre resultados históricos. No confundir una pantalla diseñada con una integración operativa.
 
 Prioridad vigente (2026-10-18): cerrar WhatsApp antes de Gmail por peticion del propietario. Voz confirmada, recuperacion y alojamiento portable en `mejoras/whatsapp-cierre-operativo`; preferencia de hosting gratuito, ver `WHATSAPP_ALOJAMIENTO_GRATUITO.md`. No marcar cerrado hasta prueba personal y receptor persistente remoto comprobados.
