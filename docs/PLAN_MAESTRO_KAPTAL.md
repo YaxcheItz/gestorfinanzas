@@ -11,7 +11,7 @@ El propietario pidio actualizar este MD al terminar cada parte y recibir siempre
 | WhatsApp personal alojado | Funciona; confirmado por propietario | Cloudflare activo. PR #84/#85 integrados en develop y main mediante #86. |
 | Preparacion de la etapa siguiente | Comprobada | `origin/develop = 7c3e2ad`; rama nueva `mejoras/whatsapp-multiusuario-base`. Receptor personal health/ready 200 durante esta entrega. |
 | 1A: identidad y prueba del telefono | Completada en rama; revisar/integrar PR | API propia alta/estado/desconexion, desafio unico, HMAC Kapso y migracion V9. 434 pruebas PostgreSQL correctas, incluidas 18 nuevas; 15 pruebas nuevas H2 correctas. Ver `WHATSAPP_MULTIUSUARIO.md`. No emite permisos financieros ni cambia el Worker desplegado. |
-| 1B: interfaz y runtime multiusuario | Implementada y validada; activacion pendiente | Rama `mejoras/whatsapp-multiusuario-runtime`, dependiente de PR #87. UI, procesamiento aislado, cola por telefono y preparador de migracion implementados. 444 pruebas PostgreSQL, 332 frontend y 39 Worker correctas. 23 E2E completos con API/PostgreSQL correctos. Publicacion/CI: consultar PR de la rama. No desplegada. |
+| 1B: interfaz y runtime multiusuario | Integrada y desplegada; activa en Cloudflare | PR #87 y #88 integrados en develop y main (#89). Backend en Render con canal habilitado. D1 respaldada y migrada. Worker multiusuario desplegado y activo (`/health` y `/ready` 200). 39 pruebas pasadas. Pendiente prueba con dos personas reales. |
 | 2: IA de respaldo | Pendiente | Reutilizar Groq/AiProvider; reglas primero y medir latencia/precision/coste. |
 | 3 y posteriores | Pendientes segun alcance original | Voz completa, Gmail piloto/multiusuario, conciliacion, asistente con evidencias, Android y demas etapas de este plan. |
 
@@ -19,17 +19,16 @@ No marcar la parte multiusuario completa por haber terminado 1A. No habilitar el
 
 Evidencia de 1A: `replica/whatsapp-multiusuario-base/verification.json`. Base de datos aislada con migraciones V1-V9; build `mvnw verify` correcto. No se desplego V9 ni se habilito la funcion en produccion. CI remoto: comprobar el PR de la rama, no asumir resultado por las pruebas locales.
 
-## Cierre local de 1B (19 de octubre de 2026)
+## Activación de WhatsApp multiusuario (19 de octubre de 2026)
 
-Publicada en [PR #88](https://github.com/YaxcheItz/gestorfinanzas/pull/88), dependiente de [#87](https://github.com/YaxcheItz/gestorfinanzas/pull/87). Implementacion `22d434b` / `fce7afc`, autoria exclusiva del propietario. Checks remotos completados con éxito (14/14 checks verdes en #87 y 14/14 checks verdes en #88): listos para integrar. Ningun despliegue/migracion de produccion ejecutado.
+Integración completada mediante [PR #87](https://github.com/YaxcheItz/gestorfinanzas/pull/87) y [PR #88](https://github.com/YaxcheItz/gestorfinanzas/pull/88) en `develop` y `main` (#89).
 
-- Implementado: conectar desde Configuracion con consentimiento, prueba por WhatsApp, estado y desconexion; autoguardado optativo. Nunca presentar solo la verificacion del telefono como servicio operativo.
-- Backend: interpreta con reglas existentes bajo el propietario verificado; contexto y eventos por conexion/generacion, transaccion contable e idempotencia. V10 aditiva; V9 intacta.
-- Worker: cola cifrada y lease por telefono; conserva bytes y firma originales, firma adicional de recepcion, autorizacion antes de responder y sin cookie personal en modo multiusuario. Un fallo no bloquea a otras personas.
-- Preparador: modo nuevo optativo, respaldo privado D1, pausa, backend disponible y rechazo de operaciones/borradores/audios vigentes; revalidacion antes y despues del cambio. Preserva archivo personal y retira su sesion separadamente. Ninguna migracion/despliegue de produccion ejecutados en esta parte.
-- Comprobado localmente: 444 pruebas PostgreSQL sin omisiones, 332 frontend, 39 Worker, build frontend y dry-run Worker correctos. V10 y 23 E2E completos con API/PostgreSQL reales correctos, incluidos dos propietarios y reinicio. Diff y sintaxis correctos; preparador revisado y pruebas de borradores/cifrado/archivo correctas, sin ejecutarlo contra produccion. CI remoto: todos los checks verdes en GitHub Actions para #87 y #88. Worker personal health/ready 200 comprobados con Node; urllib recibio 403 del acceso HTTP, sin cambios operativos.
-- Siguiente: integrar primero el PR #87 (base 1A) en develop y despues el PR #88 (runtime 1B). Publicar backend/frontend y configurar privadamente las variables del canal; activar Cloudflare con respaldo y probar dos personas reales segun `WHATSAPP_MULTIUSUARIO.md`. Preservar el bot personal hasta la migracion. IA de respaldo, voz y Gmail siguen despues.
-- Texto para el siguiente chat: «Continua Kaptal desde AGENTS.md, ESTADO_SESION.md y PLAN_MAESTRO_KAPTAL.md. La parte 1B esta implementada y validada en mejoras/whatsapp-multiusuario-runtime (PR #88) y la base 1A en PR #87, ambos con CI remoto verde (14/14). Integra primero #87 en develop y despues #88. Siguiente: publicar backend/frontend y activar WhatsApp multiusuario con respaldo, variables privadas y dos personas reales, sin perder el bot personal. No dar por hecho el despliegue. Despues IA de respaldo, voz, Gmail y resto del plan. Conserva mi autoria exclusiva y actualiza los MD y el texto de continuidad al cerrar cada parte.»
+- Backend: desplegado en Render con variables `WHATSAPP_CHANNEL_ENABLED=true`, `WHATSAPP_CHANNEL_RUNTIME_ENABLED=true`, `BOT_PHONE=+56920403095`, `PHONE_NUMBER_ID=597907523413541` y secreto verificado; disponibilidad activa comprobada en `/api/canales/whatsapp/disponibilidad` (`data: true`).
+- Worker Cloudflare: respaldada base D1 a `.local/canales-cloudflare/d1.pre-multiuser.1792434489673.private.sql`, aplicada migración 0002, desplegado y reanudado en modo multiusuario activo (`paused: false`). `/health` y `/ready` responden `200 OK` (`{"ok": true}`).
+- Pruebas: 39 pruebas del Worker pasadas al 100%. `setup.mjs` optimizado con reintentos para conexiones con latencia y uso síncrono de `--command`.
+- Rama actual: `mejoras/whatsapp-multiusuario-activacion`.
+- Siguiente paso: Probar con dos personas reales desde la app (`https://kaptalgf.vercel.app/`), retirar la sesión personal antigua con `setup.mjs retire-personal-session`, y continuar con la Etapa 2 (IA rápida de respaldo).
+- Texto para el siguiente chat: «Continua Kaptal desde AGENTS.md, ESTADO_SESION.md y PLAN_MAESTRO_KAPTAL.md. WhatsApp multiusuario ya esta desplegado y activo en Cloudflare Workers con /health y /ready en 200; backend disponible en produccion. Siguiente: probar vinculacion y consulta de dos personas reales (propietario y segunda cuenta) desde la app, luego ejecutar retire-personal-session y continuar con la Etapa 2 (IA de respaldo rapida). Conserva mi autoria exclusiva y actualiza los MD al cerrar cada paso.»
 
 ## 1. Objetivo y prioridad del propietario
 
