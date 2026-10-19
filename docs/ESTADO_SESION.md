@@ -1,6 +1,17 @@
 # Estado para retomar la sesión
 
-## Etapa vigente: cierre de WhatsApp antes de Gmail (2026-10-18)
+## Etapa vigente: WhatsApp en Cloudflare Workers + D1 (2026-10-18)
+
+- Oracle no permitio completar el registro del propietario. Cloudflare autorizado mediante Wrangler con permisos acotados; no habilitar plan de pago ni desplegar la propuesta separada de Containers.
+- Rama nueva `mejoras/whatsapp-cloudflare`, worktree `.local/whatsapp-cloudflare-worktree`, creada desde `origin/develop` comprobado (`1736526`) y con los commits de PR #84 como dependencia. No modificar el checkout principal que ejecuta el receptor local.
+- Receptor equivalente en `tools/whatsapp-worker/`: cola D1 cifrada, propietario unico, firma, lease, cron, claves compatibles con Python, API autenticada e idempotente, audio con confirmacion y parada ante rotacion incierta. Setup privado en `.local/canales-cloudflare/`; no imprimir sus secretos ni copiar la cookie activa de Python.
+- Validado: pruebas D1/contratos, audit sin avisos conocidos, dry-run y E2E PostgreSQL/API reales con propietario sintetico (reinicio y acuse financiero perdido sin duplicar). El saldo inicial de las cuentas es una operacion legitima y se excluye del conteo de gastos nuevos de esa prueba.
+- Activacion remota completada: propietario autorizo Google con sesion independiente, respaldo privado consistente de SQLite/configuracion, receptor local identificado y detenido, 10 eventos originales trasladados sin cambiar claves ni respuestas. Prueba de perfil remota terminada sin dinero ni mensajes; procesador activo, sesion verificada y sin errores. HTTPS ya responde: health/ready 200, firma ausente 401, administracion 404.
+- El MISMO webhook de Kapso fue actualizado y verificado por GET: activo, URL permanente del Worker y secreto conservado. Configuracion y respuesta anterior respaldadas privadamente. El tunel temporal ya no participa; el propietario puede cerrarlo. No volver a iniciar el receptor Python junto al Worker ni volver a vincular sin necesidad.
+- PR #85 abierto con autoria exclusiva del propietario; los 14 checks remotos pasaron antes del cambio operativo. Depende de PR #84, que seguia abierto al comprobarlo. Pendiente que el propietario confirme una consulta, gasto autentico y nota de voz reales desde WhatsApp. No se crearon movimientos reales de prueba por el agente. Estado/URL/identificadores exclusivamente en `.local/canales-cloudflare/` y `.local/canales/`.
+- Guia: `WHATSAPP_CLOUDFLARE.md`. Tras consulta, gasto y voz reales elegidos por el propietario, cerrar WhatsApp y seguir con Gmail y el plan previo. La preparacion no equivale a integracion multiusuario.
+
+## Etapa anterior: cierre operativo portable de WhatsApp (2026-10-18)
 
 - PR #83 integrado; `develop == origin/develop == 1736526` comprobado mediante fetch. Nueva rama `mejoras/whatsapp-cierre-operativo`. El propietario pide terminar WhatsApp antes de Gmail y enviara el gasto autentico al bot cuando este listo; no inventar movimientos reales.
 - Voz: transcripcion firmada de Kapso o consulta autenticada al mensaje, sin descargar medios. Confirmacion explicita ligada al audio, 15 minutos, consumo unico y cancelacion. Si no hay transcripcion en dos minutos, alternativa por texto. Disponibilidad real depende de Kapso/sandbox y sigue por comprobar con el propietario.
