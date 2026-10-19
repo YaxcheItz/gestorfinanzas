@@ -26,6 +26,10 @@ jobs:
         run: python -m unittest discover -s tools/canales -p 'test_*.py' -v
       - name: Comprobar sintaxis
         run: python -m compileall -q tools/canales
+      - name: Probar receptor persistente sin credenciales reales
+        run: |
+          docker build -t kaptal-whatsapp:test tools/canales
+          python tools/canales/smoke_container.py
 
   backend:
     name: Backend (build + tests)

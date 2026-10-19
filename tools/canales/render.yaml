@@ -1,0 +1,23 @@
+# Separate, opt-in service: creating this Blueprint provisions paid resources.
+services:
+  - type: web
+    name: kaptal-whatsapp
+    runtime: docker
+    dockerfilePath: ./tools/canales/Dockerfile
+    dockerContext: ./tools/canales
+    branch: main
+    autoDeployTrigger: "off"
+    plan: starter
+    region: oregon
+    healthCheckPath: /health
+    disk:
+      name: whatsapp-state
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: KAPTAL_BRIDGE_CONFIG
+        sync: false
+      - key: KAPSO_API_KEY
+        sync: false
+      - key: KAPSO_WEBHOOK_SECRET
+        sync: false

@@ -12,8 +12,8 @@ test('WhatsApp consulta todas las cuentas y pide la cuenta antes de registrar si
   }
   const {stdout}=await promisify(execFile)(process.platform==='win32'?'python':'python3',['../tools/canales/e2e_whatsapp.py'],{env:{...process.env,KAPTAL_E2E_FIXTURE:JSON.stringify({apiUrl:testInfo.project.use.baseURL,ownerId:auth.id,token:auth.token})}});
   const result=JSON.parse(stdout.trim());
-  expect(result).toEqual({queriesReadOnly:true,explicitAccountSavedOnce:true,duplicatePending:true,currenciesSeparated:true,providerSendMocked:true});
+  expect(result).toEqual({queriesReadOnly:true,explicitAccountSavedOnce:true,duplicatePending:true,currenciesSeparated:true,providerSendMocked:true,audioConfirmedOnce:true,lostAcknowledgementRecovered:true});
   const cuentas=(await (await request.get('/api/cuentas',{headers})).json()).data;
-  expect(cuentas.find((c:{nombre:string})=>c.nombre==='Nu prueba').saldoActual).toBe(975);
+  expect(cuentas.find((c:{nombre:string})=>c.nombre==='Nu prueba').saldoActual).toBe(968);
   expect(cuentas.find((c:{nombre:string})=>c.nombre==='Dolares prueba').saldoActual).toBe(20);
 });

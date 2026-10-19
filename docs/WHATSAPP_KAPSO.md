@@ -1,5 +1,7 @@
 # WhatsApp personal con Kapso
 
+Operacion actual y notas de voz: ver `WHATSAPP_OPERACION.md` y `WHATSAPP_ALOJAMIENTO_GRATUITO.md`. Las referencias de esta guia a falta de conexion/transcripcion describen la preparacion inicial; el estado vigente esta en `ESTADO_SESION.md`.
+
 Ampliacion posterior: el usuario eligio todas sus cuentas en lugar de una cuenta fija. Ver `WHATSAPP_CUENTAS_CONSULTAS.md` para `allAccounts`, consultas, borrador y vinculacion con Kaptal publicado. Los pasos de numero, firma y HTTPS de esta guia siguen aplicando; la configuracion manual de `accounts` solo corresponde al modo anterior.
 
 Etapa `mejoras/whatsapp-kapso`, desde `develop == origin/develop == a31d95e` comprobado mediante fetch. La bandeja financiera ya está integrada en develop. El usuario activo un sandbox; su numero se verifico mediante GET autenticado sin enviar mensajes. Los datos privados quedan fuera de Git. Falta conectar la sesion de Kaptal publicado, elegir cuenta/lista y preparar HTTPS; no hay prueba de entrega real todavia.

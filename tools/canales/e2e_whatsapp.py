@@ -111,6 +111,57 @@ def main():
                 ]
                 assert len(deliveries) == 5
                 assert all(c.args[1]["to"] == "5215555555555" for c in deliveries)
+
+            audio = json.dumps(
+                {
+                    "phone_number_id": "synthetic-bot",
+                    "message": {
+                        "id": "audio",
+                        "timestamp": str(int(datetime.now().timestamp())),
+                        "type": "audio",
+                        "from": "5215555555555",
+                        "kapso": {
+                            "direction": "inbound",
+                            "transcript": {"text": "Gaste 7 en cafe con Nu prueba"},
+                        },
+                    },
+                }
+            ).encode()
+            bridge.whatsapp(
+                audio, hmac.new(b"x" * 32, audio, hashlib.sha256).hexdigest()
+            )
+            bridge.process_audio()
+            assert bridge.flush() == 0 and count() == 1
+            audio_key = bridge.db.execute(
+                "SELECT key FROM events WHERE source='whatsapp-audio'"
+            ).fetchone()[0]
+            original_api = bridge.api
+
+            def lost_ack(path, *args, **kwargs):
+                result = original_api(path, *args, **kwargs)
+                if path.endswith("/confirmar"):
+                    raise OSError("Synthetic lost acknowledgement after server commit")
+                return result
+
+            bridge.api = lost_ack
+            try:
+                message("confirm-audio", "confirmar audio " + audio_key[:8])
+                raise AssertionError("Expected interrupted acknowledgement")
+            except OSError:
+                pass
+            bridge.db.close()
+            bridge = Bridge(config, str(Path(directory) / "queue.sqlite"))
+            bridge.process_chats()
+            bridge.flush()
+            assert count() == 2
+            assert (
+                message("confirm-audio", "confirmar audio " + audio_key[:8]) == 0
+                and count() == 2
+            )
+            assert (
+                message("confirm-again", "confirmar audio " + audio_key[:8]) == 0
+                and count() == 2
+            )
             print(
                 json.dumps(
                     {
@@ -119,6 +170,8 @@ def main():
                         "duplicatePending": True,
                         "currenciesSeparated": True,
                         "providerSendMocked": True,
+                        "audioConfirmedOnce": True,
+                        "lostAcknowledgementRecovered": True,
                     }
                 )
             )
