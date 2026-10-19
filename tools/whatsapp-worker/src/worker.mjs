@@ -1,3 +1,4 @@
+import {relayFetch,drainRelay} from './relay.mjs';
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 const MAX_BODY = 65536;
@@ -314,6 +315,7 @@ export async function drain(env) {
 
 export default {
   async fetch(request, env, ctx) {
+    if(env.MULTIUSER_ENABLED==='true')return relayFetch(request,env,ctx,eventKey);
     const url = new URL(request.url);
     try {
       if (request.method === 'GET' && url.pathname === '/health') return Response.json({ok: true}, {headers: {'Cache-Control': 'no-store'}});
@@ -330,5 +332,5 @@ export default {
       return new Response(null, {status});
     } catch { return new Response(null, {status: 503}); }
   },
-  async scheduled(_controller, env, ctx) { ctx.waitUntil(drain(env).catch(() => {})); }
+  async scheduled(_controller, env, ctx) { ctx.waitUntil((env.MULTIUSER_ENABLED==='true'?drainRelay(env):drain(env)).catch(() => {})); }
 };

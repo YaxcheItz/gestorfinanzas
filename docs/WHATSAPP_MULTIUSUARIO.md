@@ -41,6 +41,7 @@ Por defecto esta **deshabilitado**. Las variables del backend son:
 
 ```dotenv
 WHATSAPP_CHANNEL_ENABLED=false
+WHATSAPP_CHANNEL_RUNTIME_ENABLED=false
 WHATSAPP_CHANNEL_BOT_PHONE=
 WHATSAPP_CHANNEL_PHONE_NUMBER_ID=
 WHATSAPP_CHANNEL_WEBHOOK_SECRET=
@@ -63,3 +64,37 @@ No habilitar en produccion hasta integrar UI, transporte Worker, permisos financ
 Las pruebas incluyen HTTP autenticado, persistencia y aislamiento, consumo/expiracion, HMAC, bot/remitente/fecha incorrectos, cuerpo limitado, consentimiento, reemision, liberacion, borrado en cascada y carreras con transacciones separadas. Registrar resultados efectivos en `ESTADO_SESION.md` y `replica/whatsapp-multiusuario-base/verification.json`; no deducirlos de pruebas de la entrega personal anterior.
 
 Fuentes: [firma Kapso](https://docs.kapso.ai/docs/platform/webhooks/security), [bloqueos Spring Data JPA](https://docs.spring.io/spring-data/jpa/reference/jpa/locking.html).
+
+## Parte 1B: interfaz y procesamiento aislado
+
+La rama `mejoras/whatsapp-multiusuario-runtime` incorpora la base del PR #87; integrar primero ese PR. La interfaz sustituye el PIN anterior para consultas y captura por un enlace temporal: numero internacional, consentimiento, autoguardado optativo, abrir WhatsApp, comprobar estado y desconectar. Los recordatorios anteriores permanecen separados.
+
+`VERIFICADA` solo se muestra como «Conectado» si el backend habilita tambien `WHATSAPP_CHANNEL_RUNTIME_ENABLED`. Este indicador expresa configuracion del backend, no una prueba de entrega del proveedor; comprobar `/ready` y una consulta real al activar. El codigo/enlace solo existe en memoria de la pantalla; cerrar exige generar otro tras el tiempo de espera.
+
+V10 agrega preferencias, contexto con caducidad y eventos procesados. Cada evento financiero y su respuesta se confirman en la misma transaccion PostgreSQL. Repetir un mensaje devuelve el resultado congelado; otra compra parecida queda en Avisos. El propietario se deriva del telefono verificado, nunca de un identificador elegido en el mensaje. Las consultas reutilizan las reglas existentes; no hay LLM nuevo en esta entrega.
+
+El Worker multiusuario transporta el cuerpo original cifrado en D1, junto con su firma Kapso. Firma tambien la primera recepcion (`kaptal-relay-v1`, fecha en milisegundos y cuerpo) usando el secreto existente. El backend comprueba ambas firmas y rechaza mensajes recibidos antes de la vinculacion actual: una cola antigua no se aplica al nuevo propietario del mismo telefono. No se emiten JWT generales ni se usa la cookie personal.
+
+Una cola y lease por telefono mantienen orden sin bloquear a otras personas. Antes de responder, el backend vuelve a comprobar conexion y generacion. Una desconexion posterior a esa comprobacion no puede retirar un mensaje ya enviado al proveedor. El estado `sending` se persiste antes del envio; si el acuse es incierto, no se reenvia automaticamente. Revisarlo en Kapso antes de un reintento administrativo expreso.
+
+Audio: si el evento firmado ya contiene transcripcion, requiere confirmacion de un uso dentro de 15 minutos y del mismo dia financiero. Si falta transcripcion, se solicita texto; la consulta tardia de transcripciones del modo personal no esta incorporada todavia a este runtime. No se descargan medios ni URLs del usuario.
+
+### Activacion posterior a la revision y publicacion
+
+Estos pasos son operativos, no se ejecutan por instalar el codigo:
+
+1. Integrar #87 y despues el PR de 1B, verificar CI y publicar frontend/backend con V10. Conservar el Worker personal mientras tanto.
+2. Desde la raiz, `node tools/whatsapp-worker/setup.mjs backend-env --bot-phone +NUMERO_DEL_BOT` genera `.local/canales-cloudflare/backend-multiuser.private.env`. Usar el numero visible del bot, no su ID ni el numero del propietario. Configurar privadamente las cinco variables en el alojamiento del backend. No publicar ese archivo.
+3. Comprobar disponibilidad de API y que cada telefono sintetico/real este autorizado por el sandbox. Tener el numero productivo y sus condiciones comprobados antes de ofrecer alta publica.
+4. Respaldar la D1 remota mediante el procedimiento de `WHATSAPP_CLOUDFLARE.md`. Pausar el Worker: `node tools/whatsapp-worker/setup.mjs pause`. Esperar el lease y resolver toda operacion personal pendiente antes de migrar; no eliminarla.
+5. Ejecutar `node tools/whatsapp-worker/setup.mjs prepare-multiuser`. Comprueba backend, pausa, cola personal vacia, borradores/audios caducados y receptor local detenido; exporta respaldo privado de D1 y aplica D1 0002 y despliega en modo nuevo pausado. Conserva cifrados, clave, UUID y archivo anterior. La URL/webhook no cambia.
+6. Ejecutar `node tools/whatsapp-worker/setup.mjs resume`. Comprobar `/health` y `/ready`; vincular el propietario desde la app y despues otra persona. Cada una prueba una consulta propia y, cuando decida, un gasto autentico y desconexion. No crear movimientos financieros reales de prueba desde herramientas del agente.
+7. Solo despues de comprobar al propietario en modo nuevo, ejecutar `node tools/whatsapp-worker/setup.mjs retire-personal-session`. Revoca la sesion personal anterior antes de retirar su cookie cifrada; no borra su archivo de eventos. La disponibilidad del servicio por si sola no demuestra esta prueba del propietario.
+
+No reanudar Python junto al Worker. Si falla la preparacion, mantener pausado y revisar los archivos privados; no alternar modos ni restaurar una sesion por inferencia. Un despliegue fallido puede dejar el estado privado en modo nuevo mientras el Worker anterior sigue pausado: volver a ejecutar la preparacion con la misma configuracion comprobada.
+
+### Validacion
+
+Pruebas locales nuevas: UI con consentimiento/expiracion/errores, firmas y recepcion inalterable, aislamiento de propietarios, rechazo de numero desconocido, revocacion, confirmacion de audio, reintentos sin duplicar y cifrado/leases de D1. La prueba `whatsapp-multiusuario.spec.ts` usa API/PostgreSQL reales, dos propietarios sinteticos y reinicio de Miniflare; solo sustituye el envio final de Kapso. Resultados finales y limitaciones en el plan maestro y estado de sesion; no equivalen a activacion en produccion.
+
+Si llega un webhook personal durante el cambio, la segunda comprobacion de la cola bloquea la activacion y conserva el mensaje. Revisar y resolver la cola antigua antes de reanudar; no saltar la comprobacion ni marcar sus filas como terminadas por rutina.

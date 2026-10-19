@@ -1,6 +1,17 @@
 # Estado para retomar la sesión
 
-## Etapa vigente: WhatsApp multiusuario, parte 1A (2026-10-19)
+## Etapa vigente: WhatsApp multiusuario, parte 1B validada localmente (2026-10-19)
+
+- Implementado: conectar desde Configuracion con consentimiento, prueba por WhatsApp, estado y desconexion; autoguardado optativo. Nunca presentar solo la verificacion del telefono como servicio operativo.
+- Backend: interpreta con reglas existentes bajo el propietario verificado; contexto y eventos por conexion/generacion, transaccion contable e idempotencia. V10 aditiva; V9 intacta.
+- Worker: cola cifrada y lease por telefono; conserva bytes y firma originales, firma adicional de recepcion, autorizacion antes de responder y sin cookie personal en modo multiusuario. Un fallo no bloquea a otras personas.
+- Preparador: modo nuevo optativo, respaldo privado D1, pausa, backend disponible y rechazo de operaciones/borradores/audios vigentes; revalidacion antes y despues del cambio. Preserva archivo personal y retira su sesion separadamente. Ninguna migracion/despliegue de produccion ejecutados en esta parte.
+- Comprobado localmente: 444 pruebas PostgreSQL sin omisiones, 332 frontend, 39 Worker, build frontend y dry-run Worker correctos. V10 y 23 E2E completos con API/PostgreSQL reales correctos, incluidos dos propietarios y reinicio. Diff y sintaxis correctos; preparador revisado y pruebas de borradores/cifrado/archivo correctas, sin ejecutarlo contra produccion. Publicacion/CI: consultar PR de la rama. Evidencia en `replica/whatsapp-multiusuario-runtime/verification.json`. Worker personal health/ready 200 comprobados con Node; urllib recibio 403 del acceso HTTP, sin cambios operativos.
+- Siguiente: comprobar publicacion/CI del PR dependiente de #87; integrar primero #87 y despues 1B. Publicar backend/frontend y configurar privadamente las variables del canal; activar Cloudflare con respaldo y probar dos personas reales segun `WHATSAPP_MULTIUSUARIO.md`. Preservar el bot personal hasta la migracion. IA de respaldo, voz y Gmail siguen despues.
+- Texto para el siguiente chat: «Continua Kaptal desde AGENTS.md, ESTADO_SESION.md y PLAN_MAESTRO_KAPTAL.md. La parte 1B esta implementada y validada en mejoras/whatsapp-multiusuario-runtime; comprueba su PR/CI y si #87 ya fue integrado. Integra primero la base y despues 1B. Siguiente: publicar backend/frontend y activar WhatsApp multiusuario con respaldo, variables privadas y dos personas reales, sin perder el bot personal. No dar por hecho el despliegue. Despues IA de respaldo, voz, Gmail y resto del plan. Conserva mi autoria exclusiva y actualiza los MD y el texto de continuidad al cerrar cada parte.»
+
+
+## Historial: WhatsApp multiusuario, parte 1A (2026-10-19)
 
 - El propietario confirmo que WhatsApp personal funciona y pidio altas desde un boton en la app, luego IA rapida de respaldo y despues Gmail/resto del plan. Plan completo versionado en `PLAN_MAESTRO_KAPTAL.md`; debe actualizarse al cerrar cada parte. Al final de cada tarea entregar texto para retomar en un nuevo chat; preferencia incorporada a `AGENTS.md`.
 - Fetch comprobado: `origin/develop = 7c3e2ad` (#85), `origin/main = c077b5e` (#86). Rama nueva `mejoras/whatsapp-multiusuario-base` desde develop remoto. Se conserva la rama/worktree anterior; no volver a usarla para esta etapa.

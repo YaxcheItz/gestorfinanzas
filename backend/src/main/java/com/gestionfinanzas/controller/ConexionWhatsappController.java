@@ -19,7 +19,8 @@ import java.io.IOException;
 public class ConexionWhatsappController {
     private final ConexionWhatsappService conexiones;
     public record Inicio(@NotBlank @Pattern(regexp="\\+[1-9][0-9]{7,14}") String telefono,
-                         @NotNull @AssertTrue Boolean aceptarVinculacion) {}
+                         @NotNull @AssertTrue Boolean aceptarVinculacion,boolean guardarAutomaticamente) {}
+    public record Preferencias(boolean guardarAutomaticamente) {}
 
     @GetMapping("/conexion")
     public ApiResponse<ConexionWhatsappService.Estado> estado(@AuthenticationPrincipal CustomUserDetails usuario){
@@ -27,7 +28,11 @@ public class ConexionWhatsappController {
     }
     @PostMapping("/conexion")
     public ResponseEntity<ApiResponse<ConexionWhatsappService.Desafio>> iniciar(@AuthenticationPrincipal CustomUserDetails usuario,@Valid @RequestBody Inicio body){
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("Envia el codigo al bot desde tu numero",conexiones.iniciar(usuario.getId(),body.telefono())));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("Envia el codigo al bot desde tu numero",conexiones.iniciar(usuario.getId(),body.telefono(),body.guardarAutomaticamente())));
+    }
+    @PatchMapping("/conexion/preferencias")
+    public ApiResponse<ConexionWhatsappService.Estado> preferencias(@AuthenticationPrincipal CustomUserDetails usuario,@RequestBody Preferencias body){
+        return ApiResponse.ok("Preferencias guardadas",conexiones.preferencias(usuario.getId(),body.guardarAutomaticamente()));
     }
     @DeleteMapping("/conexion")
     public ApiResponse<ConexionWhatsappService.Estado> desconectar(@AuthenticationPrincipal CustomUserDetails usuario){
