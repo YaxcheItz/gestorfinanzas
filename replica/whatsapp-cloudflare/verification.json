@@ -7,7 +7,8 @@
   "apiE2E": {"passed": 1, "database": "isolated PostgreSQL", "api": "real Kaptal", "provider": "mocked Kapso", "persistentRestart": true, "lostAcknowledgement": true},
   "audit": {"knownVulnerabilities": 0, "scope": "worker and development tooling"},
   "dryRun": "passed",
-  "remote": {"workerDeployed": true, "d1Created": true, "paused": true, "sessionVerified": false, "webhookSwitched": false, "https": "initial TLS handshake failure; requires verification"},
+  "remote": {"workerDeployed": true, "d1Created": true, "paused": false, "sessionVerified": true, "webhookSwitched": true, "sameWebhookPreserved": true, "https": "verified", "healthStatus": 200, "readyStatus": 200, "missingSignatureStatus": 401, "adminStatus": 404, "localReceiverStopped": true, "privateBackup": true, "originalEventsMigrated": 10, "financialKeysPreserved": true},
   "personalFinancialWritesByAgent": 0,
-  "pending": ["independent Google authorization", "public HTTPS check", "stop only the local receiver and back up queue", "migrate queue preserving keys", "resume and verify owner", "update existing Kapso webhook", "owner-selected real text and audio tests", "remote CI"]
+  "ci": {"pullRequest": 85, "checksPassedBeforeOperationalUpdate": 14},
+  "pending": ["owner-selected real query, text and audio tests", "merge dependency PR #84 before PR #85", "confirm checks for operational documentation update"]
 }
