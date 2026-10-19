@@ -21,6 +21,8 @@ Evidencia de 1A: `replica/whatsapp-multiusuario-base/verification.json`. Base de
 
 ## Cierre local de 1B (19 de octubre de 2026)
 
+Publicada en [PR #88](https://github.com/YaxcheItz/gestorfinanzas/pull/88), dependiente de [#87](https://github.com/YaxcheItz/gestorfinanzas/pull/87). Implementacion `22d434b`, autoria exclusiva del propietario. Checks remotos en curso al registrar este traspaso: comprobarlos antes de integrar. Ningun despliegue/migracion de produccion ejecutado.
+
 - Implementado: conectar desde Configuracion con consentimiento, prueba por WhatsApp, estado y desconexion; autoguardado optativo. Nunca presentar solo la verificacion del telefono como servicio operativo.
 - Backend: interpreta con reglas existentes bajo el propietario verificado; contexto y eventos por conexion/generacion, transaccion contable e idempotencia. V10 aditiva; V9 intacta.
 - Worker: cola cifrada y lease por telefono; conserva bytes y firma originales, firma adicional de recepcion, autorizacion antes de responder y sin cookie personal en modo multiusuario. Un fallo no bloquea a otras personas.

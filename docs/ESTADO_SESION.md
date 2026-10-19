@@ -2,6 +2,8 @@
 
 ## Etapa vigente: WhatsApp multiusuario, parte 1B validada localmente (2026-10-19)
 
+- Publicada en PR #88: https://github.com/YaxcheItz/gestorfinanzas/pull/88. Depende de #87, todavia abierto al comprobarlo. Codigo `22d434b`, autoria/committer exclusivos del propietario. CI remoto en curso al registrar este traspaso; comprobar ultimo commit antes de integrar, sin deducirlo de las pruebas locales. Checkout limpio tras publicar; no se modifico produccion.
+
 - Implementado: conectar desde Configuracion con consentimiento, prueba por WhatsApp, estado y desconexion; autoguardado optativo. Nunca presentar solo la verificacion del telefono como servicio operativo.
 - Backend: interpreta con reglas existentes bajo el propietario verificado; contexto y eventos por conexion/generacion, transaccion contable e idempotencia. V10 aditiva; V9 intacta.
 - Worker: cola cifrada y lease por telefono; conserva bytes y firma originales, firma adicional de recepcion, autorizacion antes de responder y sin cookie personal en modo multiusuario. Un fallo no bloquea a otras personas.
