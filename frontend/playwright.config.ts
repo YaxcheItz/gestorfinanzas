@@ -44,6 +44,11 @@ export default defineConfig({
         SPRING_FLYWAY_DEFAULT_SCHEMA: postgres ? postgresSchema : 'PUBLIC',
         SPRING_FLYWAY_SCHEMAS: postgres ? postgresSchema : 'PUBLIC',
         JWT_SECRET: '0123456789abcdef0123456789abcdef',
+        WHATSAPP_CHANNEL_ENABLED: 'true',
+        WHATSAPP_CHANNEL_RUNTIME_ENABLED: 'true',
+        WHATSAPP_CHANNEL_BOT_PHONE: '+15555550100',
+        WHATSAPP_CHANNEL_PHONE_NUMBER_ID: '12345',
+        WHATSAPP_CHANNEL_WEBHOOK_SECRET: 'synthetic-webhook-secret-at-least-32',
         SERVER_PORT: '18080',
         APP_CORS_ALLOWED_ORIGINS: `http://localhost:${frontendPort}`
       },

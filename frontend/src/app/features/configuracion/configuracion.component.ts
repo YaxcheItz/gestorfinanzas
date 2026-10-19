@@ -1,3 +1,4 @@
+import { WhatsappConnectionComponent } from './whatsapp-connection/whatsapp-connection.component';
 import { FeatureStylesService } from '../../core/services/feature-styles.service';
 import { CommonModule, DOCUMENT } from '@angular/common';
 import { fechaFinanciera } from '../../core/utils/fecha-financiera';
@@ -26,7 +27,7 @@ import {
 @Component({
   selector: 'app-configuracion',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, MontoPipe, GoogleSignInComponent],
+  imports: [CommonModule, FormsModule, RouterLink, MontoPipe, GoogleSignInComponent, WhatsappConnectionComponent],
   template: `
     <main class="finance-page settings-page mx-auto max-w-4xl space-y-5 px-3 py-5 sm:space-y-7 sm:px-6 sm:py-8">
       <header class="flex min-w-0 items-center gap-3 sm:gap-4">
@@ -159,7 +160,7 @@ import {
             </label>
                         <label class="block min-w-0 text-xs font-semibold text-slate-700">
               Tel&eacute;fono WhatsApp (Recordatorios)
-              <input name="telefono" [(ngModel)]="telefono" (ngModelChange)="limpiarPinWhatsApp()" maxlength="25" placeholder="Ej. 5219515791240" class="mt-1.5 min-h-11 w-full min-w-0 rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm font-normal text-slate-900" />
+              <input name="telefono" [(ngModel)]="telefono" maxlength="25" placeholder="Ej. 5219515791240" class="mt-1.5 min-h-11 w-full min-w-0 rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm font-normal text-slate-900" />
             </label>
             <div class="flex items-center min-h-11 md:mt-6 gap-3">
               <input id="notif-wa" type="checkbox" name="notificacionesWhatsapp" [(ngModel)]="notificacionesWhatsapp" class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" />
@@ -173,57 +174,10 @@ import {
               </button>
             </div>
           </form>
-          <section class="wa-connect-card" aria-labelledby="wa-connect-title">
-            <header class="wa-connect-card__header">
-              <div class="wa-connect-card__title-row">
-                <svg class="wa-connect-card__icon" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
-                  <path fill="#25D366" d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.18 8.18 0 0 1 2.41 5.82c0 4.54-3.7 8.24-8.24 8.24-1.42 0-2.81-.37-4.04-1.08l-.29-.17-3.12.82.83-3.04-.19-.3a8.18 8.18 0 0 1-1.25-4.47c0-4.54 3.7-8.24 8.24-8.24m4.52 11.64c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.02-1.24-.75-.67-1.25-1.5-1.4-1.75-.15-.25-.02-.39.11-.51.11-.11.25-.29.37-.44.13-.14.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.35-.77-1.85-.2-.49-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1s.9 2.44 1.03 2.61c.13.17 1.77 2.7 4.29 3.79.6.26 1.07.41 1.43.53.6.19 1.15.16 1.58.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.15-1.18-.06-.12-.22-.19-.47-.32"/>
-                </svg>
-                <h3 id="wa-connect-title" class="wa-connect-card__title">Integración WhatsApp</h3>
-              </div>
-              @if (notificacionesWhatsapp && telefono.trim()) {
-                <span class="wa-connect-card__badge" aria-label="Recordatorios de WhatsApp activos">
-                  <span class="wa-connect-card__badge-dot"></span> Recordatorios activos
-                </span>
-              }
-            </header>
-
-            <p class="wa-connect-card__body">
-              Conecta tu cuenta de WhatsApp para registrar movimientos por mensaje, consultar balances al instante y recibir recordatorios inteligentes de tus cortes y fechas de pago.
-            </p>
-
-            <button
-              type="button"
-              class="wa-connect-card__action-btn"
-              (click)="generarPinWhatsApp()"
-              [disabled]="generandoPinWhatsApp() || !puedeSolicitarPinWhatsApp"
-              aria-describedby="whatsapp-pin-status">
-              {{ generandoPinWhatsApp() ? 'Generando PIN...' : 'Obtener PIN' }}
-            </button>
-            <p id="whatsapp-pin-status" class="mt-2 text-xs text-slate-600" role="status">
-              El PIN se genera en el servidor y vence a los 10 minutos. Envíalo al bot desde el número de WhatsApp guardado en tu perfil.
-            </p>
-            @if (!puedeSolicitarPinWhatsApp) {
-              <p class="mt-2 text-xs text-amber-800">Guarda primero tu teléfono con código de país en el perfil para habilitar la vinculación.</p>
-            }
-            @if (errorPinWhatsApp()) {
-              <p role="alert" class="mt-2 text-sm text-rose-700">{{ errorPinWhatsApp() }}</p>
-            }
-            @if (pinCodigo()) {
-              <div class="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3">
-                <p class="text-xs text-emerald-900">Tu PIN de vinculación (válido {{ pinVigenciaSegundos() / 60 }} minutos)</p>
-                <p class="my-1 font-mono text-2xl font-bold tracking-[0.25em] text-emerald-950">{{ pinCodigo() }}</p>
-                <a [href]="enlaceWhatsApp()" target="_blank" rel="noopener noreferrer" class="inline-flex min-h-10 items-center rounded-lg bg-emerald-700 px-3 text-sm font-semibold text-white hover:bg-emerald-800">
-                  Abrir WhatsApp y enviar PIN
-                </a>
-              </div>
-            }
-            @if (puedeProbarWhatsApp) {
-              <button type="button" class="wa-connect-card__test-btn mt-3" (click)="probarWhatsApp()" [disabled]="probandoWhatsApp()">
-              {{ probandoWhatsApp() ? 'Enviando prueba…' : 'Enviar mensaje de prueba' }}
-              </button>
-            }
-          </section>
+          <app-whatsapp-connection />
+          @if (notificacionesWhatsapp && puedeProbarWhatsApp) {
+            <button type="button" class="mt-3 min-h-11 rounded-full border px-4 text-sm" (click)="probarWhatsApp()" [disabled]="probandoWhatsApp()">Probar recordatorios de WhatsApp</button>
+          }
         }
       </section>
 
@@ -582,11 +536,6 @@ export class ConfiguracionComponent implements OnInit {
   readonly pushActivo = signal(false);
   readonly guardandoPush = signal(false);
   readonly probandoWhatsApp = signal(false);
-  readonly generandoPinWhatsApp = signal(false);
-  readonly pinCodigo = signal<string | null>(null);
-  readonly pinVigenciaSegundos = signal(0);
-  readonly enlaceWhatsApp = signal('');
-  readonly errorPinWhatsApp = signal<string | null>(null);
 
   nombre = '';
   email = '';
@@ -607,10 +556,6 @@ export class ConfiguracionComponent implements OnInit {
   get puedeProbarWhatsApp(): boolean {
     const telefonoGuardado = this.perfilService.perfil()?.telefono?.trim();
     return !!telefonoGuardado && telefonoGuardado === this.telefono.trim();
-  }
-
-  get puedeSolicitarPinWhatsApp(): boolean {
-    return this.puedeProbarWhatsApp;
   }
 
   avatarIniciales(): string {
@@ -768,37 +713,6 @@ export class ConfiguracionComponent implements OnInit {
         this.toastService.error(error?.error?.message || 'No se pudo enviar el mensaje de prueba.');
       }
     });
-  }
-
-  generarPinWhatsApp(): void {
-    if (!this.puedeSolicitarPinWhatsApp || this.generandoPinWhatsApp()) return;
-    this.generandoPinWhatsApp.set(true);
-    this.errorPinWhatsApp.set(null);
-    this.finanzasService.obtenerPinVinculacionWhatsApp().subscribe({
-      next: response => {
-        this.generandoPinWhatsApp.set(false);
-        if (!response.success || !response.data?.pin || !response.data.numeroBot) {
-          this.errorPinWhatsApp.set(response.message || 'No se pudo generar el PIN.');
-          return;
-        }
-        this.pinCodigo.set(response.data.pin);
-        this.pinVigenciaSegundos.set(response.data.vigenciaSegundos);
-        this.enlaceWhatsApp.set(
-          `https://wa.me/${response.data.numeroBot}?text=${encodeURIComponent(`VINCULAR ${response.data.pin}`)}`
-        );
-      },
-      error: error => {
-        this.generandoPinWhatsApp.set(false);
-        this.errorPinWhatsApp.set(error?.error?.message || 'No se pudo generar el PIN de WhatsApp.');
-      }
-    });
-  }
-
-  limpiarPinWhatsApp(): void {
-    this.pinCodigo.set(null);
-    this.pinVigenciaSegundos.set(0);
-    this.enlaceWhatsApp.set('');
-    this.errorPinWhatsApp.set(null);
   }
 
   cambiarPassword(): void {

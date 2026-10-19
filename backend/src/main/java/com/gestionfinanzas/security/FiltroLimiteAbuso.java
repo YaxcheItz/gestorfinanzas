@@ -25,11 +25,12 @@ public class FiltroLimiteAbuso extends OncePerRequestFilter {
     public FiltroLimiteAbuso(LimiteAbuso limite, OrigenSolicitud origen) {
         this.limite=limite; this.origen=origen;
     }
-    private static final Map<String,Integer> PUBLICOS = Map.of(
-        "/api/auth/login",20, "/api/auth/registro",5, "/api/auth/google",20,
-        "/api/auth/recuperacion",5, "/api/auth/recuperacion/confirmar",10,
-        "/api/auth/refresh",120, "/api/notificaciones/whatsapp/verificar-pin",10,
-        "/api/auth/canal/intercambiar",10);
+    private static final Map<String,Integer> PUBLICOS = Map.ofEntries(
+        Map.entry("/api/auth/login",20),Map.entry("/api/auth/registro",5),Map.entry("/api/auth/google",20),
+        Map.entry("/api/auth/recuperacion",5),Map.entry("/api/auth/recuperacion/confirmar",10),
+        Map.entry("/api/auth/refresh",120),Map.entry("/api/notificaciones/whatsapp/verificar-pin",10),
+        Map.entry("/api/auth/canal/intercambiar",10),Map.entry("/api/canales/whatsapp/vinculacion/evento",120),
+        Map.entry("/api/canales/whatsapp/evento",240),Map.entry("/api/canales/whatsapp/evento/autorizar-respuesta",240));
     private static final Set<String> MUTACIONES = Set.of("POST","PUT","PATCH","DELETE");
 
     @Override protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
