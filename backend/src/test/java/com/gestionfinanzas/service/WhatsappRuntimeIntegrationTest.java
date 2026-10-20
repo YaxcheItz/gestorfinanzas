@@ -119,4 +119,61 @@ class WhatsappRuntimeIntegrationTest {
         connect(a,pa,true);assertTrue(call(packet(pa,"/codex borrar todo"),BASE).path("respuesta").asText().contains("No se ejecutan"));assertEquals(0,count());
         assertEquals(UUID.fromString("6a514198-ffa9-59ab-b4d1-cc0183038a7d"),WhatsappEventoService.claveFinanciera(7L,"whatsapp-chat","synthetic-event"));
     }
+    @Test void deshacerExigeConfirmacionYSoloEliminaElMovimientoIdentificado()throws Exception{
+        connect(a,pa,true);
+        call(packet(pa,"Gaste 50 en gasolina con Nu prueba"),BASE);
+        call(packet(pa,"Gaste 20 en tacos con Nu prueba"),BASE);
+        assertEquals(2,count());
+        assertEquals(new BigDecimal("930.00"),accounts.findById(bank.getId()).orElseThrow().getSaldoActual());
+
+        var request=call(packet(pa,"deshacer"),BASE).path("respuesta").asText();
+        assertTrue(request.contains("tacos"));
+        assertTrue(request.contains("confirmar deshacer"));
+        assertEquals(2,count());
+        assertEquals(new BigDecimal("930.00"),accounts.findById(bank.getId()).orElseThrow().getSaldoActual());
+
+        call(packet(pa,"si"),BASE);
+        assertEquals(2,count());
+        var undo=call(packet(pa,"confirmar deshacer"),BASE).path("respuesta").asText();
+        assertTrue(undo.contains("Movimiento deshecho"));
+        assertEquals(1,count());
+        assertEquals(new BigDecimal("950.00"),accounts.findById(bank.getId()).orElseThrow().getSaldoActual());
+
+        call(packet(pa,"confirmar deshacer"),BASE);
+        assertEquals(1,count());
+    }
+    @Test void cancelarOVencerConfirmacionDeDeshacerConservaElMovimiento()throws Exception{
+        connect(a,pa,true);
+        call(packet(pa,"Gaste 12 en cafe con Nu prueba"),BASE);
+        call(packet(pa,"deshacer"),BASE);
+        call(packet(pa,"cancelar"),BASE);
+        assertTrue(call(packet(pa,"confirmar deshacer"),BASE).path("respuesta").asText().contains("No hay una confirmacion pendiente"));
+        assertEquals(1,count());
+
+        call(packet(pa,"deshacer"),BASE);
+        var connection=connections.findByUsuarioId(a.getId()).orElseThrow();
+        connection.setContextoVence(Instant.now().minusSeconds(1));
+        connections.saveAndFlush(connection);
+        assertTrue(call(packet(pa,"confirmar deshacer"),BASE).path("respuesta").asText().contains("vencio"));
+        assertEquals(1,count());
+    }
+    @Test void audioSePuedeConfirmarConPalabraSimpleSinCodigo()throws Exception{
+        connect(a,pa,true);
+        var audio=packet(pa,"Gaste 15 en tacos con Nu prueba","audio","audio-simple",System.currentTimeMillis());
+        call(audio,BASE);
+        assertEquals(0,count());
+
+        var malformed=call(packet(pa,"confirmar audio"),BASE).path("respuesta").asText();
+        assertTrue(malformed.contains("Falta el codigo"));
+        assertEquals(0,count());
+
+        var r=call(packet(pa,"confirmar"),BASE);
+        assertTrue(r.path("respuesta").asText().contains("registrado"));
+        assertEquals(1,count());
+        assertEquals(new BigDecimal("985.00"),accounts.findById(bank.getId()).orElseThrow().getSaldoActual());
+
+        var r2=call(packet(pa,"confirmar"),BASE);
+        assertTrue(r2.path("respuesta").asText().contains("ya no esta disponible"));
+        assertEquals(1,count());
+    }
 }
