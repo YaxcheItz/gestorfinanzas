@@ -39,6 +39,12 @@ describe('WhatsApp account connection',()=>{
     load({...state,operativo:false,estado:'VERIFICADA',telefono:'•••• 0123'});
     expect(fixture.nativeElement.textContent).toContain('Número verificado');expect(fixture.nativeElement.textContent).not.toContain('Conectado');
   });
+  it('explains that undo identifies the movement and asks for confirmation',()=>{
+    load({...state,estado:'VERIFICADA',telefono:'•••• 0123'});
+    const help=fixture.nativeElement.textContent;
+    expect(help).toContain('Escribe «deshacer» para revisar el último movimiento');
+    expect(help).toContain('confirma antes de eliminarlo');
+  });
   it('keeps an actual connection visible when refreshing fails',()=>{
     load({...state,estado:'VERIFICADA',telefono:'•••• 0123'});fixture.componentInstance.actualizar();
     http.expectOne(url).flush({message:'Sin conexión'},{status:503,statusText:'Unavailable'});fixture.detectChanges();

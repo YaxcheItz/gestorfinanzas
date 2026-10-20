@@ -118,6 +118,33 @@ public class AvisoFinancieroService {
         var a=bloquear(uid,id);if("DESCARTADO".equals(a.getEstado()))return vista(a);
         pendiente(a,version);a.setEstado("DESCARTADO");return vista(avisos.saveAndFlush(a));
     }
+    public record DeshacerCandidato(String id,String resumen) {}
+    @Transactional(readOnly=true)
+    public Optional<DeshacerCandidato> ultimoAvisoWhatsappDeshacer(Long uid) {
+        var avisoOpt=avisos.findFirstByUsuarioIdAndOrigenAndEstadoOrderByCreadoEnDesc(uid,"WHATSAPP","REGISTRADO");
+        if(avisoOpt.isEmpty())return Optional.empty();
+        var aviso=avisoOpt.get();
+        if(aviso.getTransaccionId()==null||aviso.getCreadoEn().isBefore(Instant.now().minusSeconds(900)))return Optional.empty();
+        return Optional.of(new DeshacerCandidato(aviso.getId(),aviso.getResumen()));
+    }
+    @Transactional
+    public Optional<String> deshacerAvisoWhatsapp(Long uid,String id) {
+        var a=bloquear(uid,id);
+        if(!"WHATSAPP".equals(a.getOrigen())||!"REGISTRADO".equals(a.getEstado())||a.getTransaccionId()==null
+                ||a.getCreadoEn().isBefore(Instant.now().minusSeconds(900)))return Optional.empty();
+        Long transaccionId=a.getTransaccionId();
+        if(movimientos.findByIdAndUsuarioId(transaccionId,uid).isEmpty()){
+            a.setEstado("DESCARTADO");
+            a.setTransaccionId(null);
+            avisos.saveAndFlush(a);
+            return Optional.empty();
+        }
+        transacciones.eliminarTransaccion(uid,transaccionId);
+        a.setEstado("DESCARTADO");
+        a.setTransaccionId(null);
+        avisos.saveAndFlush(a);
+        return Optional.of(a.getResumen());
+    }
     private List<Long> coincidencias(AvisoFinanciero a,TransaccionRequest d) {
         if(d==null||d.cuentaId()==null||d.tipo()==null||d.fecha()==null||d.monto()==null)return List.of();
         return movimientos.buscarCoincidenciasAviso(a.getUsuario().getId(),d.cuentaId(),d.tipo(),d.fecha(),d.monto(),PageRequest.of(0,5)).stream().map(Transaccion::getId).filter(id->!Objects.equals(id,a.getTransaccionId())).toList();
