@@ -1,6 +1,19 @@
 # Estado para retomar la sesión
 
-## Etapa vigente: WhatsApp multiusuario activado en Cloudflare Workers (2026-10-19)
+## Etapa vigente: WhatsApp IA de respaldo (fallback) en backend (2026-10-19)
+
+- Integración de fallback: En `WhatsappInterpretacionService`, cuando `MotorChatReglas.interpretar(...)` no resuelve (`reglas == null`), se activa `interpretarConIaFallback(...)` utilizando `AiProvider` (`GroqAiProvider` / `GeminiAiProvider`).
+- Principios aplicados: "Reglas primero, IA solo como rescate rápido".
+  1. Si las reglas deterministas resuelven, la IA nunca es invocada.
+  2. Aislamiento estricto de datos: la IA solo recibe IDs y nombres de cuentas y categorías activas del usuario autenticado. No se envían tokens, historial global ni saldos innecesarios.
+  3. Validación segura: los IDs de cuentas y categorías devueltos por la IA se validan contra el usuario. Si la cuenta no existe o falta, se pide aclaración guiada con sugerencias. Si la categoría es inválida, se filtra a `null`.
+  4. Resiliencia: soporte para bloques Markdown (` ```json `), manejo robusto de excepciones (JSON corrupto responde aclaración segura) y limitación de abusos (`ia:usuarioId`).
+- Validación: 10 pruebas unitarias en `WhatsappIaFallbackTest` y 57 pruebas del subsistema WhatsApp completadas con 0 fallos.
+- Rama actual: `mejoras/whatsapp-ia-fallback`.
+- Siguiente paso: Subir rama al remoto y abrir PR hacia `develop`.
+- Texto para el siguiente chat: «Continua Kaptal desde AGENTS.md, ESTADO_SESION.md y PLAN_MAESTRO_KAPTAL.md. La Etapa 2 (IA rápida de respaldo en WhatsApp) ya está implementada y validada en la rama mejoras/whatsapp-ia-fallback con 57 pruebas en verde. Siguiente: probar en integración con Groq/Gemini configurado, validar latencias y avanzar a la Etapa 3 (experiencia y cierre de voz). Conserva mi autoría exclusiva y actualiza los MD al cerrar cada paso.»
+
+## Etapa anterior: WhatsApp multiusuario activado en Cloudflare Workers (2026-10-19)
 
 - Integración completada: PR #87 (base 1A) y PR #88 (runtime 1B) integrados en `develop` y pasados a `main` mediante PR #89. Backend desplegado en Render con variables de canal configuradas; `/api/canales/whatsapp/disponibilidad` responde `data: true`.
 - Activación en Cloudflare: Base D1 respaldada en `.local/canales-cloudflare/d1.pre-multiuser.1792434489673.private.sql`, migración D1 0002 aplicada y Worker desplegado en modo multiusuario activo (`paused: false`).
