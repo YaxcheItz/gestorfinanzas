@@ -11,6 +11,7 @@ public interface AvisoFinancieroRepository extends JpaRepository<AvisoFinanciero
     boolean existsByUsuarioIdAndEstado(Long usuarioId,String estado);
     Optional<AvisoFinanciero> findByUsuarioIdAndOrigenAndIdentificadorHash(Long usuarioId,String origen,String identificadorHash);
     Page<AvisoFinanciero> findByUsuarioIdAndEstado(Long usuarioId,String estado,Pageable pageable);
+    Optional<AvisoFinanciero> findFirstByUsuarioIdAndOrigenAndEstadoOrderByCreadoEnDesc(Long usuarioId, String origen, String estado);
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select a from AvisoFinanciero a where a.id=:id and a.usuario.id=:usuario")
     Optional<AvisoFinanciero> bloquear(@Param("id") String id,@Param("usuario") Long usuario);

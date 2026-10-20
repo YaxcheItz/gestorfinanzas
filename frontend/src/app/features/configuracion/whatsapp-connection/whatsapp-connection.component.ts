@@ -22,6 +22,15 @@ import {mensajeDeError} from '../../../core/utils/mensaje-error';
           @if (s.estado === 'VERIFICADA') {
             <p class="status" role="status">{{s.operativo ? 'Conectado' : 'Número verificado'}} · {{s.telefono}}</p>
             @if (!s.operativo) {<p>El registro por mensajes estará disponible cuando termine la activación del servicio.</p>}
+            <div class="guide-box">
+              <h4>Comandos en WhatsApp</h4>
+              <ul>
+                <li>💬 <strong>Registrar:</strong> «Gasté 180 en comida con MiCuenta»</li>
+                <li>🎤 <strong>Nota de voz:</strong> Envíala y responde «confirmar»</li>
+                <li>↩️ <strong>Deshacer:</strong> Escribe «deshacer» para revisar el último movimiento; confirma antes de eliminarlo</li>
+                <li>📊 <strong>Consultar:</strong> «saldo» o «resumen de este mes»</li>
+              </ul>
+            </div>
             <button type="button" role="switch" class="secondary" [attr.aria-checked]="s.guardarAutomaticamente" (click)="preferencias(!s.guardarAutomaticamente)" [disabled]="ocupado()">Autoguardado: {{s.guardarAutomaticamente ? 'Activado' : 'Desactivado'}}</button>
             <p class="hint">Los movimientos ambiguos o parecidos a otros quedan en Avisos para revisarlos.</p>
             <button type="button" class="secondary" (click)="desconectar()" [disabled]="ocupado()">Desconectar WhatsApp</button>
@@ -55,6 +64,7 @@ import {mensajeDeError} from '../../../core/utils/mensaje-error';
     form{display:grid;gap:12px}label{font-size:14px;display:grid;gap:8px}input[type=tel]{font-size:16px;min-height:48px;padding:12px;border:1px solid var(--kaptal-border,#ddd);border-radius:16px;background:var(--kaptal-surface-subtle,#f7f7f7);color:inherit;width:100%;box-sizing:border-box}
     .check{display:flex;align-items:flex-start;gap:12px;min-height:44px;line-height:1.5}.check input{width:20px;height:20px;flex-shrink:0;margin-top:2px;accent-color:#b9413c}
     button,a{font-size:14px;font-weight:600;min-height:44px;padding:12px 20px;border-radius:999px;border:0;background:#b9413c;color:white;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;touch-action:manipulation}
+    .guide-box{margin:16px 0;padding:16px;background:var(--kaptal-surface-subtle,#f7f7f7);border-radius:16px;border:1px solid var(--kaptal-border,#eee)}.guide-box h4{margin:0 0 8px;font-size:14px;font-weight:600;color:var(--kaptal-content,#111)}.guide-box ul{margin:0;padding-left:18px;font-size:13px;line-height:1.6;color:var(--kaptal-content-muted,#555)}.guide-box li{margin-bottom:4px}
     button:disabled{opacity:.5;cursor:default}.secondary{background:var(--kaptal-surface-subtle,#f2f2f2);color:inherit;margin-top:8px}.quiet{background:transparent;color:inherit;padding-left:0;margin-top:8px}.pending{padding:16px;background:var(--kaptal-surface-subtle,#f7f7f7);border-radius:20px;margin-top:16px}.pending strong{font-size:14px}.error{color:#b42318}button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid #b9413c;outline-offset:3px}
   `,
 })

@@ -21,6 +21,7 @@ import java.util.*;
 /** Signed events grant only this channel's operations, never a general user session. */
 @Service @RequiredArgsConstructor
 public class WhatsappEventoService {
+    private static final String DESHACER_CONTEXTO="WHATSAPP_DESHACER:";
     private final ConexionWhatsappService vinculacion;
     private final ConexionWhatsappRepository conexiones;
     private final EventoWhatsappRepository eventos;
@@ -97,20 +98,57 @@ public class WhatsappEventoService {
     private String resolver(ConexionWhatsapp c,Entrada e){
         if(!e.fecha().atZone(ZoneId.of("America/Mexico_City")).toLocalDate().equals(CalendarioFinanciero.hoy()))
             return "Tu mensaje quedo pendiente desde otro dia. Envialo otra vez con fecha explicita. No se registro dinero.";
+        String normal=e.tipo().equals("text")?MotorChatReglas.normalizar(e.texto()):"";
+        if(c.getContexto()!=null&&c.getContexto().startsWith(DESHACER_CONTEXTO)){
+            if(c.getContextoVence()==null||!c.getContextoVence().isAfter(Instant.now())){
+                ConexionWhatsappService.limpiarContexto(c);
+                return "La confirmacion para deshacer vencio. No se elimino ningun movimiento.";
+            }
+            if(!e.tipo().equals("text"))return "Tienes pendiente revisar un movimiento. Responde *confirmar deshacer* o *cancelar*.";
+            if(normal.equals("cancelar")){
+                ConexionWhatsappService.limpiarContexto(c);
+                return "Cancelado. El movimiento sigue en Kaptal.";
+            }
+            if(normal.equals("confirmar deshacer")){
+                String avisoId=c.getContexto().substring(DESHACER_CONTEXTO.length());
+                ConexionWhatsappService.limpiarContexto(c);
+                var deshecho=avisos.deshacerAvisoWhatsapp(c.getUsuario().getId(),avisoId);
+                return deshecho.map(resumen->"Movimiento deshecho: "+resumen+" fue eliminado de Kaptal.")
+                    .orElse("Ese movimiento ya no esta disponible para deshacer. No se modifico ningun otro movimiento.");
+            }
+            return "Tienes pendiente revisar un movimiento. Responde *confirmar deshacer* o *cancelar*.";
+        }
+        if(normal.equals("confirmar deshacer"))return "No hay una confirmacion pendiente para deshacer. Ningun movimiento cambio.";
         if(e.tipo().equals("audio")){
             if(e.texto().isBlank())return "No pude obtener la transcripcion. No se registro dinero. Envia el movimiento por texto.";
             c.setAudioTexto(e.texto());c.setAudioCodigo(claveFinanciera(c.getUsuario().getId(),"whatsapp-audio",e.id()).toString().substring(0,8));
             c.setAudioVence(Instant.now().plusSeconds(900));c.setAudioFecha(CalendarioFinanciero.hoy());
-            return "Entendi: \""+e.texto()+"\"\nRevisa importe y cuenta. Responde: confirmar audio "+c.getAudioCodigo()+"\nO escribe cancelar. Caduca en 15 minutos.";
+            return "Entendi: \""+e.texto()+"\"\nRevisa importe y cuenta. Para registrarlo responde *confirmar* (o confirmar audio "+c.getAudioCodigo()+"), o escribe *cancelar*. Caduca en 15 minutos.";
         }
         if(!e.tipo().equals("text"))return "Envia texto o una nota de voz para registrar un movimiento.";
-        String texto=e.texto(),normal=MotorChatReglas.normalizar(texto);
+        String texto=e.texto();
         if(normal.equals("cancelar")){ConexionWhatsappService.limpiarContexto(c);return "Borrador cancelado. No se registro dinero.";}
+        if(normal.equals("deshacer")||normal.equals("anular")){
+            ConexionWhatsappService.limpiarContexto(c);
+            var candidato=avisos.ultimoAvisoWhatsappDeshacer(c.getUsuario().getId());
+            if(candidato.isPresent()){
+                var movimiento=candidato.get();
+                c.setContexto(DESHACER_CONTEXTO+movimiento.id());
+                c.setContextoVence(Instant.now().plusSeconds(900));
+                return "Ultimo movimiento de WhatsApp: "+movimiento.resumen()+". No se ha eliminado. Responde *confirmar deshacer* para confirmar o *cancelar*. Tienes 15 minutos.";
+            }
+            return "No hay ningun movimiento reciente para deshacer. Revisa tus movimientos en Kaptal.";
+        }
         if(normal.equals("ayuda")||normal.equals("/ayuda"))return "Puedes pedir saldo, movimientos recientes, resumen de este mes o escribir: gaste 180 en comida con Nombre de cuenta.\nSi falta la cuenta, te la preguntare. Los avisos y posibles duplicados se revisan en Kaptal.";
         if(texto.startsWith("/codex "))return "Solicitud para revision humana. No se ejecutan comandos desde WhatsApp.";
-        if(normal.startsWith("confirmar audio ")){
-            if(c.getAudioTexto()==null||!normal.substring(16).equals(c.getAudioCodigo())||!c.getAudioVence().isAfter(Instant.now())||!CalendarioFinanciero.hoy().equals(c.getAudioFecha()))
+        if(normal.startsWith("confirmar audio")||normal.equals("confirmar")||normal.equals("confirmo")||normal.equals("si")){
+            boolean audioCommand=normal.startsWith("confirmar audio");
+            boolean hasCode=normal.startsWith("confirmar audio ");
+            String code=hasCode?normal.substring(16).trim():null;
+            if(c.getAudioTexto()==null||!c.getAudioVence().isAfter(Instant.now())||!CalendarioFinanciero.hoy().equals(c.getAudioFecha()))
                 return "Ese audio ya no esta disponible. Envia texto o una nueva nota de voz.";
+            if(audioCommand&&(!hasCode||code.isEmpty()))return "Falta el codigo del audio. Responde *confirmar* o envia *confirmar audio <codigo>*.";
+            if(hasCode&&!code.equals(c.getAudioCodigo()))return "El codigo no coincide. Revisa el mensaje de la nota de voz.";
             texto=c.getAudioTexto();c.setAudioTexto(null);c.setAudioCodigo(null);c.setAudioVence(null);c.setAudioFecha(null);
         }
         if(c.getContexto()!=null&&c.getContextoVence().isAfter(Instant.now())){
@@ -129,7 +167,9 @@ public class WhatsappEventoService {
         var aviso=avisos.recibir(c.getUsuario().getId(),new Nuevo(Origen.WHATSAPP,key.toString(),d.descripcion().substring(0,Math.min(200,d.descripcion().length())),clase,r.moneda(),d,key));
         if(c.isGuardarAutomaticamente()&&aviso.coincidencias().isEmpty()&&d.frecuenciaRecurrencia()==null&&d.fechaFinRecurrencia()==null&&d.msi()==null)
             aviso=avisos.confirmar(c.getUsuario().getId(),aviso.id(),new Decision(aviso.version(),false));
-        return "REGISTRADO".equals(aviso.estado())?"Movimiento registrado en Kaptal.":"Aviso pendiente en Kaptal. Revisalo antes de guardar; si hay movimientos parecidos, confirma si es otra operacion.";
+        return "REGISTRADO".equals(aviso.estado())
+            ?"Movimiento registrado en Kaptal: "+r.respuesta()+"\n(Escribe *deshacer* si deseas cancelarlo)."
+            :"Aviso pendiente en Kaptal: "+r.respuesta()+"\nRevisalo antes de guardar; si hay movimientos parecidos, confirma si es otra operacion.";
     }
 
     static String hash(String text){

@@ -1,17 +1,16 @@
 # Estado para retomar la sesión
 
-## Etapa vigente: WhatsApp IA de respaldo (fallback) en backend (2026-10-19)
+## Etapa vigente: experiencia y cierre de voz de WhatsApp (2026-10-19)
 
-- Integración de fallback: En `WhatsappInterpretacionService`, cuando `MotorChatReglas.interpretar(...)` no resuelve (`reglas == null`), se activa `interpretarConIaFallback(...)` utilizando `AiProvider` (`GroqAiProvider` / `GeminiAiProvider`).
-- Principios aplicados: "Reglas primero, IA solo como rescate rápido".
-  1. Si las reglas deterministas resuelven, la IA nunca es invocada.
-  2. Aislamiento estricto de datos: la IA solo recibe IDs y nombres de cuentas y categorías activas del usuario autenticado. No se envían tokens, historial global ni saldos innecesarios.
-  3. Validación segura: los IDs de cuentas y categorías devueltos por la IA se validan contra el usuario. Si la cuenta no existe o falta, se pide aclaración guiada con sugerencias. Si la categoría es inválida, se filtra a `null`.
-  4. Resiliencia: soporte para bloques Markdown (` ```json `), manejo robusto de excepciones (JSON corrupto responde aclaración segura) y limitación de abusos (`ia:usuarioId`).
-- Validación: 10 pruebas unitarias en `WhatsappIaFallbackTest` y 57 pruebas del subsistema WhatsApp completadas con 0 fallos.
-- Rama actual: `mejoras/whatsapp-ia-fallback`.
-- Siguiente paso: Subir rama al remoto y abrir PR hacia `develop`.
-- Texto para el siguiente chat: «Continua Kaptal desde AGENTS.md, ESTADO_SESION.md y PLAN_MAESTRO_KAPTAL.md. La Etapa 2 (IA rápida de respaldo en WhatsApp) ya está implementada y validada en la rama mejoras/whatsapp-ia-fallback con 57 pruebas en verde. Siguiente: probar en integración con Groq/Gemini configurado, validar latencias y avanzar a la Etapa 3 (experiencia y cierre de voz). Conserva mi autoría exclusiva y actualiza los MD al cerrar cada paso.»
+- Etapa 2 (IA rápida de respaldo) ya está integrada en `develop` mediante PR #93. La rama de esta etapa, `mejoras/whatsapp-experiencia`, parte del commit remoto comprobado `8909b06` (`origin/develop`).
+- En `WhatsappEventoService`, la confirmación de una nota de voz acepta «confirmar» y también el código completo; un comando `confirmar audio` sin código ya no consume el borrador. Audio vencido, código incorrecto y confirmación reutilizada no registran otro movimiento.
+- «Deshacer» ahora identifica el último movimiento de WhatsApp reciente y muestra su resumen sin eliminarlo. Solo `confirmar deshacer` dentro de los 15 minutos ejecuta la reversión; `cancelar`, una respuesta ambigua o el vencimiento conservan el movimiento. Se opera sobre el aviso asociado al propietario autenticado.
+- La ayuda visible en Configuración explica los comandos, y aclara que «deshacer» solicita una revisión antes de eliminar.
+- Validación local: 60 pruebas backend relacionadas con WhatsApp y 9 pruebas del componente Angular, todas correctas; `git diff --check` sin errores.
+- Pendiente antes de cerrar la etapa: pruebas reales autorizadas desde los teléfonos del propietario y una segunda persona (mensaje, nota de voz, cancelar, confirmación y posible duplicado), y confirmar la operación desplegada. No se han creado movimientos reales ni se ha desplegado este cambio.
+- Rama actual: `mejoras/whatsapp-experiencia`, con cambios locales sin commit.
+- Siguiente paso: completar pruebas reales y, si el propietario confirma el cierre, preparar PR hacia `develop`; después seguir con Etapa 4 (Gmail bancario personal real), revisando antes su alcance y permisos.
+- Texto para el siguiente chat: «Continúa Kaptal desde `AGENTS.md`, `docs/ESTADO_SESION.md` y `docs/PLAN_MAESTRO_KAPTAL.md`. La Etapa 2 ya está integrada en develop (#93). La Etapa 3 sigue en curso en `mejoras/whatsapp-experiencia`: revisión/confirmación segura para deshacer y confirmación simplificada de audio implementadas; 60 pruebas backend WhatsApp y 9 pruebas frontend en verde. Falta probar en vivo, con autorización, mensaje, nota de voz, cancelar y posible duplicado desde los teléfonos del propietario y una segunda persona. No afirmes cierre/despliegue sin esa evidencia. Conserva mi autoría exclusiva, no registres movimientos reales por tu cuenta y actualiza los MD al cerrar cada parte.»
 
 ## Etapa anterior: WhatsApp multiusuario activado en Cloudflare Workers (2026-10-19)
 
