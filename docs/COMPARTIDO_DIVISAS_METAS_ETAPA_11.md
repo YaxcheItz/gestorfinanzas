@@ -2,7 +2,7 @@
 
 ## Orden autorizado
 
-El propietario da la Etapa 9 por completada provisionalmente y traslada sus comprobaciones físicas a la revisión final. No equivale a certificar instalación, cierre por Android ni permisos en dispositivo. PR #101 conserva esa entrega en su rama; no se incorpora por rutina en esta etapa.
+El propietario da la Etapa 9 por completada provisionalmente y traslada sus comprobaciones físicas a la revisión final. No equivale a certificar instalación, cierre por Android ni permisos en dispositivo. Durante esta entrega integró PR #101 en develop (`3af6e80`); se actualizó la rama de Etapa 11 con ese develop y se conservaron ambas documentaciones. PR #102 contiene esta primera entrega hacia develop, como borrador, sin integrarlo.
 
 Orden: **11 → base Android con Capacitor/APK → 10 sin Gmail → 12 → 13 → revisión final**. Distribución Android mediante APK firmado descargable, sin publicación en Play Store. Widgets y ajustes rápidos necesitan componentes Android adicionales; empaquetar Angular no los crea automáticamente. Gmail queda fuera. Comercialización opcional.
 
@@ -21,7 +21,7 @@ La interfaz de participantes permite hacer editor/lector manteniendo la lista ab
 
 El recorrido E2E detectó que una unión desde otra sesión no aparecía en el panel previamente cargado. Corregido: recargar al abrir y actualizar los participantes de la lista editada al recibir el resultado. La repetición completa pasó.
 
-Validación local: backend `mvnw verify`, 495 ejecutadas = 489 correctas + 6 omitidas, cero fallos/errores; frontend 366 correctas en 43 archivos; build de producción correcto. E2E móvil real local correcto: crear lista, compartir, denegar escalada de privilegios y rol inválido, promover/degradar desde la interfaz y comprobar persistencia, etiquetas y aislamiento. H2 y usuarios sintéticos. PostgreSQL/CI pendiente de publicación. No se certifica Android físico ni producción autenticada.
+Validación local: backend `mvnw verify`, 495 ejecutadas = 489 correctas + 6 omitidas, cero fallos/errores; frontend 381 correctas en 45 archivos tras actualizar develop; build de producción correcto. Dos E2E correctos tras actualizar develop: accesos de captura y recorrido móvil de listas: crear lista, compartir, denegar escalada de privilegios y rol inválido, promover/degradar desde la interfaz y comprobar persistencia, etiquetas y aislamiento. H2 y usuarios sintéticos. PostgreSQL/CI pendiente de publicación. No se certifica Android físico ni producción autenticada.
 
 Skills aplicadas: Ponytail, Angular, security-review, debugging-and-error-recovery, Playwright, ecc-verification-loop y documentation-and-adrs.
 

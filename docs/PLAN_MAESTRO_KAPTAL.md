@@ -6,7 +6,7 @@ Orden autorizado: **11 -> base Android con Capacitor y APK firmado descargable -
 
 Rama nueva `mejoras/compartido-divisas-metas` desde `origin/develop` actualizado `6775c1e`. PR #101 fue integrado en develop por el propietario durante el trabajo; rama actualizada con origin/develop `3af6e80`, sin integrar el PR #102. Primera entrega de Etapa 11: cambio de rol editor/lector por el propietario, manteniendo movimientos y saldos. Detalles y pendientes en [COMPARTIDO_DIVISAS_METAS_ETAPA_11.md](COMPARTIDO_DIVISAS_METAS_ETAPA_11.md). Etapa 11 sigue en curso: faltan repartos/partes, trazabilidad de divisas y metas.
 
-Validacion de la primera entrega: backend verify 489 correctas y 6 omitidas; frontend 366 correctas; build y E2E movil de listas/roles correctos. Corregida la actualizacion de participantes tras union desde otra sesion. H2/datos sinteticos; PostgreSQL y CI pendientes. Sin merge ni despliegue.
+Validacion de la primera entrega: backend verify 489 correctas y 6 omitidas; frontend 381 correctas tras actualizar develop; build correcto. Dos E2E de listas/roles y accesos de captura correctos tras actualizar develop. Corregida la actualizacion de participantes tras union desde otra sesion. H2/datos sinteticos; PostgreSQL y CI pendientes. PR #102 abierto como borrador hacia develop; sin integrar ni desplegar esta entrega.
 
 Los apartados siguientes son el historial anterior; prevalece este orden.
 
