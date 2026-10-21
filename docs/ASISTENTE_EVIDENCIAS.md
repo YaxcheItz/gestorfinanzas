@@ -12,7 +12,7 @@ Validación local completa: `mvnw -B verify` con 478 pruebas correctas y 6 omiti
 
 El propietario revisó en la página del preview del PR #97 el flujo de consulta y evidencia y confirmó que funcionó. La validación es manual y corresponde al preview; no se afirma despliegue en producción ni se extiende a escenarios que no se revisaron.
 
-La consulta de presupuestos muestra ahora por categoría el monto gastado, el límite y el disponible con su moneda. Usa el monto disponible calculado por `PresupuestoService` y conserva su precisión/signo, incluido saldo negativo por exceso. La prueba de `AiActionService` verifica su inclusión junto con la evidencia de movimientos de alcance coincidente.
+La consulta de presupuestos muestra ahora por categoría el monto gastado, el límite y el disponible con su moneda. Usa el monto disponible calculado por `PresupuestoService` y conserva su precisión/signo, incluido saldo negativo por exceso. La prueba de `AiActionService` verifica su inclusión junto con la evidencia de movimientos de alcance coincidente. Commit `0b495ee`; CI completo del SHA publicado en verde y suite backend local completa (478 pruebas, 6 omitidas).
 
 ## Alcance vigente
 

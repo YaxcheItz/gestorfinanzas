@@ -12,6 +12,8 @@ El propietario confirmó que las comprobaciones manuales del flujo de evidencia 
 
 Continuación funcional: las respuestas de presupuesto informan lo gastado, límite, disponible y moneda para cada categoría; el disponible conserva signo cuando el gasto supera el límite. Prueba unitaria y suite backend completas pasan.
 
+La mejora de presupuesto se publicó en `0b495ee`; su CI (backend, PostgreSQL, frontend, E2E, WhatsApp Cloudflare, canales personales y Vercel Preview) está verde. No es una integración ni un despliegue de producción.
+
 ## Prioridad vigente: solo WhatsApp y asistente (2026-10-20)
 
 Archivo solicitado posteriormente: el borrador Gmail se conserva mediante commit LOCAL en `mejoras/gmail-bancario-piloto`, sin subirlo ni integrarlo. El checkout principal queda sin cambios pendientes; el trabajo activo del asistente continúa en su worktree y PR #97. Secretos y artefactos quedan fuera de Git; no reactivar Gmail al retomar este archivo.
