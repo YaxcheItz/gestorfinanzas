@@ -1,5 +1,16 @@
 # Estado para retomar la sesión
 
+## Asistente financiero: filtros y evidencias de listas (2026-10-21)
+
+- Worktree `.local/asistente-worktree`, rama `mejoras/asistente-evidencias`, desde `origin/develop` `211b457`. Al retomar ya existía el commit local `8db5edc` y cambios sin commit de esta entrega; no se modificó el checkout principal.
+- El parser admite listas accesibles no archivadas y pide aclaración para listas desconocidas/ambiguas. Consultas y comparaciones por lista pasan autorización antes de agregar y restringen los movimientos al propietario; la evidencia incluye lista y autor para enlazar el mismo subconjunto en historial y CSV.
+- Presupuestos generan evidencia por categoría/moneda/mes/lista únicamente cuando el historial coincide con el alcance calculado. Saldos y plantillas recurrentes rechazan explícitamente el filtro por lista, en lugar de ignorarlo. WhatsApp usa el mismo parser y entrega la evidencia autorizada.
+- Interfaz de asistente e historial conserva `listaId`, `autorId`, moneda, categoría, fechas y tipo; la evidencia “Sin categoría” filtra explícitamente `categoria IS NULL`. Los filtros incompatibles o desconocidos no se convierten en reportes globales.
+- PR #97 conserva el SHA remoto `c51a7b1`; el CI visto anteriormente fallaba en la revisión de dependencias del job frontend. En esta sesión `gh` no está autenticado, así que no se pudo consultar el estado actualizado ni disparar CI. No se hizo push. La alineación de Angular a `21.2.25` y los overrides del lockfile pasan el control local; producción sin vulnerabilidades conocidas y cinco avisos conocidos solo de desarrollo.
+- Verificación local posterior a los cambios: backend `mvnw -B verify` correcto (478 pruebas, 6 omitidas); pruebas dirigidas de filtros/listas/WhatsApp: 72 correctas; frontend: 343 pruebas; build de producción y `npm run security:check` correctos. `git diff --check` debe repetirse después de esta actualización documental. No se usaron datos financieros reales ni se desplegó.
+- Pendiente: revisión final automatizada del diff, comprobar `diff --check`, commit y push del nuevo SHA para obtener CI remoto, luego verificar sus jobs. No afirmar CI verde, merge ni despliegue hasta tener evidencia. Gmail sigue deshabilitado y Etapa 6 omitida.
+- Para continuar: leer `AGENTS.md`, este archivo, `docs/PLAN_MAESTRO_KAPTAL.md` y `docs/ASISTENTE_EVIDENCIAS.md`; continuar el cierre del PR #97 y respetar Gmail/Etapa 6 fuera de alcance.
+
 ## Borrador Gmail archivado localmente (2026-10-20)
 
 - El propietario pidió guardar los +3750 añadidos locales de Gmail en su rama y limpiar la carpeta principal. Se conserva el borrador en un commit local de `mejoras/gmail-bancario-piloto`, sin push, merge ni activación. Incluye código, pruebas, lockfile y documentación; no certifica operación automática terminada.

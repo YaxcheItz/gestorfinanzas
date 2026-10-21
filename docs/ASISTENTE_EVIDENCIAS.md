@@ -1,5 +1,15 @@
 # Asistente financiero con evidencias
 
+## Avance local del 21 de octubre de 2026
+
+Se añadieron filtros de consulta por lista activa y accesible al usuario, preservados por la evidencia y por la navegación del historial/CSV mediante `listaId` y `autorId`. El parser pide aclaración para una lista desconocida o ambigua y omite listas archivadas. Los agregados de listas se autorizan antes de consultar y cuentan únicamente movimientos del usuario propietario.
+
+La evidencia presupuestaria ahora usa el mismo mes, categoría, moneda, lista y autor que el cálculo de `montoGastado`. Si no hay movimientos en ese alcance, no se presenta evidencia como si coincidiera. Los filtros de lista para saldo y plantillas recurrentes se rechazan claramente. WhatsApp recibe las listas autorizadas y devuelve la misma evidencia que el chat. Se mantienen los filtros de cuenta/categoría/fechas inclusivas y “Sin categoría”.
+
+La rama de PR #97 sigue en `mejoras/asistente-evidencias`; el SHA remoto observado es `c51a7b1`, anterior a estos cambios, cuyo CI fallaba en revisión de dependencias frontend. `gh` no está autenticado en este entorno, por lo que no se pudo revisar o iniciar CI actualizado. El cambio local de dependencias conserva Angular `21.2.25` y overrides; `npm run security:check` pasa, producción sin vulnerabilidades conocidas y cinco alertas conocidas únicamente en dependencias de desarrollo. Sin push, merge ni despliegue.
+
+Validación local completa: `mvnw -B verify` con 478 pruebas correctas y 6 omitidas; 72 pruebas dirigidas para motor, contexto, acciones, presupuestos, listas y WhatsApp; 343 pruebas frontend y build de producción correctos. Repetir `git diff --check` tras la última actualización documental. No se consultaron ni alteraron datos financieros reales.
+
 ## Alcance vigente
 
 Publicado en GitHub para revisión mediante [PR #97](https://github.com/YaxcheItz/gestorfinanzas/pull/97), hacia `develop`. Publicar la rama no despliega el cambio ni sustituye comprobar CI.
@@ -32,11 +42,9 @@ Consultar el resultado final y el número de pruebas en `ESTADO_SESION.md`. Las 
 
 ## Lo que sigue para completar la etapa
 
-1. Filtros explícitos por categoría, cuenta/lista autorizada y rangos definidos; aclarar ambigüedades antes de consultar.
-2. Extender la evidencia ya disponible para comparación mensual al resto de consultas; después incorporar enlaces equivalentes en las respuestas WhatsApp.
-3. Restante de presupuesto, recurrencias y tendencias sencillas sustentadas en datos existentes, sin atribuir gastos futuros como hechos.
-4. Interfaz conversacional y sugerencias con carga/vacío/error coherentes, usando los componentes actuales.
-5. Pruebas de aislamiento, cálculos contrastados con reportes/historial, publicación de la rama, CI y despliegue antes de validación real.
+1. Revisar el diff final y `git diff --check`; después crear commit y publicar la rama para obtener CI correspondiente al nuevo SHA.
+2. Revisar todos los checks del PR #97 y resolver cualquier fallo de backend/PostgreSQL, frontend, E2E, WhatsApp o Vercel.
+3. Completar las comprobaciones restantes de UI y evidencia de reportes/WhatsApp con CI; luego validar el despliegue servido antes de cerrar la Etapa 7.
 
 El asistente completo todavía no está terminado. Esta primera entrega no está desplegada. No activar correo ni conciliación como dependencias de estas tareas.
 

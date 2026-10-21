@@ -3,6 +3,7 @@ package com.gestionfinanzas.ai;
 import com.gestionfinanzas.dto.response.CuentaResponse;
 import com.gestionfinanzas.dto.response.CategoriaResponse;
 import com.gestionfinanzas.dto.response.TransaccionResponse;
+import com.gestionfinanzas.dto.response.ListaResponse;
 import com.gestionfinanzas.model.enums.TipoCuenta;
 import com.gestionfinanzas.model.enums.TipoTransaccion;
 import java.math.BigDecimal;
@@ -18,6 +19,7 @@ import java.util.regex.*;
 public final class MotorChatReglas {
     private static final Pattern MONTO = Pattern.compile("(?<![\\p{L}\\d-])\\$?([0-9][0-9.,]*)(?![\\p{L}])");
     private static final Pattern FECHA = Pattern.compile("\\b(\\d{4}-\\d{2}-\\d{2}|\\d{1,2}/\\d{1,2}(?:/\\d{4})?)\\b");
+    private static final Pattern RANGO = Pattern.compile("\\b(?:del|desde)\\s+(\\d{4}-\\d{2}-\\d{2})\\s+(?:al|hasta)\\s+(\\d{4}-\\d{2}-\\d{2})\\b");
     private static final Map<String, Set<String>> DICCIONARIO = Map.ofEntries(
         Map.entry("comida", Set.of("tacos","taco","comida","restaurante","cafe","cafeteria","pizza","hamburguesa","desayuno","almuerzo","cena")),
         Map.entry("supermercado", Set.of("super","supermercado","despensa","abarrotes","walmart","soriana","chedraui")),
@@ -31,7 +33,19 @@ public final class MotorChatReglas {
         Map.entry("ingresos", Set.of("nomina","sueldo","salario","quincena"))
     );
     public record Resultado(Map<String,Object> datos, String respuesta, List<String> sugerencias,
-                            String contexto, String reporte, LocalDate desde, LocalDate hasta, String moneda) {}
+                            String contexto, String reporte, LocalDate desde, LocalDate hasta, String moneda,
+                            Long cuentaId, Long categoriaId, String cuentaNombre, String categoriaNombre,
+                            Long listaId, String listaNombre) {
+        public Resultado(Map<String,Object> datos, String respuesta, List<String> sugerencias,
+                         String contexto, String reporte, LocalDate desde, LocalDate hasta, String moneda,
+                         Long cuentaId, Long categoriaId, String cuentaNombre, String categoriaNombre) {
+            this(datos,respuesta,sugerencias,contexto,reporte,desde,hasta,moneda,cuentaId,categoriaId,cuentaNombre,categoriaNombre,null,null);
+        }
+        public Resultado(Map<String,Object> datos, String respuesta, List<String> sugerencias,
+                         String contexto, String reporte, LocalDate desde, LocalDate hasta, String moneda) {
+            this(datos,respuesta,sugerencias,contexto,reporte,desde,hasta,moneda,null,null,null,null,null,null);
+        }
+    }
     private record Periodo(LocalDate desde, LocalDate hasta, String texto) {}
     private static Resultado pregunta(String mensaje, String respuesta, List<String> opciones) {
         return new Resultado(null,respuesta,opciones,mensaje,null,null,null,null);
@@ -50,6 +64,11 @@ public final class MotorChatReglas {
     public Resultado interpretar(String mensaje, List<CuentaResponse> cuentasEntrada,
                                   List<CategoriaResponse> categorias, List<TransaccionResponse> recientes, LocalDate hoy,
                                   boolean exigirCuenta) {
+        return interpretar(mensaje,cuentasEntrada,categorias,recientes,hoy,exigirCuenta,List.of());
+    }
+    public Resultado interpretar(String mensaje, List<CuentaResponse> cuentasEntrada,
+                                  List<CategoriaResponse> categorias, List<TransaccionResponse> recientes, LocalDate hoy,
+                                  boolean exigirCuenta, List<ListaResponse> listas) {
         String texto=normalizar(mensaje);
         if (texto.isBlank()) return pregunta(mensaje,"Escribe un movimiento o pide un reporte.",List.of("Gasté 80 en tacos","Reporte de este mes"));
         if (Set.of("hola","ayuda","que puedes hacer","buenas").contains(texto)) return new Resultado(null,"Escribe un gasto, ingreso o transferencia, o pide un resumen, saldo, categor\u00edas o presupuestos. La fecha predeterminada es hoy.",List.of("Gast\u00e9 80 en tacos","Recib\u00ed 900 de sueldo","Reporte de este mes"),null,null,null,null,null);
@@ -60,16 +79,56 @@ public final class MotorChatReglas {
         String textoMoneda=texto;
         for (CuentaResponse c:cuentasEntrada) textoMoneda=textoMoneda.replaceAll("(?<![\\p{L}\\d])"+Pattern.quote(normalizar(c.nombre()))+"(?![\\p{L}\\d])"," ");
         String moneda=moneda(textoMoneda);
-        if (texto.matches("(?:compara|comparame|comparar) (?:este mes|el mes actual) (?:con|contra) (?:el mes pasado|el mes anterior|el anterior)(?: en (?:mxn|usd|eur|cad|gbp))?")) {
-            return new Resultado(null,null,List.of(),null,"COMPARACION_MENSUAL",hoy.withDayOfMonth(1),hoy,moneda);
-        }
-        boolean consulta=texto.matches(".*\\b(reporte|reportes|resumen|grafico|grafica|categorias|presupuesto|presupuestos|saldo|balance|cuanto|cuanta|cuantos|cuantas|como voy|en que|top|alertas|gastos fijos|compara|comparame|comparar)\\b.*") || texto.equals("ingresos") || texto.equals("gastos");
+        boolean comparacionMensual=texto.matches(".*\\b(?:compara|comparame|comparar) (?:este mes|el mes actual) (?:con|contra) (?:el mes pasado|el mes anterior|el anterior)\\b.*");
+        boolean consulta=texto.matches(".*\\b(reporte|reportes|resumen|grafico|grafica|categorias|categoria|presupuesto|presupuestos|saldo|balance|cuanto|cuanta|cuantos|cuantas|como voy|en que|top|alertas|gastos fijos|gastos|ingresos|compara|comparame|comparar)\\b.*");
         if (consulta) {
-            if (FECHA.matcher(texto).results().count()>1 || MONTO.matcher(FECHA.matcher(texto).replaceAll(" ").replaceAll("ultimos 7 dias", " ")).find() || texto.matches(".*\\b(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre|ano|anual|trimestre)\\b.*")) return null;
-            if (texto.matches(".*\\ben\\s+(?!que |categorias?\\b|mxn\\b|usd\\b|eur\\b|cad\\b|gbp\\b).+") || texto.matches(".*\\b(desde|usando|cuenta|tarjeta)\\b.*") && !texto.contains("saldo")) return null;
-            if (texto.matches(".*\\b(compara|comparar|proyeccion|predice|pronostico|inversion|recomienda)\\b.*")) return null;
+            long cantidadFechas=FECHA.matcher(texto).results().count();
+            boolean rangoExplicito=RANGO.matcher(texto).find()&&cantidadFechas==2;
+            if ((cantidadFechas>1 && !rangoExplicito)
+                    || MONTO.matcher(FECHA.matcher(texto).replaceAll(" ").replaceAll("ultimos 7 dias", " ")).find()
+                    || texto.matches(".*\\b(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre|ano|anual|trimestre)\\b.*")) return null;
+            if(comparacionMensual&&cantidadFechas>0)return null;
+            if (texto.matches(".*\\b(compara|comparar|proyeccion|predice|pronostico|inversion|recomienda)\\b.*") && !comparacionMensual) return null;
+            List<ListaResponse> listasCoincidentes=List.of();
+            if (palabra(texto,"lista")) {
+                listasCoincidentes=listas.stream().filter(l->!l.archivada())
+                        .filter(l->palabra(texto,normalizar(l.nombre()))).toList();
+                if(listasCoincidentes.isEmpty()) return pregunta(mensaje,
+                        "No encontré una lista accesible con ese nombre. Elige una de tus listas activas.",
+                        listas.stream().filter(l->!l.archivada()).map(ListaResponse::nombre).distinct().limit(10).toList());
+                int longitudMaxima=listasCoincidentes.stream().mapToInt(l->normalizar(l.nombre()).length()).max().orElse(0);
+                listasCoincidentes=listasCoincidentes.stream().filter(l->normalizar(l.nombre()).length()==longitudMaxima).toList();
+                if(listasCoincidentes.size()>1) return pregunta(mensaje,"Hay varias listas con ese nombre. Indica cuál quieres consultar.",
+                        listasCoincidentes.stream().map(ListaResponse::nombre).distinct().limit(10).toList());
+            }
+            ListaResponse listaSeleccionada=listasCoincidentes.isEmpty()?null:listasCoincidentes.getFirst();
+            List<CuentaResponse> cuentasCoincidentes=cuentasEntrada.stream().filter(CuentaResponse::activo)
+                    .filter(c -> palabra(texto,normalizar(c.nombre()))).toList();
+            if (cuentasCoincidentes.size()>1) return pregunta(mensaje,"Hay varias cuentas con ese nombre. Indica el nombre completo de la cuenta.",cuentasCoincidentes.stream().map(CuentaResponse::nombre).distinct().toList());
+            boolean cuentaSolicitada=Pattern.compile("\\b(?:desde|usando|cuenta|tarjeta)\\s+(?!este\\b|esta\\b|hoy\\b|ayer\\b|\\d{4}-\\d{2}-\\d{2})[\\p{L}]+").matcher(texto).find();
+            if (cuentaSolicitada && cuentasCoincidentes.isEmpty()) return pregunta(mensaje,"No encontré esa cuenta activa. Indica el nombre exacto de una de tus cuentas.",cuentasEntrada.stream().filter(CuentaResponse::activo).map(CuentaResponse::nombre).limit(10).toList());
+            List<CategoriaResponse> categoriasCoincidentes=categorias.stream().filter(CategoriaResponse::activo)
+                    .filter(c -> palabra(texto,normalizar(c.nombre()))).toList();
+            if (categoriasCoincidentes.size()>1) return pregunta(mensaje,"Hay varias categorías con ese nombre. Aclara cuál quieres consultar.",categoriasCoincidentes.stream().map(CategoriaResponse::nombre).distinct().toList());
+            if (categoriasCoincidentes.isEmpty() && solicitaCategoria(texto) && contieneFiltroDesconocido(texto,cuentasEntrada,categorias,moneda))
+                return pregunta(mensaje,"No encontré esa categoría. Indica el nombre exacto de una categoría activa.",categorias.stream().filter(CategoriaResponse::activo).map(CategoriaResponse::nombre).limit(10).toList());
+            if (comparacionMensual) {
+                return new Resultado(null,null,List.of(),null,"COMPARACION_MENSUAL",hoy.withDayOfMonth(1),hoy,moneda,
+                        cuentasCoincidentes.isEmpty()?null:cuentasCoincidentes.get(0).id(),
+                        categoriasCoincidentes.isEmpty()?null:categoriasCoincidentes.get(0).id(),
+                        cuentasCoincidentes.isEmpty()?null:cuentasCoincidentes.get(0).nombre(),
+                        categoriasCoincidentes.isEmpty()?null:categoriasCoincidentes.get(0).nombre(),
+                        listaSeleccionada==null?null:listaSeleccionada.id(),
+                        listaSeleccionada==null?null:listaSeleccionada.nombre());
+            }
             String modo=texto.matches(".*\\b(presupuesto|presupuestos|alertas)\\b.*") ? "PRESUPUESTOS" : texto.contains("gastos fijos") ? "RECURRENTES" : texto.matches(".*\\b(saldo|balance|cuanto tengo)\\b.*") ? "SALDO" : texto.matches(".*\\b(categoria|categorias|top|en que)\\b.*") ? "CATEGORIAS" : "RESUMEN";
-            return new Resultado(null,null,List.of(),null,modo,periodo.desde(),periodo.hasta(),moneda);
+            return new Resultado(null,null,List.of(),null,modo,periodo.desde(),periodo.hasta(),moneda,
+                    cuentasCoincidentes.isEmpty()?null:cuentasCoincidentes.get(0).id(),
+                    categoriasCoincidentes.isEmpty()?null:categoriasCoincidentes.get(0).id(),
+                    cuentasCoincidentes.isEmpty()?null:cuentasCoincidentes.get(0).nombre(),
+                    categoriasCoincidentes.isEmpty()?null:categoriasCoincidentes.get(0).nombre(),
+                    listaSeleccionada==null?null:listaSeleccionada.id(),
+                    listaSeleccionada==null?null:listaSeleccionada.nombre());
         }
         if (FECHA.matcher(texto).results().count()>1 || texto.matches(".*\\b(semana|mes)\\b.*")) return pregunta(mensaje,"Indica un día exacto para registrar el movimiento; por ejemplo hoy, ayer o 2026-10-04.",List.of());
         boolean transfer=texto.matches(".*\\b(transferencia|transferi|transferir|transfiero|traspase|traspaso|movi|mover)\\b.*");
@@ -173,6 +232,20 @@ public final class MotorChatReglas {
         if(palabra(texto,"euros"))return "EUR";
         return null;
     }
+    private static boolean solicitaCategoria(String texto) {
+        return Pattern.compile("\\b(?:categoria|categorias)\\s+(?!por\\b)[\\p{L}]+|\\b(?:gastos?|compras?)\\s+(?:de|en)\\s+(?!este\\s+mes|mes\\b|la\\s+semana|esta\\s+semana|hoy\\b|ayer\\b)[\\p{L}]+|\\ben\\s+(?!que\\b|mxn\\b|usd\\b|eur\\b|cad\\b|gbp\\b|la\\s+lista)[\\p{L}]+")
+                .matcher(texto).find();
+    }
+    private static boolean contieneFiltroDesconocido(String texto,List<CuentaResponse> cuentas,
+                                                       List<CategoriaResponse> categorias,String moneda) {
+        String residual=RANGO.matcher(texto).replaceAll(" ");
+        residual=FECHA.matcher(residual).replaceAll(" ");
+        for(CuentaResponse cuenta:cuentas) residual=residual.replaceAll("(?<![\\p{L}\\d])"+Pattern.quote(normalizar(cuenta.nombre()))+"(?![\\p{L}\\d])"," ");
+        for(CategoriaResponse categoria:categorias) residual=residual.replaceAll("(?<![\\p{L}\\d])"+Pattern.quote(normalizar(categoria.nombre()))+"(?![\\p{L}\\d])"," ");
+        if(moneda!=null) residual=residual.replaceAll("(?<![\\p{L}\\d])"+moneda.toLowerCase(Locale.ROOT)+"(?![\\p{L}\\d])"," ");
+        residual=residual.replaceAll("\\b(reporte|reportes|resumen|grafico|grafica|categorias?|presupuestos?|saldo|balance|cuanto|cuanta|cuantos|cuantas|como|voy|en|que|top|alertas|gastos?|gaste|gastado|ingresos?|comparas?|comparame|comparar|mes|semana|hoy|ayer|anteayer|este|esta|del|desde|al|hasta|de|la|las|los|el|por|para|con|usando|cuenta|tarjeta|actual|anterior|pasado|mismo|mxn|usd|eur|cad|gbp|ultimos|ultimas|dias)\\b"," ");
+        return !residual.replaceAll("[^\\p{L}\\p{N}]"," ").isBlank();
+    }
     private static BigDecimal monto(String texto) {
         texto=texto.replaceAll("[.,]+$","");int coma=texto.lastIndexOf(','),punto=texto.lastIndexOf('.');
         if(coma>=0&&punto>=0)texto=coma>punto?texto.replace(".","").replace(',','.'):texto.replace(",","");
@@ -180,6 +253,14 @@ public final class MotorChatReglas {
         return new BigDecimal(texto).setScale(2,java.math.RoundingMode.UNNECESSARY);
     }
     private static Periodo periodo(String texto,LocalDate hoy) {
+        Matcher rango=RANGO.matcher(texto);
+        if(rango.find()) {
+            try {
+                LocalDate desde=LocalDate.parse(rango.group(1)),hasta=LocalDate.parse(rango.group(2));
+                if(hasta.isBefore(desde))throw new IllegalArgumentException();
+                return new Periodo(desde,hasta,RANGO.matcher(texto).replaceAll(" "));
+            }catch(RuntimeException ex){throw new IllegalArgumentException(ex);}
+        }
         Matcher fecha=FECHA.matcher(texto);LocalDate desde=hoy.withDayOfMonth(1),hasta=hoy;
         if(fecha.find()) {
             String f=fecha.group(1);

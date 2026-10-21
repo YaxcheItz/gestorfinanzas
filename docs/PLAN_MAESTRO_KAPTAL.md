@@ -1,5 +1,13 @@
 # Kaptal: plan maestro y traspaso al siguiente chat
 
+## Avance local del asistente (2026-10-21)
+
+Se implementaron filtros autorizados por lista activa, evidencias reproducibles por lista y autor, y evidencia de presupuesto con el mismo periodo, moneda, categoría y lista del cálculo. Chat y WhatsApp comparten el alcance; las consultas de saldo y recurrencias rechazan filtros de lista que no soportan. Se conservan los filtros explícitos de cuenta/categoría/fechas y la evidencia “Sin categoría”. Ver cambios y cobertura en [ASISTENTE_EVIDENCIAS.md](ASISTENTE_EVIDENCIAS.md).
+
+Validación local: backend `mvnw -B verify` con 478 pruebas correctas y 6 omitidas; 72 pruebas dirigidas de filtros y evidencias; 343 pruebas frontend, build de producción y `npm run security:check` correctos. Producción sin vulnerabilidades conocidas; cinco alertas conocidas permanecen solo en dependencias de desarrollo según el control del proyecto.
+
+PR #97 todavía apunta al SHA remoto anterior `c51a7b1`; el CI consultado de ese SHA falló en revisión de dependencias frontend. `gh` no está autenticado en el entorno actual y no se pudo comprobar o lanzar CI actualizado. Los cambios locales siguen sin push; no considerar la Etapa 7 cerrada ni desplegada. Gmail continúa deshabilitado y Etapa 6 omitida.
+
 ## Prioridad vigente: solo WhatsApp y asistente (2026-10-20)
 
 Archivo solicitado posteriormente: el borrador Gmail se conserva mediante commit LOCAL en `mejoras/gmail-bancario-piloto`, sin subirlo ni integrarlo. El checkout principal queda sin cambios pendientes; el trabajo activo del asistente continúa en su worktree y PR #97. Secretos y artefactos quedan fuera de Git; no reactivar Gmail al retomar este archivo.

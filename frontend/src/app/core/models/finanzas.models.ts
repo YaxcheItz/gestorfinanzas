@@ -357,6 +357,7 @@ export interface TransaccionFiltro {
   tipo?: TipoTransaccion | '';
   cuentaId?: number | null;
   categoriaId?: number | null;
+  sinCategoria?: boolean;
   categoriaIds?: number[];
   fechaInicio?: string | null;
   fechaFin?: string | null;

@@ -2,6 +2,7 @@ package com.gestionfinanzas.controller;
 
 import com.gestionfinanzas.dto.request.TransaccionRequest;
 import com.gestionfinanzas.dto.response.ApiResponse;
+import com.gestionfinanzas.ai.AiEvidence;
 import com.gestionfinanzas.security.CustomUserDetails;
 import com.gestionfinanzas.service.*;
 import jakarta.validation.Valid;
@@ -19,7 +20,13 @@ public class WhatsappConsultaController {
     private final WhatsappInterpretacionService interpretacion;
     public record Solicitud(@NotBlank @Size(max=1200) String texto) {}
     public record Respuesta(String tipo,String respuesta,TransaccionRequest propuesta,String moneda,
-                            String contexto,List<String> sugerencias,LocalDate desde,LocalDate hasta) {}
+                            String contexto,List<String> sugerencias,LocalDate desde,LocalDate hasta,
+                            List<AiEvidence> evidencia) {
+        public Respuesta(String tipo,String respuesta,TransaccionRequest propuesta,String moneda,
+                         String contexto,List<String> sugerencias,LocalDate desde,LocalDate hasta) {
+            this(tipo,respuesta,propuesta,moneda,contexto,sugerencias,desde,hasta,List.of());
+        }
+    }
 
     @PostMapping("/interpretar")
     public ApiResponse<Respuesta> interpretar(@AuthenticationPrincipal CustomUserDetails user,@Valid @RequestBody Solicitud body) {

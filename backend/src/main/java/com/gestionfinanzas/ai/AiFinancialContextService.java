@@ -10,6 +10,8 @@ import com.gestionfinanzas.model.enums.TipoCuenta;
 import com.gestionfinanzas.model.enums.TipoTransaccion;
 import com.gestionfinanzas.repository.CuentaRepository;
 import com.gestionfinanzas.repository.TransaccionRepository;
+import com.gestionfinanzas.service.ListaService;
+import com.gestionfinanzas.dto.response.ListaResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +31,11 @@ public class AiFinancialContextService {
     private final CuentaRepository cuentaRepository;
     private final TransaccionRepository transaccionRepository;
     private final ObjectMapper objectMapper;
+    private final ListaService listaService;
+
+    public List<ListaResponse> listarListas(Long userId) {
+        return listaService.listar(userId);
+    }
 
     @Transactional(readOnly = true)
     public String buildContext(Long userId) {
@@ -84,36 +91,81 @@ public class AiFinancialContextService {
     /** Totales agregados en SQL y siempre acotados al usuario autenticado. */
     @Transactional(readOnly = true)
     public AiActionService.AiActionResult reporteLocal(Long userId, String modo, LocalDate desde, LocalDate hasta, String moneda) {
+        return reporteLocal(userId,modo,desde,hasta,moneda,null,null,null,null);
+    }
+
+    @Transactional(readOnly = true)
+    public AiActionService.AiActionResult reporteLocal(Long userId, String modo, LocalDate desde, LocalDate hasta,
+            String moneda, Long cuentaId, Long categoriaId, String cuentaNombre, String categoriaNombre) {
+        return reporteLocal(userId,modo,desde,hasta,moneda,cuentaId,categoriaId,cuentaNombre,categoriaNombre,null,null);
+    }
+
+    @Transactional(readOnly = true)
+    public AiActionService.AiActionResult reporteLocal(Long userId, String modo, LocalDate desde, LocalDate hasta,
+            String moneda, Long cuentaId, Long categoriaId, String cuentaNombre, String categoriaNombre,
+            Long listaId, String listaNombre) {
+        if(listaId!=null) listaService.leer(userId,listaId);
         if ("COMPARACION_MENSUAL".equals(modo)) {
-            return comparacionMensual(userId, desde, hasta, moneda);
+            return comparacionMensual(userId, desde, hasta, moneda, cuentaId, categoriaId, cuentaNombre, categoriaNombre,listaId,listaNombre);
         }
         if ("SALDO".equals(modo)) {
             String texto=cuentaRepository.findByUsuarioIdAndActivoTrue(userId).stream()
-                .filter(c -> moneda==null || moneda.equals(c.getMoneda()))
+                .filter(c -> (moneda==null || moneda.equals(c.getMoneda())) && (cuentaId==null || cuentaId.equals(c.getId())))
                 .map(c -> c.getNombre()+": "+c.getSaldoActual().toPlainString()+" "+c.getMoneda())
                 .collect(java.util.stream.Collectors.joining("\n"));
             return new AiActionService.AiActionResult(texto.isBlank()?"No hay cuentas activas para esa moneda.":"Saldos actuales (no dependen del periodo):\n"+texto,null);
         }
         String periodo=desde+" al "+hasta;
         if ("CATEGORIAS".equals(modo)) {
-            var categorias=transaccionRepository.findGastosPorCategoria(userId,TipoTransaccion.GASTO,desde,hasta).stream()
+            var consultaCategorias=listaId==null
+                    ? transaccionRepository.findGastosPorCategoriaFiltrado(userId,desde,hasta,cuentaId,categoriaId)
+                    : transaccionRepository.findGastosPorCategoriaFiltradoEnLista(userId,listaId,desde,hasta,cuentaId,categoriaId);
+            var categorias=consultaCategorias.stream()
                 .filter(c -> moneda==null || moneda.equals(c.moneda())).toList();
-            String texto=categorias.stream().map(c -> (c.categoriaNombre()==null?"Sin categor\u00eda":c.categoriaNombre())+": "+c.monto().toPlainString()+" "+c.moneda()).collect(java.util.stream.Collectors.joining("\n"));
-            var monedas=categorias.stream().map(DashboardGastoCategoriaResponse::moneda).distinct().toList();
+            String texto=categorias.stream().map(c -> c.categoriaNombre()+": "+c.monto().toPlainString()+" "+c.moneda()).collect(java.util.stream.Collectors.joining("\n"));
+            var monedas=categorias.stream().map(AiCategoriaAgregado::moneda).distinct().toList();
             var top=categorias.stream().limit(8).toList();
             var grafico=monedas.size()==1 ? new AiActionService.AiReportWidget("Gastos por categor\u00eda: "+periodo,
-                top.stream().map(c -> c.categoriaNombre()==null?"Sin categor\u00eda":c.categoriaNombre()).toList(),top.stream().map(c -> c.monto().doubleValue()).toList(),monedas.get(0)):null;
-            return new AiActionService.AiActionResult("Gastos por categor\u00eda del "+periodo+"\n"+(texto.isBlank()?"No hay gastos en ese periodo.":texto),null,List.of(),grafico);
+                top.stream().map(AiCategoriaAgregado::categoriaNombre).toList(),top.stream().map(c -> c.monto().doubleValue()).toList(),monedas.get(0)):null;
+            var evidence=categorias.stream().map(c -> new AiEvidence(c.categoriaNombre(),desde,hasta,c.moneda(),
+                    TipoTransaccion.GASTO,c.operaciones(),c.monto(),cuentaId,c.categoriaId(),cuentaNombre,c.categoriaNombre(),
+                    c.categoriaId()==null,listaId,listaNombre,listaId==null?null:userId)).toList();
+            return new AiActionService.AiActionResult("Gastos por categor\u00eda del "+periodo+alcance(cuentaNombre,categoriaNombre,listaNombre)+"\n"+(texto.isBlank()?"No hay gastos en ese periodo.":texto),null,List.of(),grafico,List.of(),null,evidence);
         }
-        var totales=transaccionRepository.findTotalesMensualesPorMoneda(userId,desde,hasta).stream()
+        var consultaTotales=listaId==null
+                ? transaccionRepository.findTotalesMensualesPorMonedaFiltrado(userId,desde,hasta,cuentaId,categoriaId)
+                : transaccionRepository.findTotalesMensualesPorMonedaFiltradoEnLista(userId,listaId,desde,hasta,cuentaId,categoriaId);
+        var consultaConteos=listaId==null
+                ? transaccionRepository.findConteosPorMonedaYTipoFiltrado(userId,desde,hasta,cuentaId,categoriaId)
+                : transaccionRepository.findConteosPorMonedaYTipoEnLista(userId,listaId,desde,hasta,cuentaId,categoriaId);
+        var totales=consultaTotales.stream()
             .filter(t -> moneda==null||moneda.equals(t.moneda())).toList();
+        var conteos=consultaConteos.stream()
+                .filter(t->moneda==null||moneda.equals(t.moneda())).toList();
         String texto=totales.stream().map(t -> t.moneda()+": ingresos "+t.ingresos().toPlainString()+", gastos "+t.gastos().toPlainString()+", balance del periodo "+t.ingresos().subtract(t.gastos()).toPlainString()).collect(java.util.stream.Collectors.joining("\n"));
         AiActionService.AiReportWidget grafico=null;
         if(totales.size()==1){var t=totales.get(0);grafico=new AiActionService.AiReportWidget("Resumen: "+periodo,List.of("Ingresos","Gastos"),List.of(t.ingresos().doubleValue(),t.gastos().doubleValue()),t.moneda());}
-        return new AiActionService.AiActionResult("Resumen del "+periodo+"\n"+(texto.isBlank()?"No hay ingresos ni gastos registrados en ese periodo.":texto),null,List.of(),grafico);
+        var evidence=new java.util.ArrayList<AiEvidence>();
+        for(var total:totales)for(var tipo:List.of(TipoTransaccion.INGRESO,TipoTransaccion.GASTO)) {
+            long operaciones=conteos.stream().filter(c->total.moneda().equals(c.moneda())&&tipo==c.tipo())
+                    .mapToLong(com.gestionfinanzas.dto.response.MovimientoConteo::operaciones).sum();
+            evidence.add(new AiEvidence(tipo==TipoTransaccion.INGRESO?"Ingresos":"Gastos",desde,hasta,total.moneda(),
+                    tipo,operaciones,tipo==TipoTransaccion.INGRESO?total.ingresos():total.gastos(),
+                    cuentaId,categoriaId,cuentaNombre,categoriaNombre,false,listaId,listaNombre,listaId==null?null:userId));
+        }
+        return new AiActionService.AiActionResult("Resumen del "+periodo+alcance(cuentaNombre,categoriaNombre,listaNombre)+"\n"+(texto.isBlank()?"No hay ingresos ni gastos registrados en ese periodo.":texto),null,List.of(),grafico,List.of(),null,evidence);
     }
 
-    private AiActionService.AiActionResult comparacionMensual(Long userId, LocalDate desde, LocalDate hasta, String moneda) {
+    private static String alcance(String cuentaNombre,String categoriaNombre,String listaNombre) {
+        StringBuilder alcance=new StringBuilder();
+        if(cuentaNombre!=null)alcance.append(" · Cuenta: ").append(cuentaNombre);
+        if(categoriaNombre!=null)alcance.append(" · Categoría: ").append(categoriaNombre);
+        if(listaNombre!=null)alcance.append(" · Lista: ").append(listaNombre).append(" (movimientos propios)");
+        return alcance.toString();
+    }
+
+    private AiActionService.AiActionResult comparacionMensual(Long userId, LocalDate desde, LocalDate hasta, String moneda,
+            Long cuentaId, Long categoriaId, String cuentaNombre, String categoriaNombre,Long listaId,String listaNombre) {
         if (desde == null || hasta == null || desde.getDayOfMonth() != 1
                 || hasta.isBefore(desde) || !YearMonth.from(desde).equals(YearMonth.from(hasta))) {
             throw new IllegalArgumentException("La comparación necesita un tramo válido del mismo mes.");
@@ -121,10 +173,14 @@ public class AiFinancialContextService {
         YearMonth mesAnterior = YearMonth.from(desde).minusMonths(1);
         LocalDate anteriorDesde = mesAnterior.atDay(1);
         LocalDate anteriorHasta = mesAnterior.atDay(Math.min(hasta.getDayOfMonth(), mesAnterior.lengthOfMonth()));
-        var actuales = transaccionRepository.findTotalesMensualesPorMoneda(userId, desde, hasta);
-        var anteriores = transaccionRepository.findTotalesMensualesPorMoneda(userId, anteriorDesde, anteriorHasta);
-        var conteosActuales = transaccionRepository.findConteosPorMonedaYTipo(userId, desde, hasta);
-        var conteosAnteriores = transaccionRepository.findConteosPorMonedaYTipo(userId, anteriorDesde, anteriorHasta);
+        var actuales = listaId==null?transaccionRepository.findTotalesMensualesPorMonedaFiltrado(userId, desde, hasta, cuentaId, categoriaId)
+                :transaccionRepository.findTotalesMensualesPorMonedaFiltradoEnLista(userId,listaId,desde,hasta,cuentaId,categoriaId);
+        var anteriores = listaId==null?transaccionRepository.findTotalesMensualesPorMonedaFiltrado(userId, anteriorDesde, anteriorHasta, cuentaId, categoriaId)
+                :transaccionRepository.findTotalesMensualesPorMonedaFiltradoEnLista(userId,listaId,anteriorDesde,anteriorHasta,cuentaId,categoriaId);
+        var conteosActuales = listaId==null?transaccionRepository.findConteosPorMonedaYTipoFiltrado(userId, desde, hasta, cuentaId, categoriaId)
+                :transaccionRepository.findConteosPorMonedaYTipoEnLista(userId,listaId,desde,hasta,cuentaId,categoriaId);
+        var conteosAnteriores = listaId==null?transaccionRepository.findConteosPorMonedaYTipoFiltrado(userId, anteriorDesde, anteriorHasta, cuentaId, categoriaId)
+                :transaccionRepository.findConteosPorMonedaYTipoEnLista(userId,listaId,anteriorDesde,anteriorHasta,cuentaId,categoriaId);
         var evidence = new java.util.ArrayList<AiEvidence>();
         var monedas = java.util.stream.Stream.concat(actuales.stream(), anteriores.stream())
                 .map(DashboardMonedaTotales::moneda).filter(m -> moneda == null || moneda.equals(m))
@@ -141,8 +197,8 @@ public class AiFinancialContextService {
                 String nombre = tipo == TipoTransaccion.INGRESO ? "Ingresos" : "Gastos";
                 long cantidadActual = conteosActuales.stream().filter(t -> divisa.equals(t.moneda()) && t.tipo() == tipo).mapToLong(com.gestionfinanzas.dto.response.MovimientoConteo::operaciones).sum();
                 long cantidadAnterior = conteosAnteriores.stream().filter(t -> divisa.equals(t.moneda()) && t.tipo() == tipo).mapToLong(com.gestionfinanzas.dto.response.MovimientoConteo::operaciones).sum();
-                evidence.add(new AiEvidence(nombre + " actual", desde, hasta, divisa, tipo, cantidadActual, tipo == TipoTransaccion.INGRESO ? actual.ingresos() : actual.gastos()));
-                evidence.add(new AiEvidence(nombre + " anterior", anteriorDesde, anteriorHasta, divisa, tipo, cantidadAnterior, tipo == TipoTransaccion.INGRESO ? anterior.ingresos() : anterior.gastos()));
+                evidence.add(new AiEvidence(nombre + " actual", desde, hasta, divisa, tipo, cantidadActual, tipo == TipoTransaccion.INGRESO ? actual.ingresos() : actual.gastos(),cuentaId,categoriaId,cuentaNombre,categoriaNombre,false,listaId,listaNombre,listaId==null?null:userId));
+                evidence.add(new AiEvidence(nombre + " anterior", anteriorDesde, anteriorHasta, divisa, tipo, cantidadAnterior, tipo == TipoTransaccion.INGRESO ? anterior.ingresos() : anterior.gastos(),cuentaId,categoriaId,cuentaNombre,categoriaNombre,false,listaId,listaNombre,listaId==null?null:userId));
             }
             respuesta.append("\n").append(divisa).append(":\nIngresos: actual ")
                     .append(actual.ingresos().toPlainString()).append(", anterior ").append(anterior.ingresos().toPlainString())
@@ -152,7 +208,8 @@ public class AiFinancialContextService {
                     .append(", diferencia ").append(actual.gastos().subtract(anterior.gastos()).toPlainString());
         }
         if (monedas.isEmpty()) respuesta.append("\nNo hay ingresos ni gastos registrados en esos periodos para la moneda solicitada.");
-        respuesta.append("\nFuente: ingresos y gastos del usuario autenticado; transferencias excluidas. No se suman monedas ni se estiman movimientos faltantes.");
+        respuesta.append("\nFuente: ingresos y gastos del usuario autenticado").append(alcance(cuentaNombre,categoriaNombre,listaNombre))
+                .append("; transferencias excluidas. No se suman monedas ni se estiman movimientos faltantes.");
         return new AiActionService.AiActionResult(respuesta.toString(), null, List.of(), null, List.of(), null, List.copyOf(evidence));
     }
 

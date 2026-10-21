@@ -25,7 +25,9 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 class WhatsappConsultaIntegrationTest {
     @Autowired UsuarioRepository usuarios;
     @Autowired CuentaRepository cuentas;
+    @Autowired CategoriaRepository categorias;
     @Autowired TransaccionRepository transacciones;
+    @Autowired ListaService listas;
     @Autowired AvisoFinancieroRepository avisos;
     @Autowired PropuestaChatRepository propuestas;
     @Autowired WhatsappConsultaController controller;
@@ -40,8 +42,11 @@ class WhatsappConsultaIntegrationTest {
     }
     Cuenta account(Usuario u,String name,String currency,String balance){return cuentas.saveAndFlush(Cuenta.builder().usuario(u).nombre(name).tipo(TipoCuenta.DEBITO).moneda(currency).saldoActual(new BigDecimal(balance)).build());}
     JsonNode query(String text)throws Exception{
+        return query(owner,text);
+    }
+    JsonNode query(Usuario user,String text)throws Exception{
         String body=mapper.writeValueAsString(Map.of("texto",text));
-        String response=mvc.perform(post("/api/canales/whatsapp/interpretar").with(user(new CustomUserDetails(owner))).contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isOk()).andReturn().getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
+        String response=mvc.perform(post("/api/canales/whatsapp/interpretar").with(user(new CustomUserDetails(user))).contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isOk()).andReturn().getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
         return mapper.readTree(response).get("data");
     }
     @Test void consultaTodasLasCuentasSinMezclarMonedasNiOtrosUsuarios()throws Exception{
@@ -68,6 +73,45 @@ class WhatsappConsultaIntegrationTest {
     @Test void monedaContradictoriaPideAclaracion()throws Exception{assertEquals("ACLARACION",query("Gasto 180 USD con Nu").path("tipo").asText());}
     @Test void saldoPorCuentaNoDevuelveTodas()throws Exception{String s=query("saldo de Nu").path("respuesta").asText();assertTrue(s.contains("Nu"));assertFalse(s.contains("BBVA"));assertFalse(s.contains("Secreto"));}
     @Test void resumenEsConsultaSinPropuestasNiEscrituras()throws Exception{long count=propuestas.count();var r=query("¿Cuánto gasté este mes?");assertEquals("CONSULTA",r.path("tipo").asText());assertTrue(r.path("desde").asText().endsWith("01"));assertEquals(count,propuestas.count());}
+    @Test void reporteWhatsappFiltraPorCuentaYCategoriaYDevuelveEvidencia()throws Exception{
+        var hoy=CalendarioFinanciero.hoy();
+        var comida=categorias.saveAndFlush(Categoria.builder().usuario(owner).nombre("Comida").tipo(TipoTransaccion.GASTO).build());
+        var hogar=categorias.saveAndFlush(Categoria.builder().usuario(owner).nombre("Hogar").tipo(TipoTransaccion.GASTO).build());
+        transacciones.saveAndFlush(Transaccion.builder().usuario(owner).cuenta(nu).categoria(comida).tipo(TipoTransaccion.GASTO).monto(new BigDecimal("15.25")).fecha(hoy).descripcion("Almuerzo sintetico").build());
+        transacciones.saveAndFlush(Transaccion.builder().usuario(owner).cuenta(bbva).categoria(comida).tipo(TipoTransaccion.GASTO).monto(new BigDecimal("300.00")).fecha(hoy).descripcion("Compra sintetica USD").build());
+        transacciones.saveAndFlush(Transaccion.builder().usuario(owner).cuenta(nu).categoria(hogar).tipo(TipoTransaccion.GASTO).monto(new BigDecimal("400.00")).fecha(hoy).descripcion("Renta sintetica").build());
+        var r=query("Gastos de comida desde Nu del "+hoy+" al "+hoy);
+        assertEquals("CONSULTA",r.path("tipo").asText());
+        var evidencia=java.util.stream.StreamSupport.stream(r.path("evidencia").spliterator(),false)
+                .filter(item->"GASTO".equals(item.path("tipo").asText())).findFirst().orElseThrow();
+        assertEquals("GASTO",evidencia.path("tipo").asText());
+        assertEquals(1,evidencia.path("operaciones").asLong());
+        assertEquals(new BigDecimal("15.25"),evidencia.path("total").decimalValue());
+        assertEquals(nu.getId(),evidencia.path("cuentaId").asLong());
+        assertEquals(comida.getId(),evidencia.path("categoriaId").asLong());
+        assertEquals(hoy.toString(),evidencia.path("desde").asText());
+        assertEquals(hoy.toString(),evidencia.path("hasta").asText());
+        assertFalse(r.path("respuesta").asText().contains("BBVA"));
+        assertTrue(r.path("respuesta").asText().contains("Comida"));
+    }
+    @Test void reporteWhatsappEnListaAutorizadaEntregaEvidenciaDeHistorialDelMismoAutor()throws Exception{
+        var lista=listas.crear(owner.getId(),new com.gestionfinanzas.dto.request.ListaRequest("Vacaciones","🌴","MXN"));
+        var entidadLista=listas.leer(owner.getId(),lista.id());
+        var comida=categorias.saveAndFlush(Categoria.builder().usuario(owner).nombre("Comida").tipo(TipoTransaccion.GASTO).build());
+        transacciones.saveAndFlush(Transaccion.builder().usuario(owner).cuenta(nu).categoria(comida).lista(entidadLista)
+                .tipo(TipoTransaccion.GASTO).monto(new BigDecimal("35.50")).fecha(CalendarioFinanciero.hoy()).descripcion("Cena sintetica").build());
+        var response=query("Gastos de comida en la lista Vacaciones este mes");
+        assertEquals("CONSULTA",response.path("tipo").asText());
+        var evidence=java.util.stream.StreamSupport.stream(response.path("evidencia").spliterator(),false)
+                .filter(item->"GASTO".equals(item.path("tipo").asText())).findFirst().orElseThrow();
+        assertEquals(lista.id(),evidence.path("listaId").asLong());
+        assertEquals(owner.getId(),evidence.path("autorId").asLong());
+        assertEquals(1,evidence.path("operaciones").asLong());
+        assertEquals(0,new BigDecimal("35.50").compareTo(evidence.path("total").decimalValue()));
+        var unauthorized=query(foreign,"Gastos de comida en la lista Vacaciones este mes");
+        assertEquals("ACLARACION",unauthorized.path("tipo").asText());
+        assertTrue(unauthorized.path("evidencia").isMissingNode()||unauthorized.path("evidencia").isEmpty());
+    }
     @Test void comparacionMensualUsaDatosPropiosSinModificarDinero()throws Exception{
         var actual=CalendarioFinanciero.hoy().withDayOfMonth(1);var anterior=actual.minusMonths(1);
         transacciones.saveAndFlush(Transaccion.builder().usuario(owner).cuenta(nu).tipo(TipoTransaccion.GASTO).monto(new BigDecimal("40.25")).fecha(actual).descripcion("Gasto sintetico").build());

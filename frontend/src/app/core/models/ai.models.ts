@@ -39,6 +39,14 @@ export interface AiEvidence {
   tipo: 'INGRESO' | 'GASTO';
   operaciones: number;
   total: number;
+  cuentaId?: number | null;
+  categoriaId?: number | null;
+  sinCategoria?: boolean;
+  listaId?: number | null;
+  listaNombre?: string | null;
+  autorId?: number | null;
+  cuentaNombre?: string | null;
+  categoriaNombre?: string | null;
 }
 
 export interface AiReportWidget {

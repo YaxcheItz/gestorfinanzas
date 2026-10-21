@@ -203,6 +203,7 @@ export class FinanzasService {
     if (filtros.tipo) params = params.set('tipo', filtros.tipo);
     if (filtros.cuentaId != null) params = params.set('cuentaId', filtros.cuentaId.toString());
     if (filtros.categoriaId != null) params = params.set('categoriaId', filtros.categoriaId.toString());
+    if (filtros.sinCategoria) params = params.set('sinCategoria', 'true');
     if (filtros.categoriaIds?.length) {
       for (const id of filtros.categoriaIds) {
         params = params.append('categoriaIds', id.toString());

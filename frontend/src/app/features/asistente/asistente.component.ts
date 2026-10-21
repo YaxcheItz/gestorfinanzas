@@ -87,6 +87,10 @@ interface ChatEntry extends AiChatMessage {
                       @for (item of message.evidence; track $index) {
                         <button type="button" class="min-h-11 border-t border-current py-2 text-left" (click)="verEvidencia(item)">
                           {{ item.label }} · {{ item.operaciones }} operaciones · {{ item.moneda }}
+                          · Total: {{ mostrarValor('monto', item.total) }} {{ item.moneda }}
+                          @if (item.cuentaNombre) { · Cuenta: {{ item.cuentaNombre }} }
+                          @if (item.categoriaNombre) { · Categoría: {{ item.categoriaNombre }} }
+                          @if (item.listaNombre) { · Lista: {{ item.listaNombre }} · Tus movimientos }
                           <small class="block">{{ item.desde }} al {{ item.hasta }} · Ver movimientos</small>
                         </button>
                       }
@@ -260,8 +264,17 @@ interface ChatEntry extends AiChatMessage {
 export class AsistenteComponent implements OnInit {
   private readonly router = inject(Router);
   verEvidencia(item: AiEvidence): void {
+    const esLista=item.listaId!=null;
+    const queryParams: Record<string, string | number> = {
+      alcance: esLista?'lista':'propio', fechaInicio: item.desde, fechaFin: item.hasta, moneda: item.moneda, tipo: item.tipo
+    };
+    if(item.cuentaId!=null)queryParams['cuentaId']=item.cuentaId;
+    if(item.categoriaId!=null)queryParams['categoriaId']=item.categoriaId;
+    if(item.sinCategoria)queryParams['sinCategoria']='true';
+    if(item.listaId!=null)queryParams['listaId']=item.listaId;
+    if(item.autorId!=null)queryParams['autorId']=item.autorId;
     void this.router.navigate(['/transacciones'], {queryParams: {
-      alcance: 'propio', fechaInicio: item.desde, fechaFin: item.hasta, moneda: item.moneda, tipo: item.tipo
+      ...queryParams
     }});
   }
   private readonly styleAssets = inject(FeatureStylesService).load('capture');

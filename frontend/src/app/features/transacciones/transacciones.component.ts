@@ -53,7 +53,7 @@ interface FilaImportacionCsv {
 }
 
 interface FiltroVisible {
-  clave: 'tipo' | 'cuenta' | 'categoria' | 'monto' | 'fechas' | 'busqueda' | 'movimiento' | 'autor' | 'moneda';
+  clave: 'tipo' | 'cuenta' | 'categoria' | 'sinCategoria' | 'monto' | 'fechas' | 'busqueda' | 'movimiento' | 'autor' | 'moneda';
   id: string;
   etiqueta: string;
   categoriaId?: number;
@@ -76,6 +76,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
   readonly borradorAutorId = signal<number | null>(null);
   readonly soloPropios = signal(false);
   readonly filtroMoneda = signal<string | null>(null);
+  readonly filtroSinCategoria = signal(false);
   private rutaSub?: Subscription;
   private evidenciaRevision = 0;
   private listaConsulta: number | null = null;
@@ -300,6 +301,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
       this.filtroTipo() !== '' ||
       this.filtroCuentaId() !== null ||
       this.filtroCategoriaId() !== null ||
+      this.filtroSinCategoria() ||
       this.filtroCategoriaIds().length > 0 ||
       this.filtroFechaInicio() !== '' ||
       this.filtroFechaFin() !== '' ||
@@ -314,6 +316,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
     this.filtroMoneda() !== null || this.filtroAutorId() !== null || this.filtroTipo() !== ''
     || this.filtroCuentaId() !== null
     || this.filtroCategoriaId() !== null
+    || this.filtroSinCategoria()
     || this.filtroCategoriaIds().length > 0
     || this.filtroFechaInicio() !== ''
     || this.filtroFechaFin() !== ''
@@ -333,6 +336,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
     const categoria = this.filtroCategoriaId();
     if(categoria !== null) ids.add(categoria);
     for(const id of ids) filtros.push({clave:'categoria',id:`categoria-${id}`,categoriaId:id,etiqueta:this.categorias().find(c=>c.id===id)?.nombre ?? 'Categoría'});
+    if(this.filtroSinCategoria()) agregar('sinCategoria','Sin categoría');
     if(this.filtroMontoMin() !== null || this.filtroMontoMax() !== null) agregar('monto',`Monto: ${this.filtroMontoMin() ?? 'sin mínimo'} – ${this.filtroMontoMax() ?? 'sin máximo'}`);
     if(this.filtroFechaInicio() || this.filtroFechaFin()) agregar('fechas',`${this.filtroFechaInicio() || 'Sin inicio'} → ${this.filtroFechaFin() || 'Sin fin'}`);
     if(this.filtroBusqueda().trim()) agregar('busqueda',`Búsqueda: ${this.filtroBusqueda().trim()}`);
@@ -352,6 +356,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
         if(this.filtroCategoriaId()===filtro.categoriaId) this.filtroCategoriaId.set(null);
         if(Number(this.route.snapshot.queryParamMap.get('categoriaId'))===filtro.categoriaId) queryParams={categoriaId:null};
         break;
+      case 'sinCategoria': this.filtroSinCategoria.set(false);queryParams={sinCategoria:null};break;
       case 'monto': this.filtroMontoMin.set(null);this.filtroMontoMax.set(null);break;
       case 'fechas': this.filtroFechaInicio.set('');this.filtroFechaFin.set('');queryParams={fechaInicio:null,fechaFin:null};break;
       case 'busqueda': this.limpiarBusqueda();return;
@@ -451,6 +456,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
     this.filtroCuentaId.set(this.borradorCuentaId());
     this.filtroCategoriaId.set(null);
     this.filtroCategoriaIds.set([...this.borradorCategoriaIds()]);
+    if(this.borradorCategoriaIds().length) this.filtroSinCategoria.set(false);
     this.filtroFechaInicio.set(this.borradorFechaInicio());
     this.filtroFechaFin.set(this.borradorFechaFin());
     this.filtroMontoMin.set(minimo);
@@ -573,16 +579,32 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
   }
 
   aplicarEvidencia(params: ParamMap): boolean {
-    if (params.get('alcance') !== 'propio') return false;
+    const alcance=params.get('alcance');
+    if (alcance !== 'propio' && alcance !== 'lista') return false;
     const moneda = params.get('moneda'), tipo = params.get('tipo');
     const desde = params.get('fechaInicio'), hasta = params.get('fechaFin');
+    const cuentaParam=params.get('cuentaId'),categoriaParam=params.get('categoriaId');
+    const listaParam=params.get('listaId'),autorParam=params.get('autorId');
+    const sinCategoriaParam=params.get('sinCategoria');
+    const sinCategoria=sinCategoriaParam==='true';
+    const cuentaId=cuentaParam==null?null:Number(cuentaParam),categoriaId=categoriaParam==null?null:Number(categoriaParam);
+    const listaId=listaParam==null?null:Number(listaParam),autorId=autorParam==null?null:Number(autorParam);
     if (!moneda || !/^[A-Z]{3}$/.test(moneda) || (tipo !== 'INGRESO' && tipo !== 'GASTO')
-        || !desde || !hasta || !/^\d{4}-\d{2}-\d{2}$/.test(desde) || !/^\d{4}-\d{2}-\d{2}$/.test(hasta)) return false;
+        || !desde || !hasta || !/^\d{4}-\d{2}-\d{2}$/.test(desde) || !/^\d{4}-\d{2}-\d{2}$/.test(hasta)
+        || (cuentaParam!=null&&(cuentaId==null||!Number.isSafeInteger(cuentaId)||cuentaId<=0))
+        || (categoriaParam!=null&&(categoriaId==null||!Number.isSafeInteger(categoriaId)||categoriaId<=0))
+        || (listaParam!=null&&(listaId==null||!Number.isSafeInteger(listaId)||listaId<=0))
+        || (autorParam!=null&&(autorId==null||!Number.isSafeInteger(autorId)||autorId<=0))
+        || (alcance==='lista'&&(listaId==null||sinCategoria))
+        || (alcance==='propio'&&listaId!=null)
+        || (sinCategoriaParam!=null&&sinCategoriaParam!=='true')
+        || (sinCategoria&&categoriaParam!=null)) return false;
     this.evidenciaRevision = this.contextoLista.seleccionVersion();
-    this.soloPropios.set(true);this.listaConsulta = null;
+    this.soloPropios.set(alcance==='propio');this.listaConsulta=listaId;
     this.filtroMoneda.set(moneda);this.filtroTipo.set(tipo);
     this.filtroFechaInicio.set(desde);this.filtroFechaFin.set(hasta);
-    this.filtroAutorId.set(null);this.filtroCuentaId.set(null);this.filtroCategoriaId.set(null);this.filtroCategoriaIds.set([]);
+    this.filtroAutorId.set(autorId);this.filtroCuentaId.set(cuentaId);this.filtroCategoriaId.set(categoriaId);this.filtroCategoriaIds.set([]);
+    this.filtroSinCategoria.set(sinCategoria);
     this.filtroMovimientoId.set(null);this.filtroBusqueda.set('');this.filtroBusquedaInput.set('');
     this.filtroMontoMin.set(null);this.filtroMontoMax.set(null);this.paginaActual.set(0);
     return true;
@@ -626,6 +648,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
       tipo: this.filtroTipo(),
       cuentaId: this.filtroCuentaId(),
       categoriaId: this.filtroCategoriaId(),
+      sinCategoria: this.filtroSinCategoria(),
       fechaInicio: this.filtroFechaInicio() || null,
       fechaFin: this.filtroFechaFin() || null,
       busqueda: this.filtroBusqueda(),
@@ -683,6 +706,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
 
   onCategoriaChange(categoriaId: number | null): void {
     this.filtroCategoriaId.set(categoriaId);
+    this.filtroSinCategoria.set(false);
     this.paginaActual.set(0);
     this.cargarTransacciones();
   }
@@ -732,6 +756,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
     this.filtroAutorId.set(null);
     this.filtroTipo.set('');
     this.filtroCuentaId.set(null);
+    this.filtroSinCategoria.set(false);
     this.filtroCategoriaId.set(null);
     this.filtroCategoriaIds.set([]);
     this.filtroFechaInicio.set('');
@@ -742,11 +767,11 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
     this.filtroBusqueda.set('');
     this.filtroMovimientoId.set(null);
     this.paginaActual.set(0);
-    if (['movimientoId', 'cuentaId', 'categoriaId', 'fechaInicio', 'fechaFin', 'alcance', 'moneda', 'tipo']
+    if (['movimientoId', 'cuentaId', 'categoriaId', 'fechaInicio', 'fechaFin', 'alcance', 'moneda', 'tipo', 'sinCategoria']
       .some(parametro => this.route.snapshot.queryParamMap.has(parametro))) {
       this.router.navigate([], {
         relativeTo: this.route,
-        queryParams: { movimientoId: null, cuentaId: null, categoriaId: null, fechaInicio: null, fechaFin: null, alcance: null, moneda: null, tipo: null },
+        queryParams: { movimientoId: null, cuentaId: null, categoriaId: null, fechaInicio: null, fechaFin: null, alcance: null, moneda: null, tipo: null, sinCategoria: null },
         queryParamsHandling: 'merge',
         replaceUrl: true
       });
@@ -762,6 +787,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
       tipo: this.filtroTipo(),
       cuentaId: this.filtroCuentaId(),
       categoriaId: this.filtroCategoriaId(),
+      sinCategoria: this.filtroSinCategoria(),
       fechaInicio: this.filtroFechaInicio() || null,
       fechaFin: this.filtroFechaFin() || null,
       busqueda: this.filtroBusqueda(),

@@ -64,6 +64,9 @@ public class TransaccionSpecification {
             if (!categorias.isEmpty()) {
                 predicates.add(root.get("categoria").get("id").in(categorias));
             }
+            if (filtro.sinCategoria()) {
+                predicates.add(cb.isNull(root.get("categoria")));
+            }
 
             // 5. Rango de Fechas
             if (filtro.fechaInicio() != null) {
