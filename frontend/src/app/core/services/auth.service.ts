@@ -15,6 +15,7 @@ import { Router } from '@angular/router';
 import { getApiBaseUrl } from './api-base-url';
 import { SwPush } from '@angular/service-worker';
 import { take, timeout } from 'rxjs';
+import { accionCaptura, AccionCaptura } from '../utils/accion-captura';
 
 /** Necesario para que el navegador acepte y mande la cookie de refresh. */
 const CON_CREDENCIALES = { withCredentials: true } as const;
@@ -235,10 +236,12 @@ export class AuthService {
   }
 
   /** Limpia la sesion local sin tocar el servidor: util cuando la cookie ya no sirve. */
-  cerrarSesionLocal(motivo: MotivoCierreSesion = 'expirada'): void {
+  cerrarSesionLocal(motivo: MotivoCierreSesion = 'expirada', solicitada?: AccionCaptura | null): void {
+    const captura = motivo === 'expirada' ? accionCaptura(solicitada ??
+      (window.location.pathname === '/dashboard' ? new URLSearchParams(window.location.search).get('accion') : null)) : null;
     this.limpiarSesion();
     this.router.navigate(['/login'], {
-      queryParams: motivo === 'expirada' ? { sessionExpired: 'true' } : {}
+      queryParams: motivo === 'expirada' ? { sessionExpired: 'true', ...(captura ? { captura } : {}) } : {}
     });
   }
 

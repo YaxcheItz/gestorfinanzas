@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
+import { accionCaptura, AccionCaptura } from '../../../core/utils/accion-captura';
 import { AuthService } from '../../../core/services/auth.service';
 import { mensajeDeError } from '../../../core/utils/mensaje-error';
 import { GoogleSignInComponent } from '../google-sign-in/google-sign-in.component';
@@ -285,17 +286,25 @@ export class LoginComponent {
   errorMessage = signal<string | null>(null);
   sessionExpiredWarning = signal<boolean>(false);
   mostrarPassword = signal(false);
+  private captura: AccionCaptura | null = null;
 
   constructor() {
     this.route.queryParams.subscribe(params => {
+      this.captura = accionCaptura(params['captura']);
       if (params['sessionExpired'] === 'true') {
         this.sessionExpiredWarning.set(true);
       }
     });
 
     if (this.authService.isAuthenticated()) {
-      this.router.navigate(['/dashboard'], { replaceUrl: true });
+      this.continuar();
     }
+  }
+
+  private continuar(): void {
+    void this.router.navigate(['/dashboard'], {
+      replaceUrl: true, ...(this.captura ? { queryParams: { accion: this.captura } } : {})
+    });
   }
 
   togglePasswordVisibility(): void {
@@ -320,7 +329,7 @@ export class LoginComponent {
           this.errorMessage.set(response.message || 'No pudimos iniciar sesión. Revisa tus datos.');
           return;
         }
-        this.router.navigate(['/dashboard']);
+        this.continuar();
       },
       error: (err) => {
         this.loading.set(false);
@@ -342,7 +351,7 @@ export class LoginComponent {
           this.errorMessage.set(response.message || 'No pudimos iniciar sesión con Google.');
           return;
         }
-        this.router.navigate(['/dashboard']);
+        this.continuar();
       },
       error: error => {
         this.loading.set(false);

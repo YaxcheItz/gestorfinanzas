@@ -4,14 +4,21 @@
 
 Orden autorizado: **11 -> base Android con Capacitor y APK firmado descargable -> 10 sin Gmail -> 12 -> 13 -> revision final**. Etapa 9 completada provisionalmente por el propietario; sus pruebas fisicas pendientes se revisan al final, sin certificarlas ahora. APK directo, sin Play Store; widgets y ajustes rapidos requieren componentes Android. Gmail excluido. Comercializacion opcional.
 
-Rama nueva `mejoras/compartido-divisas-metas` desde `origin/develop` actualizado `6775c1e`. PR #101 de Etapa 9 permanece separado; no se incorpora ni se hace merge. Primera entrega de Etapa 11: cambio de rol editor/lector por el propietario, manteniendo movimientos y saldos. Detalles y pendientes en [COMPARTIDO_DIVISAS_METAS_ETAPA_11.md](COMPARTIDO_DIVISAS_METAS_ETAPA_11.md). Etapa 11 sigue en curso: faltan repartos/partes, trazabilidad de divisas y metas.
+Rama nueva `mejoras/compartido-divisas-metas` desde `origin/develop` actualizado `6775c1e`. PR #101 fue integrado en develop por el propietario durante el trabajo; rama actualizada con origin/develop `3af6e80`, sin integrar el PR #102. Primera entrega de Etapa 11: cambio de rol editor/lector por el propietario, manteniendo movimientos y saldos. Detalles y pendientes en [COMPARTIDO_DIVISAS_METAS_ETAPA_11.md](COMPARTIDO_DIVISAS_METAS_ETAPA_11.md). Etapa 11 sigue en curso: faltan repartos/partes, trazabilidad de divisas y metas.
 
 Validacion de la primera entrega: backend verify 489 correctas y 6 omitidas; frontend 366 correctas; build y E2E movil de listas/roles correctos. Corregida la actualizacion de participantes tras union desde otra sesion. H2/datos sinteticos; PostgreSQL y CI pendientes. Sin merge ni despliegue.
 
 Los apartados siguientes son el historial anterior; prevalece este orden.
 
+## Prioridad vigente: Etapa 9 Android/captura (2026-10-21)
 
-Publicación de Etapa 8: [PR #99 hacia develop](https://github.com/YaxcheItz/gestorfinanzas/pull/99), rama subida y abierta para revisión; implementación `2e5b13a`. CI en curso al publicar. Sin merge ni despliegue de producción. Seguir pendientes manuales del informe antes de cerrar la etapa.
+Rama `mejoras/android-captura` publicada tras recuperar conexión. [PR #101 hacia develop](https://github.com/YaxcheItz/gestorfinanzas/pull/101) abierto como borrador; CI remoto pendiente de resultado. Sin merge ni despliegue de producción. Ampliación verificada: 381 unitarias frontend y tres E2E PWA; permisos sin solicitud automática y denegación segura. Reapertura offline con token vencido exige login y conserva la captura; con conexión renueva usando cookie real.
+
+PR #99 integrado en develop `6775c1e` y PR #100 en main `d39d899`, confirmados por fetch. El propietario autoriza avanzar; las comprobaciones físicas/manuales pendientes de Etapa 8 se conservan sin declararlas resueltas. Rama nueva `mejoras/android-captura` en la carpeta principal desde develop actualizado; notas duplicadas de la raíz resguardadas y retiradas.
+
+Primer incremento: accesos PWA gasto/ingreso/dictado que sobreviven al login y se consumen al abrir, sin destinos externos ni micrófono automático. Prueba del service worker real con reapertura offline y sincronización única. 378 unitarias frontend, 12 E2E de regresión y 1 E2E PWA correctas; build correcto. CI ampliado para la PWA de producción. Alcance y criterios pendientes en [ANDROID_CAPTURA_ETAPA_9.md](ANDROID_CAPTURA_ETAPA_9.md). No cerrar Etapa 9 sin comprobar Android físico, sesión larga y preferencias/recordatorios propios. Después corresponde Etapa 11; Gmail/Etapa 6 siguen fuera.
+
+Histórico de Etapa 8: [PR #99](https://github.com/YaxcheItz/gestorfinanzas/pull/99) ya integrado por el propietario. Seguir pendientes manuales del informe; los apartados siguientes registran sesiones anteriores.
 
 Entrega para PR a develop (2026-10-21), autorizada por el propietario: auditoría/tarjetas/calendario y regresiones de recurrencias. 366 frontend completas; backend verify 485 correctas + 6 omitidas; build/dependencias correctos. 22 escenarios E2E distintos entre la regresión de 20 y el conjunto final de 5 (3 repetidos). Cuentas usa día civil México. Ver [cierre técnico y pendientes](AUDITORIA_ETAPA_8.md). Publicar no cierra Android físico/producción autenticada ni autoriza merge. Etapa 9 después de cerrar Etapa 8; Gmail deshabilitado.
 
