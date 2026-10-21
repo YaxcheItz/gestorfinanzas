@@ -75,6 +75,7 @@ class WhatsappConsultaIntegrationTest {
         var ajena=cuentas.findByUsuarioIdAndActivoTrue(foreign.getId()).get(0);
         transacciones.saveAndFlush(Transaccion.builder().usuario(foreign).cuenta(ajena).tipo(TipoTransaccion.GASTO).monto(new BigDecimal("9000.00")).fecha(actual).descripcion("Ajeno sintetico").build());
         transacciones.saveAndFlush(Transaccion.builder().usuario(owner).cuenta(nu).cuentaDestino(bbva).tipo(TipoTransaccion.TRANSFERENCIA).monto(new BigDecimal("700.00")).fecha(actual).descripcion("Transferencia sintetica").build());
+        transacciones.saveAndFlush(Transaccion.builder().usuario(owner).cuenta(bbva).tipo(TipoTransaccion.GASTO).monto(new BigDecimal("2.50")).fecha(actual).descripcion("Gasto en USD sintetico").build());
         long total=transacciones.count();long drafts=propuestas.count();long inbox=avisos.count();
         var r=query("Compara este mes con el anterior en MXN");
         assertEquals("CONSULTA",r.path("tipo").asText());assertTrue(r.path("propuesta").isNull());
@@ -82,6 +83,30 @@ class WhatsappConsultaIntegrationTest {
         assertFalse(text.contains("9000"));assertFalse(text.contains("700"));assertFalse(text.contains("USD"));
         assertEquals(total,transacciones.count());assertEquals(drafts,propuestas.count());assertEquals(inbox,avisos.count());
         assertEquals(new BigDecimal("1000.00"),cuentas.findById(nu.getId()).orElseThrow().getSaldoActual());
+        String chat=mvc.perform(post("/api/asistente/chat").with(user(new CustomUserDetails(owner)))
+                .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(Map.of(
+                        "messages",List.of(Map.of("role","USER","content","Compara este mes con el anterior en MXN")),
+                        "consentimientoDatosFinancieros",false))))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
+        var evidence=mapper.readTree(chat).path("data").path("evidence");
+        assertEquals(4,evidence.size());
+        var expense=java.util.stream.StreamSupport.stream(evidence.spliterator(),false).filter(e->e.path("label").asText().equals("Gastos actual")).findFirst().orElseThrow();
+        assertEquals(1,expense.path("operaciones").asLong());assertEquals(new BigDecimal("40.25"),expense.path("total").decimalValue());
+        String history=mvc.perform(get("/api/transacciones").with(user(new CustomUserDetails(owner)))
+                .param("tipo",expense.path("tipo").asText()).param("moneda",expense.path("moneda").asText())
+                .param("fechaInicio",expense.path("desde").asText()).param("fechaFin",expense.path("hasta").asText()))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
+        var page=mapper.readTree(history).path("data");assertEquals(1,page.path("totalElements").asLong());
+        assertEquals(new BigDecimal("40.25"),page.path("content").get(0).path("monto").decimalValue());
+        String csv=mvc.perform(get("/api/transacciones/exportar").with(user(new CustomUserDetails(owner)))
+                .param("tipo","GASTO").param("moneda","MXN").param("fechaInicio",actual.toString()).param("fechaFin",CalendarioFinanciero.hoy().toString()))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
+        assertTrue(csv.contains("40.25"));assertFalse(csv.contains("2.50"));assertFalse(csv.contains("9000"));assertFalse(csv.contains("Transferencia sintetica"));
+        assertEquals(total,transacciones.count());assertEquals(drafts,propuestas.count());assertEquals(inbox,avisos.count());
+    }
+    @Test void monedaInvalidaNoSeIgnoraEnHistorial()throws Exception{
+        mvc.perform(get("/api/transacciones").with(user(new CustomUserDetails(owner))).param("moneda","MXN,USD"))
+                .andExpect(status().isBadRequest());
     }
     @Test void comandosDestructivosYComplejosNoEjecutanAcciones()throws Exception{assertEquals("ACLARACION",query("Elimina todas mis cuentas").path("tipo").asText());assertEquals("ACLARACION",query("Compara mi reporte con el año pasado").path("tipo").asText());assertTrue(cuentas.existsById(nu.getId()));}
     @Test void sinSesionNoHayAcceso()throws Exception{mvc.perform(post("/api/canales/whatsapp/interpretar").contentType(MediaType.APPLICATION_JSON).content("{\"texto\":\"saldo\"}")).andExpect(status().isUnauthorized());}

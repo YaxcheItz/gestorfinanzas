@@ -2,6 +2,8 @@
 
 ## Alcance vigente
 
+Publicado en GitHub para revisión mediante [PR #97](https://github.com/YaxcheItz/gestorfinanzas/pull/97), hacia `develop`. Publicar la rama no despliega el cambio ni sustituye comprobar CI.
+
 El propietario dejó WhatsApp como único canal externo y pidió omitir conciliación. Gmail está deshabilitado. El asistente reutiliza el chat de la aplicación, las consultas WhatsApp y los agregados financieros existentes; no crea otra contabilidad ni modifica saldos al consultar.
 
 Rama: `mejoras/asistente-evidencias`, worktree `.local/asistente-worktree`, desde `origin/develop` comprobado `211b457`. El borrador Gmail se conserva separado en el checkout principal.
@@ -31,9 +33,23 @@ Consultar el resultado final y el número de pruebas en `ESTADO_SESION.md`. Las 
 ## Lo que sigue para completar la etapa
 
 1. Filtros explícitos por categoría, cuenta/lista autorizada y rangos definidos; aclarar ambigüedades antes de consultar.
-2. Evidencia estructurada con operaciones consideradas, periodo y filtros; enlaces al historial que respeten exactamente ese alcance.
+2. Extender la evidencia ya disponible para comparación mensual al resto de consultas; después incorporar enlaces equivalentes en las respuestas WhatsApp.
 3. Restante de presupuesto, recurrencias y tendencias sencillas sustentadas en datos existentes, sin atribuir gastos futuros como hechos.
 4. Interfaz conversacional y sugerencias con carga/vacío/error coherentes, usando los componentes actuales.
 5. Pruebas de aislamiento, cálculos contrastados con reportes/historial, publicación de la rama, CI y despliegue antes de validación real.
 
 El asistente completo todavía no está terminado. Esta primera entrega no está desplegada. No activar correo ni conciliación como dependencias de estas tareas.
+
+## Segunda entrega: evidencia de la comparación y acceso al historial
+
+Validación local: 54 pruebas backend relacionadas correctas (incluidas 17 HTTP/persistencia H2), 57 pruebas Angular correctas, build de producción y diff-check correctos. No se ejecutó aquí toda la suite ni PostgreSQL. Las pruebas de integración contrastan total/conteo de evidencia con historial y CSV, con otra moneda y otro propietario presentes, sin escribir nuevos movimientos al consultar. La interfaz verifica navegación, renderizado y omisión de la lista compartida activa exclusivamente para evidencia propia.
+
+`AiChatResponse.evidence` es una lista aditiva de evidencias calculadas en servidor. Cada fila contiene `label`, `desde`, `hasta`, `moneda`, `tipo`, `operaciones` y `total`. La comparación genera ingresos/gastos de ambos periodos para cada moneda incluida. Las cantidades y los conteos provienen de consultas autorizadas; el proveedor IA no genera esta evidencia.
+
+El asistente y la captura/reportes muestran botones con periodo, moneda y cantidad de operaciones. Al abrirlos se navega a `/transacciones?alcance=propio&fechaInicio=...&fechaFin=...&moneda=...&tipo=...`. El historial incluye únicamente los movimientos propios, sin heredar la lista compartida seleccionada ni filtros anteriores. Una selección explícita de lista o limpiar filtros sale de ese alcance. También se admite abrir otro periodo de evidencia estando ya en el historial.
+
+Los endpoints existentes de historial y CSV aceptan el filtro opcional `moneda`, validado como tres letras mayúsculas. Conservan la misma autorización y filtran por moneda de la cuenta o moneda histórica si la cuenta ya no existe. Las peticiones normales siguen usando la lista activa; solo la navegación de evidencia omite ese contexto para coincidir con el agregado propio.
+
+La evidencia refleja los datos al consultar. El historial vuelve a leer los registros actuales, por lo que una edición posterior puede cambiar el resultado. No es un estado de cuenta inmutable. La gráfica semanal genérica del panel rápido no se muestra junto a una respuesta con evidencia de otro periodo.
+
+Referencias técnicas: [Router.navigate](https://angular.dev/api/router/Router) y [Spring Data Specifications](https://docs.spring.io/spring-data/jpa/reference/jpa/specifications.html).

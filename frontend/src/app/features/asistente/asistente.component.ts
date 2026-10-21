@@ -3,7 +3,8 @@ import { TextoFinancieroPipe } from '../../core/pipes/texto-financiero.pipe';
 ﻿import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { AiActionProposal, AiChatMessage, AiConnectionStatus, AiReportWidget } from '../../core/models/ai.models';
+import { AiActionProposal, AiChatMessage, AiConnectionStatus, AiReportWidget, AiEvidence } from '../../core/models/ai.models';
+import { Router } from '@angular/router';
 import { FinanzasService } from '../../core/services/finanzas.service';
 import { PrivacidadService } from '../../core/services/privacidad.service';
 
@@ -11,6 +12,7 @@ interface ChatEntry extends AiChatMessage {
   action?: AiActionProposal;
   actions?: AiActionProposal[];
   report?: AiReportWidget | null;
+  evidence?: AiEvidence[];
   confirmedActions?: string[];
   cancelledActions?: string[];
   confirmed?: boolean;
@@ -80,6 +82,16 @@ interface ChatEntry extends AiChatMessage {
                   </span>
                   <p class="whitespace-pre-wrap break-words">{{ message.content | textoFinanciero }}</p>
 
+                  @if (message.evidence?.length) {
+                    <div class="mt-3 grid gap-2" aria-label="Datos de la respuesta">
+                      @for (item of message.evidence; track $index) {
+                        <button type="button" class="min-h-11 border-t border-current py-2 text-left" (click)="verEvidencia(item)">
+                          {{ item.label }} · {{ item.operaciones }} operaciones · {{ item.moneda }}
+                          <small class="block">{{ item.desde }} al {{ item.hasta }} · Ver movimientos</small>
+                        </button>
+                      }
+                    </div>
+                  }
                   @if (message.report; as report) {
                     <section data-report-widget class="ai-report-widget mt-3" [attr.aria-labelledby]="'ai-report-title-' + $index">
                       <header class="ai-report-widget__header">
@@ -246,6 +258,12 @@ interface ChatEntry extends AiChatMessage {
   `
 })
 export class AsistenteComponent implements OnInit {
+  private readonly router = inject(Router);
+  verEvidencia(item: AiEvidence): void {
+    void this.router.navigate(['/transacciones'], {queryParams: {
+      alcance: 'propio', fechaInicio: item.desde, fechaFin: item.hasta, moneda: item.moneda, tipo: item.tipo
+    }});
+  }
   private readonly styleAssets = inject(FeatureStylesService).load('capture');
   private readonly finanzasService = inject(FinanzasService);
   private readonly privacidad = inject(PrivacidadService);
@@ -450,7 +468,8 @@ export class AsistenteComponent implements OnInit {
           actions: response.data.actions?.length
             ? response.data.actions
             : undefined,
-          report: response.data.report ?? undefined
+          report: response.data.report ?? undefined,
+          evidence: response.data.evidence
         }]);
       },
       error: error => {

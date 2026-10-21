@@ -11,7 +11,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subscription, finalize } from 'rxjs';
 import { Router } from '@angular/router';
-import { AiActionProposal, AiChatMessage, AiReportWidget } from '../../../core/models/ai.models';
+import { AiActionProposal, AiChatMessage, AiReportWidget, AiEvidence } from '../../../core/models/ai.models';
 import { Categoria, Cuenta, Transaccion } from '../../../core/models/finanzas.models';
 import { FinanzasService } from '../../../core/services/finanzas.service';
 import { PerfilService } from '../../../core/services/perfil.service';
@@ -28,8 +28,8 @@ import { DialogViewportDirective } from '../../directives/dialog-viewport.direct
 type CaptureMode = 'CAPTURE' | 'REPORT';
 /** Estado del panel de procesamiento de voz */
 type ProcessingStep = 'TRANSCRIBIENDO' | 'CATEGORIZANDO' | null;
-interface AssistantMessage extends AiChatMessage { actions?: AiActionProposal[]; }
-interface CaptureTurn { id: number; user: string; answer: string; actions: AiActionProposal[]; voice: boolean; report?: AiReportWidget | null; suggestions?: string[]; engine?: string; confirmaciones?: {id:string; estado:'SERVIDOR'|'DISPOSITIVO'}[]; }
+interface AssistantMessage extends AiChatMessage { actions?: AiActionProposal[]; evidence?: AiEvidence[]; }
+interface CaptureTurn { id: number; user: string; answer: string; actions: AiActionProposal[]; voice: boolean; report?: AiReportWidget | null; evidence?: AiEvidence[]; suggestions?: string[]; engine?: string; confirmaciones?: {id:string; estado:'SERVIDOR'|'DISPOSITIVO'}[]; }
 interface WeeklyCategory { name: string; amount: number; percent: number; currency: string; }
 @Component({
   selector: 'app-quick-capture',
@@ -118,6 +118,11 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
                     <button type="button" (click)="exportarReporte(report)">Exportar gráfico</button>
                   </section>
                 }
+                @if (turn.evidence?.length) {
+                  <div class="chat-evidence" aria-label="Datos de la respuesta">
+                    @for (item of turn.evidence; track $index) {<button type="button" (click)="verEvidencia(item)">{{ item.label }} · {{ item.operaciones }} operaciones · {{ item.moneda }}<small>{{ item.desde }} al {{ item.hasta }} · Ver movimientos</small></button>}
+                  </div>
+                }
                 @if (turn.suggestions?.length) {<div class="chat-followups">@for (suggestion of turn.suggestions; track suggestion) {<button type="button" (click)="usarSugerencia(suggestion)" [disabled]="loading() || confirming() !== null">{{ suggestion | textoFinanciero }}</button>}</div>}
                 @for (proposal of turn.actions; track proposal.id) {
                   <button type="button" class="capture-cancel" style="min-height:44px" (click)="abrirEdicion(proposal)" [disabled]="confirming()!==null">Editar propuesta</button>
@@ -183,7 +188,12 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
             @for (message of reportMessages(); track $index; let messageIndex = $index) {
               <article class="report-message" [class.is-user]="message.role === 'USER'">
                 <div class="report-message__bubble"><small>{{ message.role === 'USER' ? 'Tú' : 'Kaptal IA' }}</small><p>{{ message.content | textoFinanciero }}</p>
-                  @if (message.role === 'ASSISTANT' && weeklyCategories().length > 0) {
+                  @if (message.evidence?.length) {
+                    <div class="chat-evidence" aria-label="Datos de la respuesta">
+                      @for (item of message.evidence; track $index) {<button type="button" (click)="verEvidencia(item)">{{ item.label }} · {{ item.operaciones }} operaciones · {{ item.moneda }}<small>{{ item.desde }} al {{ item.hasta }} · Ver movimientos</small></button>}
+                    </div>
+                  }
+                  @if (message.role === 'ASSISTANT' && !message.evidence?.length && weeklyCategories().length > 0) {
                     <div class="report-chart">
                       <h4 class="report-chart__heading">Desglose Semanal</h4>
                       <div class="report-chart__bars">
@@ -509,7 +519,7 @@ export class QuickCaptureComponent implements OnDestroy {
         }
         this.contexto = response.data.contexto ?? null;
         const proposals = response.data.actions?.length ? response.data.actions : response.data.action ? [response.data.action] : [];
-        this.captureTurns.update(turns => [...turns, { id: ++this.captureTurnId, user: value, answer: response.data!.answer, actions: proposals, voice: capturedByVoice, report: response.data!.report, suggestions: response.data!.suggestions, engine: response.data!.engine }]);
+        this.captureTurns.update(turns => [...turns, { id: ++this.captureTurnId, user: value, answer: response.data!.answer, actions: proposals, voice: capturedByVoice, report: response.data!.report, evidence: response.data!.evidence, suggestions: response.data!.suggestions, engine: response.data!.engine }]);
         this.content = '';
         this.voiceCapture.set(false);
         this.scrollCaptureToBottom();
@@ -690,6 +700,14 @@ export class QuickCaptureComponent implements OnDestroy {
     }));
   }
 
+  verEvidencia(item: AiEvidence): void {
+    this.close();
+    void this.router.navigate(['/transacciones'], { queryParams: {
+      alcance: 'propio', fechaInicio: item.desde, fechaFin: item.hasta,
+      moneda: item.moneda, tipo: item.tipo
+    }});
+  }
+
   preguntaSugerida(question: string): void { this.reportQuestion = question; this.askReport(); }
   askReport(): void {
     const content = this.reportQuestion.trim();
@@ -705,7 +723,7 @@ export class QuickCaptureComponent implements OnDestroy {
         this.reportLoading.set(false);
         if (!response.success || !response.data) { this.reportMessages.update(m=>m.slice(0,-1));this.reportError.set(response.message || 'No pude preparar el informe.'); return; }
         const actions = response.data.actions?.length ? response.data.actions : response.data.action ? [response.data.action] : [];
-        this.reportMessages.update(messages => [...messages, { role: 'ASSISTANT', content: response.data!.answer, actions }]);
+        this.reportMessages.update(messages => [...messages, { role: 'ASSISTANT', content: response.data!.answer, actions, evidence: response.data!.evidence }]);
         if (this.reportMessages().length > 12) this.reportMessages.update(messages => messages.slice(-12));
       },
       error: error => { if(generation!==this.chatGeneration)return; this.reportMessages.update(m=>m.slice(0,-1));this.reportLoading.set(false); this.reportError.set(this.errorMessage(error)); }

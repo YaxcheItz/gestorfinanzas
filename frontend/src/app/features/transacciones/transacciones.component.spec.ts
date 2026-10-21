@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of, Subject } from 'rxjs';
 import { CategoriaPreferidaService } from '../../core/services/categoria-preferida.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
@@ -11,6 +11,18 @@ import { Transaccion } from '../../core/models/finanzas.models';
 import { TransaccionesComponent } from './transacciones.component';
 
 describe('TransaccionesComponent history filters', () => {
+  it('abre evidencia propia sin heredar cuenta, lista ni busqueda anteriores', () => {
+    const c=fixture.componentInstance;
+    c.filtroCuentaId.set(88);c.filtroBusqueda.set('old');
+    expect(c.aplicarEvidencia(convertToParamMap({alcance:'propio',moneda:'MXN',tipo:'GASTO',fechaInicio:'2026-10-01',fechaFin:'2026-10-20'}))).toBe(true);
+    c.cargarTransacciones();
+    const filters=finanzasService.getTransaccionesPaginadas.mock.lastCall?.[0];
+    expect(filters).toMatchObject({soloPropios:true,moneda:'MXN',tipo:'GASTO',fechaInicio:'2026-10-01',fechaFin:'2026-10-20',cuentaId:null,busqueda:''});
+    expect(filters.listaId).toBeUndefined();
+    expect(c.aplicarEvidencia(convertToParamMap({alcance:'propio',moneda:'USD',tipo:'INGRESO',fechaInicio:'2026-09-01',fechaFin:'2026-09-20'}))).toBe(true);
+    expect(c.filtroMoneda()).toBe('USD');expect(c.filtroTipo()).toBe('INGRESO');
+    c.limpiarFiltros();expect(c.soloPropios()).toBe(false);expect(c.filtroMoneda()).toBeNull();
+  });
   let fixture: ReturnType<typeof TestBed.createComponent<TransaccionesComponent>>;
   let finanzasService: {
     getCuentas: ReturnType<typeof vi.fn>;

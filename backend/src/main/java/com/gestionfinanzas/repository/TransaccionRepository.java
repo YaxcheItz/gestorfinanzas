@@ -138,6 +138,15 @@ public interface TransaccionRepository extends JpaRepository<Transaccion, Long>,
             @Param("fin") LocalDate fin
     );
 
+    @Query("SELECT new com.gestionfinanzas.dto.response.MovimientoConteo(" +
+            "COALESCE(cuenta.moneda, t.cuentaMonedaHistorica), t.tipo, COUNT(t)) " +
+            "FROM Transaccion t LEFT JOIN t.cuenta cuenta WHERE t.usuario.id = :usuarioId " +
+            "AND t.fecha BETWEEN :inicio AND :fin " +
+            "AND t.tipo IN (com.gestionfinanzas.model.enums.TipoTransaccion.INGRESO, com.gestionfinanzas.model.enums.TipoTransaccion.GASTO) " +
+            "GROUP BY COALESCE(cuenta.moneda, t.cuentaMonedaHistorica), t.tipo")
+    List<com.gestionfinanzas.dto.response.MovimientoConteo> findConteosPorMonedaYTipo(
+            @Param("usuarioId") Long usuarioId, @Param("inicio") LocalDate inicio, @Param("fin") LocalDate fin);
+
     List<Transaccion> findAllByPlantillaRecurrenteIdOrderByFechaAsc(Long plantillaId);
 
     List<Transaccion> findAllByPlantillaRecurrenteIdAndFechaGreaterThanEqualOrderByFechaAsc(Long plantillaId, LocalDate fecha);

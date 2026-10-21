@@ -3,8 +3,17 @@ import { of, throwError } from 'rxjs';
 import { FinanzasService } from '../../core/services/finanzas.service';
 import { PrivacidadService } from '../../core/services/privacidad.service';
 import { AsistenteComponent } from './asistente.component';
+import { Router } from '@angular/router';
 
 describe('AsistenteComponent', () => {
+  it('muestra las operaciones consideradas y abre su historial exacto', () => {
+    const fixture=TestBed.createComponent(AsistenteComponent);fixture.detectChanges();
+    fixture.componentInstance.mensajes.set([{role:'ASSISTANT',content:'Comparacion calculada',evidence:[{label:'Gastos actual',desde:'2026-10-01',hasta:'2026-10-20',moneda:'MXN',tipo:'GASTO',operaciones:2,total:40.25}]}]);
+    fixture.detectChanges();
+    const button=fixture.nativeElement.querySelector('[aria-label="Datos de la respuesta"] button') as HTMLButtonElement;
+    expect(button.textContent).toContain('2 operaciones');button.click();
+    expect(TestBed.inject(Router).navigate).toHaveBeenCalledWith(['/transacciones'],{queryParams:{alcance:'propio',fechaInicio:'2026-10-01',fechaFin:'2026-10-20',moneda:'MXN',tipo:'GASTO'}});
+  });
   let finanzasService: {
     getAiConnectionStatus: ReturnType<typeof vi.fn>;
     verifyAiConnection: ReturnType<typeof vi.fn>;
@@ -51,7 +60,7 @@ describe('AsistenteComponent', () => {
 
     TestBed.configureTestingModule({
       imports: [AsistenteComponent],
-      providers: [{ provide: FinanzasService, useValue: finanzasService }]
+      providers: [{ provide: FinanzasService, useValue: finanzasService }, {provide:Router,useValue:{navigate:vi.fn()}}]
     });
   });
 

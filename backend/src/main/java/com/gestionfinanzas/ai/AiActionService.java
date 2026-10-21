@@ -591,7 +591,10 @@ public class AiActionService {
     }
     private record PendingBatchAction(String type, String summary, JsonNode data) {}
 
-    public record AiActionResult(String answer, ActionProposal action, List<ActionProposal> actions, AiReportWidget report, List<String> suggestions, String contexto) {
+    public record AiActionResult(String answer, ActionProposal action, List<ActionProposal> actions, AiReportWidget report, List<String> suggestions, String contexto, List<AiEvidence> evidence) {
+        public AiActionResult(String answer, ActionProposal action, List<ActionProposal> actions, AiReportWidget report, List<String> suggestions, String contexto) {
+            this(answer,action,actions,report,suggestions,contexto,List.of());
+        }
         public AiActionResult(String answer, ActionProposal action, List<ActionProposal> actions, AiReportWidget report) {
             this(answer, action, actions, report, List.of(), null);
         }

@@ -773,6 +773,7 @@ public class TransaccionService {
 
     private void validarFiltros(Long usuarioId, TransaccionFiltroRequest filtro) {
         if (filtro == null) return;
+        if (filtro.moneda() != null && !filtro.moneda().matches("[A-Z]{3}")) throw new IllegalArgumentException("La moneda debe tener tres letras mayúsculas.");
         if (filtro.listaId() != null) listaService.leer(usuarioId, filtro.listaId());
         if (filtro.busqueda() != null && filtro.busqueda().length() > 120) throw new IllegalArgumentException("La búsqueda admite hasta 120 caracteres.");
         EtiquetasFinancieras.normalizar(filtro.etiquetas());

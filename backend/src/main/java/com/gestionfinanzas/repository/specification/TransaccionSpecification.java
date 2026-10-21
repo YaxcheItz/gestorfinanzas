@@ -32,6 +32,10 @@ public class TransaccionSpecification {
             }
 
             // 2. Filtro por Tipo de transacción
+            if (filtro.moneda() != null) {
+                var cuenta = root.join("cuenta", JoinType.LEFT);
+                predicates.add(cb.equal(cb.coalesce(cuenta.get("moneda"), root.get("cuentaMonedaHistorica")), filtro.moneda()));
+            }
             if (filtro.tipo() != null) {
                 predicates.add(cb.equal(root.get("tipo"), filtro.tipo()));
             }

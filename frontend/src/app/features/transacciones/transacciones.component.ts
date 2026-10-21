@@ -7,7 +7,7 @@ import { MontoPrivadoDirective } from '../../shared/directives/monto-privado.dir
 import { Component, HostListener, OnDestroy, OnInit, inject, signal, computed, effect, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, ParamMap } from '@angular/router';
 import { FinanzasService } from '../../core/services/finanzas.service';
 import { CategoriaPreferidaService } from '../../core/services/categoria-preferida.service';
 import { mensajeDeError } from '../../core/utils/mensaje-error';
@@ -22,7 +22,7 @@ import { PrivacyToggleComponent } from '../../shared/components/privacy-toggle/p
 import { FechaPickerComponent } from '../../shared/components/fecha-picker/fecha-picker.component';
 import { MontoPipe } from '../../core/pipes/monto.pipe';
 import { nombreCuentaVisible } from '../../core/utils/cuenta-financiera';
-import { firstValueFrom, Subscription } from 'rxjs';
+import { firstValueFrom, Subscription, skip } from 'rxjs';
 import {
   Categoria,
   Cuenta,
@@ -53,7 +53,7 @@ interface FilaImportacionCsv {
 }
 
 interface FiltroVisible {
-  clave: 'tipo' | 'cuenta' | 'categoria' | 'monto' | 'fechas' | 'busqueda' | 'movimiento' | 'autor';
+  clave: 'tipo' | 'cuenta' | 'categoria' | 'monto' | 'fechas' | 'busqueda' | 'movimiento' | 'autor' | 'moneda';
   id: string;
   etiqueta: string;
   categoriaId?: number;
@@ -74,12 +74,18 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
   readonly contextoLista = inject(ListaContextoService);
   readonly filtroAutorId = signal<number | null>(null);
   readonly borradorAutorId = signal<number | null>(null);
+  readonly soloPropios = signal(false);
+  readonly filtroMoneda = signal<string | null>(null);
+  private rutaSub?: Subscription;
+  private evidenciaRevision = 0;
   private listaConsulta: number | null = null;
   formListaId: number | null = null;
   formEtiquetas = '';
   puedeModificar(movimiento: Transaccion): boolean { const lista = this.contextoLista.listas().find(l => l.id === movimiento.listaId); return !lista?.archivada && lista?.rol !== 'LECTOR' && (!movimiento.autorId || this.contextoLista.usuarioId() == null || movimiento.autorId === this.contextoLista.usuarioId()); }
   listasEditables() { return this.contextoLista.listas().filter(l => !l.archivada && l.rol !== 'LECTOR'); }
   constructor() {
+    this.soloPropios.set(this.route.snapshot.queryParamMap.get('alcance') === 'propio');
+    this.evidenciaRevision = this.contextoLista.seleccionVersion();
     this.contextoLista.solicitarDesdeRuta(Number(this.route.snapshot.queryParamMap.get('listaId')));
     let revisionObservada = this.contextoLista.seleccionVersion();
     let observada = this.contextoLista.activaId();
@@ -90,9 +96,10 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
       if (id === observada && revision === revisionObservada) return;
       revisionObservada = revision;
       observada = id;
+      if (this.soloPropios() && revision === this.evidenciaRevision) return;
       if (listaExplicita && this.contextoLista.seleccionVersion() === seleccionInicial) return;
       this.listaConsulta = id;
-      untracked(() => { void this.router.navigate([], {relativeTo:this.route,queryParams:{listaId:id},queryParamsHandling:'merge',replaceUrl:true}); this.detalleMovimiento.set(null); this.pageData.set(null); this.filtroAutorId.set(null); this.paginaActual.set(0); this.cargarTransacciones(); });
+      untracked(() => { this.soloPropios.set(false); void this.router.navigate([], {relativeTo:this.route,queryParams:{listaId:id,alcance:null},queryParamsHandling:'merge',replaceUrl:true}); this.detalleMovimiento.set(null); this.pageData.set(null); this.filtroAutorId.set(null); this.paginaActual.set(0); this.cargarTransacciones(); });
     });
   }
 
@@ -304,7 +311,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
   });
 
   readonly tieneFiltrosAvanzadosActivos = computed(() =>
-    this.filtroAutorId() !== null || this.filtroTipo() !== ''
+    this.filtroMoneda() !== null || this.filtroAutorId() !== null || this.filtroTipo() !== ''
     || this.filtroCuentaId() !== null
     || this.filtroCategoriaId() !== null
     || this.filtroCategoriaIds().length > 0
@@ -317,6 +324,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
   readonly filtrosVisibles = computed(() => {
     const filtros: FiltroVisible[] = [];
     const agregar = (clave: FiltroVisible['clave'], etiqueta: string) => filtros.push({clave,id:clave,etiqueta});
+    if (this.filtroMoneda()) agregar('moneda', 'Moneda: ' + this.filtroMoneda());
     if (this.filtroAutorId() != null) agregar('autor', 'Autor: ' + (this.contextoLista.activa()?.miembros.find(m => m.id === this.filtroAutorId())?.nombre ?? 'Participante'));
     const tipo = this.filtroTipo();
     if(tipo) agregar('tipo',this.etiquetaTipoDetalle(tipo));
@@ -335,6 +343,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
   quitarFiltro(filtro: FiltroVisible): void {
     let queryParams: Record<string,null> = {};
     switch(filtro.clave) {
+      case 'moneda': this.filtroMoneda.set(null);queryParams={moneda:null};break;
       case 'tipo': this.filtroTipo.set('');break;
       case 'autor': this.filtroAutorId.set(null); break;
       case 'cuenta': this.filtroCuentaId.set(null);queryParams={cuentaId:null};break;
@@ -507,7 +516,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     const lista = Number(this.route.snapshot.queryParamMap.get('listaId'));
-    this.listaConsulta = Number.isSafeInteger(lista) && lista > 0 ? lista : this.contextoLista.activaId();
+    this.listaConsulta = this.soloPropios() ? null : Number.isSafeInteger(lista) && lista > 0 ? lista : this.contextoLista.activaId();
     this.cargarCuentasYCategorias();
     const categoriaId = Number(this.route.snapshot.queryParamMap.get('categoriaId'));
     if (Number.isSafeInteger(categoriaId) && categoriaId > 0) {
@@ -529,7 +538,11 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
     if (Number.isSafeInteger(movimientoId) && movimientoId > 0) {
       this.filtroMovimientoId.set(movimientoId);
     }
+    this.aplicarEvidencia(this.route.snapshot.queryParamMap);
     this.cargarTransacciones();
+    this.rutaSub = this.route.queryParamMap?.pipe(skip(1)).subscribe(params => {
+      if (this.aplicarEvidencia(params)) this.cargarTransacciones();
+    });
     const editar = this.route.snapshot.queryParamMap.get('editar');
     const transaccionId = Number(editar ?? this.route.snapshot.queryParamMap.get('detalle'));
     if (Number.isSafeInteger(transaccionId) && transaccionId > 0) {
@@ -547,6 +560,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.rutaSub?.unsubscribe();
     this.listadoSub?.unsubscribe();
     if (this.busquedaDebounceTimer) clearTimeout(this.busquedaDebounceTimer);
   }
@@ -556,6 +570,22 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
     const month = String(fecha.getMonth() + 1).padStart(2, '0');
     const day = String(fecha.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
+  }
+
+  aplicarEvidencia(params: ParamMap): boolean {
+    if (params.get('alcance') !== 'propio') return false;
+    const moneda = params.get('moneda'), tipo = params.get('tipo');
+    const desde = params.get('fechaInicio'), hasta = params.get('fechaFin');
+    if (!moneda || !/^[A-Z]{3}$/.test(moneda) || (tipo !== 'INGRESO' && tipo !== 'GASTO')
+        || !desde || !hasta || !/^\d{4}-\d{2}-\d{2}$/.test(desde) || !/^\d{4}-\d{2}-\d{2}$/.test(hasta)) return false;
+    this.evidenciaRevision = this.contextoLista.seleccionVersion();
+    this.soloPropios.set(true);this.listaConsulta = null;
+    this.filtroMoneda.set(moneda);this.filtroTipo.set(tipo);
+    this.filtroFechaInicio.set(desde);this.filtroFechaFin.set(hasta);
+    this.filtroAutorId.set(null);this.filtroCuentaId.set(null);this.filtroCategoriaId.set(null);this.filtroCategoriaIds.set([]);
+    this.filtroMovimientoId.set(null);this.filtroBusqueda.set('');this.filtroBusquedaInput.set('');
+    this.filtroMontoMin.set(null);this.filtroMontoMax.set(null);this.paginaActual.set(0);
+    return true;
   }
 
   cargarCuentasYCategorias(): void {
@@ -590,6 +620,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
     this.error.set(null);
 
     const filtros: TransaccionFiltro = {
+      soloPropios: this.soloPropios(), moneda: this.filtroMoneda(),
       ...(this.listaConsulta == null ? {} : { listaId: this.listaConsulta }),
       ...(this.filtroAutorId() == null ? {} : { autorId: this.filtroAutorId() }),
       tipo: this.filtroTipo(),
@@ -695,6 +726,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
   }
 
   limpiarFiltros(): void {
+    this.soloPropios.set(false);this.filtroMoneda.set(null);this.listaConsulta = this.contextoLista.activaId();
     if (this.busquedaDebounceTimer) clearTimeout(this.busquedaDebounceTimer);
     this.busquedaDebounceTimer = null;
     this.filtroAutorId.set(null);
@@ -710,11 +742,11 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
     this.filtroBusqueda.set('');
     this.filtroMovimientoId.set(null);
     this.paginaActual.set(0);
-    if (['movimientoId', 'cuentaId', 'categoriaId', 'fechaInicio', 'fechaFin']
+    if (['movimientoId', 'cuentaId', 'categoriaId', 'fechaInicio', 'fechaFin', 'alcance', 'moneda', 'tipo']
       .some(parametro => this.route.snapshot.queryParamMap.has(parametro))) {
       this.router.navigate([], {
         relativeTo: this.route,
-        queryParams: { movimientoId: null, cuentaId: null, categoriaId: null, fechaInicio: null, fechaFin: null },
+        queryParams: { movimientoId: null, cuentaId: null, categoriaId: null, fechaInicio: null, fechaFin: null, alcance: null, moneda: null, tipo: null },
         queryParamsHandling: 'merge',
         replaceUrl: true
       });
@@ -724,6 +756,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
 
   exportarCsv(): void {
     const filtros: TransaccionFiltro = {
+      soloPropios: this.soloPropios(), moneda: this.filtroMoneda(),
       ...(this.listaConsulta == null ? {} : { listaId: this.listaConsulta }),
       ...(this.filtroAutorId() == null ? {} : { autorId: this.filtroAutorId() }),
       tipo: this.filtroTipo(),

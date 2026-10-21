@@ -1,5 +1,14 @@
 # Estado para retomar la sesión
 
+## Asistente publicado en rama y segunda entrega de evidencias (2026-10-20)
+
+- Verificación de esta entrega: 54 pruebas backend relacionadas correctas (37 unitarias de motor/contexto/acciones/asistente y 17 HTTP/persistencia de consultas WhatsApp), 57 pruebas frontend correctas y build Angular producción correcto. La integración comprueba conteos/totales propios, exclusión de otra moneda/usuario/transferencias, historial y CSV equivalentes, rechazo de moneda inválida y ausencia de escrituras. UI verifica renderizado, navegación y aislamiento de la lista activa. Diff-check correcto. PostgreSQL y suite completa quedan a CI; no hubo despliegue ni prueba con datos reales.
+
+- El propietario autoriza continuar y pregunta por Git. Commit inicial `80cfa5a` subido a `origin/mejoras/asistente-evidencias`; [PR #97](https://github.com/YaxcheItz/gestorfinanzas/pull/97) abierto como borrador hacia develop. No hay merge ni despliegue por abrirlo. `origin/develop` revalidado en 211b457; misma etapa/rama/worktree.
+- Segunda entrega: evidencia estructurada de comparación mensual (periodos, moneda, tipo, conteos y total), calculada en backend. Botones en asistente y captura/reportes abren el historial con exactamente ese alcance propio. Filtro moneda en historial y CSV, conservando cuenta histórica y permisos. No hereda una lista compartida ni filtros previos; las consultas normales de listas se mantienen. No hay lecturas ni registros financieros reales en esta entrega.
+- Skills aplicadas: Ponytail, Angular, diseño de interfaces, seguridad y documentación/verificación de la etapa. El borrador Gmail del checkout principal permanece separado y deshabilitado. Solo WhatsApp como canal externo; conciliación omitida.
+- Continuidad: leer AGENTS.md, este estado, PLAN_MAESTRO_KAPTAL.md y ASISTENTE_EVIDENCIAS.md. Revisar CI del PR #97. Después completar filtros específicos y evidencia de las demás consultas, presupuestos y respuestas WhatsApp. Mantener la distinción entre código publicado en rama y funciones desplegadas.
+
 ## Prioridad vigente: WhatsApp y asistente; Gmail/conciliación fuera (2026-10-20)
 
 - Cierre del primer corte del asistente: 76 pruebas relacionadas distintas correctas (75 del conjunto inicial y la nueva prueba HTTP/persistencia, con la clase completa de 16 pruebas repetida correctamente). Motor, contexto financiero, servicio de acciones/asistente y consultas/fallback/runtime WhatsApp cubiertos. Integración en H2 con propietarios sintéticos: cifras exactas, usuario ajeno y transferencias excluidos, sin modificar dinero ni crear propuestas/avisos. `git diff --check` correcto. No se ejecutó toda la suite backend ni prueba PostgreSQL en esta parte; no se cambió frontend ni se desplegó. Detalle en ASISTENTE_EVIDENCIAS.md.

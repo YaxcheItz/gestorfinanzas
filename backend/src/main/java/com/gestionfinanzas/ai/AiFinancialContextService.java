@@ -123,6 +123,9 @@ public class AiFinancialContextService {
         LocalDate anteriorHasta = mesAnterior.atDay(Math.min(hasta.getDayOfMonth(), mesAnterior.lengthOfMonth()));
         var actuales = transaccionRepository.findTotalesMensualesPorMoneda(userId, desde, hasta);
         var anteriores = transaccionRepository.findTotalesMensualesPorMoneda(userId, anteriorDesde, anteriorHasta);
+        var conteosActuales = transaccionRepository.findConteosPorMonedaYTipo(userId, desde, hasta);
+        var conteosAnteriores = transaccionRepository.findConteosPorMonedaYTipo(userId, anteriorDesde, anteriorHasta);
+        var evidence = new java.util.ArrayList<AiEvidence>();
         var monedas = java.util.stream.Stream.concat(actuales.stream(), anteriores.stream())
                 .map(DashboardMonedaTotales::moneda).filter(m -> moneda == null || moneda.equals(m))
                 .collect(java.util.stream.Collectors.toCollection(java.util.TreeSet::new));
@@ -134,6 +137,13 @@ public class AiFinancialContextService {
             var cero = new DashboardMonedaTotales(divisa, BigDecimal.ZERO, BigDecimal.ZERO);
             var actual = actuales.stream().filter(t -> divisa.equals(t.moneda())).findFirst().orElse(cero);
             var anterior = anteriores.stream().filter(t -> divisa.equals(t.moneda())).findFirst().orElse(cero);
+            for (var tipo : List.of(TipoTransaccion.INGRESO, TipoTransaccion.GASTO)) {
+                String nombre = tipo == TipoTransaccion.INGRESO ? "Ingresos" : "Gastos";
+                long cantidadActual = conteosActuales.stream().filter(t -> divisa.equals(t.moneda()) && t.tipo() == tipo).mapToLong(com.gestionfinanzas.dto.response.MovimientoConteo::operaciones).sum();
+                long cantidadAnterior = conteosAnteriores.stream().filter(t -> divisa.equals(t.moneda()) && t.tipo() == tipo).mapToLong(com.gestionfinanzas.dto.response.MovimientoConteo::operaciones).sum();
+                evidence.add(new AiEvidence(nombre + " actual", desde, hasta, divisa, tipo, cantidadActual, tipo == TipoTransaccion.INGRESO ? actual.ingresos() : actual.gastos()));
+                evidence.add(new AiEvidence(nombre + " anterior", anteriorDesde, anteriorHasta, divisa, tipo, cantidadAnterior, tipo == TipoTransaccion.INGRESO ? anterior.ingresos() : anterior.gastos()));
+            }
             respuesta.append("\n").append(divisa).append(":\nIngresos: actual ")
                     .append(actual.ingresos().toPlainString()).append(", anterior ").append(anterior.ingresos().toPlainString())
                     .append(", diferencia ").append(actual.ingresos().subtract(anterior.ingresos()).toPlainString())
@@ -143,7 +153,7 @@ public class AiFinancialContextService {
         }
         if (monedas.isEmpty()) respuesta.append("\nNo hay ingresos ni gastos registrados en esos periodos para la moneda solicitada.");
         respuesta.append("\nFuente: ingresos y gastos del usuario autenticado; transferencias excluidas. No se suman monedas ni se estiman movimientos faltantes.");
-        return new AiActionService.AiActionResult(respuesta.toString(), null);
+        return new AiActionService.AiActionResult(respuesta.toString(), null, List.of(), null, List.of(), null, List.copyOf(evidence));
     }
 
     private record AccountSummary(

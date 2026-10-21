@@ -48,6 +48,10 @@ Fuera del plan activo por decisión del propietario: piloto y autoservicio Gmail
 
 ### Rama y siguiente entrega del asistente
 
+Avance posterior: rama publicada y [PR #97](https://github.com/YaxcheItz/gestorfinanzas/pull/97) en borrador hacia develop. Se añade evidencia estructurada para comparación mensual y acceso al historial con fechas/tipo/moneda y alcance propio, también respetado en CSV. El resto de filtros y consultas sigue pendiente. Publicar una rama no implica merge ni despliegue.
+
+Validación de la segunda entrega: 54 pruebas backend y 57 frontend correctas; build Angular y diff-check correctos. Sin escrituras financieras reales. CI remoto y despliegue deben comprobarse aparte.
+
 Primer corte implementado y comprobado localmente: 76 pruebas relacionadas distintas correctas, incluidas consultas HTTP/persistencia H2 con aislamiento y ausencia de escrituras; diff-check correcto. Sin despliegue ni cambios frontend. El alcance y los pendientes están en [ASISTENTE_EVIDENCIAS.md](ASISTENTE_EVIDENCIAS.md).
 
 Nueva rama `mejoras/asistente-evidencias` en `.local/asistente-worktree`, creada desde `origin/develop` comprobado (`211b457`). La rama principal del checkout conserva Gmail sin publicar. Primer corte: comparación mensual sin IA ni escrituras, reutilizando consultas agregadas existentes. Después: filtros completos, evidencia estructurada y enlaces al historial; presupuesto/restantes y categorías con validación de alcance. No anunciar nada como publicado hasta CI/integración/despliegue.

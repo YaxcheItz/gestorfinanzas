@@ -28,6 +28,17 @@ export interface AiChatResponse {
   action: AiActionProposal | null;
   actions?: AiActionProposal[];
   report?: AiReportWidget | null;
+  evidence?: AiEvidence[];
+}
+
+export interface AiEvidence {
+  label: string;
+  desde: string;
+  hasta: string;
+  moneda: string;
+  tipo: 'INGRESO' | 'GASTO';
+  operaciones: number;
+  total: number;
 }
 
 export interface AiReportWidget {

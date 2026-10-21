@@ -81,11 +81,12 @@ public class TransaccionController {
             @RequestParam(required = false) Long listaId,
             @RequestParam(required = false) List<String> etiquetas,
             @RequestParam(required = false) Long autorId,
+            @RequestParam(required = false) String moneda,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "fecha", "id"));
         TransaccionFiltroRequest filtro = new TransaccionFiltroRequest(
-                tipo, cuentaId, categoriaId, categoriaIds, fechaInicio, fechaFin, busqueda, id, montoMin, montoMax, listaId, etiquetas, autorId
+                tipo, cuentaId, categoriaId, categoriaIds, fechaInicio, fechaFin, busqueda, id, montoMin, montoMax, listaId, etiquetas, autorId, moneda
         );
         Page<TransaccionResponse> resultado = transaccionService.listarConFiltros(userDetails.getId(), filtro, pageRequest);
         return ResponseEntity.ok(ApiResponse.ok("Transacciones obtenidas correctamente", resultado));
@@ -106,10 +107,11 @@ public class TransaccionController {
             @RequestParam(required = false) Long listaId,
             @RequestParam(required = false) List<String> etiquetas,
             @RequestParam(required = false) Long autorId,
+            @RequestParam(required = false) String moneda,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         TransaccionFiltroRequest filtro = new TransaccionFiltroRequest(
-                tipo, cuentaId, categoriaId, categoriaIds, fechaInicio, fechaFin, busqueda, id, montoMin, montoMax, listaId, etiquetas, autorId
+                tipo, cuentaId, categoriaId, categoriaIds, fechaInicio, fechaFin, busqueda, id, montoMin, montoMax, listaId, etiquetas, autorId, moneda
         );
         String filename = fechaInicio != null && fechaFin != null
                 ? "movimientos_" + fechaInicio + "_a_" + fechaFin + ".csv"
