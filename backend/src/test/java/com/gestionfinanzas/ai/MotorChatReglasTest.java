@@ -7,6 +7,8 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 class MotorChatReglasTest {
+ @Test void comparacionMensualUsaConsultaSinPropuestaNiImporte(){var r=interpretar("Compárame este mes con el anterior en MXN");assertEquals("COMPARACION_MENSUAL",r.reporte());assertEquals(LocalDate.of(2026,10,1),r.desde());assertEquals(hoy,r.hasta());assertEquals("MXN",r.moneda());assertNull(r.datos());}
+ @Test void comparacionConListaOCategoriaNoPierdeElFiltro(){assertNull(interpretar("Compara este mes con el anterior en comida"));assertNull(interpretar("Compara este mes con el anterior en la lista vacaciones"));}
  private final MotorChatReglas motor=new MotorChatReglas();
  private final LocalDate hoy=LocalDate.of(2026,10,4);
  private CuentaResponse cuenta(long id,String nombre,String moneda){return new CuentaResponse(id,nombre,TipoCuenta.EFECTIVO,null,null,null,null,null,null,BigDecimal.ZERO,moneda,null,true,null);}

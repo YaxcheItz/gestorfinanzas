@@ -22,6 +22,41 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class AiFinancialContextServiceTest {
+    @Test
+    void comparacionRespetaTramosMonedasYCifrasDecimales() {
+        var desde=java.time.LocalDate.of(2026,3,1);var hasta=java.time.LocalDate.of(2026,3,31);
+        var previo=java.time.LocalDate.of(2026,2,1);var finPrevio=java.time.LocalDate.of(2026,2,28);
+        when(transaccionRepository.findTotalesMensualesPorMoneda(7L,desde,hasta)).thenReturn(List.of(
+                new DashboardMonedaTotales("MXN",new BigDecimal("1000.10"),new BigDecimal("300.21")),
+                new DashboardMonedaTotales("USD",new BigDecimal("20"),new BigDecimal("5"))));
+        when(transaccionRepository.findTotalesMensualesPorMoneda(7L,previo,finPrevio)).thenReturn(List.of(
+                new DashboardMonedaTotales("MXN",new BigDecimal("900.01"),new BigDecimal("400.32"))));
+        var result=service.reporteLocal(7L,"COMPARACION_MENSUAL",desde,hasta,"MXN");
+        assertTrue(result.answer().contains("2026-02-28"));
+        assertTrue(result.answer().contains("diferencia 100.09"));
+        assertTrue(result.answer().contains("diferencia -100.11"));
+        assertFalse(result.answer().contains("USD"));
+        org.junit.jupiter.api.Assertions.assertNull(result.action());
+        verify(transaccionRepository).findTotalesMensualesPorMoneda(7L,previo,finPrevio);
+        org.mockito.Mockito.verifyNoInteractions(cuentaRepository);
+    }
+
+    @Test
+    void comparacionCruzaAnioSinInventarMovimientos() {
+        var desde=java.time.LocalDate.of(2026,1,1);var hasta=java.time.LocalDate.of(2026,1,4);
+        when(transaccionRepository.findTotalesMensualesPorMoneda(7L,desde,hasta)).thenReturn(List.of());
+        when(transaccionRepository.findTotalesMensualesPorMoneda(7L,java.time.LocalDate.of(2025,12,1),java.time.LocalDate.of(2025,12,4))).thenReturn(List.of());
+        var result=service.reporteLocal(7L,"COMPARACION_MENSUAL",desde,hasta,null);
+        assertTrue(result.answer().contains("2025-12-04"));
+        assertTrue(result.answer().contains("No hay ingresos ni gastos"));
+        org.junit.jupiter.api.Assertions.assertNull(result.report());
+    }
+
+    @Test
+    void comparacionNoConsultaUnRangoInvalido() {
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> service.reporteLocal(7L,"COMPARACION_MENSUAL",java.time.LocalDate.of(2026,1,2),java.time.LocalDate.of(2026,2,1),null));
+        org.mockito.Mockito.verifyNoInteractions(transaccionRepository);
+    }
 
     private final CuentaRepository cuentaRepository = mock(CuentaRepository.class);
     private final TransaccionRepository transaccionRepository = mock(TransaccionRepository.class);

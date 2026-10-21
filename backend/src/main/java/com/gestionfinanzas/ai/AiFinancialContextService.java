@@ -84,6 +84,9 @@ public class AiFinancialContextService {
     /** Totales agregados en SQL y siempre acotados al usuario autenticado. */
     @Transactional(readOnly = true)
     public AiActionService.AiActionResult reporteLocal(Long userId, String modo, LocalDate desde, LocalDate hasta, String moneda) {
+        if ("COMPARACION_MENSUAL".equals(modo)) {
+            return comparacionMensual(userId, desde, hasta, moneda);
+        }
         if ("SALDO".equals(modo)) {
             String texto=cuentaRepository.findByUsuarioIdAndActivoTrue(userId).stream()
                 .filter(c -> moneda==null || moneda.equals(c.getMoneda()))
@@ -108,6 +111,39 @@ public class AiFinancialContextService {
         AiActionService.AiReportWidget grafico=null;
         if(totales.size()==1){var t=totales.get(0);grafico=new AiActionService.AiReportWidget("Resumen: "+periodo,List.of("Ingresos","Gastos"),List.of(t.ingresos().doubleValue(),t.gastos().doubleValue()),t.moneda());}
         return new AiActionService.AiActionResult("Resumen del "+periodo+"\n"+(texto.isBlank()?"No hay ingresos ni gastos registrados en ese periodo.":texto),null,List.of(),grafico);
+    }
+
+    private AiActionService.AiActionResult comparacionMensual(Long userId, LocalDate desde, LocalDate hasta, String moneda) {
+        if (desde == null || hasta == null || desde.getDayOfMonth() != 1
+                || hasta.isBefore(desde) || !YearMonth.from(desde).equals(YearMonth.from(hasta))) {
+            throw new IllegalArgumentException("La comparación necesita un tramo válido del mismo mes.");
+        }
+        YearMonth mesAnterior = YearMonth.from(desde).minusMonths(1);
+        LocalDate anteriorDesde = mesAnterior.atDay(1);
+        LocalDate anteriorHasta = mesAnterior.atDay(Math.min(hasta.getDayOfMonth(), mesAnterior.lengthOfMonth()));
+        var actuales = transaccionRepository.findTotalesMensualesPorMoneda(userId, desde, hasta);
+        var anteriores = transaccionRepository.findTotalesMensualesPorMoneda(userId, anteriorDesde, anteriorHasta);
+        var monedas = java.util.stream.Stream.concat(actuales.stream(), anteriores.stream())
+                .map(DashboardMonedaTotales::moneda).filter(m -> moneda == null || moneda.equals(m))
+                .collect(java.util.stream.Collectors.toCollection(java.util.TreeSet::new));
+        var respuesta = new StringBuilder("Comparación mensual de movimientos propios registrados\n")
+                .append("Actual: ").append(desde).append(" al ").append(hasta)
+                .append("\nAnterior: ").append(anteriorDesde).append(" al ").append(anteriorHasta)
+                .append("\nSe compara hasta el mismo día del mes, limitado al último día si el mes anterior es más corto.");
+        for (String divisa : monedas) {
+            var cero = new DashboardMonedaTotales(divisa, BigDecimal.ZERO, BigDecimal.ZERO);
+            var actual = actuales.stream().filter(t -> divisa.equals(t.moneda())).findFirst().orElse(cero);
+            var anterior = anteriores.stream().filter(t -> divisa.equals(t.moneda())).findFirst().orElse(cero);
+            respuesta.append("\n").append(divisa).append(":\nIngresos: actual ")
+                    .append(actual.ingresos().toPlainString()).append(", anterior ").append(anterior.ingresos().toPlainString())
+                    .append(", diferencia ").append(actual.ingresos().subtract(anterior.ingresos()).toPlainString())
+                    .append("\nGastos: actual ").append(actual.gastos().toPlainString())
+                    .append(", anterior ").append(anterior.gastos().toPlainString())
+                    .append(", diferencia ").append(actual.gastos().subtract(anterior.gastos()).toPlainString());
+        }
+        if (monedas.isEmpty()) respuesta.append("\nNo hay ingresos ni gastos registrados en esos periodos para la moneda solicitada.");
+        respuesta.append("\nFuente: ingresos y gastos del usuario autenticado; transferencias excluidas. No se suman monedas ni se estiman movimientos faltantes.");
+        return new AiActionService.AiActionResult(respuesta.toString(), null);
     }
 
     private record AccountSummary(

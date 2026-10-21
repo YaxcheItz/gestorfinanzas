@@ -60,7 +60,10 @@ public final class MotorChatReglas {
         String textoMoneda=texto;
         for (CuentaResponse c:cuentasEntrada) textoMoneda=textoMoneda.replaceAll("(?<![\\p{L}\\d])"+Pattern.quote(normalizar(c.nombre()))+"(?![\\p{L}\\d])"," ");
         String moneda=moneda(textoMoneda);
-        boolean consulta=texto.matches(".*\\b(reporte|reportes|resumen|grafico|grafica|categorias|presupuesto|presupuestos|saldo|balance|cuanto|cuanta|cuantos|cuantas|como voy|en que|top|alertas|gastos fijos)\\b.*") || texto.equals("ingresos") || texto.equals("gastos");
+        if (texto.matches("(?:compara|comparame|comparar) (?:este mes|el mes actual) (?:con|contra) (?:el mes pasado|el mes anterior|el anterior)(?: en (?:mxn|usd|eur|cad|gbp))?")) {
+            return new Resultado(null,null,List.of(),null,"COMPARACION_MENSUAL",hoy.withDayOfMonth(1),hoy,moneda);
+        }
+        boolean consulta=texto.matches(".*\\b(reporte|reportes|resumen|grafico|grafica|categorias|presupuesto|presupuestos|saldo|balance|cuanto|cuanta|cuantos|cuantas|como voy|en que|top|alertas|gastos fijos|compara|comparame|comparar)\\b.*") || texto.equals("ingresos") || texto.equals("gastos");
         if (consulta) {
             if (FECHA.matcher(texto).results().count()>1 || MONTO.matcher(FECHA.matcher(texto).replaceAll(" ").replaceAll("ultimos 7 dias", " ")).find() || texto.matches(".*\\b(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre|ano|anual|trimestre)\\b.*")) return null;
             if (texto.matches(".*\\ben\\s+(?!que |categorias?\\b|mxn\\b|usd\\b|eur\\b|cad\\b|gbp\\b).+") || texto.matches(".*\\b(desde|usando|cuenta|tarjeta)\\b.*") && !texto.contains("saldo")) return null;

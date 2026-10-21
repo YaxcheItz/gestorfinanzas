@@ -68,6 +68,21 @@ class WhatsappConsultaIntegrationTest {
     @Test void monedaContradictoriaPideAclaracion()throws Exception{assertEquals("ACLARACION",query("Gasto 180 USD con Nu").path("tipo").asText());}
     @Test void saldoPorCuentaNoDevuelveTodas()throws Exception{String s=query("saldo de Nu").path("respuesta").asText();assertTrue(s.contains("Nu"));assertFalse(s.contains("BBVA"));assertFalse(s.contains("Secreto"));}
     @Test void resumenEsConsultaSinPropuestasNiEscrituras()throws Exception{long count=propuestas.count();var r=query("¿Cuánto gasté este mes?");assertEquals("CONSULTA",r.path("tipo").asText());assertTrue(r.path("desde").asText().endsWith("01"));assertEquals(count,propuestas.count());}
+    @Test void comparacionMensualUsaDatosPropiosSinModificarDinero()throws Exception{
+        var actual=CalendarioFinanciero.hoy().withDayOfMonth(1);var anterior=actual.minusMonths(1);
+        transacciones.saveAndFlush(Transaccion.builder().usuario(owner).cuenta(nu).tipo(TipoTransaccion.GASTO).monto(new BigDecimal("40.25")).fecha(actual).descripcion("Gasto sintetico").build());
+        transacciones.saveAndFlush(Transaccion.builder().usuario(owner).cuenta(nu).tipo(TipoTransaccion.GASTO).monto(new BigDecimal("10.20")).fecha(anterior).descripcion("Gasto previo sintetico").build());
+        var ajena=cuentas.findByUsuarioIdAndActivoTrue(foreign.getId()).get(0);
+        transacciones.saveAndFlush(Transaccion.builder().usuario(foreign).cuenta(ajena).tipo(TipoTransaccion.GASTO).monto(new BigDecimal("9000.00")).fecha(actual).descripcion("Ajeno sintetico").build());
+        transacciones.saveAndFlush(Transaccion.builder().usuario(owner).cuenta(nu).cuentaDestino(bbva).tipo(TipoTransaccion.TRANSFERENCIA).monto(new BigDecimal("700.00")).fecha(actual).descripcion("Transferencia sintetica").build());
+        long total=transacciones.count();long drafts=propuestas.count();long inbox=avisos.count();
+        var r=query("Compara este mes con el anterior en MXN");
+        assertEquals("CONSULTA",r.path("tipo").asText());assertTrue(r.path("propuesta").isNull());
+        String text=r.path("respuesta").asText();assertTrue(text.contains("actual 40.25, anterior 10.20, diferencia 30.05"));
+        assertFalse(text.contains("9000"));assertFalse(text.contains("700"));assertFalse(text.contains("USD"));
+        assertEquals(total,transacciones.count());assertEquals(drafts,propuestas.count());assertEquals(inbox,avisos.count());
+        assertEquals(new BigDecimal("1000.00"),cuentas.findById(nu.getId()).orElseThrow().getSaldoActual());
+    }
     @Test void comandosDestructivosYComplejosNoEjecutanAcciones()throws Exception{assertEquals("ACLARACION",query("Elimina todas mis cuentas").path("tipo").asText());assertEquals("ACLARACION",query("Compara mi reporte con el año pasado").path("tipo").asText());assertTrue(cuentas.existsById(nu.getId()));}
     @Test void sinSesionNoHayAcceso()throws Exception{mvc.perform(post("/api/canales/whatsapp/interpretar").contentType(MediaType.APPLICATION_JSON).content("{\"texto\":\"saldo\"}")).andExpect(status().isUnauthorized());}
     @Test void limitaTamanoYValidaTexto()throws Exception{mvc.perform(post("/api/canales/whatsapp/interpretar").with(user(new CustomUserDetails(owner))).contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(Map.of("texto","x".repeat(1201))))).andExpect(status().isBadRequest());}
