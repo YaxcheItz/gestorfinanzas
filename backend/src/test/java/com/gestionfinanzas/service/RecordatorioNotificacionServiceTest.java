@@ -27,6 +27,32 @@ import static org.mockito.Mockito.when;
 
 class RecordatorioNotificacionServiceTest {
 
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.CsvSource({
+            "2026-11-15,10,15,0",
+            "2026-11-16,10,15,0",
+            "2026-11-17,10,15,1",
+            "2026-10-30,10,15,0",
+            "2026-02-28,10,31,0",
+            "2026-03-02,10,31,1",
+            "2026-04-06,20,2,1",
+            "2026-12-28,10,25,1",
+            "2024-02-29,10,31,1",
+            "2027-01-05,25,5,1"
+    })
+    void pagoRespetaDiaConfiguradoYMesesCortos(String fecha, int corte, int pago, int esperadas) {
+        try (var calendario = org.mockito.Mockito.mockStatic(CalendarioFinanciero.class)) {
+            calendario.when(CalendarioFinanciero::hoy).thenReturn(LocalDate.parse(fecha));
+            when(cuentaRepository.findActivasConUsuarioPorTipo(TipoCuenta.CREDITO))
+                    .thenReturn(List.of(tarjeta("Tarjeta QA", corte, pago)));
+            when(plantillaRepository.findByActivaTrueAndSiguienteFecha(any(LocalDate.class))).thenReturn(List.of());
+            org.mockito.Mockito.lenient().when(whatsAppService.enviarRecordatorio(anyString(), anyString()))
+                    .thenReturn("Mensaje enviado exitosamente");
+            assertEquals(esperadas, service.ejecutarRecordatoriosDiarios());
+            verify(whatsAppService, org.mockito.Mockito.times(esperadas)).enviarRecordatorio(anyString(), anyString());
+        }
+    }
+
     private static final ZoneId MEXICO = ZoneId.of("America/Mexico_City");
 
     private final CuentaRepository cuentaRepository = mock(CuentaRepository.class);

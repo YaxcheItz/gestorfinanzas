@@ -1,5 +1,9 @@
 # Plan de continuación de Kaptal
 
+Publicación vigente 2026-10-21: [PR #99 hacia develop](https://github.com/YaxcheItz/gestorfinanzas/pull/99), rama `auditoria/etapa-8-funcional-visual`, implementación `2e5b13a`. Sin merge ni despliegue de producción; revisar CI y los pendientes de Etapa 8 antes de Etapa 9. Gmail deshabilitado.
+
+Seguimiento 2026-10-21: Etapa 8 preparada para PR a develop por autorización del propietario. 366 frontend, 485 backend correctas/6 omitidas; 22 E2E distintos entre regresión y conjunto final. Ver [informe](AUDITORIA_ETAPA_8.md) y [calendario](TARJETAS_CALENDARIO_MX.md). Android físico/producción autenticada pendientes; Etapa 9 después. Gmail deshabilitado.
+
 Prioridad vigente (2026-10-20): solo WhatsApp como canal externo; Gmail deshabilitado y conciliación (Etapa 6) omitida. Sigue el asistente financiero con evidencias. El orden completo actualizado está al inicio de [PLAN_MAESTRO_KAPTAL.md](PLAN_MAESTRO_KAPTAL.md); las prioridades siguientes de este documento son históricas.
 
 Actualizacion vigente 2026-10-19: el plan completo y su seguimiento estan en [PLAN_MAESTRO_KAPTAL.md](PLAN_MAESTRO_KAPTAL.md). WhatsApp personal ya funciona en Cloudflare; el propietario adelanto WhatsApp multiusuario desde la app y despues IA de respaldo, antes de Gmail y el asistente avanzado. La primera entrega es contrato/modelo/verificacion del telefono (`WHATSAPP_MULTIUSUARIO.md`); UI/runtime/migracion son la siguiente parte. Las referencias posteriores a WhatsApp sin activar, Oracle o entrega #85 pendiente son historicas.

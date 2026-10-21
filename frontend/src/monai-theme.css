@@ -89,7 +89,8 @@ html .monai-theme :is(.accounts-page, .budgets-page) :is(input, select) { font-s
 html .monai-theme .account-card { border-color: var(--kaptal-border); box-shadow: none; }
 html .monai-theme .account-card h2 { margin-top: .65rem; white-space: normal; overflow-wrap: anywhere; font-size: 1.15rem; line-height: 1.35; }
 .account-currency { color: var(--kaptal-content-muted); font-size: .7rem; font-weight: 650; margin-top: .25rem; }
-html .monai-theme .account-card > p { overflow-wrap: anywhere; }
+html .monai-theme .account-card p { overflow-wrap: anywhere; }
+html .monai-theme .account-credit-summary { grid-template-columns: repeat(auto-fit, minmax(min(100%, 7rem), 1fr)); }
 html .monai-theme .account-card [class~="text-lg"] { overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
 html .monai-theme .account-manage { border-color: var(--kaptal-border); cursor: default; }
 .account-manage summary { display: flex; align-items: center; justify-content: space-between; min-height: 44px; color: var(--kaptal-content-muted); font-size: .8rem; font-weight: 650; cursor: pointer; list-style: none; touch-action: manipulation; }

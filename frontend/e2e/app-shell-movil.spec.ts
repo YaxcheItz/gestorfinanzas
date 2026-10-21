@@ -2,6 +2,46 @@ import { expect, test } from '@playwright/test';
 
 test.use({ viewport: { width: 390, height: 844 }, serviceWorkers: 'block' });
 
+test('el enlace al contenido aparece con teclado y mueve el foco al contenido principal', async ({ page }) => {
+  await page.route('**/api/**', route => route.fulfill({json:{success:true,data:{configurado:false}}}));
+  await page.goto('/login');
+  const skip = page.getByRole('link', {name:'Ir al contenido',exact:true});
+  expect((await skip.boundingBox())!.width).toBe(1);
+  await page.keyboard.press('Tab');
+  await expect(skip).toBeFocused();
+  await expect(skip).toBeInViewport();
+  expect((await skip.boundingBox())!.width).toBeGreaterThan(44);
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#main-content')).toBeFocused();
+});
+
+test('rechazar el micrófono permite seguir escribiendo sin enviar audio ni guardar', async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('finanzas_token', `test.${btoa(JSON.stringify({exp:Math.floor(Date.now()/1000)+3600}))}.synthetic`);
+    localStorage.setItem('finanzas_user', JSON.stringify({id:995,nombre:'Voz QA',email:'voz@example.test'}));
+    Object.defineProperty(navigator.mediaDevices, 'getUserMedia', {
+      value: () => Promise.reject(new DOMException('Denied', 'NotAllowedError')),
+    });
+  });
+  const escrituras: string[] = [];
+  await page.route('**/api/**', async route => {
+    if (route.request().method() !== 'GET') escrituras.push(route.request().url());
+    const data = new URL(route.request().url()).pathname.endsWith('/perfil')
+      ? {id:995,nombre:'Voz QA',email:'voz@example.test',tema:'CLARO',monedaPredeterminada:'MXN'} : [];
+    await route.fulfill({json:{success:true,data}});
+  });
+  await page.goto('/cuentas');
+  await page.evaluate(() => window.dispatchEvent(new CustomEvent('kaptal-abrir-captura-chat')));
+  const dialog = page.getByRole('dialog', {name:'Kaptal, captura y reportes'});
+  await dialog.getByRole('button', {name:'Dictar movimiento',exact:true}).click();
+  await dialog.getByRole('button', {name:'Permitir audio y grabar',exact:true}).click();
+  await expect(dialog.getByRole('alert')).toContainText('El navegador bloqueó el micrófono');
+  await expect(dialog.getByRole('button', {name:'Dictar movimiento',exact:true})).toBeEnabled();
+  await dialog.locator('#quick-capture-text').fill('Continuar por escrito');
+  await expect(dialog.locator('#quick-capture-text')).toHaveValue('Continuar por escrito');
+  expect(escrituras).toEqual([]);
+});
+
 test('la entrada muestra Kaptal antes de que llegue JavaScript, sin un lienzo vacío', async ({ page }) => {
   await page.route('**/*.js', route => route.abort());
   await page.goto('/');
