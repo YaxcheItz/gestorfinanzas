@@ -1,5 +1,7 @@
 # Plan de continuación de Kaptal
 
+Seguimiento vigente 2026-10-21: Etapa 8 integrada por el propietario; continuar Etapa 9 en `mejoras/android-captura`, carpeta principal. Ver [entrega PWA y pendientes](ANDROID_CAPTURA_ETAPA_9.md) y el plan maestro. Las pruebas físicas anteriores siguen pendientes; Gmail deshabilitado.
+
 Publicación vigente 2026-10-21: [PR #99 hacia develop](https://github.com/YaxcheItz/gestorfinanzas/pull/99), rama `auditoria/etapa-8-funcional-visual`, implementación `2e5b13a`. Sin merge ni despliegue de producción; revisar CI y los pendientes de Etapa 8 antes de Etapa 9. Gmail deshabilitado.
 
 Seguimiento 2026-10-21: Etapa 8 preparada para PR a develop por autorización del propietario. 366 frontend, 485 backend correctas/6 omitidas; 22 E2E distintos entre regresión y conjunto final. Ver [informe](AUDITORIA_ETAPA_8.md) y [calendario](TARJETAS_CALENDARIO_MX.md). Android físico/producción autenticada pendientes; Etapa 9 después. Gmail deshabilitado.

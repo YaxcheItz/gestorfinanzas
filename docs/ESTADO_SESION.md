@@ -1,5 +1,13 @@
 # Estado para retomar la sesión
 
+## Etapa 9: primera entrega PWA/captura (2026-10-21)
+
+- El propietario autorizó avanzar tras los merges. Fetch confirma develop `6775c1e` (PR #99) y main `d39d899` (PR #100). Rama nueva `mejoras/android-captura` desde develop actualizado, en la carpeta principal; ya no trabajar en el worktree de Etapa 8.
+- Limpiadas las notas sin commit de los dos MD de la raíz, con respaldo del diff en `.local/notas-raiz-antes-etapa9.patch`. Artefactos huérfanos de Gmail resguardados en `.local/gmail-worker-resguardo-20261021`; no activar ni integrar Gmail.
+- Accesos PWA para gasto/ingreso/dictado, continuidad segura tras login por contraseña/Google y consumo de la acción para no repetir al recargar. Dictado abre el panel sin activar el micrófono. Sin autenticación no se registra ni lee dinero.
+- Validación: 378 unitarias frontend correctas; 12 E2E de accesos/chat/registro/app-shell; 1 E2E de producción con service worker real (cerrar/reabrir offline y sincronizar una vez), build y diff-check correctos. H2 local/datos sintéticos; CI PWA/PostgreSQL añadido. No se repitió backend porque no cambió.
+- Detalles, fuentes y pendientes: ANDROID_CAPTURA_ETAPA_9.md. Android físico/instalación y los pendientes manuales de Etapa 8 no se certifican por el merge. Etapa 9 sigue abierta; después viene Etapa 11. Conservar Gmail deshabilitado.
+
 Publicación vigente 2026-10-21: [PR #99](https://github.com/YaxcheItz/gestorfinanzas/pull/99) abierto, listo para revisión, de `auditoria/etapa-8-funcional-visual` hacia `develop`; commit de implementación `2e5b13a`. Rama subida, sin merge ni despliegue de producción. CI de la publicación en curso; revalidar su resultado antes de integrar. Continuar Etapa 8 con los pendientes del informe; Etapa 9 después.
 
 ## Etapa 8: entrega para PR hacia develop (2026-10-21)
