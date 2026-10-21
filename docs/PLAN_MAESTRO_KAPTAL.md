@@ -6,7 +6,7 @@ Se implementaron filtros autorizados por lista activa, evidencias reproducibles 
 
 Validación local: backend `mvnw -B verify` con 478 pruebas correctas y 6 omitidas; 72 pruebas dirigidas de filtros y evidencias; 343 pruebas frontend, build de producción y `npm run security:check` correctos. Producción sin vulnerabilidades conocidas; cinco alertas conocidas permanecen solo en dependencias de desarrollo según el control del proyecto.
 
-PR #97 todavía apunta al SHA remoto anterior `c51a7b1`; el CI consultado de ese SHA falló en revisión de dependencias frontend. `gh` no está autenticado en el entorno actual y no se pudo comprobar o lanzar CI actualizado. Los cambios locales siguen sin push; no considerar la Etapa 7 cerrada ni desplegada. Gmail continúa deshabilitado y Etapa 6 omitida.
+El cambio funcional se publicó en el commit `c93e00a` de `mejoras/asistente-evidencias` y PR #97 permanece abierto como borrador. Todos los checks públicos del SHA completo `c93e00a6e083c35089ff5a85f3676f292b1c81f4` concluyeron correctamente: backend, PostgreSQL, frontend, E2E, WhatsApp Cloudflare, canales personales y Vercel Preview. Es un preview, no un merge ni un despliegue de producción. La Etapa 7 completa sigue abierta para sus comprobaciones funcionales restantes; Gmail continúa deshabilitado y Etapa 6 omitida.
 
 ## Prioridad vigente: solo WhatsApp y asistente (2026-10-20)
 

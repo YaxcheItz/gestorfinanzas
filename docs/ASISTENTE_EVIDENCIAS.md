@@ -6,7 +6,7 @@ Se añadieron filtros de consulta por lista activa y accesible al usuario, prese
 
 La evidencia presupuestaria ahora usa el mismo mes, categoría, moneda, lista y autor que el cálculo de `montoGastado`. Si no hay movimientos en ese alcance, no se presenta evidencia como si coincidiera. Los filtros de lista para saldo y plantillas recurrentes se rechazan claramente. WhatsApp recibe las listas autorizadas y devuelve la misma evidencia que el chat. Se mantienen los filtros de cuenta/categoría/fechas inclusivas y “Sin categoría”.
 
-La rama de PR #97 sigue en `mejoras/asistente-evidencias`; el SHA remoto observado es `c51a7b1`, anterior a estos cambios, cuyo CI fallaba en revisión de dependencias frontend. `gh` no está autenticado en este entorno, por lo que no se pudo revisar o iniciar CI actualizado. El cambio local de dependencias conserva Angular `21.2.25` y overrides; `npm run security:check` pasa, producción sin vulnerabilidades conocidas y cinco alertas conocidas únicamente en dependencias de desarrollo. Sin push, merge ni despliegue.
+El cambio funcional se publicó en `c93e00a` y PR #97 permanece como borrador. Todos los checks del SHA completo `c93e00a6e083c35089ff5a85f3676f292b1c81f4` concluyeron en success: backend, PostgreSQL, frontend, E2E Chromium/API, WhatsApp Cloudflare, canales personales y Vercel Preview. El preview no es un despliegue de producción ni un merge. El SHA remoto previo `c51a7b1` fallaba en revisión de dependencias frontend; la alineación Angular `21.2.25`/overrides pasa ahora el CI. Producción sin vulnerabilidades conocidas; cinco alertas conocidas únicamente en dependencias de desarrollo.
 
 Validación local completa: `mvnw -B verify` con 478 pruebas correctas y 6 omitidas; 72 pruebas dirigidas para motor, contexto, acciones, presupuestos, listas y WhatsApp; 343 pruebas frontend y build de producción correctos. Repetir `git diff --check` tras la última actualización documental. No se consultaron ni alteraron datos financieros reales.
 
@@ -42,9 +42,8 @@ Consultar el resultado final y el número de pruebas en `ESTADO_SESION.md`. Las 
 
 ## Lo que sigue para completar la etapa
 
-1. Revisar el diff final y `git diff --check`; después crear commit y publicar la rama para obtener CI correspondiente al nuevo SHA.
-2. Revisar todos los checks del PR #97 y resolver cualquier fallo de backend/PostgreSQL, frontend, E2E, WhatsApp o Vercel.
-3. Completar las comprobaciones restantes de UI y evidencia de reportes/WhatsApp con CI; luego validar el despliegue servido antes de cerrar la Etapa 7.
+1. Mantener el PR #97 en borrador mientras se completan las comprobaciones funcionales pendientes de la Etapa 7.
+2. Antes de cerrar la etapa, validar los flujos relevantes en el despliegue servido y actualizar esta evidencia con el resultado; el CI/preview de `c93e00a` ya pasó.
 
 El asistente completo todavía no está terminado. Esta primera entrega no está desplegada. No activar correo ni conciliación como dependencias de estas tareas.
 
