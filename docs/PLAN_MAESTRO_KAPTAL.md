@@ -1,24 +1,28 @@
 # Kaptal: plan maestro y traspaso al siguiente chat
 
-## Avance local del asistente (2026-10-21)
+Publicación de Etapa 8: [PR #99 hacia develop](https://github.com/YaxcheItz/gestorfinanzas/pull/99), rama subida y abierta para revisión; implementación `2e5b13a`. CI en curso al publicar. Sin merge ni despliegue de producción. Seguir pendientes manuales del informe antes de cerrar la etapa.
 
-Se implementaron filtros autorizados por lista activa, evidencias reproducibles por lista y autor, y evidencia de presupuesto con el mismo periodo, moneda, categoría y lista del cálculo. Chat y WhatsApp comparten el alcance; las consultas de saldo y recurrencias rechazan filtros de lista que no soportan. Se conservan los filtros explícitos de cuenta/categoría/fechas y la evidencia “Sin categoría”. Ver cambios y cobertura en [ASISTENTE_EVIDENCIAS.md](ASISTENTE_EVIDENCIAS.md).
+Entrega para PR a develop (2026-10-21), autorizada por el propietario: auditoría/tarjetas/calendario y regresiones de recurrencias. 366 frontend completas; backend verify 485 correctas + 6 omitidas; build/dependencias correctos. 22 escenarios E2E distintos entre la regresión de 20 y el conjunto final de 5 (3 repetidos). Cuentas usa día civil México. Ver [cierre técnico y pendientes](AUDITORIA_ETAPA_8.md). Publicar no cierra Android físico/producción autenticada ni autoriza merge. Etapa 9 después de cerrar Etapa 8; Gmail deshabilitado.
 
-Validación local: backend `mvnw -B verify` con 478 pruebas correctas y 6 omitidas; 72 pruebas dirigidas de filtros y evidencias; 343 pruebas frontend, build de producción y `npm run security:check` correctos. Producción sin vulnerabilidades conocidas; cinco alertas conocidas permanecen solo en dependencias de desarrollo según el control del proyecto.
+Fuentes y alcance: [TARJETAS_CALENDARIO_MX.md](TARJETAS_CALENDARIO_MX.md).
 
-El cambio funcional se publicó en el commit `c93e00a` de `mejoras/asistente-evidencias` y PR #97 permanece abierto como borrador. Todos los checks públicos del SHA completo `c93e00a6e083c35089ff5a85f3676f292b1c81f4` concluyeron correctamente: backend, PostgreSQL, frontend, E2E, WhatsApp Cloudflare, canales personales y Vercel Preview. Es un preview, no un merge ni un despliegue de producción. La Etapa 7 completa sigue abierta para sus comprobaciones funcionales restantes; Gmail continúa deshabilitado y Etapa 6 omitida.
+## Revisión vigente (2026-10-21)
 
-El propietario confirmó que funcionaron en la página del preview el flujo de evidencia, la salida del restante del presupuesto y las consultas de recurrencias. Este hito de consultas/evidencias está listo para revisión; no certifica despliegue de producción. Se intentó marcar #97 listo con `gh pr ready 97`, pero la CLI no está autenticada, por lo que sigue en borrador. Próximo: autenticar `gh` o marcarlo listo desde GitHub; integrar solo tras revisión/decisión del propietario.
+Etapa 7 integrada: GitHub confirma PR #97 y fetch sitúa develop en `a8ae7f3`, main en `f4b814e`. Web/API disponibles y Vercel success comprobados de nuevo; no confundirlo con validación autenticada completa en producción. Primer paso pendiente: smoke test de consultas, filtros, evidencia/historial/CSV, presupuesto y recurrencias en producción. Después sigue Etapa 8, auditoría funcional/visual, en la rama actual ya preparada. Etapa 9 Android/captura viene después. No reactivar Gmail ni la Etapa 6; conservar los cambios documentales existentes.
 
-Continuación funcional: las respuestas de presupuesto informan lo gastado, límite, disponible y moneda para cada categoría; el disponible conserva signo cuando el gasto supera el límite. Prueba unitaria y suite backend completas pasan.
+## Avance y siguiente etapa (2026-10-20)
 
-La mejora de presupuesto se publicó en `0b495ee`; su CI (backend, PostgreSQL, frontend, E2E, WhatsApp Cloudflare, canales personales y Vercel Preview) está verde. No es una integración ni un despliegue de producción. Las modificaciones posteriores de recurrencia están en `c88f7f2`; el SHA documental actual `d8b290b` también pasó los checks.
+**Etapa 7 (asistente financiero con evidencias) completada e integrada.** PR #97 se integró a `develop` en `a8ae7f33695a9cd84d6a3d4bddea339eaa459e18`; CI quedó verde. `main` está en `f4b814e27de8a87a244d5cc5253e31a6fb1391bc`, también con CI verde. Vercel Production y el backend Render reportaron despliegue exitoso. La web pública respondió HTTP 200 y `/api/health` devolvió `UP`. Esto acredita disponibilidad, no un recorrido autenticado completo en producción.
 
-También se completó la consulta de recurrencias: distingue gastos, ingresos y plantillas genéricas; informa tipo, cuenta, categoría, importe, moneda, frecuencia y fecha siguiente. La frase del usuario determina el tipo filtrado y el asistente aclara que una plantilla no es un movimiento ejecutado. Las consultas de saldo y recurrencias por lista siguen rechazadas porque ese alcance no aplica. Se publicó en `c88f7f2`; la suite backend completa pasó (480 pruebas, 6 omitidas) y todos los checks remotos del SHA quedaron verdes.
+El propietario validó en el preview filtros/evidencias, disponibilidad de presupuesto y recurrencias. La suite local final reportada fue backend: 480 correctas y 6 omitidas; frontend: 343; build de producción correcto. El detalle funcional está en [ASISTENTE_EVIDENCIAS.md](ASISTENTE_EVIDENCIAS.md). Aún se recomienda una comprobación manual autenticada de esos flujos en producción.
+
+**Siguiente: Etapa 8, auditoría funcional y visual.** El trabajo se prepara en la rama nueva `auditoria/etapa-8-funcional-visual`, basada en `origin/develop` actualizado (`a8ae7f3`). Revisar la experiencia real y reportar fallos reproducibles antes de corregirlos; las pruebas en dispositivo físico requieren disponibilidad y validación real. No declarar completa una prueba que solo haya verificado health.
+
+Gmail permanece deshabilitado y Etapa 6 omitida. No hacer nuevos merges ni despliegues sin autorización explícita.
 
 ## Prioridad vigente: solo WhatsApp y asistente (2026-10-20)
 
-Archivo solicitado posteriormente: el borrador Gmail se conserva mediante commit LOCAL en `mejoras/gmail-bancario-piloto`, sin subirlo ni integrarlo. El checkout principal queda sin cambios pendientes; el trabajo activo del asistente continúa en su worktree y PR #97. Secretos y artefactos quedan fuera de Git; no reactivar Gmail al retomar este archivo.
+Archivo solicitado posteriormente: el borrador Gmail se conserva mediante commit LOCAL en `mejoras/gmail-bancario-piloto`, sin subirlo ni integrarlo. Secretos y artefactos quedan fuera de Git; no reactivar Gmail al retomar este archivo. El PR #97 ya está integrado; la Etapa 8 inicia en la rama descrita arriba.
 
 La última decisión del propietario sustituye el orden anterior: **solo WhatsApp como canal externo disponible**, Gmail deshabilitado y **Etapa 6 omitida**. No reactivar Gmail, sincronización de correo, conciliación multicanal, SMS ni lectores bancarios sin una nueva petición. La captura manual y el chat de la app se conservan. No se eliminan credenciales, historia, avisos ni el trabajo Gmail sin publicar.
 
@@ -26,13 +30,13 @@ Estado comprobado: Gmail local bloqueado por `gmailPaused: true`, reglas bancari
 
 ### Plan completo que queda, en el nuevo orden
 
-1. **Asistente financiero con evidencias (Etapa 7, actual).**
+1. **Asistente financiero con evidencias (Etapa 7, completada).**
    - Reutilizar el chat y las consultas WhatsApp existentes; reglas primero y proveedor IA solo para interpretación autorizada.
    - Consultas exactas por periodo, categoría, cuenta/lista autorizada y moneda; comparaciones equivalentes, presupuesto restante y recurrencias.
    - Mostrar periodo y alcance, monedas separadas, número de operaciones/filtros considerados y enlace al historial correspondiente; explicar cuando faltan datos.
    - No delegar cuentas ni cálculos al LLM; consultas de solo lectura, permisos por usuario y pruebas contra reportes/historial.
-   - Primera entrega iniciada: comparación mensual textual determinista en backend, con periodos equivalentes y sin movimientos nuevos. No equivale a asistente completo ni a despliegue.
-2. **Auditoría funcional y visual (Etapa 8).**
+   - Incluye comparación mensual textual determinista con periodos equivalentes y sin movimientos nuevos; el bloque se integró y desplegó como parte de PR #97.
+2. **Auditoría funcional y visual (Etapa 8, siguiente).**
    - Revisar en Android físico Inicio, formularios, teclado, voz/permisos, letra grande, temas y privacidad.
    - Verificar los mismos rangos y cifras entre Inicio, historial y reportes; tarjetas/cortes/vencimientos por cuenta, presupuestos y recurrencias idempotentes.
    - Revisar búsquedas, listas/etiquetas, paginación y rendimiento; corregir fallos demostrados sin rehacer funciones existentes.
@@ -64,7 +68,7 @@ Estado comprobado: Gmail local bloqueado por `gmailPaused: true`, reglas bancari
 
 Fuera del plan activo por decisión del propietario: piloto y autoservicio Gmail (Etapas 4/5), conciliación multicanal (Etapa 6) y entradas externas bancarias/SMS/pagos (Etapa 10). Mantener los apartados históricos como referencia, no como trabajo autorizado vigente. Los recordatorios de la propia app y la captura Android sí permanecen en el plan.
 
-### Rama y siguiente entrega del asistente
+### Histórico: rama y entregas del asistente
 
 Avance posterior: rama publicada y [PR #97](https://github.com/YaxcheItz/gestorfinanzas/pull/97) en borrador hacia develop. Se añade evidencia estructurada para comparación mensual y acceso al historial con fechas/tipo/moneda y alcance propio, también respetado en CSV. El resto de filtros y consultas sigue pendiente. Publicar una rama no implica merge ni despliegue.
 

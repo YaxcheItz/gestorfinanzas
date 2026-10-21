@@ -836,9 +836,9 @@ export class QuickCaptureComponent implements OnDestroy {
     const generation = ++this.voiceGeneration;
     this.error.set(''); this.voiceMessage.set('');
     if (!this.consent && !this.voiceConsent) { this.error.set('Activa el consentimiento para enviar el audio y transcribirlo.'); return; }
-    if (!window.isSecureContext) { this.error.set('Firefox bloquea el micr\u00f3fono porque abriste Kaptal desde una IP local HTTP. En el tel\u00e9fono necesitas abrirlo con HTTPS; en esta computadora puedes usar localhost.'); return; }
+    if (!window.isSecureContext) { this.error.set('El navegador necesita una conexión segura para usar el micrófono. En el teléfono abre Kaptal con HTTPS; en esta computadora puedes usar localhost.'); return; }
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
-      this.error.set('Este navegador no permite grabar audio. Actualiza Firefox o escribe el movimiento.'); return;
+      this.error.set('Este navegador no permite grabar audio. Actualiza el navegador o escribe el movimiento.'); return;
     }
     this.discardAudio = false;
     this.audioChunks = [];
@@ -870,7 +870,7 @@ export class QuickCaptureComponent implements OnDestroy {
       if (generation !== this.voiceGeneration) return;
       this.stopVoice(true);
       const name = cause instanceof DOMException ? cause.name : '';
-      this.error.set(name === 'NotAllowedError' ? 'Firefox bloqueó el micrófono. Permite el acceso en los permisos del sitio.' :
+      this.error.set(name === 'NotAllowedError' ? 'El navegador bloqueó el micrófono. Permite el acceso en los permisos del sitio o escribe el movimiento.' :
         name === 'NotFoundError' ? 'No encontré un micrófono disponible.' : 'No pude iniciar el micrófono. Revisa los permisos del navegador.');
     }
   }
