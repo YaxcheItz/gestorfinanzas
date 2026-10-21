@@ -24,9 +24,12 @@ class ListasEtiquetasIntegrationTest {
     @Autowired ListaMiembroRepository miembros;
     @Autowired UsuarioRepository usuarios;
     @Autowired CuentaRepository cuentas;
+    @Autowired CategoriaService categorias;
     @Autowired TransaccionService transacciones;
     @Autowired AiAssistantService asistente;
     @Autowired AiActionService acciones;
+    @Autowired AiFinancialContextService contextoIa;
+    @Autowired PresupuestoService presupuestos;
     @Autowired RespaldoFinancieroService respaldos;
     @Autowired RestauracionRespaldoService restauracion;
     Usuario a, b, tercero; Cuenta cuentaA, cuentaB; Long lista;
@@ -65,6 +68,47 @@ class ListasEtiquetasIntegrationTest {
         assertThrows(IllegalArgumentException.class,()->transacciones.actualizarTransaccion(b.getId(),t.id(),gasto(cuentaB,lista,"Cambio")));
         assertThrows(IllegalArgumentException.class,()->transacciones.eliminarTransaccion(b.getId(),t.id()));
         assertEquals(new BigDecimal("1000.00"),cuentas.findById(cuentaB.getId()).orElseThrow().getSaldoActual());
+    }
+    @Test void filtroSinCategoriaDevuelveSoloMovimientosPropiosSinCategoria() {
+        transacciones.crearTransaccion(a.getId(),gasto(cuentaA,null,"Sin categoría"));
+        var categoria=categorias.crearCategoria(a.getId(),
+                new CategoriaRequest("Comida",TipoTransaccion.GASTO,"🍽️","#123456"));
+        var categorizada=transacciones.crearTransaccion(a.getId(),new TransaccionRequest(
+                cuentaA.getId(),null,categoria.id(),TipoTransaccion.GASTO,new BigDecimal("25"),null,
+                LocalDate.now(),"Con categoría",null,null,null,null,null,List.of()));
+        var filtro=new TransaccionFiltroRequest(null,null,null,null,null,null,null,null,null,null,
+                null,null,null,null,true);
+
+        var resultado=transacciones.listarConFiltros(a.getId(),filtro,
+                PageRequest.of(0,10,Sort.by(Sort.Direction.DESC,"fecha","id")));
+        var csv=transacciones.exportarCsv(a.getId(),filtro);
+
+        assertEquals(1,resultado.getTotalElements());
+        assertNull(resultado.getContent().getFirst().categoriaId());
+        assertFalse(csv.contains("Con categoría"));
+        assertTrue(categorizada.id()>0);
+    }
+    @Test void evidenciaDePresupuestoIgualaElAlcanceListaMonedaCategoriaYPeriodo() {
+        var categoria=categorias.crearCategoria(a.getId(),
+                new CategoriaRequest("Comida",TipoTransaccion.GASTO,"🍽️","#123456"));
+        transacciones.crearTransaccion(a.getId(),new TransaccionRequest(
+                cuentaA.getId(),null,categoria.id(),TipoTransaccion.GASTO,new BigDecimal("35.50"),null,
+                LocalDate.now(),"Cena en lista",null,null,null,null,lista,List.of()));
+        transacciones.crearTransaccion(a.getId(),new TransaccionRequest(
+                cuentaA.getId(),null,categoria.id(),TipoTransaccion.GASTO,new BigDecimal("80"),null,
+                LocalDate.now(),"Cena personal",null,null,null,null,null,List.of()));
+        var mes=LocalDate.now().getMonthValue();var anio=LocalDate.now().getYear();
+        var presupuesto=presupuestos.crearOActualizarPresupuesto(a.getId(),
+                new PresupuestoRequest(categoria.id(),new BigDecimal("500"),"MXN",mes,anio,lista,80));
+        var inicio=LocalDate.now().withDayOfMonth(1);
+        var evidencia=contextoIa.reporteLocal(a.getId(),"CATEGORIAS",inicio,inicio.withDayOfMonth(inicio.lengthOfMonth()),
+                "MXN",null,categoria.id(),null,"Comida",lista,"Vacaciones").evidence().getFirst();
+
+        assertEquals(new BigDecimal("35.50"),presupuesto.montoGastado());
+        assertEquals(presupuesto.montoGastado(),evidencia.total());
+        assertEquals(1,evidencia.operaciones());
+        assertEquals(lista,evidencia.listaId());
+        assertEquals(a.getId(),evidencia.autorId());
     }
     @Test void editorSoloUsaSuCuentaYBusquedaNoDuplicaPorEtiquetas() {
         invitar("EDITOR");

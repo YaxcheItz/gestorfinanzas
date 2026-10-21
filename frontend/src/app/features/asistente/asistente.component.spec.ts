@@ -3,8 +3,41 @@ import { of, throwError } from 'rxjs';
 import { FinanzasService } from '../../core/services/finanzas.service';
 import { PrivacidadService } from '../../core/services/privacidad.service';
 import { AsistenteComponent } from './asistente.component';
+import { Router } from '@angular/router';
 
 describe('AsistenteComponent', () => {
+  it('muestra las operaciones consideradas y abre el historial con los filtros de evidencia', () => {
+    const fixture=TestBed.createComponent(AsistenteComponent);fixture.detectChanges();
+    fixture.componentInstance.mensajes.set([{role:'ASSISTANT',content:'Comparacion calculada',evidence:[{label:'Gastos actual',desde:'2026-10-01',hasta:'2026-10-20',moneda:'MXN',tipo:'GASTO',operaciones:2,total:40.25,cuentaId:4,categoriaId:9,cuentaNombre:'BBVA',categoriaNombre:'Comida'}]}]);
+    fixture.detectChanges();
+    const button=fixture.nativeElement.querySelector('[aria-label="Datos de la respuesta"] button') as HTMLButtonElement;
+    expect(button.textContent).toContain('2 operaciones');expect(button.textContent).toContain('40.25 MXN');expect(button.textContent).toContain('BBVA');expect(button.textContent).toContain('Comida');button.click();
+    expect(TestBed.inject(Router).navigate).toHaveBeenCalledWith(['/transacciones'],{queryParams:{alcance:'propio',fechaInicio:'2026-10-01',fechaFin:'2026-10-20',moneda:'MXN',tipo:'GASTO',cuentaId:4,categoriaId:9}});
+  });
+  it('navega a movimientos sin categoría con el filtro nulo explícito', () => {
+    const fixture=TestBed.createComponent(AsistenteComponent);fixture.detectChanges();
+    fixture.componentInstance.mensajes.set([{role:'ASSISTANT',content:'Gastos sin categoría',evidence:[{
+      label:'Sin categoría',desde:'2026-10-01',hasta:'2026-10-20',moneda:'MXN',tipo:'GASTO',
+      operaciones:1,total:35.5,sinCategoria:true
+    }]}]);
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('[aria-label="Datos de la respuesta"] button') as HTMLButtonElement).click();
+    expect(TestBed.inject(Router).navigate).toHaveBeenCalledWith(['/transacciones'],{queryParams:{
+      alcance:'propio',fechaInicio:'2026-10-01',fechaFin:'2026-10-20',moneda:'MXN',tipo:'GASTO',sinCategoria:'true'
+    }});
+  });
+  it('navega a la lista exacta y al autor de la evidencia', () => {
+    const fixture=TestBed.createComponent(AsistenteComponent);fixture.detectChanges();
+    fixture.componentInstance.mensajes.set([{role:'ASSISTANT',content:'Presupuesto',evidence:[{
+      label:'Comida',desde:'2026-10-01',hasta:'2026-10-31',moneda:'MXN',tipo:'GASTO',
+      operaciones:2,total:120,listaId:12,listaNombre:'Vacaciones',autorId:7
+    }]}]);
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('[aria-label="Datos de la respuesta"] button') as HTMLButtonElement).click();
+    expect(TestBed.inject(Router).navigate).toHaveBeenCalledWith(['/transacciones'],{queryParams:{
+      alcance:'lista',fechaInicio:'2026-10-01',fechaFin:'2026-10-31',moneda:'MXN',tipo:'GASTO',listaId:12,autorId:7
+    }});
+  });
   let finanzasService: {
     getAiConnectionStatus: ReturnType<typeof vi.fn>;
     verifyAiConnection: ReturnType<typeof vi.fn>;
@@ -51,7 +84,7 @@ describe('AsistenteComponent', () => {
 
     TestBed.configureTestingModule({
       imports: [AsistenteComponent],
-      providers: [{ provide: FinanzasService, useValue: finanzasService }]
+      providers: [{ provide: FinanzasService, useValue: finanzasService }, {provide:Router,useValue:{navigate:vi.fn()}}]
     });
   });
 

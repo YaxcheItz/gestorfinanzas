@@ -32,6 +32,10 @@ public class TransaccionSpecification {
             }
 
             // 2. Filtro por Tipo de transacción
+            if (filtro.moneda() != null) {
+                var cuenta = root.join("cuenta", JoinType.LEFT);
+                predicates.add(cb.equal(cb.coalesce(cuenta.get("moneda"), root.get("cuentaMonedaHistorica")), filtro.moneda()));
+            }
             if (filtro.tipo() != null) {
                 predicates.add(cb.equal(root.get("tipo"), filtro.tipo()));
             }
@@ -59,6 +63,9 @@ public class TransaccionSpecification {
             }
             if (!categorias.isEmpty()) {
                 predicates.add(root.get("categoria").get("id").in(categorias));
+            }
+            if (filtro.sinCategoria()) {
+                predicates.add(cb.isNull(root.get("categoria")));
             }
 
             // 5. Rango de Fechas

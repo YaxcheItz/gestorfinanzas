@@ -7,7 +7,7 @@ import { MontoPrivadoDirective } from '../../shared/directives/monto-privado.dir
 import { Component, HostListener, OnDestroy, OnInit, inject, signal, computed, effect, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, ParamMap } from '@angular/router';
 import { FinanzasService } from '../../core/services/finanzas.service';
 import { CategoriaPreferidaService } from '../../core/services/categoria-preferida.service';
 import { mensajeDeError } from '../../core/utils/mensaje-error';
@@ -22,7 +22,7 @@ import { PrivacyToggleComponent } from '../../shared/components/privacy-toggle/p
 import { FechaPickerComponent } from '../../shared/components/fecha-picker/fecha-picker.component';
 import { MontoPipe } from '../../core/pipes/monto.pipe';
 import { nombreCuentaVisible } from '../../core/utils/cuenta-financiera';
-import { firstValueFrom, Subscription } from 'rxjs';
+import { firstValueFrom, Subscription, skip } from 'rxjs';
 import {
   Categoria,
   Cuenta,
@@ -53,7 +53,7 @@ interface FilaImportacionCsv {
 }
 
 interface FiltroVisible {
-  clave: 'tipo' | 'cuenta' | 'categoria' | 'monto' | 'fechas' | 'busqueda' | 'movimiento' | 'autor';
+  clave: 'tipo' | 'cuenta' | 'categoria' | 'sinCategoria' | 'monto' | 'fechas' | 'busqueda' | 'movimiento' | 'autor' | 'moneda';
   id: string;
   etiqueta: string;
   categoriaId?: number;
@@ -74,12 +74,19 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
   readonly contextoLista = inject(ListaContextoService);
   readonly filtroAutorId = signal<number | null>(null);
   readonly borradorAutorId = signal<number | null>(null);
+  readonly soloPropios = signal(false);
+  readonly filtroMoneda = signal<string | null>(null);
+  readonly filtroSinCategoria = signal(false);
+  private rutaSub?: Subscription;
+  private evidenciaRevision = 0;
   private listaConsulta: number | null = null;
   formListaId: number | null = null;
   formEtiquetas = '';
   puedeModificar(movimiento: Transaccion): boolean { const lista = this.contextoLista.listas().find(l => l.id === movimiento.listaId); return !lista?.archivada && lista?.rol !== 'LECTOR' && (!movimiento.autorId || this.contextoLista.usuarioId() == null || movimiento.autorId === this.contextoLista.usuarioId()); }
   listasEditables() { return this.contextoLista.listas().filter(l => !l.archivada && l.rol !== 'LECTOR'); }
   constructor() {
+    this.soloPropios.set(this.route.snapshot.queryParamMap.get('alcance') === 'propio');
+    this.evidenciaRevision = this.contextoLista.seleccionVersion();
     this.contextoLista.solicitarDesdeRuta(Number(this.route.snapshot.queryParamMap.get('listaId')));
     let revisionObservada = this.contextoLista.seleccionVersion();
     let observada = this.contextoLista.activaId();
@@ -90,9 +97,10 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
       if (id === observada && revision === revisionObservada) return;
       revisionObservada = revision;
       observada = id;
+      if (this.soloPropios() && revision === this.evidenciaRevision) return;
       if (listaExplicita && this.contextoLista.seleccionVersion() === seleccionInicial) return;
       this.listaConsulta = id;
-      untracked(() => { void this.router.navigate([], {relativeTo:this.route,queryParams:{listaId:id},queryParamsHandling:'merge',replaceUrl:true}); this.detalleMovimiento.set(null); this.pageData.set(null); this.filtroAutorId.set(null); this.paginaActual.set(0); this.cargarTransacciones(); });
+      untracked(() => { this.soloPropios.set(false); void this.router.navigate([], {relativeTo:this.route,queryParams:{listaId:id,alcance:null},queryParamsHandling:'merge',replaceUrl:true}); this.detalleMovimiento.set(null); this.pageData.set(null); this.filtroAutorId.set(null); this.paginaActual.set(0); this.cargarTransacciones(); });
     });
   }
 
@@ -293,6 +301,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
       this.filtroTipo() !== '' ||
       this.filtroCuentaId() !== null ||
       this.filtroCategoriaId() !== null ||
+      this.filtroSinCategoria() ||
       this.filtroCategoriaIds().length > 0 ||
       this.filtroFechaInicio() !== '' ||
       this.filtroFechaFin() !== '' ||
@@ -304,9 +313,10 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
   });
 
   readonly tieneFiltrosAvanzadosActivos = computed(() =>
-    this.filtroAutorId() !== null || this.filtroTipo() !== ''
+    this.filtroMoneda() !== null || this.filtroAutorId() !== null || this.filtroTipo() !== ''
     || this.filtroCuentaId() !== null
     || this.filtroCategoriaId() !== null
+    || this.filtroSinCategoria()
     || this.filtroCategoriaIds().length > 0
     || this.filtroFechaInicio() !== ''
     || this.filtroFechaFin() !== ''
@@ -317,6 +327,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
   readonly filtrosVisibles = computed(() => {
     const filtros: FiltroVisible[] = [];
     const agregar = (clave: FiltroVisible['clave'], etiqueta: string) => filtros.push({clave,id:clave,etiqueta});
+    if (this.filtroMoneda()) agregar('moneda', 'Moneda: ' + this.filtroMoneda());
     if (this.filtroAutorId() != null) agregar('autor', 'Autor: ' + (this.contextoLista.activa()?.miembros.find(m => m.id === this.filtroAutorId())?.nombre ?? 'Participante'));
     const tipo = this.filtroTipo();
     if(tipo) agregar('tipo',this.etiquetaTipoDetalle(tipo));
@@ -325,6 +336,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
     const categoria = this.filtroCategoriaId();
     if(categoria !== null) ids.add(categoria);
     for(const id of ids) filtros.push({clave:'categoria',id:`categoria-${id}`,categoriaId:id,etiqueta:this.categorias().find(c=>c.id===id)?.nombre ?? 'Categoría'});
+    if(this.filtroSinCategoria()) agregar('sinCategoria','Sin categoría');
     if(this.filtroMontoMin() !== null || this.filtroMontoMax() !== null) agregar('monto',`Monto: ${this.filtroMontoMin() ?? 'sin mínimo'} – ${this.filtroMontoMax() ?? 'sin máximo'}`);
     if(this.filtroFechaInicio() || this.filtroFechaFin()) agregar('fechas',`${this.filtroFechaInicio() || 'Sin inicio'} → ${this.filtroFechaFin() || 'Sin fin'}`);
     if(this.filtroBusqueda().trim()) agregar('busqueda',`Búsqueda: ${this.filtroBusqueda().trim()}`);
@@ -335,6 +347,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
   quitarFiltro(filtro: FiltroVisible): void {
     let queryParams: Record<string,null> = {};
     switch(filtro.clave) {
+      case 'moneda': this.filtroMoneda.set(null);queryParams={moneda:null};break;
       case 'tipo': this.filtroTipo.set('');break;
       case 'autor': this.filtroAutorId.set(null); break;
       case 'cuenta': this.filtroCuentaId.set(null);queryParams={cuentaId:null};break;
@@ -343,6 +356,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
         if(this.filtroCategoriaId()===filtro.categoriaId) this.filtroCategoriaId.set(null);
         if(Number(this.route.snapshot.queryParamMap.get('categoriaId'))===filtro.categoriaId) queryParams={categoriaId:null};
         break;
+      case 'sinCategoria': this.filtroSinCategoria.set(false);queryParams={sinCategoria:null};break;
       case 'monto': this.filtroMontoMin.set(null);this.filtroMontoMax.set(null);break;
       case 'fechas': this.filtroFechaInicio.set('');this.filtroFechaFin.set('');queryParams={fechaInicio:null,fechaFin:null};break;
       case 'busqueda': this.limpiarBusqueda();return;
@@ -442,6 +456,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
     this.filtroCuentaId.set(this.borradorCuentaId());
     this.filtroCategoriaId.set(null);
     this.filtroCategoriaIds.set([...this.borradorCategoriaIds()]);
+    if(this.borradorCategoriaIds().length) this.filtroSinCategoria.set(false);
     this.filtroFechaInicio.set(this.borradorFechaInicio());
     this.filtroFechaFin.set(this.borradorFechaFin());
     this.filtroMontoMin.set(minimo);
@@ -507,7 +522,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     const lista = Number(this.route.snapshot.queryParamMap.get('listaId'));
-    this.listaConsulta = Number.isSafeInteger(lista) && lista > 0 ? lista : this.contextoLista.activaId();
+    this.listaConsulta = this.soloPropios() ? null : Number.isSafeInteger(lista) && lista > 0 ? lista : this.contextoLista.activaId();
     this.cargarCuentasYCategorias();
     const categoriaId = Number(this.route.snapshot.queryParamMap.get('categoriaId'));
     if (Number.isSafeInteger(categoriaId) && categoriaId > 0) {
@@ -529,7 +544,11 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
     if (Number.isSafeInteger(movimientoId) && movimientoId > 0) {
       this.filtroMovimientoId.set(movimientoId);
     }
+    this.aplicarEvidencia(this.route.snapshot.queryParamMap);
     this.cargarTransacciones();
+    this.rutaSub = this.route.queryParamMap?.pipe(skip(1)).subscribe(params => {
+      if (this.aplicarEvidencia(params)) this.cargarTransacciones();
+    });
     const editar = this.route.snapshot.queryParamMap.get('editar');
     const transaccionId = Number(editar ?? this.route.snapshot.queryParamMap.get('detalle'));
     if (Number.isSafeInteger(transaccionId) && transaccionId > 0) {
@@ -547,6 +566,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.rutaSub?.unsubscribe();
     this.listadoSub?.unsubscribe();
     if (this.busquedaDebounceTimer) clearTimeout(this.busquedaDebounceTimer);
   }
@@ -556,6 +576,38 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
     const month = String(fecha.getMonth() + 1).padStart(2, '0');
     const day = String(fecha.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
+  }
+
+  aplicarEvidencia(params: ParamMap): boolean {
+    const alcance=params.get('alcance');
+    if (alcance !== 'propio' && alcance !== 'lista') return false;
+    const moneda = params.get('moneda'), tipo = params.get('tipo');
+    const desde = params.get('fechaInicio'), hasta = params.get('fechaFin');
+    const cuentaParam=params.get('cuentaId'),categoriaParam=params.get('categoriaId');
+    const listaParam=params.get('listaId'),autorParam=params.get('autorId');
+    const sinCategoriaParam=params.get('sinCategoria');
+    const sinCategoria=sinCategoriaParam==='true';
+    const cuentaId=cuentaParam==null?null:Number(cuentaParam),categoriaId=categoriaParam==null?null:Number(categoriaParam);
+    const listaId=listaParam==null?null:Number(listaParam),autorId=autorParam==null?null:Number(autorParam);
+    if (!moneda || !/^[A-Z]{3}$/.test(moneda) || (tipo !== 'INGRESO' && tipo !== 'GASTO')
+        || !desde || !hasta || !/^\d{4}-\d{2}-\d{2}$/.test(desde) || !/^\d{4}-\d{2}-\d{2}$/.test(hasta)
+        || (cuentaParam!=null&&(cuentaId==null||!Number.isSafeInteger(cuentaId)||cuentaId<=0))
+        || (categoriaParam!=null&&(categoriaId==null||!Number.isSafeInteger(categoriaId)||categoriaId<=0))
+        || (listaParam!=null&&(listaId==null||!Number.isSafeInteger(listaId)||listaId<=0))
+        || (autorParam!=null&&(autorId==null||!Number.isSafeInteger(autorId)||autorId<=0))
+        || (alcance==='lista'&&(listaId==null||sinCategoria))
+        || (alcance==='propio'&&listaId!=null)
+        || (sinCategoriaParam!=null&&sinCategoriaParam!=='true')
+        || (sinCategoria&&categoriaParam!=null)) return false;
+    this.evidenciaRevision = this.contextoLista.seleccionVersion();
+    this.soloPropios.set(alcance==='propio');this.listaConsulta=listaId;
+    this.filtroMoneda.set(moneda);this.filtroTipo.set(tipo);
+    this.filtroFechaInicio.set(desde);this.filtroFechaFin.set(hasta);
+    this.filtroAutorId.set(autorId);this.filtroCuentaId.set(cuentaId);this.filtroCategoriaId.set(categoriaId);this.filtroCategoriaIds.set([]);
+    this.filtroSinCategoria.set(sinCategoria);
+    this.filtroMovimientoId.set(null);this.filtroBusqueda.set('');this.filtroBusquedaInput.set('');
+    this.filtroMontoMin.set(null);this.filtroMontoMax.set(null);this.paginaActual.set(0);
+    return true;
   }
 
   cargarCuentasYCategorias(): void {
@@ -590,11 +642,13 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
     this.error.set(null);
 
     const filtros: TransaccionFiltro = {
+      soloPropios: this.soloPropios(), moneda: this.filtroMoneda(),
       ...(this.listaConsulta == null ? {} : { listaId: this.listaConsulta }),
       ...(this.filtroAutorId() == null ? {} : { autorId: this.filtroAutorId() }),
       tipo: this.filtroTipo(),
       cuentaId: this.filtroCuentaId(),
       categoriaId: this.filtroCategoriaId(),
+      sinCategoria: this.filtroSinCategoria(),
       fechaInicio: this.filtroFechaInicio() || null,
       fechaFin: this.filtroFechaFin() || null,
       busqueda: this.filtroBusqueda(),
@@ -652,6 +706,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
 
   onCategoriaChange(categoriaId: number | null): void {
     this.filtroCategoriaId.set(categoriaId);
+    this.filtroSinCategoria.set(false);
     this.paginaActual.set(0);
     this.cargarTransacciones();
   }
@@ -695,11 +750,13 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
   }
 
   limpiarFiltros(): void {
+    this.soloPropios.set(false);this.filtroMoneda.set(null);this.listaConsulta = this.contextoLista.activaId();
     if (this.busquedaDebounceTimer) clearTimeout(this.busquedaDebounceTimer);
     this.busquedaDebounceTimer = null;
     this.filtroAutorId.set(null);
     this.filtroTipo.set('');
     this.filtroCuentaId.set(null);
+    this.filtroSinCategoria.set(false);
     this.filtroCategoriaId.set(null);
     this.filtroCategoriaIds.set([]);
     this.filtroFechaInicio.set('');
@@ -710,11 +767,11 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
     this.filtroBusqueda.set('');
     this.filtroMovimientoId.set(null);
     this.paginaActual.set(0);
-    if (['movimientoId', 'cuentaId', 'categoriaId', 'fechaInicio', 'fechaFin']
+    if (['movimientoId', 'cuentaId', 'categoriaId', 'fechaInicio', 'fechaFin', 'alcance', 'moneda', 'tipo', 'sinCategoria']
       .some(parametro => this.route.snapshot.queryParamMap.has(parametro))) {
       this.router.navigate([], {
         relativeTo: this.route,
-        queryParams: { movimientoId: null, cuentaId: null, categoriaId: null, fechaInicio: null, fechaFin: null },
+        queryParams: { movimientoId: null, cuentaId: null, categoriaId: null, fechaInicio: null, fechaFin: null, alcance: null, moneda: null, tipo: null, sinCategoria: null },
         queryParamsHandling: 'merge',
         replaceUrl: true
       });
@@ -724,11 +781,13 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
 
   exportarCsv(): void {
     const filtros: TransaccionFiltro = {
+      soloPropios: this.soloPropios(), moneda: this.filtroMoneda(),
       ...(this.listaConsulta == null ? {} : { listaId: this.listaConsulta }),
       ...(this.filtroAutorId() == null ? {} : { autorId: this.filtroAutorId() }),
       tipo: this.filtroTipo(),
       cuentaId: this.filtroCuentaId(),
       categoriaId: this.filtroCategoriaId(),
+      sinCategoria: this.filtroSinCategoria(),
       fechaInicio: this.filtroFechaInicio() || null,
       fechaFin: this.filtroFechaFin() || null,
       busqueda: this.filtroBusqueda(),

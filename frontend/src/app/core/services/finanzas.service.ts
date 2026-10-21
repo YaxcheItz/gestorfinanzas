@@ -171,7 +171,7 @@ export class FinanzasService {
   }
 
   getTransaccionesPaginadas(filtros?: TransaccionFiltro, page = 0, size = 20): Observable<ApiResponse<PageResponse<Transaccion>>> {
-    let params = this.contextoLista()
+    let params = (filtros?.soloPropios ? new HttpParams() : this.contextoLista())
       .set('page', page.toString())
       .set('size', size.toString());
 
@@ -183,7 +183,7 @@ export class FinanzasService {
   }
 
   exportarTransaccionesCsv(filtros?: TransaccionFiltro): Observable<HttpResponse<Blob>> {
-    let params = this.contextoLista();
+    let params = filtros?.soloPropios ? new HttpParams() : this.contextoLista();
     if (filtros) {
       params = this.aplicarParamsFiltroTransaccion(params, filtros);
     }
@@ -195,13 +195,15 @@ export class FinanzasService {
   }
 
   private aplicarParamsFiltroTransaccion(params: HttpParams, filtros: TransaccionFiltro): HttpParams {
-    if (filtros.listaId != null) params = params.set('listaId', filtros.listaId);
+    if (filtros.moneda) params = params.set('moneda', filtros.moneda);
+    if (filtros.listaId != null && !filtros.soloPropios) params = params.set('listaId', filtros.listaId);
     if (filtros.autorId != null) params = params.set('autorId', filtros.autorId);
     for (const etiqueta of filtros.etiquetas ?? []) params = params.append('etiquetas', etiqueta);
     if (filtros.id != null) params = params.set('id', filtros.id.toString());
     if (filtros.tipo) params = params.set('tipo', filtros.tipo);
     if (filtros.cuentaId != null) params = params.set('cuentaId', filtros.cuentaId.toString());
     if (filtros.categoriaId != null) params = params.set('categoriaId', filtros.categoriaId.toString());
+    if (filtros.sinCategoria) params = params.set('sinCategoria', 'true');
     if (filtros.categoriaIds?.length) {
       for (const id of filtros.categoriaIds) {
         params = params.append('categoriaIds', id.toString());

@@ -1,5 +1,7 @@
 # Plan de continuación de Kaptal
 
+Prioridad vigente (2026-10-20): solo WhatsApp como canal externo; Gmail deshabilitado y conciliación (Etapa 6) omitida. Sigue el asistente financiero con evidencias. El orden completo actualizado está al inicio de [PLAN_MAESTRO_KAPTAL.md](PLAN_MAESTRO_KAPTAL.md); las prioridades siguientes de este documento son históricas.
+
 Actualizacion vigente 2026-10-19: el plan completo y su seguimiento estan en [PLAN_MAESTRO_KAPTAL.md](PLAN_MAESTRO_KAPTAL.md). WhatsApp personal ya funciona en Cloudflare; el propietario adelanto WhatsApp multiusuario desde la app y despues IA de respaldo, antes de Gmail y el asistente avanzado. La primera entrega es contrato/modelo/verificacion del telefono (`WHATSAPP_MULTIUSUARIO.md`); UI/runtime/migracion son la siguiente parte. Las referencias posteriores a WhatsApp sin activar, Oracle o entrega #85 pendiente son historicas.
 
 Complementa `PLAN_UI_MONAI.md` y `replica/monai-kesef/recon.md`. Es la secuencia para retomar el proyecto sin repetir lo implementado. El estado vigente al inicio de `ESTADO_SESION.md` prevalece sobre resultados históricos. No confundir una pantalla diseñada con una integración operativa.

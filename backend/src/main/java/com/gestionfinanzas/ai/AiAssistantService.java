@@ -72,8 +72,11 @@ public class AiAssistantService {
             AiActionService.ActionProposal action,
             java.util.List<AiActionService.ActionProposal> actions,
             AiActionService.AiReportWidget report,
-            String engine, java.util.List<String> suggestions, String contexto
+            String engine, java.util.List<String> suggestions, String contexto, java.util.List<AiEvidence> evidence
     ) {
+        public AiChatResponse(String answer, AiActionService.ActionProposal action, java.util.List<AiActionService.ActionProposal> actions, AiActionService.AiReportWidget report, String engine, java.util.List<String> suggestions, String contexto) {
+            this(answer,action,actions,report,engine,suggestions,contexto,java.util.List.of());
+        }
         public AiChatResponse(String answer, AiActionService.ActionProposal action, java.util.List<AiActionService.ActionProposal> actions, AiActionService.AiReportWidget report) {
             this(answer, action, actions, report, "IA", java.util.List.of(), null);
         }
@@ -87,7 +90,7 @@ public class AiAssistantService {
     }
 
     private AiChatResponse respuestaLocal(AiActionService.AiActionResult local) {
-        return new AiChatResponse(local.answer(), local.action(), local.actions(), local.report(), "REGLAS", local.suggestions(), local.contexto());
+        return new AiChatResponse(local.answer(), local.action(), local.actions(), local.report(), "REGLAS", local.suggestions(), local.contexto(), local.evidence());
     }
 
     public AiChatResponse quickCapture(Long userId, AiQuickCaptureRequest request) {
@@ -128,11 +131,11 @@ public class AiAssistantService {
         if (request.capturaPorVoz() || request.listaId() != null || !etiquetas.isEmpty()) {
             var actuales=actionService.pendientes(userId).stream().collect(java.util.stream.Collectors.toMap(AiActionService.ActionProposal::id,p -> p));
             response=new AiChatResponse(response.answer(),response.action()==null ? null : actuales.get(response.action().id()),
-                    response.actions().stream().map(p -> actuales.get(p.id())).toList(),response.report(),response.engine(),response.suggestions(),response.contexto());
+                    response.actions().stream().map(p -> actuales.get(p.id())).toList(),response.report(),response.engine(),response.suggestions(),response.contexto(),response.evidence());
         }
         if (response.contexto() != null && !etiquetas.isEmpty()) {
             String contexto = response.contexto() + " " + etiquetas.stream().map(t -> "#" + t).collect(java.util.stream.Collectors.joining(" "));
-            response = new AiChatResponse(response.answer(), response.action(), response.actions(), response.report(), response.engine(), response.suggestions(), contexto);
+            response = new AiChatResponse(response.answer(), response.action(), response.actions(), response.report(), response.engine(), response.suggestions(), contexto,response.evidence());
         }
         return response;
     }

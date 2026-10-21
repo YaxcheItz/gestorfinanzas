@@ -7,6 +7,13 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 class MotorChatReglasTest {
+ @Test void comparacionMensualUsaConsultaSinPropuestaNiImporte(){var r=interpretar("Compárame este mes con el anterior en MXN");assertEquals("COMPARACION_MENSUAL",r.reporte());assertEquals(LocalDate.of(2026,10,1),r.desde());assertEquals(hoy,r.hasta());assertEquals("MXN",r.moneda());assertNull(r.datos());}
+ @Test void comparacionConListaOCategoriaNoPierdeElFiltro(){var r=interpretar("Compara este mes con el anterior en comida");assertEquals("COMPARACION_MENSUAL",r.reporte());assertEquals(8L,r.categoriaId());var lista=interpretar("Compara este mes con el anterior en la lista vacaciones");assertNotNull(lista);assertNull(lista.reporte());}
+ @Test void consultaReconoceCategoriaCuentaYRangoExplicito(){var r=interpretar("Gastos de comida desde BBVA del 2026-10-01 al 2026-10-04");assertNotNull(r);assertEquals("RESUMEN",r.reporte());assertEquals(LocalDate.of(2026,10,1),r.desde());assertEquals(LocalDate.of(2026,10,4),r.hasta());assertEquals(1L,r.cuentaId());assertEquals(8L,r.categoriaId());}
+ @Test void filtroDeCuentaDesconocidaNoSeConvierteEnConsultaGlobal(){var r=interpretar("Gastos de comida desde Banorte este mes");assertNotNull(r);assertNull(r.reporte());assertTrue(r.respuesta().toLowerCase().contains("cuenta"));}
+ @Test void categoriaDesconocidaNoSeConvierteEnConsultaGlobal(){var r=interpretar("Gastos de viajes este mes");assertNotNull(r);assertNull(r.reporte());assertTrue(r.respuesta().toLowerCase().contains("categor"));}
+ @Test void reporteResuelveListaAccesibleYConservaSuAlcance(){var lista=new ListaResponse(12L,"Vacaciones","🌴","MXN",false,false,"EDITOR",List.of());var r=motor.interpretar("Gastos de comida en la lista Vacaciones este mes",cuentas,categorias,List.of(),hoy,false,List.of(lista));assertEquals("RESUMEN",r.reporte());assertEquals(12L,r.listaId());assertEquals("Vacaciones",r.listaNombre());assertEquals(8L,r.categoriaId());}
+ @Test void listaDesconocidaPideAclaracionYNoGeneraReporteGlobal(){var lista=new ListaResponse(12L,"Vacaciones","🌴","MXN",false,false,"EDITOR",List.of());var r=motor.interpretar("Gastos en la lista Familiar este mes",cuentas,categorias,List.of(),hoy,false,List.of(lista));assertNotNull(r);assertNull(r.reporte());assertTrue(r.respuesta().toLowerCase().contains("lista"));}
  private final MotorChatReglas motor=new MotorChatReglas();
  private final LocalDate hoy=LocalDate.of(2026,10,4);
  private CuentaResponse cuenta(long id,String nombre,String moneda){return new CuentaResponse(id,nombre,TipoCuenta.EFECTIVO,null,null,null,null,null,null,BigDecimal.ZERO,moneda,null,true,null);}
@@ -24,6 +31,7 @@ class MotorChatReglasTest {
  @Test void variosImportesNoSeSuman(){assertNull(interpretar("Gaste 50 en tacos y 20 en cafe"));}
  @Test void reporteEsLocalConPeriodo(){var r=interpretar("Reporte de hoy");assertEquals("RESUMEN",r.reporte());assertEquals(hoy,r.desde());assertEquals(hoy,r.hasta());}
  @Test void categoriasYMonedaSeReconocen(){var r=interpretar("Top categor\u00edas de este mes USD");assertEquals("CATEGORIAS",r.reporte());assertEquals("USD",r.moneda());assertEquals(hoy.withDayOfMonth(1),r.desde());}
+ @Test void reconoceConsultasDeGastosEIngresosRecurrentes(){assertEquals("RECURRENTES_GASTO",interpretar("Muéstrame mi gasto fijo").reporte());assertEquals("RECURRENTES_GASTO",interpretar("Muéstrame mis gastos fijos").reporte());assertEquals("RECURRENTES_INGRESO",interpretar("Ingresos recurrentes").reporte());assertEquals("RECURRENTES",interpretar("Muéstrame mis movimientos recurrentes").reporte());assertEquals("GASTO",interpretar("Gasté 80 en pizza recurrente").datos().get("tipo"));}
  @Test void complejoSeDelegaSinInventarRespuesta(){assertNull(interpretar("Compara mi reporte con el a\u00f1o pasado"));}
  @Test void cuentaDesconocidaPideAclaracion(){assertNull(interpretar("Gaste 50 usando Banorte").datos());}
  @Test void abreviaturaConCategoriaFunciona(){assertEquals("GASTO",interpretar("tacos 80").datos().get("tipo"));}

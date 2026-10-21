@@ -1,5 +1,7 @@
 # Corrección de diseño: Kaptal con Inicio dominante
 
+Prioridad vigente (2026-10-20): solo WhatsApp como canal externo; Gmail deshabilitado y conciliación (Etapa 6) omitida. Sigue el asistente financiero con evidencias. El orden completo actualizado está al inicio de [PLAN_MAESTRO_KAPTAL.md](PLAN_MAESTRO_KAPTAL.md); las prioridades siguientes de este documento son históricas.
+
 Cierre posterior: compactación de Inicio y estado de captura implementados. La secuencia funcional completa para retomar está en [PLAN_CONTINUACION_MONAI.md](PLAN_CONTINUACION_MONAI.md). La validación física sigue pendiente.
 
 Especificación vigente del usuario, 14 de octubre de 2026. Corrige la misma entrega local en `mejoras/rediseno-integral-android`; no abre la etapa de automatizaciones. Los documentos anteriores que describen una barra inferior o estética carbón/verde quedan sustituidos por éste en cuestiones visuales.
