@@ -1,6 +1,52 @@
 import { expect, test } from '@playwright/test';
 import { registrarPrueba } from './registro-helper';
 
+test('PWA: renueva una sesión vencida antes de abrir el acceso de ingreso', async ({page},info) => {
+  test.skip(info.project.name !== 'chromium-pwa','Requiere build de producción.');
+  test.setTimeout(120_000);
+  const registro=await registrarPrueba(page.request,{nombre:'QA renovación',email:`renovar-${crypto.randomUUID()}@example.test`,password:'Password123'});
+  expect(registro.ok()).toBeTruthy();
+  const usuario=(await registro.json()).data;
+  await page.goto('/login');
+  await page.evaluate((usuario)=>{
+    localStorage.setItem('finanzas_token',`test.${btoa(JSON.stringify({exp:1}))}.synthetic`);
+    localStorage.setItem('finanzas_user',JSON.stringify({id:usuario.id,nombre:usuario.nombre,email:usuario.email}));
+  },usuario);
+  let renovaciones=0;
+  page.on('request',request=>{if(request.url().includes('/api/auth/refresh') && request.method()==='POST') renovaciones++;});
+  await page.goto('/dashboard?accion=nuevo-ingreso');
+  await expect(page.getByRole('dialog',{name:'Añadir movimiento',exact:true})).toBeVisible();
+  await expect(page).toHaveURL(/\/dashboard$/);
+  expect(renovaciones).toBe(1);
+  expect(await page.evaluate(()=>localStorage.getItem('finanzas_token'))).not.toContain('synthetic');
+});
+
+test('PWA: sesión vencida sin red exige login y conserva el acceso de captura', async ({page,context},info) => {
+  test.skip(info.project.name !== 'chromium-pwa','Requiere service worker real.');
+  test.setTimeout(120_000);
+  const email=`expirada-${crypto.randomUUID()}@example.test`,password='Password123';
+  const registro=await registrarPrueba(page.request,{nombre:'QA expirada',email,password});
+  expect(registro.ok()).toBeTruthy();
+  await page.goto('/login');
+  await page.locator('#email').fill(email);await page.locator('#password').fill(password);
+  await page.getByRole('button',{name:'Iniciar sesión',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Añadir movimiento',exact:true})).toBeVisible();
+  await page.evaluate(async()=>{await navigator.serviceWorker.register('/ngsw-worker.js');await navigator.serviceWorker.ready;});
+  await page.reload();
+  await expect.poll(()=>page.evaluate(()=>!!navigator.serviceWorker.controller)).toBe(true);
+  await page.evaluate(()=>localStorage.setItem('finanzas_token',`test.${btoa(JSON.stringify({exp:1}))}.synthetic`));
+  await context.setOffline(true);await page.close();
+  const reabierta=await context.newPage();
+  await reabierta.goto('/dashboard?accion=nuevo-ingreso');
+  await expect(reabierta).toHaveURL(/\/login\?.*captura=nuevo-ingreso/);
+  await expect(reabierta.getByRole('dialog',{name:'Añadir movimiento',exact:true})).not.toBeVisible();
+  await context.setOffline(false);
+  await reabierta.locator('#email').fill(email);await reabierta.locator('#password').fill(password);
+  await reabierta.getByRole('button',{name:'Iniciar sesión',exact:true}).click();
+  await expect(reabierta.getByRole('dialog',{name:'Añadir movimiento',exact:true})).toBeVisible();
+  await expect(reabierta).toHaveURL(/\/dashboard$/);
+});
+
 test('PWA: cerrar, abrir sin red y sincronizar una captura exactamente una vez', async ({page,context},info) => {
   test.skip(info.project.name !== 'chromium-pwa','Requiere build de producción y service worker real.');
   test.setTimeout(120_000);

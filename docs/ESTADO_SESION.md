@@ -2,15 +2,15 @@
 
 ## Etapa 9: primera entrega PWA/captura (2026-10-21)
 
-Código guardado en commit local `2abfe4d` de `mejoras/android-captura`. Dos intentos de push fallaron por falta de conexión a github.com:443; no se creó PR ni se ejecutó CI remoto de esta rama. Reintentar `git push -u origin mejoras/android-captura` al recuperar conexión. La carpeta se deja limpia y el servidor LAN 4300 responde HTTP 200. Catálogo de 87 entradas de skills en `.local/SKILLS_DISPONIBLES.md`.
+Conexión recuperada: rama `mejoras/android-captura` subida y [PR #101](https://github.com/YaxcheItz/gestorfinanzas/pull/101) abierto como borrador hacia develop. Sin merge ni despliegue de producción. Ampliación de regresiones: 381 unitarias frontend correctas, tres E2E PWA correctas (renovación con cookie real, sesión vencida offline y sincronización única). CI remoto pendiente de resultado; no confundirlo con validación local. Catálogo de 87 entradas de skills en `.local/SKILLS_DISPONIBLES.md`.
 
 - El propietario autorizó avanzar tras los merges. Fetch confirma develop `6775c1e` (PR #99) y main `d39d899` (PR #100). Rama nueva `mejoras/android-captura` desde develop actualizado, en la carpeta principal; ya no trabajar en el worktree de Etapa 8.
 - Limpiadas las notas sin commit de los dos MD de la raíz, con respaldo del diff en `.local/notas-raiz-antes-etapa9.patch`. Artefactos huérfanos de Gmail resguardados en `.local/gmail-worker-resguardo-20261021`; no activar ni integrar Gmail.
 - Accesos PWA para gasto/ingreso/dictado, continuidad segura tras login por contraseña/Google y consumo de la acción para no repetir al recargar. Dictado abre el panel sin activar el micrófono. Sin autenticación no se registra ni lee dinero.
-- Validación: 378 unitarias frontend correctas; 12 E2E de accesos/chat/registro/app-shell; 1 E2E de producción con service worker real (cerrar/reabrir offline y sincronizar una vez), build y diff-check correctos. H2 local/datos sintéticos; CI PWA/PostgreSQL añadido. No se repitió backend porque no cambió.
+- Validación vigente: 381 unitarias frontend correctas; 12 E2E de accesos/chat/registro/app-shell del primer incremento y tres E2E de producción con service worker real. Build y diff-check correctos. H2 local/datos sintéticos; CI PWA/PostgreSQL añadido. Los permisos Web Push no se solicitan al abrir Configuración y denegarlos conserva los avisos apagados. No se enviaron notificaciones ni se repitió backend porque no cambió.
 - Detalles, fuentes y pendientes: ANDROID_CAPTURA_ETAPA_9.md. Android físico/instalación y los pendientes manuales de Etapa 8 no se certifican por el merge. Etapa 9 sigue abierta; después viene Etapa 11. Conservar Gmail deshabilitado.
 
-Publicación vigente 2026-10-21: [PR #99](https://github.com/YaxcheItz/gestorfinanzas/pull/99) abierto, listo para revisión, de `auditoria/etapa-8-funcional-visual` hacia `develop`; commit de implementación `2e5b13a`. Rama subida, sin merge ni despliegue de producción. CI de la publicación en curso; revalidar su resultado antes de integrar. Continuar Etapa 8 con los pendientes del informe; Etapa 9 después.
+Histórico de publicación de Etapa 8: PR #99 ya integrado por el propietario en develop; prevalece el estado de Etapa 9 anterior. Los siguientes apartados conservan el registro de sesiones previas.
 
 ## Etapa 8: entrega para PR hacia develop (2026-10-21)
 
