@@ -1,5 +1,11 @@
 # Estado para retomar la sesión
 
+## Borrador Gmail archivado localmente (2026-10-20)
+
+- El propietario pidió guardar los +3750 añadidos locales de Gmail en su rama y limpiar la carpeta principal. Se conserva el borrador en un commit local de `mejoras/gmail-bancario-piloto`, sin push, merge ni activación. Incluye código, pruebas, lockfile y documentación; no certifica operación automática terminada.
+- `.local/`, credenciales OAuth, sesiones, claves Cloudflare, node_modules y artefactos permanecen excluidos de Git. Gmail sigue deshabilitado y su Worker pausado; no se leen correos ni se ejecutan pruebas financieras para esta tarea de archivo.
+- El asistente sigue separado en `mejoras/asistente-evidencias`, worktree `.local/asistente-worktree`, PR #97. Continuar ahí leyendo este estado, PLAN_MAESTRO_KAPTAL.md y ASISTENTE_EVIDENCIAS.md. No recuperar ni integrar el borrador Gmail por rutina.
+
 ## Asistente publicado en rama y segunda entrega de evidencias (2026-10-20)
 
 - Verificación de esta entrega: 54 pruebas backend relacionadas correctas (37 unitarias de motor/contexto/acciones/asistente y 17 HTTP/persistencia de consultas WhatsApp), 57 pruebas frontend correctas y build Angular producción correcto. La integración comprueba conteos/totales propios, exclusión de otra moneda/usuario/transferencias, historial y CSV equivalentes, rechazo de moneda inválida y ausencia de escrituras. UI verifica renderizado, navegación y aislamiento de la lista activa. Diff-check correcto. PostgreSQL y suite completa quedan a CI; no hubo despliegue ni prueba con datos reales.

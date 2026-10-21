@@ -2,6 +2,8 @@
 
 ## Prioridad vigente: solo WhatsApp y asistente (2026-10-20)
 
+Archivo solicitado posteriormente: el borrador Gmail se conserva mediante commit LOCAL en `mejoras/gmail-bancario-piloto`, sin subirlo ni integrarlo. El checkout principal queda sin cambios pendientes; el trabajo activo del asistente continúa en su worktree y PR #97. Secretos y artefactos quedan fuera de Git; no reactivar Gmail al retomar este archivo.
+
 La última decisión del propietario sustituye el orden anterior: **solo WhatsApp como canal externo disponible**, Gmail deshabilitado y **Etapa 6 omitida**. No reactivar Gmail, sincronización de correo, conciliación multicanal, SMS ni lectores bancarios sin una nueva petición. La captura manual y el chat de la app se conservan. No se eliminan credenciales, historia, avisos ni el trabajo Gmail sin publicar.
 
 Estado comprobado: Gmail local bloqueado por `gmailPaused: true`, reglas bancarias privadas deshabilitadas y revisión manual conservada; Worker Gmail pausado, sin sesión Kaptal importada y sin eventos. WhatsApp `/health` y `/ready` HTTP 200. La prueba inicial con urllib sin User-Agent fue rechazada; la comprobación con User-Agent operativo devolvió 200. No se cambiaron webhook ni Worker WhatsApp.
