@@ -22,10 +22,22 @@ public record TransaccionFiltroRequest(
         BigDecimal montoMax,
         Long listaId,
         List<String> etiquetas,
-        Long autorId
+        Long autorId,
+        String moneda,
+        boolean sinCategoria
 ) {
     public TransaccionFiltroRequest(TipoTransaccion tipo, Long cuentaId, Long categoriaId, List<Long> categoriaIds,
+            LocalDate fechaInicio, LocalDate fechaFin, String busqueda, Long id, BigDecimal montoMin, BigDecimal montoMax,
+            Long listaId, List<String> etiquetas, Long autorId) {
+        this(tipo,cuentaId,categoriaId,categoriaIds,fechaInicio,fechaFin,busqueda,id,montoMin,montoMax,listaId,etiquetas,autorId,null,false);
+    }
+    public TransaccionFiltroRequest(TipoTransaccion tipo, Long cuentaId, Long categoriaId, List<Long> categoriaIds,
+            LocalDate fechaInicio, LocalDate fechaFin, String busqueda, Long id, BigDecimal montoMin, BigDecimal montoMax,
+            Long listaId, List<String> etiquetas, Long autorId, String moneda) {
+        this(tipo,cuentaId,categoriaId,categoriaIds,fechaInicio,fechaFin,busqueda,id,montoMin,montoMax,listaId,etiquetas,autorId,moneda,false);
+    }
+    public TransaccionFiltroRequest(TipoTransaccion tipo, Long cuentaId, Long categoriaId, List<Long> categoriaIds,
             LocalDate fechaInicio, LocalDate fechaFin, String busqueda, Long id, BigDecimal montoMin, BigDecimal montoMax) {
-        this(tipo, cuentaId, categoriaId, categoriaIds, fechaInicio, fechaFin, busqueda, id, montoMin, montoMax, null, null, null);
+        this(tipo, cuentaId, categoriaId, categoriaIds, fechaInicio, fechaFin, busqueda, id, montoMin, montoMax, null, null, null, null, false);
     }
 }

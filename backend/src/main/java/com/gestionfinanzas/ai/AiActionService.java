@@ -61,6 +61,10 @@ public class AiActionService {
     private final PropuestaChatService propuestas;
     private final LimiteAbuso limiteAbuso;
 
+    public List<com.gestionfinanzas.dto.response.ListaResponse> listarListas(Long userId) {
+        return financialContextService.listarListas(userId);
+    }
+
     public AiActionResult interpret(Long userId, String conversation) {
         AiActionResult registroRapido = interpretarRegistroRapido(userId, conversation);
         if (registroRapido != null) {
@@ -194,7 +198,8 @@ public class AiActionService {
     public AiActionResult interpretarCapturaRapida(Long userId, String mensaje) {
         var reglas = new MotorChatReglas().interpretar(mensaje,
                 cuentaService.listarCuentas(userId, true), categoriaService.listarCategorias(userId),
-                transaccionService.listarRecientes(userId), com.gestionfinanzas.service.CalendarioFinanciero.hoy());
+                transaccionService.listarRecientes(userId), com.gestionfinanzas.service.CalendarioFinanciero.hoy(),
+                false,financialContextService.listarListas(userId));
         if (reglas == null) return null;
         if (reglas.reporte() != null) {
             return resolverReporteLocal(userId, reglas);
@@ -206,19 +211,71 @@ public class AiActionService {
 
     public AiActionResult resolverReporteLocal(Long userId, MotorChatReglas.Resultado reglas) {
             if ("PRESUPUESTOS".equals(reglas.reporte())) {
-                var resumen = presupuestoService.obtenerResumenPeriodo(userId, reglas.hasta().getMonthValue(), reglas.hasta().getYear());
-                String texto = resumen.presupuestos().stream().filter(p -> reglas.moneda()==null || reglas.moneda().equals(p.moneda()))
-                        .map(p -> p.categoriaNombre()+": gastado "+p.montoGastado()+" / l\u00edmite "+p.montoLimite()+" "+p.moneda()+" ("+p.estado()+")")
+                if(reglas.cuentaId()!=null) return new AiActionResult("Los límites de presupuesto se comparan por categoría, no por cuenta. Repite la consulta sin el filtro de cuenta.",null);
+                var resumen = reglas.listaId()==null
+                        ? presupuestoService.obtenerResumenPeriodo(userId, reglas.hasta().getMonthValue(), reglas.hasta().getYear())
+                        : presupuestoService.obtenerResumenPeriodo(userId,reglas.listaId(),reglas.hasta().getMonthValue(),reglas.hasta().getYear());
+                var listasAccesibles=financialContextService.listarListas(userId).stream()
+                        .filter(l->!l.archivada()).map(com.gestionfinanzas.dto.response.ListaResponse::id)
+                        .collect(java.util.stream.Collectors.toSet());
+                var presupuestosFiltrados=resumen.presupuestos().stream()
+                        .filter(p -> reglas.moneda()==null || reglas.moneda().equals(p.moneda()))
+                        .filter(p -> reglas.categoriaId()==null || reglas.categoriaId().equals(p.categoriaId()))
+                        .toList();
+                String texto = resumen.presupuestos().stream()
+                        .filter(p -> reglas.moneda()==null || reglas.moneda().equals(p.moneda()))
+                        .filter(p -> reglas.categoriaId()==null || reglas.categoriaId().equals(p.categoriaId()))
+                        .map(p -> p.categoriaNombre()+": gastado "+p.montoGastado()+" / l\u00edmite "+p.montoLimite()
+                                +" "+p.moneda()+"; disponible "+p.montoDisponible()+" "+p.moneda()+" ("+p.estado()+")")
                         .collect(java.util.stream.Collectors.joining("\n"));
-                return new AiActionResult("Presupuestos de "+reglas.hasta().getMonthValue()+"/"+reglas.hasta().getYear()+"\n"+(texto.isBlank()?"No hay presupuestos para esa moneda y mes.":texto), null);
+                var evidencia=new ArrayList<AiEvidence>();
+                LocalDate inicioMes=reglas.hasta().withDayOfMonth(1);
+                LocalDate finMes=reglas.hasta().withDayOfMonth(reglas.hasta().lengthOfMonth());
+                for(var presupuesto:presupuestosFiltrados) {
+                    if(presupuesto.listaId()!=null&&!listasAccesibles.contains(presupuesto.listaId())) continue;
+                    var gastos=financialContextService.reporteLocal(userId,"CATEGORIAS",inicioMes,finMes,presupuesto.moneda(),
+                            null,presupuesto.categoriaId(),null,presupuesto.categoriaNombre(),
+                            presupuesto.listaId(),presupuesto.listaNombre());
+                    evidencia.addAll(gastos.evidence());
+                }
+                return new AiActionResult("Presupuestos de "+reglas.hasta().getMonthValue()+"/"+reglas.hasta().getYear()
+                        +(reglas.categoriaNombre()==null?"":" · Categoría: "+reglas.categoriaNombre())+"\n"
+                        +(texto.isBlank()?"No hay presupuestos para esa moneda, categoría y mes.":texto)
+                        +(evidencia.isEmpty()?"\nNo hay movimientos navegables dentro del mismo alcance del presupuesto.":""),
+                        null,List.of(),null,List.of(),null,evidencia);
             }
-            if ("RECURRENTES".equals(reglas.reporte())) {
-                String texto = plantillaService.listar(userId).stream().filter(p -> p.activa() && (reglas.moneda()==null || reglas.moneda().equals(p.moneda())))
-                        .map(p -> p.categoriaNombre()+": "+p.monto()+" "+p.moneda()+"; pr\u00f3ximo: "+p.siguienteFecha())
+            if (reglas.reporte()!=null && reglas.reporte().startsWith("RECURRENTES")) {
+                if(reglas.listaId()!=null) return new AiActionResult("Las plantillas recurrentes se filtran por cuenta o categoría, no por lista. Repite la consulta sin el filtro de lista.",null);
+                TipoTransaccion tipoRecurrente="RECURRENTES_GASTO".equals(reglas.reporte())?TipoTransaccion.GASTO
+                        :"RECURRENTES_INGRESO".equals(reglas.reporte())?TipoTransaccion.INGRESO:null;
+                String texto = plantillaService.listar(userId).stream().filter(p -> p.activa()
+                                && (tipoRecurrente==null || tipoRecurrente==p.tipo())
+                                && (reglas.moneda()==null || reglas.moneda().equals(p.moneda()))
+                                && (reglas.cuentaId()==null || reglas.cuentaId().equals(p.cuentaId()))
+                                && (reglas.categoriaId()==null || reglas.categoriaId().equals(p.categoriaId())))
+                        .map(p -> {
+                            String tipo=p.tipo()==TipoTransaccion.GASTO?"Gasto":p.tipo()==TipoTransaccion.INGRESO?"Ingreso":"Movimiento";
+                            String frecuencia=p.frecuencia()==null?"no especificada":switch(p.frecuencia()) {
+                                case SEMANAL -> "semanal";
+                                case QUINCENAL -> "quincenal";
+                                case MENSUAL -> "mensual";
+                                case ANUAL -> "anual";
+                            };
+                            return tipo+" · "+p.cuentaNombre()+" · "+(p.categoriaNombre()==null?"Sin categoría":p.categoriaNombre())
+                                    +": "+p.monto()+" "+p.moneda()+"; frecuencia "+frecuencia+"; próximo: "+p.siguienteFecha();
+                        })
                         .collect(java.util.stream.Collectors.joining("\n"));
-                return new AiActionResult(texto.isBlank()?"No hay movimientos recurrentes activos.":"Movimientos recurrentes:\n"+texto, null);
+                String alcance=(reglas.cuentaNombre()==null?"":" · Cuenta: "+reglas.cuentaNombre())
+                        +(reglas.categoriaNombre()==null?"":" · Categoría: "+reglas.categoriaNombre());
+                return new AiActionResult((texto.isBlank()?"No hay plantillas recurrentes activas.":"Plantillas recurrentes (no son movimientos ya ejecutados):\n"+texto)+alcance, null);
             }
-            return financialContextService.reporteLocal(userId, reglas.reporte(), reglas.desde(), reglas.hasta(), reglas.moneda());
+            if("SALDO".equals(reglas.reporte()) && reglas.categoriaId()!=null)
+                return new AiActionResult("El saldo no se filtra por categoría. Indica una cuenta o moneda, o pide un reporte de gastos por categoría.",null);
+            if("SALDO".equals(reglas.reporte()) && reglas.listaId()!=null)
+                return new AiActionResult("El saldo es propio de cada cuenta y no se filtra por lista. Indica una cuenta o moneda.",null);
+            return financialContextService.reporteLocal(userId, reglas.reporte(), reglas.desde(), reglas.hasta(), reglas.moneda(),
+                    reglas.cuentaId(),reglas.categoriaId(),reglas.cuentaNombre(),reglas.categoriaNombre(),
+                    reglas.listaId(),reglas.listaNombre());
     }
 
     /** Resuelve comandos sencillos con un diccionario local y sin enviar el mensaje al proveedor de IA. */
@@ -591,7 +648,10 @@ public class AiActionService {
     }
     private record PendingBatchAction(String type, String summary, JsonNode data) {}
 
-    public record AiActionResult(String answer, ActionProposal action, List<ActionProposal> actions, AiReportWidget report, List<String> suggestions, String contexto) {
+    public record AiActionResult(String answer, ActionProposal action, List<ActionProposal> actions, AiReportWidget report, List<String> suggestions, String contexto, List<AiEvidence> evidence) {
+        public AiActionResult(String answer, ActionProposal action, List<ActionProposal> actions, AiReportWidget report, List<String> suggestions, String contexto) {
+            this(answer,action,actions,report,suggestions,contexto,List.of());
+        }
         public AiActionResult(String answer, ActionProposal action, List<ActionProposal> actions, AiReportWidget report) {
             this(answer, action, actions, report, List.of(), null);
         }

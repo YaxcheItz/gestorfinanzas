@@ -346,6 +346,9 @@ export interface PresupuestoMonedaResumen {
 }
 
 export interface TransaccionFiltro {
+  /** Presentation-only: omit the active shared-list context for personal evidence. */
+  soloPropios?: boolean;
+  moneda?: string | null;
   listaId?: number | null;
   etiquetas?: string[];
   autorId?: number | null;
@@ -354,6 +357,7 @@ export interface TransaccionFiltro {
   tipo?: TipoTransaccion | '';
   cuentaId?: number | null;
   categoriaId?: number | null;
+  sinCategoria?: boolean;
   categoriaIds?: number[];
   fechaInicio?: string | null;
   fechaFin?: string | null;

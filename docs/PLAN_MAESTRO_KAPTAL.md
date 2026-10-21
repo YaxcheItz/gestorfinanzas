@@ -1,6 +1,99 @@
 # Kaptal: plan maestro y traspaso al siguiente chat
 
+## Avance local del asistente (2026-10-21)
+
+Se implementaron filtros autorizados por lista activa, evidencias reproducibles por lista y autor, y evidencia de presupuesto con el mismo periodo, moneda, categoría y lista del cálculo. Chat y WhatsApp comparten el alcance; las consultas de saldo y recurrencias rechazan filtros de lista que no soportan. Se conservan los filtros explícitos de cuenta/categoría/fechas y la evidencia “Sin categoría”. Ver cambios y cobertura en [ASISTENTE_EVIDENCIAS.md](ASISTENTE_EVIDENCIAS.md).
+
+Validación local: backend `mvnw -B verify` con 478 pruebas correctas y 6 omitidas; 72 pruebas dirigidas de filtros y evidencias; 343 pruebas frontend, build de producción y `npm run security:check` correctos. Producción sin vulnerabilidades conocidas; cinco alertas conocidas permanecen solo en dependencias de desarrollo según el control del proyecto.
+
+El cambio funcional se publicó en el commit `c93e00a` de `mejoras/asistente-evidencias` y PR #97 permanece abierto como borrador. Todos los checks públicos del SHA completo `c93e00a6e083c35089ff5a85f3676f292b1c81f4` concluyeron correctamente: backend, PostgreSQL, frontend, E2E, WhatsApp Cloudflare, canales personales y Vercel Preview. Es un preview, no un merge ni un despliegue de producción. La Etapa 7 completa sigue abierta para sus comprobaciones funcionales restantes; Gmail continúa deshabilitado y Etapa 6 omitida.
+
+El propietario confirmó que funcionaron en la página del preview el flujo de evidencia, la salida del restante del presupuesto y las consultas de recurrencias. Este hito de consultas/evidencias está listo para revisión; no certifica despliegue de producción. Se intentó marcar #97 listo con `gh pr ready 97`, pero la CLI no está autenticada, por lo que sigue en borrador. Próximo: autenticar `gh` o marcarlo listo desde GitHub; integrar solo tras revisión/decisión del propietario.
+
+Continuación funcional: las respuestas de presupuesto informan lo gastado, límite, disponible y moneda para cada categoría; el disponible conserva signo cuando el gasto supera el límite. Prueba unitaria y suite backend completas pasan.
+
+La mejora de presupuesto se publicó en `0b495ee`; su CI (backend, PostgreSQL, frontend, E2E, WhatsApp Cloudflare, canales personales y Vercel Preview) está verde. No es una integración ni un despliegue de producción. Las modificaciones posteriores de recurrencia están en `c88f7f2`; el SHA documental actual `d8b290b` también pasó los checks.
+
+También se completó la consulta de recurrencias: distingue gastos, ingresos y plantillas genéricas; informa tipo, cuenta, categoría, importe, moneda, frecuencia y fecha siguiente. La frase del usuario determina el tipo filtrado y el asistente aclara que una plantilla no es un movimiento ejecutado. Las consultas de saldo y recurrencias por lista siguen rechazadas porque ese alcance no aplica. Se publicó en `c88f7f2`; la suite backend completa pasó (480 pruebas, 6 omitidas) y todos los checks remotos del SHA quedaron verdes.
+
+## Prioridad vigente: solo WhatsApp y asistente (2026-10-20)
+
+Archivo solicitado posteriormente: el borrador Gmail se conserva mediante commit LOCAL en `mejoras/gmail-bancario-piloto`, sin subirlo ni integrarlo. El checkout principal queda sin cambios pendientes; el trabajo activo del asistente continúa en su worktree y PR #97. Secretos y artefactos quedan fuera de Git; no reactivar Gmail al retomar este archivo.
+
+La última decisión del propietario sustituye el orden anterior: **solo WhatsApp como canal externo disponible**, Gmail deshabilitado y **Etapa 6 omitida**. No reactivar Gmail, sincronización de correo, conciliación multicanal, SMS ni lectores bancarios sin una nueva petición. La captura manual y el chat de la app se conservan. No se eliminan credenciales, historia, avisos ni el trabajo Gmail sin publicar.
+
+Estado comprobado: Gmail local bloqueado por `gmailPaused: true`, reglas bancarias privadas deshabilitadas y revisión manual conservada; Worker Gmail pausado, sin sesión Kaptal importada y sin eventos. WhatsApp `/health` y `/ready` HTTP 200. La prueba inicial con urllib sin User-Agent fue rechazada; la comprobación con User-Agent operativo devolvió 200. No se cambiaron webhook ni Worker WhatsApp.
+
+### Plan completo que queda, en el nuevo orden
+
+1. **Asistente financiero con evidencias (Etapa 7, actual).**
+   - Reutilizar el chat y las consultas WhatsApp existentes; reglas primero y proveedor IA solo para interpretación autorizada.
+   - Consultas exactas por periodo, categoría, cuenta/lista autorizada y moneda; comparaciones equivalentes, presupuesto restante y recurrencias.
+   - Mostrar periodo y alcance, monedas separadas, número de operaciones/filtros considerados y enlace al historial correspondiente; explicar cuando faltan datos.
+   - No delegar cuentas ni cálculos al LLM; consultas de solo lectura, permisos por usuario y pruebas contra reportes/historial.
+   - Primera entrega iniciada: comparación mensual textual determinista en backend, con periodos equivalentes y sin movimientos nuevos. No equivale a asistente completo ni a despliegue.
+2. **Auditoría funcional y visual (Etapa 8).**
+   - Revisar en Android físico Inicio, formularios, teclado, voz/permisos, letra grande, temas y privacidad.
+   - Verificar los mismos rangos y cifras entre Inicio, historial y reportes; tarjetas/cortes/vencimientos por cuenta, presupuestos y recurrencias idempotentes.
+   - Revisar búsquedas, listas/etiquetas, paginación y rendimiento; corregir fallos demostrados sin rehacer funciones existentes.
+   - Validar borradores y capturas offline, sincronización única y estados de error/pendiente claros.
+3. **Android y captura desde el sistema (Etapa 9).**
+   - Comprobar primero la PWA; evaluar envoltura de la app existente, autenticación, enlaces, safe areas, teclado y offline.
+   - Acceso rápido para registrar y voz, incluyendo Quick Settings Tile si es viable; permisos al usar y protección con pantalla bloqueada.
+   - Recordatorios propios de vencimientos/presupuestos/recurrencias y preferencias de privacidad; widgets solo al estabilizar sincronización.
+   - Prueba real: capturar con app cerrada/sin red y sincronizar exactamente una vez. Esto no habilita lectura de SMS ni notificaciones bancarias ajenas.
+4. **Compartido, divisas y metas (Etapa 11).**
+   - Auditar y completar invitaciones, roles, autoría, salida y revocación de listas compartidas.
+   - Repartos y liquidaciones con redondeo exacto y sin contar dos veces el gasto; pruebas de permisos y concurrencia.
+   - Moneda original, tipo de cambio con fecha/fuente, equivalencias y saldos por moneda, sin convertir el pasado al cambiar la visualización.
+   - Metas con aportes/retiros entre fondos propios, progreso y cancelación sin inflar ingresos/gastos.
+5. **Onboarding, privacidad y acabado nativo (Etapa 12).**
+   - Inicio guiado breve y omitible; accesibilidad, foco, lectores de pantalla, formatos y letra grande.
+   - Bloqueo/biometría cuando exista soporte nativo real, privacidad al volver del fondo y ocultación de datos en vistas previas.
+   - Interacciones táctiles, movimiento reducido, zonas de toque y alternativas a gestos.
+   - Exportación/importación y restauración comprobadas; consentimiento y eliminación de datos según funciones realmente activas.
+6. **Rendimiento, costes y operación (Etapa 13, transversal).**
+   - Medir carga/bundle, consultas y respuestas IA, límites por usuario, cuotas y costes de proveedores.
+   - Monitorización sin datos privados, alertas operativas, copias y restauración, recuperación tras sesiones vencidas/reinicios.
+   - Pruebas de seguridad, dependencias, migraciones, aislamiento, CI y publicación; comprobar el despliegue servido, no solo un commit.
+   - Revalidar WhatsApp con dos usuarios reales y escenarios de voz/cancelar/reintento cuando falte evidencia; no dar por pendiente una función ya comprobada por el propietario.
+7. **Cierre de producto.**
+   - Recorrido completo real, corrección de bloqueantes, documentación/ayuda y revisión de privacidad; integración develop → main y despliegue coordinado por entrega.
+8. **Comercialización (Etapa 14, opcional).**
+   - Solo si el propietario la solicita: requisitos de tiendas, soporte, eliminación de cuenta, límites, coste por usuario y precios sustentados. No añadir cobros/suscripciones por defecto.
+
+Fuera del plan activo por decisión del propietario: piloto y autoservicio Gmail (Etapas 4/5), conciliación multicanal (Etapa 6) y entradas externas bancarias/SMS/pagos (Etapa 10). Mantener los apartados históricos como referencia, no como trabajo autorizado vigente. Los recordatorios de la propia app y la captura Android sí permanecen en el plan.
+
+### Rama y siguiente entrega del asistente
+
+Avance posterior: rama publicada y [PR #97](https://github.com/YaxcheItz/gestorfinanzas/pull/97) en borrador hacia develop. Se añade evidencia estructurada para comparación mensual y acceso al historial con fechas/tipo/moneda y alcance propio, también respetado en CSV. El resto de filtros y consultas sigue pendiente. Publicar una rama no implica merge ni despliegue.
+
+Validación de la segunda entrega: 54 pruebas backend y 57 frontend correctas; build Angular y diff-check correctos. Sin escrituras financieras reales. CI remoto y despliegue deben comprobarse aparte.
+
+Primer corte implementado y comprobado localmente: 76 pruebas relacionadas distintas correctas, incluidas consultas HTTP/persistencia H2 con aislamiento y ausencia de escrituras; diff-check correcto. Sin despliegue ni cambios frontend. El alcance y los pendientes están en [ASISTENTE_EVIDENCIAS.md](ASISTENTE_EVIDENCIAS.md).
+
+Nueva rama `mejoras/asistente-evidencias` en `.local/asistente-worktree`, creada desde `origin/develop` comprobado (`211b457`). La rama principal del checkout conserva Gmail sin publicar. Primer corte: comparación mensual sin IA ni escrituras, reutilizando consultas agregadas existentes. Después: filtros completos, evidencia estructurada y enlaces al historial; presupuesto/restantes y categorías con validación de alcance. No anunciar nada como publicado hasta CI/integración/despliegue.
+
+## Histórico: prioridad anterior al omitir conciliación (2026-10-20)
+
+El propietario pide dejar Gmail en su estado actual y continuar con lo demás. Etapas 4/5 aplazadas: funciona la lectura local bajo demanda con revisión manual y un aviso Nu reconocido; Santander solo validado sintéticamente, sin correo real en la ventana. No hubo registro de dinero. El borrador Cloudflare fue desplegado PAUSADO, cola vacía y sin sesión Kaptal importada; no constituye sincronización automática operativa. `gmailReviewOnly` restaurado a true; no activar servicios ni repetir solicitudes OAuth.
+
+Siguiente trabajo: **Etapa 6, conciliación común y aprendizaje**, sección 10. Auditar primero la bandeja/coincidencias ya existentes y realizar una entrega pequeña sobre razones de pendientes, vínculos al movimiento y distinción entre repetición y coincidencia. Crear una rama nueva desde develop actualizado; mantener intacto el trabajo Gmail sin publicar en su rama/worktree. Después continúa Etapa 7, asistente financiero con evidencias.
+
 Fecha: 18 de octubre de 2026. Este documento es un plan solicitado por el propietario; no afirma que las funcionalidades propuestas esten implementadas. Plan versionado de continuidad; no incluye secretos.
+
+## Revision de continuidad (2026-10-20)
+
+Guia operativa detallada: [GMAIL_PILOTO_PASO_A_PASO.md](GMAIL_PILOTO_PASO_A_PASO.md). Siguiente accion del propietario: cliente OAuth Desktop privado y etiqueta/filtros `Kaptal-Bancos`; despues consentimiento local y lectura piloto con revision manual. Sigue sin iniciarse OAuth ni leerse Gmail.
+
+- Se contrasto el resumen del propietario con el diff y los llamadores del parser/colector/envio de Avisos. No se modifico codigo ni se inicio OAuth ni se consulto Gmail o la API financiera real durante esta revision.
+- `git fetch origin` confirma `origin/develop = 211b457`; la rama actual `mejoras/gmail-bancario-piloto` parte de esa base y conserva cambios sin commit/push. `origin/main = ed71e36` integra develop mediante #96. WhatsApp/IA/experiencia ya estan en el historial integrado; no rehacer esas etapas ni asumir por ello pruebas reales detalladas o despliegues actuales.
+- Pruebas repetidas: 37 en `test_canales.py` y 86 en toda la suite correctas, sin fallos. `compileall`, JSON de ejemplo y `git diff --check` correctos. El fallo previo de concurrencia de sesion Windows no se reprodujo en esta ejecucion; no se considera corregido ni se modifico su codigo.
+- Comprobacion privada limitada a metadatos: dos reglas activas con alias configurados, `gmailReviewOnly` booleano true, fecha 2026-10-15; faltan archivos cliente OAuth/credenciales Gmail y etiqueta configurada. No se imprimieron IDs, saldos, terminaciones ni secretos. Esta comprobacion no revalida cuentas remotas ni acredita permiso Gmail concedido.
+- No se encontraron fallos bloqueantes en lo revisado para el piloto manual. Tanto Nu como compra Santander usan identidad del mensaje Gmail cuando falta referencia; esto impide reprocesar el mismo correo, pero no demuestra que dos correos distintos sean operaciones distintas. Mantener revision y coincidencias. Ademas del piloto hay soporte generico de transferencias origen/destino y fixtures de otros formatos: no son reglas bancarias activadas ni amplian el alcance autorizado.
+- Pendiente: crear cliente OAuth Desktop y etiqueta/filtros exclusivos, indicar su nombre, completar consentimiento local y resolver ID; despues lectura piloto y revision de Avisos, sin autoconfirmacion. Validacion con correos reales y E2E de este piloto aun pendientes. SPEI Santander y otros bancos fuera de alcance. Revisar/publicar los cambios en esta rama cuando corresponda; no se hizo commit/push en esta revision.
+- Para otro chat: «Continua el piloto Gmail de Kaptal. Lee AGENTS.md, ESTADO_SESION.md, PLAN_MAESTRO_KAPTAL.md, BANDEJA_AVISOS.md y HERRAMIENTAS_CANALES_2026-10-17.md. Comprueba la rama mejoras/gmail-bancario-piloto y sus cambios sin publicar desde develop 211b457. Solo Nu recibido y compra TDC Santander, revision manual. La revision del 20 de octubre paso 37 pruebas especificas y 86 completas; el fallo intermitente de lock Windows no esta corregido. Faltan cliente OAuth Desktop, etiqueta/filtros y nombre de etiqueta; luego consentimiento y piloto real autorizado. No leas correo antes de eso ni registres dinero sin confirmacion. Conserva autoria exclusiva y actualiza los MD y el texto de continuidad.»
+
 
 ## Seguimiento vigente (19 de octubre de 2026)
 
@@ -10,13 +103,36 @@ El propietario pidio actualizar este MD al terminar cada parte y recibir siempre
 | --- | --- | --- |
 | WhatsApp personal alojado | Funciona; confirmado por propietario | Cloudflare activo. PR #84/#85 integrados en develop y main mediante #86. |
 | Preparacion de la etapa siguiente | Comprobada | `origin/develop = 7c3e2ad`; rama nueva `mejoras/whatsapp-multiusuario-base`. Receptor personal health/ready 200 durante esta entrega. |
-| 1A: identidad y prueba del telefono | Completada en rama; revisar/integrar PR | API propia alta/estado/desconexion, desafio unico, HMAC Kapso y migracion V9. 434 pruebas PostgreSQL correctas, incluidas 18 nuevas; 15 pruebas nuevas H2 correctas. Ver `WHATSAPP_MULTIUSUARIO.md`. No emite permisos financieros ni cambia el Worker desplegado. |
+| 1A: identidad y prueba del telefono | Integrada mediante #87; historial | API propia alta/estado/desconexion, desafio unico, HMAC Kapso y migracion V9. 434 pruebas PostgreSQL correctas, incluidas 18 nuevas; 15 pruebas nuevas H2 correctas. Ver `WHATSAPP_MULTIUSUARIO.md`. No emite permisos financieros ni cambia el Worker desplegado. |
 | 1B: interfaz y runtime multiusuario | Integrada y desplegada; activa en Cloudflare | PR #87 y #88 integrados en develop y main (#89). Backend en Render con canal habilitado. D1 respaldada y migrada. Worker multiusuario desplegado y activo (`/health` y `/ready` 200). 39 pruebas pasadas. Pendiente prueba con dos personas reales. |
 | 2: IA de respaldo | Integrada en `develop` mediante PR #93 | Reglas primero + rescate con AiProvider (`GroqAiProvider` / `GeminiAiProvider`). Validación estricta de cuentas/categorías del usuario, sanitización de Markdown, control de abusos y 10 pruebas unitarias nuevas (57 pruebas de WhatsApp verdes). |
-| 3: experiencia y cierre de voz | PR #95 abierto desde `mejoras/whatsapp-experiencia` hacia `develop` | Confirmación explícita para deshacer el último movimiento WhatsApp, consentimiento de voz simplificado con código alternativo, ayuda en Configuración; 60 pruebas backend WhatsApp y 9 pruebas del componente Angular correctas. Pendientes CI, integración/despliegue y pruebas reales autorizadas de mensaje, audio, cancelar y posible duplicado. |
-| 4 y posteriores | Pendientes según alcance original | Gmail piloto/multiusuario, conciliación, asistente con evidencias, Android y demás etapas de este plan. |
+| 3: experiencia y cierre de voz | Integrada en `develop` mediante PR #95 | El propietario confirma que WhatsApp ya funciona. La implementación pasó 60 pruebas backend WhatsApp y 9 pruebas Angular; no se registró desglose de cada escenario real. |
+| 4: Gmail bancario personal real | En curso en `mejoras/gmail-bancario-piloto`, desde `origin/develop` `211b457` | Alcance actual: ingreso por transferencia recibida de Nu y compra con TDC Santander, en revisión manual. Las 37 pruebas del parser pasan; `config.example.json` mantiene reglas desactivadas y las dos reglas están habilitadas en la configuración privada. Las 86 pruebas completas pasaron al revisar el 20 de octubre; el error intermitente previo de lock Windows no se considera corregido. Falta OAuth y etiqueta Gmail exclusiva. El abono SPEI Santander queda pendiente; otros bancos y notificaciones móviles después. |
+| 5 y posteriores | Pendientes según alcance original | Gmail autoservicio/multiusuario, conciliación, asistente con evidencias, Android y demás etapas de este plan. |
 
-En la Etapa 3 (PR #95), «deshacer» primero presenta el movimiento identificado y solo lo elimina tras «confirmar deshacer» antes de 15 minutos; cancelar o dejar vencer la confirmación no altera el movimiento. La confirmación del audio acepta «confirmar» y exige el código si se usa «confirmar audio <codigo>». No considerar esta etapa cerrada hasta integrar/desplegar y completar la prueba real autorizada con dos usuarios. No se ha desplegado el cambio actual ni se han creado movimientos reales de prueba.
+En la Etapa 3 (PR #95), «deshacer» primero presenta el movimiento identificado y solo lo elimina tras «confirmar deshacer» antes de 15 minutos; cancelar o dejar vencer la confirmación no altera el movimiento. La confirmación del audio acepta «confirmar» y exige el código si se usa «confirmar audio <codigo>». El PR está integrado y el propietario confirma que WhatsApp funciona; no se registró aquí el detalle por escenario de las pruebas reales.
+
+### Estado de la Etapa 4: piloto Gmail
+
+Corrección completada el 20 de octubre: extracción HTML inerte con preferencia por texto plano y reprocesado del aviso genérico mediante edición versionada del mismo ID. Validación real Nu: mismo aviso ahora INGRESO con datos y PENDIENTE; segunda lectura sin duplicación; cero movimientos registrados. 88 pruebas Python, compileall y diff-check correctos; Ruff no instalado. Santander cubierto con pruebas sintéticas HTML/texto, todavía sin validación real en la ventana. El colector sigue bajo demanda local; no se instaló ejecución continua ni se hizo commit/push/despliegue. Próximo: revisión del propietario y publicación de la rama.
+
+Diagnóstico del aviso visible confirmado por el propietario: correo Nu solo HTML, autenticación/remitente/asunto válidos; el parser actual solo extrae texto plano y obtiene cuerpo vacío. Próxima parte: extracción HTML segura con pruebas y actualización de la propuesta existente sin duplicarla al reclasificar. Aún no registrar dinero ni afirmar validación real de Santander.
+
+Aclaración: Configuración > Avisos gestiona Web Push; la revisión bancaria está en «Bandeja de avisos» (`/avisos`). Las claves Web Push no son requisito para Gmail. Publicar el colector local en Git sigue pendiente, pero no habilita ni es necesario para abrir la bandeja ya existente.
+
+Acceso a revisión: ruta publicada `https://kaptalgf.vercel.app/avisos` comprobada con HTTP 200 y ruta presente en bundle principal. El colector local envió el aviso a la API de esa app; no se requiere desplegar el colector para abrir la bandeja existente. Pendiente revisión autenticada por el propietario.
+
+Resultado operativo del 20 de octubre: OAuth readonly completado; identidad Gmail y propietario Kaptal comprobados, etiqueta Kaptal-Bancos resuelta en configuración privada. Primera lectura real desde 2026-10-15 entrega un aviso; segunda lectura mantiene el mismo conteo, sin duplicar entradas. Cero movimientos registrados en ambas; revisión manual activa y autoguardado deshabilitado en memoria. Pendiente revisión del propietario, validación real de ambos formatos y publicación de la rama. Un aviso no acredita por sí solo ambos bancos.
+
+Preparación confirmada posteriormente el 20 de octubre: etiqueta y dos filtros creados según el propietario. Nuevo cliente Desktop encontrado en `.local/canales`, estructura validada y archivo renombrado a `google-client.private.json`, excluido de Git. Siguiente: consentimiento OAuth, resolución del ID de etiqueta y lectura piloto con revisión manual; todavía sin ejecutar.
+
+Avance posterior del 20 de octubre: el JSON encontrado en Descargas no pasó la validación Desktop y no se copió ni modificó. Falta crear o localizar el cliente correcto. El propietario confirma etiqueta creada; ambos filtros aún sin confirmar. Siguen pendientes consentimiento, resolución de ID y lectura real con revisión manual.
+
+Actualización del 20 de octubre: el propietario confirma que aún no ha realizado los pasos del navegador. Se proporciona explicación desde cero para Google Cloud, cliente OAuth Desktop, archivo JSON y etiqueta/filtros Gmail. No se ha iniciado consentimiento ni lectura en esta entrega; continúa pendiente la preparación manual y después la prueba real.
+
+El alcance pedido ahora se limita al ingreso por transferencia recibida de Nu y la compra con TDC Santander; ambos se proponen para revisión, no se autoguardan. `config.example.json` contiene las plantillas desactivadas por defecto, y las pruebas sintéticas usan esas mismas reglas. Con autorización del propietario se consultaron las cuentas/listas propias en modo lectura y se configuró el archivo privado con los alias y esas dos reglas activas; no se mostraron IDs ni saldos. No se guardaron correos originales ni se inició OAuth. Aún faltan el cliente OAuth de escritorio, el consentimiento local y crear una etiqueta/filtro exclusivos en Gmail para resolver luego el ID de etiqueta. La fecha inicial solicitada es 2026-10-15. El aviso de abono SPEI Santander sigue pendiente: aunque se compartió el cuerpo, falta su remitente y asunto exactos; no reutilizar para él los metadatos del correo de transferencia saliente. El aviso Nu no trae referencia bancaria, así que la regla usa el ID Gmail para reintentos, manteniendo revisión y deduplicación local por huella. La compra Santander valida los últimos cuatro del correo contra `bankIdentifiers` de la cuenta de tarjeta configurada. Otros bancos y notificaciones móviles quedan para una etapa posterior. La etiqueta y fecha limitan mensajes consultados, no el alcance OAuth. `gmail.readonly` es restringido; Google contempla posibles excepciones para uso personal/desarrollo y requisitos de verificación/assessment según distribución y arquitectura. Revisar el caso antes de publicar.
+
+Fuentes oficiales consultadas: [scopes Gmail](https://developers.google.com/workspace/gmail/api/auth/scopes), [OAuth para aplicaciones de escritorio](https://developers.google.com/identity/protocols/oauth2/native-app) y [verificación de scopes restringidos](https://developers.google.com/identity/protocols/oauth2/production-readiness/restricted-scope-verification).
 
 No marcar la parte multiusuario completa por haber terminado 1A. No habilitar el nuevo flujo publico hasta conectar UI, Worker y permisos. No volver a configurar ni detener la conexion personal que funciona. Revision oficial del sandbox de Kapso: cada telefono de prueba necesita una sesion activa y su codigo del proveedor; el registro de Kaptal no sustituye esa activacion. Confirmar numero productivo/condiciones antes del alta publica de cualquier usuario.
 
@@ -176,7 +292,7 @@ Cierre: dos personas completan flujo real desde sus telefonos; no depende del eq
 Rama sugerida: mejoras/gmail-bancario-piloto.
 
 - Revisar tools/canales/gmail_auth.py y recolector actual; reutilizar pruebas/contratos, no inventar una nueva contabilidad.
-- Confirmar bancos efectivamente presentes con ejemplos representativos anonimizados. BBVA/Nu/Santander/Mercado Pago son candidatos mencionados, no parsers certificados.
+- Para ampliar Gmail a otros bancos o notificaciones móviles, confirmar primero las instituciones, formatos y permisos; el piloto actual solo cubre Nu/Santander y no se ha conectado a Gmail.
 - OAuth con Google, acceso minimo necesario, cuenta esperada verificada, desconexion/revocacion. El login Google de Kaptal NO concede acceso a Gmail.
 - Explicar alcance de gmail.readonly: una etiqueta o filtro no reduce el permiso OAuth al correo bancario. Verificar requisitos de scopes restringidos y excepciones aplicables antes de distribuir.
 - Configurar etiqueta/filtro y fecha inicial para no importar todo el pasado automaticamente.
@@ -335,4 +451,4 @@ No abrir diez ramas a la vez ni implementar todo en el siguiente chat. Empezar p
 
 ## 21. Instruccion lista para el siguiente chat
 
-Continua Kaptal leyendo AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/WHATSAPP_MULTIUSUARIO.md. WhatsApp personal ya funciona en Cloudflare Workers+D1. La parte 1A de multiusuario (contrato/modelo, desafio de telefono, HMAC, desconexion y migracion V9) esta terminada en mejoras/whatsapp-multiusuario-base: 434 pruebas PostgreSQL correctas, incluidas 18 nuevas. Comprueba PR/CI e integracion a develop antes de crear una rama NUEVA desde develop actualizado para 1B: boton en la app, transporte/enrutamiento Worker por conexion, autorizacion financiera limitada y revocable, migracion de la conexion personal y prueba con dos usuarios. VERIFICADA solo prueba telefono; no concede sesion financiera. El sandbox requiere activar cada telefono de prueba en Kapso. Conserva el canal personal, sus UUID y su cifrado. Despues siguen IA rapida de respaldo reutilizando los proveedores actuales, Gmail y el resto del plan. No pidas contrasena Google, no compartas cookies, no expongas .local ni crees movimientos reales por tu cuenta. Usa skills pertinentes y autoria exclusiva YaxcheItz <yaxtibla1@gmail.com>. Al cerrar cada parte actualiza plan/estado y entrega el texto para el siguiente chat.
+Continúa Kaptal leyendo AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/ASISTENTE_EVIDENCIAS.md (en el worktree del asistente). Solo WhatsApp como canal externo; Gmail deshabilitado, Worker Gmail pausado y Etapa 6 omitida por decisión expresa. Trabaja el asistente financiero con evidencias en mejoras/asistente-evidencias, worktree .local/asistente-worktree, desde develop remoto comprobado. Conserva intacto el borrador Gmail de la rama principal. Prioriza consultas exactas y de solo lectura, sin mezclar monedas ni usuarios, con periodo/alcance y evidencia. Actualiza los MD y no presentes cambios locales como desplegados.

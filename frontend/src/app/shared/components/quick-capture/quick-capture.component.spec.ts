@@ -12,6 +12,10 @@ import { MovimientosOfflineService } from '../../../core/services/movimientos-of
 import { ActualizacionPwaService } from '../../../core/services/actualizacion-pwa.service';
 
 describe('QuickCaptureComponent processing and gestures', () => {
+  it('abre el historial con los filtros de evidencia calculados por el servidor', () => {
+    component.verEvidencia({label:'Gastos actual',desde:'2026-10-01',hasta:'2026-10-20',moneda:'MXN',tipo:'GASTO',operaciones:2,total:40.25});
+    expect(navigate).toHaveBeenCalledWith(['/transacciones'],{queryParams:{alcance:'propio',fechaInicio:'2026-10-01',fechaFin:'2026-10-20',moneda:'MXN',tipo:'GASTO'}});
+  });
   let component: QuickCaptureComponent;
   let fixture: ReturnType<typeof TestBed.createComponent<QuickCaptureComponent>>;
   let teardown = vi.fn(() => {});

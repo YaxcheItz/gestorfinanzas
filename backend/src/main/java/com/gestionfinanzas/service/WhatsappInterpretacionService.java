@@ -54,13 +54,13 @@ public class WhatsappInterpretacionService {
             return ApiResponse.ok("Consulta calculada",new Respuesta("CONSULTA",recientes.isEmpty()?"No hay movimientos recientes.":"Movimientos recientes (no es todo el historial):\n"+recientes,null,null,null,List.of(),null,null));
         }
         var reglas=new MotorChatReglas().interpretar(texto,catalogo,categorias.listarCategorias(usuarioId),
-            movimientos.listarRecientes(usuarioId),CalendarioFinanciero.hoy(),true);
+            movimientos.listarRecientes(usuarioId),CalendarioFinanciero.hoy(),true,acciones.listarListas(usuarioId));
         if(reglas==null) {
             return interpretarConIaFallback(usuarioId, texto, catalogo);
         }
         if(reglas.reporte()!=null) {
             var reporte=acciones.resolverReporteLocal(usuarioId,reglas);
-            return ApiResponse.ok("Consulta calculada",new Respuesta("CONSULTA",reporte.answer(),null,reglas.moneda(),null,List.of(),reglas.desde(),reglas.hasta()));
+            return ApiResponse.ok("Consulta calculada",new Respuesta("CONSULTA",reporte.answer(),null,reglas.moneda(),null,List.of(),reglas.desde(),reglas.hasta(),reporte.evidence()));
         }
         if(reglas.datos()==null) return ApiResponse.ok("Aclara el movimiento",new Respuesta("ACLARACION",reglas.respuesta(),null,null,reglas.contexto(),reglas.sugerencias(),null,null));
         var datos=mapper.convertValue(reglas.datos(),TransaccionRequest.class);

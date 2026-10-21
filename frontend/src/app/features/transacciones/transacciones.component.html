@@ -7,6 +7,7 @@
           <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
             Movimientos
           </h1>
+          @if (soloPropios()) {<p class="text-sm">Movimientos propios de todas tus listas · {{ filtroMoneda() }} · {{ filtroFechaInicio() }} al {{ filtroFechaFin() }}</p>}
 
         </div>
 
@@ -808,4 +809,3 @@
         </div>
       </div>
     }
-  

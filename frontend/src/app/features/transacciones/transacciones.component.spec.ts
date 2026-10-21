@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of, Subject } from 'rxjs';
 import { CategoriaPreferidaService } from '../../core/services/categoria-preferida.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
@@ -11,6 +11,37 @@ import { Transaccion } from '../../core/models/finanzas.models';
 import { TransaccionesComponent } from './transacciones.component';
 
 describe('TransaccionesComponent history filters', () => {
+  it('aplica evidencia sin categoría con filtro explícito y sin heredar filtros', () => {
+    const c=fixture.componentInstance;
+    c.filtroCategoriaId.set(9);
+    expect(c.aplicarEvidencia(convertToParamMap({alcance:'propio',moneda:'MXN',tipo:'GASTO',fechaInicio:'2026-10-01',fechaFin:'2026-10-20',sinCategoria:'true'}))).toBe(true);
+    c.cargarTransacciones();
+    const filters=finanzasService.getTransaccionesPaginadas.mock.lastCall?.[0];
+    expect(filters).toMatchObject({soloPropios:true,moneda:'MXN',tipo:'GASTO',sinCategoria:true,categoriaId:null});
+    expect(filters.listaId).toBeUndefined();
+  });
+  it('aplica evidencia de lista con su autor sin usar alcance personal', () => {
+    const c=fixture.componentInstance;
+    c.filtroBusqueda.set('anterior');
+    expect(c.aplicarEvidencia(convertToParamMap({alcance:'lista',listaId:'12',autorId:'7',moneda:'MXN',tipo:'GASTO',fechaInicio:'2026-10-01',fechaFin:'2026-10-31',categoriaId:'9'}))).toBe(true);
+    c.cargarTransacciones();
+    const filters=finanzasService.getTransaccionesPaginadas.mock.lastCall?.[0];
+    expect(filters).toMatchObject({soloPropios:false,listaId:12,autorId:7,categoriaId:9,busqueda:''});
+  });
+
+  it('aplica cuenta y categoria explicitadas en evidencia sin heredar otros filtros', () => {
+    const c=fixture.componentInstance;
+    c.filtroCuentaId.set(88);c.filtroBusqueda.set('old');
+    expect(c.aplicarEvidencia(convertToParamMap({alcance:'propio',moneda:'MXN',tipo:'GASTO',fechaInicio:'2026-10-01',fechaFin:'2026-10-20',cuentaId:'4',categoriaId:'9'}))).toBe(true);
+    c.cargarTransacciones();
+    const filters=finanzasService.getTransaccionesPaginadas.mock.lastCall?.[0];
+    expect(filters).toMatchObject({soloPropios:true,moneda:'MXN',tipo:'GASTO',fechaInicio:'2026-10-01',fechaFin:'2026-10-20',cuentaId:4,categoriaId:9,busqueda:''});
+    expect(filters.listaId).toBeUndefined();
+    expect(c.aplicarEvidencia(convertToParamMap({alcance:'propio',moneda:'USD',tipo:'INGRESO',fechaInicio:'2026-09-01',fechaFin:'2026-09-20'}))).toBe(true);
+    expect(c.filtroMoneda()).toBe('USD');expect(c.filtroTipo()).toBe('INGRESO');
+    expect(c.filtroCuentaId()).toBeNull();expect(c.filtroCategoriaId()).toBeNull();
+    c.limpiarFiltros();expect(c.soloPropios()).toBe(false);expect(c.filtroMoneda()).toBeNull();
+  });
   let fixture: ReturnType<typeof TestBed.createComponent<TransaccionesComponent>>;
   let finanzasService: {
     getCuentas: ReturnType<typeof vi.fn>;
