@@ -8,7 +8,7 @@ Validación local: backend `mvnw -B verify` con 478 pruebas correctas y 6 omitid
 
 El cambio funcional se publicó en el commit `c93e00a` de `mejoras/asistente-evidencias` y PR #97 permanece abierto como borrador. Todos los checks públicos del SHA completo `c93e00a6e083c35089ff5a85f3676f292b1c81f4` concluyeron correctamente: backend, PostgreSQL, frontend, E2E, WhatsApp Cloudflare, canales personales y Vercel Preview. Es un preview, no un merge ni un despliegue de producción. La Etapa 7 completa sigue abierta para sus comprobaciones funcionales restantes; Gmail continúa deshabilitado y Etapa 6 omitida.
 
-El propietario confirmó que las comprobaciones manuales del flujo de evidencia en la página del preview funcionaron. Falta que verifique las salidas añadidas después: restante del presupuesto y consulta de plantillas recurrentes. Esto no confirma un despliegue de producción ni completa por sí solo todas las consultas previstas para la Etapa 7. El PR permanece en borrador mientras se define su cierre.
+El propietario confirmó que funcionaron en la página del preview el flujo de evidencia, la salida del restante del presupuesto y las consultas de recurrencias. Este hito de consultas/evidencias está listo para revisión; no certifica despliegue de producción. Se intentó marcar #97 listo con `gh pr ready 97`, pero la CLI no está autenticada, por lo que sigue en borrador. Próximo: autenticar `gh` o marcarlo listo desde GitHub; integrar solo tras revisión/decisión del propietario.
 
 Continuación funcional: las respuestas de presupuesto informan lo gastado, límite, disponible y moneda para cada categoría; el disponible conserva signo cuando el gasto supera el límite. Prueba unitaria y suite backend completas pasan.
 

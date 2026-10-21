@@ -10,7 +10,7 @@ El cambio funcional se publicó en `c93e00a` y PR #97 permanece como borrador. T
 
 Validación local completa: `mvnw -B verify` con 478 pruebas correctas y 6 omitidas; 72 pruebas dirigidas para motor, contexto, acciones, presupuestos, listas y WhatsApp; 343 pruebas frontend y build de producción correctos. Repetir `git diff --check` tras la última actualización documental. No se consultaron ni alteraron datos financieros reales.
 
-El propietario revisó en la página del preview del PR #97 el flujo de consulta y evidencia y confirmó que funcionó. La validación es manual y corresponde al preview; no se afirma despliegue en producción. Los cambios posteriores que muestran disponible del presupuesto y detalles de recurrencias aún requieren revisión manual.
+El propietario confirmó que funcionaron en la página del preview del PR #97 el flujo de consulta/evidencia, el disponible de presupuesto y las consultas de recurrencias. Es validación manual del preview, no de producción.
 
 La consulta de presupuestos muestra ahora por categoría el monto gastado, el límite y el disponible con su moneda. Usa el monto disponible calculado por `PresupuestoService` y conserva su precisión/signo, incluido saldo negativo por exceso. La prueba de `AiActionService` verifica su inclusión junto con la evidencia de movimientos de alcance coincidente. Commit `0b495ee`; CI completo del SHA publicado en verde y suite backend local completa (480 pruebas, 6 omitidas en el árbol actual).
 
@@ -48,8 +48,8 @@ Consultar el resultado final y el número de pruebas en `ESTADO_SESION.md`. Las 
 
 ## Lo que sigue para completar la etapa
 
-1. Completar las consultas y casos funcionales restantes de la Etapa 7 y acordar el cierre del PR #97, que permanece en borrador. Presupuestos y plantillas recurrentes ya muestran alcance y valores pertinentes.
-2. Validar en producción solo cuando exista autorización para integrar y desplegar; el CI y el flujo revisado por el propietario corresponden al preview, no a producción.
+1. El bloque de consultas y evidencias quedó listo para revisión. `gh pr ready 97` falló porque GitHub CLI no está autenticada y el PR #97 sigue en borrador. Autenticar la CLI o marcarlo listo desde la página de GitHub.
+2. Integrar/desplegar solo después de revisión y autorización; el CI y la validación manual corresponden al preview, no a producción.
 
 El asistente completo todavía no está terminado. Esta primera entrega no está desplegada. No activar correo ni conciliación como dependencias de estas tareas.
 
