@@ -1,5 +1,16 @@
 # Kaptal: plan maestro y traspaso al siguiente chat
 
+## Prioridad vigente: Etapa 11 (2026-10-21)
+
+Orden autorizado: **11 -> base Android con Capacitor y APK firmado descargable -> 10 sin Gmail -> 12 -> 13 -> revision final**. Etapa 9 completada provisionalmente por el propietario; sus pruebas fisicas pendientes se revisan al final, sin certificarlas ahora. APK directo, sin Play Store; widgets y ajustes rapidos requieren componentes Android. Gmail excluido. Comercializacion opcional.
+
+Rama nueva `mejoras/compartido-divisas-metas` desde `origin/develop` actualizado `6775c1e`. PR #101 de Etapa 9 permanece separado; no se incorpora ni se hace merge. Primera entrega de Etapa 11: cambio de rol editor/lector por el propietario, manteniendo movimientos y saldos. Detalles y pendientes en [COMPARTIDO_DIVISAS_METAS_ETAPA_11.md](COMPARTIDO_DIVISAS_METAS_ETAPA_11.md). Etapa 11 sigue en curso: faltan repartos/partes, trazabilidad de divisas y metas.
+
+Validacion de la primera entrega: backend verify 489 correctas y 6 omitidas; frontend 366 correctas; build y E2E movil de listas/roles correctos. Corregida la actualizacion de participantes tras union desde otra sesion. H2/datos sinteticos; PostgreSQL y CI pendientes. Sin merge ni despliegue.
+
+Los apartados siguientes son el historial anterior; prevalece este orden.
+
+
 Publicación de Etapa 8: [PR #99 hacia develop](https://github.com/YaxcheItz/gestorfinanzas/pull/99), rama subida y abierta para revisión; implementación `2e5b13a`. CI en curso al publicar. Sin merge ni despliegue de producción. Seguir pendientes manuales del informe antes de cerrar la etapa.
 
 Entrega para PR a develop (2026-10-21), autorizada por el propietario: auditoría/tarjetas/calendario y regresiones de recurrencias. 366 frontend completas; backend verify 485 correctas + 6 omitidas; build/dependencias correctos. 22 escenarios E2E distintos entre la regresión de 20 y el conjunto final de 5 (3 repetidos). Cuentas usa día civil México. Ver [cierre técnico y pendientes](AUDITORIA_ETAPA_8.md). Publicar no cierra Android físico/producción autenticada ni autoriza merge. Etapa 9 después de cerrar Etapa 8; Gmail deshabilitado.

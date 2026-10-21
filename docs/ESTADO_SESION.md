@@ -1,5 +1,16 @@
 # Estado para retomar la sesión
 
+## Prioridad vigente: Etapa 11 (2026-10-21)
+
+Orden autorizado: **11 -> base Android con Capacitor y APK firmado descargable -> 10 sin Gmail -> 12 -> 13 -> revision final**. Etapa 9 completada provisionalmente por el propietario; sus pruebas fisicas pendientes se revisan al final, sin certificarlas ahora. APK directo, sin Play Store; widgets y ajustes rapidos requieren componentes Android. Gmail excluido. Comercializacion opcional.
+
+Rama nueva `mejoras/compartido-divisas-metas` desde `origin/develop` actualizado `6775c1e`. PR #101 de Etapa 9 permanece separado; no se incorpora ni se hace merge. Primera entrega de Etapa 11: cambio de rol editor/lector por el propietario, manteniendo movimientos y saldos. Detalles y pendientes en [COMPARTIDO_DIVISAS_METAS_ETAPA_11.md](COMPARTIDO_DIVISAS_METAS_ETAPA_11.md). Etapa 11 sigue en curso: faltan repartos/partes, trazabilidad de divisas y metas.
+
+Validacion de la primera entrega: backend verify 489 correctas y 6 omitidas; frontend 366 correctas; build y E2E movil de listas/roles correctos. Corregida la actualizacion de participantes tras union desde otra sesion. H2/datos sinteticos; PostgreSQL y CI pendientes. Sin merge ni despliegue.
+
+Los apartados siguientes son el historial anterior; prevalece este orden.
+
+
 Publicación vigente 2026-10-21: [PR #99](https://github.com/YaxcheItz/gestorfinanzas/pull/99) abierto, listo para revisión, de `auditoria/etapa-8-funcional-visual` hacia `develop`; commit de implementación `2e5b13a`. Rama subida, sin merge ni despliegue de producción. CI de la publicación en curso; revalidar su resultado antes de integrar. Continuar Etapa 8 con los pendientes del informe; Etapa 9 después.
 
 ## Etapa 8: entrega para PR hacia develop (2026-10-21)
