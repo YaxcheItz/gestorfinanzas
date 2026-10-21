@@ -8,11 +8,11 @@ Validación local: backend `mvnw -B verify` con 478 pruebas correctas y 6 omitid
 
 El cambio funcional se publicó en el commit `c93e00a` de `mejoras/asistente-evidencias` y PR #97 permanece abierto como borrador. Todos los checks públicos del SHA completo `c93e00a6e083c35089ff5a85f3676f292b1c81f4` concluyeron correctamente: backend, PostgreSQL, frontend, E2E, WhatsApp Cloudflare, canales personales y Vercel Preview. Es un preview, no un merge ni un despliegue de producción. La Etapa 7 completa sigue abierta para sus comprobaciones funcionales restantes; Gmail continúa deshabilitado y Etapa 6 omitida.
 
-El propietario confirmó que las comprobaciones manuales del flujo de evidencia en la página del preview funcionaron. Esto cierra esa revisión del flujo, pero no confirma el despliegue de producción ni completa por sí solo todas las consultas previstas para la Etapa 7. El PR permanece en borrador mientras se define su cierre.
+El propietario confirmó que las comprobaciones manuales del flujo de evidencia en la página del preview funcionaron. Falta que verifique las salidas añadidas después: restante del presupuesto y consulta de plantillas recurrentes. Esto no confirma un despliegue de producción ni completa por sí solo todas las consultas previstas para la Etapa 7. El PR permanece en borrador mientras se define su cierre.
 
 Continuación funcional: las respuestas de presupuesto informan lo gastado, límite, disponible y moneda para cada categoría; el disponible conserva signo cuando el gasto supera el límite. Prueba unitaria y suite backend completas pasan.
 
-La mejora de presupuesto se publicó en `0b495ee`; su CI (backend, PostgreSQL, frontend, E2E, WhatsApp Cloudflare, canales personales y Vercel Preview) está verde. No es una integración ni un despliegue de producción.
+La mejora de presupuesto se publicó en `0b495ee`; su CI (backend, PostgreSQL, frontend, E2E, WhatsApp Cloudflare, canales personales y Vercel Preview) está verde. No es una integración ni un despliegue de producción. Las modificaciones posteriores de recurrencia están en `c88f7f2`; el SHA documental actual `d8b290b` también pasó los checks.
 
 También se completó la consulta de recurrencias: distingue gastos, ingresos y plantillas genéricas; informa tipo, cuenta, categoría, importe, moneda, frecuencia y fecha siguiente. La frase del usuario determina el tipo filtrado y el asistente aclara que una plantilla no es un movimiento ejecutado. Las consultas de saldo y recurrencias por lista siguen rechazadas porque ese alcance no aplica. Se publicó en `c88f7f2`; la suite backend completa pasó (480 pruebas, 6 omitidas) y todos los checks remotos del SHA quedaron verdes.
 
