@@ -10,6 +10,8 @@ El cambio funcional se publicó en `c93e00a` y PR #97 permanece como borrador. T
 
 Validación local completa: `mvnw -B verify` con 478 pruebas correctas y 6 omitidas; 72 pruebas dirigidas para motor, contexto, acciones, presupuestos, listas y WhatsApp; 343 pruebas frontend y build de producción correctos. Repetir `git diff --check` tras la última actualización documental. No se consultaron ni alteraron datos financieros reales.
 
+El propietario revisó en la página del preview del PR #97 el flujo de consulta y evidencia y confirmó que funcionó. La validación es manual y corresponde al preview; no se afirma despliegue en producción ni se extiende a escenarios que no se revisaron.
+
 ## Alcance vigente
 
 Publicado en GitHub para revisión mediante [PR #97](https://github.com/YaxcheItz/gestorfinanzas/pull/97), hacia `develop`. Publicar la rama no despliega el cambio ni sustituye comprobar CI.
@@ -42,8 +44,8 @@ Consultar el resultado final y el número de pruebas en `ESTADO_SESION.md`. Las 
 
 ## Lo que sigue para completar la etapa
 
-1. Mantener el PR #97 en borrador mientras se completan las comprobaciones funcionales pendientes de la Etapa 7.
-2. Antes de cerrar la etapa, validar los flujos relevantes en el despliegue servido y actualizar esta evidencia con el resultado; el CI/preview de `c93e00a` ya pasó.
+1. Completar las consultas y casos funcionales restantes de la Etapa 7 y acordar el cierre del PR #97, que permanece en borrador.
+2. Validar en producción solo cuando exista autorización para integrar y desplegar; el CI y el flujo revisado por el propietario corresponden al preview, no a producción.
 
 El asistente completo todavía no está terminado. Esta primera entrega no está desplegada. No activar correo ni conciliación como dependencias de estas tareas.
 
