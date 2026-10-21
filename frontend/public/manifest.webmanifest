@@ -21,6 +21,13 @@
       "description": "Abrir Kaptal para registrar un ingreso",
       "url": "./dashboard?accion=nuevo-ingreso",
       "icons": [{ "src": "icons/kaptal-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Escribir o dictar",
+      "short_name": "Dictar",
+      "description": "Abrir el chat; tú decides cuándo activar el micrófono",
+      "url": "./dashboard?accion=dictar",
+      "icons": [{ "src": "icons/kaptal-192.png", "sizes": "192x192" }]
     }
   ],
   "icons": [

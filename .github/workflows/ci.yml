@@ -215,3 +215,23 @@ jobs:
           name: e2e-failures
           path: frontend/test-results/
           retention-days: 7
+
+      - name: PWA de producción con service worker real
+        id: pwa
+        working-directory: frontend
+        env:
+          E2E_DATABASE_URL: jdbc:postgresql://127.0.0.1:5432/kaptal_ci_e2e
+          E2E_DATABASE_USERNAME: kaptal_test
+          E2E_DATABASE_PASSWORD: prueba-ci-aislada
+          E2E_FRONTEND_PORT: '14209'
+          ABUSE_LIMIT_STORE: postgres
+        run: |
+          npm run build
+          npx playwright test -c playwright.pwa.config.ts
+      - name: Evidencia PWA
+        uses: actions/upload-artifact@v4
+        if: failure() && steps.pwa.conclusion == 'failure'
+        with:
+          name: pwa-failures
+          path: frontend/test-results/
+          retention-days: 7

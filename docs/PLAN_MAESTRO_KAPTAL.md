@@ -1,6 +1,14 @@
 # Kaptal: plan maestro y traspaso al siguiente chat
 
-Publicación de Etapa 8: [PR #99 hacia develop](https://github.com/YaxcheItz/gestorfinanzas/pull/99), rama subida y abierta para revisión; implementación `2e5b13a`. CI en curso al publicar. Sin merge ni despliegue de producción. Seguir pendientes manuales del informe antes de cerrar la etapa.
+## Prioridad vigente: Etapa 9 Android/captura (2026-10-21)
+
+Rama `mejoras/android-captura` publicada tras recuperar conexión. [PR #101 hacia develop](https://github.com/YaxcheItz/gestorfinanzas/pull/101) abierto como borrador; CI remoto pendiente de resultado. Sin merge ni despliegue de producción. Ampliación verificada: 381 unitarias frontend y tres E2E PWA; permisos sin solicitud automática y denegación segura. Reapertura offline con token vencido exige login y conserva la captura; con conexión renueva usando cookie real.
+
+PR #99 integrado en develop `6775c1e` y PR #100 en main `d39d899`, confirmados por fetch. El propietario autoriza avanzar; las comprobaciones físicas/manuales pendientes de Etapa 8 se conservan sin declararlas resueltas. Rama nueva `mejoras/android-captura` en la carpeta principal desde develop actualizado; notas duplicadas de la raíz resguardadas y retiradas.
+
+Primer incremento: accesos PWA gasto/ingreso/dictado que sobreviven al login y se consumen al abrir, sin destinos externos ni micrófono automático. Prueba del service worker real con reapertura offline y sincronización única. 378 unitarias frontend, 12 E2E de regresión y 1 E2E PWA correctas; build correcto. CI ampliado para la PWA de producción. Alcance y criterios pendientes en [ANDROID_CAPTURA_ETAPA_9.md](ANDROID_CAPTURA_ETAPA_9.md). No cerrar Etapa 9 sin comprobar Android físico, sesión larga y preferencias/recordatorios propios. Después corresponde Etapa 11; Gmail/Etapa 6 siguen fuera.
+
+Histórico de Etapa 8: [PR #99](https://github.com/YaxcheItz/gestorfinanzas/pull/99) ya integrado por el propietario. Seguir pendientes manuales del informe; los apartados siguientes registran sesiones anteriores.
 
 Entrega para PR a develop (2026-10-21), autorizada por el propietario: auditoría/tarjetas/calendario y regresiones de recurrencias. 366 frontend completas; backend verify 485 correctas + 6 omitidas; build/dependencias correctos. 22 escenarios E2E distintos entre la regresión de 20 y el conjunto final de 5 (3 repetidos). Cuentas usa día civil México. Ver [cierre técnico y pendientes](AUDITORIA_ETAPA_8.md). Publicar no cierra Android físico/producción autenticada ni autoriza merge. Etapa 9 después de cerrar Etapa 8; Gmail deshabilitado.
 

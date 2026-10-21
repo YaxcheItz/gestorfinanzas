@@ -33,4 +33,19 @@ describe('LoginComponent envío', () => {
     expect(component.loading()).toBe(false);
     expect(navigate).not.toHaveBeenCalled();
   });
+
+  for (const metodo of ['password','google']) {
+    for (const captura of ['nuevo-gasto','nuevo-ingreso','dictar','https://otro.example']) {
+      it(`continúa ${captura} después del acceso ${metodo} sin admitir destinos externos`, () => {
+        TestBed.overrideProvider(ActivatedRoute,{useValue:{queryParams:of({captura})}});
+        const respuesta=vi.fn(()=>of({success:true,data:{id:1}}));
+        TestBed.overrideProvider(AuthService,{useValue:{isAuthenticated:()=>false,login:respuesta,loginWithGoogle:respuesta}});
+        const component=TestBed.createComponent(LoginComponent).componentInstance;
+        component.email='ana@example.test';component.password='Password123';
+        if(metodo==='google')component.iniciarConGoogle('credencial-sintetica');else component.onSubmit();
+        expect(navigate).toHaveBeenCalledWith(['/dashboard'], captura.startsWith('https')
+          ? {replaceUrl:true} : {replaceUrl:true,queryParams:{accion:captura}});
+      });
+    }
+  }
 });

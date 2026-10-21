@@ -20,7 +20,8 @@ import { CommonModule, DOCUMENT } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subscription } from 'rxjs';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { accionCaptura, AccionCaptura } from '../../core/utils/accion-captura';
 import { AuthService } from '../../core/services/auth.service';
 import { CategoriaPreferidaService } from '../../core/services/categoria-preferida.service';
 import { FinanzasService } from '../../core/services/finanzas.service';
@@ -155,7 +156,8 @@ export class DashboardComponent implements OnInit {
   });
   readonly resumenCuentaSelector = (cuenta: Cuenta) => resumenCuentaSelector(cuenta, this.privacidad.ocultarMontos());
   private monedaPreferidaAplicada = false;
-  private accionRapidaPendiente: TipoTransaccion | null = null;
+  private accionRapidaPendiente: AccionCaptura | null = null;
+  private readonly route = inject(ActivatedRoute);
   private cuentasCargadasParaAccionRapida = false;
   private categoriasCargadasParaAccionRapida = false;
   private elementoConFocoPrevio: HTMLElement | null = null;
@@ -524,9 +526,10 @@ export class DashboardComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    const accion = this.router.parseUrl(this.router.url).queryParams['accion'];
-    if (accion === 'nuevo-gasto') this.accionRapidaPendiente = 'GASTO';
-    if (accion === 'nuevo-ingreso') this.accionRapidaPendiente = 'INGRESO';
+    this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
+      this.accionRapidaPendiente = accionCaptura(params['accion']);
+      this.abrirAccionRapidaCuandoListo();
+    });
     this.cargarDashboard();
     this.cargarCuentasYCategorias();
   }
@@ -535,9 +538,14 @@ export class DashboardComponent implements OnInit {
     if (!this.accionRapidaPendiente
       || !this.cuentasCargadasParaAccionRapida
       || !this.categoriasCargadasParaAccionRapida) return;
-    const tipo = this.accionRapidaPendiente;
+    const accion = this.accionRapidaPendiente;
     this.accionRapidaPendiente = null;
-    this.abrirChatRegistro(tipo);
+    void this.router.navigate([], { relativeTo:this.route, queryParams:{accion:null}, queryParamsHandling:'merge', replaceUrl:true });
+    if (accion === 'dictar') {
+      window.dispatchEvent(new CustomEvent('kaptal-abrir-captura-chat'));
+    } else {
+      this.abrirChatRegistro(accion === 'nuevo-ingreso' ? 'INGRESO' : 'GASTO');
+    }
   }
 
   abrirChatRegistro(tipo?: TipoTransaccion): void {

@@ -21,4 +21,4 @@ http.createServer((request,response)=>{
   const resolved=fs.existsSync(file)&&fs.statSync(file).isFile()?file:path.join(root,'index.html');
   response.writeHead(200,{'Content-Type':mime[path.extname(resolved)]??'application/octet-stream','Cache-Control':'no-store'});
   fs.createReadStream(resolved).pipe(response);
-}).listen(14200,'localhost');
+}).listen(Number(process.env.E2E_FRONTEND_PORT ?? '14200'),'localhost');
