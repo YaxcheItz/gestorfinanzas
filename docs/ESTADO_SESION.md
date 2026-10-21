@@ -1,5 +1,7 @@
 # Estado para retomar la sesión
 
+Publicación vigente 2026-10-21: [PR #99](https://github.com/YaxcheItz/gestorfinanzas/pull/99) abierto, listo para revisión, de `auditoria/etapa-8-funcional-visual` hacia `develop`; commit de implementación `2e5b13a`. Rama subida, sin merge ni despliegue de producción. CI de la publicación en curso; revalidar su resultado antes de integrar. Continuar Etapa 8 con los pendientes del informe; Etapa 9 después.
+
 ## Etapa 8: entrega para PR hacia develop (2026-10-21)
 
 - Autorizado subir la rama y abrir PR a develop; sin merge ni despliegue de producción. Rama `auditoria/etapa-8-funcional-visual`, worktree `.local/asistente-worktree`, desde develop `a8ae7f3` revalidado contra remoto.

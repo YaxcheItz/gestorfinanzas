@@ -1,5 +1,7 @@
 # Kaptal: plan maestro y traspaso al siguiente chat
 
+Publicación de Etapa 8: [PR #99 hacia develop](https://github.com/YaxcheItz/gestorfinanzas/pull/99), rama subida y abierta para revisión; implementación `2e5b13a`. CI en curso al publicar. Sin merge ni despliegue de producción. Seguir pendientes manuales del informe antes de cerrar la etapa.
+
 Entrega para PR a develop (2026-10-21), autorizada por el propietario: auditoría/tarjetas/calendario y regresiones de recurrencias. 366 frontend completas; backend verify 485 correctas + 6 omitidas; build/dependencias correctos. 22 escenarios E2E distintos entre la regresión de 20 y el conjunto final de 5 (3 repetidos). Cuentas usa día civil México. Ver [cierre técnico y pendientes](AUDITORIA_ETAPA_8.md). Publicar no cierra Android físico/producción autenticada ni autoriza merge. Etapa 9 después de cerrar Etapa 8; Gmail deshabilitado.
 
 Fuentes y alcance: [TARJETAS_CALENDARIO_MX.md](TARJETAS_CALENDARIO_MX.md).

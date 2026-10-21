@@ -1,5 +1,7 @@
 # Auditoría funcional y visual: Etapa 8
 
+Publicación: [PR #99](https://github.com/YaxcheItz/gestorfinanzas/pull/99) abierto hacia develop desde `auditoria/etapa-8-funcional-visual`, implementación `2e5b13a`. Listo para revisión, sin integrar ni desplegar producción; CI en curso al publicar. Los cortes siguientes conservan su estado histórico local y no sustituyen esta actualización.
+
 ## Cierre técnico para PR hacia develop (2026-10-21)
 
 El propietario autorizó publicar la rama y abrir PR hacia `develop`; no autorizó integrar ni desplegar producción. Se conserva la auditoría como etapa abierta hasta resolver las comprobaciones manuales restantes.
