@@ -80,7 +80,10 @@ public final class MotorChatReglas {
         for (CuentaResponse c:cuentasEntrada) textoMoneda=textoMoneda.replaceAll("(?<![\\p{L}\\d])"+Pattern.quote(normalizar(c.nombre()))+"(?![\\p{L}\\d])"," ");
         String moneda=moneda(textoMoneda);
         boolean comparacionMensual=texto.matches(".*\\b(?:compara|comparame|comparar) (?:este mes|el mes actual) (?:con|contra) (?:el mes pasado|el mes anterior|el anterior)\\b.*");
-        boolean consulta=texto.matches(".*\\b(reporte|reportes|resumen|grafico|grafica|categorias|categoria|presupuesto|presupuestos|saldo|balance|cuanto|cuanta|cuantos|cuantas|como voy|en que|top|alertas|gastos fijos|gastos|ingresos|compara|comparame|comparar)\\b.*");
+        boolean consultaRecurrente=texto.matches(".*\\b(recurrentes?|plantillas?|fijos?)\\b.*")
+                && !MONTO.matcher(FECHA.matcher(texto).replaceAll(" ")).find();
+        boolean consulta=texto.matches(".*\\b(reporte|reportes|resumen|grafico|grafica|categorias|categoria|presupuesto|presupuestos|saldo|balance|cuanto|cuanta|cuantos|cuantas|como voy|en que|top|alertas|gastos fijos|gastos|ingresos|compara|comparame|comparar)\\b.*")
+                || consultaRecurrente;
         if (consulta) {
             long cantidadFechas=FECHA.matcher(texto).results().count();
             boolean rangoExplicito=RANGO.matcher(texto).find()&&cantidadFechas==2;
@@ -121,7 +124,13 @@ public final class MotorChatReglas {
                         listaSeleccionada==null?null:listaSeleccionada.id(),
                         listaSeleccionada==null?null:listaSeleccionada.nombre());
             }
-            String modo=texto.matches(".*\\b(presupuesto|presupuestos|alertas)\\b.*") ? "PRESUPUESTOS" : texto.contains("gastos fijos") ? "RECURRENTES" : texto.matches(".*\\b(saldo|balance|cuanto tengo)\\b.*") ? "SALDO" : texto.matches(".*\\b(categoria|categorias|top|en que)\\b.*") ? "CATEGORIAS" : "RESUMEN";
+            boolean consultaPlantillas=consultaRecurrente||texto.contains("gastos fijos");
+            String modo=texto.matches(".*\\b(presupuesto|presupuestos|alertas)\\b.*") ? "PRESUPUESTOS"
+                    : consultaPlantillas&&texto.matches(".*\\b(gastos?|pagos?)\\s+(fijos?|recurrentes?)\\b.*") ? "RECURRENTES_GASTO"
+                    : consultaPlantillas&&texto.matches(".*\\b(ingresos?|entradas?)\\s+recurrentes?\\b.*") ? "RECURRENTES_INGRESO"
+                    : consultaPlantillas ? "RECURRENTES"
+                    : texto.matches(".*\\b(saldo|balance|cuanto tengo)\\b.*") ? "SALDO"
+                    : texto.matches(".*\\b(categoria|categorias|top|en que)\\b.*") ? "CATEGORIAS" : "RESUMEN";
             return new Resultado(null,null,List.of(),null,modo,periodo.desde(),periodo.hasta(),moneda,
                     cuentasCoincidentes.isEmpty()?null:cuentasCoincidentes.get(0).id(),
                     categoriasCoincidentes.isEmpty()?null:categoriasCoincidentes.get(0).id(),

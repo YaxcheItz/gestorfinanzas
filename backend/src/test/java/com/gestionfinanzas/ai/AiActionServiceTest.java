@@ -177,4 +177,28 @@ class AiActionServiceTest {
         assertTrue(response.answer().contains("disponible 380 MXN"));
         verify(contextService).reporteLocal(7L,"CATEGORIAS",desde,hasta,"MXN",null,8L,null,"Comida",79L,"Vacaciones");
     }
+
+    @Test
+    void gastoFijoListaSoloPlantillasDeGastoYExplicaCuentaFrecuenciaYFecha() {
+        when(plantillaService.listar(7L)).thenReturn(List.of(
+                new com.gestionfinanzas.dto.response.PlantillaRecurrenteResponse(1L,2L,"Nu",8L,"Comida",
+                        com.gestionfinanzas.model.enums.TipoTransaccion.GASTO,new java.math.BigDecimal("500"),"MXN",
+                        null,com.gestionfinanzas.model.enums.FrecuenciaRecurrencia.MENSUAL,
+                        java.time.LocalDate.of(2026,11,5),true),
+                new com.gestionfinanzas.dto.response.PlantillaRecurrenteResponse(2L,2L,"Nu",9L,"Sueldo",
+                        com.gestionfinanzas.model.enums.TipoTransaccion.INGRESO,new java.math.BigDecimal("15000"),"MXN",
+                        null,com.gestionfinanzas.model.enums.FrecuenciaRecurrencia.MENSUAL,
+                        java.time.LocalDate.of(2026,11,1),true)));
+        var reglas=new MotorChatReglas.Resultado(null,null,List.of(),null,"RECURRENTES_GASTO",
+                java.time.LocalDate.of(2026,10,1),java.time.LocalDate.of(2026,10,20),"MXN",
+                2L,8L,"Nu","Comida");
+
+        var response=service.resolverReporteLocal(7L,reglas);
+
+        assertTrue(response.answer().contains("Nu"));
+        assertTrue(response.answer().contains("mensual"));
+        assertTrue(response.answer().contains("2026-11-05"));
+        assertTrue(!response.answer().contains("Sueldo"));
+        assertTrue(response.answer().contains("no son movimientos ya ejecutados"));
+    }
 }

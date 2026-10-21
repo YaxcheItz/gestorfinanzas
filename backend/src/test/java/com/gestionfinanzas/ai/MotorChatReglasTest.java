@@ -31,6 +31,7 @@ class MotorChatReglasTest {
  @Test void variosImportesNoSeSuman(){assertNull(interpretar("Gaste 50 en tacos y 20 en cafe"));}
  @Test void reporteEsLocalConPeriodo(){var r=interpretar("Reporte de hoy");assertEquals("RESUMEN",r.reporte());assertEquals(hoy,r.desde());assertEquals(hoy,r.hasta());}
  @Test void categoriasYMonedaSeReconocen(){var r=interpretar("Top categor\u00edas de este mes USD");assertEquals("CATEGORIAS",r.reporte());assertEquals("USD",r.moneda());assertEquals(hoy.withDayOfMonth(1),r.desde());}
+ @Test void reconoceConsultasDeGastosEIngresosRecurrentes(){assertEquals("RECURRENTES_GASTO",interpretar("Muéstrame mi gasto fijo").reporte());assertEquals("RECURRENTES_GASTO",interpretar("Muéstrame mis gastos fijos").reporte());assertEquals("RECURRENTES_INGRESO",interpretar("Ingresos recurrentes").reporte());assertEquals("RECURRENTES",interpretar("Muéstrame mis movimientos recurrentes").reporte());assertEquals("GASTO",interpretar("Gasté 80 en pizza recurrente").datos().get("tipo"));}
  @Test void complejoSeDelegaSinInventarRespuesta(){assertNull(interpretar("Compara mi reporte con el a\u00f1o pasado"));}
  @Test void cuentaDesconocidaPideAclaracion(){assertNull(interpretar("Gaste 50 usando Banorte").datos());}
  @Test void abreviaturaConCategoriaFunciona(){assertEquals("GASTO",interpretar("tacos 80").datos().get("tipo"));}

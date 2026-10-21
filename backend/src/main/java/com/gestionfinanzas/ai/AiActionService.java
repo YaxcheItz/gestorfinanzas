@@ -244,17 +244,30 @@ public class AiActionService {
                         +(evidencia.isEmpty()?"\nNo hay movimientos navegables dentro del mismo alcance del presupuesto.":""),
                         null,List.of(),null,List.of(),null,evidencia);
             }
-            if ("RECURRENTES".equals(reglas.reporte())) {
+            if (reglas.reporte()!=null && reglas.reporte().startsWith("RECURRENTES")) {
                 if(reglas.listaId()!=null) return new AiActionResult("Las plantillas recurrentes se filtran por cuenta o categoría, no por lista. Repite la consulta sin el filtro de lista.",null);
+                TipoTransaccion tipoRecurrente="RECURRENTES_GASTO".equals(reglas.reporte())?TipoTransaccion.GASTO
+                        :"RECURRENTES_INGRESO".equals(reglas.reporte())?TipoTransaccion.INGRESO:null;
                 String texto = plantillaService.listar(userId).stream().filter(p -> p.activa()
+                                && (tipoRecurrente==null || tipoRecurrente==p.tipo())
                                 && (reglas.moneda()==null || reglas.moneda().equals(p.moneda()))
                                 && (reglas.cuentaId()==null || reglas.cuentaId().equals(p.cuentaId()))
                                 && (reglas.categoriaId()==null || reglas.categoriaId().equals(p.categoriaId())))
-                        .map(p -> p.categoriaNombre()+": "+p.monto()+" "+p.moneda()+"; pr\u00f3ximo: "+p.siguienteFecha())
+                        .map(p -> {
+                            String tipo=p.tipo()==TipoTransaccion.GASTO?"Gasto":p.tipo()==TipoTransaccion.INGRESO?"Ingreso":"Movimiento";
+                            String frecuencia=p.frecuencia()==null?"no especificada":switch(p.frecuencia()) {
+                                case SEMANAL -> "semanal";
+                                case QUINCENAL -> "quincenal";
+                                case MENSUAL -> "mensual";
+                                case ANUAL -> "anual";
+                            };
+                            return tipo+" · "+p.cuentaNombre()+" · "+(p.categoriaNombre()==null?"Sin categoría":p.categoriaNombre())
+                                    +": "+p.monto()+" "+p.moneda()+"; frecuencia "+frecuencia+"; próximo: "+p.siguienteFecha();
+                        })
                         .collect(java.util.stream.Collectors.joining("\n"));
                 String alcance=(reglas.cuentaNombre()==null?"":" · Cuenta: "+reglas.cuentaNombre())
                         +(reglas.categoriaNombre()==null?"":" · Categoría: "+reglas.categoriaNombre());
-                return new AiActionResult((texto.isBlank()?"No hay movimientos recurrentes activos.":"Plantillas recurrentes (no son movimientos ya ejecutados):\n"+texto)+alcance, null);
+                return new AiActionResult((texto.isBlank()?"No hay plantillas recurrentes activas.":"Plantillas recurrentes (no son movimientos ya ejecutados):\n"+texto)+alcance, null);
             }
             if("SALDO".equals(reglas.reporte()) && reglas.categoriaId()!=null)
                 return new AiActionResult("El saldo no se filtra por categoría. Indica una cuenta o moneda, o pide un reporte de gastos por categoría.",null);

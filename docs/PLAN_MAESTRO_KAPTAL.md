@@ -14,6 +14,8 @@ Continuación funcional: las respuestas de presupuesto informan lo gastado, lím
 
 La mejora de presupuesto se publicó en `0b495ee`; su CI (backend, PostgreSQL, frontend, E2E, WhatsApp Cloudflare, canales personales y Vercel Preview) está verde. No es una integración ni un despliegue de producción.
 
+También se completó localmente la consulta de recurrencias: distingue gastos, ingresos y plantillas genéricas; informa tipo, cuenta, categoría, importe, moneda, frecuencia y fecha siguiente. La frase del usuario determina el tipo filtrado y el asistente aclara que una plantilla no es un movimiento ejecutado. Las consultas de saldo y recurrencias por lista siguen rechazadas porque ese alcance no aplica. La suite backend completa pasó (480 pruebas, 6 omitidas); queda publicar este ajuste y verificar CI.
+
 ## Prioridad vigente: solo WhatsApp y asistente (2026-10-20)
 
 Archivo solicitado posteriormente: el borrador Gmail se conserva mediante commit LOCAL en `mejoras/gmail-bancario-piloto`, sin subirlo ni integrarlo. El checkout principal queda sin cambios pendientes; el trabajo activo del asistente continúa en su worktree y PR #97. Secretos y artefactos quedan fuera de Git; no reactivar Gmail al retomar este archivo.
