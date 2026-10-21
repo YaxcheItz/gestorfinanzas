@@ -1,28 +1,26 @@
 # Asistente financiero con evidencias
 
-## Avance local del 21 de octubre de 2026
+## Etapa 7 integrada y desplegada (2026-10-20)
 
-Se añadieron filtros de consulta por lista activa y accesible al usuario, preservados por la evidencia y por la navegación del historial/CSV mediante `listaId` y `autorId`. El parser pide aclaración para una lista desconocida o ambigua y omite listas archivadas. Los agregados de listas se autorizan antes de consultar y cuentan únicamente movimientos del usuario propietario.
+Las consultas por lista usan listas activas accesibles al usuario, validan autorización antes de agregar y preservan `listaId`/`autorId` en la evidencia y en la navegación al historial/CSV. El parser pide aclaración ante una lista desconocida o ambigua y excluye listas archivadas. La evidencia de presupuesto conserva el mismo periodo, categoría, moneda, lista y autor que el cálculo; no atribuye movimientos que no coinciden. Los filtros de lista no compatibles se rechazan explícitamente. Chat y WhatsApp comparten este alcance.
 
-La evidencia presupuestaria ahora usa el mismo mes, categoría, moneda, lista y autor que el cálculo de `montoGastado`. Si no hay movimientos en ese alcance, no se presenta evidencia como si coincidiera. Los filtros de lista para saldo y plantillas recurrentes se rechazan claramente. WhatsApp recibe las listas autorizadas y devuelve la misma evidencia que el chat. Se mantienen los filtros de cuenta/categoría/fechas inclusivas y “Sin categoría”.
+Presupuestos presentan gastado, límite, disponible y moneda. Las consultas de recurrencias distinguen gastos, ingresos y plantillas generales; muestran tipo, cuenta, categoría, importe/moneda, frecuencia y próxima fecha, y aclaran que una plantilla no es un movimiento ejecutado. Se mantienen filtros de cuenta/categoría/fechas y “Sin categoría”.
 
-El cambio funcional se publicó en `c93e00a` y PR #97 permanece como borrador. Todos los checks del SHA completo `c93e00a6e083c35089ff5a85f3676f292b1c81f4` concluyeron en success: backend, PostgreSQL, frontend, E2E Chromium/API, WhatsApp Cloudflare, canales personales y Vercel Preview. El preview no es un despliegue de producción ni un merge. El SHA remoto previo `c51a7b1` fallaba en revisión de dependencias frontend; la alineación Angular `21.2.25`/overrides pasa ahora el CI. Producción sin vulnerabilidades conocidas; cinco alertas conocidas únicamente en dependencias de desarrollo.
+PR #97 está integrado: `develop` en `a8ae7f33695a9cd84d6a3d4bddea339eaa459e18` y `main` en `f4b814e27de8a87a244d5cc5253e31a6fb1391bc`, con CI verde. Vercel Production y Render reportaron éxito; la web pública dio HTTP 200 y `/api/health` devolvió `UP`. Esto no sustituye una prueba autenticada completa de cada flujo en producción. El propietario confirmó los flujos en el preview.
 
-Validación local completa: `mvnw -B verify` con 478 pruebas correctas y 6 omitidas; 72 pruebas dirigidas para motor, contexto, acciones, presupuestos, listas y WhatsApp; 343 pruebas frontend y build de producción correctos. Repetir `git diff --check` tras la última actualización documental. No se consultaron ni alteraron datos financieros reales.
-
-El propietario confirmó que funcionaron en la página del preview del PR #97 el flujo de consulta/evidencia, el disponible de presupuesto y las consultas de recurrencias. Es validación manual del preview, no de producción.
+Validación local final reportada: backend 480 pruebas correctas y 6 omitidas; frontend 343; build de producción correcto. No se consultaron ni alteraron datos financieros reales. Próximo: recorrido autenticado manual en producción y luego auditoría funcional/visual de Etapa 8. Gmail permanece deshabilitado y Etapa 6 omitida.
 
 La consulta de presupuestos muestra ahora por categoría el monto gastado, el límite y el disponible con su moneda. Usa el monto disponible calculado por `PresupuestoService` y conserva su precisión/signo, incluido saldo negativo por exceso. La prueba de `AiActionService` verifica su inclusión junto con la evidencia de movimientos de alcance coincidente. Commit `0b495ee`; CI completo del SHA publicado en verde y suite backend local completa (480 pruebas, 6 omitidas en el árbol actual).
 
 Las consultas recurrentes entienden «gasto(s) fijo(s)», gastos/ingresos recurrentes y solicitudes genéricas de plantillas. Las solicitudes de gastos o ingresos limitan el resultado al tipo pedido; la consulta genérica incluye ambos tipos identificados. Cada fila muestra cuenta, categoría (o «Sin categoría»), importe, moneda, frecuencia y próxima fecha. La respuesta distingue plantillas futuras de movimientos ya ejecutados. La palabra «recurrente» en una captura con importe no la transforma en consulta. Suite backend completa: 480 pruebas correctas, 6 omitidas; 31 pruebas dirigidas de parser/acciones; revisión de código sin hallazgos. Commit `c88f7f2` y todos sus checks remotos (backend, PostgreSQL, frontend, E2E, WhatsApp Cloudflare, canales personales y Vercel Preview) en verde. SHA documental `d8b290b` también tiene CI completo en verde.
 
-## Alcance vigente
+## Alcance implementado
 
-Publicado en GitHub para revisión mediante [PR #97](https://github.com/YaxcheItz/gestorfinanzas/pull/97), hacia `develop`. Publicar la rama no despliega el cambio ni sustituye comprobar CI.
+El trabajo está publicado mediante [PR #97](https://github.com/YaxcheItz/gestorfinanzas/pull/97), ya integrado en `develop` y desplegado en producción. Falta el smoke test autenticado del propietario en producción.
 
 El propietario dejó WhatsApp como único canal externo y pidió omitir conciliación. Gmail está deshabilitado. El asistente reutiliza el chat de la aplicación, las consultas WhatsApp y los agregados financieros existentes; no crea otra contabilidad ni modifica saldos al consultar.
 
-Rama: `mejoras/asistente-evidencias`, worktree `.local/asistente-worktree`, desde `origin/develop` comprobado `211b457`. El borrador Gmail se conserva separado en el checkout principal.
+La implementación se encuentra en `develop`; la nueva auditoría empieza desde `origin/develop` actualizado en `auditoria/etapa-8-funcional-visual`. El borrador Gmail se conserva separado.
 
 ## Primera entrega: comparación mensual calculada
 
@@ -38,20 +36,17 @@ La respuesta calcula ingresos y gastos de los movimientos del usuario autenticad
 
 La misma ruta del motor se usa por el chat y las consultas WhatsApp. No hay un endpoint nuevo ni un cambio en el contrato público. No se crean propuestas, avisos ni movimientos al pedir esta comparación.
 
-## Comprobaciones
+## Comprobaciones históricas de la primera entrega
 
-Resultado del 20 de octubre: 76 pruebas relacionadas distintas correctas. Comando inicial: `mvnw.cmd -Dtest=MotorChatReglasTest,AiFinancialContextServiceTest,AiActionServiceTest,AiAssistantServiceTest,Whatsapp*Test test` (75 pruebas). Tras añadir la prueba HTTP de comparación se repitió `WhatsappConsultaIntegrationTest` (16 pruebas correctas, 15 ya incluidas y una nueva). `git diff --check` correcto. No se ejecutó la suite backend completa ni PostgreSQL en esta entrega; frontend sin cambios y funcionalidad todavía sin desplegar.
+Resultado del corte inicial del 20 de octubre: 76 pruebas relacionadas distintas correctas. Comando inicial: `mvnw.cmd -Dtest=MotorChatReglasTest,AiFinancialContextServiceTest,AiActionServiceTest,AiAssistantServiceTest,Whatsapp*Test test` (75 pruebas). Tras añadir la prueba HTTP de comparación se repitió `WhatsappConsultaIntegrationTest` (16 pruebas correctas, 15 ya incluidas y una nueva). En ese corte no se ejecutó la suite backend completa ni PostgreSQL; frontend sin cambios. La validación final y el estado de despliegue se resumen al inicio de este documento.
 
 Pruebas unitarias del reconocimiento y los filtros no soportados; diferencias decimales exactas, meses cortos, cruce de año, ausencia de datos y rechazo de rangos inválidos. Pruebas de regresión del asistente y WhatsApp. Prueba HTTP/persistencia con datos sintéticos para verificar que solo se incluyen operaciones propias, las transferencias se excluyen y no cambian los saldos ni las cantidades de movimientos/propuestas/avisos.
 
 Consultar el resultado final y el número de pruebas en `ESTADO_SESION.md`. Las pruebas de integración usan H2 y datos sintéticos; no son una prueba real del asistente desplegado.
 
-## Lo que sigue para completar la etapa
+## Continuidad
 
-1. El bloque de consultas y evidencias quedó listo para revisión. `gh pr ready 97` falló porque GitHub CLI no está autenticada y el PR #97 sigue en borrador. Autenticar la CLI o marcarlo listo desde la página de GitHub.
-2. Integrar/desplegar solo después de revisión y autorización; el CI y la validación manual corresponden al preview, no a producción.
-
-El asistente completo todavía no está terminado. Esta primera entrega no está desplegada. No activar correo ni conciliación como dependencias de estas tareas.
+La Etapa 7 está cerrada. Para la siguiente etapa, seguir el alcance de Etapa 8 en `PLAN_MAESTRO_KAPTAL.md`, comenzar con pruebas observables y reproducibles y no afirmar como validado en producción algo cubierto solo por preview o health. No activar correo ni conciliación como dependencias.
 
 ## Segunda entrega: evidencia de la comparación y acceso al historial
 

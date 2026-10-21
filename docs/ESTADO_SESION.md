@@ -1,23 +1,32 @@
 # Estado para retomar la sesión
 
-## Asistente financiero: filtros y evidencias de listas (2026-10-21)
+## Etapa 8: entrega para PR hacia develop (2026-10-21)
 
-- Worktree `.local/asistente-worktree`, rama `mejoras/asistente-evidencias`, desde `origin/develop` `211b457`. Al retomar ya existía el commit local `8db5edc` y cambios sin commit de esta entrega; no se modificó el checkout principal.
-- El parser admite listas accesibles no archivadas y pide aclaración para listas desconocidas/ambiguas. Consultas y comparaciones por lista pasan autorización antes de agregar y restringen los movimientos al propietario; la evidencia incluye lista y autor para enlazar el mismo subconjunto en historial y CSV.
-- Presupuestos generan evidencia por categoría/moneda/mes/lista únicamente cuando el historial coincide con el alcance calculado. Saldos y plantillas recurrentes rechazan explícitamente el filtro por lista, en lugar de ignorarlo. WhatsApp usa el mismo parser y entrega la evidencia autorizada.
-- Interfaz de asistente e historial conserva `listaId`, `autorId`, moneda, categoría, fechas y tipo; la evidencia “Sin categoría” filtra explícitamente `categoria IS NULL`. Los filtros incompatibles o desconocidos no se convierten en reportes globales.
-- Commit funcional `c93e00a` publicado en `mejoras/asistente-evidencias`; PR #97 continúa abierto como borrador hacia `develop`. La consulta pública de GitHub confirmó que todos los checks del SHA `c93e00a6e083c35089ff5a85f3676f292b1c81f4` terminaron en success: backend, PostgreSQL, frontend, E2E Chromium/API, WhatsApp Cloudflare, canales personales y Vercel Preview. Esto valida el preview; no es merge ni despliegue de producción.
-- El propietario confirmó que también funcionaron en la página del preview las salidas nuevas de restante de presupuesto y consultas de recurrencias. Es validación manual en preview; no implica despliegue de producción.
-- La respuesta de presupuestos ahora informa explícitamente lo disponible por categoría y moneda, además de gastado/límite/estado. El valor se presenta con la precisión calculada por presupuesto y conserva signo negativo cuando hay exceso; prueba unitaria de regresión añadida.
-- Las consultas de recurrencias distinguen gastos fijos/recurrentes, ingresos recurrentes y plantillas genéricas. Filtran por tipo cuando la frase lo determina y muestran tipo, cuenta, categoría, importe/moneda, frecuencia y próxima fecha; se explicita que son plantillas, no movimientos ejecutados. Un gasto con importe que menciona “recurrente” sigue siendo una captura, no un reporte.
-- Commit de esta mejora `0b495ee` en la rama del PR #97. El CI de su SHA completo `0b495ee1f280fa6393f35bbb41c8865cc183edfa` terminó verde para backend, PostgreSQL, frontend, E2E, WhatsApp Cloudflare, canales personales y Vercel Preview.
-- Verificación local posterior a los cambios: backend `mvnw -B verify` correcto (480 pruebas, 6 omitidas); 31 pruebas dirigidas para parser/acciones; frontend (343 pruebas), build de producción y `git diff --check` correctos. Revisión de código sin hallazgos. No se usaron datos financieros reales.
-- La ampliación de recurrencias se publicó en `c88f7f2`. El CI del SHA completo `c88f7f2efdbdaf723ce73f96d09b903566786283` terminó verde para backend, PostgreSQL, frontend, E2E, WhatsApp Cloudflare, canales personales y Vercel Preview.
-- El SHA actual `d8b290b9251e6accea5163dd96880238b74888bb` también pasó todos los checks requeridos; PR #97 sigue en borrador.
-- El SHA remoto anterior `c51a7b1` tenía el fallo de dependencias frontend; la corrección de Angular `21.2.25` y overrides está validada localmente y en el CI de `c93e00a`. Producción sin vulnerabilidades conocidas; cinco alertas conocidas solo de desarrollo. Gmail sigue deshabilitado y Etapa 6 omitida.
-- Hito de consultas/evidencias de Etapa 7 listo para revisión: alcance por lista, presupuestos, recurrencias, filtros y navegación fueron validados localmente/CI y en el preview por el propietario. Se intentó marcar PR #97 como listo con `gh pr ready 97`, pero `gh` no está autenticado; el PR permanece en borrador. No se hizo merge ni despliegue.
-- Próximo paso: habilitar autenticación de GitHub CLI en el entorno o marcar el PR como listo desde GitHub. Después, revisión e integración según decisión del propietario; producción solo tras autorización. Mantener Gmail deshabilitado y Etapa 6 omitida.
-- Para continuar: leer `AGENTS.md`, este archivo, `docs/PLAN_MAESTRO_KAPTAL.md` y `docs/ASISTENTE_EVIDENCIAS.md`; decidir el siguiente bloque de la Etapa 7 sin reabrir Gmail ni Etapa 6.
+- Autorizado subir la rama y abrir PR a develop; sin merge ni despliegue de producción. Rama `auditoria/etapa-8-funcional-visual`, worktree `.local/asistente-worktree`, desde develop `a8ae7f3` revalidado contra remoto.
+- Añadido E2E real local de recurrencias: registrar, editar los tres alcances, pausar/reanudar y eliminar plantilla conservan historial y saldo. Ajustado el día civil de Cuentas a México; prueba con navegador UTC conserva el pago pendiente.
+- Verificado: 366 frontend completas; backend verify 491 ejecutadas = 485 correctas + 6 omitidas; cero fallos/errores. Build producción y dependencias correctos (cinco avisos de desarrollo sin parche, ninguno en producción). E2E: 20 de regresión previa y 5 del conjunto final, con 3 repetidas; 22 escenarios distintos cubiertos. Detalle en AUDITORIA_ETAPA_8.md.
+- Etapa 8 permanece abierta por Android físico, producción autenticada, lector de pantalla y ampliaciones visuales/MSI indicadas en el informe. PostgreSQL/CI pendientes de la publicación. No tocar Gmail. Después de cerrar la auditoría viene Etapa 9.
+
+
+## Revisión de avances y siguiente paso (2026-10-21)
+
+- Fetch confirma `origin/develop = a8ae7f3` y `origin/main = f4b814e`. GitHub vuelve a confirmar PR #97 integrado. Se revisaron los commits de filtros por lista, restante de presupuesto y consultas recurrentes; no repetir la implementación del asistente.
+- Comprobado ahora: Vercel success para main, web pública HTTP 200 y API `/api/health` HTTP 200/UP. La suite local anterior reportada fue backend 480 correctas/6 omitidas y frontend 343; no se volvió a ejecutar. El cierre previo documenta CI y Render exitosos; esta revisión no vuelve a certificar cada job ni el SHA servido por Render.
+- Siguiente: recorrido autenticado EN PRODUCCIÓN de consultas por filtros, evidencias e historial/CSV, presupuesto disponible y recurrencias; solo lectura. Después auditoría funcional/visual Etapa 8 en esta rama: móvil, periodos/cifras, tarjetas, búsqueda, accesibilidad, voz y offline, con evidencia reproducible. No marcar pruebas Android físico completas sin dispositivo real.
+- `auditoria/etapa-8-funcional-visual` ya existe desde develop actualizado y aún no tiene código de auditoría nuevo. Los cambios documentales sin commit se conservan; no hubo commits, merges, despliegues ni movimientos en esta revisión. Gmail deshabilitado y Etapa 6 omitida.
+- Continuidad: leer AGENTS.md, este estado, PLAN_MAESTRO_KAPTAL.md y ASISTENTE_EVIDENCIAS.md. Continuar auditoría de Etapa 8; después viene Android/captura (Etapa 9).
+
+## Etapa 7: asistente con evidencias integrada y desplegada (2026-10-20)
+
+- PR #97 fue integrado por el propietario. GitHub confirma merge a `develop` mediante `a8ae7f33695a9cd84d6a3d4bddea339eaa459e18`; sus checks están verdes. El merge correspondiente a `main` es `f4b814e27de8a87a244d5cc5253e31a6fb1391bc`; CI de `main` verde.
+- Despliegues verificados para el SHA de `main`: Vercel `Production` success y servicio backend Render success. `https://kaptalgf.vercel.app/` respondió HTTP 200; `https://kaptal-api-0xbn.onrender.com/api/health` respondió `{"status":"UP",...}`.
+- El bloque de listas/evidencias incluye listas accesibles no archivadas, autorización antes de agregar, filtro por usuario/lista y navegación que conserva `listaId`/`autorId`. Evidencia de presupuesto coincide en mes, moneda, categoría y lista. La respuesta muestra gastado, límite y disponible. Las consultas de recurrencias distinguen gasto/ingreso, muestran cuenta, categoría, moneda, frecuencia y próxima fecha, y aclaran que son plantillas no ejecutadas.
+- Filtros por cuenta/categoría/fechas, “Sin categoría”, historial/CSV y WhatsApp comparten alcance; un filtro no soportado o una lista desconocida no se convierte en reporte global.
+- El propietario confirmó que funcionaron en el preview los flujos de evidencia, restante de presupuesto y recurrencias. La comprobación de producción efectuada en esta sesión fue disponibilidad HTTP/health; queda pendiente el recorrido manual autenticado en producción.
+- Última suite backend local: 480 pruebas correctas, 6 omitidas; frontend 343, build y comprobación de dependencias correctos. CI de PR, `develop`, `main` y commits finales de la rama se verificó en verde. Sin manipular datos financieros reales.
+- Siguiente etapa: auditoría funcional y visual (Etapa 8), en rama nueva `auditoria/etapa-8-funcional-visual`, creada desde `origin/develop` actualizado (`a8ae7f3`). No iniciar pruebas de dispositivo Android como completadas sin dispositivo/validación del propietario.
+- Gmail permanece deshabilitado y Etapa 6 omitida.
+- Continuar leyendo `AGENTS.md`, este estado, `docs/PLAN_MAESTRO_KAPTAL.md` y `docs/ASISTENTE_EVIDENCIAS.md`.
 
 ## Borrador Gmail archivado localmente (2026-10-20)
 

@@ -206,21 +206,47 @@ describe('CuentasComponent', () => {
     expect(finanzasService.crearCuenta).not.toHaveBeenCalled();
   });
 
-  it('uses the estimated payment date when a payment day has not been entered', () => {
+  it('requires an explicit valid payment day instead of estimating it', () => {
     component.nombre = 'Tarjeta';
     component.tipo = 'CREDITO';
     component.limiteCredito = 10000;
     component.diaCorte = 10;
-    component.diaPago = null;
-    vi.spyOn(component, 'proximaFechaPago').mockReturnValue(new Date(2026, 9, 30));
+    for (const day of [null, 0, 32, 1.5]) {
+      component.diaPago = day;
+      component.guardar();
+      expect(component.modalError()).toContain('día de pago');
+      expect(finanzasService.crearCuenta).not.toHaveBeenCalled();
+    }
+  });
 
-    component.guardar();
+  it.each([
+    [2026, 9, 21, 10, 15, 2026, 10, 17],
+    [2026, 10, 15, 10, 15, 2026, 10, 17],
+    [2026, 10, 16, 10, 15, 2026, 10, 17],
+    [2026, 10, 17, 10, 15, 2026, 10, 17],
+    [2026, 11, 21, 10, 15, 2027, 0, 15],
+    [2026, 1, 21, 20, 31, 2026, 2, 2],
+    [2024, 1, 21, 20, 31, 2024, 1, 29],
+    [2026, 9, 21, 25, 5, 2026, 10, 5],
+    [2026, 9, 5, 10, 10, 2026, 9, 12],
+  ])('uses the configured payment cycle (%s/%s/%s, cutoff %s, payment %s)',
+    (year, month, day, cutoff, payment, dueYear, dueMonth, dueDay) => {
+      vi.useFakeTimers();
+      try {
+        vi.setSystemTime(new Date(year, month, day, 12));
+        expect(component.proximaFechaPago(cutoff, payment)).toEqual(new Date(dueYear, dueMonth, dueDay));
+      } finally { vi.useRealTimers(); }
+    });
 
-    expect(component.modalError()).toBeNull();
-    expect(finanzasService.crearCuenta).toHaveBeenCalledWith(expect.objectContaining({
-      diaCorte: 10,
-      diaPago: 30
-    }));
+  it('conserva el corte aunque sea sábado y no modifica el día base al ajustar el pago', () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date(2026, 9, 5, 12));
+      expect(component.proximaFechaCorte(10)).toEqual(new Date(2026, 9, 10));
+      const pago = component.detalleFechaPago(10, 10);
+      expect(pago.base).toEqual(new Date(2026, 9, 10));
+      expect(pago.fecha).toEqual(new Date(2026, 9, 12));
+    } finally { vi.useRealTimers(); }
   });
 
   it('rejects a credit limit below the current or opening debt', () => {

@@ -1,5 +1,7 @@
 # Corrección de diseño: Kaptal con Inicio dominante
 
+Seguimiento 2026-10-21: Etapa 8 preparada para PR a develop por autorización del propietario. 366 frontend, 485 backend correctas/6 omitidas; 22 E2E distintos entre regresión y conjunto final. Ver [informe](AUDITORIA_ETAPA_8.md) y [calendario](TARJETAS_CALENDARIO_MX.md). Android físico/producción autenticada pendientes; Etapa 9 después. Gmail deshabilitado.
+
 Prioridad vigente (2026-10-20): solo WhatsApp como canal externo; Gmail deshabilitado y conciliación (Etapa 6) omitida. Sigue el asistente financiero con evidencias. El orden completo actualizado está al inicio de [PLAN_MAESTRO_KAPTAL.md](PLAN_MAESTRO_KAPTAL.md); las prioridades siguientes de este documento son históricas.
 
 Cierre posterior: compactación de Inicio y estado de captura implementados. La secuencia funcional completa para retomar está en [PLAN_CONTINUACION_MONAI.md](PLAN_CONTINUACION_MONAI.md). La validación física sigue pendiente.

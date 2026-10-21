@@ -83,8 +83,10 @@ public class RecordatorioNotificacionService {
                     msg.append("• Límite retenido por MSI: $").append(limiteRetenido).append(" ").append(cuenta.getMoneda()).append("\n");
                 }
                 if (cuenta.getDiaPago() != null) {
-                    LocalDate fechaPago = fechaPago(fechaCorte);
-                    msg.append("• Fecha límite estimada: ").append(fechaPago).append("\n");
+                    var ajuste = CalendarioBancarioMexico.ajustar(fechaPagoBase(fechaCorte, cuenta.getDiaCorte(), cuenta.getDiaPago()));
+                    msg.append("• Pago estimado: ").append(ajuste.fecha()).append("\n");
+                    msg.append(ajuste.verificado() ? "Calendario bancario México (CNBV).\n"
+                            : "Calendario anual sin verificar: confirma el vencimiento con tu banco.\n");
                 }
                 msg.append("\nConfirma el importe y la fecha en el estado de cuenta de tu banco. Kaptal solo muestra los movimientos que registraste. 🚀");
 
@@ -94,13 +96,13 @@ public class RecordatorioNotificacionService {
 
             // Recordatorio de FECHA LÍMITE DE PAGO (el mismo día del pago)
             LocalDate fechaCorteAnterior = cuenta.getDiaCorte() == null || cuenta.getDiaPago() == null ? null
-                    : fechaCorteAsociadaAlPago(hoy, cuenta.getDiaCorte());
-            if (fechaCorteAnterior != null && fechaPago(fechaCorteAnterior).equals(hoy)) {
+                    : fechaCorteAsociadaAlPago(hoy, cuenta.getDiaCorte(), cuenta.getDiaPago());
+            if (fechaCorteAnterior != null) {
                 String msg = String.format(
-                        "⚠️ *Kaptal - Fecha Límite de Pago Hoy*\n\n" +
-                        "¡Hola %s! Hoy es tu *fecha límite de pago* para tu tarjeta *%s*.\n\n" +
+                        "⚠️ *Kaptal - Revisa el Pago de tu Tarjeta*\n\n" +
+                        "¡Hola %s! Según tu configuración y el calendario disponible, hoy es tu *fecha de pago estimada* para tu tarjeta *%s*.\n\n" +
                         "• Saldo registrado en Kaptal: $%s %s\n\n" +
-                        "Confirma el monto y la fecha límite en tu estado de cuenta bancario. 💳",
+                        "Confirma el monto y la fecha límite en tu estado de cuenta bancario; si el calendario anual no está verificado, no se aplaza la fecha base. 💳",
                         usuario.getNombre(),
                         cuenta.getNombre(),
                         saldoAdeudo,
@@ -160,15 +162,21 @@ public class RecordatorioNotificacionService {
         return yearMonth.atDay(Math.min(diaConfigurado, yearMonth.lengthOfMonth()));
     }
 
-    private LocalDate fechaPago(LocalDate corte) {
-        return corte.plusDays(20);
+    private LocalDate fechaPagoBase(LocalDate corte, int diaCorte, int diaPago) {
+        YearMonth mesPago = YearMonth.from(corte).plusMonths(diaPago <= diaCorte ? 1 : 0);
+        LocalDate pago = fechaDelMes(mesPago.getYear(), mesPago.getMonthValue(), diaPago);
+        if (!pago.isAfter(corte)) {
+            mesPago = mesPago.plusMonths(1);
+            pago = fechaDelMes(mesPago.getYear(), mesPago.getMonthValue(), diaPago);
+        }
+        return pago;
     }
 
-    private LocalDate fechaCorteAsociadaAlPago(LocalDate hoy, Integer diaCorte) {
+    private LocalDate fechaCorteAsociadaAlPago(LocalDate hoy, int diaCorte, int diaPago) {
         for (int desplazamiento = -2; desplazamiento <= 0; desplazamiento++) {
             YearMonth mes = YearMonth.from(hoy).plusMonths(desplazamiento);
             LocalDate corte = fechaDelMes(mes.getYear(), mes.getMonthValue(), diaCorte);
-            if (fechaPago(corte).equals(hoy)) return corte;
+            if (CalendarioBancarioMexico.ajustar(fechaPagoBase(corte, diaCorte, diaPago)).fecha().equals(hoy)) return corte;
         }
         return null;
     }
