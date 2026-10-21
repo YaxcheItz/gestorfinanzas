@@ -2,6 +2,8 @@
 
 ## Prioridad vigente: Etapa 9 Android/captura (2026-10-21)
 
+Entrega guardada en commit local `2abfe4d`, rama `mejoras/android-captura`. Publicación/PR pendientes: dos intentos de conexión a github.com:443 fallaron. No afirmar CI ni despliegue de esta rama; retomar push y revisión cuando vuelva la conexión. Carpeta principal sin cambios pendientes al cerrar.
+
 PR #99 integrado en develop `6775c1e` y PR #100 en main `d39d899`, confirmados por fetch. El propietario autoriza avanzar; las comprobaciones físicas/manuales pendientes de Etapa 8 se conservan sin declararlas resueltas. Rama nueva `mejoras/android-captura` en la carpeta principal desde develop actualizado; notas duplicadas de la raíz resguardadas y retiradas.
 
 Primer incremento: accesos PWA gasto/ingreso/dictado que sobreviven al login y se consumen al abrir, sin destinos externos ni micrófono automático. Prueba del service worker real con reapertura offline y sincronización única. 378 unitarias frontend, 12 E2E de regresión y 1 E2E PWA correctas; build correcto. CI ampliado para la PWA de producción. Alcance y criterios pendientes en [ANDROID_CAPTURA_ETAPA_9.md](ANDROID_CAPTURA_ETAPA_9.md). No cerrar Etapa 9 sin comprobar Android físico, sesión larga y preferencias/recordatorios propios. Después corresponde Etapa 11; Gmail/Etapa 6 siguen fuera.

@@ -2,6 +2,8 @@
 
 ## Primera entrega — 2026-10-21
 
+Publicación: implementación guardada en commit local `2abfe4d`. GitHub no fue accesible desde esta máquina en dos intentos de push; no hay PR ni CI remoto de esta rama todavía. Las verificaciones de abajo son locales. El servidor LAN existente en 4300 fue reiniciado y comprobado HTTP 200.
+
 El propietario confirmó los merges y autorizó avanzar. Fetch verificó `origin/develop=6775c1e` (PR #99) y `origin/main=d39d899` (PR #100). Trabajo en la carpeta principal, rama nueva `mejoras/android-captura` desde ese develop. El borrador Gmail sigue archivado en su rama; no se integró.
 
 Se limpiaron los dos MD pendientes de la carpeta principal después de resguardar su diff en `.local/notas-raiz-antes-etapa9.patch`. Los artefactos restantes del worker antiguo se trasladaron a `.local/gmail-worker-resguardo-20261021`. No se borraron credenciales ni se activó Gmail. La configuración LAN existente del puerto 4300 se conserva.

@@ -2,6 +2,8 @@
 
 ## Etapa 9: primera entrega PWA/captura (2026-10-21)
 
+Código guardado en commit local `2abfe4d` de `mejoras/android-captura`. Dos intentos de push fallaron por falta de conexión a github.com:443; no se creó PR ni se ejecutó CI remoto de esta rama. Reintentar `git push -u origin mejoras/android-captura` al recuperar conexión. La carpeta se deja limpia y el servidor LAN 4300 responde HTTP 200. Catálogo de 87 entradas de skills en `.local/SKILLS_DISPONIBLES.md`.
+
 - El propietario autorizó avanzar tras los merges. Fetch confirma develop `6775c1e` (PR #99) y main `d39d899` (PR #100). Rama nueva `mejoras/android-captura` desde develop actualizado, en la carpeta principal; ya no trabajar en el worktree de Etapa 8.
 - Limpiadas las notas sin commit de los dos MD de la raíz, con respaldo del diff en `.local/notas-raiz-antes-etapa9.patch`. Artefactos huérfanos de Gmail resguardados en `.local/gmail-worker-resguardo-20261021`; no activar ni integrar Gmail.
 - Accesos PWA para gasto/ingreso/dictado, continuidad segura tras login por contraseña/Google y consumo de la acción para no repetir al recargar. Dictado abre el panel sin activar el micrófono. Sin autenticación no se registra ni lee dinero.
