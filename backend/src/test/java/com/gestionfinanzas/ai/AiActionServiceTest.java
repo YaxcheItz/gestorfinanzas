@@ -174,6 +174,7 @@ class AiActionServiceTest {
         var response=service.resolverReporteLocal(7L,reglas);
 
         assertEquals(List.of(expense),response.evidence());
+        assertTrue(response.answer().contains("disponible 380 MXN"));
         verify(contextService).reporteLocal(7L,"CATEGORIAS",desde,hasta,"MXN",null,8L,null,"Comida",79L,"Vacaciones");
     }
 }

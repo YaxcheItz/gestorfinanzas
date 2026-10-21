@@ -225,7 +225,8 @@ public class AiActionService {
                 String texto = resumen.presupuestos().stream()
                         .filter(p -> reglas.moneda()==null || reglas.moneda().equals(p.moneda()))
                         .filter(p -> reglas.categoriaId()==null || reglas.categoriaId().equals(p.categoriaId()))
-                        .map(p -> p.categoriaNombre()+": gastado "+p.montoGastado()+" / l\u00edmite "+p.montoLimite()+" "+p.moneda()+" ("+p.estado()+")")
+                        .map(p -> p.categoriaNombre()+": gastado "+p.montoGastado()+" / l\u00edmite "+p.montoLimite()
+                                +" "+p.moneda()+"; disponible "+p.montoDisponible()+" "+p.moneda()+" ("+p.estado()+")")
                         .collect(java.util.stream.Collectors.joining("\n"));
                 var evidencia=new ArrayList<AiEvidence>();
                 LocalDate inicioMes=reglas.hasta().withDayOfMonth(1);

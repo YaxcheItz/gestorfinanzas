@@ -12,6 +12,8 @@ Validación local completa: `mvnw -B verify` con 478 pruebas correctas y 6 omiti
 
 El propietario revisó en la página del preview del PR #97 el flujo de consulta y evidencia y confirmó que funcionó. La validación es manual y corresponde al preview; no se afirma despliegue en producción ni se extiende a escenarios que no se revisaron.
 
+La consulta de presupuestos muestra ahora por categoría el monto gastado, el límite y el disponible con su moneda. Usa el monto disponible calculado por `PresupuestoService` y conserva su precisión/signo, incluido saldo negativo por exceso. La prueba de `AiActionService` verifica su inclusión junto con la evidencia de movimientos de alcance coincidente.
+
 ## Alcance vigente
 
 Publicado en GitHub para revisión mediante [PR #97](https://github.com/YaxcheItz/gestorfinanzas/pull/97), hacia `develop`. Publicar la rama no despliega el cambio ni sustituye comprobar CI.
@@ -44,7 +46,7 @@ Consultar el resultado final y el número de pruebas en `ESTADO_SESION.md`. Las 
 
 ## Lo que sigue para completar la etapa
 
-1. Completar las consultas y casos funcionales restantes de la Etapa 7 y acordar el cierre del PR #97, que permanece en borrador.
+1. Completar las consultas y casos funcionales restantes de la Etapa 7 y acordar el cierre del PR #97, que permanece en borrador. La respuesta de presupuesto ya incluye disponible/restante.
 2. Validar en producción solo cuando exista autorización para integrar y desplegar; el CI y el flujo revisado por el propietario corresponden al preview, no a producción.
 
 El asistente completo todavía no está terminado. Esta primera entrega no está desplegada. No activar correo ni conciliación como dependencias de estas tareas.

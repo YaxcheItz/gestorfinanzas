@@ -10,6 +10,8 @@ El cambio funcional se publicó en el commit `c93e00a` de `mejoras/asistente-evi
 
 El propietario confirmó que las comprobaciones manuales del flujo de evidencia en la página del preview funcionaron. Esto cierra esa revisión del flujo, pero no confirma el despliegue de producción ni completa por sí solo todas las consultas previstas para la Etapa 7. El PR permanece en borrador mientras se define su cierre.
 
+Continuación funcional: las respuestas de presupuesto informan lo gastado, límite, disponible y moneda para cada categoría; el disponible conserva signo cuando el gasto supera el límite. Prueba unitaria y suite backend completas pasan.
+
 ## Prioridad vigente: solo WhatsApp y asistente (2026-10-20)
 
 Archivo solicitado posteriormente: el borrador Gmail se conserva mediante commit LOCAL en `mejoras/gmail-bancario-piloto`, sin subirlo ni integrarlo. El checkout principal queda sin cambios pendientes; el trabajo activo del asistente continúa en su worktree y PR #97. Secretos y artefactos quedan fuera de Git; no reactivar Gmail al retomar este archivo.
