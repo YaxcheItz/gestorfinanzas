@@ -38,7 +38,11 @@ CI Android compila APK debug e instrumentación, y conserva el APK de prueba com
 
 Build web y 382 pruebas frontend correctas. Auditoría: cero vulnerabilidades en producción; solo cinco alertas de desarrollo ya conocidas de braces. La prueba nueva verifica que la API Android no admita sobreescritura runtime hacia otro host.
 
-Pendientes de confirmar al cerrar esta entrega: build/firma Android, ejecución instrumentada física, CI remoto y disponibilidad del APK. No certificar sesión larga/renovación, regreso del segundo plano, teclado/gestos, offline/sincronización ni operaciones financieras Android sin sus pruebas.
+APK release compilada y firma verificada; 3,484,759 bytes. SHA-256 `5EE16DAAE1C8D3CCFE508E7F8D3AAE94C2018D4B774C5EA3183EA9C2D4BBF483`. Certificado SHA-256 `b5f360604095a50f3208299767dcedca2f3acfc5087df8be1fde9cc075c120c3`. Instalada en el Samsung SM-A546E/Android 16 conectado y copiada a `Download/Kaptal-0.1.0.apk`. Archivo local `.local/releases/kaptal-release.apk`.
+
+Prueba instrumentada física correcta: formulario local, origen `https://localhost`, plataforma Android, consulta pública HTTPS con estado UP y ausencia del script Google GIS. Sin credenciales ni movimientos reales. Ejecutar de nuevo con `:app:connectedDebugAndroidTest`; limitar Gradle al módulo app evita compilar las pruebas internas de bibliotecas con dependencias Kotlin antiguas.
+
+PR [#103](https://github.com/YaxcheItz/gestorfinanzas/pull/103) abierto como borrador hacia develop. El primer CI Android falló en setup-android porque su valor predeterminado incluía el paquete retirado `tools`; corregido especificando solo `platform-tools`. CI remoto del commit final pendiente de consultar. No certificar sesión larga/renovación, regreso del segundo plano, teclado/gestos, offline/sincronización ni operaciones financieras Android sin sus pruebas.
 
 Etapa 10 y ampliaciones nativas pendientes: entrada por compartir/avisos/SMS seleccionados sin Gmail, widgets, accesos rápidos, notificaciones nativas, integración Google nativa y exportación/compartición de archivos Android. Un WebView no convierte automáticamente descargas Blob, Web Push o dictado del navegador en funciones Android. Revisar cada capacidad antes de declararla operable en la APK.
 
