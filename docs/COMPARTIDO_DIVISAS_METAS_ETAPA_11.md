@@ -55,6 +55,8 @@ Validación local de la tercera entrega: 382 pruebas frontend correctas con Vite
 
 Proteccion adicional en servidor: no retirar mas que el saldo de la meta, no aportar desde fondos insuficientes o credito y no recibir transferencias nuevas estando cancelada. Editar valida el saldo final (permite reversiones intermedias); borrar un aporte ya retirado no puede dejar la meta en negativo. Cinco regresiones adicionales correctas y E2E de rechazo/rollback confirmado.
 
+CI 275: backend, frontend, PostgreSQL/migraciones/recuperacion y conectores verdes. El unico fallo del E2E fue una consulta del saldo antes de que respondiera el retiro (970 en vez de 980). Corregida la prueba esperando HTTP; tres repeticiones locales correctas. Los otros 32 E2E remotos pasaron. Verificar el CI posterior a esta correccion.
+
 ## Cierre pendiente
 
 Revisar el nuevo CI completo, PostgreSQL/migraciones/recuperación y PR #102. Las comprobaciones físicas/autenticadas de las etapas anteriores siguen trasladadas a la revisión final por instrucción del propietario. Después de integrar y revisar esta etapa corresponde una rama nueva para Capacitor/APK firmado descargable, sin Play Store. Gmail permanece fuera. No se autoriza merge ni despliegue de producción por publicar el PR.
