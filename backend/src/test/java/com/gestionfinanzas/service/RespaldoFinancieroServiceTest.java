@@ -53,7 +53,7 @@ class RespaldoFinancieroServiceTest {
 
         var respaldo = respaldoService.generar(42L);
 
-        assertEquals(5, respaldo.version());
+        assertEquals(6, respaldo.version());
         assertEquals(42L, respaldo.perfil().id());
         assertEquals("ana@example.com", respaldo.perfil().email());
         assertEquals(0, respaldo.cuentas().size());

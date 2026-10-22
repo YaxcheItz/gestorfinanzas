@@ -54,6 +54,31 @@ class ParejaConsentimientoIntegrationTest {
         assertEquals(correoLuis,pendiente.destinatarioEmail());
         assertEquals(correoAna,servicio.aceptar(luis.getId(),invitacion.id()).pareja().email());
     }
+
+    @Test void respaldoRestauraPartesSinRecalcularImportesNiVincularFondos() {
+        aceptada();
+        servicio.agregarGasto(ana.getId(),new GastoParejaRequest(new BigDecimal("10.01"),
+                CalendarioFinanciero.hoy(),"Cena por partes",TipoReparto.PARTES,null,null,new BigDecimal("2"),new BigDecimal("1")));
+        var archivo=respaldos.generar(ana.getId());
+        restauracion.restaurar(tercero.getId(),archivo);
+        var copia=servicio.historial(tercero.getId(),servicio.historiales(tercero.getId()).getFirst().id());
+        var gasto=copia.gastos().getFirst();
+        assertEquals(TipoReparto.PARTES,gasto.tipoReparto());
+        assertEquals(new BigDecimal("10.01"),gasto.repartos().stream().map(p->p.monto()).reduce(BigDecimal.ZERO,BigDecimal::add));
+        var propia=gasto.repartos().stream().filter(p->p.usuarioId().equals(tercero.getId())).findFirst().orElseThrow();
+        assertEquals(2,propia.partes()); assertEquals(new BigDecimal("6.67"),propia.monto());
+    }
+
+    @Test void respaldoRechazaPartesFraccionariasSinTruncarlas() throws Exception {
+        aceptada();
+        servicio.agregarGasto(ana.getId(),new GastoParejaRequest(new BigDecimal("10.01"),
+                CalendarioFinanciero.hoy(),"Cena",TipoReparto.PARTES,null,null,new BigDecimal("2"),BigDecimal.ONE));
+        var mapper=new com.fasterxml.jackson.databind.ObjectMapper().findAndRegisterModules();
+        var json=mapper.valueToTree(respaldos.generar(ana.getId()));
+        ((com.fasterxml.jackson.databind.node.ObjectNode)json.at("/parejas/0/gastos/0/repartos/0")).put("partes",1.5);
+        var archivo=mapper.treeToValue(json,com.gestionfinanzas.dto.response.RespaldoFinancieroResponse.class);
+        assertThrows(IllegalArgumentException.class,()->restauracion.previsualizar(tercero.getId(),archivo));
+    }
     @Test void restaurarUsaElPerfilDelArchivoSinVincularLaCuentaReal() {
         var invitacion=servicio.crear(ana.getId(),new ParejaCrearRequest(luis.getEmail()));
         servicio.aceptar(luis.getId(),invitacion.id());

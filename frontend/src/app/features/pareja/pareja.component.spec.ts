@@ -156,6 +156,19 @@ describe('ParejaComponent', () => {
       expect(component.puedeGuardar()).toBe(false);
     });
 
+    it('valida partes enteras positivas y rechaza repartos que pierden un centavo', () => {
+      component.abrir('gasto'); component.formDescripcion = 'Cena';
+      component.formMonto = 10.01; component.formTipoReparto = 'PARTES';
+      component.formPartesPropias = 2; component.formPartesPareja = 1;
+      expect(component.puedeGuardar()).toBe(true);
+      for (const n of [null, 0, -1, 1.5, 1000001, NaN]) {
+        component.formPartesPareja = n;
+        expect(component.puedeGuardar()).toBe(false);
+      }
+      component.formPartesPareja = 1; component.formPartesPropias = 1; component.formMonto = 0.01;
+      expect(component.puedeGuardar()).toBe(false);
+    });
+
     it('should successfully add a contribution', () => {
       const apiResponse: ApiResponse<Pareja> = { success: true, data: mockPareja, message: 'Ok' };
       parejaServiceMock.agregarAporte.mockReturnValue(of(apiResponse));

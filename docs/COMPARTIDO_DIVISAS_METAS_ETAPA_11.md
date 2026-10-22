@@ -27,7 +27,13 @@ Skills aplicadas: Ponytail, Angular, security-review, debugging-and-error-recove
 
 ## Pendientes de implementación
 
-1. Completar revisión de concurrencia/revocación en listas y repartos existentes; añadir partes y liquidaciones donde falten, conservando centavos.
+Segunda entrega: reparto de pareja por `PARTES`, con cantidades enteras de 1 a 1000000 por persona. Se guardan los pesos originales y los importes resueltos; un total de 10.01 con proporción 2:1 queda en 6.67 y 3.34. No es un porcentaje aproximado ni genera una transacción personal. Se rechaza cualquier reparto que deje a una persona sin un centavo.
+
+Migración aditiva V11: columna nullable `repartos_gasto.partes` y ampliación del CHECK de tipo para aceptar PARTES; las filas anteriores no se recalculan. Respaldo versión 6 conserva los pesos; restauración sigue aceptando versiones 1 a 5 y rechaza pesos fraccionarios en los archivos nuevos. El historial muestra la cantidad de partes junto al importe resuelto.
+
+Validación de esta segunda entrega: backend verify 499 ejecutadas, 493 correctas y 6 omitidas, sin fallos/errores; frontend completo 382 correctas; build de producción correcto. E2E móvil con backend real local: registrar 10.01 en proporción 2:1, recargar y comprobar pesos/importes, saldos propios intactos y rechazo HTTP 400 de 1.5 partes. Restauración verificada con un tercero, manteniendo pesos e importes sin vincular a la cuenta real de la pareja; rechazo de archivo con partes fraccionarias. H2/datos sintéticos. La validación PostgreSQL/migración corresponde al nuevo CI; el CI de la primera entrega (`2f7b108`) terminó en verde.
+
+1. Completar revisión de concurrencia/revocación y liquidaciones existentes. Partes implementadas para pareja; las listas compartidas siguen siendo colecciones de movimientos con roles, no deudas entre veinte personas.
 2. Divisas: moneda original, tasa, fecha/fuente y equivalencia secundaria; no sumar monedas diferentes ni reconvertir el pasado al cambiar preferencias.
 3. Metas: creación/progreso, aportes y retiros trazables, cancelación y permisos; integrarlas en respaldo/restauración.
 4. Regresión completa/CI, publicar y revisar cada entrega. La Etapa 11 sigue abierta hasta completar estos criterios.

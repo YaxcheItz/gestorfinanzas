@@ -63,7 +63,7 @@ import java.util.function.Function;
 @Slf4j
 public class RestauracionRespaldoService {
 
-    private static final int VERSION_COMPATIBLE = 5;
+    private static final int VERSION_COMPATIBLE = 6;
     private static final int MAX_REGISTROS = 20_000;
     private static final Map<String, CategoriaInicial> CATEGORIAS_INICIALES = Map.of(
             "Alimentos y Supermercado", new CategoriaInicial(TipoTransaccion.GASTO, "shopping-cart", "#f59e0b"),
@@ -299,6 +299,10 @@ public class RestauracionRespaldoService {
                 hayPareja = true;
             }
             suma = suma.add(parte.monto());
+            if ("PARTES".equals(gasto.tipoReparto()) && (parte.partes() == null || parte.partes().signum() <= 0
+                    || parte.partes().stripTrailingZeros().scale() > 0 || parte.partes().compareTo(BigDecimal.valueOf(1000000)) > 0)) {
+                throw new IllegalArgumentException("El respaldo contiene una cantidad de partes no válida.");
+            }
         }
         if (!hayPropietario || !hayPareja
                 || suma.setScale(2, RoundingMode.HALF_UP).compareTo(gasto.monto().setScale(2, RoundingMode.HALF_UP)) != 0) {
@@ -382,6 +386,7 @@ public class RestauracionRespaldoService {
                         .monto(parte.monto())
                         .tipo(tipo)
                         .porcentaje(parte.porcentaje())
+                        .partes(tipo == TipoReparto.PARTES ? parte.partes().intValueExact() : null)
                         .build());
             }
         }

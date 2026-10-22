@@ -246,8 +246,8 @@ public class ParejaService {
 
         // La parte de quien registra sale por resta, así que las dos filas suman
         // el total exacto sin importar cómo se redondeó la parte de la pareja.
-        guardarReparto(gasto, yo, partePropia, request.tipoReparto(), porcentajeDe(total, partePropia));
-        guardarReparto(gasto, otro, partePareja, request.tipoReparto(), porcentajeDe(total, partePareja));
+        guardarReparto(gasto, yo, partePropia, request.tipoReparto(), porcentajeDe(total, partePropia), request.tipoReparto() == TipoReparto.PARTES ? request.partesPropias().intValueExact() : null);
+        guardarReparto(gasto, otro, partePareja, request.tipoReparto(), porcentajeDe(total, partePareja), request.tipoReparto() == TipoReparto.PARTES ? request.partesPareja().intValueExact() : null);
 
         return construirEstado(pareja, yo);
     }
@@ -333,6 +333,12 @@ public class ParejaService {
      */
     private BigDecimal calcularParteDeLaPareja(GastoParejaRequest request, BigDecimal total) {
         return switch (request.tipoReparto()) {
+            case PARTES -> {
+                BigDecimal propias = request.partesPropias(), otras = request.partesPareja();
+                if (propias == null || otras == null || propias.signum() <= 0 || otras.signum() <= 0 || propias.stripTrailingZeros().scale() > 0 || otras.stripTrailingZeros().scale() > 0 || propias.compareTo(BigDecimal.valueOf(1000000)) > 0 || otras.compareTo(BigDecimal.valueOf(1000000)) > 0)
+                    throw new IllegalArgumentException("Indica entre 1 y 1000000 partes enteras para cada persona.");
+                yield total.multiply(otras).divide(propias.add(otras), ESCALA, RoundingMode.HALF_UP);
+            }
             case IGUAL -> total.divide(BigDecimal.valueOf(2), ESCALA, RoundingMode.HALF_UP);
             case PORCENTAJE -> {
                 BigDecimal porcentaje = request.porcentajePareja();
@@ -362,13 +368,14 @@ public class ParejaService {
     }
 
     private void guardarReparto(GastoPareja gasto, Usuario usuario, BigDecimal monto,
-                                TipoReparto tipo, BigDecimal porcentaje) {
+                                TipoReparto tipo, BigDecimal porcentaje, Integer partes) {
         repartoRepository.save(RepartoGasto.builder()
                 .gasto(gasto)
                 .usuario(usuario)
                 .monto(monto)
                 .tipo(tipo)
                 .porcentaje(porcentaje)
+                .partes(tipo == TipoReparto.PARTES ? partes : null)
                 .build());
     }
 
@@ -435,7 +442,7 @@ public class ParejaService {
                         reparto.getUsuario().getId(),
                         reparto.getUsuario().getNombre(),
                         reparto.getMonto(),
-                        porcentajeDe(gasto.getMonto(), reparto.getMonto())
+                        porcentajeDe(gasto.getMonto(), reparto.getMonto()), reparto.getPartes()
                 ));
             }
             totalGastado = totalGastado.add(gasto.getMonto());
