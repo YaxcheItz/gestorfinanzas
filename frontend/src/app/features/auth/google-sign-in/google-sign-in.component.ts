@@ -1,5 +1,6 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, inject, Input, NgZone, OnDestroy, Output, signal, ViewChild } from '@angular/core';
 import { AuthService } from '../../../core/services/auth.service';
+import { Capacitor } from '@capacitor/core';
 
 type GoogleButtonText = 'signin_with' | 'signup_with' | 'continue_with';
 
@@ -68,6 +69,10 @@ export class GoogleSignInComponent implements AfterViewInit, OnDestroy {
   private callbackDeEstaInstancia: ((credential: string) => void) | null = null;
 
   ngAfterViewInit(): void {
+    if (Capacitor.isNativePlatform()) {
+      this.errorCarga.set('En Android usa correo y contraseña. El acceso con Google está disponible en la web.');
+      return;
+    }
     this.authService.googleConfig().subscribe({
       next: response => {
         const clientId = response.success && response.data?.enabled

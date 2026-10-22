@@ -1,5 +1,35 @@
 # Corrección de diseño: Kaptal con Inicio dominante
 
+## Integración vigente (2026-10-22)
+
+El propietario autorizó integrar #102/#103 y preparar todo lo posible sin teléfono. PR #102 integrado a develop mediante c8651d03de549b4f31a6c876dc825cf1d8f27edb. Rama Android actualizada con ese develop; conflictos limitados a cinco documentos, conservando los bloques históricos de ambas entregas. Sin despliegue a producción ni cambios en main.
+
+Esta entrega unifica Etapa 11 y Android para develop mediante PR #103, con APK 0.1.1/código 2 firmada y preparada en `.local/releases/Kaptal-0.1.1.apk`. Backend: 503 correctas/6 omitidas; frontend: 383 correctas; build web y Android correctos. CI del código combinado `167f0da`: seis jobs correctos en ejecución 39825842507 y Android correcto en 39825842562, incluidos PostgreSQL, recuperación, E2E/API y PWA. Documentación final posterior sin cambios de aplicación. Ver `docs/INTEGRACION_ANDROID_0_1_1.md` para huellas, evidencia y checklist físico. Estado remoto del merge final y CI de develop: revalidar en GitHub y consultar `.local/CI_ANDROID_APK_CIERRE.md`.
+
+Orden: integración → APK actualizada → validación física de sesión, operaciones y offline → Etapa 10 sin Gmail → 12 → 13 → revisión final. Etapa 9 completa provisionalmente; conserva sus pendientes físicos. Gmail deshabilitado y Etapa 6 omitida. Etapa 10 incluye compartir avisos/SMS seleccionados, notificaciones bancarias consentidas y estudio de Wallet/accesos; no supone lectura universal de SMS ni pagos Wallet.
+
+Teléfono no disponible por decisión del propietario. No declarar login, renovación, segundo plano, operaciones, actualización u offline comprobados en Android físico. Sin movimientos financieros reales. Conservar firma privada y APK 0.1.0; instalar posteriormente como actualización con cuenta de prueba autorizada. Google nativo, voz/archivos Android, widgets y accesos nativos continúan pendientes.
+
+Este apartado prevalece sobre los históricos siguientes.
+
+
+
+
+
+### Historico Android
+
+## Avance vigente: base Android (2026-10-22)
+
+Validaci?n Android: APK release 0.1.0 firmada e instalada, copia en Descargas/Kaptal-0.1.0.apk y .local/releases/kaptal-release.apk. Prueba instrumentada f?sica correcta en SM-A546E/Android 16: arranque local y health HTTPS, sin cuentas ni dinero reales. Frontend 382 y build/auditor?a correctos. PR #103 abierto hacia develop; CI del cierre pendiente de consultar. Sesi?n larga y capacidades nativas avanzadas siguen pendientes.
+
+Rama `mejoras/android-apk` creada desde `origin/develop` revalidado `3af6e80`. Etapa 11 implementada en PR #102, abierto y sin integrar; CI final verde, ejecuci?n 39731697875. Esta rama Android no incluye ese PR todav?a. Etapa 9 completada provisionalmente por decisi?n del propietario; conservar sus pendientes manuales para la revisi?n final.
+
+Orden: 11 ? Capacitor/APK firmado descargable sin Play Store ? 10 sin Gmail ? 12 ? 13 ? revisi?n final. Base Capacitor 8.5.3 con Angular empaquetado, API HTTPS por transporte nativo, sin service worker Android ni GIS web en WebView. Firma local privada, script de build y CI debug. Gmail permanece fuera.
+
+Ver alcance, comprobaciones y pendientes actuales en [ANDROID_APK_BASE.md](ANDROID_APK_BASE.md). No declarar widgets, SMS, notificaciones nativas, exportaciones, Google nativo o sesi?n larga terminados con esta base. Backend sin cambios. Sin merge ni despliegue de producci?n; prevalece este apartado sobre el historial siguiente.
+
+### Historico Etapa 11
+
 Correccion final del E2E remoto: esperar la respuesta HTTP del retiro antes de consultar saldos; tres repeticiones locales correctas. CI 275: cinco jobs verdes, unico fallo por esa espera en la prueba de metas. Revalidar el nuevo CI del PR #102. Comunicacion breve con Ponytail/Caveman; Graphify instalada sin grafo preparado, no se ejecuto; no se encontro una skill llamada agent-skills.
 
 
