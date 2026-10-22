@@ -25,7 +25,7 @@ Validación local: backend `mvnw verify`, 495 ejecutadas = 489 correctas + 6 omi
 
 Skills aplicadas: Ponytail, Angular, security-review, debugging-and-error-recovery, Playwright, ecc-verification-loop y documentation-and-adrs.
 
-## Pendientes de implementación
+## Reparto por partes
 
 Segunda entrega: reparto de pareja por `PARTES`, con cantidades enteras de 1 a 1000000 por persona. Se guardan los pesos originales y los importes resueltos; un total de 10.01 con proporción 2:1 queda en 6.67 y 3.34. No es un porcentaje aproximado ni genera una transacción personal. Se rechaza cualquier reparto que deje a una persona sin un centavo.
 
@@ -33,9 +33,28 @@ Migración aditiva V11: columna nullable `repartos_gasto.partes` y ampliación d
 
 Validación de esta segunda entrega: backend verify 499 ejecutadas, 493 correctas y 6 omitidas, sin fallos/errores; frontend completo 382 correctas; build de producción correcto. E2E móvil con backend real local: registrar 10.01 en proporción 2:1, recargar y comprobar pesos/importes, saldos propios intactos y rechazo HTTP 400 de 1.5 partes. Restauración verificada con un tercero, manteniendo pesos e importes sin vincular a la cuenta real de la pareja; rechazo de archivo con partes fraccionarias. H2/datos sintéticos. La validación PostgreSQL/migración corresponde al nuevo CI; el CI de la primera entrega (`2f7b108`) terminó en verde.
 
-1. Completar revisión de concurrencia/revocación y liquidaciones existentes. Partes implementadas para pareja; las listas compartidas siguen siendo colecciones de movimientos con roles, no deudas entre veinte personas.
-2. Divisas: moneda original, tasa, fecha/fuente y equivalencia secundaria; no sumar monedas diferentes ni reconvertir el pasado al cambiar preferencias.
-3. Metas: creación/progreso, aportes y retiros trazables, cancelación y permisos; integrarlas en respaldo/restauración.
-4. Regresión completa/CI, publicar y revisar cada entrega. La Etapa 11 sigue abierta hasta completar estos criterios.
+## Metas y divisas implementadas
+
+Metas en `/metas`, accesibles desde Herramientas. Cada meta crea una cuenta AHORRO a cero con objetivo y estado cancelada/reanudada. No se inventa un saldo adicional: progreso = saldo del apartado. Aportes y retiros usan TRANSFERENCIA entre cuentas propias, de la misma moneda en este formulario, con clave de idempotencia que se conserva al reintentar la misma solicitud. Pueden retirarse fondos de una meta cancelada. Cancelar no borra el saldo ni ejecuta devoluciones; el historial conserva autor e importes. La moneda de la meta no cambia, aunque todavía no tenga movimientos. El importe del objetivo y los saldos respetan ocultación de montos.
+
+Es un apartado virtual de la contabilidad de Kaptal; no abre una cuenta bancaria ni ejecuta transferencias bancarias reales. Las cuentas de ahorro de metas aparecen en Cuentas y sus movimientos en el historial personal. No hay suma de metas de diferentes monedas.
+
+Divisas: las transferencias conservan moneda e importe original, tasa aplicada e importe recibido redondeado a centavos. Se añade fuente `MANUAL` y fecha aplicada para las nuevas transferencias entre monedas; esa fecha es la fecha elegida para la operación, no la fecha de una cotización oficial. Cambiar la moneda preferida no reconvierte el pasado. El historial móvil muestra la referencia; CSV y respaldo también la conservan. Filas antiguas sin fuente permanecen desconocidas; no se les inventa procedencia. No se integró un proveedor de cotizaciones.
+
+Migraciones aditivas V12 (objetivo/estado en cuentas) y V13 (fuente/fecha en transacciones). Respaldo v7 incluye metas y divisas; restaurador admite v1-v7, valida objetivos/referencias y remapea las cuentas al nuevo propietario.
+
+Liquidaciones y concurrencia: revisados los servicios existentes y sus pruebas de permisos, aceptación concurrente, desvinculación frente a registro y eliminación. La prueba `unPagoSalaLaDeudaSinMoverElFondo` verifica que un pago reduce deuda sin sumar gasto ni modificar el fondo compartido. Compartido sigue siendo anotación de deuda/aportes; no mueve dinero bancario ni cuentas personales. Partes implementadas para pareja; las listas compartidas siguen siendo colecciones de movimientos con roles.
+
+## Correcciones del CI anterior
+
+El run 271 falló por expectativas obsoletas de versión de respaldo, conteos de migraciones y un aviso nuevo de Vitest; no por un fallo al aplicar V11. Actualizadas las expectativas a respaldo v7 y migraciones V1-V13; la prueba de rollback usa V14 temporal, evitando colisión con V11 real. Conserva comprobación de checksum, rollback y no adopción de bases desconocidas.
+
+Vitest actualizado a 4.1.12, parche de [registro de mocks](https://github.com/advisories/GHSA-qxg6-89mg-rqv8) y [recorrido de rutas en Windows](https://github.com/advisories/GHSA-xp26-3454-mjgp). La auditoría vuelve a pasar; siguen cinco avisos de desarrollo de braces ya documentados, sin ampliar excepciones.
+
+Validación local de la tercera entrega: 382 pruebas frontend correctas con Vitest 4.1.12, build y auditoría correctos. Cinco integraciones nuevas de metas/divisas correctas; suite backend completa final, incluido CSV: 504 ejecutadas, 498 correctas + 6 omitidas, cero fallos/errores. E2E: metas/divisas correcto; cuatro flujos de recuperación/presupuestos correctos. El primer E2E de metas encontró una etiqueta ambigua del selector; corregida y repetido correctamente. Datos sintéticos/H2. Consultar el resultado remoto actual de PostgreSQL/migraciones/recuperación en PR #102 antes de integrar.
+
+## Cierre pendiente
+
+Revisar el nuevo CI completo, PostgreSQL/migraciones/recuperación y PR #102. Las comprobaciones físicas/autenticadas de las etapas anteriores siguen trasladadas a la revisión final por instrucción del propietario. Después de integrar y revisar esta etapa corresponde una rama nueva para Capacitor/APK firmado descargable, sin Play Store. Gmail permanece fuera. No se autoriza merge ni despliegue de producción por publicar el PR.
 
 Las pruebas usan datos sintéticos; no se modifican fondos reales. Sin merge ni despliegue de producción.

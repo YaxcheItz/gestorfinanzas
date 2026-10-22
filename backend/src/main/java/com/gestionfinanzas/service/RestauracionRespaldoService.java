@@ -63,7 +63,7 @@ import java.util.function.Function;
 @Slf4j
 public class RestauracionRespaldoService {
 
-    private static final int VERSION_COMPATIBLE = 6;
+    private static final int VERSION_COMPATIBLE = 7;
     private static final int MAX_REGISTROS = 20_000;
     private static final Map<String, CategoriaInicial> CATEGORIAS_INICIALES = Map.of(
             "Alimentos y Supermercado", new CategoriaInicial(TipoTransaccion.GASTO, "shopping-cart", "#f59e0b"),
@@ -463,6 +463,10 @@ public class RestauracionRespaldoService {
         }
 
         for (CuentaResponse cuenta : respaldo.cuentas()) {
+            if ((cuenta.metaObjetivo() != null && (!montoValido(cuenta.metaObjetivo()) || cuenta.metaObjetivo().signum() <= 0 || cuenta.tipo() != TipoCuenta.AHORRO))
+                    || (cuenta.metaCancelada() && cuenta.metaObjetivo() == null)) {
+                throw new IllegalArgumentException("El respaldo contiene una meta no válida.");
+            }
             if (cuenta.limiteRetenido() != null && (cuenta.limiteRetenido().signum() < 0
                     || cuenta.limiteRetenido().stripTrailingZeros().scale() > 2
                     || cuenta.limiteRetenido().compareTo(new BigDecimal("9999999999999.99")) > 0
@@ -524,6 +528,11 @@ public class RestauracionRespaldoService {
             }
             validarCategoriaReferencia(movimiento.categoriaId(), categoriaIds,
                     movimiento.categoriaNombre(), movimiento.tipo());
+            if ((movimiento.fuenteCambio() == null) != (movimiento.fechaCambio() == null)
+                    || (movimiento.fuenteCambio() != null && (!"MANUAL".equals(movimiento.fuenteCambio())
+                    || movimiento.tipo() != TipoTransaccion.TRANSFERENCIA))) {
+                throw new IllegalArgumentException("El respaldo contiene una referencia de cambio no válida.");
+            }
         }
         if (respaldo.relacionesCashback() != null) {
             Set<Long> hijos = new HashSet<>();
@@ -726,6 +735,7 @@ public class RestauracionRespaldoService {
                     .saldoActual(origen.saldoActual())
                     .moneda(origen.moneda())
                     .descripcion(origen.descripcion())
+                    .metaObjetivo(origen.metaObjetivo()).metaCancelada(origen.metaCancelada())
                     .activo(origen.activo())
                     .build());
             mapa.put(origen.id(), guardada.getId());
@@ -787,6 +797,7 @@ public class RestauracionRespaldoService {
                     .monto(origen.monto())
                     .montoDestino(origen.montoDestino())
                     .tasaCambio(origen.tasaCambio())
+                    .fuenteCambio(origen.fuenteCambio()).fechaCambio(origen.fechaCambio())
                     .fecha(origen.fecha())
                     .descripcion(origen.descripcion())
                     .notas(origen.notas())
@@ -908,7 +919,7 @@ public class RestauracionRespaldoService {
                 resolverCategoriaHistorica(origen.categoriaId(), categorias), origen.categoriaNombre(),
                 origen.categoriaIcono(), origen.categoriaColor(), origen.tipo(), origen.monto(),
                 origen.montoDestino(), origen.tasaCambio(), origen.moneda(), origen.monedaDestino(),
-                origen.fecha(), origen.descripcion(), origen.notas(), origen.cashbackAutomatico(), origen.fechaCreacion(), origen.metodoCaptura(), origen.compraMsiId()
+                origen.fecha(), origen.descripcion(), origen.notas(), origen.cashbackAutomatico(), origen.fechaCreacion(), origen.metodoCaptura(), origen.compraMsiId(), null, null, java.util.Set.of(), null, null, null, origen.fuenteCambio(), origen.fechaCambio()
         );
     }
 

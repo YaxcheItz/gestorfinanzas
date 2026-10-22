@@ -100,7 +100,7 @@ public class RespaldoFinancieroService {
                 .map(com.gestionfinanzas.model.entity.PlantillaRecurrente::getLista).filter(java.util.Objects::nonNull)
                 .forEach(l -> listasRespaldo.put(l.getId(), l));
         return new RespaldoFinancieroResponse(
-                6,
+                7,
                 Instant.now(),
                 perfilService.obtener(usuarioId),
                 cuentas,

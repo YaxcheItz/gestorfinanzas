@@ -174,6 +174,8 @@ public class TransaccionService {
                 .monto(montoGuardar)
                 .montoDestino(datos.montoDestino())
                 .tasaCambio(datos.tasaCambio())
+                .fuenteCambio(datos.cuentaDestino() != null && !datos.cuentaOrigen().getMoneda().equals(datos.cuentaDestino().getMoneda()) ? "MANUAL" : null)
+                .fechaCambio(datos.cuentaDestino() != null && !datos.cuentaOrigen().getMoneda().equals(datos.cuentaDestino().getMoneda()) ? request.fecha() : null)
                 .fecha(request.fecha())
                 .descripcion(descripcion)
                 .notas(normalizarNotas(request.notas()))
@@ -283,6 +285,12 @@ public class TransaccionService {
         transaccion.setTipo(request.tipo());
         transaccion.setMonto(request.monto());
         transaccion.setMontoDestino(datos.montoDestino());
+        if (datos.cuentaDestino() == null || datos.cuentaOrigen().getMoneda().equals(datos.cuentaDestino().getMoneda())) {
+            transaccion.setFuenteCambio(null); transaccion.setFechaCambio(null);
+        } else if (transaccion.getTasaCambio() == null || transaccion.getTasaCambio().compareTo(datos.tasaCambio()) != 0
+                || !transaccion.getFecha().equals(request.fecha())) {
+            transaccion.setFuenteCambio("MANUAL"); transaccion.setFechaCambio(request.fecha());
+        }
         transaccion.setTasaCambio(datos.tasaCambio());
         transaccion.setFecha(request.fecha());
         transaccion.setDescripcion(descripcionMovimiento(datos, request.descripcion()));
@@ -707,7 +715,7 @@ public class TransaccionService {
         );
         StringBuilder csv = new StringBuilder("\uFEFF");
         csv.append("ID,Fecha,Tipo,Descripción,Categoría,Cuenta origen,Moneda origen,Monto origen,")
-                .append("Cuenta destino,Moneda destino,Monto destino,Tasa de cambio,Notas,Lista,Etiquetas,Autor\r\n");
+                .append("Cuenta destino,Moneda destino,Monto destino,Tasa de cambio,Notas,Lista,Etiquetas,Autor,Fuente de cambio,Fecha de cambio aplicada\r\n");
 
         for (Transaccion transaccion : transacciones) {
             List<String> campos = new ArrayList<>(13);
@@ -727,6 +735,8 @@ public class TransaccionService {
             campos.add(transaccion.getLista() != null ? transaccion.getLista().getNombre() : "Personal");
             campos.add(String.join(" ", transaccion.getEtiquetas().stream().sorted().map(e -> "#" + e).toList()));
             campos.add(transaccion.getUsuario().getNombre());
+            campos.add(transaccion.getFuenteCambio());
+            campos.add(transaccion.getFechaCambio() != null ? transaccion.getFechaCambio().toString() : "");
             csv.append(campos.stream().map(TransaccionService::campoCsv).collect(java.util.stream.Collectors.joining(",")))
                     .append("\r\n");
         }

@@ -179,7 +179,7 @@ class ListasEtiquetasIntegrationTest {
     @Test void respaldoActualRestauraListasYEtiquetasSinCompartirAcceso() {
         invitar("EDITOR");
         transacciones.crearTransaccion(a.getId(),gasto(cuentaA,lista,"Hotel","viaje","visa"));
-        var respaldo=respaldos.generar(a.getId());assertEquals(6,respaldo.version());
+        var respaldo=respaldos.generar(a.getId());assertEquals(7,respaldo.version());
         restauracion.restaurar(tercero.getId(),respaldo);
         var copias=listas.listar(tercero.getId());
         var viaje=copias.stream().filter(l->l.nombre().equals("Vacaciones")).findFirst().orElseThrow();
