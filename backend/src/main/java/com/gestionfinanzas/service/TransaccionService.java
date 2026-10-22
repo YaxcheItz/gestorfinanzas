@@ -274,6 +274,7 @@ public class TransaccionService {
                 transaccion.getMonto(), transaccion.getMontoDestino(), -1);
         aplicarImpacto(datos.tipo(), datos.cuentaOrigen(), datos.cuentaDestino(),
                 request.monto(), datos.montoDestino(), 1);
+        validarSaldosMetas(transaccion.getCuenta(), transaccion.getCuentaDestino());
 
         transaccion.setCuenta(datos.cuentaOrigen());
         transaccion.setCuentaDestino(datos.cuentaDestino());
@@ -534,6 +535,18 @@ public class TransaccionService {
                     .add(montoDestino.multiply(BigDecimal.valueOf(factor))));
             cuentaRepository.save(cuentaOrigen);
             cuentaRepository.save(cuentaDestino);
+        }
+        if (factor == 1) validarSaldosMetas(cuentaOrigen, cuentaDestino);
+        if (factor == 1 && tipo == TipoTransaccion.TRANSFERENCIA && cuentaDestino.getMetaObjetivo() != null
+                && (cuentaDestino.isMetaCancelada() || cuentaOrigen.getTipo() == TipoCuenta.CREDITO || cuentaOrigen.getSaldoActual().signum() < 0)) {
+            throw new IllegalArgumentException("Para aportar necesitas una meta activa y fondos propios disponibles.");
+        }
+    }
+
+    private void validarSaldosMetas(Cuenta... cuentas) {
+        for (var cuenta : cuentas) {
+            if (cuenta != null && cuenta.getMetaObjetivo() != null && cuenta.getSaldoActual().signum() < 0)
+                throw new IllegalArgumentException("La meta no puede quedar con saldo negativo. Revisa sus aportes y retiros.");
         }
     }
 
@@ -860,6 +873,7 @@ public class TransaccionService {
             cuentaRepository.save(cuentaOrigen);
         }
 
+        validarSaldosMetas(cuentaOrigen, transaccion.getCuentaDestino());
         libroDiarioService.registrarEliminacion(usuarioId, antes);
         auditoriaService.registrar(usuarioId, transaccion.getId(), "ELIMINAR", antes, null);
         transaccionRepository.delete(transaccion);

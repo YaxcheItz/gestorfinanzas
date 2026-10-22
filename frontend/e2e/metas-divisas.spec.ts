@@ -18,6 +18,9 @@ test('metas: aportar, cancelar y retirar conserva fondos; divisas y respaldo con
   await meta.getByRole('button',{name:'Retirar de Viaje QA',exact:true}).click();await meta.getByLabel('Cuenta de destino',{exact:true}).selectOption({label:'Banco Metas · MXN'});await meta.getByLabel('Importe',{exact:true}).fill('10');await meta.getByRole('button',{name:'Confirmar retiro',exact:true}).click();await expect(meta.getByRole('button',{name:'Reanudar meta Viaje QA',exact:true})).toBeEnabled();
   const cuentas=await page.request.get('/api/cuentas',{headers});expect(cuentas.ok()).toBeTruthy();const todas=(await cuentas.json()).data;
   expect(todas.find((c:{id:number})=>c.id===bancoId).saldoActual).toBe(980);expect(todas.find((c:{nombre:string})=>c.nombre==='Viaje QA').saldoActual).toBe(20);
+  const metaId=todas.find((c:{nombre:string})=>c.nombre==='Viaje QA').id;
+  const insuficiente=await page.request.post('/api/transacciones',{headers,data:{cuentaId:metaId,cuentaDestinoId:bancoId,tipo:'TRANSFERENCIA',monto:21,fecha:'2026-10-21'}});expect(insuficiente.status()).toBe(400);
+  const intactas=await page.request.get('/api/cuentas',{headers});expect(intactas.ok()).toBeTruthy();expect((await intactas.json()).data.find((c:{id:number})=>c.id===metaId).saldoActual).toBe(20);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
   const usd=await page.request.post('/api/cuentas',{headers,data:{nombre:'USD QA',tipo:'AHORRO',moneda:'USD',saldoInicial:0}});expect(usd.ok()).toBeTruthy();
   const cambio=await page.request.post('/api/transacciones',{headers,data:{cuentaId:bancoId,cuentaDestinoId:(await usd.json()).data.id,tipo:'TRANSFERENCIA',monto:100,tasaCambio:0.05,fecha:'2026-10-21',descripcion:'Cambio aplicado'}});expect(cambio.ok()).toBeTruthy();const fx=(await cambio.json()).data;expect(fx.montoDestino).toBe(5);expect(fx.fuenteCambio).toBe('MANUAL');expect(fx.fechaCambio).toBe('2026-10-21');

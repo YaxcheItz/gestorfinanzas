@@ -51,7 +51,9 @@ El run 271 falló por expectativas obsoletas de versión de respaldo, conteos de
 
 Vitest actualizado a 4.1.12, parche de [registro de mocks](https://github.com/advisories/GHSA-qxg6-89mg-rqv8) y [recorrido de rutas en Windows](https://github.com/advisories/GHSA-xp26-3454-mjgp). La auditoría vuelve a pasar; siguen cinco avisos de desarrollo de braces ya documentados, sin ampliar excepciones.
 
-Validación local de la tercera entrega: 382 pruebas frontend correctas con Vitest 4.1.12, build y auditoría correctos. Cinco integraciones nuevas de metas/divisas correctas; suite backend completa final, incluido CSV: 504 ejecutadas, 498 correctas + 6 omitidas, cero fallos/errores. E2E: metas/divisas correcto; cuatro flujos de recuperación/presupuestos correctos. El primer E2E de metas encontró una etiqueta ambigua del selector; corregida y repetido correctamente. Datos sintéticos/H2. Consultar el resultado remoto actual de PostgreSQL/migraciones/recuperación en PR #102 antes de integrar.
+Validación local de la tercera entrega: 382 pruebas frontend correctas con Vitest 4.1.12, build y auditoría correctos. Cinco integraciones nuevas de metas/divisas correctas; suite backend completa final, incluido CSV: 509 ejecutadas, 503 correctas + 6 omitidas, cero fallos/errores. E2E: metas/divisas correcto; cuatro flujos de recuperación/presupuestos correctos. El primer E2E de metas encontró una etiqueta ambigua del selector; corregida y repetido correctamente. Datos sintéticos/H2. Consultar el resultado remoto actual de PostgreSQL/migraciones/recuperación en PR #102 antes de integrar.
+
+Proteccion adicional en servidor: no retirar mas que el saldo de la meta, no aportar desde fondos insuficientes o credito y no recibir transferencias nuevas estando cancelada. Editar valida el saldo final (permite reversiones intermedias); borrar un aporte ya retirado no puede dejar la meta en negativo. Cinco regresiones adicionales correctas y E2E de rechazo/rollback confirmado.
 
 ## Cierre pendiente
 

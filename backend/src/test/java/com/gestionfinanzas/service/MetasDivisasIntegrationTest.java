@@ -72,4 +72,28 @@ class MetasDivisasIntegrationTest {
         var id=meta();
         assertThrows(IllegalArgumentException.class,()->servicioCuentas.actualizarCuenta(a.getId(),id,new CuentaRequest("Viaje",TipoCuenta.AHORRO,null,null,null,null,null,null,null,"USD",null)));
     }
+    @Test void noAportaMasFondosDeLosDisponibles(){
+        var id=meta();
+        assertThrows(IllegalArgumentException.class,()->movimientos.crearTransaccion(a.getId(),transferencia(banco.getId(),id,"1000.01",null)));
+    }
+    @Test void noRetiraDeUnaMetaVacia(){
+        var id=meta();
+        assertThrows(IllegalArgumentException.class,()->movimientos.crearTransaccion(a.getId(),transferencia(id,banco.getId(),"0.01",null)));
+    }
+    @Test void metaCanceladaNoRecibeAportesPorFueraDelFormulario(){
+        var id=meta();metas.estado(new CustomUserDetails(a),id,new MetaController.Estado(true));
+        assertThrows(IllegalArgumentException.class,()->movimientos.crearTransaccion(a.getId(),transferencia(banco.getId(),id,"10.00",null)));
+    }
+    @Test void editarAporteValidaElSaldoFinalEnVezDeLaReversionIntermedia(){
+        var id=meta();var aporte=movimientos.crearTransaccion(a.getId(),transferencia(banco.getId(),id,"30.00",null));
+        movimientos.crearTransaccion(a.getId(),transferencia(id,banco.getId(),"10.00",null));
+        movimientos.actualizarTransaccion(a.getId(),aporte.id(),transferencia(banco.getId(),id,"25.00",null));
+        assertEquals(new BigDecimal("15.00"),cuentas.findById(id).orElseThrow().getSaldoActual());
+        assertEquals(new BigDecimal("985.00"),banco.getSaldoActual());
+    }
+    @Test void noBorraUnAporteYaRetiradoSiDejaLaMetaEnNegativo(){
+        var id=meta();var aporte=movimientos.crearTransaccion(a.getId(),transferencia(banco.getId(),id,"30.00",null));
+        movimientos.crearTransaccion(a.getId(),transferencia(id,banco.getId(),"10.00",null));
+        assertThrows(IllegalArgumentException.class,()->movimientos.eliminarTransaccion(a.getId(),aporte.id()));
+    }
 }
