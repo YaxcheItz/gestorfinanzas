@@ -4,13 +4,14 @@
 
 El propietario autorizó integrar #102/#103 y preparar todo lo posible sin teléfono. PR #102 integrado a develop mediante c8651d03de549b4f31a6c876dc825cf1d8f27edb. Rama Android actualizada con ese develop; conflictos limitados a cinco documentos, conservando los bloques históricos de ambas entregas. Sin despliegue a producción ni cambios en main.
 
-Preparación de APK 0.1.1/código 2 con metas, divisas y compartido. Pruebas del conjunto y resultado de #103 se documentarán al cierre. Los resultados anteriores de CI no sustituyen estas comprobaciones.
+Esta entrega unifica Etapa 11 y Android para develop mediante PR #103, con APK 0.1.1/código 2 firmada y preparada en `.local/releases/Kaptal-0.1.1.apk`. Backend: 503 correctas/6 omitidas; frontend: 383 correctas; build web y Android correctos. CI del código combinado `167f0da`: seis jobs correctos en ejecución 39825842507 y Android correcto en 39825842562, incluidos PostgreSQL, recuperación, E2E/API y PWA. Documentación final posterior sin cambios de aplicación. Ver `docs/INTEGRACION_ANDROID_0_1_1.md` para huellas, evidencia y checklist físico. Estado remoto del merge final y CI de develop: revalidar en GitHub y consultar `.local/CI_ANDROID_APK_CIERRE.md`.
 
 Orden: integración → APK actualizada → validación física de sesión, operaciones y offline → Etapa 10 sin Gmail → 12 → 13 → revisión final. Etapa 9 completa provisionalmente; conserva sus pendientes físicos. Gmail deshabilitado y Etapa 6 omitida. Etapa 10 incluye compartir avisos/SMS seleccionados, notificaciones bancarias consentidas y estudio de Wallet/accesos; no supone lectura universal de SMS ni pagos Wallet.
 
 Teléfono no disponible por decisión del propietario. No declarar login, renovación, segundo plano, operaciones, actualización u offline comprobados en Android físico. Sin movimientos financieros reales. Conservar firma privada y APK 0.1.0; instalar posteriormente como actualización con cuenta de prueba autorizada. Google nativo, voz/archivos Android, widgets y accesos nativos continúan pendientes.
 
 Este apartado prevalece sobre los históricos siguientes.
+
 
 
 
