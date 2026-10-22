@@ -1,5 +1,13 @@
 # Mejoras por etapas de Kaptal
 
+## Avance vigente: base Android (2026-10-22)
+
+Rama `mejoras/android-apk` creada desde `origin/develop` revalidado `3af6e80`. Etapa 11 implementada en PR #102, abierto y sin integrar; CI final verde, ejecuci?n 39731697875. Esta rama Android no incluye ese PR todav?a. Etapa 9 completada provisionalmente por decisi?n del propietario; conservar sus pendientes manuales para la revisi?n final.
+
+Orden: 11 ? Capacitor/APK firmado descargable sin Play Store ? 10 sin Gmail ? 12 ? 13 ? revisi?n final. Base Capacitor 8.5.3 con Angular empaquetado, API HTTPS por transporte nativo, sin service worker Android ni GIS web en WebView. Firma local privada, script de build y CI debug. Gmail permanece fuera.
+
+Ver alcance, comprobaciones y pendientes actuales en [ANDROID_APK_BASE.md](ANDROID_APK_BASE.md). No declarar widgets, SMS, notificaciones nativas, exportaciones, Google nativo o sesi?n larga terminados con esta base. Backend sin cambios. Sin merge ni despliegue de producci?n; prevalece este apartado sobre el historial siguiente.
+
 Seguimiento vigente 2026-10-21: Etapa 8 integrada por el propietario; continuar Etapa 9 en `mejoras/android-captura`, carpeta principal. Ver [entrega PWA y pendientes](ANDROID_CAPTURA_ETAPA_9.md) y el plan maestro. Las pruebas físicas anteriores siguen pendientes; Gmail deshabilitado.
 
 Seguimiento PR: [#101 hacia develop](https://github.com/YaxcheItz/gestorfinanzas/pull/101), borrador de `mejoras/android-captura`. 381 unitarias frontend y tres E2E PWA correctas; CI remoto pendiente. Sin merge ni despliegue. PR #99 ya integrado por el propietario; los apartados siguientes son historia.

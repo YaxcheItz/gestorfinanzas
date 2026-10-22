@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Kaptal</string>
+    <string name="title_activity_main">Kaptal</string>
+    <string name="package_name">com.kaptal.app</string>
+    <string name="custom_url_scheme">com.kaptal.app</string>
+</resources>

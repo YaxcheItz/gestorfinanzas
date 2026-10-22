@@ -1,6 +1,15 @@
 import { bootstrapApplication } from '@angular/platform-browser';
 import { appConfig } from './app/app.config';
 import { App } from './app/app';
+import { Capacitor } from '@capacitor/core';
+import { App as NativeApp } from '@capacitor/app';
+
+if (Capacitor.isNativePlatform()) {
+  void NativeApp.addListener('backButton', ({ canGoBack }) => {
+    if (canGoBack) window.history.back();
+    else void NativeApp.minimizeApp();
+  });
+}
 
 bootstrapApplication(App, appConfig)
   .catch((err) => {

@@ -43,3 +43,11 @@ yarn-error.log*
 *.dump
 __pycache__/
 *.pyc
+
+# Android: claves y artefactos generados
+*.jks
+*.keystore
+frontend/android/local.properties
+frontend/android/.gradle/
+frontend/android/**/build/
+frontend/android/app/src/main/assets/public/

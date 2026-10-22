@@ -1,5 +1,13 @@
 # Estado para retomar la sesión
 
+## Avance vigente: base Android (2026-10-22)
+
+Rama `mejoras/android-apk` creada desde `origin/develop` revalidado `3af6e80`. Etapa 11 implementada en PR #102, abierto y sin integrar; CI final verde, ejecuci?n 39731697875. Esta rama Android no incluye ese PR todav?a. Etapa 9 completada provisionalmente por decisi?n del propietario; conservar sus pendientes manuales para la revisi?n final.
+
+Orden: 11 ? Capacitor/APK firmado descargable sin Play Store ? 10 sin Gmail ? 12 ? 13 ? revisi?n final. Base Capacitor 8.5.3 con Angular empaquetado, API HTTPS por transporte nativo, sin service worker Android ni GIS web en WebView. Firma local privada, script de build y CI debug. Gmail permanece fuera.
+
+Ver alcance, comprobaciones y pendientes actuales en [ANDROID_APK_BASE.md](ANDROID_APK_BASE.md). No declarar widgets, SMS, notificaciones nativas, exportaciones, Google nativo o sesi?n larga terminados con esta base. Backend sin cambios. Sin merge ni despliegue de producci?n; prevalece este apartado sobre el historial siguiente.
+
 ## Etapa 9: primera entrega PWA/captura (2026-10-21)
 
 Conexión recuperada: rama `mejoras/android-captura` subida y [PR #101](https://github.com/YaxcheItz/gestorfinanzas/pull/101) abierto como borrador hacia develop. Sin merge ni despliegue de producción. Ampliación de regresiones: 381 unitarias frontend correctas, tres E2E PWA correctas (renovación con cookie real, sesión vencida offline y sincronización única). CI remoto pendiente de resultado; no confundirlo con validación local. Catálogo de 87 entradas de skills en `.local/SKILLS_DISPONIBLES.md`.

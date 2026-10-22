@@ -1,10 +1,19 @@
 import { getApiBaseUrl } from './api-base-url';
+import { Capacitor } from '@capacitor/core';
+import { vi } from 'vitest';
 
 describe('getApiBaseUrl', () => {
   const ventana = window as unknown as Record<string, unknown>;
 
   afterEach(() => {
+    vi.restoreAllMocks();
     delete ventana['__API_BASE_URL__'];
+  });
+
+  it('en Android fija la API HTTPS y no acepta sobreescrituras del runtime', () => {
+    vi.spyOn(Capacitor, 'isNativePlatform').mockReturnValue(true);
+    ventana['__API_BASE_URL__'] = 'http://otro-sitio.invalid/api';
+    expect(getApiBaseUrl()).toBe('https://kaptalgf.vercel.app/api');
   });
 
   it('usa /api del mismo origen cuando no hay nada configurado', () => {
