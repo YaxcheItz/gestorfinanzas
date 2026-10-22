@@ -1,14 +1,18 @@
 # Estado para retomar la sesión
 
-## Validación física en curso (2026-10-22)
+## Validación física y APK 0.1.2 (2026-10-22)
 
-El propietario conectó el Samsung y autorizó instalar, probar y corregir. Rama nueva `validacion/android-fisico-0-1-1`, desde origin/develop `c46d090` revalidado; main sigue `d39d899`. Sin merges ni despliegues nuevos.
+Rama `validacion/android-fisico-0-1-1`, desde develop c46d090; PR #104 pendiente de integrar. #102/#103 integrados en develop, main d39d899 sin despliegue nuevo.
 
-APK release 0.1.1/código 2 instalada como actualización sin desinstalar. Confirmación del instalador y versión consultada en el SM-A546E; fecha de instalación original conservada. Inicio visible con sesión previa. Esto no certifica todavía login, renovación, cifras, operaciones u offline. No se modificaron movimientos reales ni se cerró la sesión del propietario.
+Instalada release 0.1.2/código 3 en Samsung SM-A546E/Android 16, misma firma y fecha original de instalación. Copia en Descargas/Kaptal-0.1.2.apk y .local/releases/Kaptal-0.1.2.apk. Sin borrar datos ni modificar movimientos reales.
 
-Preparada una app debug separada `com.kaptal.app.debug` («Kaptal Pruebas») para usar datos sintéticos sin afectar la instalación normal. Compilación debug e instrumentación correctas, firma debug verificada y target de instrumentación confirmado en la app de pruebas. Inspección WebView limitada a compilaciones depurables; release permanece protegida. Aún no instalada ni ejecutada la prueba financiera física por las caídas de ADB USB e inalámbrico.
+En Kaptal Pruebas separada, cuenta sintética y WebView física: registro/logout/login, renovación natural tras más de tres horas, gasto/ingreso/transferencia, edición/eliminación, saldos e historial correctos. Captura con Wi-Fi y datos realmente apagados, force-stop/reapertura sin red y sincronización única al recuperar conexión: correctos. Giro, letra grande, teclado real y retorno de segundo plano comprobados en formularios probados; ajustes del teléfono restaurados.
 
-Detalles y evidencia: `docs/VALIDACION_ANDROID_FISICO.md`. Pendiente estabilizar control del dispositivo y completar sesión, operaciones y offline antes de Etapa 10 sin Gmail → 12 → 13 → revisión final. Gmail deshabilitado y Etapa 6 omitida. Conservar firma y APK release existentes; no usar datos del propietario como fixtures.
+Corregidos permiso ACCESS_NETWORK_STATE (offline no detectado) y reinicio por fontScale (perdía importe sin guardar). ip-address de desarrollo actualizado a 10.7.4 por aviso nuevo que fallaba CI. Frontend 383 correctas, auditoría/build web y builds nativos correctos; pruebas instrumentadas de arranque y permiso correctas. Revisar checks del head de #104 antes de integrar.
+
+Evidencia y límites: docs/VALIDACION_ANDROID_FISICO.md. Finanzas probadas en debug física; actualización y firma en release. Pendientes pantalla bloqueada/reinicio completo, TalkBack, revisión total, voz/archivos/Google nativos y privacidad. Backend nuevo de Etapa 11 sin despliegue; no certificar sus funciones en producción.
+
+Siguiente: revisar e integrar #104 con autorización explícita; Etapa 10 sin Gmail en rama nueva desde develop actualizado → 12 → 13 → revisión final. Gmail deshabilitado, Etapa 6 omitida. No hacer merge ni despliegue por iniciativa propia.
 
 Prevalece este apartado sobre los históricos siguientes.
 

@@ -1,36 +1,57 @@
 # Validación Android en Samsung
 
-## Sesión del 22 de octubre de 2026: en curso
+## Resultado del 22 de octubre de 2026
 
-Rama `validacion/android-fisico-0-1-1`, creada desde `origin/develop` comprobado en `c46d090`. `origin/main` permanece en `d39d899`; sin merge ni despliegue nuevos. El propietario autorizó instalar, probar y corregir fallos, preservando sus datos financieros reales.
+Rama `validacion/android-fisico-0-1-1`, desde `origin/develop c46d090`. PR [#104](https://github.com/YaxcheItz/gestorfinanzas/pull/104), sin integrar. #102 y #103 ya integrados en develop; main permanece `d39d899`. Sin despliegue nuevo. Pruebas autorizadas por el propietario, sin modificar sus movimientos reales.
 
-### Comprobado en el teléfono
+## Instalación release
 
-- Samsung SM-A546E, instalación de la APK release mediante actualización `adb install -r`, sin desinstalar. El instalador confirmó `Success`.
-- Consultado posteriormente por ADB inalámbrico: paquete `com.kaptal.app`, versión 0.1.1, código 2; `lastUpdateTime=2026-10-22 13:40:24`. Conserva `firstInstallTime=2026-10-22 00:26:31`.
-- Arranque frío confirmado por Android y pantalla Inicio visible en el teléfono, con sesión conservada. Esto no certifica todavía que carguen todas las cifras ni una renovación de sesión correcta.
-- No se crearon cuentas de prueba ni movimientos, y no se cerró la sesión del propietario. No se borraron datos ni se reinstaló desde cero.
+Samsung SM-A546E, Android 16. Actualizaciones firmadas 0.1.0 → 0.1.1 → 0.1.2, sin desinstalar ni borrar datos. La 0.1.1 abrió la sesión previa del propietario. La actualización final 0.1.2 confirmó Success, código 3, lastUpdateTime 2026-10-22 17:52:29 y firstInstallTime original 2026-10-22 00:26:31. Arranque frío final confirmado por Android.
 
-### Incidencia de conexión
+- APK: `.local/releases/Kaptal-0.1.2.apk`; alias `.local/releases/kaptal-release.apk` actualizado. Versiones anteriores conservadas.
+- Copia en el teléfono: Descargas/Kaptal-0.1.2.apk.
+- Tamaño: 3 489 296 bytes.
+- SHA-256: `C85606A34710E1D8C2ECC04D257FA17A82C38490759BF6A70D80C99286D549D4`.
+- Certificado SHA-256 conservado: `b5f360604095a50f3208299767dcedca2f3acfc5087df8be1fde9cc075c120c3`.
 
-ADB USB se conecta de forma intermitente y después pierde el transporte o se bloquea. Se compararon las versiones oficiales 37.0.1 y 36.0.2 y las alternativas USB; ninguna quedó estable. La versión alternativa se descargó a `.local/adb-36`, sin reemplazar el SDK. Se observó también otro cliente ADB consultando una aplicación distinta; esto no prueba que sea la causa.
+## Pruebas financieras en el teléfono físico
 
-Con autorización y código temporal del propietario se vinculó ADB inalámbrico. Permitió consultar la versión, abrir la app, obtener pantalla y registros; posteriormente el enlace quedó offline y el puerto dejó de responder. No conservar el código de vinculación en documentación ni Git. Se pidió reactivar Depuración USB con el cable conectado para continuar.
+Instalada «Kaptal Pruebas», `com.kaptal.app.debug`, con almacenamiento separado de release e inspección WebView solo en compilaciones depurables. Playwright conectado a la WebView del Samsung real, plataforma android, origen local https://localhost y transporte HTTP nativo a la API de producción. No fue emulación ni PWA. Cuenta exclusivamente sintética; credenciales y capturas privadas en .local, fuera de Git.
 
-Fuentes de diagnóstico: [notas oficiales de Platform Tools](https://developer.android.com/tools/releases/platform-tools) y [ADB y vinculación inalámbrica](https://developer.android.com/tools/adb).
+| Recorrido | Resultado |
+|---|---|
+| Arranque instrumentado | Formulario local, Android, health HTTPS y ausencia de GIS web: 1 prueba correcta. |
+| Registro, logout y login | UI real, identidad QA y consulta autenticada 200. |
+| Renovación natural | Tras pausa superior a tres horas, acceso vencido; reanudación sin login, token renovado y consulta 200. Sin alterar reloj ni tokens. |
+| Cuentas | Banco QA inicial 1000 y Reserva QA inicial 0, desde UI. |
+| Movimientos | Gasto 25.50, ingreso 100, transferencia 50; saldos 1024.50 / 50, un registro de cada operación en historial. |
+| Edición | Gasto a 30.50 desde UI; saldo banco 1019.50. |
+| Eliminación | Confirmada en UI; gasto ausente, saldos 1050 / 50. |
+| Offline real | Wi-Fi y datos móviles apagados desde Android; USB activo. Gasto 12.34 guardado desde UI en IndexedDB. |
+| Muerte del proceso | Force-stop solo de app QA; reapertura sin red conserva sesión y el mismo pendiente. |
+| Sincronización | Red restaurada; cola vacía, exactamente un gasto 12.34 en servidor, saldo 1037.66 / 50; recarga sin duplicados. |
+| Giro y letra grande | Giro conserva importe sin guardar; escala del sistema 1.3 también tras corrección. Sin desbordamiento horizontal en formulario probado; ajustes restaurados. |
+| Teclado | Toque nativo abre teclado real, confirmado por InputMethod; Atrás lo oculta conservando importe. Guardar visible sobre teclado. Cierre sin guardar. |
+| Segundo plano | Home y retorno a QA con consulta autenticada y saldo correcto. |
 
-### Preparación para pruebas sin afectar al propietario
+Los importes son sintéticos. La cuenta QA se conserva para continuar pruebas. No se cerró la sesión del propietario. Estas pruebas financieras se ejecutaron en debug física; la actualización y firma se verificaron en release. No certifican todas las pantallas, el trabajo con pantalla bloqueada ni sincronización automática con la app cerrada.
 
-La instalación normal contiene una sesión. La variante debug anterior usaba el mismo identificador que release; ahora usa `com.kaptal.app.debug`, nombre «Kaptal Pruebas» y sufijo de versión `-pruebas`, con almacenamiento separado. Se habilita inspección de WebView solamente cuando Android marca la compilación como depurable; release conserva la inspección desactivada.
+## Fallos corregidos y comprobaciones
 
-Compilados correctamente `:app:assembleDebug` y `:app:assembleDebugAndroidTest`. Verificado el identificador del APK debug mediante aapt. La app de pruebas aún no está instalada ni certificada físicamente. No se modificó el frontend financiero ni el backend. Estos resultados de compilación no sustituyen la ejecución instrumentada.
+1. Offline nativo: faltaba ACCESS_NETWORK_STATE; navigator.onLine seguía true con Wi-Fi y datos apagados e impedía ofrecer guardado offline. Añadido el permiso normal de estado de red y repetido el recorrido completo correctamente. Prueba instrumentada de permiso efectivo: 1 correcta en Samsung. [Referencia Android](https://developer.android.com/reference/android/Manifest.permission#ACCESS_NETWORK_STATE).
+2. Letra grande: cambiar escala reiniciaba la actividad y borraba importe sin guardar. Añadido fontScale a configChanges; repetido el cambio real conservando captura. [Referencia Android](https://developer.android.com/guide/topics/manifest/activity-element#config).
+3. CI: aviso nuevo en ip-address 10.7.2, dependencia de desarrollo. Lockfile actualizado únicamente a 10.7.4; auditoría vuelve a pasar, sin ampliar excepciones. [Aviso y parche](https://github.com/advisories/GHSA-rxp7-6hxx-x8q5).
 
-La automatización prevista conecta Playwright a la WebView del propio Samsung; no a un navegador de escritorio emulando Android. Las credenciales y evidencias privadas permanecen en `.local`, fuera de Git. Referencias: [Playwright Android](https://playwright.dev/docs/api/class-android) e [inspección de WebView limitada a debug](https://developer.chrome.com/docs/devtools/remote-debugging/webviews/).
+Conexión: instalado controlador oficial Samsung 1.9.5.0, firma válida, interfaz ADB 2.21.4.0. Al retomar, un servidor ADB aislado de nuestras pruebas en 5038 interfería con USB. Cerrado; un único servidor 5037 permitió completar las pruebas. No atribuir el problema a otras aplicaciones ni guardar códigos temporales de vinculación.
 
-### Pendientes
+Validación local final: frontend **383 pruebas correctas**, build web correcto, auditoría correcta (producción sin avisos; cadena de desarrollo braces conocida pendiente), builds debug/release/androidTest correctos y firma release verificada. El CI anterior 0edb2d2 pasó cinco jobs y falló únicamente por auditoría ip-address; Android pasó. Consultar checks del nuevo head de #104 para resultado remoto de las correcciones.
 
-Estabilizar ADB → instalar Kaptal Pruebas → cuenta sintética y login → operaciones con saldo/historial → cierre/reapertura, fondo y renovación → captura offline, muerte del proceso y sincronización única → accesibilidad, teclado, orientación y privacidad. Las pruebas deben distinguir APK release, APK debug física, simulaciones y producción.
+## Pendientes y continuidad
 
-No desactivar la única conexión de control durante una prueba offline sin contar con restauración de red segura. No usar movimientos del propietario como fixtures. Metas y demás endpoints nuevos requieren backend actualizado en producción; no desplegar por iniciativa propia.
+Pantalla bloqueada/reinicio completo, sesiones prolongadas adicionales y ausencia de cookie válida, TalkBack/contraste y revisión de todas las pantallas, voz, CSV/respaldo nativos, Google nativo y privacidad. No confundir captura recuperada tras force-stop con sincronización en segundo plano garantizada.
 
-Después: Etapa 10 sin Gmail, Etapa 12, Etapa 13 y revisión final. Gmail deshabilitado y Etapa 6 omitida. Cada etapa nueva debe empezar en otra rama desde develop actualizado.
+La APK incluye UI de Etapa 11; su backend no se desplegó en esta tarea y sus endpoints nuevos no se certificaron en producción. Widgets, cortina y notificaciones nativas siguen pendientes.
+
+Siguiente: revisar #104 e integrarlo solo con autorización explícita. Etapa 10 sin Gmail en rama nueva desde develop actualizado: compartir aviso/SMS seleccionado, notificaciones bancarias consentidas con selección de apps y deduplicación, estudio Wallet/accesos. Sin lectura automática de SMS ni acceso universal a pagos Wallet. Después Etapas 12, 13 y revisión final. Gmail deshabilitado y Etapa 6 omitida.
+
+Skills: Ponytail, Mobile Native, Debugging and Error Recovery, Playwright CLI, Security Review, Verification Loop y Documentation and ADRs.
