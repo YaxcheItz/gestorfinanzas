@@ -25,7 +25,14 @@
     }
     @if(seleccionEditada(); as lista) {
       <details><summary>Participantes · {{ lista.miembros.length }}</summary>
-        @for(miembro of lista.miembros; track miembro.id) {<div class="miembro"><span>{{ miembro.nombre }}<small> · {{ miembro.rol === 'PROPIETARIO' ? 'Propietario' : miembro.rol === 'EDITOR' ? 'Editor' : 'Lector' }}</small></span>@if(lista.rol === 'PROPIETARIO' && miembro.rol !== 'PROPIETARIO'){<button type="button" (click)="quitar(miembro.id)" [disabled]="ocupada()" [attr.aria-label]="'Retirar acceso a ' + miembro.nombre">Retirar</button>}</div>}
+        @for(miembro of lista.miembros; track miembro.id) {
+          <div class="miembro"><span>{{ miembro.nombre }}<small> · {{ miembro.rol === 'PROPIETARIO' ? 'Propietario' : miembro.rol === 'EDITOR' ? 'Editor' : 'Lector' }}</small></span>
+            @if(lista.rol === 'PROPIETARIO' && miembro.rol !== 'PROPIETARIO') {
+              <button type="button" (click)="cambiarRol(miembro.id, miembro.rol === 'EDITOR' ? 'LECTOR' : 'EDITOR')" [disabled]="ocupada()" [attr.aria-label]="'Cambiar a ' + (miembro.rol === 'EDITOR' ? 'lector' : 'editor') + ' a ' + miembro.nombre">{{ miembro.rol === 'EDITOR' ? 'Hacer lector' : 'Hacer editor' }}</button>
+              <button type="button" (click)="quitar(miembro.id)" [disabled]="ocupada()" [attr.aria-label]="'Retirar acceso a ' + miembro.nombre">Retirar</button>
+            }
+          </div>
+        }
       </details>
       @if(lista.rol === 'PROPIETARIO' && !lista.personal && !lista.archivada) {
         <details><summary>Compartir lista</summary><p>El código vence en 7 días. Quien se una conserva acceso hasta salir o ser retirado. Crear otro código invalida el anterior.</p><label>Acceso<select name="rolInvitado" [(ngModel)]="rol"><option value="EDITOR">Editor · añade sus movimientos</option><option value="LECTOR">Lector · sólo consulta</option></select></label><button type="button" class="secundario" (click)="invitar()" [disabled]="ocupada()">Crear código de invitación</button>

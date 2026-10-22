@@ -68,6 +68,10 @@ public class Cuenta {
 
     @Column(length = 255)
     private String descripcion;
+    @Column(precision = 15, scale = 2)
+    private BigDecimal metaObjetivo;
+    @Column(nullable = false)
+    private boolean metaCancelada;
 
     @Column(nullable = false)
     @Builder.Default

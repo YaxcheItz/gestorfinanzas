@@ -1,4 +1,4 @@
-export type TipoReparto = 'IGUAL' | 'PORCENTAJE' | 'EXACTO';
+export type TipoReparto = 'IGUAL' | 'PORCENTAJE' | 'EXACTO' | 'PARTES';
 
 /**
  * Cada persona lleva sus totales ya resueltos por el servidor en vez de dejar que
@@ -29,6 +29,7 @@ export interface ParejaResumen {
 }
 
 export interface ParejaParte {
+  partes?: number | null;
   usuarioId: number;
   usuarioNombre: string;
   monto: number;
@@ -116,6 +117,8 @@ export interface AportacionParejaPayload {
 }
 
 export interface GastoParejaPayload {
+  partesPropias?: number | null;
+  partesPareja?: number | null;
   monto: number;
   fecha: string;
   descripcion: string;

@@ -174,6 +174,8 @@ public class TransaccionService {
                 .monto(montoGuardar)
                 .montoDestino(datos.montoDestino())
                 .tasaCambio(datos.tasaCambio())
+                .fuenteCambio(datos.cuentaDestino() != null && !datos.cuentaOrigen().getMoneda().equals(datos.cuentaDestino().getMoneda()) ? "MANUAL" : null)
+                .fechaCambio(datos.cuentaDestino() != null && !datos.cuentaOrigen().getMoneda().equals(datos.cuentaDestino().getMoneda()) ? request.fecha() : null)
                 .fecha(request.fecha())
                 .descripcion(descripcion)
                 .notas(normalizarNotas(request.notas()))
@@ -272,6 +274,7 @@ public class TransaccionService {
                 transaccion.getMonto(), transaccion.getMontoDestino(), -1);
         aplicarImpacto(datos.tipo(), datos.cuentaOrigen(), datos.cuentaDestino(),
                 request.monto(), datos.montoDestino(), 1);
+        validarSaldosMetas(transaccion.getCuenta(), transaccion.getCuentaDestino());
 
         transaccion.setCuenta(datos.cuentaOrigen());
         transaccion.setCuentaDestino(datos.cuentaDestino());
@@ -283,6 +286,12 @@ public class TransaccionService {
         transaccion.setTipo(request.tipo());
         transaccion.setMonto(request.monto());
         transaccion.setMontoDestino(datos.montoDestino());
+        if (datos.cuentaDestino() == null || datos.cuentaOrigen().getMoneda().equals(datos.cuentaDestino().getMoneda())) {
+            transaccion.setFuenteCambio(null); transaccion.setFechaCambio(null);
+        } else if (transaccion.getTasaCambio() == null || transaccion.getTasaCambio().compareTo(datos.tasaCambio()) != 0
+                || !transaccion.getFecha().equals(request.fecha())) {
+            transaccion.setFuenteCambio("MANUAL"); transaccion.setFechaCambio(request.fecha());
+        }
         transaccion.setTasaCambio(datos.tasaCambio());
         transaccion.setFecha(request.fecha());
         transaccion.setDescripcion(descripcionMovimiento(datos, request.descripcion()));
@@ -527,6 +536,18 @@ public class TransaccionService {
             cuentaRepository.save(cuentaOrigen);
             cuentaRepository.save(cuentaDestino);
         }
+        if (factor == 1) validarSaldosMetas(cuentaOrigen, cuentaDestino);
+        if (factor == 1 && tipo == TipoTransaccion.TRANSFERENCIA && cuentaDestino.getMetaObjetivo() != null
+                && (cuentaDestino.isMetaCancelada() || cuentaOrigen.getTipo() == TipoCuenta.CREDITO || cuentaOrigen.getSaldoActual().signum() < 0)) {
+            throw new IllegalArgumentException("Para aportar necesitas una meta activa y fondos propios disponibles.");
+        }
+    }
+
+    private void validarSaldosMetas(Cuenta... cuentas) {
+        for (var cuenta : cuentas) {
+            if (cuenta != null && cuenta.getMetaObjetivo() != null && cuenta.getSaldoActual().signum() < 0)
+                throw new IllegalArgumentException("La meta no puede quedar con saldo negativo. Revisa sus aportes y retiros.");
+        }
     }
 
     private void recalcularCashbackMes(Cuenta cuenta, LocalDate fecha) {
@@ -707,7 +728,7 @@ public class TransaccionService {
         );
         StringBuilder csv = new StringBuilder("\uFEFF");
         csv.append("ID,Fecha,Tipo,Descripción,Categoría,Cuenta origen,Moneda origen,Monto origen,")
-                .append("Cuenta destino,Moneda destino,Monto destino,Tasa de cambio,Notas,Lista,Etiquetas,Autor\r\n");
+                .append("Cuenta destino,Moneda destino,Monto destino,Tasa de cambio,Notas,Lista,Etiquetas,Autor,Fuente de cambio,Fecha de cambio aplicada\r\n");
 
         for (Transaccion transaccion : transacciones) {
             List<String> campos = new ArrayList<>(13);
@@ -727,6 +748,8 @@ public class TransaccionService {
             campos.add(transaccion.getLista() != null ? transaccion.getLista().getNombre() : "Personal");
             campos.add(String.join(" ", transaccion.getEtiquetas().stream().sorted().map(e -> "#" + e).toList()));
             campos.add(transaccion.getUsuario().getNombre());
+            campos.add(transaccion.getFuenteCambio());
+            campos.add(transaccion.getFechaCambio() != null ? transaccion.getFechaCambio().toString() : "");
             csv.append(campos.stream().map(TransaccionService::campoCsv).collect(java.util.stream.Collectors.joining(",")))
                     .append("\r\n");
         }
@@ -850,6 +873,7 @@ public class TransaccionService {
             cuentaRepository.save(cuentaOrigen);
         }
 
+        validarSaldosMetas(cuentaOrigen, transaccion.getCuentaDestino());
         libroDiarioService.registrarEliminacion(usuarioId, antes);
         auditoriaService.registrar(usuarioId, transaccion.getId(), "ELIMINAR", antes, null);
         transaccionRepository.delete(transaccion);
