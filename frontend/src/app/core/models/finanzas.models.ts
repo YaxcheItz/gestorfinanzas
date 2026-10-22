@@ -11,6 +11,8 @@ export const MONEDAS_DISPONIBLES = [
 ] as const;
 
 export interface Cuenta {
+  metaObjetivo?: number | null;
+  metaCancelada?: boolean;
   id: number;
   nombre: string;
   tipo: TipoCuenta;
@@ -67,6 +69,8 @@ export interface PinVinculacionWhatsApp {
 }
 
 export interface Transaccion {
+  fuenteCambio?: string | null;
+  fechaCambio?: string | null;
   listaId?: number | null;
   listaNombre?: string | null;
   etiquetas?: string[];

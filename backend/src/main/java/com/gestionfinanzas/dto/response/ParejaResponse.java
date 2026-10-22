@@ -99,7 +99,8 @@ public record ParejaResponse(
             Long usuarioId,
             String usuarioNombre,
             BigDecimal monto,
-            BigDecimal porcentaje
+            BigDecimal porcentaje,
+            Integer partes
     ) {}
 
     public record Pago(

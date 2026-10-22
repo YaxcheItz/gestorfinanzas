@@ -32,11 +32,20 @@ export class ListasSheetComponent implements AfterViewInit {
   codigoUnion = '';
   constructor() {
     effect(() => { const abierta = this.servicio.abierta(); untracked(() => abierta ? this.mostrar() : this.sheet?.nativeElement.close()); });
+    effect(() => {
+      const listas = this.contexto.listas();
+      untracked(() => {
+        const editada = this.seleccionEditada();
+        if (!editada) return;
+        const actual = listas.find(l => l.id === editada.id);
+        if (actual) this.editando.set(actual); else this.volver();
+      });
+    });
   }
   ngAfterViewInit(): void { this.mostrar(); }
   private mostrar(): void {
     if (this.servicio.abierta() && this.sheet && !this.sheet.nativeElement.open) {
-      this.volver(); this.sheet.nativeElement.showModal();
+      this.volver(); this.sheet.nativeElement.showModal(); this.servicio.recargar();
     }
   }
   cerrar(): void { if (!this.ocupada()) this.sheet?.nativeElement.close(); }
@@ -74,6 +83,14 @@ export class ListasSheetComponent implements AfterViewInit {
   invitar(): void { const actual = this.seleccionEditada(); if (actual) this.ejecutar(this.servicio.invitar(actual.id, this.rol), i => this.invitacion.set(i)); }
   revocar(): void { const actual = this.seleccionEditada(); if (actual) this.ejecutar(this.servicio.revocar(actual.id), () => this.invitacion.set(null)); }
   quitar(id: number): void { const actual = this.seleccionEditada(); if (actual) this.ejecutar(this.servicio.quitar(actual.id, id), () => this.volver()); }
+  cambiarRol(id: number, rol: string): void {
+    const actual = this.seleccionEditada();
+    if (!actual || actual.rol !== 'PROPIETARIO' || (rol !== 'EDITOR' && rol !== 'LECTOR')) return;
+    this.ejecutar(this.servicio.cambiarRol(actual.id, id, rol), lista => {
+      this.contexto.aplicar(this.contexto.listas().map(l => l.id === lista.id ? lista : l));
+      this.editando.set(lista);
+    });
+  }
   unirse(): void {
     this.ejecutar(this.servicio.unirse(this.codigoUnion.trim()), lista => {
       this.contexto.aplicar([...this.contexto.listas().filter(l => l.id !== lista.id), lista]); this.contexto.seleccionar(lista.id); this.codigoUnion = ''; this.volver();

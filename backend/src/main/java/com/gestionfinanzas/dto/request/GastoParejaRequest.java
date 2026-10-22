@@ -22,6 +22,7 @@ import java.time.LocalDate;
  *   registra es el resto hasta el cien.
  * - {@code EXACTO} usa {@code montoExactoPareja}, y la parte de quien registra
  *   es el resto del total.
+ * - {@code PARTES} usa cantidades enteras positivas para ambas personas.
  */
 public record GastoParejaRequest(
 
@@ -46,5 +47,16 @@ public record GastoParejaRequest(
 
         @DecimalMin(value = "0.01", message = "El monto exacto debe ser mayor a 0")
         @Digits(integer = 13, fraction = 2, message = "El monto exacto debe tener hasta 2 decimales")
-        BigDecimal montoExactoPareja
-) {}
+        BigDecimal montoExactoPareja,
+        @jakarta.validation.constraints.Min(1) @jakarta.validation.constraints.Max(1000000)
+        @Digits(integer = 7, fraction = 0)
+        BigDecimal partesPropias,
+        @jakarta.validation.constraints.Min(1) @jakarta.validation.constraints.Max(1000000)
+        @Digits(integer = 7, fraction = 0)
+        BigDecimal partesPareja
+) {
+    public GastoParejaRequest(BigDecimal monto, LocalDate fecha, String descripcion,
+            TipoReparto tipoReparto, BigDecimal porcentajePareja, BigDecimal montoExactoPareja) {
+        this(monto, fecha, descripcion, tipoReparto, porcentajePareja, montoExactoPareja, null, null);
+    }
+}

@@ -193,6 +193,9 @@ export class SwipeActionsDirective {
         <div class="tx-item__body">
           <h3 class="tx-item__title">{{ (etiquetaMovimiento) | textoFinanciero }}</h3>
           <p class="tx-item__account">@if(movimiento.categoriaNombre) {<span>{{ movimiento.categoriaNombre }} · </span>}{{ nombreCuentaVisible(movimiento.cuentaNombre) }}@if(movimiento.tipo === 'TRANSFERENCIA') { → {{ nombreCuentaVisible(movimiento.cuentaDestinoNombre) }}}</p>
+          @if(movimiento.tipo === 'TRANSFERENCIA' && movimiento.monedaDestino && movimiento.monedaDestino !== movimiento.moneda) {
+            <small>{{movimiento.fuenteCambio === 'MANUAL' ? 'Cambio manual aplicado el ' + movimiento.fechaCambio : 'Cambio histórico · fuente no registrada'}}</small>
+          }
           @if(movimiento.etiquetas?.length){<p class="tx-item__tags" style="display:flex;flex-wrap:wrap;gap:4px;font-size:11px;line-height:1.5;overflow-wrap:anywhere">@for(etiqueta of movimiento.etiquetas; track etiqueta){<span>#{{ etiqueta }}</span>}</p>}
           @if(soloLectura && movimiento.autorNombre){<p class="tx-item__meta">Por {{ movimiento.autorNombre }}</p>}
           <p class="tx-item__meta">

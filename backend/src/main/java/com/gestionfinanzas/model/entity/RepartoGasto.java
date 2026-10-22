@@ -56,4 +56,5 @@ public class RepartoGasto {
     /** Solo se llena para {@link TipoReparto#PORCENTAJE}. */
     @Column(precision = 5, scale = 2)
     private BigDecimal porcentaje;
+    private Integer partes;
 }

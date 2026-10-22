@@ -116,6 +116,17 @@ public class ListaService {
     }
 
     @Transactional
+    public ListaResponse cambiarRol(Long usuarioId, Long listaId, Long miembroId, String rol) {
+        var lista = administrar(usuarioId, listaId);
+        if (!Set.of("EDITOR", "LECTOR").contains(rol)) throw new IllegalArgumentException("Elige acceso de editor o lector.");
+        if (lista.getPropietario().getId().equals(miembroId)) throw new IllegalArgumentException("El propietario conserva la administración de su lista.");
+        var miembro = miembros.findByListaIdAndUsuarioId(listaId, miembroId)
+                .orElseThrow(() -> new IllegalArgumentException("El participante ya no pertenece a esta lista."));
+        miembro.setRol(rol);
+        return respuesta(lista, "PROPIETARIO");
+    }
+
+    @Transactional
     public void quitarMiembro(Long usuarioId, Long listaId, Long miembroId) {
         var lista = listas.bloquear(listaId).orElseThrow(() -> new PermisoCompartidoException("Lista no disponible."));
         leer(usuarioId, listaId);

@@ -1,4 +1,5 @@
 package com.gestionfinanzas.service;
+import java.math.BigDecimal;
 
 import com.gestionfinanzas.dto.request.TransaccionFiltroRequest;
 import com.gestionfinanzas.dto.response.AuditoriaTransaccionResponse;
@@ -99,7 +100,7 @@ public class RespaldoFinancieroService {
                 .map(com.gestionfinanzas.model.entity.PlantillaRecurrente::getLista).filter(java.util.Objects::nonNull)
                 .forEach(l -> listasRespaldo.put(l.getId(), l));
         return new RespaldoFinancieroResponse(
-                5,
+                7,
                 Instant.now(),
                 perfilService.obtener(usuarioId),
                 cuentas,
@@ -150,7 +151,8 @@ public class RespaldoFinancieroService {
                                 ? null : ParejaService.tipoRepartoDe(repartos).name(),
                         repartos.stream()
                                 .map(parte -> new RespaldoFinancieroResponse.ParteRespaldo(
-                                        miembro(parte.getUsuario(), usuarioId), parte.getMonto(), parte.getPorcentaje()
+                                        miembro(parte.getUsuario(), usuarioId), parte.getMonto(), parte.getPorcentaje(),
+                                        parte.getPartes() == null ? null : BigDecimal.valueOf(parte.getPartes())
                                 ))
                                 .toList(),
                         gasto.getFechaCreacion()

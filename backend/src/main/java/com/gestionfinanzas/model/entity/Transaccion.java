@@ -72,6 +72,9 @@ public class Transaccion {
 
     @Column(name = "tasa_cambio", precision = 20, scale = 8)
     private BigDecimal tasaCambio;
+    @Column(length = 30)
+    private String fuenteCambio;
+    private LocalDate fechaCambio;
 
     @Column(nullable = false)
     private LocalDate fecha;

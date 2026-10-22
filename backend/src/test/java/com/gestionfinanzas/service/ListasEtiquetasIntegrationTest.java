@@ -51,6 +51,33 @@ class ListasEtiquetasIntegrationTest {
         return transacciones.listarConFiltros(usuario,filtro(destino,texto,autor),PageRequest.of(0,10,Sort.by(Sort.Direction.DESC,"fecha","id")));
     }
     void invitar(String rol) {var invitacion=listas.invitar(a.getId(),lista,rol); listas.unirse(b.getId(),invitacion.codigo());}
+    @Test void propietarioCambiaRolSinPerderHistorialNiTocarSaldos() {
+        invitar("EDITOR");
+        var movimiento=transacciones.crearTransaccion(b.getId(),gasto(cuentaB,lista,"Cena de Bruno"));
+        var saldo=cuentas.findById(cuentaB.getId()).orElseThrow().getSaldoActual();
+        var respuesta=listas.cambiarRol(a.getId(),lista,b.getId(),"LECTOR");
+        assertEquals("LECTOR",respuesta.miembros().stream().filter(m->m.id().equals(b.getId())).findFirst().orElseThrow().rol());
+        assertEquals(movimiento.id(),transacciones.obtenerPorId(b.getId(),movimiento.id()).id());
+        assertEquals(saldo,cuentas.findById(cuentaB.getId()).orElseThrow().getSaldoActual());
+        assertThrows(PermisoCompartidoException.class,()->listas.escribir(b.getId(),lista));
+    }
+    @Test void promoverLectorPermiteRegistrarSoloConFondosPropios() {
+        invitar("LECTOR");
+        listas.cambiarRol(a.getId(),lista,b.getId(),"EDITOR");
+        transacciones.crearTransaccion(b.getId(),gasto(cuentaB,lista,"Propio"));
+        assertThrows(IllegalArgumentException.class,()->transacciones.crearTransaccion(b.getId(),gasto(cuentaA,lista,"Ajeno")));
+    }
+    @Test void participanteNoPuedePromoverseNiCambiarAlPropietario() {
+        invitar("LECTOR");
+        assertThrows(PermisoCompartidoException.class,()->listas.cambiarRol(b.getId(),lista,b.getId(),"EDITOR"));
+        assertThrows(PermisoCompartidoException.class,()->listas.cambiarRol(tercero.getId(),lista,b.getId(),"EDITOR"));
+        assertThrows(IllegalArgumentException.class,()->listas.cambiarRol(a.getId(),lista,a.getId(),"LECTOR"));
+    }
+    @Test void rolInvalidoONoMiembroNoSeAceptan() {
+        invitar("EDITOR");
+        assertThrows(IllegalArgumentException.class,()->listas.cambiarRol(a.getId(),lista,b.getId(),"PROPIETARIO"));
+        assertThrows(IllegalArgumentException.class,()->listas.cambiarRol(a.getId(),lista,tercero.getId(),"LECTOR"));
+    }
     @Test void personalEsUnicaYRegistroAnteriorSiguePrivado() {
         assertEquals(listas.personal(a.getId()).getId(),listas.personal(a.getId()).getId());
         var t=transacciones.crearTransaccion(a.getId(),gasto(cuentaA,null,"Privado"));
@@ -149,10 +176,10 @@ class ListasEtiquetasIntegrationTest {
         acciones.confirm(a.getId(),p.id(),p.version());acciones.confirm(a.getId(),p.id(),p.version());
         assertEquals(1,buscar(a.getId(),lista,"#viaje",null).getTotalElements());
     }
-    @Test void respaldoVersion5RestauraListasYEtiquetasSinCompartirAcceso() {
+    @Test void respaldoActualRestauraListasYEtiquetasSinCompartirAcceso() {
         invitar("EDITOR");
         transacciones.crearTransaccion(a.getId(),gasto(cuentaA,lista,"Hotel","viaje","visa"));
-        var respaldo=respaldos.generar(a.getId());assertEquals(5,respaldo.version());
+        var respaldo=respaldos.generar(a.getId());assertEquals(7,respaldo.version());
         restauracion.restaurar(tercero.getId(),respaldo);
         var copias=listas.listar(tercero.getId());
         var viaje=copias.stream().filter(l->l.nombre().equals("Vacaciones")).findFirst().orElseThrow();

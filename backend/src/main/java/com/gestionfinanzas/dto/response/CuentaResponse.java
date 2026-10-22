@@ -21,8 +21,17 @@ public record CuentaResponse(
     String descripcion,
     boolean activo,
     LocalDateTime fechaCreacion,
-    BigDecimal limiteRetenido
+    BigDecimal limiteRetenido,
+    BigDecimal metaObjetivo,
+    boolean metaCancelada
 ) {
+    public CuentaResponse(Long id, String nombre, TipoCuenta tipo, String institucionFinanciera,
+            BigDecimal cashbackPorcentaje, BigDecimal cashbackLimiteMensual, BigDecimal limiteCredito,
+            Integer diaCorte, Integer diaPago, BigDecimal saldoActual, String moneda, String descripcion,
+            boolean activo, LocalDateTime fechaCreacion, BigDecimal limiteRetenido) {
+        this(id,nombre,tipo,institucionFinanciera,cashbackPorcentaje,cashbackLimiteMensual,limiteCredito,
+                diaCorte,diaPago,saldoActual,moneda,descripcion,activo,fechaCreacion,limiteRetenido,null,false);
+    }
     public CuentaResponse(Long id, String nombre, TipoCuenta tipo, String institucionFinanciera,
             BigDecimal cashbackPorcentaje, BigDecimal cashbackLimiteMensual, BigDecimal limiteCredito,
             Integer diaCorte, Integer diaPago, BigDecimal saldoActual, String moneda, String descripcion,
@@ -46,7 +55,7 @@ public record CuentaResponse(
             cuenta.getDescripcion(),
             cuenta.isActivo(),
             cuenta.getFechaCreacion(),
-            cuenta.getLimiteRetenido()
+            cuenta.getLimiteRetenido(), cuenta.getMetaObjetivo(), cuenta.isMetaCancelada()
         );
     }
 }

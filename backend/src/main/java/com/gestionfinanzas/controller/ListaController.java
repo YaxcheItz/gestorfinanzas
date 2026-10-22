@@ -27,4 +27,5 @@ public class ListaController {
     @DeleteMapping("/{id}/invitacion") public ApiResponse<Void> revocar(@AuthenticationPrincipal CustomUserDetails u, @PathVariable Long id) { servicio.revocar(u.getId(), id); return ApiResponse.ok("Invitación revocada", null); }
     @PostMapping("/unirse") public ApiResponse<ListaResponse> unirse(@AuthenticationPrincipal CustomUserDetails u, @Valid @RequestBody Codigo r) { return ApiResponse.ok("Te uniste a la lista", servicio.unirse(u.getId(), r.codigo())); }
     @DeleteMapping("/{id}/miembros/{miembro}") public ApiResponse<Void> salir(@AuthenticationPrincipal CustomUserDetails u, @PathVariable Long id, @PathVariable Long miembro) { servicio.quitarMiembro(u.getId(), id, miembro); return ApiResponse.ok("Acceso retirado", null); }
+    @PatchMapping("/{id}/miembros/{miembro}/rol") public ApiResponse<ListaResponse> cambiarRol(@AuthenticationPrincipal CustomUserDetails u, @PathVariable Long id, @PathVariable Long miembro, @Valid @RequestBody Rol r) { return ApiResponse.ok("Permiso actualizado", servicio.cambiarRol(u.getId(), id, miembro, r.rol())); }
 }

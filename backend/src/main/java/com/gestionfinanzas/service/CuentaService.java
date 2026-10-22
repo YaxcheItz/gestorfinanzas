@@ -130,6 +130,9 @@ public class CuentaService {
             throw new IllegalArgumentException("Ya existe otra cuenta con el nombre '" + nombreTrim + "'");
         }
         String nuevaMoneda = normalizarMoneda(request.moneda());
+        if (cuenta.getMetaObjetivo() != null && !cuenta.getMoneda().equals(nuevaMoneda)) {
+            throw new IllegalArgumentException("La meta conserva su moneda original.");
+        }
         if (!cuenta.getMoneda().equals(nuevaMoneda)
                 && (cuenta.getSaldoActual().compareTo(BigDecimal.ZERO) != 0
                 || transaccionRepository.existsByCuentaIdOrCuentaDestinoId(cuentaId, cuentaId))) {
