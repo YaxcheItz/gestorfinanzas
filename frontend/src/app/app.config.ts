@@ -25,7 +25,7 @@ import { Capacitor } from '@capacitor/core';
  */
 function renovarSiHaceFalta(): Promise<unknown> {
   const auth = inject(AuthService);
-  if (!auth.getToken() || !auth.tokenCaducado()) return Promise.resolve();
+  if (navigator.onLine === false || !auth.getToken() || !auth.tokenCaducado()) return Promise.resolve();
   return firstValueFrom(auth.renovarSesion()).catch(() => undefined);
 }
 

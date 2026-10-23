@@ -1,4 +1,4 @@
-import { DestroyRef, Injectable, computed, effect, inject, signal } from '@angular/core';
+import { DestroyRef, Injectable, InjectionToken, computed, effect, inject, signal } from '@angular/core';
 import { Capacitor, PluginListenerHandle, registerPlugin } from '@capacitor/core';
 import { AuthService } from './auth.service';
 
@@ -9,10 +9,14 @@ interface SharedNoticePlugin {
   discard(options: { id?: string }): Promise<void>;
   addListener(event: 'changed', listener: () => void): Promise<PluginListenerHandle>;
 }
-const native = registerPlugin<SharedNoticePlugin>('SharedNotice');
+export const SHARED_NOTICE_NATIVE = new InjectionToken<SharedNoticePlugin | null>('SharedNotice native', {
+  providedIn: 'root', factory: () => Capacitor.getPlatform() === 'android'
+    ? registerPlugin<SharedNoticePlugin>('SharedNotice') : null,
+});
 
 @Injectable({ providedIn: 'root' })
 export class SharedNoticeService {
+  private readonly native = inject(SHARED_NOTICE_NATIVE);
   private readonly auth = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly state = signal<SharedNoticeState>({});
@@ -25,20 +29,21 @@ export class SharedNoticeService {
     ? this.state().error ?? '' : '');
 
   constructor() {
-    if (Capacitor.getPlatform() !== 'android') return;
+    if (!this.native) return;
     let listener: PluginListenerHandle | undefined;
     this.destroyRef.onDestroy(() => { this.destroyed = true; this.turn++; void listener?.remove(); });
-    void native.addListener('changed', () => void this.refresh()).then(handle => {
+    void this.native.addListener('changed', () => void this.refresh()).then(handle => {
       if (this.destroyed) void handle.remove(); else listener = handle;
     }).catch(() => this.state.set({ error: 'No se pudo abrir la recepción de textos compartidos.' }));
     effect(() => { this.auth.currentUser(); void this.refresh(); });
   }
 
   async refresh(): Promise<void> {
+    if (!this.native) return;
     const userId = this.auth.currentUser()?.id ?? 0;
     const turn = ++this.turn;
     try {
-      const state = await native.read({ userId });
+      const state = await this.native.read({ userId });
       if (this.destroyed || turn !== this.turn || (this.auth.currentUser()?.id ?? 0) !== userId) return;
       this.loadedUser.set(userId);
       this.state.set(state);
@@ -53,7 +58,7 @@ export class SharedNoticeService {
   isCurrent(id: string): boolean { return this.pending()?.id === id && !!this.pending()?.text; }
 
   async discard(id?: string): Promise<void> {
-    await native.discard({ id });
+    await this.native?.discard({ id });
     await this.refresh();
   }
 }

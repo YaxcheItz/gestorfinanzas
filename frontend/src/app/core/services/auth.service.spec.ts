@@ -6,6 +6,9 @@ import { appConfig } from '../../app.config';
 import { AuthService } from './auth.service';
 import { firstValueFrom, of } from 'rxjs';
 import { SwPush } from '@angular/service-worker';
+import { Capacitor } from '@capacitor/core';
+import { nativeSessionBridge } from '../native-session';
+import { ToastService } from './toast.service';
 
 describe('sesiones con los interceptores de la aplicación', () => {
   let http: HttpClient;
@@ -72,8 +75,25 @@ describe('sesiones con los interceptores de la aplicación', () => {
     finally {
       if (locksOriginal) Object.defineProperty(navigator, 'locks', locksOriginal);
       else Reflect.deleteProperty(navigator, 'locks');
-      localStorage.clear(); TestBed.resetTestingModule();
+      vi.restoreAllMocks();localStorage.clear(); TestBed.resetTestingModule();
     }
+  });
+
+  it('persiste el cierre Android antes de mostrar login o enviar el logout',async()=>{
+    vi.spyOn(Capacitor,'getPlatform').mockReturnValue('android');
+    let finish!:()=>void;
+    const update=vi.spyOn(nativeSessionBridge,'update').mockImplementation(()=>new Promise(resolve=>{finish=resolve;}));
+    auth.logout();expect(update).toHaveBeenCalledWith({closed:true,userId:0});
+    backend.expectNone('/api/auth/logout');expect(auth.isAuthenticated()).toBe(true);
+    finish();const request=await vi.waitFor(()=>backend.expectOne('/api/auth/logout'));request.flush({success:true});
+    expect(auth.isAuthenticated()).toBe(false);
+  });
+  it('no afirma cerrar Android si falla conservar la marca nativa',async()=>{
+    vi.spyOn(Capacitor,'getPlatform').mockReturnValue('android');
+    vi.spyOn(nativeSessionBridge,'update').mockRejectedValue(new Error('Disco no disponible'));
+    const error=vi.spyOn(TestBed.inject(ToastService),'error').mockImplementation(()=>undefined);
+    auth.logout();await vi.waitFor(()=>expect(error).toHaveBeenCalledOnce());
+    backend.expectNone('/api/auth/logout');expect(auth.isAuthenticated()).toBe(true);
   });
 
   it('conserva la identidad mientras renueva y no navega al login por el primer 401', () => {
@@ -138,6 +158,12 @@ describe('sesiones con los interceptores de la aplicación', () => {
     expect(auth.isAuthenticated()).toBe(false);
     expect(auth.getToken()).toBeNull();
     expect(navigate).toHaveBeenCalledTimes(1);
+  });
+  it('conserva la captura solicitada por el guard si la cookie de renovacion no sirve',()=>{
+    auth.renovarSesion('nuevo-ingreso').subscribe({error:()=>undefined});
+    backend.expectOne('/api/auth/refresh').flush({}, {status:401,statusText:'Unauthorized'});
+    expect(auth.isAuthenticated()).toBe(false);expect(navigate).toHaveBeenCalledOnce();
+    expect(navigate).toHaveBeenCalledWith(['/login'],{queryParams:{sessionExpired:'true',captura:'nuevo-ingreso'}});
   });
 
   it('varias solicitudes con cookie inválida comparten el cierre y una sola navegación', () => {

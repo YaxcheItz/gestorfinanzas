@@ -1,10 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { AuthService } from './auth.service';
-import { SharedNoticeService } from './shared-notice.service';
+import { SharedNoticeService, SHARED_NOTICE_NATIVE } from './shared-notice.service';
 
-const plugin=vi.hoisted(()=>({read:vi.fn(),discard:vi.fn(),addListener:vi.fn()}));
-vi.mock('@capacitor/core',()=>({Capacitor:{getPlatform:()=> 'android'},registerPlugin:()=>plugin}));
+const plugin={read:vi.fn(),discard:vi.fn(),addListener:vi.fn()};
 
 describe('Textos compartidos nativos',()=>{
   const user=signal<{id:number}|null>({id:71});
@@ -12,7 +11,8 @@ describe('Textos compartidos nativos',()=>{
     vi.clearAllMocks();user.set({id:71});
     plugin.read.mockResolvedValue({pending:{id:'qa',text:'Texto QA'}});
     plugin.addListener.mockResolvedValue({remove:vi.fn()});plugin.discard.mockResolvedValue(undefined);
-    TestBed.configureTestingModule({providers:[{provide:AuthService,useValue:{currentUser:user}}]});
+    TestBed.configureTestingModule({providers:[{provide:AuthService,useValue:{currentUser:user}},
+      {provide:SHARED_NOTICE_NATIVE,useValue:plugin}]});
   });
   it('oculta inmediatamente el texto cuando cambia la cuenta e ignora respuestas anteriores',async()=>{
     const service=TestBed.inject(SharedNoticeService);TestBed.tick();await service.refresh();

@@ -9,8 +9,6 @@
       }@else{<p>Este texto pertenece a otra sesión. Vuelve a esa cuenta para revisarlo o descártalo del teléfono.</p>}
       <button class="quiet" (click)="descartarCompartido()" [disabled]="ocupado()">Descartar texto del teléfono</button>
     </section>
-  }@else if(shared.error()){
-    <button class="quiet" (click)="descartarCompartido()">Cerrar aviso de texto compartido</button>
   }
   <nav aria-label="Estado de avisos" class="filters">@for(f of filtros;track f.valor){<button class="pill" [attr.aria-pressed]="estado()===f.valor" (click)="filtrar(f.valor)">{{f.texto}}</button>}</nav>
   @if(error()){<div role="alert" class="notice">{{error()}} <button (click)="cargar()">Recargar bandeja</button></div>}

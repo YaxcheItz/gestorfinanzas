@@ -20,19 +20,25 @@ La recepción crea un aviso PENDIENTE y no cambia dinero. «Guardar movimiento»
 
 Plugin local SharedNotice registrado en MainActivity, con ACTION_SEND/text/plain. Almacén privado acotado, consumo de intención, identificación y enlace a usuario. Servicio Angular con invalidación de respuestas antiguas y señal filtrada por sesión; interfaz reutiliza AvisosService y AvisosComponent. Sin dependencias nuevas, cambios backend ni migraciones.
 
+La prueba de compartir antes de login encontró una regresión de persistencia: tras logout, la WebView mostraba las claves eliminadas, pero al matar inmediatamente el proceso volvían a aparecer las credenciales anteriores. Se añadió NativeSession: conserva únicamente cierre/identificador de usuario con commit nativo antes de completar logout o login. Al arrancar se consulta antes de crear AuthService y se descartan credenciales recuperadas si la marca está cerrada o pertenece a otro usuario. Las instalaciones anteriores sin marca conservan su sesión. Un fallo al guardar la marca no afirma cerrar sesión: muestra error y permite reintentar. [Persistencia Android](https://developer.android.com/reference/android/content/SharedPreferences.Editor#commit()).
+
+También se corrigió el guard que descartaba un acceso vencido al navegar sin intentar renovar con cookie. Ahora comparte la renovación existente, conserva la intención de captura si la cookie no sirve, evita abrir la ruta bajo otra identidad y permite captura offline con la sesión local. El inicializador omite renovar cuando sabe que no hay red. No se relajó la validación del servidor ni se guardaron tokens/contraseñas en el nuevo almacén nativo.
+
 - [Recibir texto compartido en Android](https://developer.android.com/training/sharing/receive).
 - [Código nativo local con Capacitor](https://capacitorjs.com/docs/android/custom-code).
 - [Plugins Android de Capacitor](https://capacitorjs.com/docs/plugins/android).
 
 ## Pruebas
 
-- Frontend: **387 pruebas correctas**, incluidas revisión sin envío automático, original excluido del payload, reintento con igual identidad, bloqueo de envío si cambia sesión y respuesta antigua descartada.
+- Frontend: **396 pruebas correctas**, incluidas revisión sin envío automático, original excluido del payload, reintento con igual identidad, bloqueo de envío si cambia sesión, respuesta antigua descartada, cierre nativo antes de logout, fallo de persistencia, identidad de arranque y renovación al navegar conservando captura.
 - Build web y auditoría correctos; producción sin vulnerabilidades conocidas, excepción de desarrollo braces ya documentada sin ampliarla.
 - Builds Android debug, release y androidTest correctos; firma release conservada.
 - **3 pruebas instrumentadas correctas en el Samsung** sobre almacenamiento nativo: aislamiento entre identificadores de usuario y persistencia, caducidad, repetición sin cambiar identidad, no sobrescribir pendiente, descarte por identidad, rechazo de indicadores de secretos, tarjeta completa, controles y tamaño excesivo. Se usa un archivo de preferencias de prueba separado.
 - WebView del Samsung real y cuenta QA sintética: ACTION_SEND con app cerrada/abierta; repetición conserva clave; abrir/cancelar revisión no envía dinero; captura conservada tras force-stop con Wi-Fi y datos apagados; red original restaurada.
 - Envío explícito: exactamente un aviso pendiente de 42.00, sin original en su payload/respuesta y saldo de prueba sin cambiar, 1037.66. Confirmación financiera posterior en UI: un gasto 42.00, saldo 995.66; recarga no duplica. Reintento de recepción con la misma clave devuelve el mismo aviso y conserva saldo.
 - OTP sintético recibido por ACTION_SEND rechazado sin crear pendiente. Marcado HTML sintético mostrado como texto, sin ejecutar y descartado sin enviarlo.
+- Compartir sin sesión: no revela el original; después de force-stop sigue en login y conserva la intención. Login QA permite revisión explícita y descarte sin dinero. Logout seguido de cierre inmediato ya no recupera la sesión anterior.
+- Pruebas adicionales con expiración simulada solo en el JWT QA: navegar renueva mediante cookie con consulta 200; arranque tras force-stop con Wi-Fi/datos realmente apagados conserva sesión/texto y renueva al volver la red. Son simulaciones controladas de vencimiento sobre hardware real, distintas de las dos renovaciones naturales documentadas anteriormente. La automatización espera el arranque completo antes de cambiar la sesión.
 - Android reconoce Kaptal como destino de compartir texto. Actualización release instalada sin borrar datos; no se compartieron avisos ni se modificaron movimientos en la cuenta del propietario.
 
 El CI remoto de esta rama debe comprobarse sobre el head del PR antes de integrar automáticamente. Las pruebas financieras son de la app debug física con datos sintéticos; release tiene instalación, firma, versión, arranque y resolución de compartir comprobados. Los detalles privados permanecen en .local.
@@ -41,7 +47,7 @@ El CI remoto de esta rama debe comprobarse sobre el head del PR antes de integra
 
 - Paquete com.kaptal.app, código 4. Firma SHA-256 `b5f360604095a50f3208299767dcedca2f3acfc5087df8be1fde9cc075c120c3`.
 - Archivo `.local/releases/Kaptal-0.1.3.apk`, alias `.local/releases/kaptal-release.apk`; copia en Descargas/Kaptal-0.1.3.apk del teléfono. Versiones anteriores conservadas.
-- Tamaño: 3 493 253 bytes. SHA-256 `F38EC1B7535E9B548EF6969395958C1DDFE42731695E7CAADA03B56AD411A169`.
+- Tamaño: 3 494 133 bytes. SHA-256 `EDD629DBC86F24E6497C8724002A4E5065B027646566709E2685AEB485079341`.
 
 ## Pendientes
 

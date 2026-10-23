@@ -22,6 +22,7 @@ import { SharedNoticeService } from './core/services/shared-notice.service';
 })
 export class App {
   readonly sharedNotice = inject(SharedNoticeService);
+  closeSharedNoticeError(): void { void this.sharedNotice.discard().catch(() => undefined); }
   private readonly document = inject(DOCUMENT);
   irAlContenido(event: Event): void {
     event.preventDefault();
