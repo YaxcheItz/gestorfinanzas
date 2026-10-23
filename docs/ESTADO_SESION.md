@@ -1,6 +1,20 @@
 # Estado para retomar la sesión
 
-## Estado vigente: accesos/widget integrados en develop (2026-10-23)
+## Avance vigente: configuración y accesos físicos comprobados (2026-10-23)
+
+Samsung conectado: configuración interactiva con API H2 aislada aprobada (consentimiento, mapeo sintético, activación nativa y desconexión); dos instrumentadas del widget correctas; arranque frío Ingreso tras login y tres acciones en caliente aprobados. Los tres accesos reales del launcher Samsung y los tres botones del widget ya pasaron. Vencimiento simulado con renovación y logout → acción protegida → login → captura solicitada correctos. Ningún formulario guardó movimientos. Detalles y límites en `docs/VALIDACION_ANDROID_CONFIGURACION_ACCESOS.md`.
+
+La interrupción previa causó timeout del arnés; sus éxitos UI se conservaron. H2 nueva usada solo para pendientes: cierre satisfactorio, una prueba con cero fallos/errores y aserciones de cero movimientos/conexiones. Evidencia `.local/configuracion-accesos-cierre-backend.log`. Backend apagado y credenciales temporales eliminadas. Logout debug, marca nativa cerrada, cola cifrada ausente, permiso de escucha retirado y APK de instrumentación desinstalada. Widget QA retirado desde el launcher; debug detenida al terminar. Release del propietario no sustituida, sin cambios en producción.
+
+Esta rama `validacion/android-configuracion-accesos-fisicos` solo publica documentación; no cambió aplicación ni migraciones. Base `origin/develop` 0d90675. No repetir pruebas aprobadas sin motivo. Etapa 10 sigue abierta por revisión manual TalkBack/giro/letra grande de los nuevos accesos, HTTPS público y piloto bancario real consentido tras autorización. Gmail deshabilitado. Siguiente: revisión manual o Etapas 12/13 en rama nueva; main/producción requieren aprobación separada.
+
+## Histórico: avance físico interrumpido
+
+Configuración interactiva local ya aprobada en Samsung: consentimiento, asociación sintética, activación nativa y desconexión con revocación. Dos instrumentadas del widget correctas; arranque frío Ingreso tras login y tres acciones en caliente correctos. Launcher y widget reales: Gasto correcto. APK debug instalada; release del propietario sin sustituir. Evidencia y límites en `docs/VALIDACION_ANDROID_CONFIGURACION_ACCESOS.md`.
+
+La interrupción dejó caducar los arneses: fixture H2 terminó por timeout y no ejecutó sus aserciones finales. Sin backend 18082 activo ni credenciales temporales locales al retomar. Teléfono no detectado por ADB; faltan botones restantes, recorridos físicos adicionales y limpieza final del dispositivo. No repetir pasos aprobados sin motivo. Etapa 10 abierta; Gmail deshabilitado y producción sin cambios.
+
+## Histórico: accesos/widget integrados en develop (2026-10-23)
 
 PR #112 integrado en `226f0a78dfd4436d227b5ad39c0f1064b52ea5c5`, con expected_head_sha `5b27ac358c756c246137948333064a747cee8ee6`. CI 329/40005808293 y Android 28/40005808351 correctos para ese HEAD: seis jobs CI y APK, incluidos PostgreSQL/recuperación, E2E/API y PWA. Frontend CI: 410 pruebas correctas. Local: 20 focalizadas, nueve JVM, build web, lint sin errores y APKs debug/instrumentación compiladas. No confundir con ejecución física de la nueva instrumentación. #110/#111 también revalidados como integrados. Main sigue `d39d89952a18959511032880457aaccff4bb5f66`, sin despliegue ni cambios financieros de producción.
 
