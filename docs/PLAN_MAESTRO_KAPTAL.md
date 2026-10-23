@@ -2,6 +2,8 @@
 
 ## Registro automático: implementación en comprobación (2026-10-23)
 
+Recorrido HTTP físico adicional correcto: Samsung parser Sears → cola cifrada → Worker → backend aislado H2 → registro contable; reenvío del mismo payload deja un solo movimiento y deuda sintética correcta. La fixture es optativa y fuerza H2/loopback, sin usuarios o movimientos nuevos en producción. Faltan configuración interactiva, HTTPS público, bloqueo/reinicio y piloto real; no confundir esta evidencia con activación del propietario.
+
 Entrega en PR #110 (borrador), código inicial `cd5482c`; CI y Android iniciados, comprobar el head actual antes de integrar. Regresión posterior en Samsung: 21 pruebas instrumentadas correctas, incluidas ocho nuevas de almacén/Worker con transporte sintético. Caída de red/429 reintentan el mismo payload, éxito no se repite, 401 pausa y revocación/logout no restauran cola. Falta el enlace HTTP físico completo; estas pruebas no lo sustituyen. Release 0.1.5 compilada firmada, todavía no instalada en la app del propietario.
 
 PR #109 de limpieza/documentación integrado con CI 308 correcto en develop `cd178f64f859147ef6b0d18a776dbd710ee2eb99`. Rama `mejoras/android-registro-bancario-automatico`, creada desde develop comprobado y actualizada con ese merge. Implementados receptor limitado por dispositivo (V14), registro/contabilidad idempotentes, configuración de las cinco apps, parsers Sears y «Gastaste …», cola cifrada y Worker con reintentos. Las tarjetas sin límite conocido ya admiten registrar deuda sin inventar límite; los configurados siguen comprobándose. Detalles: `docs/ANDROID_REGISTRO_AUTOMATICO_ETAPA_10.md`.
