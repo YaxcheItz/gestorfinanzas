@@ -1,5 +1,16 @@
 # Kaptal: plan maestro y traspaso al siguiente chat
 
+## Prioridad vigente: datos reiniciados y registro bancario automático (2026-10-23)
+
+El propietario autorizó eliminar los usuarios de prueba y su contenido, conservar únicamente su usuario de Google y vaciar sus datos financieros. Operación realizada y verificada: ocho usuarios eliminados, uno conservado con identidad/autenticación/sesiones intactas; 28 cuentas y 48 movimientos antiguos eliminados; cinco cuentas nuevas en MXN a cero. Santander, American Express, BBVA y Sears Visa son crédito; solo Revolut es débito. Sin límites, corte/pago ni cashback inventados. Ver `docs/REINICIO_DATOS_PRUEBA_2026_10_23.md`; copia cifrada y evidencias privadas en `.local/reset-20261022/`. No repetir la limpieza ni reutilizar la fixture Android del usuario eliminado para crear más datos en producción.
+
+El requisito vigente de Etapa 10 es registrar automáticamente los movimientos reconocidos, especialmente gastos, sin confirmación por cada compra. Esto sustituye la preferencia anterior de revisión obligatoria. El propietario eligió Santander, Revolut, American Express y BBVA, y añadió Sears Visa por SMS con un ejemplo real. Remitente, terminación y asociación de identificadores de cuenta se guardan solo en `.local/canales-bancarios-autorizados.private.json`; no comprometerlos. Los casos ambiguos y las posibles duplicidades no deben registrarse a ciegas. La APK 0.1.4 aún conserva el flujo manual: automático pendiente de implementar, probar y activar.
+
+Rama de limpieza/documentación `mantenimiento/limpieza-datos-prueba`, nueva desde origin/develop `3676f5d` revalidado. La operación de datos no despliega código; main sigue sin actualizarse. Merges a develop autorizados tras comprobaciones. Siguiente: nueva entrega de registro bancario automático en `mejoras/android-registro-bancario-automatico`; después accesos/widgets/gestos útiles, Etapas 12 y 13, y modificaciones de diseño al final. No llamar cerrado al piloto bancario sin pruebas reales consentidas, bloqueo/reinicio y deduplicación. Gmail deshabilitado y Etapa 6 omitida.
+
+Prevalece este apartado sobre los históricos siguientes.
+
+
 ## Avance vigente: Etapa 10, notificaciones consentidas (2026-10-22)
 
 PR #107 integrado a develop en `b158f04617b926f4ba05de31062e03d0ed48c46d`, desde `mejoras/android-notificaciones-consentidas`, creada en `origin/develop` revalidado `5de3683`. Código `2a149811a5a07f2bc278cfb8ff29154612f88b53`: CI 304/39902079287 y Android 18/39902079348 correctos, incluidos 33 E2E/API y 4 PWA sobre PostgreSQL; seis jobs de CI verdes, con recuperación de base comprobada. Main permanece `d39d89952a18959511032880457aaccff4bb5f66`, sin despliegue nuevo. La rama `docs/cierre-android-0-1-4` se creó desde ese develop actualizado para registrar el cierre; consultar su PR para el estado documental remoto.
