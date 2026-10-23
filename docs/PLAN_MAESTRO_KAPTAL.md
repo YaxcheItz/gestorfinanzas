@@ -1,6 +1,18 @@
 # Kaptal: plan maestro y traspaso al siguiente chat
 
-## Estado vigente: registro automático integrado (2026-10-23)
+## Estado vigente: accesos y widget Android (2026-10-23)
+
+GitHub revalidado: #110 y #111 integrados; base remota `f0ca6047ae10719133034790f6474268be6c4fcf`. Rama nueva `mejoras/android-accesos-widget-captura`, creada desde ese origin/develop. Main sigue `d39d89952a18959511032880457aaccff4bb5f66`; sin despliegue. La rama conserva los dos tests antes no publicados de `validacion/android-configuracion-ciclo-fisico`.
+
+Persistencia cifrada y deduplicación tras bloqueo y reinicio físicos satisfactorias, según pruebas ya realizadas y registros `.local/automatico-lifecycle-{seed,locked,rebooted,cleanup}.txt` (cada fase OK). No se repitieron. Configuración interactiva sigue pendiente; teléfono desconectado. No había fixtures en ejecución ni listeners en 18081/18082 al revisar; archivo temporal de credenciales de configuración retirado. No tocar GlassFish/Derby ni daemons de compilación ajenos a la fixture.
+
+Implementados tres accesos dinámicos del launcher (Android 7.1+) y widget de pantalla de inicio (Android 7+) con gasto/ingreso/dictar. Intents explícitos, PendingIntents inmutables distintos y lista cerrada de acciones; sin importes, cuentas, balances ni credenciales. Puente Capacitor consume la acción una vez y Angular reutiliza `accion-captura.ts`, `/dashboard`, guard y retorno de captura tras login. Arranque espera la navegación inicial. Dictar abre la captura existente, sin activar el micrófono automáticamente. Mantener pulsado el icono permite acceder a los atajos según launcher; widget disponible en su selector.
+
+Validación local correcta: build web, 20 pruebas focalizadas de puente/guard/login, nueve JVM y builds Android debug/instrumentación; lint sin errores (16 avisos y un hint). PR #112 abierto hacia develop; CI 327/40005657088 y Android 27/40005657084 arrancaron sobre código e744b0d. Consultar checks del HEAD final, incluidos commits documentales, antes de integrar. Detalle en `docs/ANDROID_ACCESOS_WIDGETS_ETAPA_10.md`. No dar por probado el launcher/widget físico, arranque frío/retorno a sesión en dispositivo ni TalkBack. Etapa 10 sigue abierta por configuración interactiva, validación física de estos accesos, HTTPS público tras autorización y piloto bancario consentido. No repetir suites anteriores sin cambio/riesgo nuevo. Gmail deshabilitado; no recrear QA en producción. Merge a develop autorizado solo tras checks del HEAD exacto; main/producción requieren aprobación separada.
+
+Siguiente: completar pruebas/CI y revisar PR de esta rama; después validar configuración y accesos en teléfono, luego Etapas 12/13 y diseño al final. Continuación local: `.local/CONTINUAR_ANDROID_0_1_5.md`.
+
+## Histórico: registro automático integrado (2026-10-23)
 
 PR #110 integrado a develop en `6b81bbc92d629bf822ed8b8f5a3391e4404cb150`, con `expected_head_sha=56870dc5689bc47ef101c1203b9b8097225b57e6`. GitHub confirmó CI 321/39914158715 y Android APK 25/39914158564 correctos para ese HEAD: seis jobs verdes, incluidos PostgreSQL/migraciones/recuperación, E2E/API y PWA. Main remoto sigue en `d39d89952a18959511032880457aaccff4bb5f66`. Esta integración no despliega ni activa producción.
 
@@ -92,13 +104,13 @@ Teléfono no disponible por decisión del propietario. No declarar login, renova
 
 ## Histórico: Avance vigente: base Android (2026-10-22)
 
-Validaci?n Android: APK release 0.1.0 firmada e instalada, copia en Descargas/Kaptal-0.1.0.apk y .local/releases/kaptal-release.apk. Prueba instrumentada f?sica correcta en SM-A546E/Android 16: arranque local y health HTTPS, sin cuentas ni dinero reales. Frontend 382 y build/auditor?a correctos. PR #103 abierto hacia develop; CI del cierre pendiente de consultar. Sesi?n larga y capacidades nativas avanzadas siguen pendientes.
+Validación Android: APK release 0.1.0 firmada e instalada, copia en Descargas/Kaptal-0.1.0.apk y .local/releases/kaptal-release.apk. Prueba instrumentada física correcta en SM-A546E/Android 16: arranque local y health HTTPS, sin cuentas ni dinero reales. Frontend 382 y build/auditor?a correctos. PR #103 abierto hacia develop; CI del cierre pendiente de consultar. Sesi?n larga y capacidades nativas avanzadas siguen pendientes.
 
-Rama `mejoras/android-apk` creada desde `origin/develop` revalidado `3af6e80`. Etapa 11 implementada en PR #102, abierto y sin integrar; CI final verde, ejecuci?n 39731697875. Esta rama Android no incluye ese PR todav?a. Etapa 9 completada provisionalmente por decisi?n del propietario; conservar sus pendientes manuales para la revisi?n final.
+Rama `mejoras/android-apk` creada desde `origin/develop` revalidado `3af6e80`. Etapa 11 implementada en PR #102, abierto y sin integrar; CI final verde, ejecución 39731697875. Esta rama Android no incluye ese PR todav?a. Etapa 9 completada provisionalmente por decisi?n del propietario; conservar sus pendientes manuales para la revisi?n final.
 
 Orden: 11 ? Capacitor/APK firmado descargable sin Play Store ? 10 sin Gmail ? 12 ? 13 ? revisi?n final. Base Capacitor 8.5.3 con Angular empaquetado, API HTTPS por transporte nativo, sin service worker Android ni GIS web en WebView. Firma local privada, script de build y CI debug. Gmail permanece fuera.
 
-Ver alcance, comprobaciones y pendientes actuales en [ANDROID_APK_BASE.md](ANDROID_APK_BASE.md). No declarar widgets, SMS, notificaciones nativas, exportaciones, Google nativo o sesi?n larga terminados con esta base. Backend sin cambios. Sin merge ni despliegue de producci?n; prevalece este apartado sobre el historial siguiente.
+Ver alcance, comprobaciones y pendientes actuales en [ANDROID_APK_BASE.md](ANDROID_APK_BASE.md). No declarar widgets, SMS, notificaciones nativas, exportaciones, Google nativo o sesión larga terminados con esta base. Backend sin cambios. Sin merge ni despliegue de producción; prevalece este apartado sobre el historial siguiente.
 
 ### Historico Etapa 11
 
