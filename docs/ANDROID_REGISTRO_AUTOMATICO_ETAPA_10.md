@@ -28,6 +28,8 @@ La configuración requiere el teléfono desbloqueado y una sesión válida. Cone
 
 ## Evidencia y pendientes
 
+Regresión física ampliada: 21 pruebas instrumentadas correctas en Samsung, incluidas las anteriores y ocho nuevas de almacén/Worker. El Worker se ejecutó con transporte sintético aislado: caída de red y 429 conservan exactamente el mismo payload, éxito consume una sola vez, 401 pausa sin descartar, coincidencias/400 pasan a revisión y logout/revocación no restauran estado. Esto valida el procesamiento del Worker, no una conexión HTTP completa entre teléfono y backend público. Evidencia local: `.local/automatico-instrumentation-all.txt`.
+
 Comprobaciones locales: backend 516 pruebas, cero fallos y seis omitidas; frontend 406 correctas; ocho pruebas JVM de parsers correctas; build web/debug/instrumentación y Android lint sin errores. En Samsung físico, cuatro pruebas nuevas del almacén cifrado correctas: persistencia, ausencia de original/referencia en payload, actualización congelada, deduplicación, usuario/remitente/vencimiento y cola llena sin pérdida de pendientes. Son pruebas sobre archivo de QA separado, sin tocar datos financieros de producción.
 
 Pendientes antes de cerrar: revisar CI con PostgreSQL y migración V14, validar Worker/HTTP con backend aislado y recepción completa, recorrido real de configuración, bloqueo/reinicio, formatos reales y piloto consentido. El APK de producción instalado sigue siendo 0.1.4 hasta actualización comprobada; compilar 0.1.5 no acredita instalación ni funcionamiento del backend público. Publicar backend/main requiere autorización distinta de los merges a develop.
