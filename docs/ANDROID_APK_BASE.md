@@ -1,5 +1,19 @@
 # Base Android y APK de Kaptal
 
+## Etapa 10: compartir texto Android, primera entrega (2026-10-22)
+
+El propietario autorizó merges automáticos de este trabajo a develop tras comprobaciones. #104 integrado en develop mediante 55bdfe93c8b642b158349d22d1e3f4a785d3d2aa, con CI 292/39876160988 y Android 12/39876160968 correctos. Main d39d899 sin despliegue nuevo. No volver a pedir autorización para estos merges a develop; producción sigue fuera de esa autorización.
+
+Rama nueva mejoras/android-compartir-avisos desde origin/develop 55bdfe9 comprobado. Implementada recepción ACTION_SEND/text/plain con app abierta/cerrada, original local acotado y ligado a sesión, rechazo de indicadores de claves/tarjetas, revisión manual y envío explícito al contrato existente de Avisos. Recibir un aviso no mueve dinero; la confirmación financiera es posterior. Sin backend nuevo, IA, lectura automática de SMS ni acceso a notificaciones.
+
+Release 0.1.3/código 4 instalada como actualización en Samsung SM-A546E/Android 16, firma y datos conservados; copia Descargas/Kaptal-0.1.3.apk y .local/releases/Kaptal-0.1.3.apk. Pruebas financieras en debug física separada: compartir/repetir/cancelar, persistencia sin red tras force-stop, envío solo de resumen revisado, aviso pendiente sin cambiar saldo, confirmación única de gasto sintético 42.00 y saldo 995.66; reintento no duplica. OTP rechazado y HTML inerte. 396 frontend y 3 instrumentadas nativas correctas; builds y auditoría correctos. PR #105: comprobar CI del head corregido antes de integrar automáticamente.
+
+Durante la prueba sin sesión se reprodujo recuperación de credenciales antiguas tras logout y muerte inmediata del proceso. Corregido con marca nativa persistida antes de completar login/logout y comprobada antes de crear AuthService; solo guarda cierre/identificador, no credenciales. Compartir antes de login y force-stop ya conserva intención sin recuperar sesión cerrada. El guard ahora intenta renovar al navegar con acceso vencido y conserva captura si falta red/cookie. Regresiones de expiración simulada en QA sobre hardware real correctas, además de renovaciones naturales anteriores; no confundir ambas evidencias.
+
+Detalle, límites y huellas: docs/ANDROID_COMPARTIR_AVISOS_ETAPA_10.md. No cerrar Etapa 10: quedan NotificationListener consentido con apps permitidas y pruebas de revocación/reinicio/bloqueo, estudio Wallet/accesos y después Etapas 12/13. No examinar avisos reales ni activar permisos bancarios por iniciativa propia. Gmail deshabilitado y Etapa 6 omitida. Mantener pendiente de expiración aislada anterior; segunda renovación natural correcta sin reproducirla.
+
+Prevalece este apartado sobre los históricos siguientes.
+
 ## Actualización física 0.1.2 (2026-10-22)
 
 Release 0.1.2/código 3 instalada en Samsung SM-A546E/Android 16, misma firma y datos conservados; copia en Descargas/Kaptal-0.1.2.apk y .local/releases/Kaptal-0.1.2.apk. Corrige detección offline y conservación de captura al cambiar letra. Pruebas financieras, renovación natural y offline con cierre del proceso realizadas en una app debug separada y cuenta sintética. Ver [VALIDACION_ANDROID_FISICO.md](VALIDACION_ANDROID_FISICO.md) para evidencia, huellas y límites. PR #104 pendiente de integrar; sin despliegue a producción. Este estado prevalece sobre los históricos siguientes.
