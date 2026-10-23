@@ -13,6 +13,7 @@ import { RegistroRapidoComponent } from './shared/components/registro-rapido/reg
 import { ActualizacionPwaService } from './core/services/actualizacion-pwa.service';
 import { CaptureLauncherService } from './core/services/capture-launcher.service';
 import { SharedNoticeService } from './core/services/shared-notice.service';
+import { NativeCaptureService } from './core/services/native-capture.service';
 
 @Component({
   selector: 'app-root',
@@ -21,6 +22,7 @@ import { SharedNoticeService } from './core/services/shared-notice.service';
   styleUrl: './app.css'
 })
 export class App {
+  private readonly nativeCapture = inject(NativeCaptureService);
   readonly sharedNotice = inject(SharedNoticeService);
   closeSharedNoticeError(): void { void this.sharedNotice.discard().catch(() => undefined); }
   private readonly document = inject(DOCUMENT);
