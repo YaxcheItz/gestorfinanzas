@@ -33,6 +33,7 @@ Instalada «Kaptal Pruebas», `com.kaptal.app.debug`, con almacenamiento separad
 | Giro y letra grande | Giro conserva importe sin guardar; escala del sistema 1.3 también tras corrección. Sin desbordamiento horizontal en formulario probado; ajustes restaurados. |
 | Teclado | Toque nativo abre teclado real, confirmado por InputMethod; Atrás lo oculta conservando importe. Guardar visible sobre teclado. Cierre sin guardar. |
 | Segundo plano | Home y retorno a QA con consulta autenticada y saldo correcto. |
+| Asistente y evidencia | Consulta mensual: ingresos 100.00, gastos 12.34 y balance 87.66. Su evidencia abre historial con un gasto 12.34 y filtros de fecha/moneda correctos. CSV obtenido por HTTP nativo con esos filtros: cabecera y exactamente esa fila. No certifica guardar/compartir el archivo en Android. |
 
 Los importes son sintéticos. La cuenta QA se conserva para continuar pruebas. No se cerró la sesión del propietario. Estas pruebas financieras se ejecutaron en debug física; la actualización y firma se verificaron en release. No certifican todas las pantallas, el trabajo con pantalla bloqueada ni sincronización automática con la app cerrada.
 
@@ -44,14 +45,18 @@ Los importes son sintéticos. La cuenta QA se conserva para continuar pruebas. N
 
 Conexión: instalado controlador oficial Samsung 1.9.5.0, firma válida, interfaz ADB 2.21.4.0. Al retomar, un servidor ADB aislado de nuestras pruebas en 5038 interfería con USB. Cerrado; un único servidor 5037 permitió completar las pruebas. No atribuir el problema a otras aplicaciones ni guardar códigos temporales de vinculación.
 
-Validación local final: frontend **383 pruebas correctas**, build web correcto, auditoría correcta (producción sin avisos; cadena de desarrollo braces conocida pendiente), builds debug/release/androidTest correctos y firma release verificada. El CI anterior 0edb2d2 pasó cinco jobs y falló únicamente por auditoría ip-address; Android pasó. Consultar checks del nuevo head de #104 para resultado remoto de las correcciones.
+Validación local final: frontend **383 pruebas correctas**, build web correcto, auditoría correcta (producción sin avisos; cadena de desarrollo braces conocida pendiente), builds debug/release/androidTest correctos y firma release verificada. El CI anterior 0edb2d2 falló por auditoría ip-address, corregida. Código final 81f86d7: CI 291/39875106382 y Android 11/39875106308 **correctos**, incluidos PostgreSQL, recuperación, E2E y PWA. Los commits posteriores añaden evidencia documental, sin cambiar el código de aplicación. Consultar también checks del head documental antes de integrar #104.
 
 ## Pendientes y continuidad
 
 Pantalla bloqueada/reinicio completo, sesiones prolongadas adicionales y ausencia de cookie válida, TalkBack/contraste y revisión de todas las pantallas, voz, CSV/respaldo nativos, Google nativo y privacidad. No confundir captura recuperada tras force-stop con sincronización en segundo plano garantizada.
 
+Durante comprobaciones adicionales se observó una salida aislada al login por sesión expirada. Tras iniciar sesión de nuevo se comprobó renovación 200 antes y después de force-stop; no se reprodujo. No se atribuye una causa sin evidencia y se conserva como pendiente de sesiones prolongadas. La renovación natural correcta descrita arriba no certifica todos los cierres de proceso/actualizaciones posibles.
+
 La APK incluye UI de Etapa 11; su backend no se desplegó en esta tarea y sus endpoints nuevos no se certificaron en producción. Widgets, cortina y notificaciones nativas siguen pendientes.
 
 Siguiente: revisar #104 e integrarlo solo con autorización explícita. Etapa 10 sin Gmail en rama nueva desde develop actualizado: compartir aviso/SMS seleccionado, notificaciones bancarias consentidas con selección de apps y deduplicación, estudio Wallet/accesos. Sin lectura automática de SMS ni acceso universal a pagos Wallet. Después Etapas 12, 13 y revisión final. Gmail deshabilitado y Etapa 6 omitida.
+
+Preparación técnica local, sin implementación nueva: .local/ETAPA_10_PREPARACION.md, con referencias oficiales y puntos de reutilización de la bandeja Avisos existente.
 
 Skills: Ponytail, Mobile Native, Debugging and Error Recovery, Playwright CLI, Security Review, Verification Loop y Documentation and ADRs.
