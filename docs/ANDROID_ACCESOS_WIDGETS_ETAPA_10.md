@@ -12,7 +12,7 @@ El widget no lee autenticación, claves, cuentas, saldos, movimientos ni prefere
 
 ## Pruebas y límites
 
-En curso: build web, pruebas focalizadas de puente/guard/login, JVM, lint y builds debug/instrumentación. El cierre de CI del HEAD exacto debe consultarse antes del merge. No se instalará una APK sobre la app del propietario sin teléfono disponible. El número de versión se conserva en 0.1.5; esta entrega no constituye una nueva release instalada.
+Correctos localmente: build web; 20 pruebas focalizadas (puente, accion-captura, guard y login); nueve pruebas JVM (incluida lista cerrada de acciones); lint Android con cero errores, 16 avisos y un hint; APK debug y APK de instrumentación compiladas. Registro Android: `.local/accesos-widget-android.log`. Los avisos incluyen recomendaciones previas y previewLayout, ignorado antes de API 31. PR #112 abierto; CI 327/40005657088 y Android 27/40005657084 iniciados en e744b0d. Verificar todas las ejecuciones del HEAD final antes del merge. No se instalará una APK sobre la app del propietario sin teléfono disponible. El número de versión se conserva en 0.1.5; esta entrega no constituye una nueva release instalada.
 
 `CaptureWidgetTest` comprueba intents explícitos, separación de PendingIntents y metadatos del proveedor; compilada no equivale a ejecutada. Con el teléfono desconectado quedan pendientes launcher/widget reales, toques con app abierta y cerrada, logout/login con intención conservada, sesión vencida, bloqueo, giro, letra grande y TalkBack. Verificar que gasto/ingreso abre el tipo correcto, que volver atrás no reabre la acción y que dictar no activa escucha sin gesto explícito. No repetir pruebas del almacén bancario que ya pasaron si no cambia ese código.
 
