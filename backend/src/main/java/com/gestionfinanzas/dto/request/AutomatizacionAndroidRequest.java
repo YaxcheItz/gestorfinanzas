@@ -11,14 +11,14 @@ import java.util.UUID;
 public final class AutomatizacionAndroidRequest {
     private AutomatizacionAndroidRequest() {}
 
-    public record Regla(@NotNull UUID id, @NotBlank String proveedor,
+    public record Regla(@NotNull UUID id, @NotBlank @Size(max=20) String proveedor,
                         @NotBlank @Size(max=150) String paquete,
                         @Size(max=40) String remitente, @Pattern(regexp="[0-9]{4}") String terminacion,
                         @NotNull @Positive Long cuentaId, @NotNull @Positive Long listaId,
                         @Positive Long categoriaId) {}
 
     public record Configuracion(@NotNull UUID dispositivoId, boolean consentimiento,
-                                @NotEmpty @Size(max=10) List<@Valid Regla> reglas) {}
+                                @NotEmpty @Size(max=10) List<@NotNull @Valid Regla> reglas) {}
 
     public record Evento(@NotNull UUID reglaId, @NotBlank @Pattern(regexp="[a-f0-9]{64}") String eventoId,
                          @NotNull Clase clase, @NotBlank @Pattern(regexp="[A-Z]{3}") String moneda,
