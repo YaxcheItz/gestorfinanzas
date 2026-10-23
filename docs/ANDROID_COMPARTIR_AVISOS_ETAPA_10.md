@@ -2,6 +2,8 @@
 
 ## Primera entrega, 22 de octubre de 2026
 
+Integrada a develop mediante [PR #105](https://github.com/YaxcheItz/gestorfinanzas/pull/105), commit `969b8fbc8becc59e925bcc2262363052cf8c23c7`. CI final del head `03f732c`: CI 299/39883095963 y Android 16/39883095954 correctos, con 33 E2E/API y 4 PWA sobre PostgreSQL. Main y producción no se actualizaron en esta entrega.
+
 Rama `mejoras/android-compartir-avisos`, creada desde origin/develop comprobado en `55bdfe9`, después de integrar #104. CI final de #104: CI 292/39876160988 y Android 12/39876160968 correctos. El propietario autorizó merges automáticos de este trabajo a develop tras comprobaciones; no implica desplegar a producción. Main continúa en `d39d899`. Esta entrega es solo la primera parte de Etapa 10.
 
 ## Comportamiento
@@ -42,7 +44,7 @@ También se corrigió el guard que descartaba un acceso vencido al navegar sin i
 - PWA de producción local: **4 E2E correctos**, con service worker real y backend H2 de prueba. La expectativa anterior de exigir login por mero vencimiento del acceso sin red se sustituyó por capturar localmente; al recuperar red se comprueba renovación con cookie válida o login si la cookie no sirve, conservando la captura y sincronizándola una vez. El CI sobre PostgreSQL debe confirmar estos casos; no son validación Android física.
 - Android reconoce Kaptal como destino de compartir texto. Actualización release instalada sin borrar datos; no se compartieron avisos ni se modificaron movimientos en la cuenta del propietario.
 
-El CI remoto de esta rama debe comprobarse sobre el head del PR antes de integrar automáticamente. Las pruebas financieras son de la app debug física con datos sintéticos; release tiene instalación, firma, versión, arranque y resolución de compartir comprobados. Los detalles privados permanecen en .local.
+CI remoto final correcto e integración completada. Las pruebas financieras son de la app debug física con datos sintéticos; release tiene instalación, firma, versión, arranque y resolución de compartir comprobados. Los detalles privados permanecen en .local.
 
 ## APK 0.1.3
 
@@ -52,7 +54,7 @@ El CI remoto de esta rama debe comprobarse sobre el head del PR antes de integra
 
 ## Pendientes
 
-Integración automática a develop solo tras CI correcto. Siguiente canal en rama distinta: NotificationListener consentido, apps permitidas, filtrado en dispositivo, actualizaciones/repeticiones, permisos revocados, reinicio y bloqueo. No activarlo ni examinar notificaciones bancarias reales por iniciativa propia. Conservar el estudio de viabilidad Wallet/accesos; no prometer lectura universal de pagos. Después Etapas 12 y 13, además de pendientes físicos previos.
+Siguiente canal en rama distinta desde develop actualizado: NotificationListener consentido, apps permitidas, filtrado en dispositivo, actualizaciones/repeticiones, permisos revocados, reinicio y bloqueo. No activarlo ni examinar notificaciones bancarias reales por iniciativa propia. Ver [estudio inicial de viabilidad Wallet/accesos](ANDROID_CANALES_VIABILIDAD_ETAPA_10.md); no prometer lectura universal de pagos. Después Etapas 12 y 13, además de pendientes físicos previos.
 
 No cerrar Etapa 10 con esta entrega. Gmail deshabilitado, Etapa 6 omitida; sin lectura automática de SMS, Play Store ni despliegue nuevo. El backend nuevo de Etapa 11 sigue sin certificarse en producción. Conservar pendiente de expiración aislada de sesión observado en la validación anterior; segunda renovación natural posterior correcta, sin reproducirlo.
 
