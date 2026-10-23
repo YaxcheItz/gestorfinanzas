@@ -8,6 +8,7 @@ import com.getcapacitor.BridgeActivity;
 public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        registerPlugin(SharedNoticePlugin.class);
         super.onCreate(savedInstanceState);
         // Permite probar la WebView real sin exponer la instalacion release.
         WebView.setWebContentsDebuggingEnabled(

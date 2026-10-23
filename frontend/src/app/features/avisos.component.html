@@ -1,6 +1,17 @@
 <section class="inbox">
   <header><div><p class="muted">Entradas externas</p><h1>Bandeja de avisos</h1></div><button class="pill" (click)="nuevo()">Añadir aviso</button></header>
   <p class="muted intro">Tus avisos de todas las listas. Revísalos antes de guardarlos. Recibir un aviso no cambia tu dinero.</p>
+  @if(shared.pending();as texto){
+    <section class="notice" aria-label="Texto recibido en este teléfono">
+      @if(texto.text){
+        <p>Texto compartido listo para revisar. Completa solo los datos necesarios antes de enviarlos a tu cuenta.</p>
+        <button class="pill" (click)="usarCompartido()" [disabled]="ocupado()">Revisar aviso compartido</button>
+      }@else{<p>Este texto pertenece a otra sesión. Vuelve a esa cuenta para revisarlo o descártalo del teléfono.</p>}
+      <button class="quiet" (click)="descartarCompartido()" [disabled]="ocupado()">Descartar texto del teléfono</button>
+    </section>
+  }@else if(shared.error()){
+    <button class="quiet" (click)="descartarCompartido()">Cerrar aviso de texto compartido</button>
+  }
   <nav aria-label="Estado de avisos" class="filters">@for(f of filtros;track f.valor){<button class="pill" [attr.aria-pressed]="estado()===f.valor" (click)="filtrar(f.valor)">{{f.texto}}</button>}</nav>
   @if(error()){<div role="alert" class="notice">{{error()}} <button (click)="cargar()">Recargar bandeja</button></div>}
   @if(mensaje()){<p role="status">{{mensaje()}}</p>}
@@ -19,10 +30,16 @@
 <div class="backdrop"><section class="sheet" role="dialog" aria-modal="true" aria-labelledby="aviso-title" appFocusTrap tabindex="-1" (focusTrapEscape)="cerrar()">
   <header><h2 id="aviso-title">{{seleccionado()?'Revisar aviso':'Añadir aviso'}}</h2><button class="pill" aria-label="Cerrar aviso" (click)="cerrar()" [disabled]="ocupado()">×</button></header>
   @if(seleccionado();as seleccionado){<p class="notice">{{seleccionado.resumen | textoFinanciero}}</p>}
+  @if(compartido();as texto){
+    @if(shared.isCurrent(texto.id)){
+      <p class="muted">Original guardado solo en este teléfono. No se enviará este texto completo ni se usará IA. Escribe abajo un resumen y revisa cuenta, importe y fecha.</p>
+      <pre class="notice shared-text">{{texto.text}}</pre>
+    }
+  }
   <form (ngSubmit)="guardarDatos()">
     @if(errorFormulario()){<p role="alert" class="notice">{{errorFormulario()}}</p>}
     @if(!seleccionado()){
-      <label>Origen<select name="origen" [(ngModel)]="origen"><option value="MANUAL">Manual</option><option value="GMAIL">Gmail</option><option value="WHATSAPP">WhatsApp</option><option value="SMS">SMS</option><option value="NOTIFICACION">Notificación</option></select></label>
+      @if(!compartido()){<label>Origen<select name="origen" [(ngModel)]="origen"><option value="MANUAL">Manual</option><option value="GMAIL">Gmail</option><option value="WHATSAPP">WhatsApp</option><option value="SMS">SMS</option><option value="NOTIFICACION">Notificación</option></select></label>}
       <label>Resumen del aviso<textarea name="resumen" [(ngModel)]="resumen" maxlength="200" required rows="2" placeholder="Comercio y motivo del movimiento"></textarea></label><p class="muted">Sólo el movimiento, sin contraseñas, códigos ni datos completos de tarjeta.</p>
     }
     <label>Tipo de aviso<select name="clase" [(ngModel)]="clase" (ngModelChange)="cambiarClase()">@for(c of clases;track c.valor){<option [ngValue]="c.valor">{{c.texto}}</option>}</select></label>
@@ -35,7 +52,7 @@
     }@else{<label>Categoría<select name="categoria" [(ngModel)]="datos.categoriaId"><option [ngValue]="null">Sin categoría</option>@for(c of categorias();track c.id){@if(c.tipo===datos.tipo){<option [ngValue]="c.id">{{c.nombre}}</option>}}</select></label>}
     <label>Lista<select name="lista" [(ngModel)]="datos.listaId">@for(l of listas.listas();track l.id){@if(!l.archivada && l.rol!=='LECTOR'){<option [ngValue]="l.id">{{l.nombre}}</option>}}</select></label>
     <label>Fecha<input name="fecha" type="date" [(ngModel)]="datos.fecha" /></label>
-    <button class="primary" type="submit" [disabled]="ocupado()||cargandoCatalogo()">{{ocupado()?'Guardando…':'Guardar revisión'}}</button><p class="muted">Guardar la revisión conserva un aviso pendiente. No registra dinero.</p>
+    <button class="primary" type="submit" [disabled]="ocupado()||cargandoCatalogo()">{{ocupado()?'Guardando…':compartido()?'Enviar revisión a mi cuenta':'Guardar revisión'}}</button><p class="muted">Guardar la revisión conserva un aviso pendiente. No registra dinero.</p>
   </form>
 </section></div>}
 @if(confirmacion();as a){<div class="backdrop"><section class="sheet" role="dialog" aria-modal="true" aria-labelledby="confirmar-title" appFocusTrap tabindex="-1" (focusTrapEscape)="confirmacion.set(null)">

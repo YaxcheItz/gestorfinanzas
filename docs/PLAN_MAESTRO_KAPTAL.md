@@ -1,5 +1,17 @@
 # Kaptal: plan maestro y traspaso al siguiente chat
 
+## Etapa 10: compartir texto Android, primera entrega (2026-10-22)
+
+El propietario autorizó merges automáticos de este trabajo a develop tras comprobaciones. #104 integrado en develop mediante 55bdfe93c8b642b158349d22d1e3f4a785d3d2aa, con CI 292/39876160988 y Android 12/39876160968 correctos. Main d39d899 sin despliegue nuevo. No volver a pedir autorización para estos merges a develop; producción sigue fuera de esa autorización.
+
+Rama nueva mejoras/android-compartir-avisos desde origin/develop 55bdfe9 comprobado. Implementada recepción ACTION_SEND/text/plain con app abierta/cerrada, original local acotado y ligado a sesión, rechazo de indicadores de claves/tarjetas, revisión manual y envío explícito al contrato existente de Avisos. Recibir un aviso no mueve dinero; la confirmación financiera es posterior. Sin backend nuevo, IA, lectura automática de SMS ni acceso a notificaciones.
+
+Release 0.1.3/código 4 instalada como actualización en Samsung SM-A546E/Android 16, firma y datos conservados; copia Descargas/Kaptal-0.1.3.apk y .local/releases/Kaptal-0.1.3.apk. Pruebas financieras en debug física separada: compartir/repetir/cancelar, persistencia sin red tras force-stop, envío solo de resumen revisado, aviso pendiente sin cambiar saldo, confirmación única de gasto sintético 42.00 y saldo 995.66; reintento no duplica. OTP rechazado y HTML inerte. 387 pruebas frontend y 3 instrumentadas nativas correctas; builds y auditoría correctos. Consultar CI del PR antes de su integración automática.
+
+Detalle, límites y huellas: docs/ANDROID_COMPARTIR_AVISOS_ETAPA_10.md. No cerrar Etapa 10: quedan NotificationListener consentido con apps permitidas y pruebas de revocación/reinicio/bloqueo, estudio Wallet/accesos y después Etapas 12/13. No examinar avisos reales ni activar permisos bancarios por iniciativa propia. Gmail deshabilitado y Etapa 6 omitida. Mantener pendiente de expiración aislada anterior; segunda renovación natural correcta sin reproducirla.
+
+Prevalece este apartado sobre los históricos siguientes.
+
 ## Validación física y APK 0.1.2 (2026-10-22)
 
 Rama `validacion/android-fisico-0-1-1`, desde develop c46d090; PR #104 pendiente de integrar. #102/#103 integrados en develop, main d39d899 sin despliegue nuevo.
