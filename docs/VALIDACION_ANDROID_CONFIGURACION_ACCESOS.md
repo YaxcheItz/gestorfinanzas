@@ -33,3 +33,11 @@ Cierre de la nueva fixture: `AndroidConfigurationFixtureTest`, una prueba, cero 
 Limpieza: logout por UI comprobado; sin token/usuario web, marca NativeSession cerrada/usuario cero y archivo `no_backup/bank-automatic.enc` ausente. No hay permiso de escucha de Kaptal habilitado. APK de instrumentación retirada; debug queda separada y sin sesión. Widget QA retirado desde el launcher y ausencia de cola cifrada comprobada; debug detenida al finalizar. Release del propietario sigue sin sustituirse.
 
 Pendientes reales: revisión manual con TalkBack y combinaciones adicionales de giro/letra grande de los nuevos accesos; HTTPS público y piloto bancario consentido requieren una promoción separadamente autorizada. No cerrar Etapa 10 ni afirmar funcionamiento bancario público a partir de esta prueba. Gmail permanece deshabilitado. Siguiente: revisión manual pendiente o preparación de Etapas 12/13 en otra rama desde develop actualizado; diseño al final.
+
+## Bloqueo de CI y parches de tooling
+
+El primer HEAD documental de #114 (`ea2c94c`) compiló, pero CI 333/40040529000 detectó avisos nuevos de dependencias de desarrollo y no llegó a ejecutar las unitarias frontend. Se preserva ese resultado fallido; no se sortea ni se amplía la excepción de auditoría.
+
+Se actualiza únicamente tooling dentro de las mismas versiones mayores: Angular CLI 21.2.28 y sus DevKit/Schematics, body-parser 2.4.0, fast-uri 3.1.9, undici 6.29.1/7.30.1, zod 4.6.6 y qs 6.16.1 transitivo. Angular Build fija todavía undici vulnerable: override acotado `@angular/build → undici ^7.30.1`; no se fuerza la rama 7 sobre node-gyp que usa la 6. El código de aplicación y las migraciones no cambian. La prueba física anterior corresponde a la APK debug ya identificada; los nuevos builds y CI verifican el ajuste del tooling, sin repetir operaciones físicas satisfactorias.
+
+Referencias verificadas: [undici](https://github.com/advisories/GHSA-4qv8-2p9j-2685), [zod](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5), [body-parser](https://github.com/advisories/GHSA-27r3-jxmh-p828), [fast-uri](https://github.com/advisories/GHSA-w74x-v6f9-j3xg). Verificar auditoría, build y todos los jobs del HEAD final antes del merge autorizado a develop. Main/producción siguen fuera.
