@@ -1,5 +1,22 @@
 # Estado para retomar la sesión
 
+## Validación física y APK 0.1.2 (2026-10-22)
+
+Rama `validacion/android-fisico-0-1-1`, desde develop c46d090; PR #104 pendiente de integrar. #102/#103 integrados en develop, main d39d899 sin despliegue nuevo.
+
+Instalada release 0.1.2/código 3 en Samsung SM-A546E/Android 16, misma firma y fecha original de instalación. Copia en Descargas/Kaptal-0.1.2.apk y .local/releases/Kaptal-0.1.2.apk. Sin borrar datos ni modificar movimientos reales.
+
+En Kaptal Pruebas separada, cuenta sintética y WebView física: registro/logout/login, renovación natural tras más de tres horas, gasto/ingreso/transferencia, edición/eliminación, saldos e historial correctos. Captura con Wi-Fi y datos realmente apagados, force-stop/reapertura sin red y sincronización única al recuperar conexión: correctos. Giro, letra grande, teclado real y retorno de segundo plano comprobados en formularios probados; ajustes del teléfono restaurados.
+
+Corregidos permiso ACCESS_NETWORK_STATE (offline no detectado) y reinicio por fontScale (perdía importe sin guardar). ip-address de desarrollo actualizado a 10.7.4 por aviso nuevo que fallaba CI. Frontend 383 correctas, auditoría/build web y builds nativos correctos; instrumentación de arranque y permiso correcta. Código 81f86d7: CI 291/39875106382 y Android 11/39875106308 verdes, incluidos PostgreSQL/recuperación/E2E/PWA. Commits posteriores solo documentales; revisar también checks del head de #104 antes de integrar.
+
+Evidencia y límites: docs/VALIDACION_ANDROID_FISICO.md. Asistente, evidencia de historial y contenido CSV de API coinciden en gasto sintético 12.34; guardado/compartición nativos del archivo pendientes. Finanzas probadas en debug física; actualización y firma en release. Una salida aislada por sesión expirada no se reprodujo: refresh 200 antes/después de force-stop tras relogin; conservar pendiente de sesiones prolongadas. Faltan pantalla bloqueada/reinicio, TalkBack, revisión total, voz/archivos/Google y privacidad. Backend nuevo de Etapa 11 sin despliegue. Preparación siguiente: .local/ETAPA_10_PREPARACION.md; aún sin implementación.
+
+Siguiente: revisar e integrar #104 con autorización explícita; Etapa 10 sin Gmail en rama nueva desde develop actualizado → 12 → 13 → revisión final. Gmail deshabilitado, Etapa 6 omitida. No hacer merge ni despliegue por iniciativa propia.
+
+Prevalece este apartado sobre los históricos siguientes.
+
+
 ## Integración vigente (2026-10-22)
 
 El propietario autorizó integrar #102/#103 y preparar todo lo posible sin teléfono. PR #102 integrado a develop mediante c8651d03de549b4f31a6c876dc825cf1d8f27edb. Rama Android actualizada con ese develop; conflictos limitados a cinco documentos, conservando los bloques históricos de ambas entregas. Sin despliegue a producción ni cambios en main.

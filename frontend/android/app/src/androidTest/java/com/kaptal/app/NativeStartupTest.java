@@ -2,7 +2,9 @@ package com.kaptal.app;
 
 import static org.junit.Assert.*;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.SystemClock;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -14,6 +16,13 @@ import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
 public class NativeStartupTest {
+    @Test
+    public void networkStatePermissionIsGrantedForOfflineDetection() {
+        var context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        assertEquals(PackageManager.PERMISSION_GRANTED,
+            context.checkSelfPermission(Manifest.permission.ACCESS_NETWORK_STATE));
+    }
+
     @Test
     public void bundledAppStartsAndNativeHttpReachesPublicApi() throws Exception {
         var instrumentation = InstrumentationRegistry.getInstrumentation();

@@ -1,5 +1,9 @@
 # Base Android y APK de Kaptal
 
+## Actualización física 0.1.2 (2026-10-22)
+
+Release 0.1.2/código 3 instalada en Samsung SM-A546E/Android 16, misma firma y datos conservados; copia en Descargas/Kaptal-0.1.2.apk y .local/releases/Kaptal-0.1.2.apk. Corrige detección offline y conservación de captura al cambiar letra. Pruebas financieras, renovación natural y offline con cierre del proceso realizadas en una app debug separada y cuenta sintética. Ver [VALIDACION_ANDROID_FISICO.md](VALIDACION_ANDROID_FISICO.md) para evidencia, huellas y límites. PR #104 pendiente de integrar; sin despliegue a producción. Este estado prevalece sobre los históricos siguientes.
+
 ## Integración vigente (2026-10-22)
 
 El propietario autorizó integrar #102/#103 y preparar todo lo posible sin teléfono. PR #102 integrado a develop mediante c8651d03de549b4f31a6c876dc825cf1d8f27edb. Rama Android actualizada con ese develop; conflictos limitados a cinco documentos, conservando los bloques históricos de ambas entregas. Sin despliegue a producción ni cambios en main.
