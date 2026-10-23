@@ -26,6 +26,7 @@ public class FiltroLimiteAbuso extends OncePerRequestFilter {
         this.limite=limite; this.origen=origen;
     }
     private static final Map<String,Integer> PUBLICOS = Map.ofEntries(
+        Map.entry("/api/canales/android/evento",120),
         Map.entry("/api/auth/login",20),Map.entry("/api/auth/registro",5),Map.entry("/api/auth/google",20),
         Map.entry("/api/auth/recuperacion",5),Map.entry("/api/auth/recuperacion/confirmar",10),
         Map.entry("/api/auth/refresh",120),Map.entry("/api/notificaciones/whatsapp/verificar-pin",10),

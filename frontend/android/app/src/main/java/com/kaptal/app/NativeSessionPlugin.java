@@ -24,6 +24,7 @@ public class NativeSessionPlugin extends Plugin {
         synchronized (NotificationNoticeStore.class) {
         long previousUser = BankNotificationListener.user(getContext());
         if (closed || previousUser != userId) {
+            new AutomaticBankStore(getContext()).clear();
             try { BankNotificationListener.store(getContext()).clear(); }
             catch (RuntimeException ex) { call.reject("No se pudo borrar la recepción de la sesión anterior."); return; }
         }

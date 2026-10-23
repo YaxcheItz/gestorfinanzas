@@ -1,16 +1,18 @@
 import { Component, inject, output, signal } from '@angular/core';
 import { BankNotice, BankNotificationsService, NoticeApp } from '../core/services/bank-notifications';
+import { AutomaticBankComponent } from './automatic-bank';
 
 @Component({
   selector: 'app-bank-notifications',
-  imports: [],
+  imports: [AutomaticBankComponent],
   template: `
     @if (bank.available) {
+      <app-automatic-bank />
       <details (toggle)="closeSettings($event)">
         <summary>Notificaciones bancarias en este Android</summary>
         <p>Recepción {{ bank.current().enabled ? 'activa' : 'desactivada' }} · Acceso de Android {{ bank.current().granted ? 'concedido' : 'sin conceder' }}.</p>
         <p>Android concede acceso amplio a las notificaciones. Kaptal filtra en el teléfono las apps que elijas y conserva hasta 20 avisos durante 24 horas. No recupera notificaciones anteriores ni garantiza detectar todas las compras.</p>
-        <p>Revisarás cada aviso antes de enviar un resumen a tu cuenta. Recibirlo no registra dinero. Al pausar, revocar el acceso o cerrar sesión se borran la selección y la cola local.</p>
+        <p>Los avisos sin registro automático activo se revisan antes de enviarse a tu cuenta. Al pausar, revocar el acceso o cerrar sesión se borran la selección y las colas locales, incluido el automático.</p>
         <label><input type="checkbox" [checked]="consent()" (change)="consent.set($any($event.target).checked)" /> Entiendo el acceso y quiero configurar esta recepción.</label>
         <div class="actions">
           <button type="button" (click)="run('settings')" [disabled]="busy() || !consent()">Abrir acceso de Android</button>

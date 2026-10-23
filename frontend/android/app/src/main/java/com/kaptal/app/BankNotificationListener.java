@@ -16,7 +16,7 @@ public class BankNotificationListener extends NotificationListenerService {
 
     private void clearIfRevoked() {
         synchronized (NotificationNoticeStore.class) {
-            try { if (!granted(this)) store(this).clear(); }
+            try { if (!granted(this)) { store(this).clear(); new AutomaticBankStore(this).clear(); } }
             catch (RuntimeException ex) { /* El plugin reintenta al abrir la bandeja. */ }
         }
     }
@@ -56,21 +56,41 @@ public class BankNotificationListener extends NotificationListenerService {
         synchronized (NotificationNoticeStore.class) {
             try {
                 NotificationNoticeStore store = store(this);
-                if (!granted(this)) { store.clear(); return; }
+                if (!granted(this)) { store.clear(); new AutomaticBankStore(this).clear(); return; }
                 long now = System.currentTimeMillis();
                 long owner = user(this);
                 // Filtrar paquete y sesión antes de acceder a extras o texto de la notificación.
-                if (!getPackageName().equals(sbn.getOpPkg()) && !sbn.getPackageName().equals(sbn.getOpPkg())) return;
-                if (!store.accepts(owner, sbn.getPackageName(), now)) return;
+                if (Build.VERSION.SDK_INT >= 29 && !getPackageName().equals(sbn.getOpPkg()) && !sbn.getPackageName().equals(sbn.getOpPkg())) return;
+                boolean manual = store.accepts(owner, sbn.getPackageName(), now);
+                var automatic = new AutomaticBankStore(this);
+                // Check selected SMS package before examining its title or body.
+                var autoState = automatic.read();
+                boolean autoPackage = false;
+                boolean smsPackage = false;
+                if (owner > 0 && autoState.optLong("userId") == owner) {
+                    var rules = autoState.optJSONArray("rules");
+                    if(rules!=null) for(int i=0;i<rules.length();i++)
+                        if(sbn.getPackageName().equals(rules.getJSONObject(i).optString("paquete"))) {
+                            autoPackage=AutomaticBankStore.active(autoState,owner);
+                            if("SEARS".equals(rules.getJSONObject(i).optString("proveedor"))) smsPackage=true;
+                        }
+                }
+                if (!manual && !autoPackage) return;
                 Notification notification = sbn.getNotification();
                 if ((notification.flags & (Notification.FLAG_GROUP_SUMMARY | Notification.FLAG_ONGOING_EVENT)) != 0) return;
                 var extras = notification.extras;
                 CharSequence title = extras.getCharSequence(Notification.EXTRA_TITLE, "");
+                boolean autoSender = autoPackage && automatic.accepts(owner,sbn.getPackageName(),title.toString());
+                if(smsPackage && !autoSender) return;
+                if(!manual && !autoSender) return;
                 CharSequence body = extras.getCharSequence(Notification.EXTRA_BIG_TEXT);
                 if (body == null) body = extras.getCharSequence(Notification.EXTRA_TEXT, "");
                 if (title.length() + body.length() > 3999) return;
-                store.receive(owner, sbn.getPackageName(), sbn.getKey(), title + "\n" + body, now);
-            } catch (RuntimeException | org.json.JSONException ex) {
+                if(autoSender && automatic.receive(owner,sbn.getPackageName(),title.toString(),body.toString(),sbn.getKey(),sbn.getPostTime())) {
+                    AutomaticBankWorker.schedule(this); return;
+                }
+                if(manual) store.receive(owner, sbn.getPackageName(), sbn.getKey(), title + "\n" + body, now);
+            } catch (Exception ex) {
                 // Nunca registrar contenido ni extras bancarios; el estado se consulta al abrir Avisos.
             }
         }
@@ -82,9 +102,10 @@ public class BankNotificationListener extends NotificationListenerService {
             try {
                 NotificationNoticeStore store = store(this);
                 long now = System.currentTimeMillis();
+                new AutomaticBankStore(this).removed(sbn.getKey());
                 if (store.accepts(user(this), sbn.getPackageName(), now))
                     store.removed(sbn.getPackageName(), sbn.getKey(), now);
-            } catch (RuntimeException | org.json.JSONException ex) { /* Sin contenido en logs. */ }
+            } catch (Exception ex) { /* Sin contenido en logs. */ }
         }
     }
 

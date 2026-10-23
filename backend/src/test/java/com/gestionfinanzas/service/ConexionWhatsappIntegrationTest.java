@@ -129,7 +129,9 @@ class ConexionWhatsappIntegrationTest {
     }
     @Test void rechazaEventosDeOtroBotAntiguosPasivosYManipulados()throws Exception{
         String code=start(a,phone).path("codigo").asText();
-        for(byte[] raw:new byte[][]{event(phone,"vincular "+code,"999",Instant.now(),false),event(phone,"vincular "+code,"12345",Instant.now().minusSeconds(601),false),event(phone,"vincular "+code,"12345",Instant.now(),true),event(phone,"vincular "+code,"12345",Instant.now().plusSeconds(301),false)}){
+        // Leave margin beyond the five-minute policy: slower CI can cross a second boundary
+        // while processing the preceding requests and otherwise turn +301 into valid +300.
+        for(byte[] raw:new byte[][]{event(phone,"vincular "+code,"999",Instant.now(),false),event(phone,"vincular "+code,"12345",Instant.now().minusSeconds(601),false),event(phone,"vincular "+code,"12345",Instant.now(),true),event(phone,"vincular "+code,"12345",Instant.now().plusSeconds(3600),false)}){
             assertFalse(body(post(EVENT).contentType(MediaType.APPLICATION_JSON).header("X-Webhook-Signature",signature(raw)).content(raw),200).path("verificado").asBoolean());
         }
         byte[] raw=event(phone,"vincular "+code,"12345",Instant.now(),false);

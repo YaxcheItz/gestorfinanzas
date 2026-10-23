@@ -1,0 +1,41 @@
+# Etapa 10: compras bancarias automáticas
+
+## Contrato y alcance
+
+El propietario pidió registrar directamente las compras reconocidas, sin confirmación por movimiento. Se conserva una configuración inicial explícita de apps, cuentas y lista. Santander, American Express, BBVA y Sears Visa corresponden a crédito; Revolut a débito. Los límites y fechas desconocidos no se inventan: una tarjeta sin límite conocido admite registrar deuda, mientras los límites configurados conservan su comprobación. La creación/edición ordinaria de tarjetas mantiene sus validaciones anteriores.
+
+La APK 0.1.5 incorpora configuración de los cinco proveedores, no un lector universal. Sears admite el formato de compra autorizada proporcionado por el propietario, incluidas las variantes AUTORIZACION/AAUTORIZACION, fecha estricta, importe MXN, remitente y terminación coincidentes. Las otras cuatro apps admiten «Gastaste [importe] [moneda] en [comercio] con tu tarjeta [terminación opcional]». El propietario describió ese formato de memoria; no hay muestras reales de esas cuatro apps ni piloto bancario completado. Los ejemplos de pruebas son sintéticos.
+
+Para las apps mexicanas Santander/Amex/BBVA se interpreta el formato local sin moneda explícita como MXN; Revolut requiere MXN/pesos explícitos por su naturaleza multimoneda. USD/EUR y mensajes no reconocidos no se convierten automáticamente. Los mensajes ambiguos siguen en recepción local para revisión, sujetos a filtros y límites del almacén manual. Otros tipos de movimiento y formatos necesitan reglas y evidencia adicionales.
+
+Sears utiliza las notificaciones de la app SMS elegida (Google/Samsung/AOSP), con remitente exacto comprobado antes de leer el cuerpo. No se solicitan READ_SMS/RECEIVE_SMS ni acceso al historial. El teléfono debe mostrar contenido suficiente en una notificación. No se recuperan notificaciones anteriores. El filtro de remitente se conserva aunque la capacidad venza o quede pausada; desconectar borra también la recepción manual asociada.
+
+## Conexión limitada, distinta del login
+
+`POST /api/automatizacion/android`, autenticado mediante la sesión habitual, configura hasta diez reglas y devuelve una clave aleatoria de 256 bits una sola vez. Máximo cinco dispositivos por usuario. La base guarda SHA-256, propietario, UUID del dispositivo, reglas, versión de sesión y vencimiento de 90 días; migración V14. No se usa el refresh token del navegador para trabajar en segundo plano, evitando competir con su rotación.
+
+`GET/DELETE /api/automatizacion/android/{dispositivo}` permiten consultar/revocar únicamente dispositivos propios. `POST /api/canales/android/evento` exige `X-Kaptal-Android`; esa clave no autentica otras rutas ni permite elegir cuentas fuera de sus reglas. Rotación, revocación, caducidad o cambio de tokenVersion invalidan el envío. Respuestas sin caché, límites por origen y por dispositivo, bloqueo del usuario para serializar recepción/configuración/revocación.
+
+El receptor valida regla, cuenta propia activa, moneda, fecha reciente, tipo y datos. Reutiliza Avisos y el registro contable existente dentro de una transacción: recibe y confirma automáticamente si no hay coincidencias; una coincidencia queda PENDIENTE. Un reintento conserva identificador y devuelve la misma transacción. No se envían cuerpo original, referencia bancaria ni terminación de tarjeta en los eventos. La terminación configurada forma parte de la regla inicial, no de la descripción financiera.
+
+## Android y reintentos
+
+Clave, reglas y envíos se conservan con AES-GCM/Android Keystore en un archivo atómico dentro de noBackupFilesDir. Android backup está deshabilitado. WorkManager 2.12.0 envía solo payloads mínimos por HTTPS al proxy fijo de Kaptal, sin cookies ni redirecciones, con red disponible y reintentos exponenciales para red/429/5xx. No hay cuerpo original ni claves en WorkManager Data o logs.
+
+Se congela el primer payload de cada notificación hasta su retirada; una actualización no modifica una operación ya preparada. Sears deduplica además mediante huella de referencia/fecha/tarjeta local. Se conservan hasta 200 entradas; no se elimina un envío pendiente para admitir otro. Las respuestas ambiguas/rechazadas quedan identificadas para revisión local. El contador de registrados es reciente, no histórico total. Logout, cambio de usuario, pausa o revocación del permiso borran clave y cola locales. Una petición que ya llegó al servidor puede terminar antes de la revocación: siempre queda ligada al propietario original.
+
+La configuración requiere el teléfono desbloqueado y una sesión válida. Conexión no disponible en el servidor se muestra como error; la app no anuncia activación exitosa ante 404. Una configuración fallida intenta revocar la clave recién emitida. Los envíos pendientes impiden cambiar reglas para evitar reasignar compras a otra cuenta silenciosamente.
+
+## Evidencia y pendientes
+
+Regresión física ampliada: 21 pruebas instrumentadas correctas en Samsung, incluidas las anteriores y ocho nuevas de almacén/Worker. El Worker se ejecutó con transporte sintético aislado: caída de red y 429 conservan exactamente el mismo payload, éxito consume una sola vez, 401 pausa sin descartar, coincidencias/400 pasan a revisión y logout/revocación no restauran estado. Esto valida el procesamiento del Worker, no una conexión HTTP completa entre teléfono y backend público. Evidencia local: `.local/automatico-instrumentation-all.txt`.
+
+Además pasó un recorrido HTTP físico independiente: parser Sears → archivo cifrado → Worker → endpoint real de Spring → Avisos → transacción/deuda. Se reenvió exactamente el payload simulando pérdida de respuesta; el backend comprobó un solo movimiento y deuda sintética 25.10. `AndroidDeviceHttpFixtureTest` arranca solo con `-Dkaptal.device.http=true`, fuerza H2 efímera y loopback 18081, y elimina su archivo de credenciales al terminar. `AutomaticBankHttpTest` usa un transporte HTTP de localhost exclusivamente en el APK de pruebas mediante ADB reverse; no modifica el transporte HTTPS de release. Evidencias `.local/automatico-device-http-backend.log` y `.local/automatico-device-http-native.txt`. No valida TLS público, pantalla de configuración ni entrega bancaria real.
+
+Comprobaciones locales: backend 516 pruebas, cero fallos y seis omitidas; frontend 406 correctas; ocho pruebas JVM de parsers correctas; build web/debug/instrumentación y Android lint sin errores. En Samsung físico, cuatro pruebas nuevas del almacén cifrado correctas: persistencia, ausencia de original/referencia en payload, actualización congelada, deduplicación, usuario/remitente/vencimiento y cola llena sin pérdida de pendientes. Son pruebas sobre archivo de QA separado, sin tocar datos financieros de producción.
+
+Pendientes antes de cerrar: revisar CI con PostgreSQL y migración V14, validar Worker/HTTP con backend aislado y recepción completa, recorrido real de configuración, bloqueo/reinicio, formatos reales y piloto consentido. El APK de producción instalado sigue siendo 0.1.4 hasta actualización comprobada; compilar 0.1.5 no acredita instalación ni funcionamiento del backend público. Publicar backend/main requiere autorización distinta de los merges a develop.
+
+Después: accesos nativos, widgets y gestos útiles; Etapas 12/13; diseño al final. Gmail permanece deshabilitado y Etapa 6 omitida. No recrear los usuarios QA eliminados ni repetir la limpieza de producción.
+
+Referencias oficiales: [WorkManager](https://developer.android.com/jetpack/androidx/releases/work), [trabajo persistente](https://developer.android.com/develop/background-work/background-tasks/persistent/getting-started), [NotificationListenerService](https://developer.android.com/reference/android/service/notification/NotificationListenerService), [compatibilidad Java](https://developer.android.com/studio/write/java8-support), [desugar_jdk_libs](https://github.com/google/desugar_jdk_libs/blob/master/CHANGELOG.md).

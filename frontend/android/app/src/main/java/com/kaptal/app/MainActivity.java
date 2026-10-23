@@ -11,6 +11,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(SharedNoticePlugin.class);
         registerPlugin(NativeSessionPlugin.class);
         registerPlugin(BankNotificationsPlugin.class);
+        registerPlugin(AutomaticBankPlugin.class);
         super.onCreate(savedInstanceState);
         // Permite probar la WebView real sin exponer la instalacion release.
         WebView.setWebContentsDebuggingEnabled(
