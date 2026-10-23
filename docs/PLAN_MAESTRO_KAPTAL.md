@@ -1,5 +1,13 @@
 # Kaptal: plan maestro y traspaso al siguiente chat
 
+## Registro automático: implementación en comprobación (2026-10-23)
+
+PR #109 de limpieza/documentación integrado con CI 308 correcto en develop `cd178f64f859147ef6b0d18a776dbd710ee2eb99`. Rama `mejoras/android-registro-bancario-automatico`, creada desde develop comprobado y actualizada con ese merge. Implementados receptor limitado por dispositivo (V14), registro/contabilidad idempotentes, configuración de las cinco apps, parsers Sears y «Gastaste …», cola cifrada y Worker con reintentos. Las tarjetas sin límite conocido ya admiten registrar deuda sin inventar límite; los configurados siguen comprobándose. Detalles: `docs/ANDROID_REGISTRO_AUTOMATICO_ETAPA_10.md`.
+
+Backend local: 516 pruebas, cero fallos y seis omitidas; frontend 406 correctas; ocho pruebas JVM de parsers; builds web/debug/instrumentación y Android lint correctos. Cuatro pruebas nuevas del almacén cifrado en Samsung correctas, sobre archivo aislado. Se prepara release 0.1.5/código 6; esto todavía no acredita instalación ni piloto bancario. Falta CI/PostgreSQL, Worker/HTTP aislado y recorrido físico completo, bloqueo/reinicio y formatos reales. No activar con datos reales para suplir estas pruebas.
+
+Producción sigue con backend anterior y APK instalada 0.1.4. Main no actualizado ni nueva automatización pública activa. La limpieza autorizada no equivale a autorización de despliegue. Conservar el usuario y las cinco cuentas vacías; no repetir limpieza ni recrear QA en producción. Después del automático siguen accesos/widgets/gestos, Etapas 12/13 y diseño al final. Gmail deshabilitado. Este apartado prevalece sobre los históricos siguientes.
+
 ## Prioridad vigente: datos reiniciados y registro bancario automático (2026-10-23)
 
 El propietario autorizó eliminar los usuarios de prueba y su contenido, conservar únicamente su usuario de Google y vaciar sus datos financieros. Operación realizada y verificada: ocho usuarios eliminados, uno conservado con identidad/autenticación/sesiones intactas; 28 cuentas y 48 movimientos antiguos eliminados; cinco cuentas nuevas en MXN a cero. Santander, American Express, BBVA y Sears Visa son crédito; solo Revolut es débito. Sin límites, corte/pago ni cashback inventados. Ver `docs/REINICIO_DATOS_PRUEBA_2026_10_23.md`; copia cifrada y evidencias privadas en `.local/reset-20261022/`. No repetir la limpieza ni reutilizar la fixture Android del usuario eliminado para crear más datos en producción.

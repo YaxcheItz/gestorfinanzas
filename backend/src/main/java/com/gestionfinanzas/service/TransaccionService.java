@@ -380,7 +380,10 @@ public class TransaccionService {
         }
 
         BigDecimal limite = cuenta.getLimiteCredito();
-        if (limite == null || limite.compareTo(BigDecimal.ZERO) <= 0) {
+        // Unspecified credit metadata is unknown, not a zero limit. Existing bank purchases
+        // can be recorded before the owner supplies the statement's limit and dates.
+        if (limite == null) return;
+        if (limite.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Configura un límite de crédito válido antes de registrar gastos con esta tarjeta");
         }
 

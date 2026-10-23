@@ -29,7 +29,7 @@ public class BankNotificationsPlugin extends Plugin {
             try {
                 var store = BankNotificationListener.store(getContext());
                 boolean granted = BankNotificationListener.granted(getContext());
-                if (!granted) store.clear();
+                if (!granted) { store.clear(); new AutomaticBankStore(getContext()).clear(); }
                 long owner = BankNotificationListener.user(getContext());
                 if (owner != call.getData().optLong("userId", 0)) owner = 0;
                 JSObject result = store.read(owner, System.currentTimeMillis(), unlocked());
@@ -79,6 +79,7 @@ public class BankNotificationsPlugin extends Plugin {
                         || !Boolean.TRUE.equals(call.getBoolean("consent"))))
                     throw new IllegalArgumentException("Concede el acceso y acepta el alcance antes de activar.");
                 BankNotificationListener.store(getContext()).configure(owner, enabled, packages, System.currentTimeMillis());
+                if(!enabled) new AutomaticBankStore(getContext()).clear();
                 if (enabled) android.service.notification.NotificationListenerService.requestRebind(
                     new android.content.ComponentName(getContext(), BankNotificationListener.class));
                 call.resolve();
