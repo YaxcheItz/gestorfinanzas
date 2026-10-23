@@ -10,6 +10,7 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(SharedNoticePlugin.class);
         registerPlugin(NativeSessionPlugin.class);
+        registerPlugin(BankNotificationsPlugin.class);
         super.onCreate(savedInstanceState);
         // Permite probar la WebView real sin exponer la instalacion release.
         WebView.setWebContentsDebuggingEnabled(

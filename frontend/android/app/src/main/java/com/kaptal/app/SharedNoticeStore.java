@@ -14,6 +14,12 @@ final class SharedNoticeStore {
 
     SharedNoticeStore(SharedPreferences prefs) { this.prefs = prefs; }
 
+    static boolean safeText(String text) {
+        return text != null && !text.isBlank() && text.length() <= 4000
+            && !SECRET.matcher(text).find() && !CARD.matcher(text).find()
+            && !text.matches("(?s).*[\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\x7f].*");
+    }
+
     private void expire(long now) {
         long at = prefs.getLong("at", 0);
         if (prefs.contains("id") && (now < at || now - at >= TTL_MS)) {
