@@ -1,5 +1,18 @@
 # Estado para retomar la sesión
 
+## Avance vigente: Etapa 10, notificaciones consentidas (2026-10-22)
+
+Rama `mejoras/android-notificaciones-consentidas`, nueva desde `origin/develop` revalidado en `5de3683`. Implementado NotificationListener con consentimiento, apps elegidas explícitamente y recepción desactivada/selección vacía por defecto. Cola privada ligada a sesión, 20 pendientes/100 identidades/24 horas, filtro local antes de leer contenido, OTP/tarjetas rechazados y borrado al pausar, cambiar/cerrar cuenta o revocar acceso. Repeticiones y actualizaciones conservan identidad; publicar otro evento requiere su propia revisión. Solo el resumen y los campos revisados se envían a Avisos como NOTIFICACION; recibir deja PENDIENTE y no registra dinero.
+
+Samsung SM-A546E/Android 16: 10 pruebas instrumentadas de almacenes y regresiones correctas; prueba del servicio real con emisor sintético, actualización, segunda publicación y revocación/borrado correctos. Recorrido por UI física correcto: consentimiento, selección del APK emisor sintético, repetición, force-stop/reapertura conservando UUID, revisión sin original en backend, pendiente sin cambiar saldos, reintento HTTP con el mismo aviso, descarte y pausa. Los permisos de escucha de QA se retiraron al terminar; ninguna app bancaria real fue elegida. No se registraron movimientos financieros nuevos.
+
+Frontend 402 correctas; builds web/debug/instrumentación/release firmada correctos. Auditoría sin vulnerabilidades de producción; cinco alertas conocidas de desarrollo sin parche. E2E/API/PWA y comprobaciones remotas del PR: en curso, no integrar antes de verde sobre el head final. Release 0.1.4/código 5 en preparación; la instalación del propietario permanece 0.1.3 hasta validar la actualización final. Ver detalles y límites en `docs/ANDROID_NOTIFICACIONES_CONSENTIDAS_ETAPA_10.md`.
+
+La autorización de merges a develop continúa vigente tras comprobaciones; main/producción quedan fuera. Gmail deshabilitado y Etapa 6 omitida. No cerrar Etapa 10: quedan piloto bancario con apps/formatos elegidos por el propietario, bloqueo y reinicio completo físicos, accesos nativos y después Etapas 12/13. La lectura bloqueada del almacén y force-stop de la app no equivalen a esas pruebas del teléfono. No activar permisos bancarios por iniciativa propia.
+
+Prevalece este apartado sobre los históricos siguientes.
+
+
 ## Etapa 10: compartir texto Android, primera entrega (2026-10-22)
 
 El propietario autorizó merges automáticos de este trabajo a develop tras comprobaciones. #104 integrado en develop mediante 55bdfe93c8b642b158349d22d1e3f4a785d3d2aa, con CI 292/39876160988 y Android 12/39876160968 correctos. Main d39d899 sin despliegue nuevo. No volver a pedir autorización para estos merges a develop; producción sigue fuera de esa autorización.
