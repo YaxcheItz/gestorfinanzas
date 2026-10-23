@@ -1,18 +1,24 @@
 # Estado para retomar la sesión
 
-## Registro automático: implementación en comprobación (2026-10-23)
+## Estado vigente: registro automático integrado (2026-10-23)
 
-Recorrido HTTP físico adicional correcto: Samsung parser Sears → cola cifrada → Worker → backend aislado H2 → registro contable; reenvío del mismo payload deja un solo movimiento y deuda sintética correcta. La fixture es optativa y fuerza H2/loopback, sin usuarios o movimientos nuevos en producción. Faltan configuración interactiva, HTTPS público, bloqueo/reinicio y piloto real; no confundir esta evidencia con activación del propietario.
+PR #110 integrado a develop en `6b81bbc92d629bf822ed8b8f5a3391e4404cb150`, con `expected_head_sha=56870dc5689bc47ef101c1203b9b8097225b57e6`. GitHub confirmó CI 321/39914158715 y Android APK 25/39914158564 correctos para ese HEAD: seis jobs verdes, incluidos PostgreSQL/migraciones/recuperación, E2E/API y PWA. Main remoto sigue en `d39d89952a18959511032880457aaccff4bb5f66`. Esta integración no despliega ni activa producción.
 
-Entrega en PR #110 (borrador), código inicial `cd5482c`; CI y Android iniciados, comprobar el head actual antes de integrar. Regresión posterior en Samsung: 21 pruebas instrumentadas correctas, incluidas ocho nuevas de almacén/Worker con transporte sintético. Caída de red/429 reintentan el mismo payload, éxito no se repite, 401 pausa y revocación/logout no restauran cola. Falta el enlace HTTP físico completo; estas pruebas no lo sustituyen. Release 0.1.5 compilada firmada, todavía no instalada en la app del propietario.
+Requisito vigente: compras reconocidas se registran sin confirmación individual; ambiguos y posibles duplicados requieren revisión. Santander, American Express, BBVA y Sears Visa: crédito; solo Revolut: débito. Cinco cuentas inicialmente MXN y cero, sin inventar límites, fechas ni cashback. Limpieza terminada: no repetir ni recrear QA en producción; las fixtures antiguas pertenecen a usuarios eliminados. Datos privados solo en `.local/canales-bancarios-autorizados.private.json`, sin imprimir ni comprometer.
 
-PR #109 de limpieza/documentación integrado con CI 308 correcto en develop `cd178f64f859147ef6b0d18a776dbd710ee2eb99`. Rama `mejoras/android-registro-bancario-automatico`, creada desde develop comprobado y actualizada con ese merge. Implementados receptor limitado por dispositivo (V14), registro/contabilidad idempotentes, configuración de las cinco apps, parsers Sears y «Gastaste …», cola cifrada y Worker con reintentos. Las tarjetas sin límite conocido ya admiten registrar deuda sin inventar límite; los configurados siguen comprobándose. Detalles: `docs/ANDROID_REGISTRO_AUTOMATICO_ETAPA_10.md`.
+Implementado: receptor limitado por dispositivo, V14, clave revocable/caducable, contabilidad idempotente, configuración de cinco proveedores, parsers Sears/Gastaste y cola AES-GCM/Keystore con WorkManager. No lee historial SMS. Los cuatro formatos distintos de Sears se describieron de memoria: no hay compatibilidad universal acreditada. Las tarjetas sin límite conocido admiten deuda sin inventarlo; los límites configurados siguen comprobándose.
 
-Backend local: 516 pruebas, cero fallos y seis omitidas; frontend 406 correctas; ocho pruebas JVM de parsers; builds web/debug/instrumentación y Android lint correctos. Cuatro pruebas nuevas del almacén cifrado en Samsung correctas, sobre archivo aislado. Se prepara release 0.1.5/código 6; esto todavía no acredita instalación ni piloto bancario. Falta CI/PostgreSQL, Worker/HTTP aislado y recorrido físico completo, bloqueo/reinicio y formatos reales. No activar con datos reales para suplir estas pruebas.
+Evidencias revalidadas: PostgreSQL aislado 15433, 517 pruebas, cero fallos/errores y una omitida optativa (`.local/automatico-postgres-full.log`); Samsung, 21 instrumentadas (`.local/automatico-instrumentation-all.txt`) y una HTTP física parser Sears → cola cifrada → Worker → Spring/H2 aislado → movimiento único tras reenvío (`.local/automatico-device-http-native.txt` y `.local/automatico-device-http-backend.log`). Frontend 406, parsers JVM 8 y lint/builds correctos según cierre de #110. No repetir suites satisfactorias sin cambio/riesgo nuevo ni tocar PostgreSQL habitual 5432.
 
-Producción sigue con backend anterior y APK instalada 0.1.4. Main no actualizado ni nueva automatización pública activa. La limpieza autorizada no equivale a autorización de despliegue. Conservar el usuario y las cinco cuentas vacías; no repetir limpieza ni recrear QA en producción. Después del automático siguen accesos/widgets/gestos, Etapas 12/13 y diseño al final. Gmail deshabilitado. Este apartado prevalece sobre los históricos siguientes.
+APK 0.1.5/código 6 compilada/firmada: `.local/releases/Kaptal-0.1.5.apk`, SHA256 revalidado `EFF027190F0F6EF9D5EBEDAF820C4E8211DCBA25E87DC112FD4B5ACD04852761`. No instalada sobre la release del propietario: última comprobada 0.1.4. Pruebas en debug separada; permiso debug y APK de instrumentación retirados al terminar las pruebas anteriores.
 
-## Prioridad vigente: datos reiniciados y registro bancario automático (2026-10-23)
+Etapa 10 abierta: faltan configuración interactiva, bloqueo/reinicio físicos y, tras despliegue autorizado, HTTPS público y piloto consentido con formatos reales. HTTP aislado no acredita TLS público ni activación. Después: accesos/widgets/gestos en NUEVA rama desde develop remoto actualizado, sin reutilizar la rama vieja `mejoras/android-accesos-widgets`. Reutilizar `accion-captura.ts` (nuevo-gasto/nuevo-ingreso/dictar), comprobar autenticación, arranque frío y retorno a sesión; widgets sin datos financieros en pantalla bloqueada. Luego Etapas 12/13 y diseño al final.
+
+Merges a develop autorizados tras comprobaciones; main/producción requieren aprobación después de preparar una promoción comprobada. Diff main→develop: V11 (reparto por partes), V12 (metas), V13 (trazabilidad de divisas), V14 (conexiones Android), además de Etapa 11 sin desplegar. Revisar las cuatro migraciones, respaldo/recuperación y compatibilidad antes de publicar. Gmail deshabilitado, Etapa 6 omitida.
+
+Continuación vigente: `.local/CONTINUAR_ANDROID_0_1_5.md`; leer AGENTS.md y `docs/ANDROID_REGISTRO_AUTOMATICO_ETAPA_10.md`. Los apartados históricos siguientes son evidencia de su fecha, no instrucciones ni estado actuales.
+
+## Histórico: Prioridad vigente: datos reiniciados y registro bancario automático (2026-10-23)
 
 El propietario autorizó eliminar los usuarios de prueba y su contenido, conservar únicamente su usuario de Google y vaciar sus datos financieros. Operación realizada y verificada: ocho usuarios eliminados, uno conservado con identidad/autenticación/sesiones intactas; 28 cuentas y 48 movimientos antiguos eliminados; cinco cuentas nuevas en MXN a cero. Santander, American Express, BBVA y Sears Visa son crédito; solo Revolut es débito. Sin límites, corte/pago ni cashback inventados. Ver `docs/REINICIO_DATOS_PRUEBA_2026_10_23.md`; copia cifrada y evidencias privadas en `.local/reset-20261022/`. No repetir la limpieza ni reutilizar la fixture Android del usuario eliminado para crear más datos en producción.
 
@@ -20,10 +26,9 @@ El requisito vigente de Etapa 10 es registrar automáticamente los movimientos r
 
 Rama de limpieza/documentación `mantenimiento/limpieza-datos-prueba`, nueva desde origin/develop `3676f5d` revalidado. La operación de datos no despliega código; main sigue sin actualizarse. Merges a develop autorizados tras comprobaciones. Siguiente: nueva entrega de registro bancario automático en `mejoras/android-registro-bancario-automatico`; después accesos/widgets/gestos útiles, Etapas 12 y 13, y modificaciones de diseño al final. No llamar cerrado al piloto bancario sin pruebas reales consentidas, bloqueo/reinicio y deduplicación. Gmail deshabilitado y Etapa 6 omitida.
 
-Prevalece este apartado sobre los históricos siguientes.
 
 
-## Avance vigente: Etapa 10, notificaciones consentidas (2026-10-22)
+## Histórico: Avance vigente: Etapa 10, notificaciones consentidas (2026-10-22)
 
 PR #107 integrado a develop en `b158f04617b926f4ba05de31062e03d0ed48c46d`, desde `mejoras/android-notificaciones-consentidas`, creada en `origin/develop` revalidado `5de3683`. Código `2a149811a5a07f2bc278cfb8ff29154612f88b53`: CI 304/39902079287 y Android 18/39902079348 correctos, incluidos 33 E2E/API y 4 PWA sobre PostgreSQL; seis jobs de CI verdes, con recuperación de base comprobada. Main permanece `d39d89952a18959511032880457aaccff4bb5f66`, sin despliegue nuevo. La rama `docs/cierre-android-0-1-4` se creó desde ese develop actualizado para registrar el cierre; consultar su PR para el estado documental remoto.
 
@@ -37,10 +42,9 @@ Release 0.1.4/código 5 instalada como actualización en Samsung, con firma y fe
 
 La autorización de merges a develop continúa vigente tras comprobaciones; main/producción quedan fuera. Gmail deshabilitado y Etapa 6 omitida. No cerrar Etapa 10: quedan piloto bancario con apps/formatos elegidos por el propietario, bloqueo y reinicio completo físicos, accesos nativos y después Etapas 12/13. La lectura bloqueada del almacén y force-stop de la app no equivalen a esas pruebas del teléfono. No activar permisos bancarios por iniciativa propia.
 
-Prevalece este apartado sobre los históricos siguientes.
 
 
-## Etapa 10: compartir texto Android, primera entrega (2026-10-22)
+## Histórico: Etapa 10: compartir texto Android, primera entrega (2026-10-22)
 
 El propietario autorizó merges automáticos de este trabajo a develop tras comprobaciones. #104 integrado en develop mediante 55bdfe93c8b642b158349d22d1e3f4a785d3d2aa, con CI 292/39876160988 y Android 12/39876160968 correctos. Main d39d899 sin despliegue nuevo. No volver a pedir autorización para estos merges a develop; producción sigue fuera de esa autorización.
 
@@ -52,9 +56,8 @@ Durante la prueba sin sesión se reprodujo recuperación de credenciales antigua
 
 Detalle, límites y huellas: docs/ANDROID_COMPARTIR_AVISOS_ETAPA_10.md. Estudio inicial de APIs y límites: docs/ANDROID_CANALES_VIABILIDAD_ETAPA_10.md; no acredita un lector universal de compras Wallet. No cerrar Etapa 10: queda implementar NotificationListener consentido con apps permitidas y pruebas de revocación/reinicio/bloqueo, validar accesos nativos y después Etapas 12/13. No examinar avisos reales ni activar permisos bancarios por iniciativa propia. Gmail deshabilitado y Etapa 6 omitida. Mantener pruebas prolongadas; segunda renovación natural y regresiones posteriores correctas.
 
-Prevalece este apartado sobre los históricos siguientes.
 
-## Validación física y APK 0.1.2 (2026-10-22)
+## Histórico: Validación física y APK 0.1.2 (2026-10-22)
 
 Rama `validacion/android-fisico-0-1-1`, desde develop c46d090; PR #104 pendiente de integrar. #102/#103 integrados en develop, main d39d899 sin despliegue nuevo.
 
@@ -68,10 +71,9 @@ Evidencia y límites: docs/VALIDACION_ANDROID_FISICO.md. Asistente, evidencia de
 
 Siguiente: revisar e integrar #104 con autorización explícita; Etapa 10 sin Gmail en rama nueva desde develop actualizado → 12 → 13 → revisión final. Gmail deshabilitado, Etapa 6 omitida. No hacer merge ni despliegue por iniciativa propia.
 
-Prevalece este apartado sobre los históricos siguientes.
 
 
-## Integración vigente (2026-10-22)
+## Histórico: Integración vigente (2026-10-22)
 
 El propietario autorizó integrar #102/#103 y preparar todo lo posible sin teléfono. PR #102 integrado a develop mediante c8651d03de549b4f31a6c876dc825cf1d8f27edb. Rama Android actualizada con ese develop; conflictos limitados a cinco documentos, conservando los bloques históricos de ambas entregas. Sin despliegue a producción ni cambios en main.
 
@@ -81,7 +83,6 @@ Orden: integración → APK actualizada → validación física de sesión, oper
 
 Teléfono no disponible por decisión del propietario. No declarar login, renovación, segundo plano, operaciones, actualización u offline comprobados en Android físico. Sin movimientos financieros reales. Conservar firma privada y APK 0.1.0; instalar posteriormente como actualización con cuenta de prueba autorizada. Google nativo, voz/archivos Android, widgets y accesos nativos continúan pendientes.
 
-Este apartado prevalece sobre los históricos siguientes.
 
 
 
@@ -89,7 +90,7 @@ Este apartado prevalece sobre los históricos siguientes.
 
 ### Historico Android
 
-## Avance vigente: base Android (2026-10-22)
+## Histórico: Avance vigente: base Android (2026-10-22)
 
 Validaci?n Android: APK release 0.1.0 firmada e instalada, copia en Descargas/Kaptal-0.1.0.apk y .local/releases/kaptal-release.apk. Prueba instrumentada f?sica correcta en SM-A546E/Android 16: arranque local y health HTTPS, sin cuentas ni dinero reales. Frontend 382 y build/auditor?a correctos. PR #103 abierto hacia develop; CI del cierre pendiente de consultar. Sesi?n larga y capacidades nativas avanzadas siguen pendientes.
 
@@ -110,7 +111,7 @@ Tercera entrega de Etapa 11: metas propias con aportes/retiros por transferencia
 Historico de la segunda entrega de Etapa 11: reparto de pareja por partes enteras, pesos e importes persistidos, respaldo v6/restauracion compatible con v1-v5 y migracion V11. Verificado: backend 493 correctas y 6 omitidas, frontend 382, build y E2E movil correctos. CI previo del PR #102 verde; nuevo CI/PostgreSQL pendiente de publicar esta ampliacion. Siguen pendientes divisas, metas y revision de liquidaciones; no cerrar Etapa 11. Gmail fuera.
 
 
-## Prioridad vigente: Etapa 11 (2026-10-21)
+## Histórico: Prioridad vigente: Etapa 11 (2026-10-21)
 
 Orden autorizado: **11 -> base Android con Capacitor y APK firmado descargable -> 10 sin Gmail -> 12 -> 13 -> revision final**. Etapa 9 completada provisionalmente por el propietario; sus pruebas fisicas pendientes se revisan al final, sin certificarlas ahora. APK directo, sin Play Store; widgets y ajustes rapidos requieren componentes Android. Gmail excluido. Comercializacion opcional.
 
@@ -120,7 +121,7 @@ Validacion de la primera entrega: backend verify 489 correctas y 6 omitidas; fro
 
 Los apartados siguientes son el historial anterior; prevalece este orden.
 
-## Etapa 9: primera entrega PWA/captura (2026-10-21)
+## Histórico: Etapa 9: primera entrega PWA/captura (2026-10-21)
 
 Conexión recuperada: rama `mejoras/android-captura` subida y [PR #101](https://github.com/YaxcheItz/gestorfinanzas/pull/101) abierto como borrador hacia develop. Sin merge ni despliegue de producción. Ampliación de regresiones: 381 unitarias frontend correctas, tres E2E PWA correctas (renovación con cookie real, sesión vencida offline y sincronización única). CI remoto pendiente de resultado; no confundirlo con validación local. Catálogo de 87 entradas de skills en `.local/SKILLS_DISPONIBLES.md`.
 
@@ -132,7 +133,7 @@ Conexión recuperada: rama `mejoras/android-captura` subida y [PR #101](https://
 
 Histórico de publicación de Etapa 8: PR #99 ya integrado por el propietario en develop; prevalece el estado de Etapa 9 anterior. Los siguientes apartados conservan el registro de sesiones previas.
 
-## Etapa 8: entrega para PR hacia develop (2026-10-21)
+## Histórico: Etapa 8: entrega para PR hacia develop (2026-10-21)
 
 - Autorizado subir la rama y abrir PR a develop; sin merge ni despliegue de producción. Rama `auditoria/etapa-8-funcional-visual`, worktree `.local/asistente-worktree`, desde develop `a8ae7f3` revalidado contra remoto.
 - Añadido E2E real local de recurrencias: registrar, editar los tres alcances, pausar/reanudar y eliminar plantilla conservan historial y saldo. Ajustado el día civil de Cuentas a México; prueba con navegador UTC conserva el pago pendiente.
@@ -140,7 +141,7 @@ Histórico de publicación de Etapa 8: PR #99 ya integrado por el propietario en
 - Etapa 8 permanece abierta por Android físico, producción autenticada, lector de pantalla y ampliaciones visuales/MSI indicadas en el informe. PostgreSQL/CI pendientes de la publicación. No tocar Gmail. Después de cerrar la auditoría viene Etapa 9.
 
 
-## Revisión de avances y siguiente paso (2026-10-21)
+## Histórico: Revisión de avances y siguiente paso (2026-10-21)
 
 - Fetch confirma `origin/develop = a8ae7f3` y `origin/main = f4b814e`. GitHub vuelve a confirmar PR #97 integrado. Se revisaron los commits de filtros por lista, restante de presupuesto y consultas recurrentes; no repetir la implementación del asistente.
 - Comprobado ahora: Vercel success para main, web pública HTTP 200 y API `/api/health` HTTP 200/UP. La suite local anterior reportada fue backend 480 correctas/6 omitidas y frontend 343; no se volvió a ejecutar. El cierre previo documenta CI y Render exitosos; esta revisión no vuelve a certificar cada job ni el SHA servido por Render.
@@ -148,7 +149,7 @@ Histórico de publicación de Etapa 8: PR #99 ya integrado por el propietario en
 - `auditoria/etapa-8-funcional-visual` ya existe desde develop actualizado y aún no tiene código de auditoría nuevo. Los cambios documentales sin commit se conservan; no hubo commits, merges, despliegues ni movimientos en esta revisión. Gmail deshabilitado y Etapa 6 omitida.
 - Continuidad: leer AGENTS.md, este estado, PLAN_MAESTRO_KAPTAL.md y ASISTENTE_EVIDENCIAS.md. Continuar auditoría de Etapa 8; después viene Android/captura (Etapa 9).
 
-## Etapa 7: asistente con evidencias integrada y desplegada (2026-10-20)
+## Histórico: Etapa 7: asistente con evidencias integrada y desplegada (2026-10-20)
 
 - PR #97 fue integrado por el propietario. GitHub confirma merge a `develop` mediante `a8ae7f33695a9cd84d6a3d4bddea339eaa459e18`; sus checks están verdes. El merge correspondiente a `main` es `f4b814e27de8a87a244d5cc5253e31a6fb1391bc`; CI de `main` verde.
 - Despliegues verificados para el SHA de `main`: Vercel `Production` success y servicio backend Render success. `https://kaptalgf.vercel.app/` respondió HTTP 200; `https://kaptal-api-0xbn.onrender.com/api/health` respondió `{"status":"UP",...}`.
@@ -160,13 +161,13 @@ Histórico de publicación de Etapa 8: PR #99 ya integrado por el propietario en
 - Gmail permanece deshabilitado y Etapa 6 omitida.
 - Continuar leyendo `AGENTS.md`, este estado, `docs/PLAN_MAESTRO_KAPTAL.md` y `docs/ASISTENTE_EVIDENCIAS.md`.
 
-## Borrador Gmail archivado localmente (2026-10-20)
+## Histórico: Borrador Gmail archivado localmente (2026-10-20)
 
 - El propietario pidió guardar los +3750 añadidos locales de Gmail en su rama y limpiar la carpeta principal. Se conserva el borrador en un commit local de `mejoras/gmail-bancario-piloto`, sin push, merge ni activación. Incluye código, pruebas, lockfile y documentación; no certifica operación automática terminada.
 - `.local/`, credenciales OAuth, sesiones, claves Cloudflare, node_modules y artefactos permanecen excluidos de Git. Gmail sigue deshabilitado y su Worker pausado; no se leen correos ni se ejecutan pruebas financieras para esta tarea de archivo.
 - El asistente sigue separado en `mejoras/asistente-evidencias`, worktree `.local/asistente-worktree`, PR #97. Continuar ahí leyendo este estado, PLAN_MAESTRO_KAPTAL.md y ASISTENTE_EVIDENCIAS.md. No recuperar ni integrar el borrador Gmail por rutina.
 
-## Asistente publicado en rama y segunda entrega de evidencias (2026-10-20)
+## Histórico: Asistente publicado en rama y segunda entrega de evidencias (2026-10-20)
 
 - Verificación de esta entrega: 54 pruebas backend relacionadas correctas (37 unitarias de motor/contexto/acciones/asistente y 17 HTTP/persistencia de consultas WhatsApp), 57 pruebas frontend correctas y build Angular producción correcto. La integración comprueba conteos/totales propios, exclusión de otra moneda/usuario/transferencias, historial y CSV equivalentes, rechazo de moneda inválida y ausencia de escrituras. UI verifica renderizado, navegación y aislamiento de la lista activa. Diff-check correcto. PostgreSQL y suite completa quedan a CI; no hubo despliegue ni prueba con datos reales.
 
@@ -175,7 +176,7 @@ Histórico de publicación de Etapa 8: PR #99 ya integrado por el propietario en
 - Skills aplicadas: Ponytail, Angular, diseño de interfaces, seguridad y documentación/verificación de la etapa. El borrador Gmail del checkout principal permanece separado y deshabilitado. Solo WhatsApp como canal externo; conciliación omitida.
 - Continuidad: leer AGENTS.md, este estado, PLAN_MAESTRO_KAPTAL.md y ASISTENTE_EVIDENCIAS.md. Revisar CI del PR #97. Después completar filtros específicos y evidencia de las demás consultas, presupuestos y respuestas WhatsApp. Mantener la distinción entre código publicado en rama y funciones desplegadas.
 
-## Prioridad vigente: WhatsApp y asistente; Gmail/conciliación fuera (2026-10-20)
+## Histórico: Prioridad vigente: WhatsApp y asistente; Gmail/conciliación fuera (2026-10-20)
 
 - Cierre del primer corte del asistente: 76 pruebas relacionadas distintas correctas (75 del conjunto inicial y la nueva prueba HTTP/persistencia, con la clase completa de 16 pruebas repetida correctamente). Motor, contexto financiero, servicio de acciones/asistente y consultas/fallback/runtime WhatsApp cubiertos. Integración en H2 con propietarios sintéticos: cifras exactas, usuario ajeno y transferencias excluidos, sin modificar dinero ni crear propuestas/avisos. `git diff --check` correcto. No se ejecutó toda la suite backend ni prueba PostgreSQL en esta parte; no se cambió frontend ni se desplegó. Detalle en ASISTENTE_EVIDENCIAS.md.
 
@@ -186,7 +187,7 @@ Histórico de publicación de Etapa 8: PR #99 ya integrado por el propietario en
 - Primera mejora local del asistente: comando de comparación del mes actual frente al anterior con periodo equivalente, monedas separadas y cálculos BigDecimal mediante consultas autorizadas existentes. Cambios de solo lectura para chat y consultas WhatsApp compartidas. Pruebas y detalle de cierre en docs/ASISTENTE_EVIDENCIAS.md del worktree. No está desplegado ni equivale a toda la Etapa 7.
 - Continuidad: leer AGENTS.md, este estado, PLAN_MAESTRO_KAPTAL.md y ASISTENTE_EVIDENCIAS.md en el worktree del asistente. Continuar asistente, conservar WhatsApp y dejar Gmail deshabilitado. Completar filtros/evidencias/enlaces y comprobar CI/despliegue antes de dar la etapa por terminada.
 
-## Gmail detenido por decisión del propietario; siguiente conciliación (2026-10-20)
+## Histórico: Gmail detenido por decisión del propietario; siguiente conciliación (2026-10-20)
 
 - Instrucción más reciente: «dime hasta dónde funciona Gmail y dejémoslo así; continuemos con lo demás del plan». Suspende la activación automática solicitada antes. No continuar OAuth/publicación/activación Gmail por instrucciones históricas.
 - Estado funcional conservado: OAuth readonly local, etiqueta y dos filtros; lectura bajo demanda desde 2026-10-15; HTML Nu reconocido y el mismo aviso actualizado a INGRESO con datos, pendiente de confirmación manual. Cero movimientos registrados por el agente. Santander tiene pruebas sintéticas HTML/texto y soporte para miles, pero no hay correo Santander en etiqueta/ventana para validar realmente.
@@ -197,7 +198,7 @@ Histórico de publicación de Etapa 8: PR #99 ya integrado por el propietario en
 - Siguiente bloque no Gmail: Etapa 6, conciliación común y aprendizaje (sección 10 del plan). Primero revisar qué ya hace la bandeja y su detección de coincidencias; después una entrega acotada para distinguir repetición del evento, coincidencia entre canales y compras realmente distintas. Conservar decisiones del propietario y trazabilidad; no deduplicar silenciosamente movimientos distintos.
 - Para retomar: leer AGENTS.md, docs/ESTADO_SESION.md y docs/PLAN_MAESTRO_KAPTAL.md. Dejar Gmail como está, manual y remoto pausado. Continuar conciliación multicanal desde develop remoto comprobado, en NUEVA rama/worktree, conservando los cambios Gmail sin publicar de la rama actual. No registrar movimientos reales sin nueva instrucción aplicable.
 
-## Corrección HTML y reprocesado real completados (2026-10-20)
+## Histórico: Corrección HTML y reprocesado real completados (2026-10-20)
 
 - Misma etapa/rama `mejoras/gmail-bancario-piloto`; fetch confirma HEAD y origin/develop en 211b457. Se conserva el trabajo previo sin commit. Skills: canales-personales, depuración, Ponytail y verificación.
 - El lector prefiere texto plano y usa extracción HTML inerte cuando falta: sin renderizar, ejecutar scripts, descargar recursos ni adjuntos. Ignora head/script/style/template/iframe/object/svg y comentarios; decodifica entidades y conserva separadores de bloques. Límites de tamaño y autenticación/remitente/asunto bancarios conservados. Referencia técnica: https://docs.python.org/3/library/html.parser.html.
@@ -207,7 +208,7 @@ Histórico de publicación de Etapa 8: PR #99 ya integrado por el propietario en
 - Pendiente: propietario recarga /avisos y revisa cuenta, fecha e importe antes de confirmar. Santander aún sin correo real dentro de la ventana. El colector se ejecuta bajo demanda en esta computadora; esta entrega no instala servicio continuo. Código y docs pendientes de commit/PR; no se desplegó ni se modificó Web Push.
 - Continuidad: leer AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/GMAIL_PILOTO_PASO_A_PASO.md. HTML corregido y aviso Nu actualizado sin duplicar; revisar resultado y continuar validación Santander/publicación de la rama, sin repetir OAuth ni confirmar dinero por cuenta del agente.
 
-## Piloto Gmail conectado y primera lectura (2026-10-20)
+## Histórico: Piloto Gmail conectado y primera lectura (2026-10-20)
 
 - El propietario confirma que ya ve el aviso en la bandeja publicada. Diagnóstico real acotado: corresponde a Nu; remitente, asunto y autenticación Google/DMARC coinciden. El mensaje es únicamente `text/html`; `decode_plain` ignora HTML y produce texto vacío, por eso no coincide el cuerpo. No se imprimieron cuerpo, importes ni IDs. Siguiente: extracción HTML segura sin ejecutar scripts, descargar recursos ni seguir enlaces; prueba de regresión y reprocesado del mismo aviso, evitando crear otra propuesta por cambiar gmail-review a gmail-bank. No confirmar aún el aviso genérico ni asumir que ya contiene datos financieros.
 
@@ -220,7 +221,7 @@ Histórico de publicación de Etapa 8: PR #99 ya integrado por el propietario en
 - Pendiente: propietario revisa el aviso en Kaptal y valida sus datos y posibles coincidencias antes de decidir confirmación. No afirmar cobertura real de ambos bancos con un solo aviso. Publicación de cambios aún pendiente; no hubo commit, push ni despliegue.
 - Continuidad: leer AGENTS.md, este estado, PLAN_MAESTRO_KAPTAL.md y GMAIL_PILOTO_PASO_A_PASO.md. OAuth y primera lectura ya completados; no repetir autorización. Revisar resultado manual y completar validación real de Nu/Santander sin registrar dinero por cuenta del agente.
 
-## Aclaración del propietario (2026-10-20)
+## Histórico: Aclaración del propietario (2026-10-20)
 
 - Preparación completada: el propietario confirma etiqueta y ambos filtros. Se encontró el nuevo JSON Desktop en `.local/canales`, se validó su estructura sin mostrar secretos y se renombró a `google-client.private.json`; exclusión Git comprobada. Pendiente consentimiento OAuth, resolver ID de etiqueta y lectura piloto con revisión manual. No se inició OAuth ni se leyeron correos en esta comprobación.
 
@@ -228,7 +229,7 @@ Histórico de publicación de Etapa 8: PR #99 ya integrado por el propietario en
 
 - El propietario confirma que todavía no ha realizado la preparación de Google Cloud ni Gmail. Se explica desde cero cómo crear el cliente de escritorio, guardar su JSON y crear etiqueta y filtros. No se inicia OAuth ni se leen correos; la conexión y prueba real siguen pendientes. Esta entrega es orientativa y no implementa una etapa nueva.
 
-## Revision de continuidad (2026-10-20)
+## Histórico: Revision de continuidad (2026-10-20)
 
 - Continuacion solicitada: guia detallada creada en `GMAIL_PILOTO_PASO_A_PASO.md` tras comprobar que siguen faltando cliente OAuth, credenciales y etiqueta. Instrucciones contrastadas con documentacion oficial de Google. El propietario debe crear el cliente Desktop y etiqueta/filtros; despues se completa consentimiento y lectura autorizada. No se ejecuto OAuth ni se leyeron correos en esta entrega.
 
@@ -241,7 +242,7 @@ Histórico de publicación de Etapa 8: PR #99 ya integrado por el propietario en
 - Para otro chat: «Continua el piloto Gmail de Kaptal. Lee AGENTS.md, ESTADO_SESION.md, PLAN_MAESTRO_KAPTAL.md, BANDEJA_AVISOS.md y HERRAMIENTAS_CANALES_2026-10-17.md. Comprueba la rama mejoras/gmail-bancario-piloto y sus cambios sin publicar desde develop 211b457. Solo Nu recibido y compra TDC Santander, revision manual. La revision del 20 de octubre paso 37 pruebas especificas y 86 completas; el fallo intermitente de lock Windows no esta corregido. Faltan cliente OAuth Desktop, etiqueta/filtros y nombre de etiqueta; luego consentimiento y piloto real autorizado. No leas correo antes de eso ni registres dinero sin confirmacion. Conserva autoria exclusiva y actualiza los MD y el texto de continuidad.»
 
 
-## Seguimiento vigente: piloto bancario Gmail (2026-10-19)
+## Histórico: Seguimiento vigente: piloto bancario Gmail (2026-10-19)
 
 - PR #95 de experiencia WhatsApp integrado en `develop`; el propietario confirma que WhatsApp ya funciona.
 - Etapa 4 en `mejoras/gmail-bancario-piloto`, rama creada desde `origin/develop` comprobado (`211b457`). Alcance actual reducido a Gmail de Nu y Santander; otros bancos y notificaciones móviles quedan para después.
@@ -255,7 +256,7 @@ Histórico de publicación de Etapa 8: PR #99 ya integrado por el propietario en
 - Skills de Codex revisadas: `canales-personales`, `ecc-security-review`, `ecc-tdd-workflow`, `source-driven-development` y `ecc-verification-loop`. `ecc-backend-patterns` se enfoca en Node/Next.js, por lo que no aplica directamente al puente Python.
 - Texto para retomar: «Continúa Kaptal leyendo `AGENTS.md`, `docs/ESTADO_SESION.md`, `docs/PLAN_MAESTRO_KAPTAL.md`, `docs/BANDEJA_AVISOS.md` y `docs/HERRAMIENTAS_CANALES_2026-10-17.md`. La rama `mejoras/gmail-bancario-piloto` parte de `develop` `211b457`. El alcance Gmail actual es ingreso por transferencia recibida de Nu y compra con tarjeta Santander, ambos solo con revisión; las 37 pruebas del parser pasan. Ya están mapeadas las cuentas en la configuración privada y las dos reglas están habilitadas allí; no se ha consultado Gmail. Falta crear el OAuth client JSON en `.local/canales/google-client.private.json`, crear etiqueta/filtros Gmail exclusivos (propuesta `Kaptal-Bancos`), autorizar Gmail readonly localmente y resolver su ID. La fecha inicial es 2026-10-15. No leas secretos `.local` fuera de los permisos concedidos ni registres movimientos reales. Conserva mi autoría exclusiva y sincroniza los MD al cerrar cada parte.»
 
-## Historial: experiencia y cierre de voz de WhatsApp (2026-10-19)
+## Histórico: Historial: experiencia y cierre de voz de WhatsApp (2026-10-19)
 
 - Etapa 2 (IA rápida de respaldo) ya está integrada en `develop` mediante PR #93. La rama de esta etapa, `mejoras/whatsapp-experiencia`, parte del commit remoto comprobado `8909b06` (`origin/develop`).
 - En `WhatsappEventoService`, la confirmación de una nota de voz acepta «confirmar» y también el código completo; un comando `confirmar audio` sin código ya no consume el borrador. Audio vencido, código incorrecto y confirmación reutilizada no registran otro movimiento.
@@ -267,7 +268,7 @@ Histórico de publicación de Etapa 8: PR #99 ya integrado por el propietario en
 - Siguiente paso: revisar CI y el PR #95; tras integrarlo/desplegarlo, completar las pruebas reales. Después seguir con Etapa 4 (Gmail bancario personal real), revisando antes su alcance y permisos.
 - Texto para el siguiente chat: «Continúa Kaptal desde `AGENTS.md`, `docs/ESTADO_SESION.md` y `docs/PLAN_MAESTRO_KAPTAL.md`. La Etapa 2 ya está integrada en develop (#93). El PR #95 de la Etapa 3 está abierto desde `mejoras/whatsapp-experiencia` hacia `develop`: confirmación segura para deshacer y confirmación simplificada de audio; 60 pruebas backend WhatsApp y 9 frontend pasaron. Revisa CI/PR; antes de cerrar, integrar y desplegar y luego probar con autorización mensaje, nota de voz, cancelar y posible duplicado con el propietario y una segunda persona. No registres movimientos reales por tu cuenta. Conserva mi autoría exclusiva y actualiza los MD al cerrar cada parte.»
 
-## Etapa anterior: WhatsApp multiusuario activado en Cloudflare Workers (2026-10-19)
+## Histórico: Etapa anterior: WhatsApp multiusuario activado en Cloudflare Workers (2026-10-19)
 
 - Integración completada: PR #87 (base 1A) y PR #88 (runtime 1B) integrados en `develop` y pasados a `main` mediante PR #89. Backend desplegado en Render con variables de canal configuradas; `/api/canales/whatsapp/disponibilidad` responde `data: true`.
 - Activación en Cloudflare: Base D1 respaldada en `.local/canales-cloudflare/d1.pre-multiuser.1792434489673.private.sql`, migración D1 0002 aplicada y Worker desplegado en modo multiusuario activo (`paused: false`).
@@ -282,7 +283,7 @@ Histórico de publicación de Etapa 8: PR #99 ya integrado por el propietario en
 - Texto para el siguiente chat: «Continua Kaptal desde AGENTS.md, ESTADO_SESION.md y PLAN_MAESTRO_KAPTAL.md. WhatsApp multiusuario ya esta desplegado y activo en Cloudflare Workers con /health y /ready en 200; backend disponible en produccion. Siguiente: probar vinculacion y consulta de dos personas reales (propietario y segunda cuenta) desde la app, luego ejecutar retire-personal-session y continuar con la Etapa 2 (IA de respaldo rapida). Conserva mi autoria exclusiva y actualiza los MD al cerrar cada paso.»
 
 
-## Historial: WhatsApp multiusuario, parte 1A (2026-10-19)
+## Histórico: Historial: WhatsApp multiusuario, parte 1A (2026-10-19)
 
 - El propietario confirmo que WhatsApp personal funciona y pidio altas desde un boton en la app, luego IA rapida de respaldo y despues Gmail/resto del plan. Plan completo versionado en `PLAN_MAESTRO_KAPTAL.md`; debe actualizarse al cerrar cada parte. Al final de cada tarea entregar texto para retomar en un nuevo chat; preferencia incorporada a `AGENTS.md`.
 - Fetch comprobado: `origin/develop = 7c3e2ad` (#85), `origin/main = c077b5e` (#86). Rama nueva `mejoras/whatsapp-multiusuario-base` desde develop remoto. Se conserva la rama/worktree anterior; no volver a usarla para esta etapa.
@@ -291,7 +292,7 @@ Histórico de publicación de Etapa 8: PR #99 ya integrado por el propietario en
 - Cierre local: 434 pruebas PostgreSQL correctas, sin fallos ni omisiones, incluidas 18 nuevas (14 HTTP/persistencia, 3 carreras con transacciones separadas y 1 configuracion deshabilitada). `mvnw verify` correcto sobre esquema aislado con V1-V9. Las 15 HTTP/configuracion tambien pasaron en H2. Se actualizaron expectativas de V8 a V9 y el fallo controlado de migracion a V10; no se modificaron migraciones publicadas. Evidencia en `replica/whatsapp-multiusuario-base/verification.json`. CI remoto: consultar PR de la rama; no asumirlo por la evidencia local.
 - Siguiente entrega, tras revisar/integrar esta base: UI de vinculacion y Worker por conexion con autorizacion limitada, revocacion y migracion conservando UUID/cifrado de la conexion personal; dos usuarios reales antes de IA/Gmail. No mandar consultas ajenas con la cookie personal ni mostrar VERIFICADA como servicio financiero completo.
 
-## Etapa vigente: WhatsApp en Cloudflare Workers + D1 (2026-10-18)
+## Histórico: Etapa vigente: WhatsApp en Cloudflare Workers + D1 (2026-10-18)
 
 - Oracle no permitio completar el registro del propietario. Cloudflare autorizado mediante Wrangler con permisos acotados; no habilitar plan de pago ni desplegar la propuesta separada de Containers.
 - Rama nueva `mejoras/whatsapp-cloudflare`, worktree `.local/whatsapp-cloudflare-worktree`, creada desde `origin/develop` comprobado (`1736526`) y con los commits de PR #84 como dependencia. No modificar el checkout principal que ejecuta el receptor local.
@@ -302,7 +303,7 @@ Histórico de publicación de Etapa 8: PR #99 ya integrado por el propietario en
 - PR #85 abierto con autoria exclusiva del propietario; los 14 checks remotos pasaron antes del cambio operativo. Depende de PR #84, que seguia abierto al comprobarlo. Pendiente que el propietario confirme una consulta, gasto autentico y nota de voz reales desde WhatsApp. No se crearon movimientos reales de prueba por el agente. Estado/URL/identificadores exclusivamente en `.local/canales-cloudflare/` y `.local/canales/`.
 - Guia: `WHATSAPP_CLOUDFLARE.md`. Tras consulta, gasto y voz reales elegidos por el propietario, cerrar WhatsApp y seguir con Gmail y el plan previo. La preparacion no equivale a integracion multiusuario.
 
-## Etapa anterior: cierre operativo portable de WhatsApp (2026-10-18)
+## Histórico: Etapa anterior: cierre operativo portable de WhatsApp (2026-10-18)
 
 - PR #83 integrado; `develop == origin/develop == 1736526` comprobado mediante fetch. Nueva rama `mejoras/whatsapp-cierre-operativo`. El propietario pide terminar WhatsApp antes de Gmail y enviara el gasto autentico al bot cuando este listo; no inventar movimientos reales.
 - Voz: transcripcion firmada de Kapso o consulta autenticada al mensaje, sin descargar medios. Confirmacion explicita ligada al audio, 15 minutos, consumo unico y cancelacion. Si no hay transcripcion en dos minutos, alternativa por texto. Disponibilidad real depende de Kapso/sandbox y sigue por comprobar con el propietario.
@@ -312,14 +313,14 @@ Histórico de publicación de Etapa 8: PR #99 ya integrado por el propietario en
 - Receptor personal actualizado con respaldo privado consistente. Sesion/propietario, health/ready locales, HTTPS publico y rechazo de firma invalida comprobados; el propietario puede enviar ayuda, gasto autentico y nota de voz. No se generaron movimientos reales de prueba. Sincronizacion de scripts globales bloqueada por revision automatica de herramientas; los archivos del proyecto si estan actualizados. El propietario necesita crear cuenta Oracle; guia de registro incluida.
 - Pendientes reales: confirmar gasto y nota de voz del propietario, cuenta/VM gratuita disponible, traslado de cola/sesion, actualizar el webhook existente, probar reinicio remoto y retirar tunel. Gmail y el resto del plan quedan despues del cierre real de WhatsApp. No presentar preparacion local como servicio 24/7 desplegado.
 
-## Correccion de CI del PR #83: periodo inicial (2026-10-18)
+## Histórico: Correccion de CI del PR #83: periodo inicial (2026-10-18)
 
 - Fallo remoto confirmado en `39152462783`: solo E2E periodos-flexibles, linea 60. El push del mismo commit paso en `39152434313`. La traza confirma PUT correcto de CATORCENA y GET posterior correcto, pero el usuario abre el selector mientras el perfil aun esta pendiente; el borrador conserva MES aunque luego cambie el rango global.
 - Corregido Inicio para esperar la carga inicial del perfil antes de abrir/cambiar periodo (incluidos gestos). Si la carga falla, se permite elegir un periodo temporal. No se cambian calculos, preferencias guardadas ni controles de sesiones/WhatsApp.
 - La regresion unitaria de perfil demorado falla con el codigo anterior. Se conserva la prueba E2E existente y se fuerza la espera del perfil mediante una compuerta controlada, sin sleeps, reintentos ni ampliacion de timeouts. Tambien se prueba la alternativa si falla la carga del perfil.
 - Validacion local completa: 324 pruebas frontend, 21 E2E contra API/PostgreSQL reales y build de produccion correctos. Evidencia y publicacion en `replica/whatsapp-activacion-sandbox/ci-periodo-fix.json` y GitHub; no inferirlo de los resultados previos del puente.
 
-## Estado actual: WhatsApp respondio; correccion de rotacion de sesion (2026-10-18)
+## Histórico: Estado actual: WhatsApp respondio; correccion de rotacion de sesion (2026-10-18)
 
 - Kapso entrego dos mensajes reales al webhook (200), pero quedaron pendientes porque el receptor usaba una cookie anterior: una comprobacion doctor renovaba la cookie en disco mientras el worker inactivo conservaba su copia. La posterior reutilizacion daba 401. El caso se reprodujo con una prueba que falla con el codigo anterior.
 - Receptor pausado, propietario autorizo otra vez con Google y perfil verificado. Cookies ahora se recargan bajo bloqueo de archivo del sistema operativo antes de cada rotacion; lectura, renovacion y guardado son una operacion serial entre procesos. El bloqueo se libera al salir o morir el proceso. connect conserva su cookie recien autorizada y evita un segundo guardado fuera del bloqueo. No se relajan controles del servidor.
@@ -336,7 +337,7 @@ Histórico de publicación de Etapa 8: PR #99 ya integrado por el propietario en
 - Siguiente: confirmar las respuestas ya entregadas y despues probar captura elegida por el usuario. Mantener PC y tunel encendidos; es una prueba temporal, no alojamiento continuo. Si cambia/cierra el tunel, actualizar o desactivar el webhook remoto, no crear duplicados.
 - Evidencia sin secretos en `replica/whatsapp-activacion-sandbox/verification.json`. Gmail y asistente con evidencias siguen pendientes tras validar WhatsApp real.
 
-## Historial: vincular WhatsApp con Google (2026-10-17)
+## Histórico: Historial: vincular WhatsApp con Google (2026-10-17)
 
 - Usuario confirmo que entra con Google; no existe una contrasena propia que deba pedir el puente. Autorizo implementar vinculacion mediante navegador. No solicitar ni usar la contrasena de Google en scripts.
 - Rama nueva `mejoras/whatsapp-vinculacion-google` desde `origin/develop = 70f8caa` comprobado mediante fetch. Se incorpora como dependencia el commit original `94712fc` de consultas (PR #80), sin reutilizar su rama. Primero integrar #80; esta etapa se revisa aparte. Consultar GitHub para estado actual de PR/publicacion.
@@ -346,7 +347,7 @@ Histórico de publicación de Etapa 8: PR #99 ya integrado por el propietario en
 - Cierre local comprobado: 416 pruebas backend PostgreSQL sin errores ni omisiones, 9 de vinculacion H2, 322 frontend, 54 Python y 21 E2E completos correctos. Build, Ruff, formato, compileall y diff correctos. Se revirtio un override de Secure en pruebas; cookies conservan Secure y solo el helper E2E adapta transporte HTTP loopback para Python. Scripts/guias globales sincronizados. Sin despliegue ni sesion personal.
 - Siguiente tras integrar y publicar frontend/backend: ejecutar connect con el propietario, autorizar desde Google, verificar sesion; despues webhook HTTPS y prueba sandbox. Mantener Gmail y asistente con evidencias como etapas posteriores del plan existente.
 
-## Historial: WhatsApp con todas las cuentas y consultas (2026-10-17)
+## Histórico: Historial: WhatsApp con todas las cuentas y consultas (2026-10-17)
 
 - Usuario autorizo ampliar el canal a todas sus cuentas e informacion financiera. Rama `mejoras/whatsapp-cuentas-consultas` desde develop comprobado `a31d95e`; incorpora `3e44069` del PR #78 como dependencia. No reutilizar la rama de preparacion para esta etapa. Consultar Git/PR para el estado de publicacion de esta ampliacion.
 - Durante la validacion se confirmo #78 integrado: `origin/develop = 70f8caa`. La rama nueva se avanzo por fast-forward a ese merge (arbol identico a su dependencia previa), conservando los cambios de esta ampliacion. No se mezclan etapas en la rama antigua.
@@ -357,7 +358,7 @@ Histórico de publicación de Etapa 8: PR #99 ya integrado por el propietario en
 - Cierre local: 407 pruebas backend PostgreSQL correctas sin omisiones, 48 pruebas Python correctas, Ruff/formato/compileall correctos y 20 E2E completos correctos. El E2E nuevo ejecuta el puente Python contra API/PG reales; solo se simula el envio final a Kapso. Sin cambios de migraciones ni dependencias. No se reiniciaron los servidores personales ni se desplego produccion.
 - Contratos y limites: `WHATSAPP_CUENTAS_CONSULTAS.md`. Evidencia: `replica/whatsapp-cuentas-consultas/verification.json`. Pendientes de activacion: integrar/publicar endpoint backend, ejecutar connect localmente, configurar webhook HTTPS y comprobar sandbox real. Las consultas avanzadas del asistente siguen en el plan posterior.
 
-## Historial: preparacion WhatsApp/Kapso (2026-10-17)
+## Histórico: Historial: preparacion WhatsApp/Kapso (2026-10-17)
 
 - Usuario confirmo develop actualizado y autorizo continuar WhatsApp. `develop == origin/develop == a31d95ec64468c897526c14b1e3741e091176ed3`, comprobado mediante fetch; incluye PR #76 y su correccion CI. Copia inicial limpia en main; creada rama nueva `mejoras/whatsapp-kapso` desde develop. Sin commit/push de esta etapa.
 - Actualizacion del propietario: sandbox activo y numero verificado mediante GET autenticado a Kapso. Clave e identificadores guardados solo en configuracion privada; no se enviaron mensajes. El usuario usa Kaptal publicado en `https://kaptalgf.vercel.app/`, no la base local. Falta autenticar su cuenta publicada, seleccionar cuenta/lista y configurar webhook HTTPS. No trasladar IDs de la base local a produccion.
@@ -365,7 +366,7 @@ Histórico de publicación de Etapa 8: PR #99 ya integrado por el propietario en
 - Receptor corregido a HTTP 200 tras persistir; procesador con SQLite/sesion separados en otro hilo para no bloquear acuses. No anuncia aviso entregado mientras solo esta pendiente de red. Rechaza estructuras malformadas y no inicia si el procesador no puede abrir la cola. Regresiones de concurrencia y configuracion, sin cambiar Java/Angular/migraciones/servidores existentes.
 - Evidencia de esta etapa: `replica/whatsapp-kapso/verification.json`. Guia operativa y limites: `WHATSAPP_KAPSO.md`. Despues de activacion y prueba real: Gmail con reglas bancarias verificadas y asistente con evidencias; conservar el resto de `PLAN_CONTINUACION_MONAI.md`.
 
-## Historial: bandeja de avisos (2026-10-17)
+## Histórico: Historial: bandeja de avisos (2026-10-17)
 
 - Revision de CI tras publicar `7ede72f`: ejecucion `39068489152`, fallo exclusivo de backend H2; PostgreSQL, frontend, E2E y Python correctos. Reproducido localmente: borrar usuario falla por FK de avisos sin cascada en el DDL generado. La entidad declara ahora `@OnDelete(CASCADE)`, igual que V7 y otras entidades del proyecto. Se conserva la prueba de borrado sin omitirla ni modificar la migracion publicada. Resultados de cierre de esta correccion en `replica/captura-avisos/ci-fix.json`.
 
@@ -378,7 +379,7 @@ Histórico de publicación de Etapa 8: PR #99 ya integrado por el propietario en
 - Siguiente: revisar/integrar esta rama y crear otra desde develop actualizado para activar WhatsApp/Kapso con numero y webhook HTTPS; luego Gmail readonly con ejemplos anonimizados y reglas bancarias exactas. Despues retomar asistente con evidencias, Android y demas etapas de `PLAN_CONTINUACION_MONAI.md`.
 - Los apartados siguientes son historial y no sustituyen este estado vigente.
 
-## Historial: sincronizacion de canales con develop (2026-10-17)
+## Histórico: Historial: sincronizacion de canales con develop (2026-10-17)
 
 - El usuario integro recurrencias mediante PR #74: origin/develop = 1a30415. Se incorporo ese develop a mejoras/integraciones-canales; unico conflicto en este documento, conservando el historial de ambas entregas. El codigo se combino automaticamente.
 - Checks previos correctos: correcciones 39059262591 y canales 39059148161. La nueva combinacion debe completar su propia ejecucion de CI antes de integrar canales a develop.
@@ -386,7 +387,7 @@ Histórico de publicación de Etapa 8: PR #99 ya integrado por el propietario en
 - Los apartados siguientes son historial de sesiones, incluidas referencias a ramas sin commit/push que ya fueron publicadas. No interpretar esas referencias como estado actual.
 
 
-## Correccion de CI remoto (2026-10-17)
+## Histórico: Correccion de CI remoto (2026-10-17)
 
 - Ejecucion 39058043967: backend, frontend y PostgreSQL correctos; E2E fallo en chat-android y dashboard-repetir. La rama integraciones tenia CI 39057920843 correcto, pero comparte el codigo afectado.
 - Chat espera a que finalice la carga del catalogo antes de permitir enviar: evita fallback local sin cuentas cuando la red falla durante el arranque. Regresion unitaria nueva para respuestas demoradas.
@@ -394,14 +395,14 @@ Histórico de publicación de Etapa 8: PR #99 ya integrado por el propietario en
 - Verificado localmente: 313 pruebas frontend correctas y los dos E2E afectados correctos contra PostgreSQL, esquema aislado ci_remote_20261017 y puertos de prueba 14220/18080. Sin ampliar timeouts, forzar clics ni omitir expectativas. Logs privados frontend/.angular/ci-remote-*.log en copia principal. Revisar ejecucion remota nueva tras el push.
 
 
-## Publicacion autorizada (2026-10-17)
+## Histórico: Publicacion autorizada (2026-10-17)
 
 - El usuario autorizo subir las dos entregas por separado, solo con su autoria Git configurada: YaxcheItz <yaxtibla1@gmail.com>, sin coautoria.
 - Ramas: correcciones/presupuestos-recurrencias y mejoras/integraciones-canales. Consultar git log y origin para los hashes/estado remoto actuales. No se integra develop en esta operacion.
 - Los estados sin commit/push y las banderas de evidencia mas abajo corresponden a la verificacion previa a esta publicacion.
 
 
-## Etapa vigente: herramientas y canales (2026-10-17)
+## Histórico: Etapa vigente: herramientas y canales (2026-10-17)
 
 - Rama mejoras/integraciones-canales desde origin/develop e947227 comprobado mediante fetch, en worktree .local/integraciones-worktree. La rama principal correcciones/presupuestos-recurrencias sigue con sus cambios locales intactos; no confundir las entregas ni mover cambios entre ellas.
 - Peticion actual: herramientas globales de Codex, WhatsApp/Kapso y correos bancarios Gmail. Usuario eligio guardar automaticamente los reconocidos; ambiguos y posibles duplicados quedan pendientes. Bancos mencionados BBVA/Nu/Santander/Mercado Pago, sin ejemplos transaccionales verificados.
@@ -414,7 +415,7 @@ Histórico de publicación de Etapa 8: PR #99 ya integrado por el propietario en
 
 
 
-## Cierre vigente: presupuestos y recurrencias (2026-10-16, verificado)
+## Histórico: Cierre vigente: presupuestos y recurrencias (2026-10-16, verificado)
 
 - PR #71 integrado. Base comprobada mediante fetch: develop == origin/develop == e947227ba1a21f4ef6b9ad0d13c12ad8285d0990. Rama actual: correcciones/presupuestos-recurrencias. Sin commit ni push.
 - Cuatro correcciones completadas: respaldo JSON v5 conserva presupuestos por lista, umbral, fecha final y enlaces remapeados de recurrencias (compatible v1-v4); disponible sin mezcla de listas/monedas; toda la serie genera auditoria/libro diario para cada cambio historico y mantiene el contexto del cashback; fecha final validada antes de registrar/reactivar.
@@ -426,7 +427,7 @@ Histórico de publicación de Etapa 8: PR #99 ya integrado por el propietario en
 - Evidencia: replica/cierre-presupuestos-recurrencias/verification.json. Contratos: docs/CIERRE_PRESUPUESTOS_RECURRENCIAS.md. Logs .local/cierre-presupuestos-*.log y frontend/.angular/cierre-presupuestos-*.log. Skills Angular, seguridad, verificacion y Playwright. Sin cambios de dependencias ni produccion.
 - Siguiente etapa: integrar este cierre y comprobar develop contra remoto; crear otra rama para asistente-evidencias siguiendo docs/PLAN_CONTINUACION_MONAI.md. No se ha iniciado esa etapa ni publicado esta correccion.
 
-## Etapa vigente: presupuestos y recurrencias (2026-10-15)
+## Histórico: Etapa vigente: presupuestos y recurrencias (2026-10-15)
 
 - Rama nueva `mejoras/presupuestos-recurrencias` creada desde `develop` == `origin/develop` (`e033387 Merge pull request #68 from YaxcheItz/mejoras/listas-etiquetas`), comprobados al inicio. Cambios locales sin commit ni push.
 - Implementada la Etapa 2 de continuación MonAi:
@@ -457,7 +458,7 @@ Histórico de publicación de Etapa 8: PR #99 ya integrado por el propietario en
 - Skills aplicadas: angular-developer, security-review, ecc-verification-loop y playwright-cli. Sin validación en Android físico. No se conectaron servicios privados ni se crearon widgets, correo/SMS o automatizaciones nativas.
 - Siguiente etapa: presupuestos y recurrencias (sección 3 de docs/PLAN_CONTINUACION_MONAI.md), después de integrar esta entrega. Crear otra rama desde develop actualizado y comprobado contra remoto; no reutilizar esta rama ni trabajar directamente en develop. Búsquedas guardadas, reparto de deudas por lista, conversión automática e informes conversacionales por lista permanecen en sus etapas futuras. El asistente general mantiene su alcance anterior sobre los datos propios.
 
-## Corrección CI de periodos flexibles (2026-10-15)
+## Histórico: Corrección CI de periodos flexibles (2026-10-15)
 
 - El usuario publicó la etapa en `ce2f70b78f65574ffe2f60cc795c16c83e2a5dc4`. Al iniciar esta revisión estaba develop limpio; se comprobó el remoto y se volvió a `mejoras/periodos-flexibles`, coincidente con su remoto. Es corrección de la misma etapa, no una etapa nueva.
 - Dos runs rojos del mismo commit: push 38755240473 y PR 38755327861. En ambos pasan backend, frontend, migraciones PostgreSQL y E2E. Falla solamente Respaldo y restauración en base nueva.
@@ -467,7 +468,7 @@ Histórico de publicación de Etapa 8: PR #99 ya integrado por el propietario en
 - Skill aplicada: ecc-verification-loop. Cambios locales sin commit/push ni reejecución remota; hace falta subirlos para obtener checks nuevos. Las suites de frontend/backend/E2E no se repitieron en esta corrección: ya están verdes remotamente y el cambio sólo afecta al comparador Python. Servidores conservados; al cambiar de rama, revisar/reiniciar Angular si conserva un mapa antiguo de assets.
 
 
-## Correccion vigente: acceso del celular por LAN (2026-10-15)
+## Histórico: Correccion vigente: acceso del celular por LAN (2026-10-15)
 
 - Corrección de operación dentro de la misma entrega `mejoras/periodos-flexibles`, conservando todos los cambios de la etapa. No se inició otra etapa funcional.
 - Reproducido CORS 403 desde el proxy 4300 con Origin `http://192.168.0.93:4300`. El entorno privado del backend tenía la IP antigua .12. Se actualizó a la IP Wi-Fi activa .93 y se reinició sólo backend 18081; frontend 4300 y servidor 14200 conservados. Cookies HTTP locales Lax/sin Secure ya eran correctas.
@@ -477,7 +478,7 @@ Histórico de publicación de Etapa 8: PR #99 ya integrado por el propietario en
 - Se pidió al usuario URL y texto exacto por si usaba otro acceso. La corrección comprobada es la local `http://192.168.0.93:4300`; confirmación en el celular físico pendiente.
 
 
-## Etapa vigente: periodos flexibles (2026-10-15)
+## Histórico: Etapa vigente: periodos flexibles (2026-10-15)
 
 - El rediseño y sus correcciones ya están integrados en develop mediante PR #65. Se comprobó `develop == origin/develop == f2b4cdf98357f29944ef94350ef65fd90270cf4f`, con árbol limpio antes de crear `mejoras/periodos-flexibles`. Los apartados inferiores describen sesiones anteriores.
 - Implementada la etapa 1: semana anclada, cada 14 días, dos inicios mensuales, mes con inicio elegido, año, hoy, todo el historial y rango libre. Hoja accesible, navegación conservando ciclo y preferencia persistida por usuario independiente de consulta temporal. Límites inclusivos y zona de Ciudad de México; calendario compartido Java/TypeScript con fixtures. No se cambiaron fechas de tarjetas.
@@ -488,7 +489,7 @@ Histórico de publicación de Etapa 8: PR #99 ya integrado por el propietario en
 - Cambios locales sin commit, push ni despliegue. Skills: angular-developer, ecc-security-review, ecc-verification-loop y playwright-cli. Pendientes: recorrido Android físico y revisión/integración de esta entrega. Después, etapa 2 listas/etiquetas en otra rama desde develop nuevamente actualizado y comprobado; no empezar esa etapa en esta rama.
 
 
-## Corrección de CI del rediseño
+## Histórico: Corrección de CI del rediseño
 
 - Revisados los dos checks rojos del commit `1405a1b`: CI push `38691541153` y PR `38691654811`. En ambos sólo falla E2E: cuatro casos con 11 correctos. Backend, frontend y migraciones/recuperación PostgreSQL pasan en ambos. PR #64 aparece cerrado sin merge; no se cambió su estado.
 - Correcciones locales en la misma rama: recuperar nombre de cuenta junto con categoría en filas; extraer sólo el nombre textual de categoría al buscar por nombre accesible (emoji decorativo excluido); sustituir expectativas antiguas de barra inferior, skeleton, tema y tabla por controles/contextos actuales. Se mantienen las comprobaciones de edición en escritorio, filtros, privacidad, importes e idempotencia; sin omitir ni desactivar casos.
@@ -496,13 +497,13 @@ Histórico de publicación de Etapa 8: PR #99 ya integrado por el propietario en
 - Resultado final: las 15 E2E vigentes pasan en 2.1 min. No se añadieron exclusiones ni se alteraron timeouts/reintentos de CI. Evidencia en `replica/rediseno-integral/correccion-ci/verification.json` y logs. Servidores temporales 14220/18080 cerrados; 4300 y 14200 conservados.
 - Sin commit, push, reapertura de PR ni reejecución remota. Los checks antiguos seguirán rojos hasta subir las correcciones y comprobar una ejecución nueva. Skills: playwright-cli y angular-developer. Logs locales en `frontend/.angular/correccion-ci-*.log`.
 
-## Corrección de ENOENT al cambiar de rama
+## Histórico: Corrección de ENOENT al cambiar de rama
 
 - Git había cambiado de rediseño a develop, mientras Angular 4300 conservaba el mapa de assets del rediseño; `public/styles/activity.css` no existe en develop. El rediseño está ahora guardado en el commit `bafc5b3` de `mejoras/rediseno-integral-android`, con rama de seguimiento remota; los avisos anteriores de «sin commit» son históricos.
 - Se volvió a `mejoras/rediseno-integral-android` con árbol limpio y se reinició sólo Angular 4300 conservando host/proxy. El servidor recompiló correctamente. Chromium aislado comprobó login, cinco CSS con HTTP 200 y tipo text/css, cero errores JavaScript y ausencia de overlay Vite. No se cambió código ni se borraron datos.
 - Al cambiar de rama con diferencias en angular.json o assets, reiniciar el servidor correspondiente. Estado documentado localmente; sin nuevo commit, push o despliegue en esta corrección.
 
-## Cierre visual y plan de continuación
+## Histórico: Cierre visual y plan de continuación
 
 - El usuario autorizó cerrar los ajustes visuales y pidió todo el plan detallado para continuar con pocos tokens. Sigue la misma rama `mejoras/rediseno-integral-android`; no se abrió una etapa funcional nueva.
 - Añadidos: cabecera persistente, resumen compacto del gasto/periodo al salir el hero de la vista y reducción del gráfico. IntersectionObserver se desconecta al salir; privacidad se aplica también al resumen. Entrada del resumen y emoji con transform/opacity y alternativa de movimiento reducido; no se animan cifras ni altura de layout.
@@ -512,7 +513,7 @@ Histórico de publicación de Etapa 8: PR #99 ya integrado por el propietario en
 - Plan completo de continuación: `docs/PLAN_CONTINUACION_MONAI.md`. Orden: cerrar recorrido físico, periodos, listas/tags, presupuestos/recurrencias, asistente con evidencias, bandeja de avisos, Android/cortina, notificaciones bancarias, correo/SMS/WhatsApp, metas/compartido/divisas y publicación comprobada. Cada etapa nueva requiere rama desde develop comprobado después de integrar la anterior.
 - El Android físico sigue pendiente: no se puede certificar micrófono, teclado, permisos, haptics ni sensación táctil desde Chromium emulado. Sin conexiones privadas nuevas, dependencias, commit, push ni despliegue. Mantener servidores 4300 y 14200.
 
-## Dirección vigente: guía detallada MonAi del usuario
+## Histórico: Dirección vigente: guía detallada MonAi del usuario
 
 - El usuario pidió estructurar el plan y corregir el diseño antes de seguir con integraciones. Se aplican redesign-existing-projects, apple-design y angular-developer. Es corrección de la misma etapa en `mejoras/rediseno-integral-android`; no abrir ni reutilizarla para otra etapa funcional.
 - Plan maestro nuevo: `docs/PLAN_UI_MONAI.md`, con fundamentos, orden de implementación, matriz de pantallas, flujos de aceptación y límites reales. Sustituye la estética carbón/verde y la barra inferior descritas más abajo.
@@ -525,7 +526,7 @@ Histórico de publicación de Etapa 8: PR #99 ya integrado por el propietario en
 - Servidor Angular 4300 permanece activo con la configuración correcta; 14200 conserva dist actualizado. No se borraron datos ni se modificó producción. No hay commit/push/despliegue ni dependencias nuevas.
 - Pendientes explícitos de la guía: listas múltiples, tags, periodos de nómina, autoguardado, compacción física del gráfico al scroll, haptics/biometría/widgets nativos e integraciones. No están implementados por tener especificación visual. Mantener confirmación de propuestas y preferencias de tema existentes. Sin Android físico disponible.
 
-## Corrección del servidor de desarrollo
+## Histórico: Corrección del servidor de desarrollo
 
 - Ante el reporte de diseño descuadrado se detectó otro frontend activo en 4300 (Angular dev server), además del servidor de dist en 14200. Las comprobaciones anteriores no habían cubierto 4300.
 - Evidencia antes de corregir: `http://localhost:4300/styles.css` contenía tokens de tema pero no `.workspace-panel` ni `.workspace-tools`. El proceso no había recogido la nueva lista de estilos de angular.json.
@@ -533,7 +534,7 @@ Histórico de publicación de Etapa 8: PR #99 ya integrado por el propietario en
 - El script visual admite `DESIGN_REVIEW_ORIGIN` para comprobar el servidor efectivo y `DESIGN_REVIEW_SKIP_SW=1` para desarrollo sin service worker. Evidencias separadas en `replica/rediseno-integral/servidor-14200/` y `servidor-4300/`. APIs interceptadas con datos sintéticos, sin acceder a datos privados.
 - Verificación completada después del reinicio: 120 comprobaciones visuales/de interacción sobre 4300 (cuatro anchos, dos temas, sin SW de desarrollo); 121 sobre 14200 incluyendo offline. Capturas del inicio inspeccionadas. Servidor Angular queda activo en 4300.
 
-## Última revisión: inicio, navegación y alcance MonAi/Kesef
+## Histórico: Última revisión: inicio, navegación y alcance MonAi/Kesef
 
 - Misma etapa de rediseño, rama `mejoras/rediseno-integral-android`. Se conservan cambios locales anteriores. No hay commit, push ni despliegue.
 - Navegación vigente: cabecera con marca y Añadir; barra inferior con Inicio, Actividad, Reportes y Más. Más abre dialog nativo con Cuentas, Presupuestos, Compartido, Asistente, Organizar y Ajustes. Sustituye las descripciones de navegación anteriores.
@@ -543,7 +544,7 @@ Histórico de publicación de Etapa 8: PR #99 ya integrado por el propietario en
 - Petición nueva: registro desde correo/SMS/avisos bancarios y acceso desde cortina Android. Investigación y arquitectura documentadas; no implementadas. MonAi Android usa notificaciones, mientras SMS/correo de su FAQ son iOS. PWA actual no tiene contenedor Android. Pregunta enviada sobre bancos y proveedor de correo; no asumir respuesta ni acceso autorizado a correos privados.
 - Próxima etapa funcional requiere integrar/revisar ésta y rama nueva desde develop comprobado; comenzar por parser y propuestas bancarias, después Android/baldosa/notificaciones y proveedor de correo. No montar otra etapa sobre esta rama ni afirmar paridad completa con MonAi.
 
-## Estado vigente: rediseño integral Android (2026-10-14)
+## Histórico: Estado vigente: rediseño integral Android (2026-10-14)
 
 - Revisión posterior solicitada por el usuario: corregir texto sobrante y decidir la organización del menú. Es una corrección de esta misma entrega, conservada en `mejoras/rediseno-integral-android`; no inicia otra etapa.
 - Enlace para saltar al contenido oculto mediante recorte, visible sólo con `:focus-visible`, primero en el orden de teclado. Su acción mueve el foco a `main` sin navegación ni recarga; se corrigió el comportamiento de `href` relativo al base de Angular. Verificado también en el servidor existente 14200, con API interceptada y contexto aislado.
@@ -563,9 +564,9 @@ Histórico de publicación de Etapa 8: PR #99 ya integrado por el propietario en
 - Backlog en orden acordado: tarjetas/previsión, captura automática/conciliación, metas, notificaciones e integraciones externas. Cada etapa tendrá especificación y rama nueva después de revisar/integrar la anterior. Esta entrega no conecta bancos ni Wallet.
 - Las secciones siguientes son registros históricos; sus ramas, pruebas y pendientes no describen automáticamente el estado vigente.
 
-## Registro histórico de sesiones anteriores
+## Histórico: Registro histórico de sesiones anteriores
 
-## Estado vigente: cierre operativo de etapa 6 (2026-10-08)
+## Histórico: Estado vigente: cierre operativo de etapa 6 (2026-10-08)
 
 - Usuario integró etapa 6. Develop local/remoto `e1e3189`, main local/remoto `77a4511`; árboles iguales. CI remoto de ambos pasó sus cuatro jobs. El push pendiente de las secciones inferiores quedó resuelto por el usuario.
 - Rama actual: `mejoras/etapa-6-cierre-operativo`, desde develop. Cada etapa/bloque sigue en rama distinta. Sin commit ni push de este cierre por ahora; conservar autor y committer del usuario al resguardar.
@@ -579,14 +580,14 @@ Histórico de publicación de Etapa 8: PR #99 ya integrado por el propietario en
 - Cluster local temporal detenido al terminar la verificación; copia y respaldo preservados. Solicitud de autorización para adopción en Supabase/reintento de Render enviada; no interpretar silencio como aprobación.
 - Las secciones inferiores son historia y no describen el estado actual de Git, CI ni despliegue.
 
-## Resguardo solicitado de etapa 6 (histórico)
+## Histórico: Resguardo solicitado de etapa 6 (histórico)
 
 - El usuario autorizó subir todos los cambios de etapa 6 con su autoría exclusiva. Commit de fuentes/evidencias: `1a981d79a9babc08554fb87203926ee5ffbf2cb0`, rama `mejoras/etapa-6-datos-recuperacion`.
 - Autor y committer comprobados: `YaxcheItz <yaxtibla1@gmail.com>`. Sin firma ni coautoría del asistente. Los dumps y `.local/` permanecen excluidos.
 - Push pendiente por conectividad: fetch, varios pushes y comprobación HTTPS fallaron al conectar con github.com:443. El último intento no interactivo devolvió el mismo error. No se confirmó rama remota ni ejecución de CI. No hay procesos de push pendientes.
 - Reintentar únicamente esta rama al recuperar conexión; no recrear commits ni cambiar autoría. CI se activará al subir; Vercel excluye esta rama y Render declara main. La documentación de verificación anterior describe el estado previo al commit.
 
-## Etapa 6 en rama propia (2026-10-08)
+## Histórico: Etapa 6 en rama propia (2026-10-08)
 
 - El usuario confirmó merge del resguardo en develop y pidió continuar, trabajando cada etapa en rama distinta. Fetch verificó árbol limpio y develop/origin/develop en `ca59493`. Rama de esta entrega: `mejoras/etapa-6-datos-recuperacion`; preferencia persistida en AGENTS.md.
 - Flyway V1 (referencia de entidades etapas 1–3) y V2 (propuestas/huella offline/cuenta opcional). Hibernate validate; sin baseline automático ni clean. Bases existentes requieren comparación en copia y baseline explícito tras revisión. No se usó producción.
@@ -601,7 +602,7 @@ Histórico de publicación de Etapa 8: PR #99 ya integrado por el propietario en
 - Caveman activo en español; skills caveman, security-review y ecc-verification-loop. Las secciones siguientes son historia, no el estado vigente.
 - Limpieza final: cluster PostgreSQL temporal detenido y worktree de rollback retirado. Bases sintéticas permanecen bajo TEMP; dumps bajo `.local/` ignorada por Git. No asumir que PostgreSQL sigue ejecutándose al retomar.
 
-## Prioridad vigente y resguardo (2026-10-08)
+## Histórico: Prioridad vigente y resguardo (2026-10-08)
 
 - El usuario entregó un nuevo orden de diez prioridades y autorizó crear/subir `mejoras/etapas-1-5`, usando únicamente su autoría. Plan vigente en `docs/PLAN_MEJORAS_PROYECTO.md`; sustituye el orden anterior, conservando números de etapa.
 - Fetch confirmó `develop` / `origin/develop` en `2f28f3e`. Etapas 1–3 ya estaban en la base; cambios locales principalmente etapas 4–5. Rama nueva creada y primer commit `4e7c26a8d440640f0ebe51098be4f2288ebb20d5` subido únicamente a esa rama mediante refspec explícito. No PR, merge ni push a main/develop.
@@ -614,13 +615,13 @@ Histórico de publicación de Etapa 8: PR #99 ya integrado por el propietario en
 
 Actualizado: 6 de octubre de 2026. Este archivo es un punto de continuidad; verificar el estado actual antes de actuar.
 
-## Objetivo y preferencias
+## Histórico: Objetivo y preferencias
 
 El usuario pidió revisar e instalar nueve herramientas de IA y rediseñar su aplicación de finanzas, Kaptal, inspirándose en Expense Tracker - MonAi de Florian Vates, en get-monai.app. Confirmó que quería aplicar el rediseño en esta sesión.
 
 El usuario quiere que el agente seleccione las skills pertinentes por su cuenta, sin exigir que las nombre. Comunicar en español. La preferencia está en `AGENTS.md`.
 
-## Trabajo completado
+## Histórico: Trabajo completado
 
 - Revisadas UI/UX Pro Max, n8n-mcp, WorldFlowAI/everything-claude-code, OmniRoute, claude-mem, Emil Kowalski skills, Taste Skill, Cyber Neo y Replica Skill. Informe: `docs/HERRAMIENTAS_IA_REVISION.md`.
 - Verificadas 51 skills de esas fuentes. Instaladas las 11 de Replica y la skill faltante Emil break-ui; reparada Cyber Neo, incluyendo un parche que evita mostrar secretos detectados en sus reportes. Conservadas las instalaciones completas anteriores.
@@ -630,7 +631,7 @@ El usuario quiere que el agente seleccione las skills pertinentes por su cuenta,
 - OmniRoute 3.8.51 estaba instalado globalmente. No se inició su servidor, no se conectaron proveedores ni se modificó la configuración de modelos de Codex. Los hooks y comandos exclusivos de Claude Code de ECC no se activaron.
 - Implementado el rediseño Angular: tema marfil/terracota y oscuro, balance abierto, presupuestos con barras pastel, navegación móvil y botón de voz separados, panel de captura ajustado al viewport e iconos de categorías corregidos. Se repararon textos españoles con codificación dañada. Se preservó la lógica financiera.
 
-## Validación y límites
+## Histórico: Validación y límites
 
 - 149 pruebas del frontend pasaron en 18 archivos. Compilación de producción correcta, repetida después para investigar los warnings.
 - Dos warnings de compilación: paquete inicial de 582.41 kB frente a presupuesto de 500 kB; CSS del login un byte por encima de 4 kB. No se aumentaron los límites para esconderlos.
@@ -638,20 +639,20 @@ El usuario quiere que el agente seleccione las skills pertinentes por su cuenta,
 - Resultados y capturas: `replica/verification.json`, `replica/browser-checks.json`, `replica/secondary-screen-checks.json`, `replica/screens/`. Decisiones de diseño: `replica/recon.md` y `replica/design/`.
 - Existían muchos cambios locales del usuario antes de este trabajo; se preservaron. No hubo commit ni despliegue. No borrar, revertir ni atribuir todos los cambios del árbol de trabajo a esta sesión.
 
-## Pendientes conocidos
+## Histórico: Pendientes conocidos
 
 - OmniRoute: seis alertas de dependencias, incluida una crítica de Next.js bajo condiciones específicas cuya explotabilidad en OmniRoute no quedó demostrada. Resolver y volver a verificar antes de activar con claves sensibles. Detalle en el informe de herramientas.
 - Frontend: npm audit reportó seis paquetes afectados de herramientas de desarrollo, derivados de dos avisos directos (braces y http-cache-semantics) y sus cadenas. npm audit --omit=dev reportó cero. No se aplicó fix --force porque parte de la propuesta implica migrar Tailwind de versión mayor.
 - Los dos warnings de tamaño siguen pendientes de optimización. No confundirlos con los cuatro avisos que indicó el usuario: esos eran los tres errores YAML ya corregidos y un aviso de cuota de Codex.
 - El aviso “less than 50% of your 5h limit left” pertenece a la cuota de uso de la cuenta. Consultar /status dentro de Codex. No se corrige modificando el proyecto ni reiniciando la terminal.
 
-## Punto exacto donde quedó la conversación
+## Histórico: Punto exacto donde quedó la conversación
 
 El usuario preguntó cómo se conservaría el contexto tras reiniciar. Se creó este resumen y se indicó su lectura en `AGENTS.md`. No hay una nueva tarea de implementación confirmada después de esa pregunta. Al retomar, explicar el estado si se solicita; no iniciar automáticamente una migración de Tailwind, OmniRoute, un despliegue o un rediseño adicional.
 
 Para retomar en un chat nuevo: “Lee docs/ESTADO_SESION.md y continúa desde donde nos quedamos”.
 
-## Retoma y diagnóstico de inicio del 4 de octubre de 2026
+## Histórico: Retoma y diagnóstico de inicio del 4 de octubre de 2026
 
 - Se recuperó el contexto y se comprobó que los cambios locales, el tema y los artefactos del rediseño siguen presentes. Las tres skills reparadas conservan sus encabezados. No se repitieron las pruebas ni la compilación del frontend en esta retoma.
 - Nueva tarea del usuario: investigar «No active thread is available» al iniciar Codex. El usuario indicó que aparece en la aplicación de escritorio. Está pendiente identificar la ventana y el ejecutable concretos; en el entorno inspeccionado se encontraron la CLI y sus servicios, sin localizar la app gráfica registrada ni su proceso.
@@ -660,11 +661,11 @@ Para retomar en un chat nuevo: “Lee docs/ESTADO_SESION.md y continúa desde do
 - El aviso de la app permanece sin reproducir y sin corregir. Detalles, límites y fuentes: `docs/DIAGNOSTICO_INICIO_CODEX.md`. No interpretar la salud de la CLI como prueba de que la app gráfica está corregida.
 - Espacio libre medido en C: aproximadamente 1.8 GiB. No se ha establecido que cause el aviso. No se modificó la configuración de Codex ni se reinició su servidor compartido.
 
-## Aclaración posterior del usuario
+## Histórico: Aclaración posterior del usuario
 
 El usuario confirmó que la ventana es Codex CLI. La conversación actual y la prueba de inicio funcionaron; no hay evidencia de un bloqueo actual. El origen exacto del aviso sigue sin reproducirse. Si persiste o impide enviar mensajes, investigar la acción que lo dispara. Esta aclaración sustituye la referencia provisional a una app gráfica independiente.
 
-## Revisión del alcance de interacciones
+## Histórico: Revisión del alcance de interacciones
 
 - El usuario pidió dejar el diagnóstico de inicio de Codex y comparar Kaptal con su documento de Features & UI Interactions, incluyendo sugerencias de mejoras.
 - Se inspeccionó código actual de dashboard, captura, historial, asistente, categorías, configuración y filtros Spring. Skills aplicadas: ui-ux-pro-max y replica-diff.
@@ -673,7 +674,7 @@ El usuario confirmó que la ventana es Codex CLI. La conversación actual y la p
 - Se documentaron diferencias razonables para una app web (teclado decimal, calendario propio, compartir/descargar PNG, Spring en lugar de Appwrite) y se recomendó conservar las funciones adicionales de Kaptal.
 - En esta auditoría se generaron documentación y matriz, sin modificar código de aplicación ni ejecutar borrados. No se repitieron tests/build ni se probaron micrófono, bot, galería o backend en vivo. Las correcciones e integración en dispositivos siguen pendientes.
 
-## Implementación autorizada después de la auditoría
+## Histórico: Implementación autorizada después de la auditoría
 
 - El usuario autorizó incluir, quitar o modificar las funcionalidades según criterio del agente. Se aplicaron ui-ux-pro-max y ecc-verification-loop y se mantuvo la comparación con replica-diff.
 - Implementados rangos reales Hoy/últimos 7 días/fechas personalizadas en Angular y Spring; actividad reciente filtrada; regreso al mes actual y control de respuestas antiguas. Donut con Otros y total de todas las categorías de la moneda, accesible por teclado.
@@ -686,7 +687,7 @@ El usuario confirmó que la ventana es Codex CLI. La conversación actual y la p
 - No hubo commit ni despliegue. Se preservan los demás cambios locales. Hibernate usa ddl-auto:update; al publicar se requiere actualizar frontend/backend juntos y verificar la columna nueva. No se modificó la base de producción.
 
 
-## Navegación y captura simplificadas (2026-10-04)
+## Histórico: Navegación y captura simplificadas (2026-10-04)
 
 - Solicitud vigente: corregir iconos del menú inferior, quitar accesos de administración al pie del dashboard y el título visible Inicio, mejorar fechas/configuración, ocultar montos en toda la UI y simplificar gastos, ingresos, transferencias y voz.
 - Skills aplicadas: redesign-existing-projects, ui-ux-pro-max y ecc-verification-loop. Se conservaron Angular y los tokens visuales existentes.
@@ -703,7 +704,7 @@ El usuario confirmó que la ventana es Codex CLI. La conversación actual y la p
 - Comprobación final tras los últimos ajustes: 170/170 pruebas y 22/22 archivos con runner limitado (`--runner-config=../replica/navegacion-captura/vitest.config.mjs`), build exit 0 (609,87 kB inicial), Chromium 4/4 configuraciones y diff --check exit 0. Una ejecución previa simultánea con build agotó memoria; la repetición completa sin paralelizar archivos pasó. Logs finales en replica/navegacion-captura/.
 
 
-## Chat unificado con reglas y memoria (2026-10-04)
+## Histórico: Chat unificado con reglas y memoria (2026-10-04)
 
 - Solicitud vigente: todo registro nuevo de gasto, ingreso y transferencia por chat, junto con reportes; reglas e historial primero, IA solo para solicitudes complejas con permiso. Esta decisión sustituye el RegistroRapidoComponent como entrada global de la sección anterior.
 - Skills aplicadas: backend-patterns, security-review y ecc-verification-loop. Se conservan Angular y Spring, sin nuevas dependencias ni migraciones.
@@ -717,7 +718,7 @@ El usuario confirmó que la ventana es Codex CLI. La conversación actual y la p
 - Validación: 174 pruebas frontend / 22 archivos; suite backend 232 pruebas sin fallos, más repetición dirigida tras ajustar reglas de fechas. Build de producción correcto. Chromium con API sintética: 360/390 px claro, 390 px oscuro y escritorio, entrada por chat, confirmación, reportes en la misma conversación y ausencia de overflow/errores. Se bloquearon service workers en esta prueba para que las peticiones usen la API sintética. No se probó micrófono físico, IA real ni base de producción.
 - Artefactos: replica/chat-reglas/ con logs, pruebas de navegador, capturas y verification.json. Persisten advertencias de presupuesto de bundle (~603 kB frente a 500 kB) y CSS login (+1 byte). Sin commit ni despliegue; se preservaron cambios previos.
 
-## Correcciones por etapas: etapa 1 de sesiones (2026-10-06)
+## Histórico: Correcciones por etapas: etapa 1 de sesiones (2026-10-06)
 
 - El usuario pidió una revisión general del proyecto y luego autorizó corregir todos los hallazgos por etapas: terminar una, revisarla y continuar con la siguiente. Se dividió la prioridad inicial en bloques independientes. Plan completo: `docs/PLAN_MEJORAS_PROYECTO.md`.
 - Skills aplicadas en la implementación: security-review y ecc-verification-loop. Cyber Neo se usó en la auditoría anterior; no limita la implementación autorizada en este nuevo turno.
@@ -730,7 +731,7 @@ El usuario confirmó que la ventana es Codex CLI. La conversación actual y la p
 - No hubo commit ni despliegue; se preservaron cambios anteriores y no se modificó la base de producción.
 - Punto de continuidad: presentar/revisar la etapa 1. La siguiente es exactitud financiera (MSI, compra/cuotas, centavos, recurrencias y zona horaria). No iniciar automáticamente esa etapa en el mismo turno: el usuario pidió revisión entre etapas.
 
-## Continuación: Caveman y etapa 2 (2026-10-06)
+## Histórico: Continuación: Caveman y etapa 2 (2026-10-06)
 
 - El usuario autorizó continuar después de la etapa 1 y pidió instalar `https://github.com/JuliusBrussee/caveman` primero. Se instaló `skills/caveman` mediante skill-installer en `C:/Users/yaxti_cm5rg3t/.codex/skills/caveman`, fijando el commit `99aafe151a1be72be783e662858e8a0955add59f`. El archivo instalado coincide byte por byte con ese origen; evidencia en `replica/mejoras-etapa2/caveman-instalacion.json`. Sin proxy, hooks, CLI ni dependencias nuevas.
 - Caveman apareció en el catálogo de skills durante el mismo turno. El usuario preguntó si podía usarlo sin cerrar la sesión: se confirmó y se activó para respuestas breves en español. No hace falta reiniciar esta sesión. Código y documentos mantienen redacción normal. Seguir aplicándolo hasta que el usuario pida modo normal.
@@ -743,7 +744,7 @@ El usuario confirmó que la ventana es Codex CLI. La conversación actual y la p
 - Informe: `docs/MEJORAS_ETAPA_2_EXACTITUD_FINANCIERA.md`. Logs finales, capturas, pruebas de navegador y `verification.json` en `replica/mejoras-etapa2/`. Los intentos anteriores quedan como evidencia histórica; el primer caso de restauración falló por omisión de retención y ya pasó tras corregirlo.
 - Sin commit ni despliegue. Cambios anteriores preservados. Punto de continuidad: revisar la etapa 2 y su límite histórico; después seguir con etapa 3 de gastos compartidos. No iniciar etapa 3 antes de presentar este resultado, respetando la revisión entre etapas.
 
-## Continuación: etapa 3 de gastos compartidos (2026-10-06)
+## Histórico: Continuación: etapa 3 de gastos compartidos (2026-10-06)
 
 - El usuario autorizó continuar tras etapa 2. La etapa 3 queda implementada y verificada para revisión. No se inició etapa 4. Ante su pregunta posterior se confirmó que Caveman sigue activo en español y no requiere reinicio; los documentos y el código mantienen redacción normal.
 - Skills aplicadas: security-review, ecc-verification-loop y ui-ux-pro-max. Se preservaron cambios locales anteriores.
@@ -757,7 +758,7 @@ El usuario confirmó que la ventana es Codex CLI. La conversación actual y la p
 - Límites previos conservados: conciliar MSI históricos sin total/vínculo original. Vínculos activos anteriores siguen activos, sin fecha de aceptación inventada: revisar o renovar consentimiento antes de publicar. Operaciones financieras compartidas tienen bloqueo de doble envío en UI, pero falta UUID de idempotencia para respuestas inciertas; pendiente en etapa 7.
 - Sin commit, despliegue ni cambios en producción. Punto de continuidad: presentar/revisar etapa 3; siguiente etapa 4 de chat, después de la continuación del usuario. Confirmar evidencia actual al retomar.
 
-## Continuación: sincronización y etapa 4 de chat (2026-10-07)
+## Histórico: Continuación: sincronización y etapa 4 de chat (2026-10-07)
 
 - El usuario autorizó continuar y pidió comprobar primero lo que había subido, tanto local como remoto. Caveman sigue activo por petición explícita; español breve en conversación y redacción completa en código/documentos. Skills: security-review, ecc-verification-loop y ui-ux-pro-max (recuperación de formularios, etiquetas y espacio móvil).
 - Se ejecutó fetch antes de implementar. Árbol inicial limpio. Develop y origin/develop coinciden en 2f28f3ed105d0c496a69aae704d909962816a921; main y origin/main en 237142dfbd94e5d11f89dde03feb0e5a4a8ee152. Main contiene seis merges adicionales pero sus archivos son idénticos a develop. GitHub API pública confirmó dos CI exitosos en el commit actual; evidencia en replica/mejoras-etapa4/ci-remoto.json. Gh no tenía autenticación, resuelto mediante lectura pública. Suite inicial backend: 281 pruebas pasan. Fetch final conservó coincidencia HEAD/origin/develop; los cambios nuevos sí quedan locales pendientes de commit.
@@ -771,13 +772,13 @@ El usuario confirmó que la ventana es Codex CLI. La conversación actual y la p
 - Límites: propuestas antiguas en memoria no recuperables; respaldos financieros no incluyen pendientes. Resultados completados/vencidos se conservan hasta borrar cuenta: definir retención sin romper reintentos en etapa 6. Persisten conciliación MSI históricos y consentimiento de vínculos antiguos. Migraciones formales y verificación PostgreSQL siguen en etapa 6.
 - Sin commit, push, despliegue ni cambios en producción. CI remoto corresponde al punto de partida; los cambios nuevos se verificaron localmente. Punto de continuidad: revisar etapa 4. Siguiente etapa 5 offline/PWA, después de la revisión y continuación del usuario. No se inició etapa 5.
 
-## Pendiente añadido: Google Wallet y Apple Wallet
+## Histórico: Pendiente añadido: Google Wallet y Apple Wallet
 
 - El usuario pidió agregar al plan la conexión con Google Wallet y Apple Wallet para registrar movimientos en Kaptal. Queda como integración solicitada, pendiente de investigación e implementación tras estabilizar las etapas actuales.
 - Antes de implementar, verificar documentación oficial sobre acceso a movimientos, permisos y restricciones de plataforma/país. No se ha comprobado viabilidad técnica ni se promete acceso directo al historial. Evaluar integración bancaria u otras alternativas autorizadas si las APIs de las billeteras no lo permiten.
 - Contemplar consentimiento, cuenta asociada, revisión/confirmación, deduplicación, conciliación, origen del movimiento y desconexión. Se añadió a docs/PLAN_MEJORAS_PROYECTO.md. Este turno solo actualiza documentación; no conecta servicios ni inicia la etapa 5.
 
-## Revisión de Caveman antes de continuar
+## Histórico: Revisión de Caveman antes de continuar
 
 - El usuario señaló que no notaba diferencia de estilo y pidió verificar Caveman, actualizándolo si hacía falta. La instalación previa existía y estaba disponible en el catálogo; no estaba dañada, pero era una versión anterior. Se reconoció que las respuestas seguían siendo más extensas de lo necesario: instalar la skill no garantiza por sí solo una aplicación consistente de su estilo.
 - Se comparó el archivo instalado con skills/caveman/SKILL.md del repositorio oficial, fijando el commit actual 23beaec2e6b4f0391eea45164e05892c9d3ed730. Cambian el reporte de estado sin hooks, la presentación de diffs y las excepciones para preguntas; la regla central de brevedad sigue igual.
@@ -785,7 +786,7 @@ El usuario confirmó que la ventana es Codex CLI. La conversación actual y la p
 - Se mantiene la preferencia explícita: respuestas en español más breves, resultado primero y sin relleno, conservando hechos técnicos y gramática clara. La skill no exige imitar una voz infantil ni romper la gramática. Código/documentos mantienen redacción normal. No se instalaron proxy ni hooks, no se modificó configuración global y no se afirma ahorro porcentual medido.
 - No se inició etapa 5 ni se cambiaron fuentes del proyecto durante esta comprobación. Caveman se aplica leyendo sus instrucciones en esta sesión; no necesita reinicio para ajustar las respuestas actuales.
 
-## Continuación: etapa 5 offline/PWA (2026-10-08)
+## Histórico: Continuación: etapa 5 offline/PWA (2026-10-08)
 
 - El usuario autorizó continuar tras la comprobación de Caveman. Se recuperó el estado y se verificaron los cambios locales antes de completar la etapa 5. Se conservan los cambios anteriores de etapa 4; no se inició etapa 6.
 - Skills aplicadas: caveman para comunicación breve en español, security-review para datos locales e idempotencia, ecc-verification-loop para regresiones y compilación. Sin dependencias nuevas.
