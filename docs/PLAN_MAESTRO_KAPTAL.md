@@ -1,6 +1,16 @@
 # Kaptal: plan maestro y traspaso al siguiente chat
 
-## Estado vigente: accesos y widget Android (2026-10-23)
+## Estado vigente: accesos/widget integrados en develop (2026-10-23)
+
+PR #112 integrado en `226f0a78dfd4436d227b5ad39c0f1064b52ea5c5`, con expected_head_sha `5b27ac358c756c246137948333064a747cee8ee6`. CI 329/40005808293 y Android 28/40005808351 correctos para ese HEAD: seis jobs CI y APK, incluidos PostgreSQL/recuperación, E2E/API y PWA. Frontend CI: 410 pruebas correctas. Local: 20 focalizadas, nueve JVM, build web, lint sin errores y APKs debug/instrumentación compiladas. No confundir con ejecución física de la nueva instrumentación. #110/#111 también revalidados como integrados. Main sigue `d39d89952a18959511032880457aaccff4bb5f66`, sin despliegue ni cambios financieros de producción.
+
+Accesos Gasto/Ingreso/Dictar del launcher y widget de tres botones, sin datos financieros, reutilizan `accion-captura.ts` y guard/login existentes. Preparada APK debug separada `.local/releases/Kaptal-accesos-e744b0d-debug.apk` (SHA256 `C9E29EF4673600882D9AF7206E09BA5262823CB038C63DC8A67DE5963339985B`), no instalada. Release del propietario: última comprobada 0.1.4; release 0.1.5 anterior solo compilada. Ver `docs/ANDROID_ACCESOS_WIDGETS_ETAPA_10.md`.
+
+Etapa 10 abierta. Ya pasaron persistencia cifrada y deduplicación tras bloqueo/reinicio físicos (registros `automatico-lifecycle-*`); no repetir sin motivo. Pendientes: configuración interactiva y launcher/widget/arranque frío/retorno de sesión/TalkBack en el teléfono desconectado; HTTPS público y piloto bancario consentido tras despliegue autorizado. Fixtures locales sin procesos activos; credenciales temporales retiradas. Pruebas optativas previas preservadas en #112. Gmail deshabilitado, sin QA nuevo en producción. Merges a develop autorizados tras checks; main/producción requieren aprobación separada.
+
+Siguiente: conectar teléfono para configuración y accesos; después Etapas 12/13 y diseño al final. Leer continuidad `.local/CONTINUAR_ANDROID_0_1_5.md`. Los estados siguientes son históricos de su fecha.
+
+## Histórico: accesos y widget Android (2026-10-23)
 
 GitHub revalidado: #110 y #111 integrados; base remota `f0ca6047ae10719133034790f6474268be6c4fcf`. Rama nueva `mejoras/android-accesos-widget-captura`, creada desde ese origin/develop. Main sigue `d39d89952a18959511032880457aaccff4bb5f66`; sin despliegue. La rama conserva los dos tests antes no publicados de `validacion/android-configuracion-ciclo-fisico`.
 
