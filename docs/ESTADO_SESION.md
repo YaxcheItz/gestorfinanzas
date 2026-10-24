@@ -1,5 +1,19 @@
 # Estado para retomar la sesión
 
+## Avance vigente: guía inicial 0.1.8 y configuración bancaria real
+
+Este avance prevalece sobre las referencias a 0.1.7 como APK actual y al piloto todavía sin configurar. La autorización permanente de publicación sigue vigente; Gmail permanece deshabilitado.
+
+- Base comprobada: develop `7f6b787ef9c87728510b5b5cf0eeccc8948d4d3a`, CI353/40067585130 SUCCESS. Rama nueva `mejoras/etapa-12-guia-inicial` desde ese remoto, sin implementar directamente en develop.
+- Etapa12: guía breve y omitible bajo el resumen, con enlaces reales a cuentas/movimientos/presupuestos/Avisos; reapertura desde Configuración con foco y título visible. Preferencia local por usuario/dispositivo, tolerante a almacenamiento bloqueado. No solicita permisos, activa canales ni crea datos por mostrarse. Detalle en `GUIA_INICIAL_ETAPA_12.md`.
+- Validación local: ocho pruebas nuevas, suite frontend 424 correctas, build web/release correcto; diez E2E de guía/regresión móvil correctos y recorrido final ampliado de tema claro/oscuro, letra grande, foco y reapertura correcto. Datos sintéticos y servicios locales; sin QA en producción.
+- APK física: 0.1.8/código9 instalada como actualización; firma original SHA256 `b5f360604095a50f3208299767dcedca2f3acfc5087df8be1fde9cc075c120c3` y primera instalación 2026-10-22 00:26:31 conservadas. El propietario confirma guía visible, omisión y reapertura correctas. APK `.local/releases/Kaptal-0.1.8.apk` y Descargas; SHA256 `979CE4DF15268A19643E14EBA3F0DEFDB8BC8C6BB9400F01A8FE3C7BB5AA4D45`. No se borraron datos ni cerró sesión para actualizar; debug sigue detenida.
+- Piloto real: propietario creó su cuenta Santander, concedió acceso Android y confirmó «Registro automático activado» tras seleccionar cuenta/lista y consentimiento. Consulta de solo lectura corrobora una configuración Santander vigente en el servidor. También seleccionó otros bancos y confirmó expresamente que desea registrar sus compras reconocidas; conservar esa selección y no activar bancos nuevos por iniciativa del asistente. Evidencia privada de booleanos `.local/santander-pilot-configuration-result.json`.
+- Límite del piloto: configuración activa no acredita formato real, recepción ni un único movimiento. Esperar próximo aviso habitual consentido, sin compras de prueba, importaciones antiguas ni publicar datos bancarios. Etapa10 sigue abierta. No repetir persistencia/reinicio, widgets o configuración sintética aprobados sin motivo.
+- Producción comprobada al iniciar este incremento: main `f4aee67d3ff0f35ce49cc89e35337523e68b0a4d`, CI351/Android42 y Render/Vercel correctos, HTTPS/cliente Google y V11–V14 verificados. La guía 0.1.8 instalada aún no implica integración web: revisar PR/checks del HEAD exacto y despliegue servido antes de declararla publicada.
+
+Siguiente: checks remotos/integración/publicación de esta guía según autorización vigente; continuar piloto esperando aviso habitual. Después privacidad/bloqueo nativo y accesibilidad amplia de Etapa12, luego mediciones/operación de Etapa13, en ramas nuevas desde develop actualizado. Diseño al final. Estado exacto de HEAD/CI/integración al cerrar en `.local/CONTINUAR_ANDROID_0_1_8.md`; verificar siempre GitHub antes de asumir que un estado histórico sigue vigente.
+
 ## Estado vigente: Google 0.1.7 y promoción publicados
 
 Esta sección prevalece sobre los apuntes históricos siguientes, incluidas sus peticiones de aprobación separada y sus estados de OAuth/APK ya superados.
