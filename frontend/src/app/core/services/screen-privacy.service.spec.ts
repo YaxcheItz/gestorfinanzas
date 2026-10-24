@@ -78,4 +78,12 @@ describe('ScreenPrivacyService', () => {
     finish({ enabled: false }); await pending;
     expect(service.enabled()).toBeNull(); expect(service.error()).not.toBe('');
   });
+
+  it('reconcilia la protección efectiva después de desbloquear la pantalla nativa', async () => {
+    const service = TestBed.inject(ScreenPrivacyService);
+    await vi.waitFor(() => expect(service.enabled()).toBe(false));
+    native.read.mockResolvedValueOnce({ enabled: true });
+    window.dispatchEvent(new Event('kaptal-screen-privacy-changed'));
+    await vi.waitFor(() => expect(service.enabled()).toBe(true));
+  });
 });

@@ -1,4 +1,5 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { DestroyRef, Injectable, inject, signal } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { NATIVE_SCREEN_PRIVACY } from '../native-screen-privacy';
 
 @Injectable({
@@ -13,15 +14,27 @@ export class ScreenPrivacyService {
   readonly busy = this.working.asReadonly();
   private readonly failure = signal('');
   readonly error = this.failure.asReadonly();
+  private pendingRefresh = false;
 
-  constructor() { if (this.native) void this.refresh(); }
+  constructor() {
+    const window = inject(DOCUMENT).defaultView;
+    const refresh = () => {
+      if (this.busy()) this.pendingRefresh = true;
+      else void this.refresh();
+    };
+    if (this.native) {
+      void this.refresh();
+      window?.addEventListener('kaptal-screen-privacy-changed', refresh);
+      inject(DestroyRef).onDestroy(() => window?.removeEventListener('kaptal-screen-privacy-changed', refresh));
+    }
+  }
 
   async refresh(): Promise<void> {
     if (!this.native || this.busy()) return;
     this.working.set(true); this.failure.set('');
     try { this.state.set(this.confirmed(await this.native.read())); }
     catch { this.state.set(null); this.failure.set('No se pudo comprobar la protección de pantalla. Reintenta.'); }
-    finally { this.working.set(false); }
+    finally { this.finished(); }
   }
 
   async set(enabled: boolean): Promise<void> {
@@ -34,7 +47,12 @@ export class ScreenPrivacyService {
     } catch {
       this.state.set(null);
       this.failure.set('No se pudo confirmar el cambio. Comprueba el estado antes de continuar.');
-    } finally { this.working.set(false); }
+    } finally { this.finished(); }
+  }
+
+  private finished(): void {
+    this.working.set(false);
+    if (this.pendingRefresh) { this.pendingRefresh = false; void this.refresh(); }
   }
 
   private confirmed(value: unknown): boolean {
