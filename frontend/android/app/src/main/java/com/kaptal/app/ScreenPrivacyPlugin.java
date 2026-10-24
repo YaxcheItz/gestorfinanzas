@@ -21,6 +21,7 @@ public class ScreenPrivacyPlugin extends Plugin {
     }
 
     private static void apply(Activity activity, boolean enabled) {
+        enabled = enabled || (activity instanceof MainActivity main && main.isAppLocked());
         if (enabled) activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
         else activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)

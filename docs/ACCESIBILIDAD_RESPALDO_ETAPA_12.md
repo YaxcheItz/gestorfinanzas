@@ -10,7 +10,7 @@ Estos ajustes responden a fallos reproducidos con letra al 200 % y errores de St
 
 ## Comprobaciones
 
-Rama independiente `validacion/etapa-12-accesibilidad-respaldo`, desde develop `fd821fb79e9ed86d7fc0e229733df6589441fe3c`. Validación local: **436 pruebas frontend**, incluidas dos nuevas de caché bloqueada, build correcto y **15 E2E correctos**. La rama de bloqueo tiene pruebas adicionales propias y se valida por separado.
+Rama independiente `validacion/etapa-12-accesibilidad-respaldo`, desde develop `fd821fb79e9ed86d7fc0e229733df6589441fe3c`, actualizada con `70a7f863eb458650dfffc2daff0e10ccdbf5f822` de bloqueo/mediciones. Validación combinada local: **445 pruebas frontend**, incluidas dos nuevas de caché bloqueada y las de bloqueo incorporadas; cinco pruebas del medidor, build correcto y **16 E2E correctos**. Los escenarios físicos del bloqueo se documentan por separado en #124.
 
 El recorrido vigente usa API real y H2 efímera, con protección explícita para ejecutarse solo en localhost/127.0.0.1 y usuarios/dinero sintéticos. Incluye:
 

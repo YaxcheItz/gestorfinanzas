@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="kaptal_lock_canvas">#000000</color>
+    <color name="kaptal_lock_content">#FFFFFF</color>
+    <color name="kaptal_lock_muted">#A1A1A6</color>
+    <color name="kaptal_lock_surface">#2C2C2E</color>
+    <color name="kaptal_lock_brand">#FF8A80</color>
+    <color name="kaptal_lock_on_brand">#111111</color>
+</resources>
