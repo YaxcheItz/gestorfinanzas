@@ -1,5 +1,29 @@
 # Etapa 12: acceso Google nativo Android
 
+### Avance posterior: login f?sico y APK
+
+Login normal Google en Kaptal Pruebas correcto: dashboard, sesi?n local y lectura autenticada de /api/cuentas con HTTP 200/success. Evidencia .local/google-normal-flow-result.json, solo booleanos/estado HTTP. El propietario confirma acceso correcto y aclara que su cuenta era reciente y a?n no ten?a cuentas financieras; no afirmar conservaci?n de cuentas preexistentes como prueba f?sica. Cinco AuthServiceTest cubren continuidad/rechazo de identidad de forma aislada.
+
+Release 0.1.7/c?digo8 instalada con adb install -r; firma SHA256 b5f360604095a50f3208299767dcedca2f3acfc5087df8be1fde9cc075c120c3 id?ntica a 0.1.6, primera instalaci?n 2026-10-22 00:26:31 conservada. Abierta para login del propietario; confirmaci?n f?sica release pendiente. No se borraron datos ni se activ? registro bancario.
+
+Arn?s de logout/cancelaci?n no concluyente: no registrar PASS. La primera navegaci?n directa del arn?s no carg? la SPA correctamente; selector nativo/Http nativo tampoco debe medirse mediante eventos HTTP de Playwright. Sesi?n real verificada por lectura nativa autenticada. Pendiente completar cierre/cancelaci?n y dejar debug detenida.
+
+Respaldo actualizado .local/promotion-20261024T050844Z/before-main.dump.dpapi: dump en modo solo lectura, cifrado DPAPI, descifrado/hash y cat?logo correctos. Este snapshot nuevo a?n no se restaur?; ensayo V11?V14 anterior documentado en docs/ENTREGA_ANDROID_0_1_6_Y_PROMOCION.md. No se escribieron/restauraron datos productivos.
+
+## Verificaci?n vigente tras despliegue OAuth (2026-10-24 UTC)
+
+Esta secci?n prevalece sobre los estados hist?ricos siguientes. El propietario ya cambi? GOOGLE_CLIENT_ID en Render y confirma despliegue terminado. Se verificaron directamente Render y el proxy HTTPS Vercel: /api/health UP y /api/auth/google/config con el nuevo cliente web del proyecto 877485729157. Este cambio de configuraci?n no equivale a promover develop a main ni acredita V11?V14 en producci?n.
+
+Autorizaci?n permanente vigente para publicar tras comprobaciones; no pedir aprobaci?n separada de main/producci?n. No autoriza destrucci?n/restauraci?n de datos ni Gmail. Clientes web/Android ya creados: no pedir recrearlos ni buscar acceso al proyecto anterior.
+
+Git confirmado: rama mejoras/android-google-nativo-etapa-12, HEAD aa102bfcb6c813257ddb2227487a4774c144e45a; origin/develop d3e97da16dc3e873382af38b7874461a7fea5c3e, origin/main d39d89952a18959511032880457aaccff4bb5f66. #117 y #116 abiertos y en borrador. CI344/40064325188 y Android37/40064325225 SUCCESS para aa102bf. Documentaci?n local previa conservada; revalidar CI si cambia HEAD.
+
+Samsung SM-A546E conectado por ADB. Release com.kaptal.app contin?a 0.1.6/c?digo7, datos intactos. Debug sin diagn?stico compilada e instalada con adb install -r: 0.1.7-pruebas/c?digo8, SHA256 64CC144F3B90979B7F7E58FD5793A7D846209C80CAAA4144A1B9E0D782002AF7. APK release preparada 0.1.7 mantiene SHA256 89A8B40EB6176E2008411B7EC567DBB6103BF8920F622BEA10B51A2D32C8EE03; a?n no instalada sobre release.
+
+Prueba normal en curso: bot?n expl?cito de Kaptal Pruebas, selector elegido por propietario. A?n no afirmar sesi?n real ni continuidad de cuenta. Arn?s privado .local/check-google-normal-flow.cjs registra solo booleanos/estado HTTP, no cuerpos de autenticaci?n ni datos personales. No ejecutar validate-android-live.cjs: crea QA productiva y contradice l?mites actuales.
+
+Pendientes: completar login y continuidad de cuenta habitual; cancelaci?n/logout cuando corresponda; actualizaci?n release conservando firma/datos; documentos y checks del HEAD final #117, integraci?n develop, actualizar #116 y respaldo cifrado antes de promoci?n, backend/ frontend y migraciones/HTTPS despu?s. Piloto Santander con pr?ximo aviso habitual consentido, sin compras de prueba. Etapa10 y Etapas12/13 siguen abiertas; dise?o al final. No repetir ciclo f?sico/widget/accesibilidad ya acreditados sin motivo.
+
 ## Resultado vigente: cliente del proyecto controlado validado
 
 El propietario creó un cliente web junto a los clientes Android en su proyecto 877485729157. El backend público todavía entrega un cliente de 809732796581, proyecto al que el propietario no acredita acceso. Los intentos anteriores con esa audiencia fallaban dentro del proveedor, antes del backend.
