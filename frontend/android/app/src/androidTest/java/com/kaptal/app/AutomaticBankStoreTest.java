@@ -63,4 +63,23 @@ public class AutomaticBankStoreTest {
         assertEquals(200,store.read().getJSONArray("entries").length()); assertTrue(store.read().getBoolean("full"));
         store.clear(); assertEquals(0,store.read().length());
     }
+    @Test public void santanderPurchaseQueuesOnceAcrossNotificationRedelivery() throws Exception {
+        String bankPackage="mx.bancosantander.supermovil";
+        var rule=new JSONObject().put("id","00000000-0000-4000-8000-000000000002")
+            .put("proveedor","SANTANDER").put("paquete",bankPackage).put("terminacion","1234");
+        store.write(store.read().put("rules",new JSONArray().put(rule)));
+        String date=LocalDate.now(ZoneId.of("America/Mexico_City")).format(DateTimeFormatter.ofPattern("dd/MM/uuuu"));
+        String text="Compra con tarjeta en TIENDA QA por $25.10 MXN con tarjeta de credito **1234, el "
+            +date+" a las 09:12:34 hrs.";
+        assertTrue(store.receive(71,bankPackage,"Santander",text,"bank-qa-one",100));
+        assertTrue(store.receive(71,bankPackage,"Santander",text,"bank-qa-redelivery",200));
+        var entries=store.read().getJSONArray("entries");
+        assertEquals(1,entries.length()); assertEquals("queued",entries.getJSONObject(0).getString("status"));
+        var payload=entries.getJSONObject(0).getJSONObject("payload");
+        assertEquals("TIENDA QA",payload.getString("descripcion"));
+        assertEquals(LocalDate.now(ZoneId.of("America/Mexico_City")).toString(),payload.getString("fecha"));
+        assertFalse(payload.has("terminacion")); assertFalse(payload.has("text"));
+        assertTrue(store.receive(71,bankPackage,"Santander",text.replace("09:12:34","09:12:35"),"bank-qa-next",300));
+        assertEquals(2,store.read().getJSONArray("entries").length());
+    }
 }
