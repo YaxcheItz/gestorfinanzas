@@ -3,6 +3,20 @@
   @if (authService.isAuthenticated()) { <app-navbar /> }
   @else { <a routerLink="/login" class="auth-brand" aria-label="Kaptal, inicio"><img src="kaptal.svg" alt=""><span>Kaptal</span></a> }
   <main id="main-content" tabindex="-1" class="flex-1" [class.app-content-with-bottom-nav]="authService.isAuthenticated()">
+    @if (sharedNotice.pending() || sharedNotice.error()) {
+      <aside class="mx-4 my-3 rounded-xl border border-current p-3 text-sm" aria-label="Texto compartido">
+        @if (sharedNotice.error()) {
+          <p role="alert">{{ sharedNotice.error() }}</p>
+          <button type="button" class="min-h-11 underline" (click)="closeSharedNoticeError()">Cerrar aviso de texto compartido</button>
+        }
+        @if (sharedNotice.pending()) {
+          <p>Hay un texto compartido guardado en este teléfono. Todavía no se envió ni cambió tu dinero.</p>
+          @if (authService.isAuthenticated()) {
+            <a class="inline-flex min-h-11 items-center underline" routerLink="/avisos">Revisar texto compartido</a>
+          } @else { <p>Inicia sesión para revisarlo. Se conserva hasta 24 horas.</p> }
+        }
+      </aside>
+    }
     <router-outlet />
   </main>
   @if (authService.isAuthenticated()) {

@@ -34,6 +34,7 @@ export class ListasService {
   invitar(id: number, rol: 'EDITOR' | 'LECTOR') { return this.http.post<ApiResponse<{ codigo: string; vence: string; rol: string }>>(`${this.url}/${id}/invitacion`, { rol }); }
   revocar(id: number) { return this.http.delete<ApiResponse<void>>(`${this.url}/${id}/invitacion`); }
   quitar(id: number, miembro: number) { return this.http.delete<ApiResponse<void>>(`${this.url}/${id}/miembros/${miembro}`); }
+  cambiarRol(id: number, miembro: number, rol: 'EDITOR' | 'LECTOR') { return this.http.patch<ApiResponse<ListaFinanciera>>(`${this.url}/${id}/miembros/${miembro}/rol`, { rol }); }
   unirse(codigo: string) { return this.http.post<ApiResponse<ListaFinanciera>>(`${this.url}/unirse`, { codigo }); }
   etiquetas(id: number) { return this.http.get<ApiResponse<string[]>>(`${this.url}/${id}/etiquetas`); }
 }

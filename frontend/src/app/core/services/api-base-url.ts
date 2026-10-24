@@ -1,3 +1,5 @@
+import { Capacitor } from '@capacitor/core';
+
 const runtimeApiBaseUrl = (): string | undefined => {
   if (typeof window === 'undefined') {
     return undefined;
@@ -7,7 +9,7 @@ const runtimeApiBaseUrl = (): string | undefined => {
 };
 
 /**
- * La API siempre es '/api', o sea el mismo origen que la pagina, y nunca el dominio de
+ * En la web la API es '/api', o sea el mismo origen que la pagina, y nunca el dominio de
  * Render directamente.
  *
  * En desarrollo lo resuelve proxy.conf.json contra el backend local. En produccion lo
@@ -16,9 +18,11 @@ const runtimeApiBaseUrl = (): string | undefined => {
  * La razon de que sea el mismo origen es la cookie de sesion. Con la app en vercel.app
  * llamando a onrender.com, esa cookie cuenta como de terceros, y Firefox o Safari la bloquean
  * dejando al usuario sin sesion. Al pasar por el proxy pasa a ser de primera parte y todos los
- * navegadores la respetan.
+ * navegadores la respetan. Android empaqueta recursos locales y usa HTTP nativo hacia
+ * el mismo proxy HTTPS de Kaptal, sin habilitar navegacion remota en el WebView.
  */
 export function getApiBaseUrl(): string {
+  if (Capacitor.isNativePlatform()) return 'https://kaptalgf.vercel.app/api';
   const configured = runtimeApiBaseUrl();
   if (configured) {
     return configured.replace(/\/$/, '');

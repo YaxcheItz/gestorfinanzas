@@ -51,6 +51,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**", "/api/health", "/error").permitAll()
                 .requestMatchers("/api/notificaciones/whatsapp/verificar-pin").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.POST,"/api/canales/android/evento").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.POST,"/api/canales/whatsapp/vinculacion/evento").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.POST,"/api/canales/whatsapp/evento","/api/canales/whatsapp/evento/autorizar-respuesta").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET,"/api/canales/whatsapp/disponibilidad").permitAll()

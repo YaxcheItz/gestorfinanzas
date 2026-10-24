@@ -1,0 +1,33 @@
+import { expect, test } from '@playwright/test';
+import { registrarPrueba } from './registro-helper';
+
+test.use({viewport:{width:390,height:844},hasTouch:true,serviceWorkers:'block'});
+test('pareja: reparto 2:1 conserva centavos, proporción y saldos propios',async({page})=>{
+  const password='Password123',email=`partes-${crypto.randomUUID()}@example.test`;
+  const a=await registrarPrueba(page.request,{nombre:'QA Partes',email,password});expect(a.ok()).toBeTruthy();
+  const headers={Authorization:`Bearer ${(await a.json()).data.token}`};
+  const otroEmail=`partes-otro-${crypto.randomUUID()}@example.test`;
+  const b=await registrarPrueba(page.request,{nombre:'QA Pareja',email:otroEmail,password});expect(b.ok()).toBeTruthy();
+  const otroHeaders={Authorization:`Bearer ${(await b.json()).data.token}`};
+  const invitacion=await page.request.post('/api/pareja',{headers,data:{email:otroEmail}});expect(invitacion.ok()).toBeTruthy();
+  const aceptar=await page.request.post(`/api/pareja/invitaciones/${(await invitacion.json()).data.id}/aceptar`,{headers:otroHeaders});expect(aceptar.ok()).toBeTruthy();
+  const cuentas=await page.request.get('/api/cuentas',{headers});expect(cuentas.ok()).toBeTruthy();
+  const saldos=(await cuentas.json()).data;
+  await page.goto('/login');await page.locator('#email').fill(email);await page.locator('#password').fill(password);
+  await page.getByRole('button',{name:'Iniciar sesión',exact:true}).click();await expect(page).toHaveURL(/dashboard/);
+  await page.goto('/pareja');await page.getByRole('button',{name:'Registrar gasto',exact:true}).click();
+  await page.locator('#form-monto').fill('10.01');await page.locator('#form-descripcion').fill('Cena por partes');
+  await page.locator('#form-tipo').selectOption('PARTES');
+  await page.locator('#form-partes-propias').fill('2');await page.locator('#form-partes-pareja').fill('1');
+  const guardado=page.waitForResponse(r=>r.url().endsWith('/api/pareja/gastos') && r.request().method()==='POST');
+  await page.getByRole('button',{name:'Guardar',exact:true}).click();expect((await guardado).ok()).toBeTruthy();
+  await page.reload();
+  const estado=await page.request.get('/api/pareja',{headers});expect(estado.ok()).toBeTruthy();
+  const gasto=(await estado.json()).data.gastos[0];
+  expect(gasto.tipoReparto).toBe('PARTES');
+  expect(gasto.repartos.map((p:{partes:number,monto:number})=>[p.partes,p.monto]).sort()).toEqual([[1,3.34],[2,6.67]]);
+  const despues=await page.request.get('/api/cuentas',{headers});expect(despues.ok()).toBeTruthy();
+  expect((await despues.json()).data).toEqual(saldos);
+  const invalido=await page.request.post('/api/pareja/gastos',{headers,data:{monto:10,fecha:'2026-10-21',descripcion:'Inválido',tipoReparto:'PARTES',partesPropias:1.5,partesPareja:1}});
+  expect(invalido.status()).toBe(400);
+});

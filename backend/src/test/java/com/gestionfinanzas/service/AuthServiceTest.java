@@ -9,6 +9,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -52,6 +53,38 @@ class AuthServiceTest {
         authService.autenticarGoogle("nuevo-tema", "Nueva", "nueva.tema@example.com", true);
         assertThat(usuarioRepository.findByEmail("nueva.tema@example.com").orElseThrow().getTemaPreferido())
                 .isEqualTo("CLARO");
+    }
+
+    @Test
+    @DisplayName("Google conserva usuario y cuentas cuando la identidad verificada no cambia")
+    void googleConservaIdentidadExistente() {
+        authService.autenticarGoogle("identidad-estable", "Original", "estable@example.test", true);
+        var original = usuarioRepository.findByGoogleSubject("identidad-estable").orElseThrow();
+        var cuentas = cuentaRepository.findByUsuarioIdOrderByActivoDescNombreAsc(original.getId());
+        long totalUsuarios = usuarioRepository.count();
+
+        authService.autenticarGoogle("identidad-estable", "Nombre actualizado", "estable@example.test", true);
+
+        assertThat(usuarioRepository.count()).isEqualTo(totalUsuarios);
+        assertThat(usuarioRepository.findByGoogleSubject("identidad-estable").orElseThrow().getId())
+                .isEqualTo(original.getId());
+        assertThat(cuentaRepository.findByUsuarioIdOrderByActivoDescNombreAsc(original.getId()))
+                .extracting("id").containsExactlyElementsOf(cuentas.stream().map(c -> c.getId()).toList());
+    }
+
+    @Test
+    @DisplayName("Google rechaza reemplazar una identidad vinculada aunque coincida el correo")
+    void googleNoReemplazaIdentidadVinculada() {
+        authService.autenticarGoogle("identidad-original", "Original", "vinculada@example.test", true);
+        long totalUsuarios = usuarioRepository.count();
+
+        assertThatThrownBy(() -> authService.autenticarGoogle(
+                "identidad-distinta", "Otra", "vinculada@example.test", true))
+                .isInstanceOf(org.springframework.security.authentication.BadCredentialsException.class);
+
+        assertThat(usuarioRepository.count()).isEqualTo(totalUsuarios);
+        assertThat(usuarioRepository.findByEmail("vinculada@example.test").orElseThrow().getGoogleSubject())
+                .isEqualTo("identidad-original");
     }
 
     @Test

@@ -6,6 +6,7 @@ import { signal } from '@angular/core';
 import { AuthService } from './core/services/auth.service';
 import { PerfilService } from './core/services/perfil.service';
 import { CaptureLauncherService } from './core/services/capture-launcher.service';
+import { SharedNoticeService } from './core/services/shared-notice.service';
 
 describe('App', () => {
   beforeEach(async () => {
@@ -20,6 +21,16 @@ describe('App', () => {
     const fixture = TestBed.createComponent(App);
     const app = fixture.componentInstance;
     expect(app).toBeTruthy();
+  });
+  it('permite cerrar un texto rechazado sin pedir login ni afirmar que quedo guardado', async () => {
+    const discard=vi.fn(()=>Promise.resolve());
+    TestBed.overrideProvider(SharedNoticeService,{useValue:{pending:()=>undefined,error:()=> 'Texto rechazado',discard}});
+    const fixture=TestBed.createComponent(App);await fixture.whenStable();
+    const html=fixture.nativeElement as HTMLElement;
+    expect(html.textContent).not.toContain('Hay un texto compartido guardado');
+    expect(html.textContent).not.toContain('Inicia sesión para revisarlo');
+    const button=[...html.querySelectorAll('button')].find(b=>b.textContent?.includes('Cerrar aviso de texto compartido'))!;
+    button.click();await fixture.whenStable();expect(discard).toHaveBeenCalledOnce();
   });
 
   it('discards a deferred capture payload on a direct account change', () => {

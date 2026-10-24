@@ -315,6 +315,27 @@ class ParejaServiceTest {
         assertSumaTotal(partes, "80.00");
     }
 
+    @Test void repartoPorPartesConservaProporcionYCentavos() {
+        servicio.agregarGasto(ANA, new GastoParejaRequest(monto("10.01"), HOY, "Cena", TipoReparto.PARTES, null, null, monto("2"), monto("1")));
+        var partes = partesDelUltimoGasto();
+        assertEquals(monto("6.67"), parteDe(partes, ANA).getMonto());
+        assertEquals(monto("3.34"), parteDe(partes, LUIS).getMonto());
+        assertEquals(2, parteDe(partes, ANA).getPartes());
+        assertEquals(1, parteDe(partes, LUIS).getPartes());
+        assertSumaTotal(partes, "10.01");
+    }
+
+    @Test void repartoPorPartesRechazaPesosInvalidosYPartesSinCentavos() {
+        for (Integer valor : new Integer[]{null, 0, -1, 1000001}) {
+            assertThrows(IllegalArgumentException.class, () -> servicio.agregarGasto(ANA,
+                new GastoParejaRequest(monto("10.00"), HOY, "Cena", TipoReparto.PARTES, null, null, valor == null ? null : BigDecimal.valueOf(valor), monto("1"))));
+            assertThrows(IllegalArgumentException.class, () -> servicio.agregarGasto(ANA,
+                new GastoParejaRequest(monto("10.00"), HOY, "Cena", TipoReparto.PARTES, null, null, monto("1"), valor == null ? null : BigDecimal.valueOf(valor))));
+        }
+        assertThrows(IllegalArgumentException.class, () -> servicio.agregarGasto(ANA,
+            new GastoParejaRequest(monto("0.01"), HOY, "Cena", TipoReparto.PARTES, null, null, monto("1"), monto("1"))));
+    }
+
     @Test
     void elPorcentajeSeRedondeaYElTotalSigueCuadrando() {
         servicio.agregarGasto(ANA, gasto("33.33", TipoReparto.PORCENTAJE, "33.33", null));

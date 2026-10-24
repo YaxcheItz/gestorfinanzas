@@ -12,6 +12,8 @@ import { QuickCaptureComponent } from './shared/components/quick-capture/quick-c
 import { RegistroRapidoComponent } from './shared/components/registro-rapido/registro-rapido.component';
 import { ActualizacionPwaService } from './core/services/actualizacion-pwa.service';
 import { CaptureLauncherService } from './core/services/capture-launcher.service';
+import { SharedNoticeService } from './core/services/shared-notice.service';
+import { NativeCaptureService } from './core/services/native-capture.service';
 
 @Component({
   selector: 'app-root',
@@ -20,6 +22,9 @@ import { CaptureLauncherService } from './core/services/capture-launcher.service
   styleUrl: './app.css'
 })
 export class App {
+  private readonly nativeCapture = inject(NativeCaptureService);
+  readonly sharedNotice = inject(SharedNoticeService);
+  closeSharedNoticeError(): void { void this.sharedNotice.discard().catch(() => undefined); }
   private readonly document = inject(DOCUMENT);
   irAlContenido(event: Event): void {
     event.preventDefault();

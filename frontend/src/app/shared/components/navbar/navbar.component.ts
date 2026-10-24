@@ -30,6 +30,7 @@ import { Router, RouterLink } from '@angular/router';
         <div class="workspace-panel__primary">
           <a routerLink="/dashboard" (click)="cerrarMenu()">Inicio <span aria-hidden="true">&#8250;</span></a>
           <a routerLink="/cuentas" (click)="cerrarMenu()">Cuentas <span aria-hidden="true">&#8250;</span></a>
+          <a routerLink="/metas" (click)="cerrarMenu()">Metas de ahorro <span aria-hidden="true">&#8250;</span></a>
           <a routerLink="/avisos" (click)="cerrarMenu()">Bandeja de avisos <span aria-hidden="true">&#8250;</span></a>
           <a routerLink="/presupuestos" (click)="cerrarMenu()">Presupuestos <span aria-hidden="true">&#8250;</span></a>
           <a routerLink="/pareja" (click)="cerrarMenu()">Compartido <span aria-hidden="true">&#8250;</span></a>

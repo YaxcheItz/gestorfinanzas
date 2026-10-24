@@ -1,6 +1,6 @@
 import { DestroyRef, Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, tap, catchError, throwError, finalize, shareReplay, map, defer, from, firstValueFrom, of } from 'rxjs';
+import { Observable, tap, catchError, throwError, finalize, shareReplay, map, defer, from, firstValueFrom, of, switchMap } from 'rxjs';
 import {
   ApiResponse,
   AuthResponse,
@@ -15,6 +15,9 @@ import { Router } from '@angular/router';
 import { getApiBaseUrl } from './api-base-url';
 import { SwPush } from '@angular/service-worker';
 import { take, timeout } from 'rxjs';
+import { accionCaptura, AccionCaptura } from '../utils/accion-captura';
+import { persistNativeSession } from '../native-session';
+import { ToastService } from './toast.service';
 
 /** Necesario para que el navegador acepte y mande la cookie de refresh. */
 const CON_CREDENCIALES = { withCredentials: true } as const;
@@ -41,6 +44,7 @@ const CABECERA_CSRF = { headers: { 'X-Gestion-Sesion': '1' } } as const;
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
+  private readonly toast = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly swPush = inject(SwPush, { optional: true });
   private readonly apiUrl = `${getApiBaseUrl()}/auth`;
@@ -50,6 +54,7 @@ export class AuthService {
 
   /** Peticion de refresh compartida, para no rotar dos veces a la vez. */
   private refreshEnVuelo: Observable<AuthResponse> | null = null;
+  private capturaRenovacion: AccionCaptura | null = null;
   private versionSesion = 0;
 
   // Signals para estado reactivo moderno
@@ -93,21 +98,13 @@ export class AuthService {
     // withCredentials no es opcional: sin el, el navegador ignora el Set-Cookie de una peticion
     // de otro origen y la cookie de refresh nunca se guardaria.
     return this.http.post<ApiResponse<AuthResponse>>(`${this.apiUrl}/registro`, payload, CON_CREDENCIALES).pipe(
-      tap(res => {
-        if (res.success && res.data) {
-          this.guardarSesion(res.data);
-        }
-      })
+      switchMap(res => this.confirmarNuevaSesion(res))
     );
   }
 
   login(payload: LoginPayload): Observable<ApiResponse<AuthResponse>> {
     return this.http.post<ApiResponse<AuthResponse>>(`${this.apiUrl}/login`, payload, CON_CREDENCIALES).pipe(
-      tap(res => {
-        if (res.success && res.data) {
-          this.guardarSesion(res.data);
-        }
-      })
+      switchMap(res => this.confirmarNuevaSesion(res))
     );
   }
 
@@ -119,9 +116,7 @@ export class AuthService {
     return this.http.post<ApiResponse<AuthResponse>>(
       `${this.apiUrl}/google`, { credential }, CON_CREDENCIALES
     ).pipe(
-      tap(res => {
-        if (res.success && res.data) this.guardarSesion(res.data);
-      })
+      switchMap(res => this.confirmarNuevaSesion(res))
     );
   }
 
@@ -164,10 +159,19 @@ export class AuthService {
   }
 
   private finalizarLogout(): void {
-    this.cerrarSesionEnServidor().subscribe({
-      next: () => this.cerrarSesionLocal('salida'),
-      error: () => this.cerrarSesionLocal('salida')
+    persistNativeSession(true).subscribe({
+      next: () => this.cerrarSesionEnServidor().subscribe({
+        next: () => this.cerrarSesionLocal('salida'),
+        error: () => this.cerrarSesionLocal('salida')
+      }),
+      error: () => this.toast.error('No se pudo conservar el cierre de sesión. Reintenta antes de cerrar la app.')
     });
+  }
+
+  private confirmarNuevaSesion(res: ApiResponse<AuthResponse>): Observable<ApiResponse<AuthResponse>> {
+    if (!res.success || !res.data) return of(res);
+    const data = res.data;
+    return persistNativeSession(false, data.id).pipe(tap(() => this.guardarSesion(data)), map(() => res));
   }
 
   /**
@@ -177,7 +181,8 @@ export class AuthService {
    * peticiones pueden pedir renewal al mismo tiempo, y con la rotacion del servidor eso romperia
    * la sesion: las peticiones en vuelo comparten una sola, y las siguientes se enganchan a ella.
    */
-  renovarSesion(): Observable<AuthResponse> {
+  renovarSesion(captura: AccionCaptura | null = null): Observable<AuthResponse> {
+    if (captura) this.capturaRenovacion = captura;
     if (!this.refreshEnVuelo) {
       const tokenAnterior = this.getToken();
       const usuarioId = this.currentUser()?.id ?? null;
@@ -193,11 +198,12 @@ export class AuthService {
       }).pipe(
         catchError(error => {
           // Un fallo temporal o de permisos no equivale a una cookie vencida.
-          if (error?.status === 401 && this.versionSesion === version) this.cerrarSesionLocal();
+          if (error?.status === 401 && this.versionSesion === version) this.cerrarSesionLocal('expirada', this.capturaRenovacion);
           return throwError(() => error);
         }),
         finalize(() => {
           this.refreshEnVuelo = null;
+          this.capturaRenovacion = null;
         }),
         shareReplay({ bufferSize: 1, refCount: false })
       );
@@ -235,10 +241,12 @@ export class AuthService {
   }
 
   /** Limpia la sesion local sin tocar el servidor: util cuando la cookie ya no sirve. */
-  cerrarSesionLocal(motivo: MotivoCierreSesion = 'expirada'): void {
+  cerrarSesionLocal(motivo: MotivoCierreSesion = 'expirada', solicitada?: AccionCaptura | null): void {
+    const captura = motivo === 'expirada' ? accionCaptura(solicitada ??
+      (window.location.pathname === '/dashboard' ? new URLSearchParams(window.location.search).get('accion') : null)) : null;
     this.limpiarSesion();
     this.router.navigate(['/login'], {
-      queryParams: motivo === 'expirada' ? { sessionExpired: 'true' } : {}
+      queryParams: motivo === 'expirada' ? { sessionExpired: 'true', ...(captura ? { captura } : {}) } : {}
     });
   }
 

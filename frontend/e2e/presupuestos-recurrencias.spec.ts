@@ -30,7 +30,7 @@ test('presupuesto respeta lista y moneda, oculta importes y restaura limites ind
   for(const width of [320,390]){await page.setViewportSize({width,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);}
   await page.screenshot({path:info.outputPath('presupuesto-movil-privado.png')});
   await dialog.locator('select[name="cuenta"]').selectOption({label:'Banco USD \u00b7 USD'});await expect(presupuesto).toHaveCount(0);
-  const archivoRespuesta=await page.request.get('/api/perfil/respaldo',{headers});expect(archivoRespuesta.ok()).toBeTruthy();const archivo=await archivoRespuesta.json();expect(archivo.version).toBe(5);
+  const archivoRespuesta=await page.request.get('/api/perfil/respaldo',{headers});expect(archivoRespuesta.ok()).toBeTruthy();const archivo=await archivoRespuesta.json();expect(archivo.version).toBe(7);
   const nuevo=await registrarPrueba(page.request,{nombre:'QA restauracion',email:`restore-budget-${crypto.randomUUID()}@example.test`,password});expect(nuevo.ok()).toBeTruthy();
   const destino={Authorization:`Bearer ${(await nuevo.json()).data.token}`};
   const restaurar=await page.request.post('/api/perfil/respaldo/restaurar',{headers:destino,data:archivo});expect(restaurar.ok()).toBeTruthy();

@@ -73,7 +73,11 @@ public record RespaldoFinancieroResponse(
             LocalDateTime fechaCreacion
     ) {}
 
-    public record ParteRespaldo(MiembroRespaldo usuario, BigDecimal monto, BigDecimal porcentaje) {}
+    public record ParteRespaldo(MiembroRespaldo usuario, BigDecimal monto, BigDecimal porcentaje, BigDecimal partes) {
+        public ParteRespaldo(MiembroRespaldo usuario, BigDecimal monto, BigDecimal porcentaje) {
+            this(usuario, monto, porcentaje, null);
+        }
+    }
 
     public record PagoRespaldo(
             Long id,

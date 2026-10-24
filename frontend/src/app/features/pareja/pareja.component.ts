@@ -240,6 +240,7 @@ type FormularioAbierto = 'aporte' | 'gasto' | 'pago' | null;
                   <li class="flex items-center justify-between gap-3 text-xs">
                     <span class="min-w-0 truncate text-slate-600 dark:text-slate-300">
                       {{ parte.usuarioNombre }} ({{ parte.porcentaje | number:'1.0-2' }}%)
+                      @if (parte.partes != null) { · {{ parte.partes }} partes }
                     </span>
                     <span class="shrink-0 font-medium text-slate-900">{{ parte.monto | monto: gasto.moneda }}</span>
                   </li>
@@ -320,8 +321,16 @@ type FormularioAbierto = 'aporte' | 'gasto' | 'pago' | null;
                   <option value="IGUAL">A partes iguales</option>
                   <option value="PORCENTAJE">Por porcentaje</option>
                   <option value="EXACTO">Por monto exacto</option>
+                  <option value="PARTES">Por partes</option>
                 </select>
               </div>
+              @if (formTipoReparto === 'PARTES') {
+                <label for="form-partes-propias">Mis partes</label>
+                <input id="form-partes-propias" name="partesPropias" type="number" inputmode="numeric" min="1" max="1000000" step="1" required [(ngModel)]="formPartesPropias" class="w-full rounded-xl border p-3 text-base dark:bg-slate-800" />
+                <label for="form-partes-pareja">Partes de {{ parejaNombre() }}</label>
+                <input id="form-partes-pareja" name="partesPareja" type="number" inputmode="numeric" min="1" max="1000000" step="1" required [(ngModel)]="formPartesPareja" class="w-full rounded-xl border p-3 text-base dark:bg-slate-800" />
+                <p class="text-sm text-slate-500">Por ejemplo, 2 para ti y 1 para tu pareja. El total se reparte conservando cada centavo.</p>
+              }
               @if (formTipoReparto === 'PORCENTAJE') {
                 <div>
                   <label for="form-porcentaje" class="block text-sm font-medium text-slate-700 dark:text-slate-200">
@@ -406,6 +415,8 @@ export class ParejaComponent implements OnInit {
   formTipoReparto: TipoReparto = 'IGUAL';
   formPorcentaje: number | null = null;
   formExacto: number | null = null;
+  formPartesPropias: number | null = 1;
+  formPartesPareja: number | null = 1;
   formNotas = '';
   formDireccionPago: 'ENVIADO' | 'RECIBIDO' = 'ENVIADO';
 
@@ -467,6 +478,12 @@ export class ParejaComponent implements OnInit {
     if (this.soloLectura() || !this.formMonto || !Number.isFinite(this.formMonto) || this.formMonto <= 0) return false;
     if (this.formulario() === 'gasto') {
       if (!this.formDescripcion.trim()) return false;
+      if (this.formTipoReparto === 'PARTES') {
+        if (![this.formPartesPropias, this.formPartesPareja].every(n => n != null && Number.isInteger(n) && n >= 1 && n <= 1000000)) return false;
+        const total = Math.round(this.formMonto * 100);
+        const parte = Math.round(total * this.formPartesPareja! / (this.formPartesPropias! + this.formPartesPareja!));
+        return parte > 0 && parte < total;
+      }
       if (this.formTipoReparto === 'PORCENTAJE') {
         if (this.formPorcentaje == null || this.formPorcentaje <= 0 || this.formPorcentaje >= 100) return false;
         const total = Math.round(this.formMonto * 100);
@@ -581,6 +598,8 @@ export class ParejaComponent implements OnInit {
     this.formTipoReparto = 'IGUAL';
     this.formPorcentaje = null;
     this.formExacto = null;
+    this.formPartesPropias = 1;
+    this.formPartesPareja = 1;
     this.formNotas = '';
     this.formDireccionPago = this.deuda()?.idQuienDebe === this.pareja()?.pareja.id ? 'RECIBIDO' : 'ENVIADO';
   }
@@ -610,7 +629,9 @@ export class ParejaComponent implements OnInit {
         descripcion: this.formDescripcion.trim(),
         tipoReparto: this.formTipoReparto,
         porcentajePareja: this.formTipoReparto === 'PORCENTAJE' ? this.formPorcentaje : null,
-        montoExactoPareja: this.formTipoReparto === 'EXACTO' ? this.formExacto : null
+        montoExactoPareja: this.formTipoReparto === 'EXACTO' ? this.formExacto : null,
+        partesPropias: this.formTipoReparto === 'PARTES' ? this.formPartesPropias : null,
+        partesPareja: this.formTipoReparto === 'PARTES' ? this.formPartesPareja : null
       }), 'Gasto compartido registrado');
       return;
     }
@@ -660,6 +681,7 @@ export class ParejaComponent implements OnInit {
       case 'IGUAL': return 'Mitad y mitad';
       case 'PORCENTAJE': return 'Por porcentaje';
       case 'EXACTO': return 'Por monto exacto';
+      case 'PARTES': return 'Por partes';
       default: return '';
     }
   }

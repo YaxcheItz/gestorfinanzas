@@ -1,16 +1,266 @@
 # Kaptal: plan maestro y traspaso al siguiente chat
 
-Publicación de Etapa 8: [PR #99 hacia develop](https://github.com/YaxcheItz/gestorfinanzas/pull/99), rama subida y abierta para revisión; implementación `2e5b13a`. CI en curso al publicar. Sin merge ni despliegue de producción. Seguir pendientes manuales del informe antes de cerrar la etapa.
+## Cierre de validaci?n f?sica Google 0.1.7
+
+El propietario confirm? login correcto tambi?n en la release 0.1.7 instalada. Kaptal Pruebas: logout real mediante Configuraci?n/Seguridad, sesi?n local eliminada; selector Google abierto y cancelado con Atr?s, retorno al login, bot?n reintento habilitado y ninguna sesi?n creada. Evidencia .local/google-normal-logout-cancel-result.json (todos los booleanos correctos). El problema del arn?s era localizar el control; se resolvi? usando el bot?n del bloque de seguridad. Los intentos anteriores incompletos no acreditaban fallo del producto. Debug detenida y release al frente, sin nuevos cambios de datos/avisos bancarios.
+
+Preparado para integrar #117 cuando todos los checks del HEAD final sean correctos. Despu?s actualizar #116/develop?main, verificar respaldo actualizado y pruebas exactas antes de promover; publicaci?n autorizada permanentemente. No cerrar Etapa10 ni Etapas12/13 por este incremento. Gmail deshabilitado; piloto Santander pendiente del pr?ximo aviso consentido.
+
+### Avance posterior: login f?sico y APK
+
+Login normal Google en Kaptal Pruebas correcto: dashboard, sesi?n local y lectura autenticada de /api/cuentas con HTTP 200/success. Evidencia .local/google-normal-flow-result.json, solo booleanos/estado HTTP. El propietario confirma acceso correcto y aclara que su cuenta era reciente y a?n no ten?a cuentas financieras; no afirmar conservaci?n de cuentas preexistentes como prueba f?sica. Cinco AuthServiceTest cubren continuidad/rechazo de identidad de forma aislada.
+
+Release 0.1.7/c?digo8 instalada con adb install -r; firma SHA256 b5f360604095a50f3208299767dcedca2f3acfc5087df8be1fde9cc075c120c3 id?ntica a 0.1.6, primera instalaci?n 2026-10-22 00:26:31 conservada. Abierta para login del propietario; confirmaci?n f?sica release pendiente. No se borraron datos ni se activ? registro bancario.
+
+Arn?s de logout/cancelaci?n no concluyente: no registrar PASS. La primera navegaci?n directa del arn?s no carg? la SPA correctamente; selector nativo/Http nativo tampoco debe medirse mediante eventos HTTP de Playwright. Sesi?n real verificada por lectura nativa autenticada. Pendiente completar cierre/cancelaci?n y dejar debug detenida.
+
+Respaldo actualizado .local/promotion-20261024T050844Z/before-main.dump.dpapi: dump en modo solo lectura, cifrado DPAPI, descifrado/hash y cat?logo correctos. Este snapshot nuevo a?n no se restaur?; ensayo V11?V14 anterior documentado en docs/ENTREGA_ANDROID_0_1_6_Y_PROMOCION.md. No se escribieron/restauraron datos productivos.
+
+## Verificaci?n vigente tras despliegue OAuth (2026-10-24 UTC)
+
+Esta secci?n prevalece sobre los estados hist?ricos siguientes. El propietario ya cambi? GOOGLE_CLIENT_ID en Render y confirma despliegue terminado. Se verificaron directamente Render y el proxy HTTPS Vercel: /api/health UP y /api/auth/google/config con el nuevo cliente web del proyecto 877485729157. Este cambio de configuraci?n no equivale a promover develop a main ni acredita V11?V14 en producci?n.
+
+Autorizaci?n permanente vigente para publicar tras comprobaciones; no pedir aprobaci?n separada de main/producci?n. No autoriza destrucci?n/restauraci?n de datos ni Gmail. Clientes web/Android ya creados: no pedir recrearlos ni buscar acceso al proyecto anterior.
+
+Git confirmado: rama mejoras/android-google-nativo-etapa-12, HEAD aa102bfcb6c813257ddb2227487a4774c144e45a; origin/develop d3e97da16dc3e873382af38b7874461a7fea5c3e, origin/main d39d89952a18959511032880457aaccff4bb5f66. #117 y #116 abiertos y en borrador. CI344/40064325188 y Android37/40064325225 SUCCESS para aa102bf. Documentaci?n local previa conservada; revalidar CI si cambia HEAD.
+
+Samsung SM-A546E conectado por ADB. Release com.kaptal.app contin?a 0.1.6/c?digo7, datos intactos. Debug sin diagn?stico compilada e instalada con adb install -r: 0.1.7-pruebas/c?digo8, SHA256 64CC144F3B90979B7F7E58FD5793A7D846209C80CAAA4144A1B9E0D782002AF7. APK release preparada 0.1.7 mantiene SHA256 89A8B40EB6176E2008411B7EC567DBB6103BF8920F622BEA10B51A2D32C8EE03; a?n no instalada sobre release.
+
+Prueba normal en curso: bot?n expl?cito de Kaptal Pruebas, selector elegido por propietario. A?n no afirmar sesi?n real ni continuidad de cuenta. Arn?s privado .local/check-google-normal-flow.cjs registra solo booleanos/estado HTTP, no cuerpos de autenticaci?n ni datos personales. No ejecutar validate-android-live.cjs: crea QA productiva y contradice l?mites actuales.
+
+Pendientes: completar login y continuidad de cuenta habitual; cancelaci?n/logout cuando corresponda; actualizaci?n release conservando firma/datos; documentos y checks del HEAD final #117, integraci?n develop, actualizar #116 y respaldo cifrado antes de promoci?n, backend/ frontend y migraciones/HTTPS despu?s. Piloto Santander con pr?ximo aviso habitual consentido, sin compras de prueba. Etapa10 y Etapas12/13 siguen abiertas; dise?o al final. No repetir ciclo f?sico/widget/accesibilidad ya acreditados sin motivo.
+
+## Autorizacion vigente de produccion
+
+El propietario autoriza expresamente de forma permanente los pasos de publicacion en produccion de Kaptal tras comprobaciones satisfactorias. Sustituye el requisito historico de pedir aprobacion separada para main/publicacion. No volver a pedir esa aprobacion; no asumir autorizacion para acciones destructivas, restauraciones de datos ni activar Gmail. Primero resolver GOOGLE_CLIENT_ID y validar sesion Google real; luego continuar #117/#116 tras checks exactos. Herramientas actuales sin conector Render ni credencial disponible: guiar al propietario en kaptal-api > Environment para sustituir SOLO GOOGLE_CLIENT_ID por el cliente propuesto y desplegar; verificar config publica despues. Cambio aun no ejecutado.
+
+
+## Cliente Google del propietario validado de forma aislada
+
+Cliente web nuevo del proyecto 877485729157: prueba fisica aislada correcta. Credential Manager devolvio token y jose verifico firma/audiencia/emisor/expiracion y correo verificado; solo booleanos guardados, sin login ni escrituras productivas. Propuesta concreta .local/google-oauth-transition.json conserva cliente anterior y nuevo; GOOGLE_CLIENT_ID publico aun pertenece a 809732796581. Pendiente aprobacion separada para cambiar solo esa variable en Render, verificar sesion real y continuidad de cuenta. #116 sigue borrador; no autoriza merge main ni V11-V14. Log temporal del plugin retirado. Detalle docs/ANDROID_GOOGLE_NATIVO_ETAPA_12.md.
+
+
+## Diferencia de proyectos OAuth confirmada
+
+El propietario confirma que solo controla los proyectos visibles en su cuenta; el proyecto Gmail personal es 877485729157 y los nuevos Android pertenecen a este. El backend publico sigue entregando cliente web de 809732796581, obtenido de GOOGLE_CLIENT_ID; no esta fijado en la APK/repositorio y no se acredita acceso al proyecto original. No seguir pidiendo buscar otras cuentas. Preparar cliente WEB de acceso en proyecto controlado junto a Android, validar de forma aislada y revisar continuidad de identidad antes de proponer cambio productivo. No sustituir GOOGLE_CLIENT_ID productivo sin aprobacion separada; no activar Gmail ni alterar su cliente Desktop. Propuesta aun sin ejecutar en consola.
+
+
+## Diagnostico actual del proveedor Google
+
+Build debug de diagnostico compilado e instalado solo en com.kaptal.app.debug. Tercer intento con cuenta elegida por propietario: GetCredentialCustomException, tipo Google Password Manager. No hubo ID token enviado al backend. Cliente web publico consultado: proyecto numerico 809732796581. Pregunta pendiente: confirmar que ID de cliente Android Kaptal Pruebas empieza por 809732796581-. No registrar mensajes completos ni tokens. Cambio temporal sin commit en GoogleSignInPlugin.java: log de clase/tipo solo para app debuggable; revisar o retirar al cerrar diagnostico. Release del propietario sigue 0.1.6; #117 y #116 en borrador. CI success de 1071fd4 no cubre este cambio temporal.
+
+
+## Login Google real: fallo del proveedor en investigacion
+
+Samsung reconectado. El selector Google aparecio y el propietario eligio su cuenta habitual dos veces; ambas devolvieron GOOGLE_UNAVAILABLE desde el plugin antes de enviar el ID token al backend. No hay login real aprobado. Firma debug SHA-1 revalidada y coincidente con la guia. Se prepara build debug de diagnostico con clase/tipo de excepcion, sin mensajes del proveedor, cuentas ni tokens. No instalar release ni integrar #117 mientras no se resuelva.
+
+
+## OAuth Android confirmado por el propietario
+
+El propietario confirma creados los dos clientes Android (release y pruebas) en Google Cloud. Falta verificar el resultado mediante login real; no se inspecciono la consola ni se capturaron secretos. CI342/40062424909 y Android36/40062425053 finalizaron success para HEAD 1071fd41c5f1c072a8db29b0956a63a549ac04fc de #117. El telefono no aparece en ADB al retomar; se solicito reconexion y desbloqueo. PR sigue borrador, sin integrar. Main/produccion sin cambios.
+
+
+## Seguimiento PR #117 y Google Cloud
+
+PR #117 en borrador, commit funcional d6bbc6c235d29fb8c0d67e74440c0b2087430b6b. CI 340/40062296550 y Android 35/40062296548 en curso al revisar; frontend, backend y contratos ya correctos. Telefono conectado; sin fixtures escuchando en 18082/15434. Falta confirmar clientes OAuth en Google Cloud y login real; no integrar ni promover por dar por terminada esa interaccion.
+
+## Cierre de compilacion Google nativo 0.1.7
+
+Build Android debug/release compatible, lint/JVM y una prueba instrumentada Samsung correctos. APK firmada con certificado release conservado: .local/releases/Kaptal-0.1.7.apk y Descargas; SHA256 89A8B40EB6176E2008411B7EC567DBB6103BF8920F622BEA10B51A2D32C8EE03. No instalada sobre release: faltan clientes OAuth Android y login real del propietario. Configuracion/cancelacion real pendientes; detalle actualizado en docs/ANDROID_GOOGLE_NATIVO_ETAPA_12.md. #116 verificado abierto y en borrador, main d39d899 sin cambios.
+
+
+## Trabajo vigente: Google nativo necesario para el propietario
+
+El propietario confirmó que solo utiliza Google y eligió Santander para el piloto. La release 0.1.6 ya instalada arranca en login y conserva la limitación previa de Google solo web. No dar por configurado el banco ni por validado el login habitual de la APK. PR de promoción #116 convertido a borrador hasta resolver el incremento Google nativo y su configuración OAuth; main sigue d39d899, sin despliegue nuevo.
+
+Rama nueva `mejoras/android-google-nativo-etapa-12` desde develop d3e97da. Se prepara 0.1.7/código 8 con Credential Manager, botón explícito, validación Google existente del backend y limpieza de sesión del proveedor al salir. Sin Gmail/Drive. Seis pruebas del componente correctas (incluido GIS web sin regresión), 18 focalizadas iniciales y build web correctos; compilación Java/lint/JVM inicial correctos. Compatibilidad resuelta con googleid 1.1.1: build final debug/release y puente Samsung correctos. Login real todavía pendiente.
+
+El propietario debe revisar clientes OAuth Android en el proyecto web existente: paquetes/firma y pasos detallados en `docs/ANDROID_GOOGLE_NATIVO_ETAPA_12.md`. No solicitar ni imprimir contraseñas, secretos OAuth o tokens. No crear cuentas QA en producción ni elegir una cuenta Google distinta de la habitual en la prueba. La configuración del proyecto y el selector de cuenta requieren su interacción. Google nativo no cierra la Etapa 12 completa; onboarding/privacidad/bloqueo y auditoría amplia siguen después.
+
+## Histórico: APK 0.1.6 instalada y promoción preparada
+
+Release 0.1.6/código 7 instalada como actualización en Samsung; misma firma y fecha original conservadas, arranque comprobado. APK y hash en `docs/ENTREGA_ANDROID_0_1_6_Y_PROMOCION.md`; copia en Descargas. Letra 1.5/giro físico con borrador conservado y cierre accesible aprobados en debug aislada. El propietario confirmó etiquetas de login con TalkBack; ajustes originales restaurados y verificados tras una desconexión USB. Fixture cerrada sin movimientos/conexiones, backend apagado; no confundir este alcance con auditoría completa de accesibilidad.
+
+Respaldo productivo nuevo cifrado DPAPI, catálogo/descifrado/hash verificados; restauración local y DDL V11–V14 ensayados conservando columnas/datos anteriores. Instancia temporal 15434 y datos restaurados retirados. Sin escrituras en producción. Main continúa d39d899; promoción pendiente de PR/checks y aprobación separada. El backend público todavía no incorpora V11–V14; registro bancario de release no activado. Gmail deshabilitado.
+
+Rama nueva `entrega/android-accesibilidad-apk-0-1-6` desde develop 81b9293: bump de versión y arreglo del script Windows ante avisos de javac. No repetir pruebas satisfactorias sin motivo. Siguiente: integrar la entrega tras CI, preparar PR de promoción revisable, aprobación separada, comprobar HTTPS y piloto bancario consentido; después Etapas 12/13 en ramas nuevas, diseño al final. Etapa 10 sigue abierta.
+
+## Histórico: configuración y accesos físicos comprobados (2026-10-23)
+
+Samsung conectado: configuración interactiva con API H2 aislada aprobada (consentimiento, mapeo sintético, activación nativa y desconexión); dos instrumentadas del widget correctas; arranque frío Ingreso tras login y tres acciones en caliente aprobados. Los tres accesos reales del launcher Samsung y los tres botones del widget ya pasaron. Vencimiento simulado con renovación y logout → acción protegida → login → captura solicitada correctos. Ningún formulario guardó movimientos. Detalles y límites en `docs/VALIDACION_ANDROID_CONFIGURACION_ACCESOS.md`.
+
+La interrupción previa causó timeout del arnés; sus éxitos UI se conservaron. H2 nueva usada solo para pendientes: cierre satisfactorio, una prueba con cero fallos/errores y aserciones de cero movimientos/conexiones. Evidencia `.local/configuracion-accesos-cierre-backend.log`. Backend apagado y credenciales temporales eliminadas. Logout debug, marca nativa cerrada, cola cifrada ausente, permiso de escucha retirado y APK de instrumentación desinstalada. Widget QA retirado desde el launcher; debug detenida al terminar. Release del propietario no sustituida, sin cambios en producción.
+
+Esta rama `validacion/android-configuracion-accesos-fisicos` registra evidencia física y parches del tooling de desarrollo necesarios para resolver el bloqueo de auditoría de CI 333. No cambió el código funcional ni migraciones. Lockfile: Angular CLI 21.2.28, body-parser 2.4.0, fast-uri 3.1.9, undici 6.29.1/7.30.1 y zod 4.6.6; override de undici limitado a Angular Build. Mantener el control de auditoría sin ampliar excepciones. Revalidar checks del HEAD final de PR #114 antes de integrar. Base `origin/develop` 0d90675. No repetir pruebas aprobadas sin motivo. Etapa 10 sigue abierta por revisión manual TalkBack/giro/letra grande de los nuevos accesos, HTTPS público y piloto bancario real consentido tras autorización. Gmail deshabilitado. Siguiente: revisión manual o Etapas 12/13 en rama nueva; main/producción requieren aprobación separada.
+
+## Histórico: avance físico interrumpido
+
+Configuración interactiva local ya aprobada en Samsung: consentimiento, asociación sintética, activación nativa y desconexión con revocación. Dos instrumentadas del widget correctas; arranque frío Ingreso tras login y tres acciones en caliente correctos. Launcher y widget reales: Gasto correcto. APK debug instalada; release del propietario sin sustituir. Evidencia y límites en `docs/VALIDACION_ANDROID_CONFIGURACION_ACCESOS.md`.
+
+La interrupción dejó caducar los arneses: fixture H2 terminó por timeout y no ejecutó sus aserciones finales. Sin backend 18082 activo ni credenciales temporales locales al retomar. Teléfono no detectado por ADB; faltan botones restantes, recorridos físicos adicionales y limpieza final del dispositivo. No repetir pasos aprobados sin motivo. Etapa 10 abierta; Gmail deshabilitado y producción sin cambios.
+
+## Histórico: accesos/widget integrados en develop (2026-10-23)
+
+PR #112 integrado en `226f0a78dfd4436d227b5ad39c0f1064b52ea5c5`, con expected_head_sha `5b27ac358c756c246137948333064a747cee8ee6`. CI 329/40005808293 y Android 28/40005808351 correctos para ese HEAD: seis jobs CI y APK, incluidos PostgreSQL/recuperación, E2E/API y PWA. Frontend CI: 410 pruebas correctas. Local: 20 focalizadas, nueve JVM, build web, lint sin errores y APKs debug/instrumentación compiladas. No confundir con ejecución física de la nueva instrumentación. #110/#111 también revalidados como integrados. Main sigue `d39d89952a18959511032880457aaccff4bb5f66`, sin despliegue ni cambios financieros de producción.
+
+Accesos Gasto/Ingreso/Dictar del launcher y widget de tres botones, sin datos financieros, reutilizan `accion-captura.ts` y guard/login existentes. Preparada APK debug separada `.local/releases/Kaptal-accesos-e744b0d-debug.apk` (SHA256 `C9E29EF4673600882D9AF7206E09BA5262823CB038C63DC8A67DE5963339985B`), no instalada. Release del propietario: última comprobada 0.1.4; release 0.1.5 anterior solo compilada. Ver `docs/ANDROID_ACCESOS_WIDGETS_ETAPA_10.md`.
+
+Etapa 10 abierta. Ya pasaron persistencia cifrada y deduplicación tras bloqueo/reinicio físicos (registros `automatico-lifecycle-*`); no repetir sin motivo. Pendientes: configuración interactiva y launcher/widget/arranque frío/retorno de sesión/TalkBack en el teléfono desconectado; HTTPS público y piloto bancario consentido tras despliegue autorizado. Fixtures locales sin procesos activos; credenciales temporales retiradas. Pruebas optativas previas preservadas en #112. Gmail deshabilitado, sin QA nuevo en producción. Merges a develop autorizados tras checks; main/producción requieren aprobación separada.
+
+Siguiente: conectar teléfono para configuración y accesos; después Etapas 12/13 y diseño al final. Leer continuidad `.local/CONTINUAR_ANDROID_0_1_5.md`. Los estados siguientes son históricos de su fecha.
+
+## Histórico: accesos y widget Android (2026-10-23)
+
+GitHub revalidado: #110 y #111 integrados; base remota `f0ca6047ae10719133034790f6474268be6c4fcf`. Rama nueva `mejoras/android-accesos-widget-captura`, creada desde ese origin/develop. Main sigue `d39d89952a18959511032880457aaccff4bb5f66`; sin despliegue. La rama conserva los dos tests antes no publicados de `validacion/android-configuracion-ciclo-fisico`.
+
+Persistencia cifrada y deduplicación tras bloqueo y reinicio físicos satisfactorias, según pruebas ya realizadas y registros `.local/automatico-lifecycle-{seed,locked,rebooted,cleanup}.txt` (cada fase OK). No se repitieron. Configuración interactiva sigue pendiente; teléfono desconectado. No había fixtures en ejecución ni listeners en 18081/18082 al revisar; archivo temporal de credenciales de configuración retirado. No tocar GlassFish/Derby ni daemons de compilación ajenos a la fixture.
+
+Implementados tres accesos dinámicos del launcher (Android 7.1+) y widget de pantalla de inicio (Android 7+) con gasto/ingreso/dictar. Intents explícitos, PendingIntents inmutables distintos y lista cerrada de acciones; sin importes, cuentas, balances ni credenciales. Puente Capacitor consume la acción una vez y Angular reutiliza `accion-captura.ts`, `/dashboard`, guard y retorno de captura tras login. Arranque espera la navegación inicial. Dictar abre la captura existente, sin activar el micrófono automáticamente. Mantener pulsado el icono permite acceder a los atajos según launcher; widget disponible en su selector.
+
+Validación local correcta: build web, 20 pruebas focalizadas de puente/guard/login, nueve JVM y builds Android debug/instrumentación; lint sin errores (16 avisos y un hint). PR #112 abierto hacia develop; CI 327/40005657088 y Android 27/40005657084 arrancaron sobre código e744b0d. Consultar checks del HEAD final, incluidos commits documentales, antes de integrar. Detalle en `docs/ANDROID_ACCESOS_WIDGETS_ETAPA_10.md`. No dar por probado el launcher/widget físico, arranque frío/retorno a sesión en dispositivo ni TalkBack. Etapa 10 sigue abierta por configuración interactiva, validación física de estos accesos, HTTPS público tras autorización y piloto bancario consentido. No repetir suites anteriores sin cambio/riesgo nuevo. Gmail deshabilitado; no recrear QA en producción. Merge a develop autorizado solo tras checks del HEAD exacto; main/producción requieren aprobación separada.
+
+Siguiente: completar pruebas/CI y revisar PR de esta rama; después validar configuración y accesos en teléfono, luego Etapas 12/13 y diseño al final. Continuación local: `.local/CONTINUAR_ANDROID_0_1_5.md`.
+
+## Histórico: registro automático integrado (2026-10-23)
+
+PR #110 integrado a develop en `6b81bbc92d629bf822ed8b8f5a3391e4404cb150`, con `expected_head_sha=56870dc5689bc47ef101c1203b9b8097225b57e6`. GitHub confirmó CI 321/39914158715 y Android APK 25/39914158564 correctos para ese HEAD: seis jobs verdes, incluidos PostgreSQL/migraciones/recuperación, E2E/API y PWA. Main remoto sigue en `d39d89952a18959511032880457aaccff4bb5f66`. Esta integración no despliega ni activa producción.
+
+Requisito vigente: compras reconocidas se registran sin confirmación individual; ambiguos y posibles duplicados requieren revisión. Santander, American Express, BBVA y Sears Visa: crédito; solo Revolut: débito. Cinco cuentas inicialmente MXN y cero, sin inventar límites, fechas ni cashback. Limpieza terminada: no repetir ni recrear QA en producción; las fixtures antiguas pertenecen a usuarios eliminados. Datos privados solo en `.local/canales-bancarios-autorizados.private.json`, sin imprimir ni comprometer.
+
+Implementado: receptor limitado por dispositivo, V14, clave revocable/caducable, contabilidad idempotente, configuración de cinco proveedores, parsers Sears/Gastaste y cola AES-GCM/Keystore con WorkManager. No lee historial SMS. Los cuatro formatos distintos de Sears se describieron de memoria: no hay compatibilidad universal acreditada. Las tarjetas sin límite conocido admiten deuda sin inventarlo; los límites configurados siguen comprobándose.
+
+Evidencias revalidadas: PostgreSQL aislado 15433, 517 pruebas, cero fallos/errores y una omitida optativa (`.local/automatico-postgres-full.log`); Samsung, 21 instrumentadas (`.local/automatico-instrumentation-all.txt`) y una HTTP física parser Sears → cola cifrada → Worker → Spring/H2 aislado → movimiento único tras reenvío (`.local/automatico-device-http-native.txt` y `.local/automatico-device-http-backend.log`). Frontend 406, parsers JVM 8 y lint/builds correctos según cierre de #110. No repetir suites satisfactorias sin cambio/riesgo nuevo ni tocar PostgreSQL habitual 5432.
+
+APK 0.1.5/código 6 compilada/firmada: `.local/releases/Kaptal-0.1.5.apk`, SHA256 revalidado `EFF027190F0F6EF9D5EBEDAF820C4E8211DCBA25E87DC112FD4B5ACD04852761`. No instalada sobre la release del propietario: última comprobada 0.1.4. Pruebas en debug separada; permiso debug y APK de instrumentación retirados al terminar las pruebas anteriores.
+
+Etapa 10 abierta: faltan configuración interactiva, bloqueo/reinicio físicos y, tras despliegue autorizado, HTTPS público y piloto consentido con formatos reales. HTTP aislado no acredita TLS público ni activación. Después: accesos/widgets/gestos en NUEVA rama desde develop remoto actualizado, sin reutilizar la rama vieja `mejoras/android-accesos-widgets`. Reutilizar `accion-captura.ts` (nuevo-gasto/nuevo-ingreso/dictar), comprobar autenticación, arranque frío y retorno a sesión; widgets sin datos financieros en pantalla bloqueada. Luego Etapas 12/13 y diseño al final.
+
+Merges a develop autorizados tras comprobaciones; main/producción requieren aprobación después de preparar una promoción comprobada. Diff main→develop: V11 (reparto por partes), V12 (metas), V13 (trazabilidad de divisas), V14 (conexiones Android), además de Etapa 11 sin desplegar. Revisar las cuatro migraciones, respaldo/recuperación y compatibilidad antes de publicar. Gmail deshabilitado, Etapa 6 omitida.
+
+Continuación vigente: `.local/CONTINUAR_ANDROID_0_1_5.md`; leer AGENTS.md y `docs/ANDROID_REGISTRO_AUTOMATICO_ETAPA_10.md`. Los apartados históricos siguientes son evidencia de su fecha, no instrucciones ni estado actuales.
+
+## Histórico: Prioridad vigente: datos reiniciados y registro bancario automático (2026-10-23)
+
+El propietario autorizó eliminar los usuarios de prueba y su contenido, conservar únicamente su usuario de Google y vaciar sus datos financieros. Operación realizada y verificada: ocho usuarios eliminados, uno conservado con identidad/autenticación/sesiones intactas; 28 cuentas y 48 movimientos antiguos eliminados; cinco cuentas nuevas en MXN a cero. Santander, American Express, BBVA y Sears Visa son crédito; solo Revolut es débito. Sin límites, corte/pago ni cashback inventados. Ver `docs/REINICIO_DATOS_PRUEBA_2026_10_23.md`; copia cifrada y evidencias privadas en `.local/reset-20261022/`. No repetir la limpieza ni reutilizar la fixture Android del usuario eliminado para crear más datos en producción.
+
+El requisito vigente de Etapa 10 es registrar automáticamente los movimientos reconocidos, especialmente gastos, sin confirmación por cada compra. Esto sustituye la preferencia anterior de revisión obligatoria. El propietario eligió Santander, Revolut, American Express y BBVA, y añadió Sears Visa por SMS con un ejemplo real. Remitente, terminación y asociación de identificadores de cuenta se guardan solo en `.local/canales-bancarios-autorizados.private.json`; no comprometerlos. Los casos ambiguos y las posibles duplicidades no deben registrarse a ciegas. La APK 0.1.4 aún conserva el flujo manual: automático pendiente de implementar, probar y activar.
+
+Rama de limpieza/documentación `mantenimiento/limpieza-datos-prueba`, nueva desde origin/develop `3676f5d` revalidado. La operación de datos no despliega código; main sigue sin actualizarse. Merges a develop autorizados tras comprobaciones. Siguiente: nueva entrega de registro bancario automático en `mejoras/android-registro-bancario-automatico`; después accesos/widgets/gestos útiles, Etapas 12 y 13, y modificaciones de diseño al final. No llamar cerrado al piloto bancario sin pruebas reales consentidas, bloqueo/reinicio y deduplicación. Gmail deshabilitado y Etapa 6 omitida.
+
+
+
+## Histórico: Avance vigente: Etapa 10, notificaciones consentidas (2026-10-22)
+
+PR #107 integrado a develop en `b158f04617b926f4ba05de31062e03d0ed48c46d`, desde `mejoras/android-notificaciones-consentidas`, creada en `origin/develop` revalidado `5de3683`. Código `2a149811a5a07f2bc278cfb8ff29154612f88b53`: CI 304/39902079287 y Android 18/39902079348 correctos, incluidos 33 E2E/API y 4 PWA sobre PostgreSQL; seis jobs de CI verdes, con recuperación de base comprobada. Main permanece `d39d89952a18959511032880457aaccff4bb5f66`, sin despliegue nuevo. La rama `docs/cierre-android-0-1-4` se creó desde ese develop actualizado para registrar el cierre; consultar su PR para el estado documental remoto.
+
+Implementado NotificationListener con consentimiento, apps elegidas explícitamente y recepción desactivada/selección vacía por defecto. Cola privada ligada a sesión, 20 pendientes/100 identidades/24 horas, filtro local antes de leer contenido, indicadores conocidos de OTP/tarjetas rechazados y borrado al pausar, cambiar/cerrar cuenta o revocar acceso. Repeticiones y actualizaciones conservan identidad; publicar otro evento requiere su propia revisión. Solo el resumen y los campos revisados se envían a Avisos como NOTIFICACION; recibir deja PENDIENTE y no registra dinero.
+
+Samsung SM-A546E/Android 16: 10 pruebas instrumentadas de almacenes y regresiones correctas; prueba del servicio real con emisor sintético, actualización, segunda publicación y revocación/borrado correctos. Recorrido por UI física correcto: consentimiento, selección del APK emisor sintético, repetición, force-stop/reapertura conservando UUID, revisión sin original en backend, pendiente sin cambiar saldos, reintento HTTP con el mismo aviso, descarte y pausa. Los permisos de escucha de QA se retiraron al terminar; ninguna app bancaria real fue elegida. No se registraron movimientos financieros nuevos.
+
+Frontend 402 correctas; builds web/debug/instrumentación/release firmada correctos. Auditoría sin vulnerabilidades de producción; cinco alertas conocidas de desarrollo sin parche. El E2E local no arrancó: su fixture apunta a la instancia aislada apagada de PostgreSQL en 15433; las regresiones E2E/API/PWA completas sí se ejecutaron correctamente en CI y esa es la evidencia vigente. No modificar el PostgreSQL habitual en 5432 para resolver esa fixture.
+
+Release 0.1.4/código 5 instalada como actualización en Samsung, con firma y fecha original conservadas. Copias `.local/releases/Kaptal-0.1.4.apk`, alias `kaptal-release.apk` y Descargas/Kaptal-0.1.4.apk. 3502117 bytes, SHA-256 `1FF2C4D85BCD00DE2C2FA4B1064DFD6CFF654C02F31C4F410F93734BF0326CC1`. Arranque release correcto; permisos bancarios reales no activados. La validación financiera y del servicio se hizo en debug separada; no confundirla con la instalación/arranque de release. Ver detalles y límites en `docs/ANDROID_NOTIFICACIONES_CONSENTIDAS_ETAPA_10.md`.
+
+La autorización de merges a develop continúa vigente tras comprobaciones; main/producción quedan fuera. Gmail deshabilitado y Etapa 6 omitida. No cerrar Etapa 10: quedan piloto bancario con apps/formatos elegidos por el propietario, bloqueo y reinicio completo físicos, accesos nativos y después Etapas 12/13. La lectura bloqueada del almacén y force-stop de la app no equivalen a esas pruebas del teléfono. No activar permisos bancarios por iniciativa propia.
+
+
+
+## Histórico: Etapa 10: compartir texto Android, primera entrega (2026-10-22)
+
+El propietario autorizó merges automáticos de este trabajo a develop tras comprobaciones. #104 integrado en develop mediante 55bdfe93c8b642b158349d22d1e3f4a785d3d2aa, con CI 292/39876160988 y Android 12/39876160968 correctos. Main d39d899 sin despliegue nuevo. No volver a pedir autorización para estos merges a develop; producción sigue fuera de esa autorización.
+
+Rama nueva mejoras/android-compartir-avisos desde origin/develop 55bdfe9 comprobado. Implementada recepción ACTION_SEND/text/plain con app abierta/cerrada, original local acotado y ligado a sesión, rechazo de indicadores de claves/tarjetas, revisión manual y envío explícito al contrato existente de Avisos. Recibir un aviso no mueve dinero; la confirmación financiera es posterior. Sin backend nuevo, IA, lectura automática de SMS ni acceso a notificaciones.
+
+Release 0.1.3/código 4 instalada como actualización en Samsung SM-A546E/Android 16, firma y datos conservados; copia Descargas/Kaptal-0.1.3.apk y .local/releases/Kaptal-0.1.3.apk. Pruebas financieras en debug física separada: compartir/repetir/cancelar, persistencia sin red tras force-stop, envío solo de resumen revisado, aviso pendiente sin cambiar saldo, confirmación única de gasto sintético 42.00 y saldo 995.66; reintento no duplica. OTP rechazado y HTML inerte. 396 frontend y 3 instrumentadas nativas correctas; builds y auditoría correctos. PR #105 integrado a develop en 969b8fbc8becc59e925bcc2262363052cf8c23c7: CI 299/39883095963 y Android 16/39883095954 verdes sobre 03f732c, incluidos 33 E2E/API y 4 PWA con PostgreSQL.
+
+Durante la prueba sin sesión se reprodujo recuperación de credenciales antiguas tras logout y muerte inmediata del proceso. Corregido con marca nativa persistida antes de completar login/logout y comprobada antes de crear AuthService; solo guarda cierre/identificador, no credenciales. Compartir antes de login y force-stop ya conserva intención sin recuperar sesión cerrada. El guard ahora intenta renovar al navegar con acceso vencido y conserva captura si falta red/cookie. Regresiones de expiración simulada en QA sobre hardware real correctas, además de renovaciones naturales anteriores; no confundir ambas evidencias.
+
+Detalle, límites y huellas: docs/ANDROID_COMPARTIR_AVISOS_ETAPA_10.md. Estudio inicial de APIs y límites: docs/ANDROID_CANALES_VIABILIDAD_ETAPA_10.md; no acredita un lector universal de compras Wallet. No cerrar Etapa 10: queda implementar NotificationListener consentido con apps permitidas y pruebas de revocación/reinicio/bloqueo, validar accesos nativos y después Etapas 12/13. No examinar avisos reales ni activar permisos bancarios por iniciativa propia. Gmail deshabilitado y Etapa 6 omitida. Mantener pruebas prolongadas; segunda renovación natural y regresiones posteriores correctas.
+
+
+## Histórico: Validación física y APK 0.1.2 (2026-10-22)
+
+Rama `validacion/android-fisico-0-1-1`, desde develop c46d090; PR #104 pendiente de integrar. #102/#103 integrados en develop, main d39d899 sin despliegue nuevo.
+
+Instalada release 0.1.2/código 3 en Samsung SM-A546E/Android 16, misma firma y fecha original de instalación. Copia en Descargas/Kaptal-0.1.2.apk y .local/releases/Kaptal-0.1.2.apk. Sin borrar datos ni modificar movimientos reales.
+
+En Kaptal Pruebas separada, cuenta sintética y WebView física: registro/logout/login, renovación natural tras más de tres horas, gasto/ingreso/transferencia, edición/eliminación, saldos e historial correctos. Captura con Wi-Fi y datos realmente apagados, force-stop/reapertura sin red y sincronización única al recuperar conexión: correctos. Giro, letra grande, teclado real y retorno de segundo plano comprobados en formularios probados; ajustes del teléfono restaurados.
+
+Corregidos permiso ACCESS_NETWORK_STATE (offline no detectado) y reinicio por fontScale (perdía importe sin guardar). ip-address de desarrollo actualizado a 10.7.4 por aviso nuevo que fallaba CI. Frontend 383 correctas, auditoría/build web y builds nativos correctos; instrumentación de arranque y permiso correcta. Código 81f86d7: CI 291/39875106382 y Android 11/39875106308 verdes, incluidos PostgreSQL/recuperación/E2E/PWA. Commits posteriores solo documentales; revisar también checks del head de #104 antes de integrar.
+
+Evidencia y límites: docs/VALIDACION_ANDROID_FISICO.md. Asistente, evidencia de historial y contenido CSV de API coinciden en gasto sintético 12.34; guardado/compartición nativos del archivo pendientes. Finanzas probadas en debug física; actualización y firma en release. Una salida aislada por sesión expirada no se reprodujo: refresh 200 antes/después de force-stop tras relogin; conservar pendiente de sesiones prolongadas. Faltan pantalla bloqueada/reinicio, TalkBack, revisión total, voz/archivos/Google y privacidad. Backend nuevo de Etapa 11 sin despliegue. Preparación siguiente: .local/ETAPA_10_PREPARACION.md; aún sin implementación.
+
+Siguiente: revisar e integrar #104 con autorización explícita; Etapa 10 sin Gmail en rama nueva desde develop actualizado → 12 → 13 → revisión final. Gmail deshabilitado, Etapa 6 omitida. No hacer merge ni despliegue por iniciativa propia.
+
+
+
+## Histórico: Integración vigente (2026-10-22)
+
+El propietario autorizó integrar #102/#103 y preparar todo lo posible sin teléfono. PR #102 integrado a develop mediante c8651d03de549b4f31a6c876dc825cf1d8f27edb. Rama Android actualizada con ese develop; conflictos limitados a cinco documentos, conservando los bloques históricos de ambas entregas. Sin despliegue a producción ni cambios en main.
+
+Esta entrega unifica Etapa 11 y Android para develop mediante PR #103, con APK 0.1.1/código 2 firmada y preparada en `.local/releases/Kaptal-0.1.1.apk`. Backend: 503 correctas/6 omitidas; frontend: 383 correctas; build web y Android correctos. CI del código combinado `167f0da`: seis jobs correctos en ejecución 39825842507 y Android correcto en 39825842562, incluidos PostgreSQL, recuperación, E2E/API y PWA. Documentación final posterior sin cambios de aplicación. Ver `docs/INTEGRACION_ANDROID_0_1_1.md` para huellas, evidencia y checklist físico. Estado remoto del merge final y CI de develop: revalidar en GitHub y consultar `.local/CI_ANDROID_APK_CIERRE.md`.
+
+Orden: integración → APK actualizada → validación física de sesión, operaciones y offline → Etapa 10 sin Gmail → 12 → 13 → revisión final. Etapa 9 completa provisionalmente; conserva sus pendientes físicos. Gmail deshabilitado y Etapa 6 omitida. Etapa 10 incluye compartir avisos/SMS seleccionados, notificaciones bancarias consentidas y estudio de Wallet/accesos; no supone lectura universal de SMS ni pagos Wallet.
+
+Teléfono no disponible por decisión del propietario. No declarar login, renovación, segundo plano, operaciones, actualización u offline comprobados en Android físico. Sin movimientos financieros reales. Conservar firma privada y APK 0.1.0; instalar posteriormente como actualización con cuenta de prueba autorizada. Google nativo, voz/archivos Android, widgets y accesos nativos continúan pendientes.
+
+
+
+
+
+
+### Historico Android
+
+## Histórico: Avance vigente: base Android (2026-10-22)
+
+Validación Android: APK release 0.1.0 firmada e instalada, copia en Descargas/Kaptal-0.1.0.apk y .local/releases/kaptal-release.apk. Prueba instrumentada física correcta en SM-A546E/Android 16: arranque local y health HTTPS, sin cuentas ni dinero reales. Frontend 382 y build/auditor?a correctos. PR #103 abierto hacia develop; CI del cierre pendiente de consultar. Sesi?n larga y capacidades nativas avanzadas siguen pendientes.
+
+Rama `mejoras/android-apk` creada desde `origin/develop` revalidado `3af6e80`. Etapa 11 implementada en PR #102, abierto y sin integrar; CI final verde, ejecución 39731697875. Esta rama Android no incluye ese PR todav?a. Etapa 9 completada provisionalmente por decisi?n del propietario; conservar sus pendientes manuales para la revisi?n final.
+
+Orden: 11 ? Capacitor/APK firmado descargable sin Play Store ? 10 sin Gmail ? 12 ? 13 ? revisi?n final. Base Capacitor 8.5.3 con Angular empaquetado, API HTTPS por transporte nativo, sin service worker Android ni GIS web en WebView. Firma local privada, script de build y CI debug. Gmail permanece fuera.
+
+Ver alcance, comprobaciones y pendientes actuales en [ANDROID_APK_BASE.md](ANDROID_APK_BASE.md). No declarar widgets, SMS, notificaciones nativas, exportaciones, Google nativo o sesión larga terminados con esta base. Backend sin cambios. Sin merge ni despliegue de producción; prevalece este apartado sobre el historial siguiente.
+
+### Historico Etapa 11
+
+Correccion final del E2E remoto: esperar la respuesta HTTP del retiro antes de consultar saldos; tres repeticiones locales correctas. CI 275: cinco jobs verdes, unico fallo por esa espera en la prueba de metas. Revalidar el nuevo CI del PR #102. Comunicacion breve con Ponytail/Caveman; Graphify instalada sin grafo preparado, no se ejecuto; no se encontro una skill llamada agent-skills.
+
+
+Tercera entrega de Etapa 11: metas propias con aportes/retiros por transferencias, cancelacion conservando fondos y respaldo v7; divisas con fuente manual y fecha aplicada en historial/CSV/respaldo. Revisadas liquidaciones y concurrencia existentes. Corregidas expectativas obsoletas del CI (respaldo y migraciones) y actualizado Vitest a 4.1.12; auditoria correcta. Frontend 382, build y cinco E2E distintos correctos; backend verify completo final: 509 ejecutadas, 503 correctas y 6 omitidas, sin fallos/errores. Consultar el resultado remoto actual de PostgreSQL/CI en PR #102 antes de integrar. Detalles en COMPARTIDO_DIVISAS_METAS_ETAPA_11.md. PR #102 sin integrar. Despues sigue Capacitor/APK; Gmail fuera.
+
+
+Historico de la segunda entrega de Etapa 11: reparto de pareja por partes enteras, pesos e importes persistidos, respaldo v6/restauracion compatible con v1-v5 y migracion V11. Verificado: backend 493 correctas y 6 omitidas, frontend 382, build y E2E movil correctos. CI previo del PR #102 verde; nuevo CI/PostgreSQL pendiente de publicar esta ampliacion. Siguen pendientes divisas, metas y revision de liquidaciones; no cerrar Etapa 11. Gmail fuera.
+
+
+## Histórico: Prioridad vigente: Etapa 11 (2026-10-21)
+
+Orden autorizado: **11 -> base Android con Capacitor y APK firmado descargable -> 10 sin Gmail -> 12 -> 13 -> revision final**. Etapa 9 completada provisionalmente por el propietario; sus pruebas fisicas pendientes se revisan al final, sin certificarlas ahora. APK directo, sin Play Store; widgets y ajustes rapidos requieren componentes Android. Gmail excluido. Comercializacion opcional.
+
+Rama nueva `mejoras/compartido-divisas-metas` desde `origin/develop` actualizado `6775c1e`. PR #101 fue integrado en develop por el propietario durante el trabajo; rama actualizada con origin/develop `3af6e80`, sin integrar el PR #102. Primera entrega de Etapa 11: cambio de rol editor/lector por el propietario, manteniendo movimientos y saldos. Detalles y pendientes en [COMPARTIDO_DIVISAS_METAS_ETAPA_11.md](COMPARTIDO_DIVISAS_METAS_ETAPA_11.md). Los bloques de roles, partes, metas y divisas estan implementados. Revisar el CI actual y el PR #102 antes del cierre y de continuar con Capacitor/APK.
+
+Validacion de la primera entrega: backend verify 489 correctas y 6 omitidas; frontend 381 correctas tras actualizar develop; build correcto. Dos E2E de listas/roles y accesos de captura correctos tras actualizar develop. Corregida la actualizacion de participantes tras union desde otra sesion. H2/datos sinteticos; PostgreSQL y CI pendientes. PR #102 abierto como borrador hacia develop; sin integrar ni desplegar esta entrega.
+
+Los apartados siguientes son el historial anterior; prevalece este orden.
+
+## Histórico: Prioridad vigente: Etapa 9 Android/captura (2026-10-21)
+
+Rama `mejoras/android-captura` publicada tras recuperar conexión. [PR #101 hacia develop](https://github.com/YaxcheItz/gestorfinanzas/pull/101) abierto como borrador; CI remoto pendiente de resultado. Sin merge ni despliegue de producción. Ampliación verificada: 381 unitarias frontend y tres E2E PWA; permisos sin solicitud automática y denegación segura. Reapertura offline con token vencido exige login y conserva la captura; con conexión renueva usando cookie real.
+
+PR #99 integrado en develop `6775c1e` y PR #100 en main `d39d899`, confirmados por fetch. El propietario autoriza avanzar; las comprobaciones físicas/manuales pendientes de Etapa 8 se conservan sin declararlas resueltas. Rama nueva `mejoras/android-captura` en la carpeta principal desde develop actualizado; notas duplicadas de la raíz resguardadas y retiradas.
+
+Primer incremento: accesos PWA gasto/ingreso/dictado que sobreviven al login y se consumen al abrir, sin destinos externos ni micrófono automático. Prueba del service worker real con reapertura offline y sincronización única. 378 unitarias frontend, 12 E2E de regresión y 1 E2E PWA correctas; build correcto. CI ampliado para la PWA de producción. Alcance y criterios pendientes en [ANDROID_CAPTURA_ETAPA_9.md](ANDROID_CAPTURA_ETAPA_9.md). No cerrar Etapa 9 sin comprobar Android físico, sesión larga y preferencias/recordatorios propios. Después corresponde Etapa 11; Gmail/Etapa 6 siguen fuera.
+
+Histórico de Etapa 8: [PR #99](https://github.com/YaxcheItz/gestorfinanzas/pull/99) ya integrado por el propietario. Seguir pendientes manuales del informe; los apartados siguientes registran sesiones anteriores.
 
 Entrega para PR a develop (2026-10-21), autorizada por el propietario: auditoría/tarjetas/calendario y regresiones de recurrencias. 366 frontend completas; backend verify 485 correctas + 6 omitidas; build/dependencias correctos. 22 escenarios E2E distintos entre la regresión de 20 y el conjunto final de 5 (3 repetidos). Cuentas usa día civil México. Ver [cierre técnico y pendientes](AUDITORIA_ETAPA_8.md). Publicar no cierra Android físico/producción autenticada ni autoriza merge. Etapa 9 después de cerrar Etapa 8; Gmail deshabilitado.
 
 Fuentes y alcance: [TARJETAS_CALENDARIO_MX.md](TARJETAS_CALENDARIO_MX.md).
 
-## Revisión vigente (2026-10-21)
+## Histórico: Revisión vigente (2026-10-21)
 
 Etapa 7 integrada: GitHub confirma PR #97 y fetch sitúa develop en `a8ae7f3`, main en `f4b814e`. Web/API disponibles y Vercel success comprobados de nuevo; no confundirlo con validación autenticada completa en producción. Primer paso pendiente: smoke test de consultas, filtros, evidencia/historial/CSV, presupuesto y recurrencias en producción. Después sigue Etapa 8, auditoría funcional/visual, en la rama actual ya preparada. Etapa 9 Android/captura viene después. No reactivar Gmail ni la Etapa 6; conservar los cambios documentales existentes.
 
-## Avance y siguiente etapa (2026-10-20)
+## Histórico: Avance y siguiente etapa (2026-10-20)
 
 **Etapa 7 (asistente financiero con evidencias) completada e integrada.** PR #97 se integró a `develop` en `a8ae7f33695a9cd84d6a3d4bddea339eaa459e18`; CI quedó verde. `main` está en `f4b814e27de8a87a244d5cc5253e31a6fb1391bc`, también con CI verde. Vercel Production y el backend Render reportaron despliegue exitoso. La web pública respondió HTTP 200 y `/api/health` devolvió `UP`. Esto acredita disponibilidad, no un recorrido autenticado completo en producción.
 
@@ -20,7 +270,7 @@ El propietario validó en el preview filtros/evidencias, disponibilidad de presu
 
 Gmail permanece deshabilitado y Etapa 6 omitida. No hacer nuevos merges ni despliegues sin autorización explícita.
 
-## Prioridad vigente: solo WhatsApp y asistente (2026-10-20)
+## Histórico: Prioridad vigente: solo WhatsApp y asistente (2026-10-20)
 
 Archivo solicitado posteriormente: el borrador Gmail se conserva mediante commit LOCAL en `mejoras/gmail-bancario-piloto`, sin subirlo ni integrarlo. Secretos y artefactos quedan fuera de Git; no reactivar Gmail al retomar este archivo. El PR #97 ya está integrado; la Etapa 8 inicia en la rama descrita arriba.
 
@@ -86,7 +336,7 @@ Siguiente trabajo: **Etapa 6, conciliación común y aprendizaje**, sección 10.
 
 Fecha: 18 de octubre de 2026. Este documento es un plan solicitado por el propietario; no afirma que las funcionalidades propuestas esten implementadas. Plan versionado de continuidad; no incluye secretos.
 
-## Revision de continuidad (2026-10-20)
+## Histórico: Revision de continuidad (2026-10-20)
 
 Guia operativa detallada: [GMAIL_PILOTO_PASO_A_PASO.md](GMAIL_PILOTO_PASO_A_PASO.md). Siguiente accion del propietario: cliente OAuth Desktop privado y etiqueta/filtros `Kaptal-Bancos`; despues consentimiento local y lectura piloto con revision manual. Sigue sin iniciarse OAuth ni leerse Gmail.
 
@@ -99,7 +349,7 @@ Guia operativa detallada: [GMAIL_PILOTO_PASO_A_PASO.md](GMAIL_PILOTO_PASO_A_PASO
 - Para otro chat: «Continua el piloto Gmail de Kaptal. Lee AGENTS.md, ESTADO_SESION.md, PLAN_MAESTRO_KAPTAL.md, BANDEJA_AVISOS.md y HERRAMIENTAS_CANALES_2026-10-17.md. Comprueba la rama mejoras/gmail-bancario-piloto y sus cambios sin publicar desde develop 211b457. Solo Nu recibido y compra TDC Santander, revision manual. La revision del 20 de octubre paso 37 pruebas especificas y 86 completas; el fallo intermitente de lock Windows no esta corregido. Faltan cliente OAuth Desktop, etiqueta/filtros y nombre de etiqueta; luego consentimiento y piloto real autorizado. No leas correo antes de eso ni registres dinero sin confirmacion. Conserva autoria exclusiva y actualiza los MD y el texto de continuidad.»
 
 
-## Seguimiento vigente (19 de octubre de 2026)
+## Histórico: Seguimiento vigente (19 de octubre de 2026)
 
 El propietario pidio actualizar este MD al terminar cada parte y recibir siempre un texto listo para continuar en otro chat. `AGENTS.md` conserva esa preferencia. Este seguimiento prevalece sobre las referencias historicas que siguen.
 
@@ -142,7 +392,7 @@ No marcar la parte multiusuario completa por haber terminado 1A. No habilitar el
 
 Evidencia de 1A: `replica/whatsapp-multiusuario-base/verification.json`. Base de datos aislada con migraciones V1-V9; build `mvnw verify` correcto. No se desplego V9 ni se habilito la funcion en produccion. CI remoto: comprobar el PR de la rama, no asumir resultado por las pruebas locales.
 
-## Activación de WhatsApp multiusuario (19 de octubre de 2026)
+## Histórico: Activación de WhatsApp multiusuario (19 de octubre de 2026)
 
 Integración completada mediante [PR #87](https://github.com/YaxcheItz/gestorfinanzas/pull/87) y [PR #88](https://github.com/YaxcheItz/gestorfinanzas/pull/88) en `develop` y `main` (#89).
 
@@ -453,6 +703,6 @@ Solo si el propietario decide distribuir/comercializar: requisitos de tiendas, p
 
 No abrir diez ramas a la vez ni implementar todo en el siguiente chat. Empezar por el primer bloque y conservar este orden salvo instruccion del propietario.
 
-## 21. Instruccion lista para el siguiente chat
+## 21. Instrucción lista para el siguiente chat
 
-Continúa Kaptal leyendo AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/ASISTENTE_EVIDENCIAS.md (en el worktree del asistente). Solo WhatsApp como canal externo; Gmail deshabilitado, Worker Gmail pausado y Etapa 6 omitida por decisión expresa. Trabaja el asistente financiero con evidencias en mejoras/asistente-evidencias, worktree .local/asistente-worktree, desde develop remoto comprobado. Conserva intacto el borrador Gmail de la rama principal. Prioriza consultas exactas y de solo lectura, sin mezclar monedas ni usuarios, con periodo/alcance y evidencia. Actualiza los MD y no presentes cambios locales como desplegados.
+Continúa Kaptal leyendo AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md, docs/ANDROID_REGISTRO_AUTOMATICO_ETAPA_10.md y .local/CONTINUAR_ANDROID_0_1_5.md. #110 integrado en develop 6b81bbc con CI/Android correctos; verifica remoto. Completa configuración interactiva y bloqueo/reinicio físicos en entorno aislado; HTTPS público y piloto esperan despliegue autorizado. Después accesos/widgets/gestos en nueva rama desde develop actualizado, Etapas 12/13 y diseño al final. No reactivar Gmail, repetir limpieza ni reutilizar QA de producción eliminado. Merges a develop autorizados tras checks; main/producción requieren aprobación separada.

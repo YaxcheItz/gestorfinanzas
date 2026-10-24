@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="capture_widget_name">Kaptal · Captura</string>
+    <string name="capture_expense">Gasto</string>
+    <string name="capture_income">Ingreso</string>
+    <string name="capture_voice">Dictar</string>
+</resources>

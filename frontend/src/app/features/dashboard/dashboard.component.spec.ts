@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { CategoriaPreferidaService } from '../../core/services/categoria-preferida.service';
@@ -52,7 +52,8 @@ describe('DashboardComponent movement dialog accessibility', () => {
         { provide: ToastService, useValue: { success: vi.fn(), error: vi.fn() } },
         { provide: ConfirmDialogService, useValue: { confirm: vi.fn() } },
         { provide: PerfilService, useValue: { perfil: signal(null), cargando: signal(false) } },
-        { provide: Router, useValue: { navigate: vi.fn(), parseUrl: () => ({ queryParams: {} }) } }
+        { provide: Router, useValue: { navigate: vi.fn(), parseUrl: () => ({ queryParams: {} }) } },
+        { provide: ActivatedRoute, useValue: {queryParams:of({})} }
       ]
     });
     await TestBed.compileComponents();
