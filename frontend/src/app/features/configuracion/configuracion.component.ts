@@ -75,7 +75,7 @@ import {
         <form (ngSubmit)="guardarPerfil()" class="space-y-4">
           <fieldset>
             <legend class="mb-2 text-xs font-semibold text-slate-700">Tema</legend>
-            <div class="grid grid-cols-3 gap-2">
+            <div class="settings-theme-choices">
               <button
                 type="button"
                 (click)="tema = 'CLARO'"
@@ -282,6 +282,10 @@ import {
         </div>
         <div class="mt-5 border-t border-slate-200 pt-5">
           <h3 class="text-sm font-bold text-slate-900">Restaurar desde un respaldo</h3>
+          <p class="mt-2 text-sm leading-relaxed text-slate-600">
+            El CSV contiene los movimientos de la lista activa. El respaldo JSON incluye tus datos propios de todas las listas.
+            Las conexiones y los permisos bancarios se configuran de nuevo en cada dispositivo.
+          </p>
           <p class="mt-1 max-w-2xl text-sm leading-relaxed text-slate-600">
             Primero revisaremos el archivo. Para evitar duplicados o cambios en tus saldos, solo se restaura en una cuenta sin datos financieros.
             Tu correo, contraseña y preferencias actuales se conservarán.

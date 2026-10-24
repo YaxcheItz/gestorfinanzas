@@ -28,7 +28,7 @@ import {
     <div class="finance-page budgets-page max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-5 sm:space-y-8">
       
       <!-- Encabezado y Navegación de Período -->
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+      <div class="flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
           <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
             Presupuestos
@@ -140,11 +140,11 @@ import {
             <button 
               type="button"
               (click)="abrirModalNuevo()"
-              class="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-xs transition-colors cursor-pointer">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              class="inline-flex min-h-11 max-w-full items-center justify-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-xs transition-colors cursor-pointer">
+              <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
               </svg>
-              Crear primer presupuesto
+              <span class="min-w-0 [overflow-wrap:anywhere]">Crear primer presupuesto</span>
             </button>
           </div>
         } @else {

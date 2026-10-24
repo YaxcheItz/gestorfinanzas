@@ -35,9 +35,9 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
         </div>
       }
 
-      <div class="inline-flex p-1 bg-slate-100 rounded-xl" role="group" aria-label="Filtrar categorías">
-        <button type="button" (click)="mostrarInactivas.set(false)" [class]="!mostrarInactivas() ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600'" class="px-3 py-2 rounded-lg text-xs font-semibold cursor-pointer">Activas</button>
-        <button type="button" (click)="mostrarInactivas.set(true)" [class]="mostrarInactivas() ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600'" class="px-3 py-2 rounded-lg text-xs font-semibold cursor-pointer">Archivadas</button>
+      <div class="inline-flex max-w-full flex-wrap p-1 bg-slate-100 rounded-xl" role="group" aria-label="Filtrar categorías">
+        <button type="button" (click)="mostrarInactivas.set(false)" [attr.aria-pressed]="!mostrarInactivas()" [class]="!mostrarInactivas() ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600'" class="min-h-11 px-3 py-2 rounded-lg text-xs font-semibold cursor-pointer">Activas</button>
+        <button type="button" (click)="mostrarInactivas.set(true)" [attr.aria-pressed]="mostrarInactivas()" [class]="mostrarInactivas() ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600'" class="min-h-11 px-3 py-2 rounded-lg text-xs font-semibold cursor-pointer">Archivadas</button>
       </div>
 
       @if (loading()) {
@@ -50,7 +50,7 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
         <section aria-label="Categorías personalizadas" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
           @for (categoria of categoriasVisibles(); track categoria.id) {
             <article
-              class="min-w-0 bg-white p-3 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3 sm:gap-4"
+              class="min-w-0 bg-white p-3 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-wrap items-center gap-3 sm:gap-4"
               [class.opacity-70]="!categoria.activo"
               [attr.data-categoria-id]="categoria.id"
               [class.ring-2]="destinoTactil() === categoria.id"
@@ -72,7 +72,7 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
               <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl" [style.backgroundColor]="categoria.color || '#f1f5f9'">
                 <app-categoria-icono [icono]="categoria.icono" [tipo]="categoria.tipo" clase="h-5 w-5" />
               </span>
-              <div class="min-w-0 flex-1">
+              <div class="min-w-0 flex-1 basis-[8ch]">
                 <h2 class="font-semibold text-slate-900 truncate">{{ categoria.nombre }}</h2>
                 <p class="text-xs text-slate-500">{{ categoria.tipo === 'GASTO' ? 'Gasto' : 'Ingreso' }} · Personalizada</p>
               </div>
@@ -81,12 +81,12 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
                 <button type="button" (click)="moverCategoria(categoria, 1)" [attr.aria-label]="'Bajar ' + categoria.nombre" class="min-h-11 px-2 text-xs font-semibold text-slate-500 hover:text-emerald-700">↓</button>
               </div>
               @if (categoria.activo) {
-                <div class="flex shrink-0 flex-col sm:flex-row">
-                  <button type="button" (click)="abrirEditar(categoria)" class="min-h-10 px-2 text-slate-500 hover:text-slate-900 rounded-lg cursor-pointer" [attr.aria-label]="'Editar ' + categoria.nombre">Editar</button>
-                  <button type="button" (click)="cambiarEstado(categoria, false)" class="min-h-10 px-2 text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer" [attr.aria-label]="'Archivar ' + categoria.nombre">Archivar</button>
+                <div class="flex max-w-full shrink-0 flex-wrap flex-col sm:flex-row">
+                  <button type="button" (click)="abrirEditar(categoria)" class="min-h-11 px-2 text-slate-500 hover:text-slate-900 rounded-lg cursor-pointer" [attr.aria-label]="'Editar ' + categoria.nombre">Editar</button>
+                  <button type="button" (click)="cambiarEstado(categoria, false)" class="min-h-11 px-2 text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer" [attr.aria-label]="'Archivar ' + categoria.nombre">Archivar</button>
                 </div>
               } @else {
-                <button type="button" (click)="cambiarEstado(categoria, true)" class="min-h-10 px-3 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 rounded-lg cursor-pointer">Restaurar</button>
+                <button type="button" (click)="cambiarEstado(categoria, true)" class="min-h-11 px-3 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 rounded-lg cursor-pointer">Restaurar</button>
               }
             </article>
           }
