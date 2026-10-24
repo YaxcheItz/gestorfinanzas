@@ -1,5 +1,19 @@
 # Estado para retomar la sesión
 
+## Avance vigente: entrega combinada 0.1.10 e integración completa
+
+- Integración: #126 (mediciones), #124 (bloqueo nativo) y #125 (accesibilidad/respaldo) integrados en develop `8038946e1894bd1d9bc8d25f9cffc1f85f4d00f9`. #125 terminó con CI380/40130497481 y Android60/40130497478 correctos.
+- Promoción #127 integrada en main `0c82f2f25fbc170d85733e23097858244815aac3` tras quince checks y estado Vercel SUCCESS del HEAD exacto 8038946: CI381/40131370547, CI382/40131389846, Android61/40131370565 y Android62/40131389869. Comprobar por separado CI383/40132044197, Android63/40132044247 y despliegues posteriores; integrar no equivale a despliegue terminado.
+- APK combinado 0.1.10/código11 instalado conservando firma, datos, primera instalación y acceso a notificaciones. SHA256 `897D4BBF0F35DADF01141420FF325629C81BF129F18EDCC52231E5A952C52522`, `.local/releases/Kaptal-0.1.10.apk` y Descargas. Sustituye los APK intermedios E398/2E70. Origen 8038946.
+- Dispositivo: Samsung SM-A546E. El propietario confirma sesión/cuentas y uso normal después de desbloquear el APK combinado. Ya confirmó fondo Kaptal, diálogo Android automático, cancelación protegida y reintento sin bucle. No repetir esas pruebas sin motivo ni cerrar su sesión. Debug detenida e instrumentación retirada.
+- Validación local combinada: 445 pruebas frontend, cinco del medidor, build y dieciséis E2E correctos. Respaldo/restauración solo local con datos sintéticos. Seis pruebas JVM del bloqueo y dos instrumentadas Samsung correctas. TalkBack y contraste completo siguen pendientes.
+- Respaldo previo a promoción actualizado: `.local/promotion-20261024T204749Z/before-main.dump.dpapi`; origen solo lectura, cifrado/descifrado/hash y catálogo comprobados, sin restaurar. V11–V14 sin cambios. La autorización permanente de publicación tras comprobaciones sigue vigente; no permite acciones destructivas, restauración/QA productiva ni Gmail.
+- Piloto Santander y otros bancos seleccionados intencionalmente activos/consentidos. Falta el próximo aviso habitual para comprobar formato, asociación y registro único; no realizar compras de prueba. Etapa10 abierta.
+- Etapa12 pendiente de TalkBack/contraste completo. Etapa13 tiene métricas de build y latencia local; faltan rendimiento real, consumo/costes de IA, presupuesto global, alertas y recuperación operativa. No presentar mediciones H2 como p95 productivo. Diseño general al final.
+
+Siguiente: terminar verificaciones posteriores de main y Render/Vercel, HTTPS/health/Google, hashes servidos y migraciones; registrar el resultado exacto en el prompt local `.local/CONTINUAR_KAPTAL_ETAPAS_12_13.md`. Continuar pendientes en ramas nuevas desde develop remoto actualizado. Mantener ambos documentos y plan local sincronizados.
+
+
 ## Avance vigente: accesibilidad corregida con fuentes alternativas y mediciones integradas
 
 - #125 en `validacion/etapa-12-accesibilidad-respaldo`, worktree `.local/wt-a12`, rama independiente desde develop fd821fb y actualizada con `70a7f863eb458650dfffc2daff0e10ccdbf5f822` de #124/#126. Corrige caché bloqueada y reflujo de Configuración, Cuentas, Categorías y Presupuestos con letra al 200 %. CSV/lista activa y alcance del JSON aclarados. Detalle en `ACCESIBILIDAD_RESPALDO_ETAPA_12.md`.
