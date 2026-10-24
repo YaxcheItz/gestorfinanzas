@@ -10,6 +10,8 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "test:e2e": "playwright test",
+    "metrics:build": "node scripts/measure-build.mjs",
+    "metrics:test": "node --test scripts/measure-build.test.mjs",
     "security:check": "node --test scripts/check-dependencies.test.mjs && node scripts/check-dependencies.mjs"
   },
   "prettier": {
