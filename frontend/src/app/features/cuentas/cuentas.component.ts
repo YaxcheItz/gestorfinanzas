@@ -35,7 +35,7 @@ import { fechaCivilFinanciera } from '../../core/utils/periodo-financiero';
         </button>
       </header>
 
-      <div class="inline-flex p-1 bg-slate-100 rounded-xl" role="group" aria-label="Filtrar cuentas">
+      <div class="inline-flex max-w-full flex-wrap p-1 bg-slate-100 rounded-xl" role="group" aria-label="Filtrar cuentas">
         <button
           type="button"
           (click)="filtroEstado.set('ACTIVAS')"

@@ -24,21 +24,25 @@ export class PrivacidadService {
    */
   aplicarDesdeCache(usuarioId: number): void {
     this.usuarioId = usuarioId;
-    const guardado = this.document.defaultView?.localStorage.getItem(this.clave(usuarioId));
-    if (guardado === 'true' || guardado === 'false') this._ocultarMontos.set(guardado === 'true');
+    try {
+      const guardado = this.document.defaultView?.localStorage.getItem(this.clave(usuarioId));
+      if (guardado === 'true' || guardado === 'false') this._ocultarMontos.set(guardado === 'true');
+    } catch { this._ocultarMontos.set(true); } // Hide amounts until the server resolves an unreadable preference.
   }
 
   aplicar(usuarioId: number, ocultarMontos: boolean): void {
     this.usuarioId = usuarioId;
     this._ocultarMontos.set(ocultarMontos);
-    this.document.defaultView?.localStorage.setItem(this.clave(usuarioId), String(ocultarMontos));
+    try { this.document.defaultView?.localStorage.setItem(this.clave(usuarioId), String(ocultarMontos)); }
+    catch { /* The authenticated preference remains effective in memory. */ }
   }
 
   alternarLocal(): boolean {
     const nuevoValor = !this._ocultarMontos();
     this._ocultarMontos.set(nuevoValor);
     if (this.usuarioId !== null) {
-      this.document.defaultView?.localStorage.setItem(this.clave(this.usuarioId), String(nuevoValor));
+      try { this.document.defaultView?.localStorage.setItem(this.clave(this.usuarioId), String(nuevoValor)); }
+      catch { /* The user's explicit choice remains effective in memory. */ }
     }
     return nuevoValor;
   }

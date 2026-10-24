@@ -16,6 +16,7 @@ import { PerfilService } from '../../core/services/perfil.service';
 import { PrivacidadService } from '../../core/services/privacidad.service';
 import { GuiaInicialService } from '../../core/services/guia-inicial.service';
 import { ScreenPrivacyComponent } from '../../shared/components/screen-privacy/screen-privacy.component';
+import { AppLockComponent } from '../../shared/components/app-lock/app-lock.component';
 import { ToastService } from '../../core/services/toast.service';
 import { MontoPipe } from '../../core/pipes/monto.pipe';
 import { RestauracionRespaldoPreview } from '../../core/models/auth.models';
@@ -29,7 +30,7 @@ import {
 @Component({
   selector: 'app-configuracion',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, MontoPipe, GoogleSignInComponent, WhatsappConnectionComponent, ScreenPrivacyComponent],
+  imports: [CommonModule, FormsModule, RouterLink, MontoPipe, GoogleSignInComponent, WhatsappConnectionComponent, ScreenPrivacyComponent, AppLockComponent],
   template: `
     <main class="finance-page settings-page mx-auto max-w-4xl space-y-5 px-3 py-5 sm:space-y-7 sm:px-6 sm:py-8">
       <header class="flex min-w-0 items-center gap-3 sm:gap-4">
@@ -75,7 +76,7 @@ import {
         <form (ngSubmit)="guardarPerfil()" class="space-y-4">
           <fieldset>
             <legend class="mb-2 text-xs font-semibold text-slate-700">Tema</legend>
-            <div class="grid grid-cols-3 gap-2">
+            <div class="settings-theme-choices">
               <button
                 type="button"
                 (click)="tema = 'CLARO'"
@@ -222,6 +223,7 @@ import {
         <summary><strong>Seguridad</strong><span>Privacidad, contraseña y sesión</span></summary>
         <div class="settings-disclosure__content">
         <app-screen-privacy />
+        <app-app-lock />
         <div class="mb-5">
           <h2 class="text-base font-bold text-slate-900">Seguridad</h2>
           <p class="mt-1 text-xs text-slate-500">Usa entre 8 y 20 caracteres. Puedes incluir símbolos.</p>
@@ -282,6 +284,10 @@ import {
         </div>
         <div class="mt-5 border-t border-slate-200 pt-5">
           <h3 class="text-sm font-bold text-slate-900">Restaurar desde un respaldo</h3>
+          <p class="mt-2 text-sm leading-relaxed text-slate-600">
+            El CSV contiene los movimientos de la lista activa. El respaldo JSON incluye tus datos propios de todas las listas.
+            Las conexiones y los permisos bancarios se configuran de nuevo en cada dispositivo.
+          </p>
           <p class="mt-1 max-w-2xl text-sm leading-relaxed text-slate-600">
             Primero revisaremos el archivo. Para evitar duplicados o cambios en tus saldos, solo se restaura en una cuenta sin datos financieros.
             Tu correo, contraseña y preferencias actuales se conservarán.
@@ -297,10 +303,10 @@ import {
             <p role="status" class="mt-3 text-sm text-slate-600">Validando archivo...</p>
           }
           @if (previewRespaldo(); as preview) {
-            <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4" aria-live="polite">
+            <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 [overflow-wrap:anywhere]" aria-live="polite">
               <h4 class="text-sm font-bold text-slate-900">Vista previa del respaldo</h4>
               <p class="mt-1 text-xs text-slate-600">Generado: {{ preview.generadoEn | date:'medium' }} · Versión {{ preview.version }}</p>
-              <dl class="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-4">
+              <dl class="settings-backup-counts mt-3 text-sm">
                 <div><dt class="text-xs text-slate-500">Cuentas</dt><dd class="font-semibold text-slate-900">{{ preview.cuentas }}</dd></div>
                 <div><dt class="text-xs text-slate-500">Categorías</dt><dd class="font-semibold text-slate-900">{{ preview.categorias }}</dd></div>
                 <div><dt class="text-xs text-slate-500">Movimientos</dt><dd class="font-semibold text-slate-900">{{ preview.transacciones }}</dd></div>
