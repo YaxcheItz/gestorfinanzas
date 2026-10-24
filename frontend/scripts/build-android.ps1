@@ -35,8 +35,14 @@ try {
     }
     Push-Location android
     try {
-        & ./gradlew.bat ":app:assemble$variant" --no-daemon
-        if ($LASTEXITCODE) { throw 'Fallo el build Android.' }
+        # Windows PowerShell convierte avisos de javac en errores; manda el codigo de salida.
+        $previousErrorAction = $ErrorActionPreference
+        try {
+            $ErrorActionPreference = 'Continue'
+            & ./gradlew.bat ":app:assemble$variant" --no-daemon
+            $gradleExitCode = $LASTEXITCODE
+        } finally { $ErrorActionPreference = $previousErrorAction }
+        if ($gradleExitCode) { throw 'Fallo el build Android.' }
     } finally { Pop-Location }
     $apk = Join-Path $frontend "android/app/build/outputs/apk/$variant/app-$variant.apk"
     $apksigner = Get-ChildItem (Join-Path $env:ANDROID_HOME 'build-tools/*/apksigner.bat') | Sort-Object FullName -Descending | Select-Object -First 1
