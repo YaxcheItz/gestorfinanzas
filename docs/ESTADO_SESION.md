@@ -1,5 +1,18 @@
 # Estado para retomar la sesión
 
+## Avance vigente: privacidad nativa de pantalla 0.1.9
+
+Este avance prevalece sobre 0.1.8 como APK actual. La autorización permanente de publicación tras comprobaciones permanece vigente; no autoriza destruir/restaurar datos ni activar Gmail.
+
+- Base verificada: develop `f74c097896c660f19297c2611c8d2e30a3a3220f`, CI360/40103010727 SUCCESS. #121 documental integrado tras CI359 y siete checks correctos de `2b99210`. Rama nueva `mejoras/etapa-12-privacidad-pantalla` desde ese remoto.
+- Implementado control Android opcional en Configuración → Seguridad: protección nativa de capturas y vista previa, preferencia privada por dispositivo, sin logout ni cambios bancarios. `FLAG_SECURE` y API de Recientes desde Android13; lectura del estado real, booleano estricto, errores/reintento sin fingir éxito. El bloqueo biométrico/de acceso aún no está implementado. Detalle/fuentes en `PRIVACIDAD_PANTALLA_ETAPA_12.md`.
+- Validación: 434 unitarias frontend correctas, diez nuevas; builds web/debug/release y Android lint/JVM correctos; diez E2E locales correctos con ausencia de control ficticio en web. Una instrumentada Samsung correcta, repetida tras completar Recientes: flag real, validación, recreación, preferencia de tipo inválido recuperable y sesión nativa intacta. Preferencia debug restaurada; instrumentación desinstalada y debug detenida. Sin QA productiva.
+- APK/dispositivo: release 0.1.9/código10 instalada con firma/datos y fecha original 2026-10-22 00:26:31 conservados. SHA256 `6BFF7E70739FE431F595DECAEE70DF9C7C2F094E719C340CF2E86D94358290E3`, `.local/releases/Kaptal-0.1.9.apk` y Descargas. Acceso a notificaciones retenido. El propietario activó la opción y confirmó capturas bloqueadas y vista de Recientes protegida. Conservarla; no desactivarla para capturas de diagnóstico.
+- Producción al iniciar este incremento: main `4f3651efcd9424a154c21fb2893d0ac925a5cdf4`, guía 0.1.8 publicada, CI358/Android46 y Render/Vercel correctos, HTTPS/config Google y V11–V14 comprobados. Privacidad 0.1.9 instalada no equivale todavía a integración web/publicación del código.
+- Piloto bancario: Santander configurado y otros bancos seleccionados intencionalmente, consentidos por el propietario. No desconectar por bloqueo/privacidad. Esperar próximo aviso habitual para formato/asociación/un solo movimiento; no compras de prueba ni avisos sintéticos productivos. Etapa10 sigue abierta; Gmail deshabilitado.
+
+Siguiente: CI del HEAD exacto y PR/integración/publicación; después bloqueo/biometría nativos y accesibilidad amplia, seguido de Etapa13 en ramas nuevas desde develop actualizado. El propietario aclaró que su duda sobre el alcance no era una cancelación y autorizó expresamente continuar con todos estos puntos. No repetir persistencia cifrada, reinicio físico o widgets ya acreditados sin motivo nuevo. Mantener estado/plan/copia local y `.local/CONTINUAR_ANDROID_PRIVACIDAD_ETAPA_12.md` sincronizados. Diseño al final.
+
 ## Avance vigente: guía inicial 0.1.8 y configuración bancaria real
 
 Este avance prevalece sobre las referencias a 0.1.7 como APK actual y al piloto todavía sin configurar. La autorización permanente de publicación sigue vigente; Gmail permanece deshabilitado.

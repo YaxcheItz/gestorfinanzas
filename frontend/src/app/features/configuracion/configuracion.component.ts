@@ -15,6 +15,7 @@ import { FinanzasService } from '../../core/services/finanzas.service';
 import { PerfilService } from '../../core/services/perfil.service';
 import { PrivacidadService } from '../../core/services/privacidad.service';
 import { GuiaInicialService } from '../../core/services/guia-inicial.service';
+import { ScreenPrivacyComponent } from '../../shared/components/screen-privacy/screen-privacy.component';
 import { ToastService } from '../../core/services/toast.service';
 import { MontoPipe } from '../../core/pipes/monto.pipe';
 import { RestauracionRespaldoPreview } from '../../core/models/auth.models';
@@ -28,7 +29,7 @@ import {
 @Component({
   selector: 'app-configuracion',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, MontoPipe, GoogleSignInComponent, WhatsappConnectionComponent],
+  imports: [CommonModule, FormsModule, RouterLink, MontoPipe, GoogleSignInComponent, WhatsappConnectionComponent, ScreenPrivacyComponent],
   template: `
     <main class="finance-page settings-page mx-auto max-w-4xl space-y-5 px-3 py-5 sm:space-y-7 sm:px-6 sm:py-8">
       <header class="flex min-w-0 items-center gap-3 sm:gap-4">
@@ -218,8 +219,9 @@ import {
       </div></details>
 
       <details id="security" class="settings-disclosure scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6" [open]="seccionAbierta() === 'security'" (toggle)="alternarSeccion('security', $event)">
-        <summary><strong>Seguridad</strong><span>Contraseña y cierre de sesión</span></summary>
+        <summary><strong>Seguridad</strong><span>Privacidad, contraseña y sesión</span></summary>
         <div class="settings-disclosure__content">
+        <app-screen-privacy />
         <div class="mb-5">
           <h2 class="text-base font-bold text-slate-900">Seguridad</h2>
           <p class="mt-1 text-xs text-slate-500">Usa entre 8 y 20 caracteres. Puedes incluir símbolos.</p>

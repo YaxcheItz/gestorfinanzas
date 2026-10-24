@@ -257,6 +257,7 @@ test('ajustes abre secciones por enlace y conserva la protección de eliminar cu
   await page.screenshot({path:test.info().outputPath('ajustes-movil.png'),fullPage:true});
   await page.getByRole('navigation',{name:'Secciones de configuración'}).getByRole('link',{name:'Seguridad',exact:true}).click();
   await expect(page.locator('#security')).toHaveAttribute('open','');
+  await expect(page.getByRole('switch', { name: 'Proteger pantalla en este Android' })).toHaveCount(0);
   await page.getByRole('navigation',{name:'Secciones de configuración'}).getByRole('link',{name:'Respaldo',exact:true}).click();
   await expect(page.locator('#backup')).toHaveAttribute('open','');
   await expect(page.locator('#security')).not.toHaveAttribute('open');
