@@ -4,6 +4,25 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 public class NativeAuthenticationGateTest {
+    @Test public void enteringShowsSystemPromptWithoutLoopingAfterCancellation() {
+        var gate = new NativeAuthenticationGate(); gate.resume();
+        assertTrue(gate.shouldPrompt(true, true, false));
+        assertFalse(gate.shouldPrompt(true, true, false));
+        gate.begin(100);
+        gate.pause(true); gate.resume();
+        assertFalse(gate.shouldPrompt(true, true, true));
+        gate.cancel();
+        assertFalse(gate.shouldPrompt(true, true, false));
+        gate.pause(false); gate.resume();
+        assertTrue(gate.shouldPrompt(true, true, false));
+    }
+    @Test public void automaticPromptNeverAppearsForUnlockedOrDisabledScreen() {
+        var gate = new NativeAuthenticationGate(); gate.resume();
+        assertFalse(gate.shouldPrompt(false, true, false));
+        assertFalse(gate.shouldPrompt(true, false, false));
+        assertFalse(gate.shouldPrompt(true, true, true));
+        gate.destroy(); assertFalse(gate.shouldPrompt(true, true, false));
+    }
     @Test public void successIsSingleUseAndRequiresResume() {
         var gate = new NativeAuthenticationGate();
         long attempt = gate.begin(100);

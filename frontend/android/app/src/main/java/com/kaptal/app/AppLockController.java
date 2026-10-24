@@ -39,11 +39,14 @@ final class AppLockController {
         cover.setOrientation(LinearLayout.VERTICAL);
         cover.setGravity(Gravity.CENTER);
         cover.setPadding(32, 32, 32, 32);
-        cover.setBackgroundColor(Color.rgb(15, 23, 42));
+        var colors = activity.obtainStyledAttributes(new int[]{android.R.attr.colorBackground, android.R.attr.textColorPrimary});
+        cover.setBackgroundColor(colors.getColor(0, Color.WHITE));
         cover.setClickable(true);
         cover.setFocusable(true);
         message = new TextView(activity);
-        message.setTextColor(Color.WHITE);
+        var textColors = colors.getColorStateList(1);
+        if (textColors != null) message.setTextColor(textColors);
+        colors.recycle();
         message.setTextSize(20);
         message.setGravity(Gravity.CENTER);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) message.setAccessibilityHeading(true);
@@ -87,10 +90,13 @@ final class AppLockController {
         if (locked) { call.reject("Desbloquea Kaptal antes de cambiar esta opción.", "LOCKED"); return; }
         authenticate(call, value);
     }
-    void resume() { resumed = true; gate.resume(); finishAuthentication(); render(); }
+    void resume() {
+        resumed = true; gate.resume(); finishAuthentication(); render();
+        if (gate.shouldPrompt(enabled, locked, authenticating)) authenticate(null, null);
+    }
     void pause() {
         resumed = false; pendingResult = false;
-        gate.pause();
+        gate.pause(authenticating);
         if (enabled) locked = true;
         render();
     }
