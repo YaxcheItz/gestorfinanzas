@@ -28,6 +28,8 @@ La configuración requiere el teléfono desbloqueado y una sesión válida. Cone
 
 ## Evidencia y pendientes
 
+Configuración interactiva local aprobada en Samsung (2026-10-23): consentimiento, cuenta/lista sintéticas, activación del registro nativo y desconexión con revocación en Spring/H2 aislado. La fixture de cierre terminó correctamente con cero conexiones y movimientos. Esto acredita UI/plugins con API local interceptada, no TLS público, cuentas reales ni activación en producción. Ver `VALIDACION_ANDROID_CONFIGURACION_ACCESOS.md`; el resto conserva evidencia histórica anterior.
+
 Actualización 2026-10-23: #110/#111 integrados y revalidados en GitHub. Bloqueo y reinicio físicos ya satisfactorios, con persistencia cifrada y deduplicación; registros locales `automatico-lifecycle-seed/locked/rebooted/cleanup.txt`, una prueba correcta por fase. La configuración interactiva sigue pendiente. Fixtures detenidas, credenciales temporales retiradas y teléfono desconectado. Los párrafos posteriores conservan el cierre histórico de #110; bloqueo/reinicio ya no son pendientes vigentes. Accesos/widget avanzan en rama nueva; ver `ANDROID_ACCESOS_WIDGETS_ETAPA_10.md`.
 
 Regresión física ampliada: 21 pruebas instrumentadas correctas en Samsung, incluidas las anteriores y ocho nuevas de almacén/Worker. El Worker se ejecutó con transporte sintético aislado: caída de red y 429 conservan exactamente el mismo payload, éxito consume una sola vez, 401 pausa sin descartar, coincidencias/400 pasan a revisión y logout/revocación no restauran estado. Esto valida el procesamiento del Worker, no una conexión HTTP completa entre teléfono y backend público. Evidencia local: `.local/automatico-instrumentation-all.txt`.
