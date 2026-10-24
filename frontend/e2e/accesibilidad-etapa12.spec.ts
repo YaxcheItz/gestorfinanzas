@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { registrarPrueba } from './registro-helper';
+import { readPageGeometry } from './geometry-helper';
 
 test.use({ viewport: { width: 320, height: 740 }, hasTouch: true, serviceWorkers: 'block' });
 test.setTimeout(180_000);
@@ -34,21 +35,19 @@ test('pantallas principales conservan nombres accesibles, foco y geometría con 
     }
     for (const viewport of [{ width: 320, height: 740 }, { width: 740, height: 320 }]) {
       await page.setViewportSize(viewport);
-      for (const dark of [false, true]) {
-        await page.evaluate(dark => {
+      for (const appearance of [{ dark: false, font: '' }, { dark: true, font: '' }, { dark: false, font: 'Arial, sans-serif' }, { dark: true, font: 'Arial, sans-serif' }]) {
+        const { dark, font } = appearance;
+        await page.evaluate(({ dark, font }) => {
           document.documentElement.style.fontSize = '32px';
           document.documentElement.classList.toggle('dark', dark);
-        }, dark);
+          document.querySelector<HTMLElement>('.monai-theme')!.style.fontFamily = font;
+        }, appearance);
         await page.evaluate(async () => {
           await document.fonts.ready;
           await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
         });
-        await expect.poll(() => page.evaluate(() => ({ fits: document.documentElement.scrollWidth <= innerWidth + 1,
-          viewport: innerWidth, document: document.documentElement.scrollWidth, scrollX,
-          elements: Array.from(document.querySelectorAll('body *')).map(element => ({
-            tag: element.tagName, class: element.className, right: Math.round(element.getBoundingClientRect().right + scrollX),
-          })).filter(element => element.right > innerWidth + 1).sort((a, b) => b.right - a.right).slice(0, 5) })),
-          { message: `${path} ${viewport.width} ${dark ? 'dark' : 'light'}` }).toMatchObject({ fits: true });
+        await expect.poll(() => page.evaluate(readPageGeometry),
+          { message: `${path} ${viewport.width} ${dark ? 'dark' : 'light'} ${font || 'system'}` }).toMatchObject({ fits: true });
       }
     }
     const tree = await accessibility.send('Accessibility.getFullAXTree');

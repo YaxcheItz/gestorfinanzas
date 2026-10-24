@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import { registrarPrueba } from './registro-helper';
+import { readPageGeometry } from './geometry-helper';
 
 test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, serviceWorkers: 'block' });
 test.setTimeout(180_000);
@@ -85,16 +86,17 @@ test('CSV y respaldo descargables, revisión accesible y restauración única co
   await expect.poll(() => page.evaluate(() => Array.from(document.querySelectorAll<HTMLLinkElement>('link[data-kaptal-style]')).every(link => link.sheet !== null))).toBe(true);
   for (const viewport of [{ width: 320, height: 740 }, { width: 740, height: 320 }]) {
     await page.setViewportSize(viewport);
-    for (const dark of [false, true]) {
-      await page.evaluate(dark => {
+    for (const appearance of [{ dark: false, font: '' }, { dark: true, font: '' }, { dark: false, font: 'Arial, sans-serif' }, { dark: true, font: 'Arial, sans-serif' }]) {
+      await page.evaluate(({ dark, font }) => {
         document.documentElement.style.fontSize = '32px';
         document.documentElement.classList.toggle('dark', dark);
-      }, dark);
+        document.querySelector<HTMLElement>('.monai-theme')!.style.fontFamily = font;
+      }, appearance);
       await page.evaluate(async () => {
         await document.fonts.ready;
         await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
       });
-      await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
+      await expect.poll(() => page.evaluate(readPageGeometry)).toMatchObject({ fits: true });
       expect((await restore.boundingBox())!.height).toBeGreaterThanOrEqual(44);
     }
   }

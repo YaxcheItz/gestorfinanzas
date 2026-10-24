@@ -7,6 +7,7 @@ html .monai-theme .settings-page :is(button, select) { min-height: 44px; }
 html .monai-theme .settings-page :is(input:not([type="checkbox"]), select) { font-size: 1rem; }
 .settings-theme-choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 4.5rem), 1fr)); gap: .5rem; }
 .settings-theme-choices button { min-width: 0; overflow-wrap: anywhere; }
+.settings-backup-counts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 7rem), 1fr)); gap: .5rem 1rem; }
 .settings-disclosure { border-color: var(--kaptal-border) !important; box-shadow: none !important; }
 .settings-disclosure > summary { display: grid; grid-template-columns: minmax(0, 1fr) 20px; align-items: center; gap: .35rem .75rem; min-height: 44px; cursor: pointer; list-style: none; touch-action: manipulation; }
 .settings-disclosure > summary::-webkit-details-marker { display: none; }

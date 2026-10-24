@@ -2,7 +2,7 @@
 
 ## Cambios
 
-- Configuración: las opciones de tema se distribuyen según el espacio y el tamaño de letra. Presupuestos: la cabecera puede pasar a otra línea y la acción del estado vacío conserva su texto dentro de la pantalla. Categorías: tarjetas y acciones pueden reorganizarse sin desbordarse; filtros anuncian su selección con `aria-pressed` y acciones conservan al menos 44 px de alto.
+- Configuración: opciones de tema y contadores del respaldo se distribuyen según el espacio/tamaño de letra; el texto largo de la previsualización puede partirse. Cuentas: el filtro puede pasar a otra línea. Presupuestos: cabecera, texto y acción del estado vacío se adaptan sin desbordarse. Categorías: tarjetas y acciones pueden reorganizarse; filtros anuncian selección con `aria-pressed` y acciones conservan al menos 44 px de alto.
 - Privacidad: una lectura de caché bloqueada oculta los importes hasta recibir la preferencia autenticada del servidor. Si falla la escritura local, la elección sigue efectiva en memoria y no lanza una excepción. No cambia el almacenamiento de autenticación ni su contrato.
 - Respaldo: se aclara que CSV corresponde a la lista activa y JSON incluye datos propios de todas las listas. Las conexiones y permisos bancarios deben configurarse de nuevo por dispositivo; no se incluyen credenciales ni se reactivan canales al restaurar.
 
@@ -20,9 +20,9 @@ El recorrido vigente usa API real y H2 efímera, con protección explícita para
 4. Restauración en otra cuenta local vacía: saldos exactos MXN/USD, saldos iniciales, compra, etiquetas, lista, historial y libro conservados; identificadores remapeados y perfil/identidad del destino conservados.
 5. Rechazo del segundo intento sin duplicar movimientos ni cambiar saldos; origen intacto.
 
-La revisión de accesibilidad recorre dashboard, cuentas, movimientos, presupuestos, categorías, metas, configuración y avisos a 320×740 y 740×320, letra al 200 %, claro/oscuro. Comprueba nombres de controles en el árbol de accesibilidad de Chromium, enlace de salto/foco, ausencia de desbordamiento horizontal y ocultación del importe sintético en los nombres accesibles. Se ejecutaron también las regresiones de cuentas y la estructura móvil.
+La revisión de accesibilidad recorre dashboard, cuentas, movimientos, presupuestos, categorías, metas, configuración y avisos a 320×740 y 740×320, letra al 200 %, claro/oscuro, fuente del sistema y Arial. Comprueba nombres de controles en el árbol de accesibilidad de Chromium, enlace de salto/foco, ausencia de desbordamiento horizontal y ocultación del importe sintético en los nombres accesibles. Se ejecutaron también las regresiones de cuentas y la estructura móvil.
 
-CI370 detectó fallos de geometría en las dos pruebas nuevas. El arnés medía inmediatamente después de cambiar tamaño/tema, sin esperar los estilos de página cargados asíncronamente ni las fuentes. Ahora espera esas condiciones y dos frames, comprueba datos visibles en las páginas afectadas y sondea el mismo límite de ancho. Incluye diagnóstico del documento completo y desplazamiento horizontal. Los dos recorridos actualizados pasan localmente; el HEAD actualizado debe superar también CI antes de integrar.
+CI370/371 detectaron desbordamientos reales que no aparecían con la fuente habitual de Windows. La espera de estilos/fuentes no los resolvió. Forzar Arial reprodujo exactamente los 327px en un viewport de 320px: el texto del estado vacío de Presupuestos salía de su caja. La matriz ampliada encontró además el filtro de Cuentas y la palabra «Presupuestos» de los contadores del respaldo. Se ajustaron padding, reflujo y columnas adaptables. Los dos recorridos pasan con ambas fuentes, manteniendo el mismo límite de ancho. El diagnóstico conserva dimensiones y clases de elementos/textos, sin copiar su contenido, y omite contenido de details cerrados. Revalidar el HEAD actualizado también en CI antes de integrar.
 
 ## Pendientes y límites
 

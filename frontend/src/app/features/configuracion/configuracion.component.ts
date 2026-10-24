@@ -301,10 +301,10 @@ import {
             <p role="status" class="mt-3 text-sm text-slate-600">Validando archivo...</p>
           }
           @if (previewRespaldo(); as preview) {
-            <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4" aria-live="polite">
+            <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 [overflow-wrap:anywhere]" aria-live="polite">
               <h4 class="text-sm font-bold text-slate-900">Vista previa del respaldo</h4>
               <p class="mt-1 text-xs text-slate-600">Generado: {{ preview.generadoEn | date:'medium' }} · Versión {{ preview.version }}</p>
-              <dl class="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-4">
+              <dl class="settings-backup-counts mt-3 text-sm">
                 <div><dt class="text-xs text-slate-500">Cuentas</dt><dd class="font-semibold text-slate-900">{{ preview.cuentas }}</dd></div>
                 <div><dt class="text-xs text-slate-500">Categorías</dt><dd class="font-semibold text-slate-900">{{ preview.categorias }}</dd></div>
                 <div><dt class="text-xs text-slate-500">Movimientos</dt><dd class="font-semibold text-slate-900">{{ preview.transacciones }}</dd></div>
