@@ -23,6 +23,10 @@ test('pantallas principales conservan nombres accesibles, foco y geometría con 
     await page.goto(path);
     await expect(page.locator('#main-content')).toBeVisible();
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expect.poll(() => page.evaluate(() => Array.from(document.querySelectorAll<HTMLLinkElement>('link[data-kaptal-style]')).every(link => link.sheet !== null))).toBe(true);
+    if (path === '/presupuestos') await expect(page.getByRole('heading', { name: 'Tus categorías', exact: true })).toBeVisible();
+    if (path === '/cuentas') await expect(page.locator('.account-card').filter({ hasText: 'Cuenta de ensayo' })).toBeVisible();
+    if (path === '/categorias') await expect(page.getByRole('region', { name: 'Categorías personalizadas', exact: true })).toBeVisible();
     if (path === '/categorias') {
       const filters = page.getByRole('group', { name: 'Filtrar categorías', exact: true });
       await expect(filters.getByRole('button', { name: 'Activas', exact: true })).toHaveAttribute('aria-pressed', 'true');
@@ -35,11 +39,16 @@ test('pantallas principales conservan nombres accesibles, foco y geometría con 
           document.documentElement.style.fontSize = '32px';
           document.documentElement.classList.toggle('dark', dark);
         }, dark);
-        const overflow = await page.evaluate(() => ({ fits: document.documentElement.scrollWidth <= innerWidth + 1,
-          elements: Array.from(document.querySelectorAll('main *')).map(element => ({
-            tag: element.tagName, class: element.className, right: Math.round(element.getBoundingClientRect().right),
-          })).filter(element => element.right > innerWidth + 1).sort((a, b) => b.right - a.right).slice(0, 5) }));
-        expect(overflow.fits, `${path} ${JSON.stringify(overflow.elements)}`).toBe(true);
+        await page.evaluate(async () => {
+          await document.fonts.ready;
+          await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+        });
+        await expect.poll(() => page.evaluate(() => ({ fits: document.documentElement.scrollWidth <= innerWidth + 1,
+          viewport: innerWidth, document: document.documentElement.scrollWidth, scrollX,
+          elements: Array.from(document.querySelectorAll('body *')).map(element => ({
+            tag: element.tagName, class: element.className, right: Math.round(element.getBoundingClientRect().right + scrollX),
+          })).filter(element => element.right > innerWidth + 1).sort((a, b) => b.right - a.right).slice(0, 5) })),
+          { message: `${path} ${viewport.width} ${dark ? 'dark' : 'light'}` }).toMatchObject({ fits: true });
       }
     }
     const tree = await accessibility.send('Accessibility.getFullAXTree');

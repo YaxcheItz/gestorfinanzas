@@ -22,6 +22,8 @@ El recorrido vigente usa API real y H2 efímera, con protección explícita para
 
 La revisión de accesibilidad recorre dashboard, cuentas, movimientos, presupuestos, categorías, metas, configuración y avisos a 320×740 y 740×320, letra al 200 %, claro/oscuro. Comprueba nombres de controles en el árbol de accesibilidad de Chromium, enlace de salto/foco, ausencia de desbordamiento horizontal y ocultación del importe sintético en los nombres accesibles. Se ejecutaron también las regresiones de cuentas y la estructura móvil.
 
+CI370 detectó fallos de geometría en las dos pruebas nuevas. El arnés medía inmediatamente después de cambiar tamaño/tema, sin esperar los estilos de página cargados asíncronamente ni las fuentes. Ahora espera esas condiciones y dos frames, comprueba datos visibles en las páginas afectadas y sondea el mismo límite de ancho. Incluye diagnóstico del documento completo y desplazamiento horizontal. Los dos recorridos actualizados pasan localmente; el HEAD actualizado debe superar también CI antes de integrar.
+
 ## Pendientes y límites
 
 - El recorrido Chromium no sustituye TalkBack, contraste completo ni el ensayo físico de los controles ajustados. Retomar las verificaciones necesarias cuando el propietario reconecte el Samsung, conservando las evidencias previas que no cambien.

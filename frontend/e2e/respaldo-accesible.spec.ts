@@ -82,6 +82,7 @@ test('CSV y respaldo descargables, revisión accesible y restauración única co
   });
   const restore = page.getByRole('button', { name: 'Restaurar mis datos', exact: true });
   await expect(restore).toBeVisible(); await expect(restore).toBeDisabled();
+  await expect.poll(() => page.evaluate(() => Array.from(document.querySelectorAll<HTMLLinkElement>('link[data-kaptal-style]')).every(link => link.sheet !== null))).toBe(true);
   for (const viewport of [{ width: 320, height: 740 }, { width: 740, height: 320 }]) {
     await page.setViewportSize(viewport);
     for (const dark of [false, true]) {
@@ -89,7 +90,11 @@ test('CSV y respaldo descargables, revisión accesible y restauración única co
         document.documentElement.style.fontSize = '32px';
         document.documentElement.classList.toggle('dark', dark);
       }, dark);
-      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
+      await page.evaluate(async () => {
+        await document.fonts.ready;
+        await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+      });
+      await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
       expect((await restore.boundingBox())!.height).toBeGreaterThanOrEqual(44);
     }
   }
