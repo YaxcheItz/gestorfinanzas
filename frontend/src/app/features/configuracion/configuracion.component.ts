@@ -76,7 +76,7 @@ import {
         <form (ngSubmit)="guardarPerfil()" class="space-y-4">
           <fieldset>
             <legend class="mb-2 text-xs font-semibold text-slate-700">Tema</legend>
-            <div class="grid grid-cols-3 gap-2">
+            <div class="settings-theme-choices">
               <button
                 type="button"
                 (click)="tema = 'CLARO'"
@@ -284,6 +284,10 @@ import {
         </div>
         <div class="mt-5 border-t border-slate-200 pt-5">
           <h3 class="text-sm font-bold text-slate-900">Restaurar desde un respaldo</h3>
+          <p class="mt-2 text-sm leading-relaxed text-slate-600">
+            El CSV contiene los movimientos de la lista activa. El respaldo JSON incluye tus datos propios de todas las listas.
+            Las conexiones y los permisos bancarios se configuran de nuevo en cada dispositivo.
+          </p>
           <p class="mt-1 max-w-2xl text-sm leading-relaxed text-slate-600">
             Primero revisaremos el archivo. Para evitar duplicados o cambios en tus saldos, solo se restaura en una cuenta sin datos financieros.
             Tu correo, contraseña y preferencias actuales se conservarán.
@@ -299,10 +303,10 @@ import {
             <p role="status" class="mt-3 text-sm text-slate-600">Validando archivo...</p>
           }
           @if (previewRespaldo(); as preview) {
-            <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4" aria-live="polite">
+            <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 [overflow-wrap:anywhere]" aria-live="polite">
               <h4 class="text-sm font-bold text-slate-900">Vista previa del respaldo</h4>
               <p class="mt-1 text-xs text-slate-600">Generado: {{ preview.generadoEn | date:'medium' }} · Versión {{ preview.version }}</p>
-              <dl class="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-4">
+              <dl class="settings-backup-counts mt-3 text-sm">
                 <div><dt class="text-xs text-slate-500">Cuentas</dt><dd class="font-semibold text-slate-900">{{ preview.cuentas }}</dd></div>
                 <div><dt class="text-xs text-slate-500">Categorías</dt><dd class="font-semibold text-slate-900">{{ preview.categorias }}</dd></div>
                 <div><dt class="text-xs text-slate-500">Movimientos</dt><dd class="font-semibold text-slate-900">{{ preview.transacciones }}</dd></div>
