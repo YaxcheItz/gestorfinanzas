@@ -1,6 +1,11 @@
 package com.kaptal.app;
 
 import android.content.Context;
+import androidx.core.content.ContextCompat;
+import androidx.credentials.ClearCredentialStateRequest;
+import androidx.credentials.CredentialManager;
+import androidx.credentials.CredentialManagerCallback;
+import androidx.credentials.exceptions.ClearCredentialException;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
@@ -30,7 +35,17 @@ public class NativeSessionPlugin extends Plugin {
         }
         boolean saved = getContext().getSharedPreferences("session_state", Context.MODE_PRIVATE)
             .edit().putBoolean("closed", closed).putLong("userId", closed ? 0 : userId).commit();
-        if (saved) call.resolve(); else call.reject("No se pudo conservar el estado de la sesión.");
+        if (!saved) { call.reject("No se pudo conservar el estado de la sesión."); return; }
+        if (!closed) { call.resolve(); return; }
+        // La marca de cierre ya esta persistida aunque falle el proveedor de credenciales.
+        try {
+            CredentialManager.create(getContext()).clearCredentialStateAsync(
+                new ClearCredentialStateRequest(), null, ContextCompat.getMainExecutor(getContext()),
+                new CredentialManagerCallback<Void, ClearCredentialException>() {
+                    @Override public void onResult(Void result) { call.resolve(); }
+                    @Override public void onError(ClearCredentialException error) { call.resolve(); }
+                });
+        } catch (RuntimeException ex) { call.resolve(); }
         }
     }
 }

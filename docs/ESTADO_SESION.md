@@ -1,6 +1,83 @@
 # Estado para retomar la sesión
 
-## Estado vigente: APK 0.1.6 instalada y promoción preparada
+## Cierre de validaci?n f?sica Google 0.1.7
+
+El propietario confirm? login correcto tambi?n en la release 0.1.7 instalada. Kaptal Pruebas: logout real mediante Configuraci?n/Seguridad, sesi?n local eliminada; selector Google abierto y cancelado con Atr?s, retorno al login, bot?n reintento habilitado y ninguna sesi?n creada. Evidencia .local/google-normal-logout-cancel-result.json (todos los booleanos correctos). El problema del arn?s era localizar el control; se resolvi? usando el bot?n del bloque de seguridad. Los intentos anteriores incompletos no acreditaban fallo del producto. Debug detenida y release al frente, sin nuevos cambios de datos/avisos bancarios.
+
+Preparado para integrar #117 cuando todos los checks del HEAD final sean correctos. Despu?s actualizar #116/develop?main, verificar respaldo actualizado y pruebas exactas antes de promover; publicaci?n autorizada permanentemente. No cerrar Etapa10 ni Etapas12/13 por este incremento. Gmail deshabilitado; piloto Santander pendiente del pr?ximo aviso consentido.
+
+### Avance posterior: login f?sico y APK
+
+Login normal Google en Kaptal Pruebas correcto: dashboard, sesi?n local y lectura autenticada de /api/cuentas con HTTP 200/success. Evidencia .local/google-normal-flow-result.json, solo booleanos/estado HTTP. El propietario confirma acceso correcto y aclara que su cuenta era reciente y a?n no ten?a cuentas financieras; no afirmar conservaci?n de cuentas preexistentes como prueba f?sica. Cinco AuthServiceTest cubren continuidad/rechazo de identidad de forma aislada.
+
+Release 0.1.7/c?digo8 instalada con adb install -r; firma SHA256 b5f360604095a50f3208299767dcedca2f3acfc5087df8be1fde9cc075c120c3 id?ntica a 0.1.6, primera instalaci?n 2026-10-22 00:26:31 conservada. Abierta para login del propietario; confirmaci?n f?sica release pendiente. No se borraron datos ni se activ? registro bancario.
+
+Arn?s de logout/cancelaci?n no concluyente: no registrar PASS. La primera navegaci?n directa del arn?s no carg? la SPA correctamente; selector nativo/Http nativo tampoco debe medirse mediante eventos HTTP de Playwright. Sesi?n real verificada por lectura nativa autenticada. Pendiente completar cierre/cancelaci?n y dejar debug detenida.
+
+Respaldo actualizado .local/promotion-20261024T050844Z/before-main.dump.dpapi: dump en modo solo lectura, cifrado DPAPI, descifrado/hash y cat?logo correctos. Este snapshot nuevo a?n no se restaur?; ensayo V11?V14 anterior documentado en docs/ENTREGA_ANDROID_0_1_6_Y_PROMOCION.md. No se escribieron/restauraron datos productivos.
+
+## Verificaci?n vigente tras despliegue OAuth (2026-10-24 UTC)
+
+Esta secci?n prevalece sobre los estados hist?ricos siguientes. El propietario ya cambi? GOOGLE_CLIENT_ID en Render y confirma despliegue terminado. Se verificaron directamente Render y el proxy HTTPS Vercel: /api/health UP y /api/auth/google/config con el nuevo cliente web del proyecto 877485729157. Este cambio de configuraci?n no equivale a promover develop a main ni acredita V11?V14 en producci?n.
+
+Autorizaci?n permanente vigente para publicar tras comprobaciones; no pedir aprobaci?n separada de main/producci?n. No autoriza destrucci?n/restauraci?n de datos ni Gmail. Clientes web/Android ya creados: no pedir recrearlos ni buscar acceso al proyecto anterior.
+
+Git confirmado: rama mejoras/android-google-nativo-etapa-12, HEAD aa102bfcb6c813257ddb2227487a4774c144e45a; origin/develop d3e97da16dc3e873382af38b7874461a7fea5c3e, origin/main d39d89952a18959511032880457aaccff4bb5f66. #117 y #116 abiertos y en borrador. CI344/40064325188 y Android37/40064325225 SUCCESS para aa102bf. Documentaci?n local previa conservada; revalidar CI si cambia HEAD.
+
+Samsung SM-A546E conectado por ADB. Release com.kaptal.app contin?a 0.1.6/c?digo7, datos intactos. Debug sin diagn?stico compilada e instalada con adb install -r: 0.1.7-pruebas/c?digo8, SHA256 64CC144F3B90979B7F7E58FD5793A7D846209C80CAAA4144A1B9E0D782002AF7. APK release preparada 0.1.7 mantiene SHA256 89A8B40EB6176E2008411B7EC567DBB6103BF8920F622BEA10B51A2D32C8EE03; a?n no instalada sobre release.
+
+Prueba normal en curso: bot?n expl?cito de Kaptal Pruebas, selector elegido por propietario. A?n no afirmar sesi?n real ni continuidad de cuenta. Arn?s privado .local/check-google-normal-flow.cjs registra solo booleanos/estado HTTP, no cuerpos de autenticaci?n ni datos personales. No ejecutar validate-android-live.cjs: crea QA productiva y contradice l?mites actuales.
+
+Pendientes: completar login y continuidad de cuenta habitual; cancelaci?n/logout cuando corresponda; actualizaci?n release conservando firma/datos; documentos y checks del HEAD final #117, integraci?n develop, actualizar #116 y respaldo cifrado antes de promoci?n, backend/ frontend y migraciones/HTTPS despu?s. Piloto Santander con pr?ximo aviso habitual consentido, sin compras de prueba. Etapa10 y Etapas12/13 siguen abiertas; dise?o al final. No repetir ciclo f?sico/widget/accesibilidad ya acreditados sin motivo.
+
+## Autorizacion vigente de produccion
+
+El propietario autoriza expresamente de forma permanente los pasos de publicacion en produccion de Kaptal tras comprobaciones satisfactorias. Sustituye el requisito historico de pedir aprobacion separada para main/publicacion. No volver a pedir esa aprobacion; no asumir autorizacion para acciones destructivas, restauraciones de datos ni activar Gmail. Primero resolver GOOGLE_CLIENT_ID y validar sesion Google real; luego continuar #117/#116 tras checks exactos. Herramientas actuales sin conector Render ni credencial disponible: guiar al propietario en kaptal-api > Environment para sustituir SOLO GOOGLE_CLIENT_ID por el cliente propuesto y desplegar; verificar config publica despues. Cambio aun no ejecutado.
+
+
+## Cliente Google del propietario validado de forma aislada
+
+Cliente web nuevo del proyecto 877485729157: prueba fisica aislada correcta. Credential Manager devolvio token y jose verifico firma/audiencia/emisor/expiracion y correo verificado; solo booleanos guardados, sin login ni escrituras productivas. Propuesta concreta .local/google-oauth-transition.json conserva cliente anterior y nuevo; GOOGLE_CLIENT_ID publico aun pertenece a 809732796581. Pendiente aprobacion separada para cambiar solo esa variable en Render, verificar sesion real y continuidad de cuenta. #116 sigue borrador; no autoriza merge main ni V11-V14. Log temporal del plugin retirado. Detalle docs/ANDROID_GOOGLE_NATIVO_ETAPA_12.md.
+
+
+## Diferencia de proyectos OAuth confirmada
+
+El propietario confirma que solo controla los proyectos visibles en su cuenta; el proyecto Gmail personal es 877485729157 y los nuevos Android pertenecen a este. El backend publico sigue entregando cliente web de 809732796581, obtenido de GOOGLE_CLIENT_ID; no esta fijado en la APK/repositorio y no se acredita acceso al proyecto original. No seguir pidiendo buscar otras cuentas. Preparar cliente WEB de acceso en proyecto controlado junto a Android, validar de forma aislada y revisar continuidad de identidad antes de proponer cambio productivo. No sustituir GOOGLE_CLIENT_ID productivo sin aprobacion separada; no activar Gmail ni alterar su cliente Desktop. Propuesta aun sin ejecutar en consola.
+
+
+## Diagnostico actual del proveedor Google
+
+Build debug de diagnostico compilado e instalado solo en com.kaptal.app.debug. Tercer intento con cuenta elegida por propietario: GetCredentialCustomException, tipo Google Password Manager. No hubo ID token enviado al backend. Cliente web publico consultado: proyecto numerico 809732796581. Pregunta pendiente: confirmar que ID de cliente Android Kaptal Pruebas empieza por 809732796581-. No registrar mensajes completos ni tokens. Cambio temporal sin commit en GoogleSignInPlugin.java: log de clase/tipo solo para app debuggable; revisar o retirar al cerrar diagnostico. Release del propietario sigue 0.1.6; #117 y #116 en borrador. CI success de 1071fd4 no cubre este cambio temporal.
+
+
+## Login Google real: fallo del proveedor en investigacion
+
+Samsung reconectado. El selector Google aparecio y el propietario eligio su cuenta habitual dos veces; ambas devolvieron GOOGLE_UNAVAILABLE desde el plugin antes de enviar el ID token al backend. No hay login real aprobado. Firma debug SHA-1 revalidada y coincidente con la guia. Se prepara build debug de diagnostico con clase/tipo de excepcion, sin mensajes del proveedor, cuentas ni tokens. No instalar release ni integrar #117 mientras no se resuelva.
+
+
+## OAuth Android confirmado por el propietario
+
+El propietario confirma creados los dos clientes Android (release y pruebas) en Google Cloud. Falta verificar el resultado mediante login real; no se inspecciono la consola ni se capturaron secretos. CI342/40062424909 y Android36/40062425053 finalizaron success para HEAD 1071fd41c5f1c072a8db29b0956a63a549ac04fc de #117. El telefono no aparece en ADB al retomar; se solicito reconexion y desbloqueo. PR sigue borrador, sin integrar. Main/produccion sin cambios.
+
+
+## Seguimiento PR #117 y Google Cloud
+
+PR #117 en borrador, commit funcional d6bbc6c235d29fb8c0d67e74440c0b2087430b6b. CI 340/40062296550 y Android 35/40062296548 en curso al revisar; frontend, backend y contratos ya correctos. Telefono conectado; sin fixtures escuchando en 18082/15434. Falta confirmar clientes OAuth en Google Cloud y login real; no integrar ni promover por dar por terminada esa interaccion.
+
+## Cierre de compilacion Google nativo 0.1.7
+
+Build Android debug/release compatible, lint/JVM y una prueba instrumentada Samsung correctos. APK firmada con certificado release conservado: .local/releases/Kaptal-0.1.7.apk y Descargas; SHA256 89A8B40EB6176E2008411B7EC567DBB6103BF8920F622BEA10B51A2D32C8EE03. No instalada sobre release: faltan clientes OAuth Android y login real del propietario. Configuracion/cancelacion real pendientes; detalle actualizado en docs/ANDROID_GOOGLE_NATIVO_ETAPA_12.md. #116 verificado abierto y en borrador, main d39d899 sin cambios.
+
+
+## Trabajo vigente: Google nativo necesario para el propietario
+
+El propietario confirmó que solo utiliza Google y eligió Santander para el piloto. La release 0.1.6 ya instalada arranca en login y conserva la limitación previa de Google solo web. No dar por configurado el banco ni por validado el login habitual de la APK. PR de promoción #116 convertido a borrador hasta resolver el incremento Google nativo y su configuración OAuth; main sigue d39d899, sin despliegue nuevo.
+
+Rama nueva `mejoras/android-google-nativo-etapa-12` desde develop d3e97da. Se prepara 0.1.7/código 8 con Credential Manager, botón explícito, validación Google existente del backend y limpieza de sesión del proveedor al salir. Sin Gmail/Drive. Seis pruebas del componente correctas (incluido GIS web sin regresión), 18 focalizadas iniciales y build web correctos; compilación Java/lint/JVM inicial correctos. Compatibilidad resuelta con googleid 1.1.1: build final debug/release y puente Samsung correctos. Login real todavía pendiente.
+
+El propietario debe revisar clientes OAuth Android en el proyecto web existente: paquetes/firma y pasos detallados en `docs/ANDROID_GOOGLE_NATIVO_ETAPA_12.md`. No solicitar ni imprimir contraseñas, secretos OAuth o tokens. No crear cuentas QA en producción ni elegir una cuenta Google distinta de la habitual en la prueba. La configuración del proyecto y el selector de cuenta requieren su interacción. Google nativo no cierra la Etapa 12 completa; onboarding/privacidad/bloqueo y auditoría amplia siguen después.
+
+## Histórico: APK 0.1.6 instalada y promoción preparada
 
 Release 0.1.6/código 7 instalada como actualización en Samsung; misma firma y fecha original conservadas, arranque comprobado. APK y hash en `docs/ENTREGA_ANDROID_0_1_6_Y_PROMOCION.md`; copia en Descargas. Letra 1.5/giro físico con borrador conservado y cierre accesible aprobados en debug aislada. El propietario confirmó etiquetas de login con TalkBack; ajustes originales restaurados y verificados tras una desconexión USB. Fixture cerrada sin movimientos/conexiones, backend apagado; no confundir este alcance con auditoría completa de accesibilidad.
 
