@@ -1,5 +1,17 @@
 # Kaptal: plan maestro y traspaso al siguiente chat
 
+## Avance vigente: aviso real Santander recibido sin movimiento
+
+- El propietario informa una compra habitual real: el aviso Santander aparece en Kaptal, pero no se registró movimiento. Esto confirma recepción visible, no el registro automático ni su causa. Etapa10 sigue abierta y este incidente tiene prioridad sobre nuevas funciones.
+- Diagnóstico en rama nueva `correcciones/santander-aviso-sin-registro`, desde origin/develop `748ac09b9dce9a6fe18a8c00e22ceae09d8542f1` verificado; árbol limpio al iniciar y Samsung conectado.
+- Código revisado: BankNotificationListener intenta automatización antes de guardar en bandeja local; BankPurchaseParser solo acepta el patrón anclado «Gastaste … en … con tu tarjeta», moneda permitida y terminación coincidente si configurada. Que exista aviso local no demuestra que ese patrón haya sido reconocido. Falta confirmar estado activo/cola/revisión y formato anonimizado antes de atribuir causa o ampliar patrones.
+- Propietario confirma que solo ve «Notificación local», revisar/descartar; actualizar configuración deja contadores en cero y formulario sin bancos. Causa visual reproducida: el plugin no devolvía reglas guardadas y el componente nunca rellenaba las selecciones. Corregido el contrato nativo y la carga de asociaciones; no devuelve la clave, no reactiva ni modifica la cola, consentimiento sigue sin marcar.
+- Dos pruebas nuevas: fallo reproducido antes del cambio, seis pruebas enfocadas y 447 frontend completas correctas; build web correcto. APK0.1.11/código12 en preparación para mostrar el estado real sin reconfigurar. Aún no instalado/integrado/publicado. No atribuir todavía la compra ausente al parser o a pérdida de configuración.
+- No se modificaron movimientos ni configuración; no se descartó/reenvió el aviso, no compras de prueba, Gmail deshabilitado. No registrar mensajes originales ni datos bancarios en logs/documentos.
+
+Siguiente: obtener únicamente estado/motivo o contadores de «Registrar compras automáticamente» del propietario; distinguir patrón rechazado de envío pendiente/revisión. Reproducir con datos sintéticos antes de corregir. No reactivar la conexión por rutina porque puede afectar la cola existente.
+
+
 ## Avance vigente: entrega combinada 0.1.10 e integración completa
 
 - Integración: #126 (mediciones), #124 (bloqueo nativo) y #125 (accesibilidad/respaldo) integrados en develop `8038946e1894bd1d9bc8d25f9cffc1f85f4d00f9`. #125 terminó con CI380/40130497481 y Android60/40130497478 correctos.

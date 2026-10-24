@@ -107,6 +107,16 @@ export class AutomaticBankComponent {
       this.state.set(state); this.accounts.set(accounts.data.filter(a => a.activo));
       this.lists.set(lists.data.filter(l => !l.archivada && l.rol !== 'LECTOR' && l.moneda === 'MXN'));
       this.smsApps.set(apps.filter(a => ['com.google.android.apps.messaging', 'com.samsung.android.messaging', 'com.android.mms'].includes(a.packageName)));
+      const rules = state.rules ?? [];
+      for (const profile of this.profiles) {
+        const rule = rules.find(r => r.proveedor === profile.provider);
+        profile.account = rule?.cuentaId ?? null;
+        profile.suffix = rule?.terminacion ?? '';
+      }
+      const sears = rules.find(r => r.proveedor === 'SEARS');
+      this.smsPackage = sears?.paquete ?? '';
+      this.sender = sears?.remitente ?? '';
+      this.listId = rules[0]?.listaId ?? null;
       this.loaded.set(true);
     } catch { this.error.set('No se pudo cargar la configuración. Comprueba sesión y conexión.'); }
     finally { this.busy.set(false); }
