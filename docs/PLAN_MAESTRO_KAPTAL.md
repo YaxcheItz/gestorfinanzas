@@ -1,5 +1,11 @@
 # Kaptal: plan maestro y traspaso al siguiente chat
 
+## Cierre de validaci?n f?sica Google 0.1.7
+
+El propietario confirm? login correcto tambi?n en la release 0.1.7 instalada. Kaptal Pruebas: logout real mediante Configuraci?n/Seguridad, sesi?n local eliminada; selector Google abierto y cancelado con Atr?s, retorno al login, bot?n reintento habilitado y ninguna sesi?n creada. Evidencia .local/google-normal-logout-cancel-result.json (todos los booleanos correctos). El problema del arn?s era localizar el control; se resolvi? usando el bot?n del bloque de seguridad. Los intentos anteriores incompletos no acreditaban fallo del producto. Debug detenida y release al frente, sin nuevos cambios de datos/avisos bancarios.
+
+Preparado para integrar #117 cuando todos los checks del HEAD final sean correctos. Despu?s actualizar #116/develop?main, verificar respaldo actualizado y pruebas exactas antes de promover; publicaci?n autorizada permanentemente. No cerrar Etapa10 ni Etapas12/13 por este incremento. Gmail deshabilitado; piloto Santander pendiente del pr?ximo aviso consentido.
+
 ### Avance posterior: login f?sico y APK
 
 Login normal Google en Kaptal Pruebas correcto: dashboard, sesi?n local y lectura autenticada de /api/cuentas con HTTP 200/success. Evidencia .local/google-normal-flow-result.json, solo booleanos/estado HTTP. El propietario confirma acceso correcto y aclara que su cuenta era reciente y a?n no ten?a cuentas financieras; no afirmar conservaci?n de cuentas preexistentes como prueba f?sica. Cinco AuthServiceTest cubren continuidad/rechazo de identidad de forma aislada.
