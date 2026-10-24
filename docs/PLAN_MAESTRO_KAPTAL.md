@@ -1,6 +1,19 @@
 # Kaptal: plan maestro y traspaso al siguiente chat
 
-## Estado vigente: APK 0.1.6 instalada y promoción preparada
+## Cierre de compilacion Google nativo 0.1.7
+
+Build Android debug/release compatible, lint/JVM y una prueba instrumentada Samsung correctos. APK firmada con certificado release conservado: .local/releases/Kaptal-0.1.7.apk y Descargas; SHA256 89A8B40EB6176E2008411B7EC567DBB6103BF8920F622BEA10B51A2D32C8EE03. No instalada sobre release: faltan clientes OAuth Android y login real del propietario. Configuracion/cancelacion real pendientes; detalle actualizado en docs/ANDROID_GOOGLE_NATIVO_ETAPA_12.md. #116 verificado abierto y en borrador, main d39d899 sin cambios.
+
+
+## Trabajo vigente: Google nativo necesario para el propietario
+
+El propietario confirmó que solo utiliza Google y eligió Santander para el piloto. La release 0.1.6 ya instalada arranca en login y conserva la limitación previa de Google solo web. No dar por configurado el banco ni por validado el login habitual de la APK. PR de promoción #116 convertido a borrador hasta resolver el incremento Google nativo y su configuración OAuth; main sigue d39d899, sin despliegue nuevo.
+
+Rama nueva `mejoras/android-google-nativo-etapa-12` desde develop d3e97da. Se prepara 0.1.7/código 8 con Credential Manager, botón explícito, validación Google existente del backend y limpieza de sesión del proveedor al salir. Sin Gmail/Drive. Seis pruebas del componente correctas (incluido GIS web sin regresión), 18 focalizadas iniciales y build web correctos; compilación Java/lint/JVM inicial correctos. Ajuste de compatibilidad de metadatos Kotlin del SDK y build final en curso. Login real todavía pendiente.
+
+El propietario debe revisar clientes OAuth Android en el proyecto web existente: paquetes/firma y pasos detallados en `docs/ANDROID_GOOGLE_NATIVO_ETAPA_12.md`. No solicitar ni imprimir contraseñas, secretos OAuth o tokens. No crear cuentas QA en producción ni elegir una cuenta Google distinta de la habitual en la prueba. La configuración del proyecto y el selector de cuenta requieren su interacción. Google nativo no cierra la Etapa 12 completa; onboarding/privacidad/bloqueo y auditoría amplia siguen después.
+
+## Histórico: APK 0.1.6 instalada y promoción preparada
 
 Release 0.1.6/código 7 instalada como actualización en Samsung; misma firma y fecha original conservadas, arranque comprobado. APK y hash en `docs/ENTREGA_ANDROID_0_1_6_Y_PROMOCION.md`; copia en Descargas. Letra 1.5/giro físico con borrador conservado y cierre accesible aprobados en debug aislada. El propietario confirmó etiquetas de login con TalkBack; ajustes originales restaurados y verificados tras una desconexión USB. Fixture cerrada sin movimientos/conexiones, backend apagado; no confundir este alcance con auditoría completa de accesibilidad.
 

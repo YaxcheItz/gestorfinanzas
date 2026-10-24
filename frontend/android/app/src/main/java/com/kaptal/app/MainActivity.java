@@ -13,6 +13,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(BankNotificationsPlugin.class);
         registerPlugin(AutomaticBankPlugin.class);
         registerPlugin(CaptureActionPlugin.class);
+        registerPlugin(GoogleSignInPlugin.class);
         super.onCreate(savedInstanceState);
         CaptureWidget.publishShortcuts(this);
         // Permite probar la WebView real sin exponer la instalacion release.
