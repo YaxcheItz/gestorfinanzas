@@ -1,5 +1,30 @@
 # Kaptal: plan maestro y traspaso al siguiente chat
 
+## Cliente Google del propietario validado de forma aislada
+
+Cliente web nuevo del proyecto 877485729157: prueba fisica aislada correcta. Credential Manager devolvio token y jose verifico firma/audiencia/emisor/expiracion y correo verificado; solo booleanos guardados, sin login ni escrituras productivas. Propuesta concreta .local/google-oauth-transition.json conserva cliente anterior y nuevo; GOOGLE_CLIENT_ID publico aun pertenece a 809732796581. Pendiente aprobacion separada para cambiar solo esa variable en Render, verificar sesion real y continuidad de cuenta. #116 sigue borrador; no autoriza merge main ni V11-V14. Log temporal del plugin retirado. Detalle docs/ANDROID_GOOGLE_NATIVO_ETAPA_12.md.
+
+
+## Diferencia de proyectos OAuth confirmada
+
+El propietario confirma que solo controla los proyectos visibles en su cuenta; el proyecto Gmail personal es 877485729157 y los nuevos Android pertenecen a este. El backend publico sigue entregando cliente web de 809732796581, obtenido de GOOGLE_CLIENT_ID; no esta fijado en la APK/repositorio y no se acredita acceso al proyecto original. No seguir pidiendo buscar otras cuentas. Preparar cliente WEB de acceso en proyecto controlado junto a Android, validar de forma aislada y revisar continuidad de identidad antes de proponer cambio productivo. No sustituir GOOGLE_CLIENT_ID productivo sin aprobacion separada; no activar Gmail ni alterar su cliente Desktop. Propuesta aun sin ejecutar en consola.
+
+
+## Diagnostico actual del proveedor Google
+
+Build debug de diagnostico compilado e instalado solo en com.kaptal.app.debug. Tercer intento con cuenta elegida por propietario: GetCredentialCustomException, tipo Google Password Manager. No hubo ID token enviado al backend. Cliente web publico consultado: proyecto numerico 809732796581. Pregunta pendiente: confirmar que ID de cliente Android Kaptal Pruebas empieza por 809732796581-. No registrar mensajes completos ni tokens. Cambio temporal sin commit en GoogleSignInPlugin.java: log de clase/tipo solo para app debuggable; revisar o retirar al cerrar diagnostico. Release del propietario sigue 0.1.6; #117 y #116 en borrador. CI success de 1071fd4 no cubre este cambio temporal.
+
+
+## Login Google real: fallo del proveedor en investigacion
+
+Samsung reconectado. El selector Google aparecio y el propietario eligio su cuenta habitual dos veces; ambas devolvieron GOOGLE_UNAVAILABLE desde el plugin antes de enviar el ID token al backend. No hay login real aprobado. Firma debug SHA-1 revalidada y coincidente con la guia. Se prepara build debug de diagnostico con clase/tipo de excepcion, sin mensajes del proveedor, cuentas ni tokens. No instalar release ni integrar #117 mientras no se resuelva.
+
+
+## OAuth Android confirmado por el propietario
+
+El propietario confirma creados los dos clientes Android (release y pruebas) en Google Cloud. Falta verificar el resultado mediante login real; no se inspecciono la consola ni se capturaron secretos. CI342/40062424909 y Android36/40062425053 finalizaron success para HEAD 1071fd41c5f1c072a8db29b0956a63a549ac04fc de #117. El telefono no aparece en ADB al retomar; se solicito reconexion y desbloqueo. PR sigue borrador, sin integrar. Main/produccion sin cambios.
+
+
 ## Seguimiento PR #117 y Google Cloud
 
 PR #117 en borrador, commit funcional d6bbc6c235d29fb8c0d67e74440c0b2087430b6b. CI 340/40062296550 y Android 35/40062296548 en curso al revisar; frontend, backend y contratos ya correctos. Telefono conectado; sin fixtures escuchando en 18082/15434. Falta confirmar clientes OAuth en Google Cloud y login real; no integrar ni promover por dar por terminada esa interaccion.

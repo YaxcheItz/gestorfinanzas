@@ -1,5 +1,15 @@
 # Etapa 12: acceso Google nativo Android
 
+## Resultado vigente: cliente del proyecto controlado validado
+
+El propietario creó un cliente web junto a los clientes Android en su proyecto 877485729157. El backend público todavía entrega un cliente de 809732796581, proyecto al que el propietario no acredita acceso. Los intentos anteriores con esa audiencia fallaban dentro del proveedor, antes del backend.
+
+Prueba física aislada usando la audiencia web nueva: Credential Manager devolvió el ID token; `jose` verificó firma RS256 con claves públicas Google, audiencia exacta, emisor, expiración/edad máxima y correo verificado. Token y datos de identidad solo en memoria; evidencia de booleanos en `.local/google-native-new-client-isolated-result.json`. No se llamó al login productivo ni se creó usuario, sesión o movimiento. Debug detenida al cerrar. Se retiró el log temporal de diagnóstico del plugin.
+
+Pendiente: comprobar continuidad de identidad con pruebas aisladas, aprobar por separado el cambio productivo de `GOOGLE_CLIENT_ID`, realizarlo en Render y verificar config pública, login real y cuenta habitual. La prueba del token no acredita sesión emitida por el backend ni permisos bancarios. Conservar valor anterior para reversión de configuración autorizada; no tocar DB ni migraciones. #116 sigue en borrador y esta transición de configuración no autoriza su merge.
+
+Las instrucciones históricas siguientes exigían acceso al proyecto OAuth original. Ya no se debe pedir buscarlo: la transición preparada utiliza el proyecto que controla el propietario. Gmail permanece deshabilitado; su cliente Desktop no cambia y no se solicitan scopes Gmail/Drive.
+
 ## Comprobación tras reconectar
 
 Build Android compatible debug/release, lint y JVM correctos. Una prueba instrumentada en Samsung aprobó rechazo de configuración inválida y cierre de sesión nativo. Seis pruebas del componente y 18 focalizadas iniciales correctas; build web correcto. No acredita login Google real ni cancelación del selector del proveedor.
