@@ -1,5 +1,19 @@
 # Kaptal: plan maestro y traspaso al siguiente chat
 
+## Avance vigente: aviso real Santander recibido sin movimiento
+
+- El propietario informa una compra habitual real: el aviso Santander aparece en Kaptal, pero no se registró movimiento. Esto confirma recepción visible, no el registro automático ni su causa. Etapa10 sigue abierta y este incidente tiene prioridad sobre nuevas funciones.
+- Diagnóstico en rama nueva `correcciones/santander-aviso-sin-registro`, desde origin/develop `748ac09b9dce9a6fe18a8c00e22ceae09d8542f1` verificado; árbol limpio al iniciar y Samsung conectado.
+- Causa confirmada: conexión activa y asociaciones persistidas; el aviso real comienza «Compra con tarjeta en …». El parser anterior solo aceptaba «Gastaste … en … con tu tarjeta». El aviso quedó local y no se preparó envío automático. No fue pérdida de los bancos configurados.
+- Propietario confirma que solo ve «Notificación local», revisar/descartar; actualizar configuración deja contadores en cero y formulario sin bancos. Causa visual reproducida: el plugin no devolvía reglas guardadas y el componente nunca rellenaba las selecciones. Corregido el contrato nativo y la carga de asociaciones; no devuelve la clave, no reactiva ni modifica la cola, consentimiento sigue sin marcar.
+- Formulario: dos pruebas nuevas, fallo reproducido antes del cambio, seis enfocadas y 447 frontend completas correctas; build correcto. APK intermedio 0.1.11/código12 instalado con firma/datos/primera instalación originales. Propietario confirma que reaparecen Santander/Sears y «Registro activo». PR129 borrador, HEAD84baa30 con CI386/387 y Android64 iniciales; comprobar nuevos HEAD después del parser.
+- Parser corregido: formato Santander de crédito con MXN, comercio, tarjeta enmascarada, fecha/hora estrictas; fecha bancaria preservada y máximo31d como backend. Identidad estable por campos del evento bancario para deduplicar reentregas con distinta clave Android. Pruebas usan únicamente otra compra ficticia, nunca el mensaje real. Siete pruebas JVM del parser correctas tras fallo previo, suite JVM/lint correctos y cinco instrumentadas Samsung del almacén correctas, incluida nueva cola Santander única y segundo evento distinto. Debug detenida e instrumentación retirada.
+- APK final 0.1.11/código12 reconstruido e instalado con datos y primera instalación originales, SHA256 `83AFF54AD1BD40FFF7779749EBCAB9F670998CD605385838A5DB4C63C181392C`, `.local/releases/Kaptal-0.1.11.apk` y Descargas. Misma firma original; sustituye intermedio D39D del formulario. CI final/integración/promoción pendientes; producción sigue main0c82f2f de 0.1.10.
+- No se modificaron movimientos ni configuración; no se descartó/reenvió el aviso, no compras de prueba, Gmail deshabilitado. No registrar mensajes originales ni datos bancarios en logs/documentos.
+
+Siguiente: terminar prueba instrumentada aislada del parser/cola, reconstruir e instalar APK final, validar CI exacto de PR129 e integrar/promover tras checks. No reenviar automáticamente el aviso antiguo ni simular avisos productivos; la compra previa necesita revisión única del propietario. Etapa10 sigue abierta hasta constatar registro real con siguiente aviso habitual. No reactivar conexión por rutina.
+
+
 ## Avance vigente: entrega combinada 0.1.10 e integración completa
 
 - Integración: #126 (mediciones), #124 (bloqueo nativo) y #125 (accesibilidad/respaldo) integrados en develop `8038946e1894bd1d9bc8d25f9cffc1f85f4d00f9`. #125 terminó con CI380/40130497481 y Android60/40130497478 correctos.

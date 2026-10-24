@@ -9,6 +9,7 @@ import { ApiResponse } from '../models/auth.models';
 export interface AutomaticState {
   deviceId: string; active: boolean; queued: number; registered: number; review: number; full: boolean; error: string;
   reviews?: { eventoId: string; descripcion: string; monto: number; moneda: string; fecha: string }[];
+  rules?: AutomaticRule[];
 }
 export interface AutomaticRule {
   id: string; proveedor: string; paquete: string; remitente: string | null; terminacion: string | null;
