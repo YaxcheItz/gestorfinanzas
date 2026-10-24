@@ -35,6 +35,7 @@ import { FechaPickerComponent } from '../../shared/components/fecha-picker/fecha
 import { CategoriaIconoComponent } from '../../shared/components/categoria-icono/categoria-icono.component';
 import { MontoPipe } from '../../core/pipes/monto.pipe';
 import { PrivacyToggleComponent } from '../../shared/components/privacy-toggle/privacy-toggle.component';
+import { GuiaInicialComponent } from '../../shared/components/guia-inicial/guia-inicial.component';
 import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive';
 import { PrivacidadService } from '../../core/services/privacidad.service';
 import { MovimientosOfflineService, MovimientoPendiente } from '../../core/services/movimientos-offline.service';
@@ -78,7 +79,7 @@ type SpeechRecognitionWindow = Window & {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [ FocusTrapDirective, TextoFinancieroPipe, MontoPrivadoDirective, CommonModule, FormsModule, CategoriaSelectorComponent, CuentaSelectorComponent, MovimientoMobileCardComponent, MontoPipe, FechaPickerComponent, CategoriaIconoComponent, PrivacyToggleComponent],
+  imports: [ GuiaInicialComponent, FocusTrapDirective, TextoFinancieroPipe, MontoPrivadoDirective, CommonModule, FormsModule, CategoriaSelectorComponent, CuentaSelectorComponent, MovimientoMobileCardComponent, MontoPipe, FechaPickerComponent, CategoriaIconoComponent, PrivacyToggleComponent],
   templateUrl: './dashboard.component.html',
 })
 export class DashboardComponent implements OnInit {

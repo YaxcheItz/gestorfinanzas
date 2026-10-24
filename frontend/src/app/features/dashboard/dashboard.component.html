@@ -7,6 +7,7 @@
         <app-privacy-toggle/>
       </header>
 
+
       <!-- Modal de Selección de Rango de Tiempo (Time Dropdown Modal) -->
       @if (modalRangoAbierto()) {
         <div class="time-dropdown-backdrop" (click)="cerrarModalRango()">
@@ -90,6 +91,8 @@
         } @else if (!error()) { <p class="dashboard-screen__amount">{{ 0 | monto:monedaResumen():'symbol-narrow':'1.2-2' }}</p> }
         <div class="home-period"><button type="button" class="home-period-arrow" (click)="cambiarPeriodo(-1)" [disabled]="cargandoPeriodoInicial() || !puedeRetroceder()" aria-label="Periodo anterior">&lsaquo;</button><button type="button" class="time-dropdown-btn" (click)="toggleModalRango()" [disabled]="cargandoPeriodoInicial()" [attr.aria-busy]="cargandoPeriodoInicial()" aria-haspopup="dialog" [attr.aria-expanded]="modalRangoAbierto()">{{ etiquetaRangoSeleccionado() }} <span aria-hidden="true">&#8964;</span></button><button type="button" class="home-period-arrow" (click)="cambiarPeriodo(1)" [disabled]="cargandoPeriodoInicial() || periodoEsActual()" aria-label="Periodo siguiente">&rsaquo;</button></div>
       </section>
+
+      <app-guia-inicial />
 
       <section class="home-categories" aria-labelledby="home-categories-title">
         <h2 id="home-categories-title" class="sr-only">Gastos por categoría</h2>
