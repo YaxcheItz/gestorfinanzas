@@ -98,6 +98,19 @@ jobs:
       - name: Compilar
         run: npm run build
 
+      - name: Probar medición del build
+        run: npm run metrics:test
+
+      - name: Medir archivos iniciales y diferidos
+        run: npm run metrics:build --silent > build-measurement.json
+
+      - name: Evidencia de tamaño del build
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build-measurement-${{ github.sha }}
+          path: frontend/build-measurement.json
+          retention-days: 7
+
       - name: Revisar dependencias
         run: npm run security:check
 
@@ -208,6 +221,13 @@ jobs:
           E2E_DATABASE_PASSWORD: prueba-ci-aislada
           ABUSE_LIMIT_STORE: postgres
         run: npm run test:e2e
+      - name: Evidencia de latencia API local
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: api-local-latency-${{ github.sha }}
+          path: frontend/test-results/**/local-performance.json
+          retention-days: 7
       - name: Evidencias E2E
         uses: actions/upload-artifact@v4
         if: failure()
