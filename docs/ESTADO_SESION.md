@@ -1,34 +1,23 @@
 # Estado para retomar la sesión
 
-## Cierre de validaci?n f?sica Google 0.1.7
+## Estado vigente: Google 0.1.7 y promoción publicados
 
-El propietario confirm? login correcto tambi?n en la release 0.1.7 instalada. Kaptal Pruebas: logout real mediante Configuraci?n/Seguridad, sesi?n local eliminada; selector Google abierto y cancelado con Atr?s, retorno al login, bot?n reintento habilitado y ninguna sesi?n creada. Evidencia .local/google-normal-logout-cancel-result.json (todos los booleanos correctos). El problema del arn?s era localizar el control; se resolvi? usando el bot?n del bloque de seguridad. Los intentos anteriores incompletos no acreditaban fallo del producto. Debug detenida y release al frente, sin nuevos cambios de datos/avisos bancarios.
+Esta sección prevalece sobre los apuntes históricos siguientes, incluidas sus peticiones de aprobación separada y sus estados de OAuth/APK ya superados.
 
-Preparado para integrar #117 cuando todos los checks del HEAD final sean correctos. Despu?s actualizar #116/develop?main, verificar respaldo actualizado y pruebas exactas antes de promover; publicaci?n autorizada permanentemente. No cerrar Etapa10 ni Etapas12/13 por este incremento. Gmail deshabilitado; piloto Santander pendiente del pr?ximo aviso consentido.
+- **Autorización:** publicación permanente autorizada por el propietario tras las comprobaciones. No volver a pedir aprobación de main/producción. No autoriza acciones destructivas, restauraciones de datos ni Gmail; tampoco QA en producción.
+- **OAuth público:** el propietario cambió GOOGLE_CLIENT_ID en Render; despliegue terminado. Render directo y Vercel HTTPS responden health UP y config con `877485729157-o5gasaa8saor9ulogjlgfirni6262emv.apps.googleusercontent.com`. Clientes Android release/debug ya creados en el mismo proyecto controlado; no recrearlos ni pedir acceso al proyecto anterior.
+- **Login físico:** Google mediante el botón normal de Kaptal Pruebas llegó al dashboard y permitió lectura autenticada de cuentas HTTP200/success. El propietario confirma cuenta esperada y aclara que es reciente, todavía sin cuentas financieras; no afirmar conservación física de cuentas que no existían. Cinco AuthServiceTest cubren continuidad/rechazo de identidad de forma aislada.
+- **Logout/cancelación:** cierre real en Configuración/Seguridad, sesión local eliminada; selector Google cancelado con Atrás, retorno al login y reintento habilitado, sin sesión creada. Los intentos incompletos del arnés se resolvieron al corregir navegación/localización del control. Evidencias privadas solo de booleanos: `.local/google-normal-flow-result.json` y `.local/google-normal-logout-cancel-result.json`. No ejecutar `.local/validate-android-live.cjs`, que crea QA productiva.
+- **APK/dispositivo:** Samsung SM-A546E conectado. Release 0.1.7/código8 instalada con actualización y login real confirmado por el propietario; misma firma y primera instalación 2026-10-22 00:26:31 conservadas. APK `.local/releases/Kaptal-0.1.7.apk` y Descargas, SHA256 `89A8B40EB6176E2008411B7EC567DBB6103BF8920F622BEA10B51A2D32C8EE03`. Debug sin diagnóstico 0.1.7-pruebas/código8 instalada y detenida; release al frente. Sin borrado de datos ni activación bancaria.
+- **Integración:** #117 integrado en develop `59768f690d0e53e27b77c40756951b5b8e5cdf72` tras los 14 checks correctos de `86d0b4368b14a18fa0e6a2a94f36bbb2423a730b` (CI347/348, Android39 y Vercel). CI344/Android37 también pasaron para el anterior aa102bf. Rama nueva de entrega `entrega/promocion-android-0-1-7` desde origin/develop actualizado; documentación de seguimiento aquí.
+- **Promoción:** #116 integrado en main `f4aee67d3ff0f35ce49cc89e35337523e68b0a4d` tras 15 checks correctos de `59768f6` (CI349/350, Android40/41 y Vercel). Render y Vercel registran despliegue SUCCESS del commit main; health UP y cliente Google nuevo por HTTPS en ambos. Bundle principal servido y manifiesto coinciden con la entrega. CI351/40066434493 y Android42/40066434483 de main SUCCESS: siete checks posteriores correctos, incluidos E2E/API/PWA. No confundir checks previos de promoción con los posteriores de main.
+- **Respaldo/migraciones:** snapshot previo a promoción `.local/promotion-20261024T052812Z/before-main.dump.dpapi`, origen solo lectura, cifrado DPAPI, descifrado/hash y catálogo verificados. Snapshot nuevo no restaurado; ensayo local previo V11–V14 conservó datos, documentado en `ENTREGA_ANDROID_0_1_6_Y_PROMOCION.md`. Consulta productiva posterior de solo lectura confirma V11–V14 aplicadas. No se restauró ni borró producción.
+- **Piloto/etapas:** preparación en `PILOTO_SANTANDER_ANDROID_0_1_7.md`; Santander instalado. Configuración real y próximo aviso habitual consentido pendientes, sin compras de prueba. No repetir bloqueo/reinicio, widgets o accesibilidad ya acreditados sin motivo. Etapa10 sigue abierta; Etapas12/13 completas continúan en ramas nuevas desde develop actualizado, diseño al final. Gmail deshabilitado.
 
-### Avance posterior: login f?sico y APK
+Siguiente: integrar la documentación final tras sus checks → configuración Santander con el propietario y próximo aviso habitual → resto de Etapas12/13 en ramas nuevas. Mantener separados CI, integración, APK/dispositivo y producción.
 
-Login normal Google en Kaptal Pruebas correcto: dashboard, sesi?n local y lectura autenticada de /api/cuentas con HTTP 200/success. Evidencia .local/google-normal-flow-result.json, solo booleanos/estado HTTP. El propietario confirma acceso correcto y aclara que su cuenta era reciente y a?n no ten?a cuentas financieras; no afirmar conservaci?n de cuentas preexistentes como prueba f?sica. Cinco AuthServiceTest cubren continuidad/rechazo de identidad de forma aislada.
 
-Release 0.1.7/c?digo8 instalada con adb install -r; firma SHA256 b5f360604095a50f3208299767dcedca2f3acfc5087df8be1fde9cc075c120c3 id?ntica a 0.1.6, primera instalaci?n 2026-10-22 00:26:31 conservada. Abierta para login del propietario; confirmaci?n f?sica release pendiente. No se borraron datos ni se activ? registro bancario.
-
-Arn?s de logout/cancelaci?n no concluyente: no registrar PASS. La primera navegaci?n directa del arn?s no carg? la SPA correctamente; selector nativo/Http nativo tampoco debe medirse mediante eventos HTTP de Playwright. Sesi?n real verificada por lectura nativa autenticada. Pendiente completar cierre/cancelaci?n y dejar debug detenida.
-
-Respaldo actualizado .local/promotion-20261024T050844Z/before-main.dump.dpapi: dump en modo solo lectura, cifrado DPAPI, descifrado/hash y cat?logo correctos. Este snapshot nuevo a?n no se restaur?; ensayo V11?V14 anterior documentado en docs/ENTREGA_ANDROID_0_1_6_Y_PROMOCION.md. No se escribieron/restauraron datos productivos.
-
-## Verificaci?n vigente tras despliegue OAuth (2026-10-24 UTC)
-
-Esta secci?n prevalece sobre los estados hist?ricos siguientes. El propietario ya cambi? GOOGLE_CLIENT_ID en Render y confirma despliegue terminado. Se verificaron directamente Render y el proxy HTTPS Vercel: /api/health UP y /api/auth/google/config con el nuevo cliente web del proyecto 877485729157. Este cambio de configuraci?n no equivale a promover develop a main ni acredita V11?V14 en producci?n.
-
-Autorizaci?n permanente vigente para publicar tras comprobaciones; no pedir aprobaci?n separada de main/producci?n. No autoriza destrucci?n/restauraci?n de datos ni Gmail. Clientes web/Android ya creados: no pedir recrearlos ni buscar acceso al proyecto anterior.
-
-Git confirmado: rama mejoras/android-google-nativo-etapa-12, HEAD aa102bfcb6c813257ddb2227487a4774c144e45a; origin/develop d3e97da16dc3e873382af38b7874461a7fea5c3e, origin/main d39d89952a18959511032880457aaccff4bb5f66. #117 y #116 abiertos y en borrador. CI344/40064325188 y Android37/40064325225 SUCCESS para aa102bf. Documentaci?n local previa conservada; revalidar CI si cambia HEAD.
-
-Samsung SM-A546E conectado por ADB. Release com.kaptal.app contin?a 0.1.6/c?digo7, datos intactos. Debug sin diagn?stico compilada e instalada con adb install -r: 0.1.7-pruebas/c?digo8, SHA256 64CC144F3B90979B7F7E58FD5793A7D846209C80CAAA4144A1B9E0D782002AF7. APK release preparada 0.1.7 mantiene SHA256 89A8B40EB6176E2008411B7EC567DBB6103BF8920F622BEA10B51A2D32C8EE03; a?n no instalada sobre release.
-
-Prueba normal en curso: bot?n expl?cito de Kaptal Pruebas, selector elegido por propietario. A?n no afirmar sesi?n real ni continuidad de cuenta. Arn?s privado .local/check-google-normal-flow.cjs registra solo booleanos/estado HTTP, no cuerpos de autenticaci?n ni datos personales. No ejecutar validate-android-live.cjs: crea QA productiva y contradice l?mites actuales.
-
-Pendientes: completar login y continuidad de cuenta habitual; cancelaci?n/logout cuando corresponda; actualizaci?n release conservando firma/datos; documentos y checks del HEAD final #117, integraci?n develop, actualizar #116 y respaldo cifrado antes de promoci?n, backend/ frontend y migraciones/HTTPS despu?s. Piloto Santander con pr?ximo aviso habitual consentido, sin compras de prueba. Etapa10 y Etapas12/13 siguen abiertas; dise?o al final. No repetir ciclo f?sico/widget/accesibilidad ya acreditados sin motivo.
+## Apuntes historicos (prevalece el estado vigente anterior)
 
 ## Autorizacion vigente de produccion
 
