@@ -43,6 +43,7 @@ public class AutomaticBankPlugin extends Plugin {
                 }
                 boolean active=AutomaticBankStore.active(state,uid) && BankNotificationListener.granted(getContext());
                 call.resolve(new JSObject().put("deviceId",device).put("active",active)
+                    .put("rules",state.optJSONArray("rules"))
                     .put("queued",queued).put("registered",registered).put("review",review)
                     .put("reviews",reviews)
                     .put("full",state.optBoolean("full")).put("error",state.optString("error")));

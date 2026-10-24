@@ -19,7 +19,7 @@ import { AuthService } from '../core/services/auth.service';
       <details (toggle)="opened($event)">
         <summary>Registrar compras automáticamente</summary>
         <p>Configura una vez cada cuenta. Las compras reconocidas se registrarán sin pedir confirmación, incluso en segundo plano. Sin internet, se conservará un envío cifrado para reintentarlo.</p>
-        <p>Se reconoce la compra autorizada de Sears Visa y «Gastaste … en … con tu tarjeta». Los mensajes ambiguos y posibles duplicados necesitan revisión. Revolut requiere moneda explícita.</p>
+        <p>Se reconoce la compra autorizada de Sears Visa, «Gastaste … en … con tu tarjeta» y el aviso Santander «Compra con tarjeta en …» con importe MXN, tarjeta, fecha y hora. Los mensajes ambiguos y posibles duplicados necesitan revisión. Revolut requiere moneda explícita.</p>
         <p>Sears se detecta desde las notificaciones de tu app de SMS; actívalas en Android. Kaptal no lee el historial. Android puede ocultar contenido o detener la recepción por batería o cierre forzado.</p>
         @if (state(); as s) {
           <p role="status">Registro {{ s.active ? 'activo' : 'desactivado' }} · {{ s.queued }} envíos pendientes · {{ s.registered }} registrados recientes · {{ s.review }} para revisar.</p>
@@ -107,6 +107,16 @@ export class AutomaticBankComponent {
       this.state.set(state); this.accounts.set(accounts.data.filter(a => a.activo));
       this.lists.set(lists.data.filter(l => !l.archivada && l.rol !== 'LECTOR' && l.moneda === 'MXN'));
       this.smsApps.set(apps.filter(a => ['com.google.android.apps.messaging', 'com.samsung.android.messaging', 'com.android.mms'].includes(a.packageName)));
+      const rules = state.rules ?? [];
+      for (const profile of this.profiles) {
+        const rule = rules.find(r => r.proveedor === profile.provider);
+        profile.account = rule?.cuentaId ?? null;
+        profile.suffix = rule?.terminacion ?? '';
+      }
+      const sears = rules.find(r => r.proveedor === 'SEARS');
+      this.smsPackage = sears?.paquete ?? '';
+      this.sender = sears?.remitente ?? '';
+      this.listId = rules[0]?.listaId ?? null;
       this.loaded.set(true);
     } catch { this.error.set('No se pudo cargar la configuración. Comprueba sesión y conexión.'); }
     finally { this.busy.set(false); }
