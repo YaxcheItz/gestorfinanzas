@@ -1,6 +1,14 @@
 # Kaptal: plan maestro y traspaso al siguiente chat
 
-## Avance vigente: configuración y accesos físicos comprobados (2026-10-23)
+## Estado vigente: APK 0.1.6 instalada y promoción preparada
+
+Release 0.1.6/código 7 instalada como actualización en Samsung; misma firma y fecha original conservadas, arranque comprobado. APK y hash en `docs/ENTREGA_ANDROID_0_1_6_Y_PROMOCION.md`; copia en Descargas. Letra 1.5/giro físico con borrador conservado y cierre accesible aprobados en debug aislada. El propietario confirmó etiquetas de login con TalkBack; ajustes originales restaurados y verificados tras una desconexión USB. Fixture cerrada sin movimientos/conexiones, backend apagado; no confundir este alcance con auditoría completa de accesibilidad.
+
+Respaldo productivo nuevo cifrado DPAPI, catálogo/descifrado/hash verificados; restauración local y DDL V11–V14 ensayados conservando columnas/datos anteriores. Instancia temporal 15434 y datos restaurados retirados. Sin escrituras en producción. Main continúa d39d899; promoción pendiente de PR/checks y aprobación separada. El backend público todavía no incorpora V11–V14; registro bancario de release no activado. Gmail deshabilitado.
+
+Rama nueva `entrega/android-accesibilidad-apk-0-1-6` desde develop 81b9293: bump de versión y arreglo del script Windows ante avisos de javac. No repetir pruebas satisfactorias sin motivo. Siguiente: integrar la entrega tras CI, preparar PR de promoción revisable, aprobación separada, comprobar HTTPS y piloto bancario consentido; después Etapas 12/13 en ramas nuevas, diseño al final. Etapa 10 sigue abierta.
+
+## Histórico: configuración y accesos físicos comprobados (2026-10-23)
 
 Samsung conectado: configuración interactiva con API H2 aislada aprobada (consentimiento, mapeo sintético, activación nativa y desconexión); dos instrumentadas del widget correctas; arranque frío Ingreso tras login y tres acciones en caliente aprobados. Los tres accesos reales del launcher Samsung y los tres botones del widget ya pasaron. Vencimiento simulado con renovación y logout → acción protegida → login → captura solicitada correctos. Ningún formulario guardó movimientos. Detalles y límites en `docs/VALIDACION_ANDROID_CONFIGURACION_ACCESOS.md`.
 
