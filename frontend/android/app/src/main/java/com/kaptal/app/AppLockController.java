@@ -3,7 +3,8 @@ package com.kaptal.app;
 import android.app.KeyguardManager;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
+import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
 import android.hardware.biometrics.BiometricManager;
 import android.hardware.biometrics.BiometricPrompt;
 import android.os.Build;
@@ -15,6 +16,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.ImageView;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.PluginCall;
@@ -23,8 +26,10 @@ import com.getcapacitor.PluginCall;
 final class AppLockController {
     private final MainActivity activity;
     private final NativeAuthenticationGate gate = new NativeAuthenticationGate();
-    private final LinearLayout cover;
-    private final TextView message;
+    private final ScrollView cover;
+    private final LinearLayout controls;
+    private final TextView title, message;
+    private final Button unlock, settings;
     private boolean enabled, locked, authenticating, resumed, pendingResult;
     private CancellationSignal cancellation;
     private PluginCall settingCall;
@@ -35,36 +40,64 @@ final class AppLockController {
         try { enabled = activity.getSharedPreferences("app_lock", Context.MODE_PRIVATE).getBoolean("enabled", false); }
         catch (RuntimeException error) { enabled = true; }
         locked = enabled;
-        cover = new LinearLayout(activity);
-        cover.setOrientation(LinearLayout.VERTICAL);
-        cover.setGravity(Gravity.CENTER);
-        cover.setPadding(32, 32, 32, 32);
-        var colors = activity.obtainStyledAttributes(new int[]{android.R.attr.colorBackground, android.R.attr.textColorPrimary});
-        cover.setBackgroundColor(colors.getColor(0, Color.WHITE));
+        cover = new ScrollView(activity);
+        cover.setFillViewport(true);
+        cover.setPadding(dp(24), dp(24), dp(24), dp(24));
         cover.setClickable(true);
         cover.setFocusable(true);
+        var content = new LinearLayout(activity);
+        content.setOrientation(LinearLayout.VERTICAL);
+        content.setGravity(Gravity.CENTER);
+        cover.addView(content, new ScrollView.LayoutParams(-1, -2));
+        var icon = new ImageView(activity);
+        icon.setImageResource(R.drawable.kaptal_icon);
+        icon.setBackground(rounded(activity.getColor(R.color.kaptal_lock_surface), 20));
+        icon.setClipToOutline(true);
+        icon.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        var iconLayout = new LinearLayout.LayoutParams(dp(80), dp(80));
+        iconLayout.bottomMargin = dp(20);
+        content.addView(icon, iconLayout);
+        title = new TextView(activity);
+        title.setText("Kaptal");
+        title.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        title.setGravity(Gravity.CENTER);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) title.setAccessibilityHeading(true);
+        content.addView(title);
         message = new TextView(activity);
-        var textColors = colors.getColorStateList(1);
-        if (textColors != null) message.setTextColor(textColors);
-        colors.recycle();
-        message.setTextSize(20);
+        message.setText("Tu espacio, protegido.");
         message.setGravity(Gravity.CENTER);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) message.setAccessibilityHeading(true);
-        cover.addView(message);
-        Button unlock = new Button(activity);
+        message.setPadding(0, dp(8), 0, dp(20));
+        message.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
+        content.addView(message);
+        controls = new LinearLayout(activity);
+        controls.setOrientation(LinearLayout.VERTICAL);
+        content.addView(controls, new LinearLayout.LayoutParams(-1, -2));
+        unlock = new Button(activity);
         unlock.setText("Desbloquear con Android");
-        unlock.setMinHeight((int) (48 * activity.getResources().getDisplayMetrics().density));
+        styleButton(unlock);
         unlock.setOnClickListener(view -> authenticate(null, null));
-        cover.addView(unlock);
-        Button settings = new Button(activity);
+        controls.addView(unlock, new LinearLayout.LayoutParams(-1, -2));
+        settings = new Button(activity);
         settings.setText("Seguridad de Android");
+        styleButton(settings);
         settings.setOnClickListener(view -> {
             try { activity.startActivity(new Intent(Settings.ACTION_SECURITY_SETTINGS)); }
             catch (RuntimeException error) { message.setText("Abre Seguridad desde los ajustes de Android."); }
         });
-        cover.addView(settings);
+        var settingsLayout = new LinearLayout.LayoutParams(-1, -2);
+        settingsLayout.topMargin = dp(12);
+        controls.addView(settings, settingsLayout);
         activity.addContentView(cover, new ViewGroup.LayoutParams(-1, -1));
         render();
+    }
+
+    private int dp(int value) { return Math.round(value * activity.getResources().getDisplayMetrics().density); }
+    private GradientDrawable rounded(int color, int radius) {
+        var background = new GradientDrawable(); background.setColor(color); background.setCornerRadius(dp(radius)); return background;
+    }
+    private void styleButton(Button button) {
+        button.setAllCaps(false); button.setMinHeight(dp(48)); button.setMinimumWidth(0);
+        button.setPadding(dp(20), dp(12), dp(20), dp(12)); button.setStateListAnimator(null); button.setElevation(0);
     }
 
     boolean isLocked() { return locked; }
@@ -119,6 +152,7 @@ final class AppLockController {
             return;
         }
         authenticating = true; pendingResult = false; settingCall = call; requested = value;
+        render();
         long attempt = gate.begin(SystemClock.elapsedRealtime());
         cancellation = new CancellationSignal();
         try {
@@ -164,6 +198,8 @@ final class AppLockController {
         message.setText(text);
         if (settingCall != null) settingCall.reject(text, "CANCELLED");
         settingCall = null; requested = null;
+        render();
+        if (locked) unlock.requestFocus();
     }
     private void render() {
         if (locked) {
@@ -173,7 +209,17 @@ final class AppLockController {
         }
         activity.getBridge().getWebView().setVisibility(locked ? View.INVISIBLE : View.VISIBLE);
         cover.setVisibility(locked ? View.VISIBLE : View.GONE);
-        if (locked) { message.setText("Kaptal está bloqueado"); cover.bringToFront(); }
+        if (locked) cover.bringToFront();
+        cover.setBackgroundColor(activity.getColor(R.color.kaptal_lock_canvas));
+        title.setTextSize(24); title.setTextColor(activity.getColor(R.color.kaptal_lock_content));
+        message.setTextSize(16); message.setTextColor(activity.getColor(R.color.kaptal_lock_muted));
+        message.setVisibility(authenticating ? View.GONE : View.VISIBLE);
+        controls.setVisibility(authenticating ? View.GONE : View.VISIBLE);
+        unlock.setTextSize(16); unlock.setTextColor(activity.getColor(R.color.kaptal_lock_on_brand));
+        unlock.setBackground(rounded(activity.getColor(R.color.kaptal_lock_brand), 24));
+        settings.setTextSize(16); settings.setTextColor(activity.getColor(R.color.kaptal_lock_content));
+        settings.setBackground(rounded(activity.getColor(R.color.kaptal_lock_surface), 24));
+        settings.setVisibility(available() ? View.GONE : View.VISIBLE);
         ScreenPrivacyPlugin.applySavedPolicy(activity);
         if (!locked) activity.getBridge().triggerWindowJSEvent("kaptal-screen-privacy-changed");
     }
