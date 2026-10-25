@@ -148,6 +148,14 @@ final class NotificationNoticeStore {
         return result;
     }
 
+    JSONObject current(long user,String id,int revision,long now) throws JSONException {
+        var notices=read(user,now,true).getJSONArray("notices");
+        for(int i=0;i<notices.length();i++) {
+            var notice=notices.getJSONObject(i);
+            if(id.equals(notice.getString("id"))&&revision==notice.getInt("revision"))return notice;
+        }
+        throw new IllegalArgumentException("Aviso actualizado o no disponible.");
+    }
     void discard(long user, String id, int revision, long now) throws JSONException {
         JSONObject state = load(now);
         if (user <= 0 || state.optLong("user") != user) throw new IllegalArgumentException("Sesión cambiada.");

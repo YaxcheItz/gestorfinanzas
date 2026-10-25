@@ -33,6 +33,22 @@ public class BankNotificationsPlugin extends Plugin {
                 long owner = BankNotificationListener.user(getContext());
                 if (owner != call.getData().optLong("userId", 0)) owner = 0;
                 JSObject result = store.read(owner, System.currentTimeMillis(), unlocked());
+                var notices=result.getJSONArray("notices");
+                if(notices.length()>0) {
+                    org.json.JSONObject automatic=null;
+                    try { automatic=new AutomaticBankStore(getContext()).read(); } catch(Exception ex) { /* Keep original and configuration intact. */ }
+                    for(int i=0;i<notices.length();i++) {
+                        var notice=notices.getJSONObject(i);
+                        try {
+                            var details=automatic==null?new org.json.JSONObject().put("automaticStatus","unavailable")
+                                :AutomaticBankStore.describe(automatic,owner,notice);
+                            notice.put("automaticStatus",details.getString("automaticStatus"));
+                            notice.put("automaticVersion",details.optString("automaticVersion"));
+                            notice.put("canRetry",details.optBoolean("canRetry"));
+                            if(details.has("preview"))notice.put("preview",details.getJSONObject("preview"));
+                        } catch(Exception ex) { notice.put("automaticStatus","unavailable"); }
+                    }
+                }
                 result.put("granted", granted);
                 call.resolve(result);
             } catch (RuntimeException | org.json.JSONException ex) { call.reject("No se pudo leer la recepción de notificaciones."); }
@@ -40,6 +56,20 @@ public class BankNotificationsPlugin extends Plugin {
     }
 
     private Intent launcher() { return new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER); }
+
+    @PluginMethod public void retryAutomatic(PluginCall call) {
+        synchronized(NotificationNoticeStore.class) {
+            try {
+                long owner=user(call);
+                if(!BankNotificationListener.granted(getContext()))throw new IllegalStateException();
+                var notice=BankNotificationListener.store(getContext()).current(owner,call.getString("id",""),
+                    call.getInt("revision",0),System.currentTimeMillis());
+                new AutomaticBankStore(getContext()).retryNotice(owner,notice,call.getString("automaticVersion",""));
+                AutomaticBankWorker.schedule(getContext());
+                call.resolve();
+            } catch(Exception ex) { call.reject("El aviso o la conexión cambió. Actualiza y comprueba tus movimientos."); }
+        }
+    }
 
     @PluginMethod public void apps(PluginCall call) {
         try {

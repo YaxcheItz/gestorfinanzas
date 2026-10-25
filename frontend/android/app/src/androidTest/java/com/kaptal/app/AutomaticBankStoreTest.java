@@ -20,7 +20,8 @@ public class AutomaticBankStoreTest {
         assertTrue("Only isolated debug app",context.getPackageName().endsWith(".debug"));
         store=new AutomaticBankStore(context,"bank-automatic-test.enc"); store.clear();
         var rule=new JSONObject().put("id","00000000-0000-4000-8000-000000000001")
-            .put("proveedor","SEARS").put("paquete",pkg).put("remitente","12345").put("terminacion","1234");
+            .put("proveedor","SEARS").put("paquete",pkg).put("remitente","12345").put("terminacion","1234")
+            .put("cuentaId",11).put("listaId",21).put("categoriaId",JSONObject.NULL);
         store.write(new JSONObject().put("userId",71).put("expires",System.currentTimeMillis()+3600000)
             .put("key","synthetic-private-key").put("generation","qa").put("rules",new JSONArray().put(rule)));
     }
@@ -81,5 +82,42 @@ public class AutomaticBankStoreTest {
         assertFalse(payload.has("terminacion")); assertFalse(payload.has("text"));
         assertTrue(store.receive(71,bankPackage,"Santander",text.replace("09:12:34","09:12:35"),"bank-qa-next",300));
         assertEquals(2,store.read().getJSONArray("entries").length());
+    }
+    @Test public void nullableOptionalCardSuffixDoesNotRejectSantanderPurchase() throws Exception {
+        String bankPackage="mx.bancosantander.supermovil";
+        var rule=new JSONObject().put("id","00000000-0000-4000-8000-000000000002")
+            .put("proveedor","SANTANDER").put("paquete",bankPackage).put("terminacion",JSONObject.NULL);
+        store.write(store.read().put("rules",new JSONArray().put(rule)));
+        String date=LocalDate.now(ZoneId.of("America/Mexico_City")).format(DateTimeFormatter.ofPattern("dd/MM/uuuu"));
+        String text="Compra con tarjeta en TIENDA QA por $25.10 MXN con tarjeta de credito **1234, el "
+            +date+" a las 09:12:34 hrs.";
+        assertTrue("An optional JSON null is not a card suffix",store.receive(71,bankPackage,"Santander",text,"null-suffix-qa",100));
+    }
+    @Test public void describesSearsReviewWithoutMutatingQueueOrExposingCredentials() throws Exception {
+        var before=store.read().toString();
+        var notice=new JSONObject().put("id","local-qa").put("revision",1).put("at",100)
+            .put("packageName",pkg).put("text","12345\n"+body(987654));
+        var result=AutomaticBankStore.describe(store.read(),71,notice);
+        assertEquals("ready",result.getString("automaticStatus"));
+        assertEquals("TIENDA QA",result.getJSONObject("preview").getString("descripcion"));
+        assertFalse(result.has("key"));assertFalse(result.getJSONObject("preview").has("terminacion"));
+        assertEquals(before,store.read().toString());
+        notice.put("text","OTHER\n"+body(987654));
+        assertEquals("sender_mismatch",AutomaticBankStore.describe(store.read(),71,notice).getString("automaticStatus"));
+        assertEquals("inactive",AutomaticBankStore.describe(store.read(),72,notice).getString("automaticStatus"));
+    }
+    @Test public void explicitRetryChecksOwnerConfigurationAndAvoidsSecondQueueEntry() throws Exception {
+        var notice=new JSONObject().put("id","retry-qa").put("revision",1).put("at",100)
+            .put("packageName",pkg).put("text","12345\n"+body(987654));
+        assertThrows(IllegalStateException.class,()->store.retryNotice(72,notice,"qa"));
+        assertThrows(IllegalStateException.class,()->store.retryNotice(71,notice,"stale"));
+        var changed=new JSONObject(notice.toString()).put("text","OTHER\n"+body(987654));
+        assertThrows(IllegalStateException.class,()->store.retryNotice(71,changed,"qa"));
+        assertFalse(store.read().has("entries"));
+        store.retryNotice(71,notice,"qa");
+        assertEquals(1,store.read().getJSONArray("entries").length());
+        assertEquals("queued",AutomaticBankStore.describe(store.read(),71,notice).getString("automaticStatus"));
+        assertThrows(IllegalStateException.class,()->store.retryNotice(71,notice,"qa"));
+        assertEquals(1,store.read().getJSONArray("entries").length());
     }
 }

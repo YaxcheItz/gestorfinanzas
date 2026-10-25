@@ -1,5 +1,20 @@
 # Estado para retomar la sesión
 
+## Avance vigente: avisos reales siguen fallando; 0.1.12 en validación
+
+- El propietario informa nuevas compras reales Sears y Santander que solo aparecen locales y no rellenan ni registran. El piloto real NO pasó; la entrega0.1.11 y sus pruebas sintéticas no prueban registro productivo. Detenidas funciones nuevas hasta resolver. No pedir nuevas compras ni descartar/recrear conexiones.
+- Rama nueva `correcciones/avisos-reales-diagnostico` desde develop remoto `74049165838047746cd846926b72a7276ee2fc29` verificado con siete checks correctos. Árbol limpio al inicio. Samsung conectado; APK instalado comprobado por hash idéntico a 0.1.11 final83AFF, descartada instalación intermedia como causa.
+- La captura habitual de jerarquía falla por falta de estado inactivo. Un diagnóstico temporal explícito en debug no logró ver la ventana Kaptal: cero nodos, sin leer ni conservar mensajes bancarios. Fuente temporal retirada del código; no inferir formato real de esos resultados. Originales y configuración intactos.
+- Fallo Android reproducido con compra ficticia: JSONObject.optString convierte terminación JSON null en el texto «null», rechazando una terminación opcional vacía. Prueba instrumentada roja antes del cambio. Corrección mediante isNull y evaluación compartida entre recepción, diagnóstico y revisión; pendiente comprobar el motivo específico de cada aviso real, especialmente Sears.
+- 0.1.12/código13 en preparación: cada aviso mostrará motivo local (conexión, aplicación, remitente, formato/tarjeta, ambigüedad, cola/registrado/revisión); una compra reconocida rellena cuenta/lista/importe/fecha/descripción al revisarla SIN enviarla. Cambios de revisión/asociación/estado invalidan formularios antiguos.
+- Reintento explícito para un aviso existente reconocido Sears o Santander con identidad bancaria estable: el plugin solo acepta ID/revisión/versión y vuelve a leer el original propietario/no vencido; comprueba desbloqueo, permiso, conexión vigente y regla única. No acepta texto/datos financieros desde JS. Conserva original; usa cola/Worker existentes y deduplicación. No dispara registros al consultar o abrir una revisión.
+- Validación: 450 frontend y build web correctos; suite JVM/lint/build Android correctos;16 instrumentadas Samsung correctas (ocho del almacén automático y ocho de avisos locales), incluidas null, diagnóstico sin mutación, reintento y búsqueda por propietario/revisión/caducidad. Debug detenida e instrumentación retirada.
+- APK0.1.12/código13 instalado, firma y primera instalación/datos originales conservados; SHA256 `F3F147201C0CBEB9876063D380A5E56C711093BE91074CCA52CC501DD250D4BC`, `.local/releases/Kaptal-0.1.12.apk` y Descargas. Esperando SOLO motivos por aviso Sears/Santander mostrados en app; no pulsar reintento hasta saber motivo. No integrado/promovido todavía ni reenviados avisos reales.
+- Producción sigue main `ecf71ef4c26cfa0e22fe300eb72bfd1837b0541b`, entrega0.1.11. Publicación autorizada tras checks permanentemente; no pedir aprobación adicional. No QA/avisos sintéticos productivos, acciones destructivas/restauración ni Gmail. Datos de todas las pruebas son ficticios y archivos debug aislados.
+
+Siguiente: terminar pruebas físicas aisladas, instalar0.1.12 con firma/datos conservados y obtener SOLO motivos por aviso Sears/Santander. Corregir según evidencia; no volver a prometer registro real basándose solo en regex unitarias. Reintento de compra REAL solo por acción explícita del propietario en la app, comprobando cuenta y movimiento único. Luego CI exacto, integración/promoción y documentación; Etapas10/12/13 siguen abiertas y diseño general al final.
+
+
 ## Avance vigente: Santander 0.1.11 corregido, integrado y APK final instalado
 
 - Causas confirmadas: las asociaciones bancarias seguían guardadas pero el formulario no las recuperaba; corregido. El propietario confirmó reaparición de Santander/Sears y Registro activo. El formato real «Compra con tarjeta en …» no coincidía con el parser anterior «Gastaste …»; corregido sin guardar el mensaje real ni sus datos en código, pruebas, documentos o logs.

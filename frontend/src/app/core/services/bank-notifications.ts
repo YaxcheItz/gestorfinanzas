@@ -3,7 +3,13 @@ import { DOCUMENT } from '@angular/common';
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import { AuthService } from './auth.service';
 
-export interface BankNotice { id: string; text: string; packageName: string; revision: number; at: number; }
+export interface BankNotice {
+  id: string; text: string; packageName: string; revision: number; at: number;
+  automaticStatus?: string;
+  automaticVersion?: string;
+  canRetry?: boolean;
+  preview?: { cuentaId: number; listaId: number; categoriaId: number | null; monto: number; moneda: string; fecha: string; descripcion: string };
+}
 export interface NoticeApp { packageName: string; label: string; }
 interface NoticeState { granted: boolean; enabled: boolean; packages: string[]; notices: BankNotice[]; omitted: number; }
 interface BankNotificationsPlugin {
@@ -12,6 +18,7 @@ interface BankNotificationsPlugin {
   settings(options: { userId: number }): Promise<void>;
   configure(options: { userId: number; enabled: boolean; packages: string[]; consent: boolean }): Promise<void>;
   discard(options: { userId: number; id: string; revision: number }): Promise<void>;
+  retryAutomatic(options: { userId: number; id: string; revision: number; automaticVersion: string }): Promise<void>;
 }
 export const BANK_NOTIFICATIONS_NATIVE = new InjectionToken<BankNotificationsPlugin | null>('BankNotifications native', {
   providedIn: 'root', factory: () => Capacitor.getPlatform() === 'android'
@@ -65,12 +72,20 @@ export class BankNotificationsService {
   }
 
   isCurrent(notice: BankNotice): boolean {
-    return this.current().notices.some(n => n.id === notice.id && n.revision === notice.revision && n.text === notice.text);
+    return this.current().notices.some(n => n.id === notice.id && n.revision === notice.revision && n.text === notice.text
+      && n.automaticStatus === notice.automaticStatus && n.automaticVersion === notice.automaticVersion);
   }
   async apps(): Promise<NoticeApp[]> {
     const userId = this.auth.currentUser()?.id ?? 0;
     const result = await this.native?.apps({ userId });
     return userId === (this.auth.currentUser()?.id ?? 0) ? result?.apps ?? [] : [];
+  }
+  async retryAutomatic(notice: BankNotice): Promise<void> {
+    if(!this.native||!this.isCurrent(notice)||notice.automaticStatus!=='ready'||!notice.canRetry||!notice.automaticVersion)
+      throw new Error('Actualiza el aviso antes de reintentar.');
+    await this.native.retryAutomatic({userId:this.auth.currentUser()?.id??0,id:notice.id,revision:notice.revision,
+      automaticVersion:notice.automaticVersion});
+    await this.refresh();
   }
   async settings(): Promise<void> { await this.native?.settings({ userId: this.auth.currentUser()?.id ?? 0 }); }
   async configure(enabled: boolean, packages: string[], consent: boolean): Promise<void> {

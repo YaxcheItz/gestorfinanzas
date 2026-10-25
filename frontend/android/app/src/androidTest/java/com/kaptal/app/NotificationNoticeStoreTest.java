@@ -23,6 +23,14 @@ public class NotificationNoticeStoreTest {
     }
     private void enable() throws Exception { store.configure(71, true, Set.of(app), now); }
     private int count() throws Exception { return store.read(71, now, true).getJSONArray("notices").length(); }
+    @Test public void retryLookupRequiresOwnerRevisionAndUnexpiredOriginal() throws Exception {
+        enable();store.receive(71,app,"qa","Compra QA",now);
+        var first=store.read(71,now,true).getJSONArray("notices").getJSONObject(0);String id=first.getString("id");
+        assertEquals("Compra QA",store.current(71,id,1,now).getString("text"));
+        assertThrows(IllegalArgumentException.class,()->store.current(72,id,1,now));
+        assertThrows(IllegalArgumentException.class,()->store.current(71,id,2,now));
+        assertThrows(IllegalArgumentException.class,()->store.current(71,id,1,now+NotificationNoticeStore.TTL_MS));
+    }
 
     @Test public void defaultsOffAndFiltersSessionAndPackage() throws Exception {
         assertFalse(store.accepts(71, app, now)); enable();
