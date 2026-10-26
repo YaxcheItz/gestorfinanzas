@@ -19,6 +19,7 @@ import { AuthService } from '../core/services/auth.service';
       <details (toggle)="opened($event)">
         <summary>Registrar compras automáticamente</summary>
         <p>Configura una vez cada cuenta. Las compras reconocidas se registrarán sin pedir confirmación, incluso en segundo plano. Sin internet, se conservará un envío cifrado para reintentarlo.</p>
+        <p>Santander registra solo compras y gastos. Los avisos claros de depósitos, abonos e ingresos se ignoran en esta conexión.</p>
         <p>Se reconoce la compra autorizada de Sears Visa, «Gastaste … en … con tu tarjeta» y el aviso Santander «Compra con tarjeta en …» con importe MXN, tarjeta, fecha y hora. Los mensajes ambiguos y posibles duplicados necesitan revisión. Revolut requiere moneda explícita.</p>
         <p>Sears se detecta desde las notificaciones de tu app de SMS; actívalas en Android. Kaptal no lee el historial. Android puede ocultar contenido o detener la recepción por batería o cierre forzado.</p>
         @if (state(); as s) {
@@ -41,9 +42,10 @@ import { AuthService } from '../core/services/auth.service';
                 </select>
               </label>
               @if (profile.account) {
-                <label>Últimos cuatro dígitos {{ profile.provider === 'SEARS' ? '(obligatorios)' : '(opcionales)' }}
-                  <input type="text" inputmode="numeric" maxlength="4" autocomplete="off" [(ngModel)]="profile.suffix" />
+                <label>{{ profile.provider === 'SEARS' ? 'Terminaciones Sears (obligatorias)' : 'Últimos cuatro dígitos (opcionales)' }}
+                  <input type="text" [attr.inputmode]="profile.provider === 'SEARS' ? 'text' : 'numeric'" [attr.maxlength]="profile.provider === 'SEARS' ? 58 : 4" autocomplete="off" [(ngModel)]="profile.suffix" />
                 </label>
+                @if(profile.provider === 'SEARS') { <p>Para la física y la digital, separa sus cuatro dígitos con una coma. Ambas se registrarán en esta misma cuenta.</p> }
               }
             }
             <label>App de mensajes para Sears
@@ -95,7 +97,7 @@ export class AutomaticBankComponent {
   }
   async load(): Promise<void> {
     if (this.busy()) return;
-    this.busy.set(true); this.error.set('');
+    this.busy.set(true); this.error.set(''); this.loaded.set(false);
     const userId = this.auth.currentUser()?.id;
     try {
       const [state, accounts, lists, apps] = await Promise.all([
@@ -108,10 +110,14 @@ export class AutomaticBankComponent {
       this.lists.set(lists.data.filter(l => !l.archivada && l.rol !== 'LECTOR' && l.moneda === 'MXN'));
       this.smsApps.set(apps.filter(a => ['com.google.android.apps.messaging', 'com.samsung.android.messaging', 'com.android.mms'].includes(a.packageName)));
       const rules = state.rules ?? [];
+      const searsRules=rules.filter(r=>r.proveedor==='SEARS');
+      const firstSears=searsRules[0];
+      if(firstSears&&searsRules.some(r=>r.cuentaId!==firstSears.cuentaId||r.listaId!==firstSears.listaId
+        ||r.paquete!==firstSears.paquete||r.remitente!==firstSears.remitente))throw new Error('Las tarjetas Sears usan distintas asociaciones.');
       for (const profile of this.profiles) {
         const rule = rules.find(r => r.proveedor === profile.provider);
         profile.account = rule?.cuentaId ?? null;
-        profile.suffix = rule?.terminacion ?? '';
+        profile.suffix = profile.provider==='SEARS'?searsRules.map(r=>r.terminacion??'').join(', '):rule?.terminacion??'';
       }
       const sears = rules.find(r => r.proveedor === 'SEARS');
       this.smsPackage = sears?.paquete ?? '';
@@ -124,14 +130,18 @@ export class AutomaticBankComponent {
   async connect(): Promise<void> {
     this.error.set(''); this.message.set('');
     const selected = this.profiles.filter(p => p.account);
-    if (!this.consent || !this.listId || !selected.length || selected.some(p => p.suffix && !/^[0-9]{4}$/.test(p.suffix))
-      || selected.some(p => p.provider === 'SEARS' && (!this.smsPackage || !this.sender.trim() || !/^[0-9]{4}$/.test(p.suffix)))) {
-      this.error.set('Elige cuenta y lista; Sears necesita app de mensajes, remitente y cuatro dígitos.'); return;
+    if (!this.consent || !this.listId || !selected.length || selected.some(p => {
+      if(p.provider!=='SEARS')return !!p.suffix&&!/^[0-9]{4}$/.test(p.suffix);
+      const cards=p.suffix.split(',').map(s=>s.trim());
+      return !this.smsPackage||!this.sender.trim()||cards.some(s=>!/^[0-9]{4}$/.test(s))||new Set(cards).size!==cards.length;
+    })) {
+      this.error.set('Elige cuenta y lista; Sears necesita app de mensajes, remitente y terminaciones de cuatro dígitos sin repetir.'); return;
     }
-    const rules: AutomaticRule[] = selected.map(p => ({ id: crypto.randomUUID(), proveedor: p.provider,
+    const rules: AutomaticRule[] = selected.flatMap(p => (p.provider==='SEARS'?p.suffix.split(',').map(s=>s.trim()):[p.suffix||null]).map(suffix=>({ id: crypto.randomUUID(), proveedor: p.provider,
       paquete: p.provider === 'SEARS' ? this.smsPackage : p.pkg,
-      remitente: p.provider === 'SEARS' ? this.sender.trim() : null, terminacion: p.suffix || null,
-      cuentaId: p.account!, listaId: this.listId!, categoriaId: null }));
+      remitente: p.provider === 'SEARS' ? this.sender.trim() : null, terminacion: suffix,
+      cuentaId: p.account!, listaId: this.listId!, categoriaId: null })));
+    if(rules.length>10){this.error.set('Configura como máximo diez tarjetas y orígenes en este dispositivo.');return;}
     this.busy.set(true);
     try {
       await this.automatic.configure(rules, this.consent);

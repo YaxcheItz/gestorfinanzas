@@ -54,4 +54,23 @@ describe('Configuración bancaria guardada', () => {
     expect(c.listId).toBeNull(); expect(c.sender).toBe(''); expect(c.smsPackage).toBe('');
     expect(c.state()?.active).toBe(false);
   });
+  it('conserva tarjetas física y digital Sears en una sola cuenta sin perder los demás bancos', async () => {
+    const state=await automatic.read();
+    state.rules.push({...state.rules[1],terminacion:'5678'});
+    await load();
+    const sears=c.profiles.find(p=>p.provider==='SEARS')!;
+    expect(sears.suffix).toBe('1234, 5678');
+    c.consent=true;await c.connect();
+    const rules=automatic.configure.mock.calls[0][0];
+    expect(rules.filter((r:any)=>r.proveedor==='SEARS').map((r:any)=>r.terminacion)).toEqual(['1234','5678']);
+    expect(rules.filter((r:any)=>r.proveedor==='SEARS').every((r:any)=>r.cuentaId===12&&r.listaId===21)).toBe(true);
+    expect(rules.some((r:any)=>r.proveedor==='SANTANDER'&&r.cuentaId===11)).toBe(true);
+  });
+  it('rechaza terminaciones Sears repetidas o incompletas sin renovar la conexión', async () => {
+    await load();c.consent=true;const sears=c.profiles.find(p=>p.provider==='SEARS')!;
+    for(const value of ['1234,1234','1234,','1234,56']) {
+      sears.suffix=value;await c.connect();
+      expect(automatic.configure).not.toHaveBeenCalled();
+    }
+  });
 });

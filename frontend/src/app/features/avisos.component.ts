@@ -23,7 +23,7 @@ export class AvisosComponent {
   readonly notificacion=signal<BankNotice|null>(null);
   readonly original=computed(()=>this.compartido()??this.notificacion());
   originalVigente(){const n=this.notificacion();return n?this.bank.isCurrent(n):this.shared.isCurrent(this.compartido()?.id??'');}
-  usarNotificacion(n:BankNotice){if(this.ocupado()||!this.bank.isCurrent(n))return;this.nuevo();this.notificacion.set(n);this.identificador='android-notificacion:'+n.id;this.origen='NOTIFICACION';}
+  usarNotificacion(n:BankNotice){if(this.ocupado()||!this.bank.isCurrent(n))return;this.nuevo();this.notificacion.set(n);this.identificador='android-notificacion:'+n.id;this.origen='NOTIFICACION';if(n.automaticStatus==='ready'&&n.preview){const p=n.preview;this.resumen=p.descripcion;this.moneda=p.moneda;this.datos={...this.datos,cuentaId:p.cuentaId,listaId:p.listaId,categoriaId:p.categoriaId,monto:p.monto,fecha:p.fecha,descripcion:p.descripcion};}}
   readonly compartido=signal<SharedNotice|null>(null);
   private readonly api=inject(AvisosService);
   private readonly finanzas=inject(FinanzasService);

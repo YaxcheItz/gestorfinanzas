@@ -119,6 +119,8 @@ public class AutomatizacionAndroidService {
             .orElseThrow(()->new IllegalArgumentException("Regla no disponible."));
         if(!Set.of(Clase.COMPRA,Clase.INGRESO,Clase.DEVOLUCION).contains(evento.clase()))
             throw new IllegalArgumentException("Ese movimiento necesita revisión.");
+        if("SANTANDER".equals(regla.proveedor())&&evento.clase()!=Clase.COMPRA)
+            throw new IllegalArgumentException("Esta conexión de Santander solo admite compras y gastos.");
         var hoy=CalendarioFinanciero.hoy();
         if(evento.fecha().isAfter(hoy)||evento.fecha().isBefore(hoy.minusDays(31)))throw new IllegalArgumentException("La fecha necesita revisión.");
         var cuenta=cuentas.findByIdAndUsuarioId(regla.cuentaId(),usuario.getId()).orElseThrow(()->new IllegalArgumentException("Cuenta no disponible."));
