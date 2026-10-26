@@ -36,9 +36,9 @@ import { AutomaticBankComponent } from './automatic-bank';
       @for (notice of bank.current().notices; track notice.id) {
         <div class="local-notice">
           <p>Notificación local de {{ notice.packageName }}. {{ notice.revision > 1 ? 'El contenido fue actualizado; revisa los datos de nuevo.' : '' }}</p>
-          <p role="status">{{ automaticReason(notice.automaticStatus) }}</p>
+          <p role="status">{{ automaticReason(notice.automaticStatus, notice.canRetry) }}</p>
           @if(notice.canRetry && notice.automaticStatus === 'ready') {
-            <button type="button" (click)="retry(notice)" [disabled]="busy()">Reintentar registro con la cuenta asociada</button>
+            <button type="button" (click)="retry(notice)" [disabled]="busy()">Registrar con la cuenta asociada</button>
           }
           <button type="button" (click)="review.emit(notice)" [disabled]="busy() || notice.automaticStatus === 'queued' || notice.automaticStatus === 'registered' || notice.automaticStatus === 'review'">Revisar notificación</button>
           <button type="button" (click)="discard(notice)" [disabled]="busy()">Descartar del teléfono</button>
@@ -57,13 +57,16 @@ export class BankNotificationsComponent {
   readonly consent = signal(false);
   readonly busy = signal(false);
   readonly error = signal('');
-  automaticReason(status?: string): string {
+  automaticReason(status?: string,canRetry=false): string {
+    if(status==='ready'&&canRetry)return 'Compra reconocida. Puedes registrar este aviso pendiente con la cuenta asociada.';
     const messages: Record<string,string> = {
       ready: 'Compra reconocida. Revisa los datos rellenados antes de guardarla.',
       inactive: 'El registro automático está desactivado o vencido en este teléfono.',
       app_not_linked: 'La aplicación que envió este aviso no está asociada al registro automático.',
       sender_mismatch: 'El remitente del aviso no coincide con el configurado para Sears.',
       format_or_card: 'El formato, la tarjeta, la moneda o la fecha no coinciden con una compra reconocida.',
+      card_mismatch: 'La terminación del aviso no coincide con la tarjeta configurada. Revisa la cuenta y su terminación.',
+      unsupported_format: 'El formato, importe, moneda o fecha del aviso necesita revisión.',
       ambiguous: 'Más de una cuenta coincide; revisa la cuenta antes de registrar.',
       queued: 'Esta compra ya está en la cola automática. No la guardes de nuevo.',
       registered: 'Esta compra ya se registró automáticamente. Compruébala en Movimientos.',

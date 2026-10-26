@@ -55,6 +55,26 @@ public class BankPurchaseParserTest {
         assertNotEquals(first.eventId(),parse("SANTANDER",null,body.replace("**1234","**5678")).eventId());
     }
     private String santanderPackage() { return BankPurchaseParser.PACKAGES.get("SANTANDER"); }
+    @Test public void reconstructsSantanderNotificationWithPurchasePrefixInTitle() {
+        String title="Compra con tarjeta en TIENDA QA";
+        String body="por $25.10 MXN con tarjeta de credito **1234, el 23/10/2026 a las 09:12:34 hrs.";
+        var split=BankPurchaseParser.parseNotification("SANTANDER",santanderPackage(),"1234","qa",title,body,date);
+        var full=parse("SANTANDER","1234",title+" "+body);
+        assertNotNull(split);assertEquals(full,split);
+        assertTrue(BankPurchaseParser.hasBankEvent("SANTANDER",title,body));
+        assertNull(BankPurchaseParser.parseNotification("SANTANDER",santanderPackage(),"5678","qa",title,body,date));
+        assertNull(BankPurchaseParser.parseNotification("SANTANDER","test.fake","1234","qa",title,body,date));
+        assertNull(BankPurchaseParser.parseNotification("SANTANDER",santanderPackage(),"1234","qa",
+            "Compra rechazada",title+" "+body,date));
+        assertNull(BankPurchaseParser.parseNotification("SANTANDER",santanderPackage(),"1234","qa",
+            "Aviso: compra no autorizada",title+" "+body,date));
+        assertNull(BankPurchaseParser.parseNotification("SANTANDER",santanderPackage(),"1234","qa",
+            "Compra no\nautorizada",title+" "+body,date));
+        String complete=title+" "+body;
+        for(int boundary=complete.indexOf(' ');boundary>=0;boundary=complete.indexOf(' ',boundary+1))
+            assertEquals(full,BankPurchaseParser.parseNotification("SANTANDER",santanderPackage(),"1234","qa",
+                complete.substring(0,boundary),complete.substring(boundary+1),date));
+    }
     @Test public void santanderRejectsAmbiguousRejectedForeignAndInvalidValues() {
         String body=santander("TIENDA QA","25.10","1234","23/10/2026","09:12:34");
         assertNull(parse("SANTANDER","5678",body));
@@ -68,5 +88,12 @@ public class BankPurchaseParserTest {
             body.replace("TIENDA QA","CUENTA 123456789"),body+" Mensaje adicional"}) {
             assertNull(parse("SANTANDER",null,invalid));
         }
+    }
+    @Test public void ignoresSantanderIncomeButKeepsExpenseMerchantWords() {
+        assertTrue(BankPurchaseParser.isNonExpenseNotification("Depósito recibido","Recibiste un ingreso QA"));
+        assertTrue(BankPurchaseParser.isNonExpenseNotification("Santander","Abono a tu cuenta QA"));
+        assertFalse(BankPurchaseParser.isNonExpenseNotification("Compra con tarjeta en","DEPOSITO QA por un importe"));
+        assertNull(BankPurchaseParser.parseNotification("SANTANDER",santanderPackage(),null,"qa","Depósito recibido",
+            santander("TIENDA QA","25.10","1234","23/10/2026","09:12:34"),date));
     }
 }

@@ -39,9 +39,15 @@ public class BankNotificationsPlugin extends Plugin {
                     try { automatic=new AutomaticBankStore(getContext()).read(); } catch(Exception ex) { /* Keep original and configuration intact. */ }
                     for(int i=0;i<notices.length();i++) {
                         var notice=notices.getJSONObject(i);
+                        String[] original=notice.getString("text").split("\n",2);
+                        if(BankPurchaseParser.PACKAGES.get("SANTANDER").equals(notice.getString("packageName"))
+                            &&BankPurchaseParser.isNonExpenseNotification(original[0],original.length>1?original[1]:"")) {
+                            notices.remove(i--);continue;
+                        }
                         try {
                             var details=automatic==null?new org.json.JSONObject().put("automaticStatus","unavailable")
                                 :AutomaticBankStore.describe(automatic,owner,notice);
+                            if("expenses_only".equals(details.optString("automaticStatus"))) { notices.remove(i--);continue; }
                             notice.put("automaticStatus",details.getString("automaticStatus"));
                             notice.put("automaticVersion",details.optString("automaticVersion"));
                             notice.put("canRetry",details.optBoolean("canRetry"));

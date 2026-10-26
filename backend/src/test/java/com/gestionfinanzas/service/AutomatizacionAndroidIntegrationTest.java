@@ -104,6 +104,28 @@ class AutomatizacionAndroidIntegrationTest {
         assertThrows(IllegalArgumentException.class,()->service.recibir(credencial.clave(),transferencia));
         assertEquals(new BigDecimal("1000.00"),saldo());
     }
+    @Test void santanderSoloPermiteComprasSinIngresosNiDevoluciones() {
+        var r=new Regla(reglaId,"SANTANDER","mx.bancosantander.supermovil",null,"1234",cuenta.getId(),lista,null);
+        var cap=service.configurar(usuario.getId(),new Configuracion(dispositivo,true,List.of(r)));
+        for(var clase:List.of(Clase.INGRESO,Clase.DEVOLUCION)) {
+            var ingreso=new Evento(reglaId,"d".repeat(64),clase,"MXN",new BigDecimal("25.00"),CalendarioFinanciero.hoy(),"Ingreso QA");
+            assertThrows(IllegalArgumentException.class,()->service.recibir(cap.clave(),ingreso));
+        }
+        assertEquals(new BigDecimal("1000.00"),saldo());
+    }
+    @Test void dosTarjetasSearsCompartenCuentaYConservanIdempotencia() {
+        cuenta.setTipo(TipoCuenta.CREDITO);cuenta.setSaldoActual(BigDecimal.ZERO);cuentas.saveAndFlush(cuenta);
+        var first=new Regla(reglaId,"SEARS","com.google.android.apps.messaging","12345","1234",cuenta.getId(),lista,null);
+        var second=new Regla(UUID.randomUUID(),"SEARS","com.google.android.apps.messaging","12345","5678",cuenta.getId(),lista,null);
+        long count=cuentas.count();
+        var cap=service.configurar(usuario.getId(),new Configuracion(dispositivo,true,List.of(first,second)));
+        assertEquals(2,cap.reglas().size());assertEquals(count,cuentas.count());
+        assertEquals("REGISTRADO",service.recibir(cap.clave(),evento("e".repeat(64))).estado());
+        var digital=new Evento(second.id(),"f".repeat(64),Clase.COMPRA,"MXN",new BigDecimal("32.00"),CalendarioFinanciero.hoy(),"Otra tienda QA");
+        var result=service.recibir(cap.clave(),digital);assertEquals("REGISTRADO",result.estado());
+        assertEquals(result.transaccionId(),service.recibir(cap.clave(),digital).transaccionId());
+        assertEquals(new BigDecimal("-57.00"),saldo());assertEquals(count,cuentas.count());
+    }
     @Test void receptorExigeClaveYNoAbreGestionNiOtrosMetodos() throws Exception {
         var credencial=conectar();
         String body=mapper.writeValueAsString(evento("c".repeat(64)));

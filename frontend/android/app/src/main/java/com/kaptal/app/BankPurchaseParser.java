@@ -21,6 +21,33 @@ final class BankPurchaseParser {
     private static final Pattern SANTANDER_CREDIT=Pattern.compile(
         "^Compra con tarjeta en (.{1,120}?) por \\$([0-9]{1,3}(?:,[0-9]{3})*|[0-9]{1,13})\\.([0-9]{2}) MXN con tarjeta de cr[eé]dito \\*{2}([0-9]{4}), el ([0-9]{2}/[0-9]{2}/[0-9]{4}) a las ([0-9]{2}:[0-9]{2}:[0-9]{2}) hrs\\.?$",
         Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+    private static final Pattern NON_PURCHASE_TITLE=Pattern.compile(
+        "\\b(?:rechazad[ao]|cancelad[ao]|no autorizad[ao]|no reconocid[ao]|intento|devoluci[oó]n)\\b",
+        Pattern.CASE_INSENSITIVE|Pattern.UNICODE_CASE);
+    private static final Pattern NON_EXPENSE_PREFIX=Pattern.compile(
+        "^(?:dep[oó]sito|abono|ingreso|devoluci[oó]n|transferencia|pago recibido|recibiste|te depositaron)\\b",
+        Pattern.CASE_INSENSITIVE|Pattern.UNICODE_CASE);
+    static boolean isNonExpenseNotification(String title,String body) {
+        String heading=title==null?"":title.trim().replaceAll("[\\s\\p{Z}]+"," ");
+        String text=body==null?"":body.trim().replaceAll("[\\s\\p{Z}]+"," ");
+        if(NON_EXPENSE_PREFIX.matcher(heading).find())return true;
+        if(heading.matches("(?iu)^(?:compra|gastaste)\\b.*"))return false;
+        return NON_EXPENSE_PREFIX.matcher(text).find();
+    }
+    static SearsPurchaseParser.Purchase parseNotification(String provider,String pkg,String suffix,String key,
+            String title,String body,LocalDate date) {
+        if("SANTANDER".equals(provider)&&isNonExpenseNotification(title,body))return null;
+        if("SANTANDER".equals(provider)&&title!=null&&NON_PURCHASE_TITLE.matcher(title.replaceAll("[\\s\\p{Z}]+"," ")).find())return null;
+        var direct=parse(provider,pkg,suffix,key,body,date);
+        if(direct!=null||!"SANTANDER".equals(provider)||title==null||title.isBlank())return direct;
+        return parse(provider,pkg,suffix,key,title.trim()+" "+(body==null?"":body.trim()),date);
+    }
+    static boolean hasBankEvent(String provider,String title,String body) {
+        if(!"SANTANDER".equals(provider))return false;
+        String text=body==null?"":body.trim();String heading=title==null?"":title.trim();
+        return SANTANDER_CREDIT.matcher(text.replaceAll("\\s+"," ")).matches()
+            ||SANTANDER_CREDIT.matcher((heading+" "+text).trim().replaceAll("\\s+"," ")).matches();
+    }
     static SearsPurchaseParser.Purchase parse(String provider,String pkg,String suffix,String key,String body,LocalDate date) {
         if(provider==null || pkg==null || !pkg.equals(PACKAGES.get(provider)) || body==null || body.length()>1000
             || key==null || key.isBlank() || date==null) return null;
