@@ -22,7 +22,7 @@
         </div>
       }
       @for (review of s.reviews ?? []; track review.eventoId) {
-        <p class="feedback">{{ review.fecha }} · {{ review.descripcion }} · {{ review.monto }} {{ review.moneda }}. Comprueba Movimientos antes de registrarlo manualmente.</p>
+        <p class="feedback">{{ review.fecha }} · {{ review.descripcion | textoFinanciero }} · {{ review.monto | monto:review.moneda:'symbol':'1.2-2' }} {{ review.moneda }}. Comprueba Movimientos antes de registrarlo manualmente.</p>
       }
       @if (s.full || s.error) { <p role="alert" class="feedback">Comprueba la conexión y tus movimientos antes de volver a activar.</p> }
     }
@@ -42,7 +42,7 @@
             <section class="profile">
               <h3>{{ profile.name }}</h3>
               <label>Cuenta de destino
-                <select [(ngModel)]="profile.account" [attr.aria-label]="'Cuenta de ' + profile.name">
+                <select [(ngModel)]="profile.account" [attr.aria-label]="'Cuenta de destino · ' + profile.name">
                   <option [ngValue]="null">No activar</option>
                   @for (account of accounts(); track account.id) {
                     @if (account.moneda === 'MXN' && account.tipo === profile.type) { <option [ngValue]="account.id">{{ account.nombre }}</option> }
@@ -51,7 +51,7 @@
               </label>
               @if (profile.account) {
                 <label>{{ profile.provider === 'SEARS' ? 'Terminaciones Sears (obligatorias)' : 'Últimos cuatro dígitos (opcionales)' }}
-                  <input type="text" [attr.inputmode]="profile.provider === 'SEARS' ? 'text' : 'numeric'" [attr.maxlength]="profile.provider === 'SEARS' ? 58 : 4" autocomplete="off" [(ngModel)]="profile.suffix" />
+                  <input type="text" [attr.aria-label]="profile.provider === 'SEARS' ? 'Terminaciones Sears (obligatorias)' : 'Últimos cuatro dígitos (opcionales) · ' + profile.name" [attr.inputmode]="profile.provider === 'SEARS' ? 'text' : 'numeric'" [attr.maxlength]="profile.provider === 'SEARS' ? 58 : 4" autocomplete="off" [(ngModel)]="profile.suffix" />
                 </label>
                 @if (profile.provider === 'SEARS') {
                   <p class="hint">Física y digital: escribe sus cuatro dígitos separados por coma. Ambas usan esta misma cuenta.</p>

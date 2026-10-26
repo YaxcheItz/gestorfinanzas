@@ -1,6 +1,19 @@
 # Estado para retomar la sesión
 
-## Avance vigente: entrega 0.1.13 publicada y operación CI integrada (26 de octubre)
+## Avance vigente: privacidad y etiquetas accesibles de Avisos 0.1.14
+
+- Nueva rama `correcciones/avisos-privacidad-accesible`, creada desde develop remoto f0746e4 comprobado y actualizada por fast-forward a80d23f8f3fa9ac694ee7a7765add0ecef44b7553 después de integrar #138. Ese cierre documental pasó CI413/40408665741 y siete checks/Vercel correctos. Se preservaron los cambios locales de frontend al actualizar la base.
+- Fallo de privacidad reproducido con prueba E2E roja y datos ficticios: un envío automático que requiere revisión mostraba importe/descripción directamente pese a Ocultar montos. El resumen usa ahora MontoPipe y TextoFinancieroPipe existentes, respetando preferencia guardada desde el primer frame y cambios posteriores. No basta ocultar visualmente: la regresión comprueba también ausencia del importe en el árbol accesible.
+- Etiquetas de cuenta incluyen el texto visible «Cuenta de destino» y el banco; últimos cuatro dígitos incluyen banco para distinguir controles con lector/voz. Sears mantiene etiqueta única. Prueba anterior roja por nombre ausente; ambos temas,320px/horizontal/texto200% y reglas guardadas siguen correctos.
+- Validación:454 unitarias y build correctos; cuatro E2E sintéticos correctos, sin escrituras HTTP. Pruebas rojas en `.local/avisos-privacy-red.log` y `.local/avisos-accessible-label-red.log`; verdes en `.local/avisos-0114-e2e-green.log`. No sustituye una prueba física de TalkBack ni registro automático real.
+- APK0.1.14/código15 firmado e instalado en Samsung conectado, firma/datos y primera instalación2026-10-22 conservados. SHA256 `7DF12224481B8AE9B16C3903E1D82BEEC69E51AC8F49E602AA6650F63D8A84F2`, `.local/releases/Kaptal-0.1.14.apk` y Descargas. DEX sin diagnóstico temporal. Se pidió comprobar continuidad de sesión/resumen/bancos; respuesta del propietario pendiente al escribir. No cambios de autenticación, backend, Worker, asociaciones ni registro financiero.
+- Producción continúa main `a5beff7f5f6b3433c298569c32a98838b5f6f0bf`, aplicación0.1.13 verificada. CI412/40380969029 y despliegues Render7340620531/Vercel7340641516 SUCCESS. HTTPS/API/proxy/Google,60archivos exactos y V11–V14 revalidados21:54Z. No confundir APK0.1.14 instalado con publicación de0.1.14, todavía pendiente de commit/CI/integración/promoción.
+- El propietario reconectó el teléfono y confirmó que aún no ha hecho otra compra. Etapa10 ABIERTA hasta próximo aviso habitual con gasto único en cuenta correcta sin guardado manual. No pedir compras ni recuperar descartados; Santander SOLO gastos, Sears física/digital en una cuenta. No QA productiva ni Gmail.
+
+Siguiente: publicar HEAD final de esta corrección, esperar todos sus checks exactos, integrar y promover con respaldo y comprobaciones posteriores ya autorizadas. Actualizar ambos documentos/plan local y continuación separando CI, integración, APK/dispositivo y producción. Etapas12/13 siguen abiertas por aceptación física y operación/costes pendientes; diseño global del resto de la app al final.
+
+
+## Hist?rico: entrega 0.1.13 publicada y operación CI integrada (26 de octubre)
 
 ### Código, CI e integración
 
