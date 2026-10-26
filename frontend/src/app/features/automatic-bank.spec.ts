@@ -22,7 +22,7 @@ describe('Configuración bancaria guardada', () => {
       ] }), configure: vi.fn(), disconnect: vi.fn() };
     TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(),
       { provide: AutomaticBankService, useValue: automatic },
-      { provide: BankNotificationsService, useValue: { apps: async () => [] } },
+      { provide: BankNotificationsService, useValue: { apps: async () => [], current: signal({granted:true}) } },
       { provide: FinanzasService, useValue: { getCuentas: () => of({ data: [] }) } },
       { provide: AuthService, useValue: { currentUser: user } },
     ] });
@@ -32,6 +32,7 @@ describe('Configuración bancaria guardada', () => {
   afterEach(() => http.verify());
   async function load() {
     const pending = c.load();
+    await Promise.resolve();
     http.expectOne('/api/listas').flush({ data: [] });
     await pending;
   }
@@ -72,5 +73,22 @@ describe('Configuración bancaria guardada', () => {
       sears.suffix=value;await c.connect();
       expect(automatic.configure).not.toHaveBeenCalled();
     }
+  });
+  it('conserva el estado nativo activo aunque falle la carga de cuentas y listas', async () => {
+    const pending=c.load();
+    await Promise.resolve();
+    http.expectOne('/api/listas').flush({}, {status:503,statusText:'Offline'});
+    await pending;
+    expect(c.state()?.active).toBe(true);
+    expect(c.ruleCount('SEARS')).toBe(1);
+    expect(c.loaded()).toBe(false);
+    expect(automatic.configure).not.toHaveBeenCalled();
+  });
+  it('consulta el resumen sin descargar catálogos ni activar el registro', async () => {
+    await c.refreshSummary();
+    expect(c.state()?.active).toBe(true);
+    c.opened({target:{open:false}} as unknown as Event);
+    expect(c.state()?.active).toBe(true);
+    expect(automatic.configure).not.toHaveBeenCalled();
   });
 });

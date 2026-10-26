@@ -1,0 +1,31 @@
+:host {
+  display: block;
+  color: var(--kaptal-content);
+  --notice-muted: color-mix(in srgb, var(--kaptal-content-muted) 85%, var(--kaptal-content));
+  --notice-control-border: color-mix(in srgb, var(--kaptal-content) 45%, var(--kaptal-border));
+}
+*, *::before, *::after { box-sizing: border-box; }
+p { margin: 0; line-height: 1.6; overflow-wrap: anywhere; }
+h2, h3 { margin: 0; overflow-wrap: anywhere; }
+.eyebrow { color: var(--notice-muted); font-size: .75rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.hint, small { color: var(--notice-muted); font-size: .875rem; line-height: 1.6; }
+button, select, input { font: inherit; }
+button, summary, a { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+button { min-height: 48px; padding: .7rem 1rem; border: 0; border-radius: .8rem; background: var(--kaptal-surface-subtle); color: inherit; cursor: pointer; line-height: 1.4; overflow-wrap: anywhere; }
+button.primary { background: var(--kaptal-brand); color: var(--kaptal-on-brand); font-weight: 650; }
+button.quiet { background: transparent; color: var(--notice-muted); }
+button.danger { color: var(--kaptal-expense); background: transparent; text-align: left; }
+button:disabled { opacity: .5; cursor: default; }
+button:active:not(:disabled) { transform: translateY(1px); }
+button:focus-visible, summary:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--kaptal-focus); outline-offset: 3px; }
+select, input:not([type=checkbox]) { width: 100%; min-width: 0; min-height: 48px; padding: .7rem .8rem; border: 1px solid var(--notice-control-border); border-radius: .7rem; background: var(--kaptal-surface); color: inherit; font-size: 1rem; }
+input[type=checkbox] { width: 22px; height: 22px; flex: 0 0 22px; accent-color: var(--kaptal-brand); }
+label { display: grid; gap: .5rem; min-width: 0; font-size: .875rem; font-weight: 600; }
+label.consent { display: flex; align-items: flex-start; gap: .75rem; min-height: 48px; padding: .8rem 0; line-height: 1.6; font-weight: 400; }
+fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+legend { padding: 0; margin-bottom: 1rem; font-weight: 700; }
+summary { min-height: 52px; cursor: pointer; font-weight: 650; padding: .85rem 0; }
+.actions { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; }
+.feedback { margin-top: .8rem; padding: .9rem; border-radius: .7rem; background: var(--kaptal-surface-subtle); font-size: .875rem; }
+[role=alert] { border-left: 3px solid var(--kaptal-expense); }
+@media (prefers-reduced-motion: reduce) { button:active:not(:disabled) { transform: none; } }
