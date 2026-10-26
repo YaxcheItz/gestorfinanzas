@@ -1,6 +1,55 @@
 # Estado para retomar la sesión
 
-## Avance vigente: operación CI y entrega de Avisos 0.1.13
+## Avance vigente: privacidad y etiquetas accesibles de Avisos 0.1.14
+
+- Nueva rama `correcciones/avisos-privacidad-accesible`, creada desde develop remoto f0746e4 comprobado y actualizada por fast-forward a80d23f8f3fa9ac694ee7a7765add0ecef44b7553 después de integrar #138. Ese cierre documental pasó CI413/40408665741 y siete checks/Vercel correctos. Se preservaron los cambios locales de frontend al actualizar la base.
+- Fallo de privacidad reproducido con prueba E2E roja y datos ficticios: un envío automático que requiere revisión mostraba importe/descripción directamente pese a Ocultar montos. El resumen usa ahora MontoPipe y TextoFinancieroPipe existentes, respetando preferencia guardada desde el primer frame y cambios posteriores. No basta ocultar visualmente: la regresión comprueba también ausencia del importe en el árbol accesible.
+- Etiquetas de cuenta incluyen el texto visible «Cuenta de destino» y el banco; últimos cuatro dígitos incluyen banco para distinguir controles con lector/voz. Sears mantiene etiqueta única. Prueba anterior roja por nombre ausente; ambos temas,320px/horizontal/texto200% y reglas guardadas siguen correctos.
+- Validación:454 unitarias y build correctos; cuatro E2E sintéticos correctos, sin escrituras HTTP. Pruebas rojas en `.local/avisos-privacy-red.log` y `.local/avisos-accessible-label-red.log`; verdes en `.local/avisos-0114-e2e-green.log`. No sustituye una prueba física de TalkBack ni registro automático real.
+- APK0.1.14/código15 firmado e instalado en Samsung conectado, firma/datos y primera instalación2026-10-22 conservados. SHA256 `7DF12224481B8AE9B16C3903E1D82BEEC69E51AC8F49E602AA6650F63D8A84F2`, `.local/releases/Kaptal-0.1.14.apk` y Descargas. DEX sin diagnóstico temporal. Se pidió comprobar continuidad de sesión/resumen/bancos; respuesta del propietario pendiente al escribir. No cambios de autenticación, backend, Worker, asociaciones ni registro financiero.
+- Producción continúa main `a5beff7f5f6b3433c298569c32a98838b5f6f0bf`, aplicación0.1.13 verificada. CI412/40380969029 y despliegues Render7340620531/Vercel7340641516 SUCCESS. HTTPS/API/proxy/Google,60archivos exactos y V11–V14 revalidados21:54Z. No confundir APK0.1.14 instalado con publicación de0.1.14, todavía pendiente de commit/CI/integración/promoción.
+- El propietario reconectó el teléfono y confirmó que aún no ha hecho otra compra. Etapa10 ABIERTA hasta próximo aviso habitual con gasto único en cuenta correcta sin guardado manual. No pedir compras ni recuperar descartados; Santander SOLO gastos, Sears física/digital en una cuenta. No QA productiva ni Gmail.
+
+Siguiente: publicar HEAD final de esta corrección, esperar todos sus checks exactos, integrar y promover con respaldo y comprobaciones posteriores ya autorizadas. Actualizar ambos documentos/plan local y continuación separando CI, integración, APK/dispositivo y producción. Etapas12/13 siguen abiertas por aceptación física y operación/costes pendientes; diseño global del resto de la app al final.
+
+
+## Hist?rico: entrega 0.1.13 publicada y operación CI integrada (26 de octubre)
+
+### Código, CI e integración
+
+- Aplicación: corrección #132 y diseño #134 integrados en develop y promovidos por #133/#135. Fuente funcional `94e1fed85d6d21549a76d71aeaa34c1ca8168cdd`; fuente del APK/diseño `533e4e2d7908277228a56f3563c493c92a1b1554`. CI398/399 y Android71 correctos para la corrección; CI402/403 y Android74 correctos para el diseño. Las promociones se comprobaron sobre sus HEAD exactos antes de main.
+- Main de la aplicación0.1.13: `ecc62fda0160c60d60f73fd246cf1ba1d6ea66e4`, CI409/40377856431 y Android78/40377856484 SUCCESS. El propietario validó físicamente el nuevo resumen, bancos asociados y Administrar bancos.
+- Operación #136/#137 integrada y promovida: fuente `cdf3722cf1c7dd1ff4c1f6fecc4b81a29e147218`, CI407/40376963106 y CI408/40377250417 SUCCESS; base develop `f0746e494eae449a7bb8e2256ffc4e4fa2885bb6`, CI410/40378565782 y CI411/40378882806 SUCCESS. Main actual `a5beff7f5f6b3433c298569c32a98838b5f6f0bf`, CI412/40380969029 SUCCESS. Frontend/backend idénticos a la fuente del APK533e4e2; no corresponde otra versión ni instalación por el cambio operativo.
+- Se elevó SOLO el límite total del trabajo E2E15→25min: la instalación de Chromium agotaba15min antes de terminar flujos/PWA. Se conservan límites de pruebas, arranque y PostgreSQL. CI400/405 iniciales cancelados fueron sustituidos por sus intentos2 correctos, sin ocultar fallos ni repetir operaciones financieras.
+- Cierre documental en rama nueva `docs/cierre-avisos-0-1-13`, creada desde develop remoto f0746e4 actualizado y comprobado. Sus checks/integración se registran por separado en el prompt local; no confundir documentación con otra entrega de app.
+
+### Comportamiento y pruebas
+
+- Santander reconstruye la compra dividida entre título/cuerpo; Sears admite física/digital en la misma cuenta y nuevas compras en una conversación SMS. Mantiene validación de tarjeta, fecha, moneda, propietario y folio; payload del mismo evento inmutable y deduplicado. Terminación JSON null corregida.
+- Santander SOLO gastos: avisos claros de depósitos/abonos/ingresos/devoluciones/transferencias se excluyen de esta conexión y backend rechaza ingresos/devoluciones Santander. Otros ingresos para otra cuenta quedan pospuestos. No borrar movimientos ni recuperar descartados.
+- Avisos muestra estado automático y bancos/tarjetas sin abrir formularios, contadores recientes diferenciados de Movimientos, permisos y asociaciones por banco. Separa registro asociado de revisión manual. Consultar no envía dinero; estados enviados/registrados evitan otro registro. Resumen nativo independiente de catálogos/red y presentación limpia al cambiar usuario.
+- Corrección:452 pruebas frontend, nueve backend aisladas y19 instrumentadas Samsung correctas. Diseño final:454 frontend, build sin advertencias de presupuesto y tres E2E sintéticos correctos, sin escrituras HTTP;320px/horizontal/claro/oscuro/texto200%. Texto secundario/control: contraste5.26/3.50 claro y6.38/5.44 oscuro. No sustituye TalkBack ni un aviso bancario real.
+- Medición del build: JS inicial125810bytes gzip y CSS18384bytes gzip; evidencia `.local/avisos-0113-build-metrics.json`. Es tamaño de artefactos, no latencia pública ni coste de proveedores.
+
+### APK y dispositivo
+
+- Samsung SM-A546E `RZCW80EJNHX` reconectado por el propietario el26 de octubre; versión instalada comprobada0.1.13/código14, firma/datos y primera instalación2026-10-22 conservados. SHA256 `BAD50B56B2FF8FD3B71D3CE667BDCD74DC737EFCFB8C473E4E0E823021D321DD`; `.local/releases/Kaptal-0.1.13.apk` y Descargas. Sin diagnóstico temporal en DEX.
+- La versión funcional0.1.12 limpia quedó sustituida: SHA256 A2A9F1F45C7325DC7B22910D88DA67DB3619ECD1465E635F93DB1BA15106B9A7. No distribuir candidatos probe históricos ni reinstalar por rutina. Tampoco repetir login/bloqueo/reinicio/persistencia ya acreditados sin motivo.
+
+### Producción y respaldo
+
+- Main actual a5beff7: Render7340620531 y VercelProduction7340641516 SUCCESS. Verificación pública21:54:57Z:60 archivos JS/CSS exactos, API/proxy HTTPS saludables y nuevo cliente Google activo. Esquema de solo lectura21:54:58Z: V11–V14 aplicadas; sin migraciones nuevas.
+- Respaldo previo actualizado `.local/promotion-20261026T184257Z/before-main.dump.dpapi`: cifrado/descifrado/hash/catálogo correctos, origen solo lectura, sin restaurar. Anteriores16:22/18:04 conservados. Evidencias `.local/avisos-0113-production-result.json` y `.local/avisos-design-delivery-result.json`; expected manifests de0.1.12/0.1.13 separados.
+- Publicación permanentemente autorizada tras checks, sin otra aprobación. No autoriza acciones destructivas, restauraciones, QA productiva, Gmail ni compras de prueba. Gmail permanece deshabilitado; no modificar su cliente Desktop.
+
+### Pendientes reales y siguiente etapa
+
+- Etapa10 ABIERTA: el propietario había reconocido ambos avisos pero aclaró que descartó revisiones editables. Al reconectar confirma que aún no ha hecho otra compra. No existe prueba fiable de registro automático real. Esperar el próximo aviso habitual y comprobar gasto único/cuenta correcta sin guardar manualmente; no solicitar compras ni recuperar descartados.
+- Etapa12: pendiente revisión física de accesibilidad/TalkBack y demás aceptación faltante. Preservar configuración original del teléfono al terminar. El diseño específico de Avisos fue solicitado y validado; diseño global del resto de la app continúa al final.
+- Etapa13 continúa abierta: presupuesto global de IA, límites distribuidos, métricas/latencias y alertas operativas, cuotas/costes y recuperación según plan. El ajuste de CI y la medición del build son avances parciales. Cada parte nueva en rama desde develop remoto actualizado/comprobado; mantener estado, plan local y continuación sincronizados.
+
+
+## Hist?rico: operación CI y entrega de Avisos 0.1.13
 
 - Corrección funcional #132 integrada y promovida por #133: main d83720ef2bf2f4fe672723904c077d00dad8aee2. CI404/40373946575 y Android75/40373946513 SUCCESS; Render7339601061 y Vercel7339615172 SUCCESS. Sesenta assets exactos, HTTPS/API/proxy/Google correctos; V11–V14 aplicadas, comprobación solo lectura. Sin nuevas migraciones ni Gmail.
 - Diseño #134 integrado en develop f3560503b9617e9d55b46d7178a4069b83dcdd39. Fuente533e4e2d7908277228a56f3563c493c92a1b1554 validada por CI402/403 y Android74, catorce checks/Vercel correctos. Promoción #135 en espera del CI405 intento2; CI406/40374179835 y Android76/40374110981,77/40374179899 correctos.

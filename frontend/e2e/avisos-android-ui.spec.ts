@@ -1,13 +1,14 @@
 import { expect, test, Page } from '@playwright/test';
 import { readPageGeometry } from './geometry-helper';
 
-async function syntheticAndroid(page: Page, baseURL: string, dark = false) {
+async function syntheticAndroid(page: Page, baseURL: string, dark = false, privacy = false) {
   expect(new URL(baseURL).hostname).toBe('localhost');
   const writes: string[] = [];
-  await page.addInitScript(({ dark }) => {
+  await page.addInitScript(({ dark, privacy }) => {
     const w = window as any;
     localStorage.setItem('finanzas_token', `qa.${btoa(JSON.stringify({exp:Math.floor(Date.now()/1000)+3600}))}.synthetic`);
     localStorage.setItem('finanzas_user', JSON.stringify({id:995,nombre:'Prueba de interfaz',email:'ui@example.test'}));
+    localStorage.setItem('kaptal_ocultar_montos_995', String(privacy));
     const methods = ['read','consume','update','configure','clear','apps','settings','retryAutomatic','discard','getInfo','getLaunchUrl','removeListener','removeAllListeners'];
     const rules = [
       {proveedor:'SANTANDER',cuentaId:11,listaId:21,terminacion:null,paquete:'mx.bancosantander.supermovil'},
@@ -25,7 +26,8 @@ async function syntheticAndroid(page: Page, baseURL: string, dark = false) {
         if(plugin==='NativeSession'&&method==='read')return {closed:false,userId:995};
         if(plugin==='AppLock')return {enabled:false,supported:true,available:true};
         if(plugin==='ScreenPrivacy')return {enabled:false,supported:true};
-        if(plugin==='AutomaticBank')return {deviceId:'synthetic-device',active:true,queued:1,registered:2,review:0,rules};
+        if(plugin==='AutomaticBank')return {deviceId:'synthetic-device',active:true,queued:1,registered:2,review:privacy?1:0,rules,
+          reviews:privacy?[{eventoId:'qa-review',fecha:'2026-10-26',descripcion:'Compra QA 27',monto:25.1,moneda:'MXN'}]:[]};
         if(plugin==='BankNotifications'){
           if(method==='retryAutomatic'){notices[0].automaticStatus='queued';notices[0].canRetry=false;return {};}
           if(method==='apps')return {apps:[{packageName:'com.google.android.apps.messaging',label:'Mensajes QA'}]};
@@ -34,13 +36,13 @@ async function syntheticAndroid(page: Page, baseURL: string, dark = false) {
         return {};
       },
     };
-  }, { dark });
+  }, { dark, privacy });
   await page.route('**/*', async route => {
     const request=route.request(), url=new URL(request.url());
     if(!url.pathname.startsWith('/api/'))return url.origin===new URL(baseURL).origin ? route.continue() : route.abort();
     if(request.method()!=='GET')writes.push(url.pathname);
     let data: unknown = [];
-    if(url.pathname.endsWith('/perfil'))data={id:995,nombre:'Prueba de interfaz',email:'ui@example.test',tema:dark?'OSCURO':'CLARO',monedaPredeterminada:'MXN'};
+    if(url.pathname.endsWith('/perfil'))data={id:995,nombre:'Prueba de interfaz',email:'ui@example.test',tema:dark?'OSCURO':'CLARO',monedaPredeterminada:'MXN',ocultarMontos:privacy};
     if(url.pathname.endsWith('/avisos'))data={content:[],totalPages:0};
     if(url.pathname.endsWith('/cuentas'))data=[{id:11,nombre:'Crédito QA',tipo:'CREDITO',moneda:'MXN',activo:true},{id:12,nombre:'Sears QA',tipo:'CREDITO',moneda:'MXN',activo:true}];
     if(url.pathname.endsWith('/listas'))data=[{id:21,nombre:'Personal QA',moneda:'MXN',personal:true,rol:'PROPIETARIO',archivada:false,miembros:[]}];
@@ -64,13 +66,23 @@ test('una compra pendiente usa el original nativo y no el guardado manual', asyn
   expect(writes).toEqual([]);
 });
 
+test('ocultar montos protege los envíos para revisión también en el lector de pantalla', async ({page,baseURL})=>{
+  const writes=await syntheticAndroid(page,baseURL!,false,true);
+  const summary=page.getByRole('region',{name:'Tus compras, en su cuenta'});
+  await expect(summary).not.toContainText('25.1');
+  await expect(summary).toContainText('Compra QA •••');
+  expect(await summary.ariaSnapshot()).not.toMatch(/25[.,]10?|QA 27/);
+  expect(writes).toEqual([]);
+});
+
 for(const dark of [false,true]) {
   test(`avisos y asociaciones se leen sin desbordes, tema ${dark?'oscuro':'claro'}`,async({page,baseURL},testInfo)=>{
     await page.setViewportSize({width:390,height:844});
     const writes=await syntheticAndroid(page,baseURL!,dark);
     await page.screenshot({path:testInfo.outputPath('avisos-sinteticos.png'),fullPage:true});
     await page.getByText('Registrar compras automáticamente · Administrar bancos',{exact:true}).click();
-    await expect(page.getByLabel('Cuenta de Sears Visa')).toHaveValue(/12$/);
+    await expect(page.getByLabel('Cuenta de destino · Sears Visa',{exact:true})).toHaveValue(/12$/);
+    await expect(page.getByLabel('Últimos cuatro dígitos (opcionales) · Santander',{exact:true})).toBeVisible();
     await expect(page.getByLabel('Terminaciones Sears (obligatorias)')).toHaveValue('1234, 5678');
     for(const size of [{width:320,height:740},{width:844,height:390}]) {
       await page.setViewportSize(size);
