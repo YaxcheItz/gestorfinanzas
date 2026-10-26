@@ -1,0 +1,18 @@
+.permissions { border-top: 1px solid var(--kaptal-border); border-bottom: 1px solid var(--kaptal-border); padding: .4rem 0; }
+.permission-header { display: flex; align-items: center; justify-content: space-between; gap: .8rem; padding: .5rem 0; }
+.permission-header h2 { font-size: 1rem; }
+.permission-state { font-size: .8125rem; color: var(--notice-muted); text-align: right; }
+.permission-settings { display: grid; gap: 1rem; padding: .5rem 0 1rem; }
+.apps { max-height: 18rem; overflow: auto; padding: .25rem; }
+.apps label { display: flex; align-items: center; min-height: 48px; gap: .75rem; font-weight: 400; }
+.local-header { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: .5rem; margin: 1.75rem 0 .5rem; }
+.local-header h2 { font-size: 1.125rem; }
+.local-notice { padding: 1.25rem 0; border-bottom: 1px solid var(--kaptal-border); overflow-wrap: anywhere; }
+.notice-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: .75rem; margin-bottom: .55rem; }
+.notice-heading h3 { font-size: 1rem; }
+.status { font-size: .75rem; font-weight: 650; color: var(--notice-muted); text-align: right; }
+.status[data-state=registered] { color: var(--kaptal-income); }
+.status[data-state=ready], .status[data-state=queued] { color: var(--kaptal-brand); }
+.local-notice .actions { margin-top: .9rem; }
+.local-empty { padding: 1rem 0; }
+.local-notice a { display: inline-flex; align-items: center; min-height: 48px; color: inherit; text-decoration: underline; text-underline-offset: .2em; }

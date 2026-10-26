@@ -1,0 +1,25 @@
+.automation { padding: 1.25rem; margin: 1.5rem 0; border-radius: 1.25rem; background: var(--kaptal-surface-subtle); }
+.automation-header { display: flex; align-items: flex-start; justify-content: space-between; gap: .75rem; }
+h2 { font-size: 1.25rem; letter-spacing: -.025em; margin: .3rem 0 .65rem; }
+.scope { display: inline-flex; align-items: center; gap: .4rem; color: var(--notice-muted); font-size: .8125rem; white-space: nowrap; }
+.scope::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--notice-muted); }
+.scope.active { color: var(--kaptal-income); }
+.scope.active::before { background: currentColor; }
+.metrics { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: .75rem; padding: 1.2rem 0; }
+.metrics div { display: grid; align-content: start; gap: .3rem; }
+.metrics strong { font-size: 1.5rem; font-variant-numeric: tabular-nums; font-weight: 650; }
+.metrics span { font-size: .8125rem; color: var(--notice-muted); overflow-wrap: anywhere; line-height: 1.5; }
+.connected { display: flex; flex-wrap: wrap; gap: .45rem 1rem; padding: .9rem 0; border-top: 1px solid var(--kaptal-border); font-size: .875rem; }
+.connected span { display: inline-flex; align-items: center; gap: .4rem; }
+.connected span::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--kaptal-content-muted); }
+.connection-actions { margin-top: .5rem; }
+.connection-actions button { background: var(--kaptal-surface); }
+details { border-top: 1px solid var(--kaptal-border); margin-top: .8rem; }
+.setup-intro { display: grid; gap: .75rem; padding-bottom: 1.25rem; }
+.profile { display: grid; gap: .8rem; padding: 1rem 0; border-top: 1px solid var(--kaptal-border); }
+.profile h3 { font-size: 1rem; }
+.destination { display: grid; gap: 1rem; padding-top: 1.25rem; }
+.save { width: 100%; margin-top: .5rem; }
+.support { margin-top: 1rem; }
+.support p + p { margin-top: .75rem; }
+@media(max-width:359px) { .automation { padding: 1rem; } .automation-header { flex-direction: column; } .metrics { gap: .5rem; } }

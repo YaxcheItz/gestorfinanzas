@@ -27,7 +27,7 @@ test('bandeja revisa avisos y separa posibles duplicados sin repetir confirmacio
   const dialog=page.getByRole('dialog',{name:'¿Es otra operación?'});await expect(dialog).toBeVisible();
   await dialog.getByRole('button',{name:'Volver',exact:true}).click();expect(await gastos()).toHaveLength(1);
   await page.getByRole('button',{name:'Guardar movimiento',exact:true}).click();await dialog.getByRole('button',{name:'Es una operación distinta',exact:true}).click();
-  await expect(page.getByText('No hay avisos pendientes',{exact:true})).toBeVisible();expect(await gastos()).toHaveLength(2);
+  await expect(page.getByText('No hay revisiones pendientes',{exact:true})).toBeVisible();expect(await gastos()).toHaveLength(2);
   await page.getByRole('button',{name:'Registrados',exact:true}).click();await expect(page.locator('.row')).toHaveCount(2);
   for(const width of [320,390]){await page.setViewportSize({width,height:844});await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);}
   await page.screenshot({path:testInfo.outputPath('bandeja-movil.png'),fullPage:true});
@@ -37,6 +37,6 @@ test('bandeja revisa avisos y separa posibles duplicados sin repetir confirmacio
   await page.getByRole('button',{name:'Revisar y corregir',exact:true}).click();
   const edit=page.getByRole('dialog',{name:'Revisar aviso'});await edit.locator('input[name="descripcion"]').fill('Compra corregida');await edit.locator('input[name="monto"]').fill('13');await edit.locator('select[name="cuenta"]').selectOption({label:'Banco bandeja · MXN'});await edit.getByRole('button',{name:'Guardar revisión',exact:true}).click();
   await expect(edit).not.toBeVisible();await expect(page.getByRole('heading',{name:'Compra corregida',exact:true})).toBeVisible();
-  await page.getByRole('button',{name:'Descartar',exact:true}).click();await expect(page.getByText('No hay avisos pendientes',{exact:true})).toBeVisible();
+  await page.getByRole('button',{name:'Descartar',exact:true}).click();await expect(page.getByText('No hay revisiones pendientes',{exact:true})).toBeVisible();
   expect(await gastos()).toHaveLength(2);
 });

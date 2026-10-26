@@ -1,6 +1,6 @@
 <section class="inbox">
-  <header><div><p class="muted">Entradas externas</p><h1>Bandeja de avisos</h1></div><button class="pill" (click)="nuevo()">Añadir aviso</button></header>
-  <p class="muted intro">Los avisos pendientes se revisan antes de guardarlos. Las compras reconocidas con registro automático activo se guardan directamente en la cuenta asociada.</p>
+  <header><div><p class="eyebrow">Tu actividad bancaria</p><h1>Bandeja de avisos</h1></div><button class="pill" (click)="nuevo()">Añadir aviso</button></header>
+  <p class="muted intro">Consulta el registro de tus compras y revisa los avisos que necesitan tu atención.</p>
   @if(shared.pending();as texto){
     <section class="notice" aria-label="Texto recibido en este teléfono">
       @if(texto.text){
@@ -11,13 +11,14 @@
     </section>
   }
   <app-bank-notifications (review)="usarNotificacion($event)" />
+  <div class="review-heading"><h2>Revisiones en tu cuenta</h2><p class="muted">Los avisos enviados para revisión se guardan como movimiento cuando los confirmas.</p></div>
   <nav aria-label="Estado de avisos" class="filters">@for(f of filtros;track f.valor){<button class="pill" [attr.aria-pressed]="estado()===f.valor" (click)="filtrar(f.valor)">{{f.texto}}</button>}</nav>
   @if(error()){<div role="alert" class="notice">{{error()}} <button (click)="cargar()">Recargar bandeja</button></div>}
   @if(mensaje()){<p role="status">{{mensaje()}}</p>}
   @if(cargando()){<p role="status" class="muted">Cargando avisos…</p>}
-  @else if(!avisos().length && !error()){<section class="empty"><span aria-hidden="true">📨</span><h2>{{estado()==='PENDIENTE'?'No hay avisos pendientes':'Sin avisos en esta vista'}}</h2><p class="muted">Los avisos que añadas aparecerán aquí. WhatsApp y Gmail necesitan una conexión configurada.</p></section>}
+  @else if(!avisos().length && !error()){<section class="empty"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 5h16v14H4zM4 6l8 7 8-7" /></svg><h2>{{estado()==='PENDIENTE'?'No hay revisiones pendientes':'Sin revisiones en esta vista'}}</h2><p class="muted">Aquí aparecen tus avisos enviados para revisión. Las compras registradas automáticamente están en Movimientos.</p></section>}
   <div [attr.aria-busy]="cargando()">@for(a of avisos();track a.id){<article class="row">
-    <div class="row-top"><span class="emoji" aria-hidden="true">{{a.origen==='WHATSAPP'?'💬':'📨'}}</span><div class="copy"><h2>{{(a.datos?.descripcion || a.resumen) | textoFinanciero}}</h2><p class="muted">{{etiquetaOrigen(a.origen)}} · {{etiquetaClase(a.clase)}} · {{etiquetaEstado(a.estado)}}</p></div>@if(a.datos?.monto!=null){<strong>{{a.datos!.monto! | monto:a.moneda:'symbol':'1.2-2'}}</strong>}</div>
+    <div class="row-top"><span class="notice-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5h16v14H4zM4 6l8 7 8-7" /></svg></span><div class="copy"><h2>{{(a.datos?.descripcion || a.resumen) | textoFinanciero}}</h2><p class="muted">{{etiquetaOrigen(a.origen)}} · {{etiquetaClase(a.clase)}} · {{etiquetaEstado(a.estado)}}</p></div>@if(a.datos?.monto!=null){<strong>{{a.datos!.monto! | monto:a.moneda:'symbol':'1.2-2'}}</strong>}</div>
     @if(a.coincidencias.length){<p class="notice">Hay {{a.coincidencias.length}} movimiento(s) parecido(s). Podría ser otra compra: revísalo antes de guardar.</p><a routerLink="/transacciones" [queryParams]="{detalle:a.coincidencias[0]}">Revisar movimiento parecido</a>}
     <div class="actions">@if(a.estado==='PENDIENTE'){
       <button class="pill" (click)="editar(a)" [disabled]="ocupado()">Revisar y corregir</button><button class="pill" (click)="prepararConfirmacion(a)" [disabled]="ocupado()">Guardar movimiento</button><button class="quiet" (click)="ejecutar(a,'descartar',false)" [disabled]="ocupado()">Descartar</button>

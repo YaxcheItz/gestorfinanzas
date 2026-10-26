@@ -1,0 +1,88 @@
+@if (automatic.available) {
+  <section class="automation" aria-labelledby="automation-title">
+    <div class="automation-header">
+      <div><p class="eyebrow">Registro automático</p><h2 id="automation-title">Tus compras, en su cuenta</h2></div>
+      <span class="scope" [class.active]="state()?.active">{{ state() ? state()!.active ? 'Registro activo' : 'Desactivado' : 'Comprobando' }}</span>
+    </div>
+    <p class="hint">Las compras reconocidas de tus bancos asociados se guardan sin pedir confirmación. Santander: solo gastos.</p>
+    @if (state(); as s) {
+      <div class="metrics" role="group" aria-label="Estado de envíos recientes">
+        <div><strong>{{ s.queued }}</strong><span>Envíos pendientes</span></div>
+        <div><strong>{{ s.registered }}</strong><span>Registrados recientes</span></div>
+        <div><strong>{{ s.review }}</strong><span>Para revisar</span></div>
+      </div>
+      <p class="hint">Estos contadores muestran envíos recientes del teléfono, no el total de Movimientos.</p>
+      @if (s.rules?.length) {
+        <div class="connected" aria-label="Bancos asociados">
+          @for (profile of profiles; track profile.provider) {
+            @if (ruleCount(profile.provider); as count) {
+              <span>{{ profile.name }}{{ count > 1 ? ' · ' + count + ' tarjetas' : '' }}</span>
+            }
+          }
+        </div>
+      }
+      @for (review of s.reviews ?? []; track review.eventoId) {
+        <p class="feedback">{{ review.fecha }} · {{ review.descripcion }} · {{ review.monto }} {{ review.moneda }}. Comprueba Movimientos antes de registrarlo manualmente.</p>
+      }
+      @if (s.full || s.error) { <p role="alert" class="feedback">Comprueba la conexión y tus movimientos antes de volver a activar.</p> }
+    }
+    <div class="connection-actions"><button type="button" (click)="refreshSummary()" [disabled]="busy()">Actualizar estado</button></div>
+    @if (summaryError()) { <p role="status" class="feedback">{{ summaryError() }}</p> }
+    <details (toggle)="opened($event)">
+      <summary>Registrar compras automáticamente · Administrar bancos</summary>
+      <div class="setup-intro">
+        <p class="hint">Asocia cada banco a su cuenta y elige la lista de destino. Guardar conserva los demás bancos que mantengas seleccionados.</p>
+        <p class="hint">Sin internet, los envíos reconocidos se conservan cifrados para reintentarlos. Los formatos ambiguos o las posibles coincidencias pasan a revisión.</p>
+      </div>
+      <button type="button" (click)="load()" [disabled]="busy()">{{ busy() ? 'Cargando configuración…' : 'Actualizar configuración' }}</button>
+      @if (loaded()) {
+        <fieldset [disabled]="busy()">
+          <legend>Asociaciones bancarias</legend>
+          @for (profile of profiles; track profile.provider) {
+            <section class="profile">
+              <h3>{{ profile.name }}</h3>
+              <label>Cuenta de destino
+                <select [(ngModel)]="profile.account" [attr.aria-label]="'Cuenta de ' + profile.name">
+                  <option [ngValue]="null">No activar</option>
+                  @for (account of accounts(); track account.id) {
+                    @if (account.moneda === 'MXN' && account.tipo === profile.type) { <option [ngValue]="account.id">{{ account.nombre }}</option> }
+                  }
+                </select>
+              </label>
+              @if (profile.account) {
+                <label>{{ profile.provider === 'SEARS' ? 'Terminaciones Sears (obligatorias)' : 'Últimos cuatro dígitos (opcionales)' }}
+                  <input type="text" [attr.inputmode]="profile.provider === 'SEARS' ? 'text' : 'numeric'" [attr.maxlength]="profile.provider === 'SEARS' ? 58 : 4" autocomplete="off" [(ngModel)]="profile.suffix" />
+                </label>
+                @if (profile.provider === 'SEARS') {
+                  <p class="hint">Física y digital: escribe sus cuatro dígitos separados por coma. Ambas usan esta misma cuenta.</p>
+                  <label>App de mensajes
+                    <select [(ngModel)]="smsPackage"><option value="">Elige tu app</option>
+                      @for (app of smsApps(); track app.packageName) { <option [value]="app.packageName">{{ app.label }}</option> }
+                    </select>
+                  </label>
+                  <label>Remitente de Sears<input type="text" maxlength="40" autocomplete="off" [(ngModel)]="sender" /></label>
+                }
+              }
+            </section>
+          }
+          <div class="destination">
+            <label>Lista para estas compras<select [(ngModel)]="listId"><option [ngValue]="null">Elige una lista</option>
+              @for (list of lists(); track list.id) { <option [ngValue]="list.id">{{ list.nombre }}</option> }
+            </select></label>
+            <label class="consent"><input type="checkbox" [(ngModel)]="consent" /> Quiero registrar directamente las compras reconocidas en estas cuentas.</label>
+          </div>
+          <button class="primary save" type="button" (click)="connect()" [disabled]="!consent || busy() || !bank.current().granted || !!state()?.queued">{{ state()?.active ? 'Guardar asociaciones' : 'Activar registro automático' }}</button>
+          @if (state()?.queued) { <p class="hint">Espera a que terminen los envíos pendientes antes de cambiar las asociaciones.</p> }
+          @if (!bank.current().granted) { <p class="hint">Primero concede acceso a las notificaciones en los permisos de Android, debajo de esta sección.</p> }
+        </fieldset>
+      }
+      <details class="support"><summary>Qué avisos se reconocen</summary>
+        <p class="hint">Sears Visa desde tu app de SMS; Santander «Gastaste…» o «Compra con tarjeta en…» con importe MXN, tarjeta, fecha y hora. Revolut requiere moneda explícita. Un banco seleccionado no garantiza que todos sus formatos sean reconocidos.</p>
+        <p class="hint">No se importa historial ni se recuperan compras anteriores. Android puede ocultar contenido o detener la recepción por batería o cierre forzado.</p>
+      </details>
+      @if (state()?.active) { <button class="danger" type="button" (click)="disconnect()" [disabled]="busy()">Desconectar y borrar envíos locales pendientes</button> }
+      @if (message()) { <p role="status" class="feedback">{{ message() }}</p> }
+      @if (error()) { <p role="alert" class="feedback">{{ error() }}</p> }
+    </details>
+  </section>
+}
