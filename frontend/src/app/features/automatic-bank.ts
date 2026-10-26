@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
@@ -14,60 +14,8 @@ import { AuthService } from '../core/services/auth.service';
 @Component({
   selector: 'app-automatic-bank',
   imports: [FormsModule],
-  template: `
-    @if (automatic.available) {
-      <details (toggle)="opened($event)">
-        <summary>Registrar compras automáticamente</summary>
-        <p>Configura una vez cada cuenta. Las compras reconocidas se registrarán sin pedir confirmación, incluso en segundo plano. Sin internet, se conservará un envío cifrado para reintentarlo.</p>
-        <p>Santander registra solo compras y gastos. Los avisos claros de depósitos, abonos e ingresos se ignoran en esta conexión.</p>
-        <p>Se reconoce la compra autorizada de Sears Visa, «Gastaste … en … con tu tarjeta» y el aviso Santander «Compra con tarjeta en …» con importe MXN, tarjeta, fecha y hora. Los mensajes ambiguos y posibles duplicados necesitan revisión. Revolut requiere moneda explícita.</p>
-        <p>Sears se detecta desde las notificaciones de tu app de SMS; actívalas en Android. Kaptal no lee el historial. Android puede ocultar contenido o detener la recepción por batería o cierre forzado.</p>
-        @if (state(); as s) {
-          <p role="status">Registro {{ s.active ? 'activo' : 'desactivado' }} · {{ s.queued }} envíos pendientes · {{ s.registered }} registrados recientes · {{ s.review }} para revisar.</p>
-          @for (review of s.reviews ?? []; track review.eventoId) {
-            <p>{{ review.fecha }} · {{ review.descripcion }} · {{ review.monto }} {{ review.moneda }}. Comprueba la bandeja de Avisos y tu banco antes de registrarlo manualmente.</p>
-          }
-          @if (s.full || s.error) { <p role="alert">Comprueba la conexión y los movimientos con tu banco antes de volver a activar.</p> }
-        }
-        <button type="button" (click)="load()" [disabled]="busy()">Actualizar configuración</button>
-        @if (loaded()) {
-          <fieldset [disabled]="busy()"><legend>Asocia cada app a su cuenta</legend>
-            @for (profile of profiles; track profile.provider) {
-              <label>{{ profile.name }}
-                <select [(ngModel)]="profile.account" [attr.aria-label]="'Cuenta de ' + profile.name">
-                  <option [ngValue]="null">No activar</option>
-                  @for (account of accounts(); track account.id) {
-                    @if (account.moneda === 'MXN' && account.tipo === profile.type) { <option [ngValue]="account.id">{{ account.nombre }}</option> }
-                  }
-                </select>
-              </label>
-              @if (profile.account) {
-                <label>{{ profile.provider === 'SEARS' ? 'Terminaciones Sears (obligatorias)' : 'Últimos cuatro dígitos (opcionales)' }}
-                  <input type="text" [attr.inputmode]="profile.provider === 'SEARS' ? 'text' : 'numeric'" [attr.maxlength]="profile.provider === 'SEARS' ? 58 : 4" autocomplete="off" [(ngModel)]="profile.suffix" />
-                </label>
-                @if(profile.provider === 'SEARS') { <p>Para la física y la digital, separa sus cuatro dígitos con una coma. Ambas se registrarán en esta misma cuenta.</p> }
-              }
-            }
-            <label>App de mensajes para Sears
-              <select [(ngModel)]="smsPackage"><option value="">Elige tu app</option>
-                @for (app of smsApps(); track app.packageName) { <option [value]="app.packageName">{{ app.label }}</option> }
-              </select>
-            </label>
-            <label>Remitente de Sears <input type="text" maxlength="40" autocomplete="off" [(ngModel)]="sender" /></label>
-            <label>Lista de destino <select [(ngModel)]="listId"><option [ngValue]="null">Elige una lista</option>
-              @for (list of lists(); track list.id) { <option [ngValue]="list.id">{{ list.nombre }}</option> }
-            </select></label>
-            <label><input type="checkbox" [(ngModel)]="consent" /> Quiero registrar directamente las compras reconocidas en estas cuentas.</label>
-            <button type="button" (click)="connect()" [disabled]="!consent || busy() || !bank.current().granted">Activar registro automático</button>
-          </fieldset>
-        }
-        <button type="button" (click)="disconnect()" [disabled]="busy()">Desconectar y borrar envíos locales pendientes</button>
-        @if (message()) { <p role="status">{{ message() }}</p> }
-        @if (error()) { <p role="alert">{{ error() }}</p> }
-      </details>
-    }
-  `,
-  styles: `:host{display:block;margin:1rem 0}summary{font-weight:700;cursor:pointer;padding:.8rem 0}p{margin:.7rem 0}label{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin:.6rem 0}select,input,button{font:inherit;min-height:44px;max-width:100%}select,input{border:1px solid var(--border,#ccc);border-radius:.6rem;padding:.4rem}button{padding:.5rem .8rem;margin:.3rem;border:1px solid var(--border,#ccc);border-radius:.8rem}fieldset{min-width:0}`,
+  templateUrl: './automatic-bank.html',
+  styleUrls: ['./bank-notice-controls.css', './automatic-bank.css'],
 })
 export class AutomaticBankComponent {
   readonly automatic = inject(AutomaticBankService);
@@ -83,6 +31,34 @@ export class AutomaticBankComponent {
   readonly busy = signal(false);
   readonly error = signal('');
   readonly message = signal('');
+  readonly summaryError = signal('');
+  private summaryTurn = 0;
+  private summaryOwner: number | undefined;
+  constructor() {
+    effect(() => {
+      const user = this.auth.currentUser()?.id;
+      if (this.summaryOwner !== user) {
+        this.summaryOwner = user; this.state.set(null); this.loaded.set(false); this.consent = false;
+        this.sender = ''; this.smsPackage = ''; this.listId = null;
+        this.accounts.set([]); this.lists.set([]);
+        for (const p of this.profiles) { p.account = null; p.suffix = ''; }
+      }
+      this.bank.current();
+      void this.refreshSummary();
+    });
+  }
+  async refreshSummary(): Promise<void> {
+    const user = this.auth.currentUser()?.id;
+    const turn = ++this.summaryTurn;
+    try {
+      const state = await this.automatic.read();
+      if (turn !== this.summaryTurn || user !== this.auth.currentUser()?.id) return;
+      this.state.set(state); this.summaryError.set(state ? '' : 'Abre tu sesión para comprobar el registro.');
+    } catch {
+      if (turn === this.summaryTurn) { this.state.set(null); this.summaryError.set('No se pudo comprobar el registro. Actualiza el estado.'); }
+    }
+  }
+  ruleCount(provider: string): number { return this.state()?.rules?.filter(r => r.proveedor === provider).length ?? 0; }
   readonly profiles = [
     { provider: 'SANTANDER', name: 'Santander', type: 'CREDITO', pkg: 'mx.bancosantander.supermovil', account: null as number | null, suffix: '' },
     { provider: 'REVOLUT', name: 'Revolut', type: 'DEBITO', pkg: 'com.revolut.revolut', account: null as number | null, suffix: '' },
@@ -93,20 +69,23 @@ export class AutomaticBankComponent {
   smsPackage = ''; sender = ''; listId: number | null = null; consent = false;
   opened(event: Event): void {
     if ((event.target as HTMLDetailsElement).open) void this.load();
-    else { this.consent = false; this.loaded.set(false); this.state.set(null); this.sender = ''; for (const p of this.profiles) { p.suffix = ''; p.account = null; } }
+    else { this.consent = false; this.loaded.set(false); this.sender = ''; for (const p of this.profiles) { p.suffix = ''; p.account = null; } }
   }
   async load(): Promise<void> {
     if (this.busy()) return;
     this.busy.set(true); this.error.set(''); this.loaded.set(false);
     const userId = this.auth.currentUser()?.id;
     try {
-      const [state, accounts, lists, apps] = await Promise.all([
-        this.automatic.read(), firstValueFrom(this.finance.getCuentas()),
+      const state = await this.automatic.read();
+      if (userId !== this.auth.currentUser()?.id) return;
+      this.state.set(state);
+      const [accounts, lists, apps] = await Promise.all([
+        firstValueFrom(this.finance.getCuentas()),
         firstValueFrom(this.http.get<ApiResponse<ListaFinanciera[]>>(`${getApiBaseUrl()}/listas`)), this.bank.apps(),
       ]);
       if (userId !== this.auth.currentUser()?.id) return;
       if (!state) throw new Error('Abre tu sesión de nuevo.');
-      this.state.set(state); this.accounts.set(accounts.data.filter(a => a.activo));
+      this.accounts.set(accounts.data.filter(a => a.activo));
       this.lists.set(lists.data.filter(l => !l.archivada && l.rol !== 'LECTOR' && l.moneda === 'MXN'));
       this.smsApps.set(apps.filter(a => ['com.google.android.apps.messaging', 'com.samsung.android.messaging', 'com.android.mms'].includes(a.packageName)));
       const rules = state.rules ?? [];

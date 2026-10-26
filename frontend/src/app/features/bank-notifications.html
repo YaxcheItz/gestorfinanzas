@@ -1,0 +1,52 @@
+@if (bank.available) {
+  <app-automatic-bank />
+  <section class="permissions" aria-label="Recepción en Android">
+    <div class="permission-header"><h2>Acceso a notificaciones</h2><span class="permission-state">{{ bank.current().granted ? 'Acceso concedido' : 'Sin conceder' }} · {{ bank.current().enabled ? 'Recepción activa' : 'Recepción pausada' }}</span></div>
+    <details (toggle)="closeSettings($event)">
+      <summary>Notificaciones bancarias en este Android</summary>
+      <div class="permission-settings">
+        <p class="hint">Android concede acceso amplio a las notificaciones. Kaptal filtra en el teléfono las apps que elijas y conserva hasta 20 avisos durante 24 horas. No recupera notificaciones anteriores ni garantiza detectar todas las compras.</p>
+        <p class="hint">Al pausar, revocar el acceso o cerrar sesión se borran la selección y las colas locales, incluido el automático.</p>
+        <label class="consent"><input type="checkbox" [checked]="consent()" (change)="consent.set($any($event.target).checked)" /> Entiendo el acceso y quiero configurar esta recepción.</label>
+        <div class="actions">
+          <button type="button" (click)="run('settings')" [disabled]="busy() || !consent()">Abrir acceso de Android</button>
+          <button type="button" (click)="loadApps()" [disabled]="busy() || !consent()">Elegir aplicaciones</button>
+          <button type="button" (click)="bank.refresh()" [disabled]="busy()">Actualizar estado</button>
+        </div>
+        @if (appsLoaded()) {
+          <fieldset class="apps" [disabled]="busy()"><legend>Tus aplicaciones bancarias · máximo 10</legend>
+            @for (app of apps(); track app.packageName) {
+              <label><input type="checkbox" [checked]="selected().includes(app.packageName)" (change)="toggle(app.packageName, $any($event.target).checked)" /> {{ app.label }}</label>
+            }
+          </fieldset>
+          <button class="primary" type="button" (click)="run('enable')" [disabled]="busy() || !consent() || !bank.current().granted || selected().length === 0 || selected().length > 10">Activar con estas apps</button>
+        }
+        <button class="danger" type="button" (click)="run('pause')" [disabled]="busy()">Pausar y borrar recepción local</button>
+        @if (message()) { <p role="status" class="feedback">{{ message() }}</p> }
+      </div>
+    </details>
+  </section>
+  @if (bank.error()) { <p role="alert" class="feedback">{{ bank.error() }}</p> }
+  @if (error()) { <p role="alert" class="feedback">{{ error() }}</p> }
+  @if (bank.current().omitted) { <p role="status" class="feedback">Se omitieron avisos por seguridad o límites de almacenamiento. Comprueba los movimientos con tu banco.</p> }
+  <div class="local-header"><h2>Avisos de este teléfono</h2><span class="hint">Se conservan hasta 24 horas</span></div>
+  @for (notice of bank.current().notices; track notice.id) {
+    <article class="local-notice">
+      <div class="notice-heading"><h3>{{ bankName(notice.packageName) }}</h3><span class="status" [attr.data-state]="notice.automaticStatus">{{ statusLabel(notice.automaticStatus) }}</span></div>
+      @if (notice.revision > 1) { <p class="hint">El contenido cambió. Revisa los datos de nuevo.</p> }
+      <p class="hint" role="status">{{ automaticReason(notice.automaticStatus, notice.canRetry) }}</p>
+      <div class="actions">
+        @if (notice.canRetry && notice.automaticStatus === 'ready') {
+          <button class="primary" type="button" (click)="retry(notice)" [disabled]="busy()">Registrar con la cuenta asociada</button>
+        }
+        @if (notice.automaticStatus === 'registered' || notice.automaticStatus === 'review') {
+          <a routerLink="/transacciones">Ver Movimientos</a>
+        }
+        @if (notice.automaticStatus !== 'queued' && notice.automaticStatus !== 'registered' && notice.automaticStatus !== 'review') {
+          <button type="button" (click)="review.emit(notice)" [disabled]="busy()">{{ notice.canRetry ? 'Revisar y editar manualmente' : 'Revisar notificación' }}</button>
+        }
+        <button class="quiet" type="button" (click)="discard(notice)" [disabled]="busy()">Descartar del teléfono</button>
+      </div>
+    </article>
+  } @empty { <p class="hint local-empty">No hay avisos locales para revisar. Las compras registradas se consultan en Movimientos.</p> }
+}
