@@ -44,4 +44,26 @@ describe('Recepción bancaria nativa', () => {
     native.read.mockRejectedValue(new Error('Sin almacenamiento')); await service.refresh();
     expect(service.isCurrent(notice)).toBe(false); expect(service.error()).not.toBe('');
   });
+  it('invalida el formulario si la compra se encola o cambia la asociación después de abrirlo', async () => {
+    const service = TestBed.inject(BankNotificationsService);TestBed.tick();
+    const original={...notice,automaticStatus:'ready',automaticVersion:'qa-one'};
+    native.read.mockResolvedValue({...state,notices:[original]});await service.refresh();
+    expect(service.isCurrent(original)).toBe(true);
+    native.read.mockResolvedValue({...state,notices:[{...original,automaticStatus:'queued'}]});await service.refresh();
+    expect(service.isCurrent(original)).toBe(false);
+    native.read.mockResolvedValue({...state,notices:[{...original,automaticVersion:'qa-two'}]});await service.refresh();
+    expect(service.isCurrent(original)).toBe(false);
+  });
+  it('reintenta únicamente el aviso vigente y envía solo identificadores al plugin', async () => {
+    const service=TestBed.inject(BankNotificationsService);TestBed.tick();
+    const original={...notice,automaticStatus:'ready',automaticVersion:'qa-one',canRetry:true};
+    native.retryAutomatic=vi.fn().mockResolvedValue(undefined);
+    native.read.mockResolvedValue({...state,notices:[original]});await service.refresh();
+    expect(native.retryAutomatic).not.toHaveBeenCalled();
+    await service.retryAutomatic(original);
+    expect(native.retryAutomatic).toHaveBeenCalledWith({userId:71,id:'qa',revision:1,automaticVersion:'qa-one'});
+    native.read.mockResolvedValue({...state,notices:[{...original,automaticStatus:'queued',canRetry:false}]});await service.refresh();
+    await expect(service.retryAutomatic(original)).rejects.toThrow();
+    expect(native.retryAutomatic).toHaveBeenCalledTimes(1);
+  });
 });

@@ -16,6 +16,12 @@ final class SearsPurchaseParser {
         Pattern.CASE_INSENSITIVE);
     record Purchase(String eventId, BigDecimal amount, LocalDate date, String merchant) {}
 
+    static boolean matchesWithoutConfiguredCard(String body,LocalDate today) {
+        if(body==null||body.length()>1000)return false;
+        var match=PURCHASE.matcher(body.trim().replaceAll("\\s+"," "));
+        return match.matches()&&parse("shape","shape",match.group(2),body,today)!=null;
+    }
+
     static Purchase parse(String sender, String expectedSender, String suffix, String body, LocalDate today) {
         if (sender == null || !sender.equals(expectedSender) || suffix == null || !suffix.matches("[0-9]{4}")
                 || body == null || body.length() > 1000 || today == null) return null;

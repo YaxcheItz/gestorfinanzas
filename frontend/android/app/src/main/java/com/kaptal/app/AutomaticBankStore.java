@@ -67,27 +67,78 @@ final class AutomaticBankStore {
         }
         return false;
     }
+    private record Evaluation(String status,JSONObject rule,SearsPurchaseParser.Purchase purchase) {}
+    private static Evaluation evaluate(JSONObject state,long user,String pkg,String sender,String body,String key,long postedAt) throws Exception {
+        if(!active(state,user))return new Evaluation("inactive",null,null);
+        var rules=state.optJSONArray("rules");
+        JSONObject selected=null;SearsPurchaseParser.Purchase purchase=null;
+        boolean packageMatched=false,senderMatched=false,cardMismatch=false;
+        if(rules!=null)for(int i=0;i<rules.length();i++) {
+            var rule=rules.getJSONObject(i);
+            if(!pkg.equals(rule.optString("paquete")))continue;
+            packageMatched=true;
+            boolean sears="SEARS".equals(rule.optString("proveedor"));
+            if(sears&&!sender.equals(rule.optString("remitente")))continue;
+            senderMatched=true;
+            if("SANTANDER".equals(rule.optString("proveedor"))&&BankPurchaseParser.isNonExpenseNotification(sender,body))
+                return new Evaluation("expenses_only",null,null);
+            String suffix=rule.isNull("terminacion")?null:rule.optString("terminacion");
+            var date=java.time.LocalDate.now(java.time.ZoneId.of("America/Mexico_City"));
+            var parsed=sears?SearsPurchaseParser.parse(sender,rule.optString("remitente"),suffix,body,date)
+                :BankPurchaseParser.parseNotification(rule.optString("proveedor"),pkg,suffix,key+":"+postedAt,sender,body,date);
+            if(parsed==null) {
+                cardMismatch|=sears?SearsPurchaseParser.matchesWithoutConfiguredCard(body,date)
+                    :BankPurchaseParser.parseNotification(rule.optString("proveedor"),pkg,null,key+":"+postedAt,sender,body,date)!=null;
+                continue;
+            }
+            if(selected!=null)return new Evaluation("ambiguous",null,null);
+            selected=rule;purchase=parsed;
+        }
+        if(selected!=null)return new Evaluation("ready",selected,purchase);
+        return new Evaluation(!packageMatched?"app_not_linked":!senderMatched?"sender_mismatch":cardMismatch?"card_mismatch":"unsupported_format",null,null);
+    }
+    /** Same evaluation as reception, without changing queues or sending anything. */
+    static JSONObject describe(JSONObject state,long user,JSONObject notice) throws Exception {
+        String[] original=notice.getString("text").split("\n",2);
+        var result=evaluate(state,user,notice.getString("packageName"),original[0],original.length>1?original[1]:"",
+            notice.getString("id"),notice.getLong("at"));
+        var output=new JSONObject().put("automaticStatus",result.status()).put("canRetry",false)
+            .put("automaticVersion",active(state,user)?state.optString("generation"):"");
+        if(!"ready".equals(result.status()))return output;
+        String id=result.rule().getString("id")+":"+result.purchase().eventId();
+        var entries=state.optJSONArray("entries");
+        if(entries!=null)for(int i=0;i<entries.length();i++)if(id.equals(entries.getJSONObject(i).optString("id")))
+            return output.put("automaticStatus",entries.getJSONObject(i).optString("status","review"));
+        var p=result.purchase();var rule=result.rule();
+        String body=original.length>1?original[1].trim().replaceAll("\\s+"," "):"";
+        boolean stable="SEARS".equals(rule.optString("proveedor"))||BankPurchaseParser.hasBankEvent(rule.optString("proveedor"),original[0],body);
+        return output.put("canRetry",stable).put("preview",new JSONObject().put("cuentaId",rule.getLong("cuentaId"))
+            .put("listaId",rule.getLong("listaId")).put("categoriaId",rule.opt("categoriaId"))
+            .put("monto",p.amount()).put("moneda","MXN").put("fecha",p.date().toString()).put("descripcion",p.merchant()));
+    }
+    void retryNotice(long user,JSONObject notice,String generation) throws Exception {
+        var state=read();
+        if(!active(state,user)||generation==null||generation.isBlank()||!generation.equals(state.optString("generation")))
+            throw new IllegalStateException("Configuration changed");
+        var details=describe(state,user,notice);
+        if(!"ready".equals(details.optString("automaticStatus"))||!details.optBoolean("canRetry"))
+            throw new IllegalStateException("Notice needs review");
+        String[] original=notice.getString("text").split("\n",2);
+        if(original.length!=2||!receive(user,notice.getString("packageName"),original[0],original[1],
+            "local:"+notice.getString("id"),notice.getLong("at")))throw new IllegalStateException("Queue unavailable");
+    }
     boolean receive(long user,String pkg,String sender,String body,String notificationKey,long postedAt) throws Exception {
         var state = read(); if (!active(state,user)) return false;
+        var evaluation=evaluate(state,user,pkg,sender,body,notificationKey,postedAt);
         var previousEntries=state.optJSONArray("entries");
         if(previousEntries!=null) for(int i=0;i<previousEntries.length();i++) {
             var previous=previousEntries.getJSONObject(i);
-            if(notificationKey.equals(previous.optString("notificationKey")) && previous.optBoolean("active")) return true;
+            if(notificationKey.equals(previous.optString("notificationKey")) && previous.optBoolean("active")
+                && !("ready".equals(evaluation.status())&&"SEARS".equals(evaluation.rule().optString("proveedor"))))return true;
         }
-        var rules = state.optJSONArray("rules"); if (rules == null) return false;
-        JSONObject selected = null; SearsPurchaseParser.Purchase purchase = null;
-        for (int i=0;i<rules.length();i++) {
-            var rule = rules.getJSONObject(i);
-            if (!pkg.equals(rule.optString("paquete"))) continue;
-            var date=java.time.LocalDate.now(java.time.ZoneId.of("America/Mexico_City"));
-            var parsed = "SEARS".equals(rule.optString("proveedor"))
-                ? SearsPurchaseParser.parse(sender,rule.optString("remitente"),rule.optString("terminacion"),body,date)
-                : BankPurchaseParser.parse(rule.optString("proveedor"),pkg,rule.optString("terminacion"),notificationKey+":"+postedAt,body,date);
-            if (parsed == null) continue;
-            if (selected != null) return false;
-            selected = rule; purchase = parsed;
-        }
-        if (selected == null) return false;
+        if("expenses_only".equals(evaluation.status()))return true;
+        if(!"ready".equals(evaluation.status()))return false;
+        var selected=evaluation.rule();var purchase=evaluation.purchase();
         JSONArray entries = state.optJSONArray("entries"); if (entries == null) entries = new JSONArray();
         String identity = selected.getString("id") + ":" + purchase.eventId();
         for (int i=0;i<entries.length();i++) if (identity.equals(entries.getJSONObject(i).optString("id"))) return true;

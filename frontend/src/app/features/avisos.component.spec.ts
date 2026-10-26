@@ -26,6 +26,17 @@ describe('Bandeja de avisos',()=>{
     ]}).overrideComponent(AvisosComponent,{set:{template:''}});
   });
   afterEach(()=>fixture?.destroy());
+  it('rellena una compra reconocida sin enviarla ni registrar dinero al abrir revisión',()=>{
+    fixture=TestBed.createComponent(AvisosComponent);const c=fixture.componentInstance;
+    const notice={id:'qa-local',revision:1,text:'Original QA',packageName:'qa.bank',at:1,
+      automaticStatus:'ready',preview:{cuentaId:11,listaId:21,categoriaId:null,monto:25.10,
+        fecha:'2026-10-23',descripcion:'TIENDA QA',moneda:'MXN'}} as any;
+    c.usarNotificacion(notice);
+    expect(c.datos.cuentaId).toBe(11);expect(c.datos.monto).toBe(25.10);
+    expect(c.datos.listaId).toBe(21);expect(c.datos.descripcion).toBe('TIENDA QA');
+    expect(c.resumen).toBe('TIENDA QA');expect(api.recibir).not.toHaveBeenCalled();
+    expect(api.decidir).not.toHaveBeenCalled();
+  });
   it('ignora una respuesta antigua al cambiar de filtro',()=>{
     const anterior=new Subject<any>();api.listar.mockReturnValueOnce(anterior);
     fixture=TestBed.createComponent(AvisosComponent);const c=fixture.componentInstance;

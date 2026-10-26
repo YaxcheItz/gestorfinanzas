@@ -86,6 +86,8 @@ public class BankNotificationListener extends NotificationListenerService {
                 CharSequence body = extras.getCharSequence(Notification.EXTRA_BIG_TEXT);
                 if (body == null) body = extras.getCharSequence(Notification.EXTRA_TEXT, "");
                 if (title.length() + body.length() > 3999) return;
+                if(sbn.getPackageName().equals(BankPurchaseParser.PACKAGES.get("SANTANDER"))
+                    &&BankPurchaseParser.isNonExpenseNotification(title.toString(),body.toString()))return;
                 if(autoSender && automatic.receive(owner,sbn.getPackageName(),title.toString(),body.toString(),sbn.getKey(),sbn.getPostTime())) {
                     AutomaticBankWorker.schedule(this); return;
                 }
