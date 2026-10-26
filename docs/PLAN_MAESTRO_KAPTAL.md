@@ -1,6 +1,41 @@
 # Kaptal: plan maestro y traspaso al siguiente chat
 
-## Avance vigente: privacidad y etiquetas accesibles de Avisos 0.1.14
+## Avance vigente: Kaptal0.1.14 publicada y verificada (26 de octubre)
+
+**Alcance vigente:** el propietario omitió expresamente TalkBack. Está fuera de los pendientes activos: no solicitar esa prueba ni activar el servicio; no presentarlo como validado. Esta decisión prevalece sobre las menciones históricas siguientes.
+
+### Código, CI e integración
+
+- #139 integrado desde `0d572c318c722e69faba14d4bb862e490f182c5f` a develop `0ba10a28fbc49debbb8b3858a40272cdc16df1c1`. CI415/40409935321, CI416/40410054467 y Android79/40410054443 SUCCESS; catorce checks y Vercel correctos.
+- Promoción #140 integrada después de quince checks/Vercel correctos sobre0ba10a2: CI417/40411162802, CI418/40411298399, Android80/40411162794 y81/40411299564 SUCCESS. Main publicado `a41731af1063a2ba448db3f7afecbe52f2285b91`; comprobaciones posteriores CI419/40413641657 y Android82/40413641683 SUCCESS.
+- Cierre0.1.13/#138 ya integrado, fuente b94ea5f y CI413/40408665741 correctos. Operación #136/#137 publicada anteriormente: solo límite total E2E15→25min para preparación de Chromium, manteniendo límites de pruebas, arranque y PostgreSQL. No ocultó fallos ni añadió reintentos financieros.
+
+### Cambios y validación
+
+- Se corrigió una fuga visual en el resumen de envíos para revisión: ahora importe/descripción respetan Ocultar montos mediante MontoPipe/TextoFinancieroPipe existentes, también en el árbol accesible. Cuenta y terminación identifican etiqueta visible y banco. No cambia backend, Worker, asociaciones ni registro financiero.
+- Dos pruebas E2E rojas reprodujeron el importe visible con preferencia activa y el nombre de control ausente. Resultado final:454 unitarias, build y cuatro E2E ficticios correctos; sin escrituras HTTP, temas claro/oscuro,320px/horizontal/texto200%. No equivale a prueba bancaria real. JS inicial125810bytes gzip/CSS18384bytes gzip, mismo tamaño inicial medido que0.1.13.
+- Se conserva la corrección funcional previa: Santander reconstruye título/cuerpo; Sears admite física/digital en una misma cuenta y nuevos folios dentro de una conversación SMS. Validación de tarjeta/fecha/moneda/propietario y deduplicación conservadas. Santander SOLO gastos; depósitos y otros ingresos excluidos de esta conexión. Sin nuevas migraciones ni Gmail.
+
+### APK y dispositivo
+
+- Samsung recibió0.1.14/código15 con firma/datos y primera instalación2026-10-22 conservados. SHA256 `7DF12224481B8AE9B16C3903E1D82BEEC69E51AC8F49E602AA6650F63D8A84F2`; `.local/releases/Kaptal-0.1.14.apk` y Descargas. DEX sin diagnóstico temporal. Fuente del APK:0d572c3; no confundir con SHA de merge o CI.
+- El propietario reconectó el teléfono y confirmó sesión, resumen automático y bancos asociados correctos después de instalar0.1.14. No repetir login/bloqueo/reinicio/persistencia ya acreditados por rutina.0.1.13/BAD50 es histórica y quedó sustituida; no distribuir candidatos probe.
+
+### Producción y recuperación
+
+- Main a41731a: VercelProduction7345295353 y Render7345285413 SUCCESS. Verificación posterior al despliegue22:42:02Z:60archivos JS/CSS exactos, API/proxy HTTPS saludables y nuevo cliente Google activo. Esquema de solo lectura22:42:03Z: V11–V14 aplicadas; sin migraciones nuevas. El primer chequeo previo a finalizar Vercel fue sustituido por verificaciones correctas posteriores.
+- Respaldo previo actualizado `.local/promotion-20261026T221732Z/before-main.dump.dpapi`: origen solo lectura, cifrado/descifrado/hash/catálogo correctos; sin restaurar. Evidencias `.local/avisos-0114-production-result.json`, `avisos-0114-delivery-result.json`, `avisos-0114-e2e-green.log`, `avisos-0114-unit.log` y `avisos-0114-build-metrics.json`. Manifiestos/verificadores separados por versión.
+- Publicación permanentemente autorizada tras checks; no pedir otra aprobación. No acciones destructivas, restauraciones, QA productiva, compras de prueba ni Gmail. No modificar su cliente Desktop.
+
+### Pendientes y siguiente parte
+
+- Etapa10 sigue ABIERTA: el propietario aclaró que descartó las revisiones editables y aún no hizo otra compra tras la actualización. Reconocimiento no acredita gasto automático real. Esperar próximo aviso habitual y comprobar gasto único/cuenta correcta sin guardar manualmente; no pedir compras ni recuperar descartados.
+- Continuar pendientes reales de Etapas12/13 según alcance vigente, con TalkBack omitido: contraste/accesibilidad restante, métricas/latencias, presupuesto global y límites de IA, alertas/cuotas/costes y recuperación. Este parche y el ajuste de CI son avances parciales; diseño global del resto de la app al final. Cada parte nueva en rama desde develop remoto actualizado/comprobado.
+
+
+## Hist?rico: privacidad y etiquetas accesibles de Avisos 0.1.14
+
+El propietario omitió expresamente TalkBack el26 de octubre: queda fuera de los pendientes activos. No solicitar esa prueba ni activar el servicio; no presentarla como validada. Esta decisión prevalece sobre las menciones históricas siguientes.
 
 - Nueva rama `correcciones/avisos-privacidad-accesible`, creada desde develop remoto f0746e4 comprobado y actualizada por fast-forward a80d23f8f3fa9ac694ee7a7765add0ecef44b7553 después de integrar #138. Ese cierre documental pasó CI413/40408665741 y siete checks/Vercel correctos. Se preservaron los cambios locales de frontend al actualizar la base.
 - Fallo de privacidad reproducido con prueba E2E roja y datos ficticios: un envío automático que requiere revisión mostraba importe/descripción directamente pese a Ocultar montos. El resumen usa ahora MontoPipe y TextoFinancieroPipe existentes, respetando preferencia guardada desde el primer frame y cambios posteriores. No basta ocultar visualmente: la regresión comprueba también ausencia del importe en el árbol accesible.
