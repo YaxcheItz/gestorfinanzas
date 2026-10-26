@@ -10,10 +10,12 @@ import { ListaFinanciera } from '../core/models/listas.models';
 import { ApiResponse } from '../core/models/auth.models';
 import { getApiBaseUrl } from '../core/services/api-base-url';
 import { AuthService } from '../core/services/auth.service';
+import { MontoPipe } from '../core/pipes/monto.pipe';
+import { TextoFinancieroPipe } from '../core/pipes/texto-financiero.pipe';
 
 @Component({
   selector: 'app-automatic-bank',
-  imports: [FormsModule],
+  imports: [FormsModule, MontoPipe, TextoFinancieroPipe],
   templateUrl: './automatic-bank.html',
   styleUrls: ['./bank-notice-controls.css', './automatic-bank.css'],
 })
