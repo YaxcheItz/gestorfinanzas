@@ -57,6 +57,7 @@ async function syntheticAndroid(page: Page, baseURL: string, dark = false, priva
     await route.fulfill({json:{success:true,data}});
   });
   await page.goto('/avisos');
+  await page.evaluate(()=>document.fonts.ready.then(()=>undefined));
   await page.evaluate(dark=>document.documentElement.classList.toggle('dark',dark),dark);
   await expect(page.getByText(recovery?'Desactivado':'Registro activo',{exact:true})).toBeVisible();
   return writes;
