@@ -1,0 +1,94 @@
+import io
+import json
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
+import unittest
+
+from resumir_ia import summarize, WINDOW_SIZE
+
+
+def record(ms=10, provider='openai', outcome='success'):
+    return ('2026-10-26 INFO com.gestionfinanzas.ai.AiProviderRouter : '
+            f'KAPTAL_AI_GENERATION provider={provider} outcome={outcome} elapsed_ms={ms}\n')
+
+
+class MetricsTest(unittest.TestCase):
+    def test_counts_and_nearest_rank_percentile(self):
+        report = summarize(io.StringIO(''.join(record(n) for n in range(1, 21))))
+        self.assertEqual(report['records'], 20)
+        group = report['groups'][0]
+        self.assertEqual((group['count'], group['windowCount']), (20, 20))
+        self.assertEqual((group['minWindowMs'], group['maxWindowMs']), (1, 20))
+        self.assertEqual(group['meanWindowMs'], 10.5)
+        self.assertEqual(group['p95WindowMs'], 19)
+
+    def test_outcomes_and_providers_are_separated(self):
+        report = summarize(io.StringIO(record() + record(20, outcome='provider_error')
+                                       + record(30, provider='groq') + record(0, outcome='busy')))
+        self.assertEqual(len(report['groups']), 4)
+        self.assertEqual(sum(g['count'] for g in report['groups']), 4)
+
+    def test_unrecognized_or_private_content_is_never_echoed(self):
+        text = ('PRIVATE_CANARY\n' + record(provider='PRIVATE_CANARY')
+                + record(outcome='PRIVATE_CANARY') + record(-1) + record('1.25')
+                + record() + record()[:-1] + ' PRIVATE_CANARY\n')
+        report = summarize(io.StringIO(text))
+        self.assertEqual(report['records'], 1)
+        self.assertEqual(report['ignoredLines'], 6)
+        self.assertNotIn('PRIVATE_CANARY', json.dumps(report))
+
+    def test_statistics_use_only_a_bounded_recent_window(self):
+        report = summarize(io.StringIO(record(999999) + record(1) * WINDOW_SIZE))
+        group = report['groups'][0]
+        self.assertEqual(group['count'], WINDOW_SIZE + 1)
+        self.assertEqual(group['windowCount'], WINDOW_SIZE)
+        self.assertEqual(group['maxWindowMs'], 1)
+        self.assertEqual(group['p95WindowMs'], 1)
+
+    def test_long_lines_are_drained_without_becoming_new_records(self):
+        report = summarize(io.StringIO('PRIVATE_CANARY' * 3000 + record() + record(40)))
+        self.assertEqual(report['records'], 1)
+        self.assertEqual(report['ignoredLines'], 1)
+        self.assertEqual(report['groups'][0]['meanWindowMs'], 40)
+
+    def test_cli_outputs_only_aggregate_json(self):
+        script = Path(__file__).with_name('resumir_ia.py')
+        result = subprocess.run([sys.executable, str(script)], input='PRIVATE_CANARY\n' + record(),
+                                text=True, capture_output=True, check=False)
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(result.stderr, '')
+        self.assertEqual(json.loads(result.stdout)['records'], 1)
+        self.assertNotIn('PRIVATE_CANARY', result.stdout)
+
+    def test_cli_read_errors_do_not_echo_private_paths(self):
+        script = Path(__file__).with_name('resumir_ia.py')
+        result = subprocess.run([sys.executable, str(script), 'PRIVATE_CANARY/not-present.log'],
+                                text=True, capture_output=True, check=False)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(result.stdout, '')
+        self.assertNotIn('PRIVATE_CANARY', result.stderr)
+
+    def test_cli_reads_a_private_utf8_file_and_only_outputs_aggregates(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'PRIVATE_CANARY.log'
+            path.write_text('PRIVATE_CANARY\n' + record(45), encoding='utf-8')
+            result = subprocess.run([sys.executable, str(Path(__file__).with_name('resumir_ia.py')), str(path)],
+                                    text=True, capture_output=True, check=False)
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(json.loads(result.stdout)['records'], 1)
+        self.assertNotIn('PRIVATE_CANARY', result.stdout + result.stderr)
+
+    def test_cli_replaces_invalid_utf8_without_echoing_it(self):
+        script = Path(__file__).with_name('resumir_ia.py')
+        result = subprocess.run([sys.executable, str(script)],
+                                input=b'\xffPRIVATE_CANARY\n' + record().encode('utf-8'),
+                                capture_output=True, check=False)
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(json.loads(result.stdout)['records'], 1)
+        self.assertNotIn(b'PRIVATE_CANARY', result.stdout + result.stderr)
+
+
+if __name__ == '__main__':
+    unittest.main()

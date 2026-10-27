@@ -1,6 +1,54 @@
 # Kaptal: plan maestro y traspaso al siguiente chat
 
-## Avance vigente: privacidad y etiquetas accesibles de Avisos 0.1.14
+## Avance vigente: Etapa13, métricas privadas de generaciones de IA
+
+- Rama nueva `mejoras/metricas-ia-etapa-13` desde develop remoto `c6aee70dd063ea8ecd895b6ee4067f5039dd036c`, comprobado con siete checks correctos. Main continúa `a41731af1063a2ba448db3f7afecbe52f2285b91`, aplicación0.1.14 publicada/verificada. No reutilizar ramas de Android/diseño ni trabajar directamente en develop.
+- Implementación: el router de IA emite un registro de formato fijo con proveedor de lista cerrada, resultado y duración. No registra prompt, respuesta, excepción, modelo, URL, usuario/correo/cuenta/importe ni credenciales. Respuestas, errores, selección de proveedor y permisos de concurrencia existentes conservados; pruebas verifican que rechazos no aumentan permisos y fallos los liberan.
+- Herramienta `tools/operacion/resumir_ia.py`: JSON agregado por proveedor/resultado, conteos y p95 por rango más cercano sobre últimas1024duraciones por grupo; grupos y memoria acotados, líneas largas/ajenas descartadas sin reproducir contenido. UTF-8 inválido se reemplaza; errores de archivo no revelan rutas privadas. CI incluye sus pruebas estándar sin nuevas dependencias.
+- Alcance: generaciones lógicas, no peticiones HTTP facturadas ni tokens/costes. Un proveedor puede hacer alternativas internas; éxito del router no equivale a interpretación correcta o movimiento guardado. Presupuesto global, métricas de tokens/coste y alertas siguen pendientes. No se modificaron límites, precios, claves ni configuración de proveedores; no llamadas de pago o QA productiva para validar.
+- Pruebas: cinco fallos iniciales reprodujeron ausencia de métricas; se corrigió además una fixture incompleta. Siete pruebas del router verdes, nueve del resumidor verdes. Suite backend local529casos correcta con ocho PostgreSQL omitidos en H2; CI debe ejecutar su trabajo PostgreSQL habitual. Cobertura router100%líneas/90,91%ramas y resumidor95,16%líneas. Ida/vuelta33registros ficticios Java→Python correcta. Evidencias `.local/metricas-ia-red.log`, `metricas-backend-full.log`, `metricas-coverage-result.json`, `metricas-python-coverage.json` y `metricas-roundtrip-final.json`.
+- Documento técnico `docs/OPERACION_METRICAS_IA_ETAPA_13.md`: contrato, significado de p95, límites del informe y publicación. No hay endpoint nuevo, migraciones ni modificación de frontend/Android; se conserva APK0.1.14/código15, SHA2567DF12224481B8AE9B16C3903E1D82BEEC69E51AC8F49E602AA6650F63D8A84F2. No se requiere otra instalación ni teléfono para esta parte.
+- Estado actual: cambios locales aún por publicar y validar en CI exacto. No confundir validación sintética con métricas productivas reales: estas llegarán durante uso normal. TalkBack omitido expresamente, fuera del alcance; Gmail deshabilitado y cliente Desktop intacto. Piloto real de compras Etapa10 abierto hasta próximo aviso habitual, sin compras de prueba ni recuperación de descartados.
+
+Siguiente: publicar PR de métricas, comprobar todos los checks del HEAD exacto e integrar a develop; preparar respaldo cifrado y promover/verificar producción según autorización vigente sin otra aprobación. Mantener separados código/CI/integración, APK/dispositivo y producción. Después continuar presupuesto global/latencias/alertas de Etapa13 y resto del plan; diseño global al final.
+
+
+## Histórico: Kaptal0.1.14 publicada y verificada (26 de octubre)
+
+**Alcance vigente:** el propietario omitió expresamente TalkBack. Está fuera de los pendientes activos: no solicitar esa prueba ni activar el servicio; no presentarlo como validado. Esta decisión prevalece sobre las menciones históricas siguientes.
+
+### Código, CI e integración
+
+- #139 integrado desde `0d572c318c722e69faba14d4bb862e490f182c5f` a develop `0ba10a28fbc49debbb8b3858a40272cdc16df1c1`. CI415/40409935321, CI416/40410054467 y Android79/40410054443 SUCCESS; catorce checks y Vercel correctos.
+- Promoción #140 integrada después de quince checks/Vercel correctos sobre0ba10a2: CI417/40411162802, CI418/40411298399, Android80/40411162794 y81/40411299564 SUCCESS. Main publicado `a41731af1063a2ba448db3f7afecbe52f2285b91`; comprobaciones posteriores CI419/40413641657 y Android82/40413641683 SUCCESS.
+- Cierre0.1.13/#138 ya integrado, fuente b94ea5f y CI413/40408665741 correctos. Operación #136/#137 publicada anteriormente: solo límite total E2E15→25min para preparación de Chromium, manteniendo límites de pruebas, arranque y PostgreSQL. No ocultó fallos ni añadió reintentos financieros.
+
+### Cambios y validación
+
+- Se corrigió una fuga visual en el resumen de envíos para revisión: ahora importe/descripción respetan Ocultar montos mediante MontoPipe/TextoFinancieroPipe existentes, también en el árbol accesible. Cuenta y terminación identifican etiqueta visible y banco. No cambia backend, Worker, asociaciones ni registro financiero.
+- Dos pruebas E2E rojas reprodujeron el importe visible con preferencia activa y el nombre de control ausente. Resultado final:454 unitarias, build y cuatro E2E ficticios correctos; sin escrituras HTTP, temas claro/oscuro,320px/horizontal/texto200%. No equivale a prueba bancaria real. JS inicial125810bytes gzip/CSS18384bytes gzip, mismo tamaño inicial medido que0.1.13.
+- Se conserva la corrección funcional previa: Santander reconstruye título/cuerpo; Sears admite física/digital en una misma cuenta y nuevos folios dentro de una conversación SMS. Validación de tarjeta/fecha/moneda/propietario y deduplicación conservadas. Santander SOLO gastos; depósitos y otros ingresos excluidos de esta conexión. Sin nuevas migraciones ni Gmail.
+
+### APK y dispositivo
+
+- Samsung recibió0.1.14/código15 con firma/datos y primera instalación2026-10-22 conservados. SHA256 `7DF12224481B8AE9B16C3903E1D82BEEC69E51AC8F49E602AA6650F63D8A84F2`; `.local/releases/Kaptal-0.1.14.apk` y Descargas. DEX sin diagnóstico temporal. Fuente del APK:0d572c3; no confundir con SHA de merge o CI.
+- El propietario reconectó el teléfono y confirmó sesión, resumen automático y bancos asociados correctos después de instalar0.1.14. No repetir login/bloqueo/reinicio/persistencia ya acreditados por rutina.0.1.13/BAD50 es histórica y quedó sustituida; no distribuir candidatos probe.
+
+### Producción y recuperación
+
+- Main a41731a: VercelProduction7345295353 y Render7345285413 SUCCESS. Verificación posterior al despliegue22:42:02Z:60archivos JS/CSS exactos, API/proxy HTTPS saludables y nuevo cliente Google activo. Esquema de solo lectura22:42:03Z: V11–V14 aplicadas; sin migraciones nuevas. El primer chequeo previo a finalizar Vercel fue sustituido por verificaciones correctas posteriores.
+- Respaldo previo actualizado `.local/promotion-20261026T221732Z/before-main.dump.dpapi`: origen solo lectura, cifrado/descifrado/hash/catálogo correctos; sin restaurar. Evidencias `.local/avisos-0114-production-result.json`, `avisos-0114-delivery-result.json`, `avisos-0114-e2e-green.log`, `avisos-0114-unit.log` y `avisos-0114-build-metrics.json`. Manifiestos/verificadores separados por versión.
+- Publicación permanentemente autorizada tras checks; no pedir otra aprobación. No acciones destructivas, restauraciones, QA productiva, compras de prueba ni Gmail. No modificar su cliente Desktop.
+
+### Pendientes y siguiente parte
+
+- Etapa10 sigue ABIERTA: el propietario aclaró que descartó las revisiones editables y aún no hizo otra compra tras la actualización. Reconocimiento no acredita gasto automático real. Esperar próximo aviso habitual y comprobar gasto único/cuenta correcta sin guardar manualmente; no pedir compras ni recuperar descartados.
+- Continuar pendientes reales de Etapas12/13 según alcance vigente, con TalkBack omitido: contraste/accesibilidad restante, métricas/latencias, presupuesto global y límites de IA, alertas/cuotas/costes y recuperación. Este parche y el ajuste de CI son avances parciales; diseño global del resto de la app al final. Cada parte nueva en rama desde develop remoto actualizado/comprobado.
+
+
+## Histórico: privacidad y etiquetas accesibles de Avisos 0.1.14
+
+El propietario omitió expresamente TalkBack el26 de octubre: queda fuera de los pendientes activos. No solicitar esa prueba ni activar el servicio; no presentarla como validada. Esta decisión prevalece sobre las menciones históricas siguientes.
 
 - Nueva rama `correcciones/avisos-privacidad-accesible`, creada desde develop remoto f0746e4 comprobado y actualizada por fast-forward a80d23f8f3fa9ac694ee7a7765add0ecef44b7553 después de integrar #138. Ese cierre documental pasó CI413/40408665741 y siete checks/Vercel correctos. Se preservaron los cambios locales de frontend al actualizar la base.
 - Fallo de privacidad reproducido con prueba E2E roja y datos ficticios: un envío automático que requiere revisión mostraba importe/descripción directamente pese a Ocultar montos. El resumen usa ahora MontoPipe y TextoFinancieroPipe existentes, respetando preferencia guardada desde el primer frame y cambios posteriores. No basta ocultar visualmente: la regresión comprueba también ausencia del importe en el árbol accesible.
@@ -13,7 +61,7 @@
 Siguiente: publicar HEAD final de esta corrección, esperar todos sus checks exactos, integrar y promover con respaldo y comprobaciones posteriores ya autorizadas. Actualizar ambos documentos/plan local y continuación separando CI, integración, APK/dispositivo y producción. Etapas12/13 siguen abiertas por aceptación física y operación/costes pendientes; diseño global del resto de la app al final.
 
 
-## Hist?rico: entrega 0.1.13 publicada y operación CI integrada (26 de octubre)
+## Histórico: entrega 0.1.13 publicada y operación CI integrada (26 de octubre)
 
 ### Código, CI e integración
 
@@ -49,7 +97,7 @@ Siguiente: publicar HEAD final de esta corrección, esperar todos sus checks exa
 - Etapa13 continúa abierta: presupuesto global de IA, límites distribuidos, métricas/latencias y alertas operativas, cuotas/costes y recuperación según plan. El ajuste de CI y la medición del build son avances parciales. Cada parte nueva en rama desde develop remoto actualizado/comprobado; mantener estado, plan local y continuación sincronizados.
 
 
-## Hist?rico: operación CI y entrega de Avisos 0.1.13
+## Histórico: operación CI y entrega de Avisos 0.1.13
 
 - Corrección funcional #132 integrada y promovida por #133: main d83720ef2bf2f4fe672723904c077d00dad8aee2. CI404/40373946575 y Android75/40373946513 SUCCESS; Render7339601061 y Vercel7339615172 SUCCESS. Sesenta assets exactos, HTTPS/API/proxy/Google correctos; V11–V14 aplicadas, comprobación solo lectura. Sin nuevas migraciones ni Gmail.
 - Diseño #134 integrado en develop f3560503b9617e9d55b46d7178a4069b83dcdd39. Fuente533e4e2d7908277228a56f3563c493c92a1b1554 validada por CI402/403 y Android74, catorce checks/Vercel correctos. Promoción #135 en espera del CI405 intento2; CI406/40374179835 y Android76/40374110981,77/40374179899 correctos.
@@ -62,7 +110,7 @@ Siguiente: publicar HEAD final de esta corrección, esperar todos sus checks exa
 Siguiente: esperar CI405 intento2, integrar #135 con HEAD f356050 exacto, verificar despliegues/post-CI/HTTPS/Google/V11–V14/60 assets del diseño mediante `.local/verify-avisos-0113-production.cjs`. Revalidar CI del ajuste operativo e integrarlo en develop en su propia rama; documentar estado final y continuar pendientes reales de Etapas12/13. Diseño general del resto de la app al final. Mantener documentación y plan local sincronizados.
 
 
-## Hist?rico: Avisos rediseñado y APK0.1.13 instalado
+## Histórico: Avisos rediseñado y APK0.1.13 instalado
 
 - Nueva rama `mejoras/avisos-bancarios-diseno` desde develop595fea6990e6f0ed8077bac2ffe5d6465b3bc316 verificado contra remoto; corrección funcional #132 ya integrada (fuente94e1fed, CI398/399 y Android71 SUCCESS).
 - Rediseño completo de la sección Avisos solicitado por el propietario: resumen automático visible y consultable sin HTTP, contadores recientes, bancos asociados/tarjetas, permisos de Android, formularios por banco, avisos locales y revisión manual separados. Acciones explícitas y bloqueo de otro registro cuando ya está enviado/registrado. Mantiene todos los bancos y física/digital Sears en una cuenta.
@@ -74,7 +122,7 @@ Siguiente: esperar CI405 intento2, integrar #135 con HEAD f356050 exacto, verifi
 - Piloto real pendiente: el propietario confirmó reconocimiento de ambas compras, después aclaró que descartó las revisiones editables. NO se ha acreditado registro automático real; no recuperar descartados, fabricar QA productiva ni pedir compras. Santander solo gastos; depósitos excluidos. Etapa10 continúa abierta; resto Etapas12/13 conforme al plan, diseño global al final.
 
 
-## Hist?rico: corrección integrada y rediseño de Avisos en validación
+## Histórico: corrección integrada y rediseño de Avisos en validación
 
 - #132 integrado en develop595fea6990e6f0ed8077bac2ffe5d6465b3bc316 desde94e1fed85d6d21549a76d71aeaa34c1ca8168cdd. CI398/40263558940, CI399/40263564148 y Android71/40263564324 SUCCESS, quince checks y Vercel correctos. Se corrigieron título/cuerpo Santander, física/digital Sears, nueva compra en conversación SMS y filtro de solo gastos Santander.
 - APK funcional limpio0.1.12/código13 instalado, SHA256 A2A9F1F45C7325DC7B22910D88DA67DB3619ECD1465E635F93DB1BA15106B9A7, firma/datos originales conservados y diagnóstico temporal ausente del DEX. Pruebas locales452 frontend, nueve backend aisladas y19 instrumentadas correctas. Reconocimiento real confirmado; registro automático real NO acreditado porque el propietario aclaró que descartó las revisiones. Etapa10 abierta; no recuperar descartados ni pedir compras.
@@ -85,7 +133,7 @@ Siguiente: esperar CI405 intento2, integrar #135 con HEAD f356050 exacto, verifi
 - Se prepara release0.1.13/código14 con el diseño; no confundirla todavía con APK instalado, integración o producción. Comprobar firma y hash, instalar conservando datos y solicitar valoración visual breve sin capturas ni datos bancarios. Actualizar esta nota con resultado final, CI, PR y producción al terminar.
 
 
-## Hist?rico: APK limpio de avisos instalado; CI final pendiente
+## Histórico: APK limpio de avisos instalado; CI final pendiente
 
 - Corrección funcional en `correcciones/avisos-reales-diagnostico`, PR #132: Santander reconstruye título/cuerpo; Sears permite física y digital en la misma cuenta y distingue nuevas compras en una conversación SMS. Mantiene deduplicación y validación de identidad, tarjeta, fecha y moneda.
 - Santander queda limitado a gastos: se ignoran avisos claros de depósitos y otros ingresos; backend rechaza ingresos/devoluciones de esa conexión. Sin nuevas migraciones ni cambios de Gmail.
@@ -96,7 +144,7 @@ Siguiente: esperar CI405 intento2, integrar #135 con HEAD f356050 exacto, verifi
 - Siguiente: integrar #132 con CI final correcto; refrescar respaldo cifrado y promover con verificaciones posteriores, ya autorizado. Rediseñar toda la sección Avisos en rama NUEVA desde develop actualizado: estado automático claro, bancos/tarjetas y acciones sin confusión con revisión manual. Esta petición específica de diseño está autorizada ahora; diseño global permanece al final.
 
 
-## Hist?rico: cierre funcional de avisos 0.1.12 y rediseño autorizado
+## Histórico: cierre funcional de avisos 0.1.12 y rediseño autorizado
 
 - Rama `correcciones/avisos-reales-diagnostico`, base develop7404916; PR132 borrador. HEAD publicado inicial8cfd784 pasó CI396/397 y Android70; existen mejoras posteriores aún sin commit, no usar esos checks como validación del HEAD final.
 - Causas reales confirmadas con indicadores internos sin datos bancarios: Sears tenía terminación distinta y necesita física/digital en la MISMA cuenta; UI ahora admite ambas separadas por coma, genera reglas distintas sin crear cuentas y preserva demás bancos/lista. El propietario introdujo ambas y confirmó reconocimiento de los dos avisos. No copiar dígitos reales al código/pruebas/docs.
@@ -113,7 +161,7 @@ Siguiente: esperar CI405 intento2, integrar #135 con HEAD f356050 exacto, verifi
 Siguiente: build final sin diagnóstico, instalar conservando firma/datos/asociaciones y actualizar hash; commit/CI exacto e integración de132. Crear rama independiente de diseño al actualizar develop; trabajar diseño mientras promoción y comprobaciones posteriores se completan, sin confundir APK, CI, integración y producción. Respaldar antes de promover, verificar después. Mantener estado/plan/plan local/prompt sincronizados.
 
 
-## Hist?rico: evidencia real por banco y validación pendiente
+## Histórico: evidencia real por banco y validación pendiente
 
 - Ambos avisos quedaron en `format_or_card` en0.1.12 inicial. Diagnóstico temporal recogió únicamente claves fijas, booleanos y proveedor SEARS/SANTANDER; ningún mensaje/importe/fecha/tarjeta/identificador real. Evidencia `.local/bank-shape-indicators-only.json`.
 - Sears: remitente coincide, formato completo se acepta sin comparar la tarjeta, moneda/fecha válidas; `cardMatches=false` y terminación configurada. Causa real: terminación del aviso distinta de la vinculada. Se pidió al propietario comprobar que es la misma cuenta y corregir terminación conservando otros bancos/lista, sin compartir dígitos. Esperando resultado «Compra reconocida». No relajar la comprobación de tarjeta.
@@ -124,7 +172,7 @@ Siguiente: build final sin diagnóstico, instalar conservando firma/datos/asocia
 
 Siguiente: recibir frase Santander y resultado de Sears; patrón con fixtures ficticios y pruebas negativas, quitar diagnóstico del APK final, instalar conservando firma/datos. Solo entonces reintento REAL por botón explícito del propietario si aparece Compra reconocida; comprobar resultado/cuenta/movimiento único sin datos privados. No compras nuevas. Actualizar ambos documentos/plan/continuación y revalidar HEAD final.
 
-## Hist?rico: avisos reales siguen fallando; 0.1.12 en validación
+## Histórico: avisos reales siguen fallando; 0.1.12 en validación
 
 - El propietario informa nuevas compras reales Sears y Santander que solo aparecen locales y no rellenan ni registran. El piloto real NO pasó; la entrega0.1.11 y sus pruebas sintéticas no prueban registro productivo. Detenidas funciones nuevas hasta resolver. No pedir nuevas compras ni descartar/recrear conexiones.
 - Rama nueva `correcciones/avisos-reales-diagnostico` desde develop remoto `74049165838047746cd846926b72a7276ee2fc29` verificado con siete checks correctos. Árbol limpio al inicio. Samsung conectado; APK instalado comprobado por hash idéntico a 0.1.11 final83AFF, descartada instalación intermedia como causa.
@@ -139,7 +187,7 @@ Siguiente: recibir frase Santander y resultado de Sears; patrón con fixtures fi
 Siguiente: terminar pruebas físicas aisladas, instalar0.1.12 con firma/datos conservados y obtener SOLO motivos por aviso Sears/Santander. Corregir según evidencia; no volver a prometer registro real basándose solo en regex unitarias. Reintento de compra REAL solo por acción explícita del propietario en la app, comprobando cuenta y movimiento único. Luego CI exacto, integración/promoción y documentación; Etapas10/12/13 siguen abiertas y diseño general al final.
 
 
-## Hist?rico: Santander 0.1.11 corregido, integrado y APK final instalado
+## Histórico: Santander 0.1.11 corregido, integrado y APK final instalado
 
 - Causas confirmadas: las asociaciones bancarias seguían guardadas pero el formulario no las recuperaba; corregido. El propietario confirmó reaparición de Santander/Sears y Registro activo. El formato real «Compra con tarjeta en …» no coincidía con el parser anterior «Gastaste …»; corregido sin guardar el mensaje real ni sus datos en código, pruebas, documentos o logs.
 - Reconocimiento nuevo limitado a Santander crédito/MXN, comercio, tarjeta enmascarada y fecha/hora estrictas. Respeta terminación configurada y fecha bancaria hasta31d como backend; rechazos, pagos, moneda distinta y formatos ambiguos permanecen fuera del registro automático. Identidad estable del evento deduplica reentregas Android. El aviso antiguo no se reenvía retrospectivamente.
@@ -153,7 +201,7 @@ Siguiente: terminar pruebas físicas aisladas, instalar0.1.12 con firma/datos co
 Siguiente: confirmar producción/CI posterior y cierre documental; después validar el siguiente aviso habitual sin pruebas bancarias artificiales. Ante otra incidencia, detener funciones nuevas y diagnosticar con información anonimizada. Cada etapa nueva en rama desde develop remoto actualizado y verificado; mantener ambos documentos, plan local y prompt sincronizados.
 
 
-## Hist?rico: aviso real Santander recibido sin movimiento
+## Histórico: aviso real Santander recibido sin movimiento
 
 - El propietario informa una compra habitual real: el aviso Santander aparece en Kaptal, pero no se registró movimiento. Esto confirma recepción visible, no el registro automático ni su causa. Etapa10 sigue abierta y este incidente tiene prioridad sobre nuevas funciones.
 - Diagnóstico en rama nueva `correcciones/santander-aviso-sin-registro`, desde origin/develop `748ac09b9dce9a6fe18a8c00e22ceae09d8542f1` verificado; árbol limpio al iniciar y Samsung conectado.
@@ -167,7 +215,7 @@ Siguiente: confirmar producción/CI posterior y cierre documental; después vali
 Siguiente: terminar prueba instrumentada aislada del parser/cola, reconstruir e instalar APK final, validar CI exacto de PR129 e integrar/promover tras checks. No reenviar automáticamente el aviso antiguo ni simular avisos productivos; la compra previa necesita revisión única del propietario. Etapa10 sigue abierta hasta constatar registro real con siguiente aviso habitual. No reactivar conexión por rutina.
 
 
-## Hist?rico: entrega combinada 0.1.10 e integración completa
+## Histórico: entrega combinada 0.1.10 e integración completa
 
 - Integración: #126 (mediciones), #124 (bloqueo nativo) y #125 (accesibilidad/respaldo) integrados en develop `8038946e1894bd1d9bc8d25f9cffc1f85f4d00f9`. #125 terminó con CI380/40130497481 y Android60/40130497478 correctos.
 - Promoción #127 integrada en main `0c82f2f25fbc170d85733e23097858244815aac3` tras quince checks y estado Vercel SUCCESS del HEAD exacto 8038946: CI381/40131370547, CI382/40131389846, Android61/40131370565 y Android62/40131389869. Comprobar por separado CI383/40132044197, Android63/40132044247 y despliegues posteriores; integrar no equivale a despliegue terminado.
@@ -181,7 +229,7 @@ Siguiente: terminar prueba instrumentada aislada del parser/cola, reconstruir e 
 Siguiente: terminar verificaciones posteriores de main y Render/Vercel, HTTPS/health/Google, hashes servidos y migraciones; registrar el resultado exacto en el prompt local `.local/CONTINUAR_KAPTAL_ETAPAS_12_13.md`. Continuar pendientes en ramas nuevas desde develop remoto actualizado. Mantener ambos documentos y plan local sincronizados.
 
 
-## Hist?rico: accesibilidad corregida con fuentes alternativas y mediciones integradas
+## Histórico: accesibilidad corregida con fuentes alternativas y mediciones integradas
 
 - #125 en `validacion/etapa-12-accesibilidad-respaldo`, worktree `.local/wt-a12`, rama independiente desde develop fd821fb y actualizada con `70a7f863eb458650dfffc2daff0e10ccdbf5f822` de #124/#126. Corrige caché bloqueada y reflujo de Configuración, Cuentas, Categorías y Presupuestos con letra al 200 %. CSV/lista activa y alcance del JSON aclarados. Detalle en `ACCESIBILIDAD_RESPALDO_ETAPA_12.md`.
 - CI370/40109964613 y CI371/40111171593 fallaron en geometría. Esperar fuentes no bastó: Arial reprodujo exactamente 327px en un viewport320 por texto del estado vacío de Presupuestos. Corregidos padding/palabras, filtro de Cuentas y contadores del respaldo; matriz ahora incluye sistema/Arial, claro/oscuro y dos orientaciones. Diagnóstico de cajas/rangos de texto sin copiar contenido. No retirar el límite de ancho ni atribuir el fallo a SQL sin evidencia.
@@ -195,7 +243,7 @@ Siguiente: terminar verificaciones posteriores de main y Render/Vercel, HTTPS/he
 
 Siguiente: revalidar e integrar #125 tras checks de su HEAD final combinado. Promover con respaldo y verificaciones; construir APK combinado manteniendo firma/datos. Mantener ambos documentos, plan local y prompt con CI/integración/APK/dispositivo/producción separados. Continuar pendientes reales de accesibilidad/operación; diseño general al final.
 
-## Hist?rico: bloqueo 0.1.10 validado en Samsung; accesibilidad y mediciones separadas
+## Histórico: bloqueo 0.1.10 validado en Samsung; accesibilidad y mediciones separadas
 
 - #124, rama `mejoras/etapa-12-bloqueo-nativo`, nueva desde develop fd821fb. Bloqueo voluntario Android11+ con BiometricPrompt, autorización efímera de un solo uso y cobertura nativa opaca. Al volver abre directamente el diálogo Android; logo/colores de Kaptal detrás, controles solo para reintentar tras cancelar y ScrollView para letra grande. No modifica sesión, tokens, WorkManager ni configuración bancaria. Detalle en `BLOQUEO_NATIVO_ETAPA_12.md`.
 - Validación: 443 pruebas frontend y diez E2E locales anteriores sin cambios JS en el ajuste de fondo; seis pruebas JVM específicas, lint y builds debug/release correctos. Dos instrumentadas Samsung repetidas después del fondo: flag real, WebView invisible, retorno/recreación, preferencia de capturas y sesión intactas. Debug detenida e instrumentación retirada.
@@ -209,7 +257,7 @@ Siguiente: revalidar e integrar #125 tras checks de su HEAD final combinado. Pro
 
 Siguiente: terminar CI exacto e integración de las tres entregas sin mezclar sus estados; conciliar develop en cada rama y reconstruir APK combinado. Promover con respaldo/verificaciones. Mantener planes y prompt local con HEAD/CI/APK/dispositivo/producción separados. Continuar pendientes reales de accesibilidad y operación; diseño general al final.
 
-## Hist?rico: mediciones de Etapa13 preparadas; accesibilidad en CI y teléfono desconectado
+## Histórico: mediciones de Etapa13 preparadas; accesibilidad en CI y teléfono desconectado
 
 - Rama nueva e independiente `mejoras/etapa-13-mediciones-operacion`, worktree `.local/wt-e13`, desde origin/develop `fd821fb79e9ed86d7fc0e229733df6589441fe3c` verificado. Añade un medidor reproducible del build con imports estáticos/preload, bytes/gzip/Brotli/hash e inline separado, cinco pruebas correctas y artefacto CI por SHA. Usa TypeScript/Node ya instalados; sin dependencias ni recursos nuevos. Build correcto y salida CLI JSON verificada.
 - Recorrido HTTP local correcto: veinte compras sintéticas, tres calentamientos y veinte muestras por operación; reporta health/cuentas/página de movimientos, sin cuerpos/tokens/identificadores. Guardia de frontend y PostgreSQL locales. H2 p95 inicial 12.914/24.195/24.659 ms; no p95 productivo, SQL ni ensayo de carga. Referencia de JS inicial 385980 bytes y gzip125784; no es tiempo de arranque. Detalle, fuentes y límites en `RENDIMIENTO_OPERACION_ETAPA_13.md`. Cuotas/costes reales, presupuesto global, alertas, interpretación y mediciones físicas siguen pendientes; Etapa13 no cerrada.
@@ -221,7 +269,7 @@ Siguiente: terminar CI exacto e integración de las tres entregas sin mezclar su
 
 Siguiente: resolver/revalidar CI de #125 y CI del HEAD exacto de esta entrega; integrar sin confundir las ramas y promover con respaldo/verificaciones. Reconciliar #124 con develop actualizado sin publicar el bloqueo antes de la prueba física. Al reconectar, APK final y diálogo automático/cancelación/reintento/retorno; no repetir reinicio/persistencia/widgets acreditados sin motivo. Continuar los pendientes reales de Etapas12/13; diseño general al final. Mantener plan local y prompt con los tres worktrees y HEAD/CI/producción separados.
 
-## Hist?rico: privacidad nativa de pantalla 0.1.9
+## Histórico: privacidad nativa de pantalla 0.1.9
 
 Este avance prevalece sobre 0.1.8 como APK actual. La autorización permanente de publicación tras comprobaciones permanece vigente; no autoriza destruir/restaurar datos ni activar Gmail.
 
@@ -234,7 +282,7 @@ Este avance prevalece sobre 0.1.8 como APK actual. La autorización permanente d
 
 Siguiente: CI del HEAD exacto y PR/integración/publicación; después bloqueo/biometría nativos y accesibilidad amplia, seguido de Etapa13 en ramas nuevas desde develop actualizado. El propietario aclaró que su duda sobre el alcance no era una cancelación y autorizó expresamente continuar con todos estos puntos. No repetir persistencia cifrada, reinicio físico o widgets ya acreditados sin motivo nuevo. Mantener estado/plan/copia local y `.local/CONTINUAR_ANDROID_PRIVACIDAD_ETAPA_12.md` sincronizados. Diseño al final.
 
-## Hist?rico: guía inicial 0.1.8 y configuración bancaria real
+## Histórico: guía inicial 0.1.8 y configuración bancaria real
 
 Este avance prevalece sobre las referencias a 0.1.7 como APK actual y al piloto todavía sin configurar. La autorización permanente de publicación sigue vigente; Gmail permanece deshabilitado.
 
