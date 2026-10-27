@@ -42,37 +42,52 @@ public class AutomaticBankPlugin extends Plugin {
                     }
                 }
                 boolean active=AutomaticBankStore.active(state,uid) && BankNotificationListener.granted(getContext());
+                String reason=!BankNotificationListener.granted(getContext())?"permission":state.optBoolean("paused")?"reconnect"
+                    :state.optJSONArray("rules")==null||state.getJSONArray("rules").length()==0?"not_configured"
+                    :state.optLong("expires")<=System.currentTimeMillis()?"expired":state.optString("error");
                 call.resolve(new JSObject().put("deviceId",device).put("active",active)
+                    .put("reason",reason).put("entries",AutomaticBankStore.summaries(state))
                     .put("rules",state.optJSONArray("rules"))
                     .put("queued",queued).put("registered",registered).put("review",review)
                     .put("reviews",reviews)
                     .put("full",state.optBoolean("full")).put("error",state.optString("error")));
-                if(active && queued>0) AutomaticBankWorker.schedule(getContext());
+                if(active && queued>0) AutomaticBankWorker.ensure(getContext());
             } catch(Exception ex) { call.reject("No se pudo leer el registro automatico."); }
+        }
+    }
+    private long validate(PluginCall call,JSONArray rules) throws Exception {
+        long uid=user(call);
+        if(!Boolean.TRUE.equals(call.getBoolean("consent"))||!BankNotificationListener.granted(getContext()))throw new IllegalArgumentException();
+        if(rules==null||rules.length()<1||rules.length()>10)throw new IllegalArgumentException();
+        AutomaticBankStore.checkPending(new AutomaticBankStore(getContext()).read(),uid,rules);
+        for(int i=0;i<rules.length();i++)getContext().getPackageManager().getApplicationInfo(rules.getJSONObject(i).getString("paquete"),0);
+        return uid;
+    }
+    @PluginMethod public void validate(PluginCall call) {
+        synchronized(NotificationNoticeStore.class) {
+            try { validate(call,call.getArray("rules"));call.resolve(); }
+            catch(Exception ex) { call.reject("Comprueba el acceso de Android y que las apps bancarias elegidas estén instaladas. Conserva los envíos pendientes."); }
+        }
+    }
+    @PluginMethod public void retry(PluginCall call) {
+        synchronized(NotificationNoticeStore.class) {
+            try {
+                long uid=user(call);
+                if(!BankNotificationListener.granted(getContext())||!AutomaticBankStore.active(new AutomaticBankStore(getContext()).read(),uid))throw new IllegalStateException();
+                AutomaticBankWorker.retry(getContext());call.resolve();
+            } catch(Exception ex) { call.reject("Restablece la conexión antes de reintentar."); }
         }
     }
     @PluginMethod public void configure(PluginCall call) {
         synchronized(NotificationNoticeStore.class) {
             try {
-                long uid=user(call);
-                if(!Boolean.TRUE.equals(call.getBoolean("consent")) || !BankNotificationListener.granted(getContext())) throw new IllegalArgumentException();
                 var credential=call.getObject("credential");
                 if(credential==null || !credential.getString("clave").matches("[A-Za-z0-9_-]{43}")) throw new IllegalArgumentException();
                 var rules=credential.getJSONArray("reglas");
-                if(rules.length()<1 || rules.length()>10) throw new IllegalArgumentException();
-                var state=new JSONObject().put("generation",UUID.randomUUID().toString()).put("userId",uid)
-                    .put("key",credential.getString("clave")).put("expires",Instant.parse(credential.getString("vence")).toEpochMilli())
-                    .put("rules",rules).put("entries",new JSONArray());
+                long uid=validate(call,rules);
                 var store=new AutomaticBankStore(getContext());
-                // Preserve durable payloads when renewing a credential with unchanged rules.
-                var previous=store.read();
-                if(previous.optLong("userId")==uid && rules.toString().equals(String.valueOf(previous.optJSONArray("rules"))))
-                    state.put("entries",previous.optJSONArray("entries"));
-                else if(previous.optJSONArray("entries")!=null) {
-                    var entries=previous.getJSONArray("entries");
-                    for(int i=0;i<entries.length();i++) if("queued".equals(entries.getJSONObject(i).optString("status")))
-                        throw new IllegalStateException("Pending movements");
-                }
+                var state=AutomaticBankStore.replacement(store.read(),uid,rules,credential.getString("clave"),
+                    Instant.parse(credential.getString("vence")).toEpochMilli());
                 java.util.Set<String> packages=new java.util.HashSet<>();
                 for(int i=0;i<rules.length();i++) {
                     String pkg=rules.getJSONObject(i).getString("paquete");
@@ -83,7 +98,7 @@ public class AutomaticBankPlugin extends Plugin {
                 BankNotificationListener.store(getContext()).configure(uid,true,packages,System.currentTimeMillis());
                 android.service.notification.NotificationListenerService.requestRebind(
                     new android.content.ComponentName(getContext(),BankNotificationListener.class));
-                AutomaticBankWorker.schedule(getContext());
+                AutomaticBankWorker.retry(getContext());
                 call.resolve();
             } catch(Exception ex) { call.reject("No se pudo conectar. Revisa acceso y movimientos pendientes."); }
         }

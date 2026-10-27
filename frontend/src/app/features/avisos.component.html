@@ -1,6 +1,5 @@
 <section class="inbox">
-  <header><div><p class="eyebrow">Tu actividad bancaria</p><h1>Bandeja de avisos</h1></div><button class="pill" (click)="nuevo()">Añadir aviso</button></header>
-  <p class="muted intro">Consulta el registro de tus compras y revisa los avisos que necesitan tu atención.</p>
+  <header><h1>Bandeja de avisos</h1><button class="pill" (click)="nuevo()">Añadir aviso</button></header>
   @if(shared.pending();as texto){
     <section class="notice" aria-label="Texto recibido en este teléfono">
       @if(texto.text){
@@ -10,8 +9,8 @@
       <button class="quiet" (click)="descartarCompartido()" [disabled]="ocupado()">Descartar texto del teléfono</button>
     </section>
   }
-  <app-bank-notifications (review)="usarNotificacion($event)" />
-  <div class="review-heading"><h2>Revisiones en tu cuenta</h2><p class="muted">Los avisos enviados para revisión se guardan como movimiento cuando los confirmas.</p></div>
+  <app-bank-notifications (review)="usarNotificacion($event)" (changed)="cargar()" />
+  <div id="account-reviews" class="review-heading"><h2>Revisiones en tu cuenta</h2></div>
   <nav aria-label="Estado de avisos" class="filters">@for(f of filtros;track f.valor){<button class="pill" [attr.aria-pressed]="estado()===f.valor" (click)="filtrar(f.valor)">{{f.texto}}</button>}</nav>
   @if(error()){<div role="alert" class="notice">{{error()}} <button (click)="cargar()">Recargar bandeja</button></div>}
   @if(mensaje()){<p role="status">{{mensaje()}}</p>}

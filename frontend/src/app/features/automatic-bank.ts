@@ -1,4 +1,4 @@
-import { Component, effect, inject, signal } from '@angular/core';
+import { Component, effect, inject, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
@@ -12,14 +12,16 @@ import { getApiBaseUrl } from '../core/services/api-base-url';
 import { AuthService } from '../core/services/auth.service';
 import { MontoPipe } from '../core/pipes/monto.pipe';
 import { TextoFinancieroPipe } from '../core/pipes/texto-financiero.pipe';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-automatic-bank',
-  imports: [FormsModule, MontoPipe, TextoFinancieroPipe],
+  imports: [FormsModule, MontoPipe, TextoFinancieroPipe, RouterLink],
   templateUrl: './automatic-bank.html',
   styleUrls: ['./bank-notice-controls.css', './automatic-bank.css'],
 })
 export class AutomaticBankComponent {
+  readonly changed = output<void>();
   readonly automatic = inject(AutomaticBankService);
   readonly bank = inject(BankNotificationsService);
   private readonly finance = inject(FinanzasService);
@@ -34,6 +36,19 @@ export class AutomaticBankComponent {
   readonly error = signal('');
   readonly message = signal('');
   readonly summaryError = signal('');
+  readonly showEntries = signal(false);
+  reconnectConsent = false;
+  accountName(id: number): string { return this.accounts().find(a=>a.id===id)?.nombre ?? 'Cuenta asociada'; }
+  async toggleEntries(): Promise<void> {
+    this.showEntries.update(value=>!value);
+    if(this.showEntries()) {
+      const user=this.auth.currentUser()?.id;
+      try {
+        const response=await firstValueFrom(this.finance.getCuentas());
+        if(user===this.auth.currentUser()?.id)this.accounts.set(response.data.filter(a=>a.activo));
+      } catch { /* Queue details stay available offline. */ }
+    }
+  }
   private summaryTurn = 0;
   private summaryOwner: number | undefined;
   constructor() {
@@ -41,6 +56,7 @@ export class AutomaticBankComponent {
       const user = this.auth.currentUser()?.id;
       if (this.summaryOwner !== user) {
         this.summaryOwner = user; this.state.set(null); this.loaded.set(false); this.consent = false;
+        this.reconnectConsent = false;this.showEntries.set(false);
         this.sender = ''; this.smsPackage = ''; this.listId = null;
         this.accounts.set([]); this.lists.set([]);
         for (const p of this.profiles) { p.account = null; p.suffix = ''; }
@@ -55,12 +71,45 @@ export class AutomaticBankComponent {
     try {
       const state = await this.automatic.read();
       if (turn !== this.summaryTurn || user !== this.auth.currentUser()?.id) return;
+      const previous=this.state();
       this.state.set(state); this.summaryError.set(state ? '' : 'Abre tu sesión para comprobar el registro.');
+      if(previous && state && (previous.registered!==state.registered || previous.review!==state.review))this.changed.emit();
     } catch {
       if (turn === this.summaryTurn) { this.state.set(null); this.summaryError.set('No se pudo comprobar el registro. Actualiza el estado.'); }
     }
   }
   ruleCount(provider: string): number { return this.state()?.rules?.filter(r => r.proveedor === provider).length ?? 0; }
+  bankName(provider: string): string { return this.profiles.find(p => p.provider === provider)?.name ?? 'Compra bancaria'; }
+  statusLabel(status: string): string { return ({queued:'Pendiente de envío',registered:'Registrado',review:'Revisar en Movimientos'} as Record<string,string>)[status] ?? 'Revisar'; }
+  reason(): string {
+    const s=this.state();
+    if (!s) return this.summaryError() || 'Comprobando conexión…';
+    return ({permission:'Concede acceso a las notificaciones en Android.',reconnect:'La conexión necesita restablecerse. Tus envíos siguen guardados.',
+      expired:'La conexión venció. Restablécela para enviar las compras guardadas.',not_configured:'Asocia un banco para comenzar.',
+      network:'Sin conexión. Las compras siguen guardadas y se reintentarán.',server:'El servidor no respondió correctamente. Puedes reintentar.',
+      rate_limit:'El servidor pidió esperar. Se reintentará automáticamente.'} as Record<string,string>)[s.reason || s.error] ?? '';
+  }
+  canUseAccount(profile: {provider:string;type:string}, account: Cuenta): boolean {
+    return account.moneda==='MXN' && (['SANTANDER','BBVA'].includes(profile.provider)
+      ? ['CREDITO','DEBITO'].includes(account.tipo) : account.tipo===profile.type);
+  }
+  async recover(): Promise<void> {
+    if (this.busy() || !this.reconnectConsent) return;
+    this.busy.set(true);this.error.set('');this.message.set('');
+    try {
+      await this.automatic.reconnect(this.reconnectConsent);
+      this.reconnectConsent=false;await this.refreshSummary();
+      this.message.set('Conexión restablecida. Se conservan las cuentas y los envíos pendientes.');
+    } catch { this.error.set('No se pudo restablecer. Comprueba sesión, internet y acceso de Android. Tus envíos se conservan.'); }
+    finally { this.busy.set(false); }
+  }
+  async retry(): Promise<void> {
+    if(this.busy())return;
+    this.busy.set(true);this.error.set('');this.message.set('');
+    try { await this.automatic.retry();await this.refreshSummary();this.message.set('Reintento solicitado. El resultado aparecerá aquí.'); }
+    catch { this.error.set('No se pudo reintentar. Restablece la conexión si está desactivada.'); }
+    finally { this.busy.set(false); }
+  }
   readonly profiles = [
     { provider: 'SANTANDER', name: 'Santander', type: 'CREDITO', pkg: 'mx.bancosantander.supermovil', account: null as number | null, suffix: '' },
     { provider: 'REVOLUT', name: 'Revolut', type: 'DEBITO', pkg: 'com.revolut.revolut', account: null as number | null, suffix: '' },
@@ -83,7 +132,7 @@ export class AutomaticBankComponent {
       this.state.set(state);
       const [accounts, lists, apps] = await Promise.all([
         firstValueFrom(this.finance.getCuentas()),
-        firstValueFrom(this.http.get<ApiResponse<ListaFinanciera[]>>(`${getApiBaseUrl()}/listas`)), this.bank.apps(),
+        firstValueFrom(this.http.get<ApiResponse<ListaFinanciera[]>>(`${getApiBaseUrl()}/listas`)), this.bank.apps().catch(() => []),
       ]);
       if (userId !== this.auth.currentUser()?.id) return;
       if (!state) throw new Error('Abre tu sesión de nuevo.');

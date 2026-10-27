@@ -1,17 +1,16 @@
 @if (automatic.available) {
   <section class="automation" aria-labelledby="automation-title">
     <div class="automation-header">
-      <div><p class="eyebrow">Registro automático</p><h2 id="automation-title">Tus compras, en su cuenta</h2></div>
+      <div><h2 id="automation-title">Registro de compras</h2><p class="hint">Gastos reconocidos, sin confirmación manual.</p></div>
       <span class="scope" [class.active]="state()?.active">{{ state() ? state()!.active ? 'Registro activo' : 'Desactivado' : 'Comprobando' }}</span>
     </div>
-    <p class="hint">Las compras reconocidas de tus bancos asociados se guardan sin pedir confirmación. Santander: solo gastos.</p>
+    @if (reason()) { <p class="connection-reason" role="status">{{ reason() }}</p> }
     @if (state(); as s) {
-      <div class="metrics" role="group" aria-label="Estado de envíos recientes">
-        <div><strong>{{ s.queued }}</strong><span>Envíos pendientes</span></div>
-        <div><strong>{{ s.registered }}</strong><span>Registrados recientes</span></div>
+      <div class="metrics" role="group" aria-label="Envíos de este teléfono">
+        <div><strong>{{ s.queued }}</strong><span>Pendientes</span></div>
+        <div><strong>{{ s.registered }}</strong><span>Registrados</span></div>
         <div><strong>{{ s.review }}</strong><span>Para revisar</span></div>
       </div>
-      <p class="hint">Estos contadores muestran envíos recientes del teléfono, no el total de Movimientos.</p>
       @if (s.rules?.length) {
         <div class="connected" aria-label="Bancos asociados">
           @for (profile of profiles; track profile.provider) {
@@ -21,31 +20,66 @@
           }
         </div>
       }
-      @for (review of s.reviews ?? []; track review.eventoId) {
-        <p class="feedback">{{ review.fecha }} · {{ review.descripcion | textoFinanciero }} · {{ review.monto | monto:review.moneda:'symbol':'1.2-2' }} {{ review.moneda }}. Comprueba Movimientos antes de registrarlo manualmente.</p>
+      <div class="connection-actions">
+        @if (s.queued || s.review || s.registered) {
+          <button type="button" (click)="toggleEntries()" [attr.aria-expanded]="showEntries()" aria-controls="automatic-entries">{{ showEntries() ? 'Ocultar envíos' : 'Ver envíos' }}</button>
+        }
+        @if (s.queued && s.active) { <button class="primary" type="button" (click)="retry()" [disabled]="busy()">Reintentar envío</button> }
+        <button class="quiet" type="button" (click)="refreshSummary()" [disabled]="busy()">Actualizar</button>
+      </div>
+      @if (!s.active && s.rules?.length && bank.current().granted) {
+        <div class="recovery">
+          <p>Restablece la conexión conservando las cuentas y las compras pendientes.</p>
+          <label class="consent"><input type="checkbox" [(ngModel)]="reconnectConsent" /> Autorizo continuar el registro con mis asociaciones guardadas.</label>
+          <button class="primary" type="button" (click)="recover()" [disabled]="busy() || !reconnectConsent">Restablecer conexión</button>
+        </div>
       }
-      @if (s.full || s.error) { <p role="alert" class="feedback">Comprueba la conexión y tus movimientos antes de volver a activar.</p> }
+      @if (showEntries()) {
+        <div id="automatic-entries" class="entries" aria-label="Detalle de envíos">
+          @for (entry of s.entries ?? []; track entry.id) {
+            <article class="entry">
+              <div class="entry-heading"><strong>{{ bankName(entry.proveedor) }}</strong><span>{{ statusLabel(entry.status) }}</span></div>
+              <p>{{ entry.descripcion | textoFinanciero }}</p>
+              <p class="entry-amount">{{ entry.monto | monto:entry.moneda:'symbol':'1.2-2' }}</p>
+              <p class="hint">{{ entry.fecha }} · {{ accountName(entry.cuentaId) | textoFinanciero }}</p>
+              @if (entry.status === 'review') { <a href="#account-reviews">Revisar en tu cuenta</a> }
+            </article>
+          } @empty {
+            <p class="hint">Actualiza para consultar el detalle. Tus envíos se conservan.</p>
+          }
+          <a routerLink="/transacciones">Ver Movimientos</a>
+        </div>
+      }
+      @if (!s.entries?.length) {
+        @for (review of s.reviews ?? []; track review.eventoId) {
+          <p class="feedback">{{ review.fecha }} · {{ review.descripcion | textoFinanciero }} · {{ review.monto | monto:review.moneda:'symbol':'1.2-2' }} {{ review.moneda }}. Comprueba Movimientos antes de registrarlo manualmente.</p>
+        }
+      }
+      @if (s.full) { <p role="alert" class="feedback">La cola está llena. Resuelve los envíos pendientes para recibir nuevas compras.</p> }
     }
-    <div class="connection-actions"><button type="button" (click)="refreshSummary()" [disabled]="busy()">Actualizar estado</button></div>
-    @if (summaryError()) { <p role="status" class="feedback">{{ summaryError() }}</p> }
+    @if (!state()) { <button type="button" (click)="refreshSummary()" [disabled]="busy()">Reintentar conexión</button> }
+    @if (message()) { <p role="status" class="feedback">{{ message() }}</p> }
+    @if (error()) { <p role="alert" class="feedback">{{ error() }}</p> }
+
     <details (toggle)="opened($event)">
-      <summary>Registrar compras automáticamente · Administrar bancos</summary>
+      <summary>Administrar bancos</summary>
       <div class="setup-intro">
-        <p class="hint">Asocia cada banco a su cuenta y elige la lista de destino. Guardar conserva los demás bancos que mantengas seleccionados.</p>
-        <p class="hint">Sin internet, los envíos reconocidos se conservan cifrados para reintentarlos. Los formatos ambiguos o las posibles coincidencias pasan a revisión.</p>
+        <p class="hint">Elige la cuenta de cada banco y la lista donde guardar sus compras.</p>
+        <a routerLink="/cuentas">Crear o administrar cuentas</a>
       </div>
       <button type="button" (click)="load()" [disabled]="busy()">{{ busy() ? 'Cargando configuración…' : 'Actualizar configuración' }}</button>
       @if (loaded()) {
         <fieldset [disabled]="busy()">
           <legend>Asociaciones bancarias</legend>
           @for (profile of profiles; track profile.provider) {
-            <section class="profile">
-              <h3>{{ profile.name }}</h3>
+            <details class="profile" [open]="!!profile.account">
+              <summary>{{ profile.name }}</summary>
+              <div class="profile-fields">
               <label>Cuenta de destino
                 <select [(ngModel)]="profile.account" [attr.aria-label]="'Cuenta de destino · ' + profile.name">
                   <option [ngValue]="null">No activar</option>
                   @for (account of accounts(); track account.id) {
-                    @if (account.moneda === 'MXN' && account.tipo === profile.type) { <option [ngValue]="account.id">{{ account.nombre }}</option> }
+                    @if (canUseAccount(profile, account)) { <option [ngValue]="account.id">{{ account.nombre }}</option> }
                   }
                 </select>
               </label>
@@ -63,7 +97,8 @@
                   <label>Remitente de Sears<input type="text" maxlength="40" autocomplete="off" [(ngModel)]="sender" /></label>
                 }
               }
-            </section>
+              </div>
+            </details>
           }
           <div class="destination">
             <label>Lista para estas compras<select [(ngModel)]="listId"><option [ngValue]="null">Elige una lista</option>
@@ -72,17 +107,16 @@
             <label class="consent"><input type="checkbox" [(ngModel)]="consent" /> Quiero registrar directamente las compras reconocidas en estas cuentas.</label>
           </div>
           <button class="primary save" type="button" (click)="connect()" [disabled]="!consent || busy() || !bank.current().granted || !!state()?.queued">{{ state()?.active ? 'Guardar asociaciones' : 'Activar registro automático' }}</button>
-          @if (state()?.queued) { <p class="hint">Espera a que terminen los envíos pendientes antes de cambiar las asociaciones.</p> }
+          @if (state()?.queued) { <p class="hint">Resuelve primero los envíos desde «Ver envíos». Puedes restablecer la conexión sin cambiar sus cuentas.</p> }
           @if (!bank.current().granted) { <p class="hint">Primero concede acceso a las notificaciones en los permisos de Android, debajo de esta sección.</p> }
         </fieldset>
       }
-      <details class="support"><summary>Qué avisos se reconocen</summary>
+      <details class="support"><summary>Más información</summary>
+        <p class="hint">El resumen muestra envíos recientes de este teléfono. El historial completo está en Movimientos. Sin internet se conservan cifrados; los formatos ambiguos y posibles coincidencias necesitan revisión.</p>
         <p class="hint">Sears Visa desde tu app de SMS; Santander «Gastaste…» o «Compra con tarjeta en…» con importe MXN, tarjeta, fecha y hora. Revolut requiere moneda explícita. Un banco seleccionado no garantiza que todos sus formatos sean reconocidos.</p>
         <p class="hint">No se importa historial ni se recuperan compras anteriores. Android puede ocultar contenido o detener la recepción por batería o cierre forzado.</p>
       </details>
       @if (state()?.active) { <button class="danger" type="button" (click)="disconnect()" [disabled]="busy()">Desconectar y borrar envíos locales pendientes</button> }
-      @if (message()) { <p role="status" class="feedback">{{ message() }}</p> }
-      @if (error()) { <p role="alert" class="feedback">{{ error() }}</p> }
     </details>
   </section>
 }

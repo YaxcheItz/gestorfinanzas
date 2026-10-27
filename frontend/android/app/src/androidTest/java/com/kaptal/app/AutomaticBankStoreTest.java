@@ -26,6 +26,32 @@ public class AutomaticBankStoreTest {
             .put("key","synthetic-private-key").put("generation","qa").put("rules",new JSONArray().put(rule)));
     }
     @After public void clean() { store.clear(); }
+    @Test public void renewalAllowsPendingOnlyWithIdenticalDestinationsAndRuleIds() throws Exception {
+        assertTrue(receive("one",987654));
+        var state=store.read();var rules=state.getJSONArray("rules");
+        state.put("paused",true).put("error","reconnect");
+        var renewed=AutomaticBankStore.replacement(state,71,new JSONArray(rules.toString()),"new-synthetic-key",System.currentTimeMillis()+3600000);
+        assertTrue(AutomaticBankStore.active(renewed,71));
+        assertEquals(state.getJSONArray("entries").toString(),renewed.getJSONArray("entries").toString());
+        assertNotEquals(state.getString("generation"),renewed.getString("generation"));
+        AutomaticBankStore.checkPending(state,71,new JSONArray(rules.toString()));
+        var changed=new JSONArray(rules.toString());changed.getJSONObject(0).put("cuentaId",99);
+        try { AutomaticBankStore.replacement(state,71,changed,"new-synthetic-key",System.currentTimeMillis()+3600000);fail("Must preserve destination"); }
+        catch(IllegalStateException expected) { }
+        changed=new JSONArray(rules.toString());changed.getJSONObject(0).put("id","other-id");
+        assertFalse(AutomaticBankStore.sameRules(rules,changed));
+        assertEquals(1,store.read().getJSONArray("entries").length());
+    }
+    @Test public void summariesExposeQueuedPurchaseWithoutCredentialsOrOriginalMessage() throws Exception {
+        assertTrue(receive("one",987654));
+        var state=store.read();var summaries=AutomaticBankStore.summaries(state);
+        assertEquals(1,summaries.length());
+        assertEquals("queued",summaries.getJSONObject(0).getString("status"));
+        assertEquals("SEARS",summaries.getJSONObject(0).getString("proveedor"));
+        assertEquals(11,summaries.getJSONObject(0).getLong("cuentaId"));
+        assertFalse(summaries.toString().contains("synthetic-private-key"));
+        assertFalse(summaries.toString().contains("AAUTORIZACION"));
+    }
     private String body(int reference) {
         String date=LocalDate.now(ZoneId.of("America/Mexico_City")).format(DateTimeFormatter.BASIC_ISO_DATE);
         return "COMPRA AUTORIZADA EN TIENDA QA CON TU TARJETA SEARS VISA 1234 POR $25.10 MXN EL "+date+" CON AAUTORIZACION "+reference;

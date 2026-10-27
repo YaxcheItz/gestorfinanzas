@@ -12,6 +12,7 @@ import { RouterLink } from '@angular/router';
 export class BankNotificationsComponent {
   readonly bank = inject(BankNotificationsService);
   readonly review = output<BankNotice>();
+  readonly changed = output<void>();
   readonly apps = signal<NoticeApp[]>([]);
   readonly appsLoaded = signal(false);
   readonly selected = signal<string[]>([]);
