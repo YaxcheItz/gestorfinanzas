@@ -44,6 +44,8 @@ jobs:
         run: python -m unittest discover -s tools/canales -p 'test_*.py' -v
       - name: Comprobar sintaxis
         run: python -m compileall -q tools/canales
+      - name: Probar resumen operativo sin datos reales
+        run: python -m unittest discover -s tools/operacion -p 'test_*.py' -v
       - name: Probar receptor persistente sin credenciales reales
         run: |
           docker build -t kaptal-whatsapp:test tools/canales
