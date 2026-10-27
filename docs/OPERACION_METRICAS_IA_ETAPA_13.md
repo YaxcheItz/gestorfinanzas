@@ -1,0 +1,55 @@
+# Etapa 13: métricas operativas de generaciones de IA
+
+Esta parte permite contar resultados y medir duración de generaciones sin registrar su contenido. No implementa todavía presupuesto global, tokens consumidos, precios ni alertas automáticas.
+
+## Registro del backend
+
+`AiProviderRouter.generate` emite una línea INFO por invocación, incluyendo las rechazadas:
+
+```text
+KAPTAL_AI_GENERATION provider=openai outcome=success elapsed_ms=10
+```
+
+El ejemplo es ficticio. Los únicos campos del mensaje son proveedor de una lista cerrada, resultado y milisegundos enteros no negativos. No incluye prompt, respuesta, excepción, modelo, URL, usuario, correo, cuenta, importe, credencial ni identificador de solicitud. Un nombre de proveedor desconocido se convierte en `unknown`.
+
+| Resultado | Significado |
+| --- | --- |
+| `success` | El proveedor devolvió una respuesta que pasa las validaciones existentes del router. No acredita interpretación correcta ni movimiento guardado. |
+| `provider_error` | La generación terminó con una excepción del proveedor/configuración. El mensaje y la traza no se añaden al registro de métricas. |
+| `invalid_request` | La entrada supera los límites existentes o es inválida; no se llama al proveedor. |
+| `busy` | No hay permiso de concurrencia disponible; no se llama al proveedor. |
+| `invalid_response` | Respuesta nula o demasiado grande, según las validaciones existentes. |
+
+La duración abarca el router y la implementación seleccionada, incluidas sus posibles alternativas internas. Una generación puede producir más de una petición HTTP: **el contador no representa llamadas facturadas**. Tampoco mide toda la petición HTTP de la app ni la ejecución posterior de acciones financieras.
+
+Se preservan proveedor seleccionado, respuesta, excepciones, límites y liberación de permisos existentes. No cambia el contrato `AiProvider.generate`, añade dependencias, expone un endpoint ni modifica el esquema de base de datos.
+
+## Resumen local
+
+Guardar una exportación privada del backend en texto plano UTF-8 en `.local/backend-operacion.log` y ejecutar desde la raíz:
+
+```powershell
+python tools/operacion/resumir_ia.py .local/backend-operacion.log
+```
+
+También acepta entrada estándar con `python tools/operacion/resumir_ia.py`. Solo produce JSON agregado: registros aceptados, líneas ignoradas y grupos por proveedor/resultado. Los registros ajenos o malformados no se reproducen. Las líneas mayores de4096 caracteres se consumen y descartan completas.
+
+Cada grupo conserva un máximo de1024 duraciones recientes. `count` corresponde a todos los registros válidos del grupo en esa exportación; media, mínimo, máximo y `p95WindowMs` corresponden únicamente a su ventana reciente. El p95 usa rango más cercano: posición `ceil(0.95 × n)` sobre la ventana ordenada. Para muestras pequeñas puede coincidir con el máximo; no es un percentil histórico de toda la aplicación.
+
+Los grupos y la memoria están acotados. No mezclar exportaciones superpuestas al interpretar el recuento. Filtros de logging, rotación o registros omitidos impiden inferir consumo total a partir del resumen; cero registros no demuestra cero uso. No usar este informe como contabilidad, facturación o mecanismo de cuota.
+
+El resumidor no sanea el archivo original. Mantener la exportación privada; compartir únicamente el JSON agregado si se necesita revisar estas métricas. No copiar logs reales al repositorio ni a pruebas.
+
+## Validación y publicación
+
+- Validación local:529casos backend sin fallos, ocho de PostgreSQL omitidos en H2 y reservados para CI; nueve pruebas Python correctas. Cobertura del router:100%líneas/90,91%ramas con JaCoCo; resumidor:95,16%líneas con trace de la biblioteca estándar. Ida/vuelta de33registros ficticios Java→Python, sin texto de origen en el informe.
+- Pruebas del router con proveedores simulados: resultado intacto, formato cerrado, errores sin texto privado, entradas rechazadas, respuestas inválidas, identidad de los tres proveedores y saturación/liberación de permisos.
+- Pruebas del resumidor: recuentos/p95, separación de resultados, ventana acotada, líneas largas, contenido desconocido, UTF-8 inválido y errores de lectura sin reproducir rutas privadas.
+- Comprobar ida y vuelta con logs de pruebas sintéticas. No generar llamadas de IA de pago ni QA productiva para validar la instrumentación.
+- Después de publicar: verificar CI del HEAD exacto, despliegues, HTTPS/configuración pública y esquema. La primera evidencia de métricas productivas llegará con el uso normal; no confundir despliegue correcto con una generación real ya observada.
+
+Se mantiene Kaptal Android0.1.14/código15: este cambio de backend/herramientas no necesita otro APK. TalkBack permanece omitido; Gmail deshabilitado. El piloto de compras real y el resto de Etapa 13 siguen abiertos.
+
+## Referencias de implementación
+
+Se reutiliza el [logging parametrizado de SLF4J](https://www.slf4j.org/manual.html) existente. Para duración se toma la diferencia entre lecturas de [System.nanoTime de Java 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/System.html#nanoTime()), sin usar la hora del calendario como cronómetro.
