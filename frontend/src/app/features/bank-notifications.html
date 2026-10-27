@@ -1,9 +1,8 @@
 @if (bank.available) {
-  <app-automatic-bank />
+  <app-automatic-bank (changed)="changed.emit()" />
   <section class="permissions" aria-label="Recepción en Android">
-    <div class="permission-header"><h2>Acceso a notificaciones</h2><span class="permission-state">{{ bank.current().granted ? 'Acceso concedido' : 'Sin conceder' }} · {{ bank.current().enabled ? 'Recepción activa' : 'Recepción pausada' }}</span></div>
     <details (toggle)="closeSettings($event)">
-      <summary>Notificaciones bancarias en este Android</summary>
+      <summary class="permission-header">Permisos de Android <span class="permission-state">{{ bank.current().granted ? 'Concedidos' : 'Sin conceder' }}</span></summary>
       <div class="permission-settings">
         <p class="hint">Android concede acceso amplio a las notificaciones. Kaptal filtra en el teléfono las apps que elijas y conserva hasta 20 avisos durante 24 horas. No recupera notificaciones anteriores ni garantiza detectar todas las compras.</p>
         <p class="hint">Al pausar, revocar el acceso o cerrar sesión se borran la selección y las colas locales, incluido el automático.</p>

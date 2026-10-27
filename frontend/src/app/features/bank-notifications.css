@@ -1,7 +1,7 @@
 .permissions { border-top: 1px solid var(--kaptal-border); border-bottom: 1px solid var(--kaptal-border); padding: .4rem 0; }
-.permission-header { display: flex; align-items: center; justify-content: space-between; gap: .8rem; padding: .5rem 0; }
+.permission-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .4rem .8rem; padding: .5rem 0; }
 .permission-header h2 { font-size: 1rem; }
-.permission-state { font-size: .8125rem; color: var(--notice-muted); text-align: right; }
+.permission-state { min-width: 0; overflow-wrap: anywhere; font-size: .8125rem; color: var(--notice-muted); }
 .permission-settings { display: grid; gap: 1rem; padding: .5rem 0 1rem; }
 .apps { max-height: 18rem; overflow: auto; padding: .25rem; }
 .apps label { display: flex; align-items: center; min-height: 48px; gap: .75rem; font-weight: 400; }

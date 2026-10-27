@@ -50,10 +50,13 @@ public class AutomaticBankWorkerTest {
     @Test public void networkAndRateLimitRetryIdenticalPayloadThenConsumeOnce() throws Exception {
         SyntheticWorker.networkError=true; assertEquals(ListenableWorker.Result.retry(),run());
         assertEquals("queued",status());
+        assertEquals("network",store.read().getString("error"));
         SyntheticWorker.networkError=false; SyntheticWorker.code=429;
         assertEquals(ListenableWorker.Result.retry(),run());
+        assertEquals("rate_limit",store.read().getString("error"));
         SyntheticWorker.code=200; assertEquals(ListenableWorker.Result.success(),run());
         assertEquals("registered",status()); assertEquals(3,SyntheticWorker.sent.size());
+        assertEquals("",store.read().getString("error"));
         assertEquals(1,new HashSet<>(SyntheticWorker.sent).size());
         run(); assertEquals(3,SyntheticWorker.sent.size());
     }

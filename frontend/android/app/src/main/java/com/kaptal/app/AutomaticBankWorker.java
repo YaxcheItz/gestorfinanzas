@@ -11,16 +11,30 @@ import javax.net.ssl.HttpsURLConnection;
 
 public class AutomaticBankWorker extends Worker {
     static void schedule(Context context) {
+        // Append reception so a notice arriving while a worker finishes is not stranded.
+        schedule(context,ExistingWorkPolicy.APPEND_OR_REPLACE);
+    }
+    static void ensure(Context context) { schedule(context,ExistingWorkPolicy.KEEP); }
+    static void retry(Context context) { schedule(context,ExistingWorkPolicy.REPLACE); }
+    private static void schedule(Context context,ExistingWorkPolicy policy) {
         var request = new OneTimeWorkRequest.Builder(AutomaticBankWorker.class)
             .setConstraints(new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
             .setBackoffCriteria(BackoffPolicy.EXPONENTIAL,30,TimeUnit.SECONDS).build();
-        WorkManager.getInstance(context).enqueueUniqueWork("bank-automatic",ExistingWorkPolicy.APPEND_OR_REPLACE,request);
+        WorkManager.getInstance(context).enqueueUniqueWork("bank-automatic",policy,request);
     }
     public AutomaticBankWorker(@NonNull Context context,@NonNull WorkerParameters params) { super(context,params); }
     protected AutomaticBankStore store() { return new AutomaticBankStore(getApplicationContext()); }
     protected long owner() { return BankNotificationListener.user(getApplicationContext()); }
     protected boolean granted() { return BankNotificationListener.granted(getApplicationContext()); }
     protected record Reply(int code,String body) {}
+    private void waiting(String generation,String reason) {
+        synchronized(NotificationNoticeStore.class) {
+            try {
+                var state=store().read();
+                if(generation.equals(state.optString("generation"))) { state.put("error",reason);store().write(state); }
+            } catch(Exception ignored) { /* Preserve the encrypted queue and WorkManager retry. */ }
+        }
+    }
     protected Reply post(String key,String payload) throws Exception {
         var connection=(HttpsURLConnection)URI.create("https://kaptalgf.vercel.app/api/canales/android/evento").toURL().openConnection();
         try {
@@ -63,13 +77,13 @@ public class AutomaticBankWorker extends Worker {
             try {
                 var reply=post(key,payload);
                 int code=reply.code();
-                if(code==429 || code>=500 || code==408) return Result.retry();
+                if(code==429 || code>=500 || code==408) { waiting(generation,code==429?"rate_limit":"server");return Result.retry(); }
                 String status="review";
                 if(code==200) {
                     var response=new JSONObject(reply.body());
-                    if(!response.optBoolean("success")) return Result.retry();
+                    if(!response.optBoolean("success")) { waiting(generation,"server");return Result.retry(); }
                     String outcome=response.getJSONObject("data").getString("estado");
-                    if(!java.util.Set.of("REGISTRADO","PENDIENTE","DESCARTADO").contains(outcome)) return Result.retry();
+                    if(!java.util.Set.of("REGISTRADO","PENDIENTE","DESCARTADO").contains(outcome)) { waiting(generation,"server");return Result.retry(); }
                     status=outcome.equals("REGISTRADO")?"registered":"review";
                 }
                 synchronized(NotificationNoticeStore.class) {
@@ -79,13 +93,14 @@ public class AutomaticBankWorker extends Worker {
                         state.put("paused",true); state.put("error","reconnect"); store.write(state); return Result.success();
                     }
                     var entries=state.getJSONArray("entries");
+                    state.put("error","");
                     for(int i=0;i<entries.length();i++) {
                         var entry=entries.getJSONObject(i);
                         if(id.equals(entry.optString("id"))) { entry.put("status",status); break; }
                     }
                     store.write(state);
                 }
-            } catch(Exception ex) { return Result.retry(); }
+            } catch(Exception ex) { waiting(generation,"network");return Result.retry(); }
         }
         return Result.retry();
     }

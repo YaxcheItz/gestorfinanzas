@@ -15,7 +15,7 @@ describe('Registro bancario automático', () => {
   let http: HttpTestingController;
   beforeEach(() => {
     user.set({ id: 71 });
-    native = { read: vi.fn().mockResolvedValue(state), configure: vi.fn().mockResolvedValue(undefined), clear: vi.fn() };
+    native = { read: vi.fn().mockResolvedValue(state), configure: vi.fn().mockResolvedValue(undefined), clear: vi.fn(), validate: vi.fn().mockResolvedValue(undefined) };
     TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(),
       { provide: AuthService, useValue: { currentUser: user } }, { provide: AUTOMATIC_BANK_NATIVE, useValue: native }] });
     http = TestBed.inject(HttpTestingController);
@@ -49,5 +49,31 @@ describe('Registro bancario automático', () => {
     request.flush({ success: true, data: credential });
     const revoke = await vi.waitFor(() => http.expectOne('/api/automatizacion/android/' + state.deviceId));
     expect(revoke.request.method).toBe('DELETE'); revoke.flush({ success: true }); await assertion;
+  });
+  it('restablece una conexión pausada con compras pendientes sin cambiar reglas ni identificadores', async () => {
+    native.read.mockResolvedValue({ ...state, queued: 1, rules: [rule], error: 'reconnect' });
+    const pending = TestBed.inject(AutomaticBankService).reconnect(true);
+    const request = await vi.waitFor(() => http.expectOne('/api/automatizacion/android'));
+    expect(request.request.body.reglas).toEqual([rule]);
+    request.flush({ success: true, data: credential }); await pending;
+    expect(native.configure).toHaveBeenCalledWith({ userId: 71, consent: true, credential });
+    expect(native.clear).not.toHaveBeenCalled();
+  });
+  it('no renueva conexiones sin consentimiento o sin asociaciones guardadas', async () => {
+    const service = TestBed.inject(AutomaticBankService);
+    await expect(service.reconnect(false)).rejects.toThrow();
+    await expect(service.reconnect(true)).rejects.toThrow();
+    http.expectNone('/api/automatizacion/android');
+  });
+  it('reintenta la cola nativa sin enviar dinero por HTTP desde el formulario', async () => {
+    native.retry = vi.fn().mockResolvedValue(undefined);
+    await TestBed.inject(AutomaticBankService).retry();
+    expect(native.retry).toHaveBeenCalledWith({ userId: 71 });
+    http.expectNone('/api/automatizacion/android');
+  });
+  it('valida las apps instaladas antes de rotar la clave del servidor', async () => {
+    native.validate.mockRejectedValue(new Error('Unavailable bank app'));
+    await expect(TestBed.inject(AutomaticBankService).configure([rule],true)).rejects.toThrow('Unavailable bank app');
+    http.expectNone('/api/automatizacion/android');
   });
 });
