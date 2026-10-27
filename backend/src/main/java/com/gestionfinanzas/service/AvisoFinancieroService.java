@@ -23,6 +23,7 @@ public class AvisoFinancieroService {
     private final CuentaRepository cuentas;
     private final TransaccionRepository movimientos;
     private final TransaccionService transacciones;
+    private final CategoriaCompraAutomaticaService categoriasAutomaticas;
     private final ObjectMapper mapper;
     private final Validator validator;
     private final jakarta.persistence.EntityManager entityManager;
@@ -59,7 +60,15 @@ public class AvisoFinancieroService {
     }
     @Transactional
     public Vista recibir(Long uid,Nuevo body) {
+        return recibir(uid,body,false);
+    }
+    @Transactional
+    public Vista recibirCompraAutomatica(Long uid,Nuevo body) {
+        return recibir(uid,body,true);
+    }
+    private Vista recibir(Long uid,Nuevo body,boolean categorizar) {
         var usuario=propietario(uid);seguro(body.resumen(),body.datos());
+        // Hash the original event, then freeze its category only once below, after the replay check.
         String identidad=hash(body.identificador()),contenido=hash(json(List.of(body.resumen(),body.clase(),body.moneda(),body.datos()==null?"":body.datos(),body.claveRegistro()==null?"":body.claveRegistro())));
         var existente=avisos.findByUsuarioIdAndOrigenAndIdentificadorHash(uid,body.origen().name(),identidad);
         if(existente.isPresent()){
@@ -67,10 +76,18 @@ public class AvisoFinancieroService {
             return vista(existente.get());
         }
         if(body.datos()!=null)contexto(uid,body.datos(),body.moneda());
+        var datos=body.datos();
+        if(categorizar && Set.of(Origen.NOTIFICACION,Origen.SMS).contains(body.origen()) && body.clase()==Clase.COMPRA
+                && datos!=null && datos.tipo()==TipoTransaccion.GASTO && datos.categoriaId()==null) {
+            Long categoria=categoriasAutomaticas.asignar(usuario,datos.descripcion());
+            datos=new TransaccionRequest(datos.cuentaId(),datos.cuentaDestinoId(),categoria,datos.tipo(),datos.monto(),
+                datos.tasaCambio(),datos.fecha(),datos.descripcion(),datos.notas(),datos.frecuenciaRecurrencia(),
+                datos.siguienteFechaRecurrencia(),datos.msi(),datos.listaId(),datos.etiquetas(),datos.modoEdicionRecurrencia(),datos.fechaFinRecurrencia());
+        }
         var aviso=AvisoFinanciero.builder().id(UUID.randomUUID().toString()).usuario(usuario).origen(body.origen().name())
             .identificadorHash(identidad).recepcionHash(contenido).claveRegistro(body.claveRegistro()==null?UUID.randomUUID():body.claveRegistro())
             .resumen(body.resumen().strip()).clase(body.clase().name()).estado("PENDIENTE").moneda(body.moneda())
-            .datos(body.datos()==null?null:json(body.datos())).creadoEn(Instant.now()).build();
+            .datos(datos==null?null:json(datos)).creadoEn(Instant.now()).build();
         return vista(avisos.saveAndFlush(aviso));
     }
     private AvisoFinanciero bloquear(Long uid,String id) {

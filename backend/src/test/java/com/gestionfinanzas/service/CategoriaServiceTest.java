@@ -28,6 +28,19 @@ class CategoriaServiceTest {
     private final CategoriaService service = new CategoriaService(
             categoriaRepository, usuarioRepository, transaccionRepository, presupuestoRepository
     );
+    @Test
+    void noDuplicaCategoriaCreadaPorUnAvisoMientrasLaCreacionManualEspera() {
+        var usuario=Usuario.builder().id(7L).build();
+        var reciboTermino=new java.util.concurrent.atomic.AtomicBoolean();
+        when(usuarioRepository.findById(7L)).thenReturn(Optional.of(usuario));
+        when(usuarioRepository.findByIdForUpdate(7L)).thenAnswer(call->{reciboTermino.set(true);return Optional.of(usuario);});
+        when(categoriaRepository.existsByUsuarioIdAndTipoAndNombreIgnoreCase(7L,TipoTransaccion.GASTO,"Otros gastos"))
+            .thenAnswer(call->reciboTermino.get());
+        when(categoriaRepository.save(any(Categoria.class))).thenAnswer(call->{Categoria c=call.getArgument(0);c.setId(4L);return c;});
+        assertThrows(IllegalArgumentException.class,()->service.crearCategoria(7L,
+            new CategoriaRequest("Otros gastos",TipoTransaccion.GASTO,"receipt","#64748b")));
+        org.mockito.Mockito.verify(categoriaRepository,org.mockito.Mockito.never()).save(any());
+    }
 
     @Test
     void rechazaNombresMayoresA20AlCrear() {

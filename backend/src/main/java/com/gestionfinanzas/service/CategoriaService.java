@@ -45,11 +45,12 @@ public class CategoriaService {
         validarTipoEditable(request.tipo());
         String nombre = request.nombre().trim();
         validarLongitudNombre(nombre);
+        // Share the bank-receipt lock before checking whether its category already exists.
+        Usuario usuario = usuarioRepository.findByIdForUpdate(usuarioId)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
         if (categoriaRepository.existsByUsuarioIdAndTipoAndNombreIgnoreCase(usuarioId, request.tipo(), nombre)) {
             throw new IllegalArgumentException("Ya existe una categoría con ese nombre y tipo");
         }
-        Usuario usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
         Categoria categoria = Categoria.builder()
                 .usuario(usuario)
                 .nombre(nombre)

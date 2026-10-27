@@ -129,7 +129,7 @@ public class AutomatizacionAndroidService {
         var datos=new TransaccionRequest(regla.cuentaId(),null,tipo==TipoTransaccion.GASTO?regla.categoriaId():null,
             tipo,evento.monto(),null,evento.fecha(),evento.descripcion(),null,null,null,null,regla.listaId(),List.of());
         Origen origen="SEARS".equals(regla.proveedor())?Origen.SMS:Origen.NOTIFICACION;
-        var recibido=avisos.recibir(usuario.getId(),new Nuevo(origen,"android-auto:"+regla.cuentaId()+":"+evento.eventoId(),
+        var recibido=avisos.recibirCompraAutomatica(usuario.getId(),new Nuevo(origen,"android-auto:"+regla.cuentaId()+":"+evento.eventoId(),
             evento.descripcion(),evento.clase(),evento.moneda(),datos,null));
         // No interpretar coincidencia como prueba de duplicación ni registrar dos veces a ciegas.
         if(!"PENDIENTE".equals(recibido.estado())||!recibido.coincidencias().isEmpty())return recibido;
