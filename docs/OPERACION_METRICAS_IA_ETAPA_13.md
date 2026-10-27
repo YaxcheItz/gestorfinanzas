@@ -50,6 +50,14 @@ El resumidor no sanea el archivo original. Mantener la exportación privada; com
 
 Se mantiene Kaptal Android0.1.14/código15: este cambio de backend/herramientas no necesita otro APK. TalkBack permanece omitido; Gmail deshabilitado. El piloto de compras real y el resto de Etapa 13 siguen abiertos.
 
+### Entrega comprobada
+
+Fuente `d3408b6b4a4338931434134490f86e704cf8aaff`, #142 integrado a develop `52907b14ac69b8c773f0fe0478cdcf419c3881bf`. CI422/40444247094 y CI423/40444293930 SUCCESS. Promoción #143 después de CI424/40445071545 y CI425/40445094529 SUCCESS; main `0ab5674624f6d5acabe61b0b3e615b019a5e9276`, CI426/40445895585 posterior SUCCESS. Todos los checks del commit y Vercel se comprobaron antes de cada integración.
+
+Render7349787963 y Vercel Production7349804463 SUCCESS para ese main. A las2026-10-27T03:50:19Z pasaron health directo/proxy HTTPS, configuración Google y coincidencia de los60archivos JS/CSS y manifiesto de la entrega0.1.14. A las03:50:25Z se comprobaron V11–V14 en transacción de solo lectura, sin nueva migración. Respaldo previo DPAPI actualizado y verificado, sin restauración. Detalles privados en `.local/metricas-ia-production-result.json`, `.local/metricas-ia-production-schema.json` y `.local/metricas-ia-integration.json`.
+
+Esto acredita publicación y disponibilidad; no acredita una generación real ya observada. La primera métrica productiva se revisará durante uso habitual, sin llamadas de pago para probar. No hay instalación ni comprobación física nueva por esta parte.
+
 ## Referencias de implementación
 
 Se reutiliza el [logging parametrizado de SLF4J](https://www.slf4j.org/manual.html) existente. Para duración se toma la diferencia entre lecturas de [System.nanoTime de Java 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/System.html#nanoTime()), sin usar la hora del calendario como cronómetro.
