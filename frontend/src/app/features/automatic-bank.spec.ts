@@ -91,4 +91,24 @@ describe('Configuración bancaria guardada', () => {
     expect(c.state()?.active).toBe(true);
     expect(automatic.configure).not.toHaveBeenCalled();
   });
+  it('permite Santander y BBVA de débito sin ofrecer cuentas incompatibles', () => {
+    const debit={moneda:'MXN',tipo:'DEBITO'} as any;
+    expect(c.canUseAccount(c.profiles[0],debit)).toBe(true);
+    expect(c.canUseAccount(c.profiles.find(p=>p.provider==='BBVA')!,debit)).toBe(true);
+    expect(c.canUseAccount(c.profiles.find(p=>p.provider==='SEARS')!,debit)).toBe(false);
+    expect(c.canUseAccount(c.profiles[0],{...debit,moneda:'USD'})).toBe(false);
+  });
+  it('no bloquea Santander si Android no puede listar la app de mensajes', async () => {
+    c.bank.apps=vi.fn().mockRejectedValue(new Error('Unavailable'));
+    await load();
+    expect(c.loaded()).toBe(true);expect(c.smsApps()).toEqual([]);
+    expect(c.profiles[0].account).toBe(11);
+  });
+  it('actualiza la bandeja solo cuando cambia el resultado de los envíos', async () => {
+    const changed=vi.fn();c.changed.subscribe(changed);
+    automatic.read.mockResolvedValue({active:true,registered:0,review:0,queued:1});
+    await c.refreshSummary();await c.refreshSummary();expect(changed).not.toHaveBeenCalled();
+    automatic.read.mockResolvedValue({active:true,registered:1,review:0,queued:0});
+    await c.refreshSummary();await c.refreshSummary();expect(changed).toHaveBeenCalledTimes(1);
+  });
 });

@@ -57,6 +57,57 @@ final class AutomaticBankStore {
         return user > 0 && state.optLong("userId") == user && state.optLong("expires") > System.currentTimeMillis()
             && !state.optBoolean("paused",false);
     }
+    static boolean sameRules(JSONArray before,JSONArray after) throws Exception {
+        if(before==null||after==null||before.length()!=after.length())return false;
+        String[] fields={"id","proveedor","paquete","remitente","terminacion","cuentaId","listaId","categoriaId"};
+        for(int i=0;i<before.length();i++) {
+            var original=before.getJSONObject(i);JSONObject match=null;
+            for(int j=0;j<after.length();j++)if(original.getString("id").equals(after.getJSONObject(j).optString("id")))match=after.getJSONObject(j);
+            if(match==null)return false;
+            for(String field:fields)if(!String.valueOf(original.opt(field)).equals(String.valueOf(match.opt(field))))return false;
+        }
+        return true;
+    }
+    static void checkPending(JSONObject previous,long user,JSONArray rules) throws Exception {
+        if(previous.optLong("userId")!=user||sameRules(previous.optJSONArray("rules"),rules))return;
+        var entries=previous.optJSONArray("entries");
+        if(entries!=null)for(int i=0;i<entries.length();i++)
+            if("queued".equals(entries.getJSONObject(i).optString("status")))throw new IllegalStateException("Pending movements");
+    }
+    static JSONObject replacement(JSONObject previous,long user,JSONArray rules,String key,long expires) throws Exception {
+        checkPending(previous,user,rules);
+        var state=new JSONObject().put("generation",java.util.UUID.randomUUID().toString()).put("userId",user)
+            .put("key",key).put("expires",expires).put("rules",rules).put("entries",new JSONArray());
+        if(previous.optLong("userId")==user&&previous.optJSONArray("entries")!=null) {
+            var entries=new JSONArray(previous.getJSONArray("entries").toString());
+            var summaries=summaries(previous);
+            for(int i=0;i<entries.length();i++) {
+                var entry=entries.getJSONObject(i);
+                for(int j=0;j<summaries.length();j++) {
+                    var summary=summaries.getJSONObject(j);
+                    if(entry.getString("id").equals(summary.getString("id")))
+                        entry.put("proveedor",summary.getString("proveedor")).put("cuentaId",summary.getLong("cuentaId"));
+                }
+            }
+            state.put("entries",entries);
+        }
+        return state;
+    }
+    static JSONArray summaries(JSONObject state) throws Exception {
+        var output=new JSONArray();var entries=state.optJSONArray("entries");var rules=state.optJSONArray("rules");
+        if(entries==null)return output;
+        for(int i=entries.length()-1;i>=0;i--) {
+            var entry=entries.getJSONObject(i);var payload=entry.getJSONObject("payload");JSONObject rule=null;
+            if(rules!=null)for(int j=0;j<rules.length();j++)
+                if(payload.optString("reglaId").equals(rules.getJSONObject(j).optString("id")))rule=rules.getJSONObject(j);
+            output.put(new JSONObject().put("id",entry.getString("id")).put("status",entry.optString("status"))
+                .put("proveedor",entry.optString("proveedor",rule==null?"":rule.optString("proveedor")))
+                .put("cuentaId",entry.optLong("cuentaId",rule==null?0:rule.optLong("cuentaId")))
+                .put("descripcion",payload.optString("descripcion")).put("monto",payload.opt("monto"))
+                .put("moneda",payload.optString("moneda","MXN")).put("fecha",payload.optString("fecha")));
+        }
+        return output;
+    }
     boolean accepts(long user,String pkg,String sender) throws Exception {
         var state = read(); if (!active(state,user)) return false;
         var rules = state.optJSONArray("rules"); if (rules == null) return false;
@@ -153,6 +204,7 @@ final class AutomaticBankStore {
             .put("clase","COMPRA").put("moneda","MXN").put("monto",purchase.amount())
             .put("fecha",purchase.date().toString()).put("descripcion",purchase.merchant());
         entries.put(new JSONObject().put("id",identity).put("notificationKey",notificationKey)
+            .put("proveedor",selected.optString("proveedor")).put("cuentaId",selected.optLong("cuentaId"))
             .put("active",true).put("status","queued").put("payload",payload));
         state.put("entries",entries); write(state); return true;
     }
