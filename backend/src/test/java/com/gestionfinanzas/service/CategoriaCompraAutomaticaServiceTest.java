@@ -30,7 +30,16 @@ class CategoriaCompraAutomaticaServiceTest {
     @ParameterizedTest @CsvSource({
         "RESTAURANTE QA,Comida", "TAQUERÍA QA,Comida", "CAFÉ QA,Comida",
         "DLO UBER EATS,Comida", "UBER,Transporte", "UBER EATS FARMACIA,Otros gastos",
-        "PAYPAL UBER EATS,Otros gastos", "UBEREATS QA,Otros gastos",
+        "PAYPAL UBER EATS,Otros gastos", "UBEREATS QA,Comida",
+        "RAPPI,Comida", "Rappi*COMERCIO QA,Comida", "RAPPI TURBO,Comida",
+        "DIDI FOOD,Comida", "DIDIFOOD QA,Comida", "DiDi*Food,Comida",
+        "UBER*EATS,Comida", "DIDI,Transporte", "DIDI TRIP,Transporte", "UBER TRIP,Transporte",
+        "PEDIDOSYA,Comida", "PEDIDOS YA,Comida", "JUST EAT,Comida", "JUSTEAT,Comida",
+        "DOORDASH,Comida", "DOOR DASH,Comida",
+        "RAPPICARD,Otros gastos", "RAPPI CARD,Otros gastos", "RAPPIPAY,Otros gastos", "RAPPI PAY,Otros gastos",
+        "RAPPI FARMACIA,Otros gastos", "RAPPI DIDI,Otros gastos", "DIDI FOOD FARMACIA,Otros gastos",
+        "PAYPAL RAPPI,Otros gastos", "MERCADO PAGO DIDIFOOD,Otros gastos",
+        "RAPPID QA,Otros gastos", "UBEREATSTORE QA,Otros gastos", "DIDIFOODLAND QA,Otros gastos",
         "SUPERMERCADO QA,Supermercado", "TAXI QA,Transporte", "FARMACIA QA,Salud",
         "ELECTRICIDAD QA,Hogar", "CINE QA,Ocio", "COMERCIO QA,Otros gastos",
         "RESTAURANTE FARMACIA QA,Otros gastos", "PANCAFETERA QA,Otros gastos",
@@ -40,6 +49,17 @@ class CategoriaCompraAutomaticaServiceTest {
         var c=catalog.stream().filter(v->v.getId().equals(id)).findFirst().orElseThrow();
         assertEquals(expected,c.getNombre());assertSame(user,c.getUsuario());
         assertEquals(TipoTransaccion.GASTO,c.getTipo());assertTrue(c.isActivo());
+    }
+    @Test void reusesPersonalFoodEquivalentAndRespectsArchiveOrAmbiguity() {
+        var personal=add(user,"Alimentación",TipoTransaccion.GASTO,true);
+        assertEquals(personal.getId(),service.asignar(user,"RAPPI QA"));
+        add(user,"Comida",TipoTransaccion.GASTO,true);
+        Long ambiguous=service.asignar(user,"DIDI FOOD QA");
+        assertEquals("Otros gastos",catalog.stream().filter(c->c.getId().equals(ambiguous)).findFirst().orElseThrow().getNombre());
+        catalog.clear();personal=add(user,"Alimentación",TipoTransaccion.GASTO,false);
+        Long archived=service.asignar(user,"UBEREATS QA");
+        assertEquals("Otros gastos",catalog.stream().filter(c->c.getId().equals(archived)).findFirst().orElseThrow().getNombre());
+        assertFalse(personal.isActivo());
     }
     @Test void reusesExistingGroceryNameAndNeverCreatesDuplicate() {
         var c=add(user,"Alimentos y Supermercado",TipoTransaccion.GASTO,true);
