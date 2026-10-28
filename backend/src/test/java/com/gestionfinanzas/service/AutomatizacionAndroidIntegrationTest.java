@@ -28,6 +28,9 @@ class AutomatizacionAndroidIntegrationTest {
         assertEquals("REGISTRADO",first.estado());
         assertEquals(first.transaccionId(),service.recibir(enabled.clave(),ingreso).transaccionId());
         assertEquals(new BigDecimal("1250.00"),saldo());
+        cuenta.setMoneda("USD");cuentas.saveAndFlush(cuenta);
+        var foreign=new Evento(reglaId,"f".repeat(64),Clase.INGRESO,"USD",new BigDecimal("25.00"),CalendarioFinanciero.hoy(),"Ingreso Revolut");
+        assertThrows(IllegalArgumentException.class,()->service.recibir(enabled.clave(),foreign));
     }
     @Test void consentimientoIngresoNoSeExtiendeAOtrosBancosOMonedas() {
         var rule=new Regla(reglaId,"SANTANDER","mx.bancosantander.supermovil",null,null,cuenta.getId(),lista,null,true);

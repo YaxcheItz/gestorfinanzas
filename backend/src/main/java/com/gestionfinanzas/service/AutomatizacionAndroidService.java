@@ -130,6 +130,9 @@ public class AutomatizacionAndroidService {
         if(evento.fecha().isAfter(hoy)||evento.fecha().isBefore(hoy.minusDays(31)))throw new IllegalArgumentException("La fecha necesita revisión.");
         var cuenta=cuentas.findByIdAndUsuarioId(regla.cuentaId(),usuario.getId()).orElseThrow(()->new IllegalArgumentException("Cuenta no disponible."));
         if(!cuenta.isActivo()||!cuenta.getMoneda().equals(evento.moneda()))throw new IllegalArgumentException("La cuenta o moneda cambió. Revisa el aviso.");
+        if("REVOLUT".equals(regla.proveedor())&&evento.clase()==Clase.INGRESO
+            &&(!"MXN".equals(evento.moneda())||cuenta.getTipo()!=com.gestionfinanzas.model.enums.TipoCuenta.DEBITO))
+            throw new IllegalArgumentException("El consentimiento de ingresos Revolut solo cubre débito MXN.");
         TipoTransaccion tipo=evento.clase()==Clase.COMPRA?TipoTransaccion.GASTO:TipoTransaccion.INGRESO;
         var datos=new TransaccionRequest(regla.cuentaId(),null,tipo==TipoTransaccion.GASTO?regla.categoriaId():null,
             tipo,evento.monto(),null,evento.fecha(),evento.descripcion(),null,null,null,null,regla.listaId(),List.of());
