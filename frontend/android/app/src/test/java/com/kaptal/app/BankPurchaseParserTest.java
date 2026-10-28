@@ -6,6 +6,13 @@ import java.time.LocalDate;
 import static org.junit.Assert.*;
 
 public class BankPurchaseParserTest {
+    @Test public void normalizesAmexTitleBeforeRejectingCodesAndNonPurchases() {
+        String body="Gastaste $25.10 Gastos de hoy: $80.20";
+        for(String title:new String[]{"OTP\n123456","Compra no\nautorizada","Compra no\u00a0reconocida"})
+            assertNull(BankPurchaseParser.parseNotification("AMEX",BankPurchaseParser.PACKAGES.get("AMEX"),null,"qa",title,body,date));
+        var purchase=BankPurchaseParser.parseNotification("AMEX",BankPurchaseParser.PACKAGES.get("AMEX"),null,"qa","COMERCIO\nQA",body,date);
+        assertNotNull(purchase);assertEquals("COMERCIO QA",purchase.merchant());
+    }
     @Test public void recognizesRevolutIncomeWithoutForwardingSender() {
         String body="PERSONA QA te en- vió un pago. Presiona aquí para obtener más información";
         var result=BankPurchaseParser.parseRevolutIncome(BankPurchaseParser.PACKAGES.get("REVOLUT"),"qa","Recibiste $250",body,date);
