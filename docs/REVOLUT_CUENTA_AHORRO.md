@@ -17,3 +17,8 @@ La APK0.1.17/código18 incluye el selector corregido. La firma y los datos se co
 - Sin migración de esquema, importación de ejemplos, recuperación de avisos descartados, compras de prueba ni QA financiera productiva. La primera recepción real de los formatos nuevos y categoría sigue pendiente del uso habitual. No hay llamadas de IA para estas comprobaciones.
 
 Siguiente: continuar los pendientes operativos de Etapa13; diseño completo al final con el propietario por secciones, incluidas etiquetas. Mantener Gmail deshabilitado, Desktop intacto y TalkBack omitido.
+
+
+## Entrega y configuración completadas
+
+#158/#159 integradas, main `ddedff20ec3e9d4f36b54181abb3bce9eeda06a2` publicado con checks/deploys/API/Google/66estáticos correctos. APK0.1.17/código18 instalada; Revolut ahorro original con ingresos consentidos y Amex única sin filtro de tarjeta guardadas y recargadas. Referencia cifrada/consulta de solo lectura confirmaron cuenta/historial y demás asociaciones conservados. Configuración no equivale a recepción bancaria real: esta sigue pendiente del uso habitual. Evidencia exacta en `.local/revolut-ahorro-delivery.json`.
