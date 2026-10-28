@@ -33,3 +33,7 @@ Las recepciones nuevas pasan por cola cifrada, capacidad por dispositivo, compro
 - Interfaz: cinco E2E locales sobre build productivo, temas claro/oscuro, 320 px, horizontal, letra 200% y ocultación de montos. Fixtures sin escrituras financieras reales.
 
 El registro productivo de estos formatos y la primera categoría real siguen pendientes de avisos habituales futuros. No se han hecho compras, QA productiva, recuperaciones de descartados ni importaciones retroactivas. Los ejemplos pegados en el chat no registran movimientos. CI, integración, despliegue e instalación se detallan en estado/plan y `.local/CONTINUAR_AVISOS_AMEX_REVOLUT.md`.
+
+## Revisión final del título e instalación diferida
+
+El título Amex se normaliza antes de comprobar rechazo, códigos sensibles y comercio, incluyendo saltos de línea y espacios Unicode. La regresión se reprodujo antes de corregirla;25unitarias Android, lint y release correctos. APK final0.1.16/código17: SHA256 `18702AB6D3323C3D15AE6FF465F42B9BD0BCC55F78E11BFD76E771A548DF375C`. Teléfono desconectado por el propietario y ADB vacío: instalación/prueba física final pendientes. La evidencia física Store/Worker anterior sigue separada del build final. CI/integración/producción se registran en estado y continuación privada.

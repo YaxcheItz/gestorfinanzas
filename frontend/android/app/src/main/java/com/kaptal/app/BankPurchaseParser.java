@@ -52,11 +52,12 @@ final class BankPurchaseParser {
             String title,String body,LocalDate date) {
         if("AMEX".equals(provider)&&PACKAGES.get("AMEX").equals(pkg)&&title!=null&&body!=null
             &&title.length()<=120&&body.length()<=1000&&key!=null&&!key.isBlank()&&date!=null) {
-            if(isNonExpenseNotification(title,body)||NON_PURCHASE_TITLE.matcher(title).find())return null;
+            String heading=title.trim().replaceAll("[\\s\\p{Z}]+"," ");
+            if(isNonExpenseNotification(heading,body)||NON_PURCHASE_TITLE.matcher(heading).find())return null;
             var summary=AMEX_SUMMARY.matcher(body.trim().replaceAll("[\\s\\p{Z}]+"," "));
             // A configured card restriction cannot be verified from this cardless format.
             if(summary.matches()&&(suffix==null||suffix.isEmpty()))return purchase(
-                new BigDecimal(summary.group(1).replace(",","")+"."+summary.group(2)),date,title.trim(),provider+"|"+key);
+                new BigDecimal(summary.group(1).replace(",","")+"."+summary.group(2)),date,heading,provider+"|"+key);
         }
         if("SANTANDER".equals(provider)&&isNonExpenseNotification(title,body))return null;
         if("SANTANDER".equals(provider)&&title!=null&&NON_PURCHASE_TITLE.matcher(title.replaceAll("[\\s\\p{Z}]+"," ")).find())return null;
