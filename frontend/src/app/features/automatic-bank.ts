@@ -90,8 +90,9 @@ export class AutomaticBankComponent {
       rate_limit:'El servidor pidió esperar. Se reintentará automáticamente.'} as Record<string,string>)[s.reason || s.error] ?? '';
   }
   canUseAccount(profile: {provider:string;type:string}, account: Cuenta): boolean {
-    return account.moneda==='MXN' && (['SANTANDER','BBVA'].includes(profile.provider)
-      ? ['CREDITO','DEBITO'].includes(account.tipo) : account.tipo===profile.type);
+    const types=profile.provider==='REVOLUT' ? ['DEBITO','AHORRO']
+      : ['SANTANDER','BBVA'].includes(profile.provider) ? ['CREDITO','DEBITO'] : [profile.type];
+    return account.moneda==='MXN' && types.includes(account.tipo);
   }
   async recover(): Promise<void> {
     if (this.busy() || !this.reconnectConsent) return;

@@ -7,6 +7,7 @@ import com.gestionfinanzas.dto.request.AutomatizacionAndroidRequest.*;
 import com.gestionfinanzas.dto.request.TransaccionRequest;
 import com.gestionfinanzas.model.entity.*;
 import com.gestionfinanzas.model.enums.TipoTransaccion;
+import com.gestionfinanzas.model.enums.TipoCuenta;
 import com.gestionfinanzas.repository.*;
 import com.gestionfinanzas.security.LimiteAbuso;
 import jakarta.persistence.EntityManager;
@@ -34,6 +35,10 @@ public class AutomatizacionAndroidService {
         "SANTANDER","mx.bancosantander.supermovil", "REVOLUT","com.revolut.revolut",
         "AMEX","com.americanexpress.android.acctsvcs.mx", "BBVA","com.bancomer.mbanking");
     private static final Set<String> MENSAJES=Set.of("com.samsung.android.messaging","com.google.android.apps.messaging","com.android.mms");
+    private static boolean cuentaIngresoRevolutMxn(Cuenta cuenta) {
+        return "MXN".equals(cuenta.getMoneda())
+            && (cuenta.getTipo()==TipoCuenta.DEBITO||cuenta.getTipo()==TipoCuenta.AHORRO);
+    }
     public record Credencial(String id,String clave,Instant vence,List<Regla> reglas) {}
     public record Estado(boolean activa,Instant vence,List<Regla> reglas) {}
 
@@ -73,9 +78,8 @@ public class AutomatizacionAndroidService {
             if(!rutas.add(ruta))throw new IllegalArgumentException("Dos reglas corresponden al mismo origen y tarjeta.");
             var cuenta=cuentas.findByIdAndUsuarioId(regla.cuentaId(),uid).orElseThrow(()->new IllegalArgumentException("Cuenta no disponible."));
             if(!cuenta.isActivo())throw new IllegalArgumentException("La cuenta está desactivada.");
-            if(regla.ingresosMxn()&&(!"REVOLUT".equals(regla.proveedor())||!"MXN".equals(cuenta.getMoneda())
-                ||cuenta.getTipo()!=com.gestionfinanzas.model.enums.TipoCuenta.DEBITO))
-                throw new IllegalArgumentException("Los ingresos automáticos requieren una cuenta Revolut de débito en MXN.");
+            if(regla.ingresosMxn()&&(!"REVOLUT".equals(regla.proveedor())||!cuentaIngresoRevolutMxn(cuenta)))
+                throw new IllegalArgumentException("Los ingresos automáticos requieren una cuenta Revolut de débito o ahorro en MXN.");
             transacciones.validarListaCaptura(uid,regla.listaId());
             if(regla.categoriaId()!=null) {
                 var categoria=categorias.findAccessibleById(regla.categoriaId(),uid).orElseThrow(()->new IllegalArgumentException("Categoría no disponible."));
@@ -130,9 +134,8 @@ public class AutomatizacionAndroidService {
         if(evento.fecha().isAfter(hoy)||evento.fecha().isBefore(hoy.minusDays(31)))throw new IllegalArgumentException("La fecha necesita revisión.");
         var cuenta=cuentas.findByIdAndUsuarioId(regla.cuentaId(),usuario.getId()).orElseThrow(()->new IllegalArgumentException("Cuenta no disponible."));
         if(!cuenta.isActivo()||!cuenta.getMoneda().equals(evento.moneda()))throw new IllegalArgumentException("La cuenta o moneda cambió. Revisa el aviso.");
-        if("REVOLUT".equals(regla.proveedor())&&evento.clase()==Clase.INGRESO
-            &&(!"MXN".equals(evento.moneda())||cuenta.getTipo()!=com.gestionfinanzas.model.enums.TipoCuenta.DEBITO))
-            throw new IllegalArgumentException("El consentimiento de ingresos Revolut solo cubre débito MXN.");
+        if("REVOLUT".equals(regla.proveedor())&&evento.clase()==Clase.INGRESO&&!cuentaIngresoRevolutMxn(cuenta))
+            throw new IllegalArgumentException("El consentimiento de ingresos Revolut solo cubre débito o ahorro MXN.");
         TipoTransaccion tipo=evento.clase()==Clase.COMPRA?TipoTransaccion.GASTO:TipoTransaccion.INGRESO;
         var datos=new TransaccionRequest(regla.cuentaId(),null,tipo==TipoTransaccion.GASTO?regla.categoriaId():null,
             tipo,evento.monto(),null,evento.fecha(),evento.descripcion(),null,null,null,null,regla.listaId(),List.of());

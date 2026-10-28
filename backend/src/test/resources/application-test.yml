@@ -24,5 +24,12 @@ jwt:
   expiration-ms: 86400000
 
 app:
+  ai:
+    # A developer's inherited provider keys must never enable external AI in Spring tests.
+    free-tier-providers: ""
+    gemini:
+      api-key: ""
+    groq:
+      api-key: ""
   cors:
     allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:${CORS_ORIGINS:http://localhost:4200,http://localhost:4300,http://127.0.0.1:4200,http://127.0.0.1:4300,http://localhost:14200,http://127.0.0.1:14200}}

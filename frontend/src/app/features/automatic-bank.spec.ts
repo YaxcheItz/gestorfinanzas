@@ -10,6 +10,20 @@ import { FinanzasService } from '../core/services/finanzas.service';
 import { AuthService } from '../core/services/auth.service';
 
 describe('Configuración bancaria guardada', () => {
+  it('admite ahorro MXN de Revolut sin ampliar tipos de otros bancos ni cambiar la cuenta', () => {
+    const revolut=c.profiles.find(p=>p.provider==='REVOLUT')!;
+    const saved={id:13,nombre:'Revolut QA',tipo:'AHORRO',moneda:'MXN'} as any;
+    expect(c.canUseAccount(revolut,saved)).toBe(true);
+    expect(c.canUseAccount(revolut,{...saved,tipo:'DEBITO'})).toBe(true);
+    for(const tipo of ['CREDITO','EFECTIVO','INVERSION']) {
+      expect(c.canUseAccount(revolut,{...saved,tipo})).toBe(false);
+    }
+    expect(c.canUseAccount(revolut,{...saved,moneda:'USD'})).toBe(false);
+    for(const profile of c.profiles.filter(p=>p.provider!=='REVOLUT')) {
+      expect(c.canUseAccount(profile,saved)).toBe(false);
+    }
+    expect(saved.tipo).toBe('AHORRO');expect(saved.id).toBe(13);
+  });
   it('conserva identidad y categoría fija al guardar una asociación existente', async () => {
     const saved={id:'qa-existing',proveedor:'REVOLUT',paquete:'com.revolut.revolut',remitente:null,
       terminacion:null,cuentaId:13,listaId:21,categoriaId:31,ingresosMxn:false};
