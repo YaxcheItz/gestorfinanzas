@@ -54,3 +54,9 @@ Sin generaciones reales para QA, benchmarks pagados, escrituras financieras prod
 ## Representación REST del nivel de razonamiento
 
 Para GenerateContent se usa `generationConfig.thinkingConfig.thinkingLevel = "MINIMAL"`, valor canónico del enum [ThinkingLevel de la API REST](https://ai.google.dev/api/generate-content#ThinkingLevel). El formato de los ejemplos de otros SDKs/Interactions no sustituye el contrato REST. JSON comprobado con HTTP simulado; veinte casos focales Gemini/metadatos correctos, sin generación real de QA.
+
+## Publicación conjunta verificada
+
+#155 integrada a main `5bc2ae6e2a8fbeb04e174740ad9639a73593619b` tras quince checks correctos. CI464/Android99 posteriores y Render7387852850/VercelProduction7387867984 SUCCESS. Verificación pública 2026-10-28T14:24:17.198Z:66estáticos, API directa/proxy y Google correctos; V11–V14 de solo lectura, sin migraciones nuevas. APK0.1.16final preparada, no instalada porque el teléfono está desconectado. Evidencia física anterior y observación real pendiente se mantienen separadas. Cierre de documentación/aislamiento en `.local/ampliacion-cierre.json`.
+
+El aislamiento final está documentado en `AISLAMIENTO_IA_EN_PRUEBAS.md`: la primera suite bancaria de la sesión heredó una clave Gemini y registró tres generaciones; no se verificó su coste. Las pruebas posteriores de estas partes utilizaron claves retiradas/HTTP simulado. El perfiltest ahora bloquea proveedores y credenciales heredadas, con595casos locales correctos (ocho PostgreSQL reservados para CI). No afirmar cero llamadas externas para toda la sesión.

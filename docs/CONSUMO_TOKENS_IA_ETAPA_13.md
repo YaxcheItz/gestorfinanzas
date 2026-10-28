@@ -40,3 +40,9 @@ Generaciones, intentos y respuestas con tokens son magnitudes distintas. Un fall
 -Sin nuevas llamadas de IA para QA ni escrituras financieras productivas. No requiere otra APK. El teléfono permanece desconectado y la instalación0.1.16final sigue pendiente.
 
 CI exacto, integración y producción se registran en estado/plan y `.local/ia-tokens-delivery.json`. Pendientes: observación de metadatos durante uso habitual, cuotas efectivas por cuenta, duración de audio que el proveedor realmente reporte, p95 representativo y operación/recuperación restante. No cambiar planes Free ni habilitar fallback de pago para obtener esas comprobaciones.
+
+## Publicación conjunta verificada
+
+#155 integrada a main `5bc2ae6e2a8fbeb04e174740ad9639a73593619b` tras quince checks correctos. CI464/Android99 posteriores y Render7387852850/VercelProduction7387867984 SUCCESS. Verificación pública 2026-10-28T14:24:17.198Z:66estáticos, API directa/proxy y Google correctos; V11–V14 de solo lectura, sin migraciones nuevas. APK0.1.16final preparada, no instalada porque el teléfono está desconectado. Evidencia física anterior y observación real pendiente se mantienen separadas. Cierre de documentación/aislamiento en `.local/ampliacion-cierre.json`.
+
+El aislamiento final está documentado en `AISLAMIENTO_IA_EN_PRUEBAS.md`: la primera suite bancaria de la sesión heredó una clave Gemini y registró tres generaciones; no se verificó su coste. Las pruebas posteriores de estas partes utilizaron claves retiradas/HTTP simulado. El perfiltest ahora bloquea proveedores y credenciales heredadas, con595casos locales correctos (ocho PostgreSQL reservados para CI). No afirmar cero llamadas externas para toda la sesión.
