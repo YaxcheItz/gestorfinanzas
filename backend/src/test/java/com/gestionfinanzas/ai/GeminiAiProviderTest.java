@@ -23,7 +23,7 @@ class GeminiAiProviderTest {
     @Test void stableFlashLiteUsesMinimalThinkingWithoutPaidTools() {
         var builder=RestClient.builder();var server=MockRestServiceServer.bindTo(builder).build();
         server.expect(requestTo(BASE_URL+"/models/gemini-3.5-flash-lite:generateContent"))
-            .andExpect(jsonPath("$.generationConfig.thinkingConfig.thinkingLevel").value("minimal"))
+            .andExpect(jsonPath("$.generationConfig.thinkingConfig.thinkingLevel").value("MINIMAL"))
             .andExpect(jsonPath("$.tools").doesNotExist())
             .andRespond(withSuccess("{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"synthetic\"}]}}]}",MediaType.APPLICATION_JSON));
         var policy=org.mockito.Mockito.mock(AiUsagePolicy.class);

@@ -73,7 +73,7 @@ public class GeminiAiProvider implements AiProvider {
         if (model.startsWith("gemini-2.5")) {
             generationConfig.put("thinkingConfig", Map.of("thinkingBudget", 0));
         } else if(model.equals("gemini-3.5-flash-lite")) {
-            generationConfig.put("thinkingConfig",Map.of("thinkingLevel","minimal"));
+            generationConfig.put("thinkingConfig",Map.of("thinkingLevel","MINIMAL"));
         }
 
         JsonNode response;
