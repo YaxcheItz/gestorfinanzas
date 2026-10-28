@@ -49,3 +49,8 @@ La publicación y las pruebas aisladas están comprobadas; todavía no se afirma
 ## Formatos adicionales y actividad de reparto
 
 La entrega descrita en `docs/AVISOS_AMEX_REVOLUT.md` distingue Uber Eats (Comida) de Uber (Transporte), conservando el fallback ambiguo y las decisiones manuales. Los ingresos Revolut consentidos quedan fuera de la clasificación de gastos. El soporte del formato nativo requiere APK0.1.16; la entrega base del clasificador sigue siendo backend. No modifica categorías históricas.
+
+
+## Reparto de comida frente a viajes
+
+Se amplía el catálogo de comercio para Rappi, Uber Eats/UberEats, DiDi Food/DiDiFood, PedidosYa, Just Eat y DoorDash como Comida, reutilizando Alimentación como equivalente. Uber/DiDi sin el nombre de comida siguen en Transporte. Se preservan intermediarios/ambiguos/fijas/archivadas/manuales/reintentos e historial. Ver `REPARTO_COMIDA_TRANSPORTE.md` y `.local/reparto-categorias-delivery.json` para pruebas/publicación; no requiere otra APK ni migra historial.
