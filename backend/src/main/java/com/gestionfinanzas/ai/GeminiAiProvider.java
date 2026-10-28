@@ -97,6 +97,7 @@ public class GeminiAiProvider implements AiProvider {
             throw new AiProviderException("No fue posible conectar con Gemini. Revisa la conexión a internet.");
         }
 
+        AiTokenMetrics.gemini(response);
         JsonNode candidate = response == null ? null : response.path("candidates").path(0);
         JsonNode parts = candidate == null ? null : candidate.path("content").path("parts");
         List<String> outputParts = new ArrayList<>();

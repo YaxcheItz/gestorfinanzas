@@ -79,6 +79,7 @@ public class GroqAiProvider implements AiProvider {
                     .retrieve()
                     .body(JsonNode.class);
 
+            AiTokenMetrics.groq(response);
             String text = response == null ? "" : response.path("choices").path(0)
                     .path("message").path("content").asText("").trim();
             if (text.isBlank()) {
