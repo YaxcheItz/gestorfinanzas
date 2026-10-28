@@ -27,3 +27,8 @@ No hay QA financiera productiva, llamadas reales de IA, recuperación de descart
 ## Referencias de las plataformas
 
 Nombres/servicios contrastados con sus páginas oficiales: [Rappi México](https://www.rappi.com.mx/), [DiDi Food](https://www.didi-food.com/), [Uber Eats México](https://www.ubereats.com/mx), [PedidosYa](https://www.pedidosya.com/), [Just Eat](https://www.just-eat.es/) y [DoorDash](https://www.doordash.com/). Son referencias del catálogo, no pruebas de una compra ni de una recepción bancaria productiva.
+
+
+## Publicación completada
+
+#161/#162 integradas; main `368c00c8a2a3b36b18f01389020beeb9e9019ad9` publicado con despliegues/API/Google/66estáticos correctos. Sin migración ni otra APK. CI exacta y cierre en `.local/reparto-categorias-delivery.json`. Resultado real corregido pendiente de una compra habitual nueva, sin modificar historia.
