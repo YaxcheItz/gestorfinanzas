@@ -17,6 +17,32 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest @ActiveProfiles("test") @Transactional
 @org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 class AutomatizacionAndroidIntegrationTest {
+    @Test void cuentaAhorroRevolutConservaIdentidadSaldoYReintentoUnico() {
+        cuenta.setTipo(TipoCuenta.AHORRO);cuentas.saveAndFlush(cuenta);
+        Long original=cuenta.getId();
+        var rule=new Regla(reglaId,"REVOLUT","com.revolut.revolut",null,null,original,lista,null,true);
+        var enabled=service.configurar(usuario.getId(),new Configuracion(dispositivo,true,List.of(rule)));
+        assertEquals(original,service.estado(usuario.getId(),dispositivo).reglas().get(0).cuentaId());
+        assertEquals(new BigDecimal("1000.00"),saldo());
+        var ingreso=new Evento(reglaId,"d".repeat(64),Clase.INGRESO,"MXN",new BigDecimal("250.00"),CalendarioFinanciero.hoy(),"Ingreso Revolut");
+        var first=service.recibir(enabled.clave(),ingreso);
+        assertEquals("REGISTRADO",first.estado());
+        assertEquals(first.transaccionId(),service.recibir(enabled.clave(),ingreso).transaccionId());
+        assertEquals("REGISTRADO",service.recibir(enabled.clave(),evento("c".repeat(64))).estado());
+        assertEquals(new BigDecimal("1225.00"),saldo());
+        assertEquals(TipoCuenta.AHORRO,cuentas.findById(original).orElseThrow().getTipo());
+    }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.EnumSource(value=TipoCuenta.class,names={"CREDITO","EFECTIVO","INVERSION"})
+    void ingresosRevolutRechazanTiposAjenosAlConfigurarYRecibir(TipoCuenta tipo) {
+        var rule=new Regla(reglaId,"REVOLUT","com.revolut.revolut",null,null,cuenta.getId(),lista,null,true);
+        var enabled=service.configurar(usuario.getId(),new Configuracion(dispositivo,true,List.of(rule)));
+        cuenta.setTipo(tipo);cuentas.saveAndFlush(cuenta);
+        assertThrows(IllegalArgumentException.class,()->service.configurar(usuario.getId(),new Configuracion(dispositivo,true,List.of(rule))));
+        var ingreso=new Evento(reglaId,"d".repeat(64),Clase.INGRESO,"MXN",new BigDecimal("250.00"),CalendarioFinanciero.hoy(),"Ingreso Revolut");
+        assertThrows(IllegalArgumentException.class,()->service.recibir(enabled.clave(),ingreso));
+        assertEquals(new BigDecimal("1000.00"),saldo());
+    }
     @Test void ingresoRevolutExigeConsentimientoYReintentaSinDuplicarSaldo() {
         var cap=conectar();
         var ingreso=new Evento(reglaId,"e".repeat(64),Clase.INGRESO,"MXN",new BigDecimal("250.00"),CalendarioFinanciero.hoy(),"Ingreso Revolut");
