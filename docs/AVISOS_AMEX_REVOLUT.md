@@ -16,7 +16,7 @@ El propietario autorizó incluir ingresos y confirmó MXN para los avisos con s�
 
 Se reconoce el título de pago recibido con importe positivo y el cuerpo completo de pago enviado de persona a persona, incluyendo la separación tipográfica de «envió». Una divisa explícita distinta, texto incompleto, cancelación o paquete ajeno no se registra. El símbolo de dólar sin divisa solo se interpreta como MXN tras ese consentimiento específico. No cambia la política de compras Revolut en otras monedas.
 
-El movimiento se envía como INGRESO con descripción fija «Ingreso Revolut», sin nombre del remitente, texto original ni categoría de gasto. El backend exige consentimiento guardado y una cuenta Revolut de débito MXN. Un ingreso sin tarjeta puede dirigirse solo a una asociación consentida inequívoca; varias asociaciones compatibles requieren revisión.
+El movimiento se envía como INGRESO con descripción fija «Ingreso Revolut», sin nombre del remitente, texto original ni categoría de gasto. El backend exige consentimiento guardado y una cuenta Revolut de débito o ahorro MXN. Un ingreso sin tarjeta puede dirigirse solo a una asociación consentida inequívoca; varias asociaciones compatibles requieren revisión.
 
 ## Configuración y conservación
 
@@ -41,3 +41,8 @@ El título Amex se normaliza antes de comprobar rechazo, códigos sensibles y co
 ## Publicación conjunta verificada
 
 #155 integrada a main `5bc2ae6e2a8fbeb04e174740ad9639a73593619b` tras quince checks correctos. CI464/Android99 posteriores y Render7387852850/VercelProduction7387867984 SUCCESS. Verificación pública 2026-10-28T14:24:17.198Z:66estáticos, API directa/proxy y Google correctos; V11–V14 de solo lectura, sin migraciones nuevas. APK0.1.16final preparada, no instalada porque el teléfono está desconectado. Evidencia física anterior y observación real pendiente se mantienen separadas. Cierre de documentación/aislamiento en `.local/ampliacion-cierre.json`.
+
+
+## Compatibilidad de ahorro y teléfono reconectado
+
+La selección Revolut admite cuentas AHORRO/DEBITO en MXN sin recrearlas. El propietario delegó usar la única asociación Amex sin filtro de terminación; no ampliar ese consentimiento a otras cuentas. Ver `docs/REVOLUT_CUENTA_AHORRO.md` y `.local/revolut-ahorro-delivery.json` para instalación0.1.17, publicación y guardado efectivos. Los apartados anteriores de teléfono desconectado son históricos.
