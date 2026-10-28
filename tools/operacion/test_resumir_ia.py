@@ -15,12 +15,39 @@ def record(ms=10, provider='openai', outcome='success'):
 
 
 class MetricsTest(unittest.TestCase):
+    def test_provider_token_counts_are_aggregated_without_inventing_a_cost(self):
+        text = ('KAPTAL_AI_USAGE provider=gemini status=reported input_tokens=10 output_tokens=3 total_tokens=17\n' * 2
+            + 'KAPTAL_AI_USAGE provider=groq status=reported input_tokens=4 output_tokens=2 total_tokens=6\n'
+            + 'KAPTAL_AI_USAGE provider=gemini status=unavailable\n')
+        report = summarize(io.StringIO(text))
+        self.assertEqual(report['reportedTokenUsage']['gemini'], {'responses': 2, 'inputTokens': 20, 'outputTokens': 6, 'totalTokens': 34})
+        self.assertEqual(report['reportedTokenUsage']['groq']['totalTokens'], 6)
+        self.assertEqual(report['unavailableTokenUsage'], {'gemini': 1})
+        self.assertEqual(report['records'], 0)
+        self.assertNotIn('cost', json.dumps(report).lower())
+
+    def test_missing_usage_is_not_counted_as_reported_zero(self):
+        report = summarize(io.StringIO('KAPTAL_AI_USAGE provider=groq status=unavailable\n'
+            + 'KAPTAL_AI_USAGE provider=groq status=reported input_tokens=0 output_tokens=0 total_tokens=0\n'))
+        self.assertEqual(report['reportedTokenUsage']['groq']['responses'], 1)
+        self.assertEqual(report['unavailableTokenUsage']['groq'], 1)
+
+    def test_bad_token_counts_and_private_suffixes_are_ignored(self):
+        text = ('KAPTAL_AI_USAGE provider=groq status=reported input_tokens=10 output_tokens=3 total_tokens=12\n'
+            + 'KAPTAL_AI_USAGE provider=groq status=reported input_tokens=1000000001 output_tokens=0 total_tokens=1000000001\n'
+            + 'KAPTAL_AI_USAGE provider=groq status=reported input_tokens=1 output_tokens=0 total_tokens=1 PRIVATE_CANARY\n'
+            + 'KAPTAL_AI_USAGE provider=PRIVATE_CANARY status=unavailable\n')
+        report = summarize(io.StringIO(text))
+        self.assertEqual(report['reportedTokenUsage'], {})
+        self.assertEqual(report['unavailableTokenUsage'], {})
+        self.assertEqual(report['ignoredLines'], 4)
+        self.assertNotIn('PRIVATE_CANARY', json.dumps(report))
     def test_outbound_attempts_budget_denials_and_generations_stay_separate(self):
         report = summarize(io.StringIO('KAPTAL_AI_REQUEST provider=groq outcome=reserved\n' * 2
             + 'KAPTAL_AI_REQUEST provider=gemini outcome=reserved\n'
             + 'KAPTAL_AI_BUDGET outcome=exhausted\n'
             + record(provider='groq', outcome='budget_denied')))
-        self.assertEqual(report['format'], 2)
+        self.assertEqual(report['format'], 3)
         self.assertEqual(report['records'], 1)
         self.assertEqual(report['outboundAttempts'], {'gemini': 1, 'groq': 2})
         self.assertEqual(report['budgetEvents'], {'exhausted': 1})
