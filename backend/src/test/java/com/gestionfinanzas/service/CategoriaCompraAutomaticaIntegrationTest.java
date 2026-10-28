@@ -47,6 +47,20 @@ class CategoriaCompraAutomaticaIntegrationTest {
         return categorias.saveAndFlush(Categoria.builder().usuario(owner).nombre(name).tipo(type).activo(active).build());
     }
     String categoryName(Long id) { assertNotNull(id);return categorias.findById(id).orElseThrow().getNombre(); }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.CsvSource({"RAPPI QA,Comida","DIDI FOOD QA,Comida","UBEREATS QA,Comida","DIDI QA,Transporte","UBER QA,Transporte"})
+    void deliveryOrRideCategoryPersistsAndRedeliveryKeepsManualCorrection(String description,String expected) {
+        String key=connect(null);var e=event("a",description,"25.00");
+        var first=service.recibir(key,e);assertEquals("REGISTRADO",first.estado());
+        assertEquals(expected,categoryName(first.datos().categoriaId()));
+        var manual=category(usuario,"Personal QA",TipoTransaccion.GASTO,true);
+        var transaction=movimientos.findById(first.transaccionId()).orElseThrow();
+        transaction.setCategoria(manual);movimientos.saveAndFlush(transaction);
+        var replay=service.recibir(key,e);
+        assertEquals(first.transaccionId(),replay.transaccionId());
+        assertEquals(manual.getId(),movimientos.findById(first.transaccionId()).orElseThrow().getCategoria().getId());
+        assertEquals(new BigDecimal("975.00"),cuentas.findById(cuenta.getId()).orElseThrow().getSaldoActual());
+    }
     @Test void restaurantCreatesFoodAndRedeliveryPreservesManualCorrection() {
         String key=connect(null);var e=event("a","RESTAURANTE QA","25.00");
         var first=service.recibir(key,e);assertEquals("REGISTRADO",first.estado());

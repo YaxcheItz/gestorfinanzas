@@ -19,7 +19,7 @@ public class CategoriaCompraAutomaticaService {
     private static final Grupo OTROS=new Grupo("Otros gastos","receipt","#64748b",
         Set.of("otros gastos","otros"),Set.of());
     private static final List<Grupo> GRUPOS=List.of(
-        new Grupo("Comida","utensils","#ef4444",Set.of("comida","restaurantes","restaurante","cafeterias"),
+        new Grupo("Comida","utensils","#ef4444",Set.of("comida","alimentacion","restaurantes","restaurante","cafeterias"),
             Set.of("restaurante","restaurantes","restaurant","taqueria","tacos","pizzeria","pizza","cafeteria","cafe","hamburguesas","sushi")),
         new Grupo("Supermercado","shopping-cart","#f97316",Set.of("supermercado","supermercados","alimentos y supermercado","despensa","abarrotes"),
             Set.of("supermercado","supermercados","abarrotes","despensa")),
@@ -39,9 +39,10 @@ public class CategoriaCompraAutomaticaService {
     private static Grupo grupo(String descripcion) {
         String texto=normalizar(descripcion);
         // An intermediary's name does not identify the underlying merchant's activity.
-        if(Set.of("mercadopago","mercado pago","paypal","payu","stripe","clip").stream().anyMatch(p->contiene(texto,p)))return OTROS;
+        if(Set.of("mercadopago","mercado pago","paypal","payu","stripe","clip","rappipay","rappi pay","rappicard","rappi card")
+            .stream().anyMatch(p->contiene(texto,p)))return OTROS;
         // Food delivery is not a ride; preserve other activity words to detect ambiguity.
-        String actividad=texto.replaceAll("\\buber eats\\b","restaurante");
+        String actividad=texto.replaceAll("\\b(?:uber\\s*eats|didi\\s*food|rappi|pedidos\\s*ya|just\\s*eat|door\\s*dash)\\b","restaurante");
         var coincidencias=GRUPOS.stream().filter(g->g.palabras().stream().anyMatch(p->contiene(actividad,p))).toList();
         return coincidencias.size()==1?coincidencias.get(0):OTROS;
     }
