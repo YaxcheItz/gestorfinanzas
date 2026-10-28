@@ -111,7 +111,9 @@ class CategoriaCompraAutomaticaIntegrationTest {
         assertEquals(count,categorias.count());
     }
     @Test void incomeIsNotAssignedAnExpenseCategory() {
-        String key=connect(null);var income=new Evento(rule,"a".repeat(64),Clase.INGRESO,"MXN",new BigDecimal("25.00"),CalendarioFinanciero.hoy(),"RESTAURANTE QA");
+        var consented=new Regla(rule,"REVOLUT","com.revolut.revolut",null,null,cuenta.getId(),lista,null,true);
+        String key=service.configurar(usuario.getId(),new Configuracion(UUID.randomUUID(),true,List.of(consented))).clave();
+        var income=new Evento(rule,"a".repeat(64),Clase.INGRESO,"MXN",new BigDecimal("25.00"),CalendarioFinanciero.hoy(),"RESTAURANTE QA");
         assertNull(service.recibir(key,income).datos().categoriaId());
         assertTrue(categorias.findByUsuarioIdAndTipo(usuario.getId(),TipoTransaccion.GASTO).isEmpty());
     }

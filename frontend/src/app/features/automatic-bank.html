@@ -1,7 +1,7 @@
 @if (automatic.available) {
   <section class="automation" aria-labelledby="automation-title">
     <div class="automation-header">
-      <div><h2 id="automation-title">Registro de compras</h2><p class="hint">Gastos reconocidos, sin confirmación manual.</p></div>
+      <div><h2 id="automation-title">Registro automático</h2><p class="hint">Compras reconocidas e ingresos Revolut autorizados, sin confirmación por movimiento.</p></div>
       <span class="scope" [class.active]="state()?.active">{{ state() ? state()!.active ? 'Registro activo' : 'Desactivado' : 'Comprobando' }}</span>
     </div>
     @if (reason()) { <p class="connection-reason" role="status">{{ reason() }}</p> }
@@ -29,7 +29,7 @@
       </div>
       @if (!s.active && s.rules?.length && bank.current().granted) {
         <div class="recovery">
-          <p>Restablece la conexión conservando las cuentas y las compras pendientes.</p>
+          <p>Restablece la conexión conservando las cuentas y los movimientos pendientes.</p>
           <label class="consent"><input type="checkbox" [(ngModel)]="reconnectConsent" /> Autorizo continuar el registro con mis asociaciones guardadas.</label>
           <button class="primary" type="button" (click)="recover()" [disabled]="busy() || !reconnectConsent">Restablecer conexión</button>
         </div>
@@ -41,7 +41,7 @@
               <div class="entry-heading"><strong>{{ bankName(entry.proveedor) }}</strong><span>{{ statusLabel(entry.status) }}</span></div>
               <p>{{ entry.descripcion | textoFinanciero }}</p>
               <p class="entry-amount">{{ entry.monto | monto:entry.moneda:'symbol':'1.2-2' }}</p>
-              <p class="hint">{{ entry.fecha }} · {{ accountName(entry.cuentaId) | textoFinanciero }}</p>
+              <p class="hint">{{ entry.clase === 'INGRESO' ? 'Ingreso' : 'Compra' }} · {{ entry.fecha }} · {{ accountName(entry.cuentaId) | textoFinanciero }}</p>
               @if (entry.status === 'review') { <a href="#account-reviews">Revisar en tu cuenta</a> }
             </article>
           } @empty {
@@ -64,7 +64,7 @@
     <details (toggle)="opened($event)">
       <summary>Administrar bancos</summary>
       <div class="setup-intro">
-        <p class="hint">Elige la cuenta de cada banco y la lista donde guardar sus compras.</p>
+        <p class="hint">Elige la cuenta de cada banco y la lista donde guardar sus movimientos.</p>
         <a routerLink="/cuentas">Crear o administrar cuentas</a>
       </div>
       <button type="button" (click)="load()" [disabled]="busy()">{{ busy() ? 'Cargando configuración…' : 'Actualizar configuración' }}</button>
@@ -87,6 +87,13 @@
                 <label>{{ profile.provider === 'SEARS' ? 'Terminaciones Sears (obligatorias)' : 'Últimos cuatro dígitos (opcionales)' }}
                   <input type="text" [attr.aria-label]="profile.provider === 'SEARS' ? 'Terminaciones Sears (obligatorias)' : 'Últimos cuatro dígitos (opcionales) · ' + profile.name" [attr.inputmode]="profile.provider === 'SEARS' ? 'text' : 'numeric'" [attr.maxlength]="profile.provider === 'SEARS' ? 58 : 4" autocomplete="off" [(ngModel)]="profile.suffix" />
                 </label>
+                @if (profile.provider === 'REVOLUT') {
+                  <label class="consent"><input type="checkbox" [(ngModel)]="revolutIncomeMxn" /> Registrar también los pagos recibidos de Revolut. Confirmo que los avisos con $ son MXN.</label>
+                  <p class="hint">Solo avisos nuevos del formato reconocido. No se guarda el nombre de quien envía el pago.</p>
+                }
+                @if (profile.provider === 'AMEX') {
+                  <p class="hint">Si el aviso no muestra tarjeta, deja la terminación vacía y asocia una sola cuenta American Express. Gastos de hoy no se suma a la compra.</p>
+                }
                 @if (profile.provider === 'SEARS') {
                   <p class="hint">Física y digital: escribe sus cuatro dígitos separados por coma. Ambas usan esta misma cuenta.</p>
                   <label>App de mensajes
@@ -101,10 +108,10 @@
             </details>
           }
           <div class="destination">
-            <label>Lista para estas compras<select [(ngModel)]="listId"><option [ngValue]="null">Elige una lista</option>
+            <label>Lista para estos movimientos<select [(ngModel)]="listId"><option [ngValue]="null">Elige una lista</option>
               @for (list of lists(); track list.id) { <option [ngValue]="list.id">{{ list.nombre }}</option> }
             </select></label>
-            <label class="consent"><input type="checkbox" [(ngModel)]="consent" /> Quiero registrar directamente las compras reconocidas en estas cuentas.</label>
+            <label class="consent"><input type="checkbox" [(ngModel)]="consent" /> Quiero registrar directamente las compras reconocidas y los ingresos que he autorizado en estas cuentas.</label>
           </div>
           <button class="primary save" type="button" (click)="connect()" [disabled]="!consent || busy() || !bank.current().granted || !!state()?.queued">{{ state()?.active ? 'Guardar asociaciones' : 'Activar registro automático' }}</button>
           @if (state()?.queued) { <p class="hint">Resuelve primero los envíos desde «Ver envíos». Puedes restablecer la conexión sin cambiar sus cuentas.</p> }

@@ -17,6 +17,32 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest @ActiveProfiles("test") @Transactional
 @org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 class AutomatizacionAndroidIntegrationTest {
+    @Test void ingresoRevolutExigeConsentimientoYReintentaSinDuplicarSaldo() {
+        var cap=conectar();
+        var ingreso=new Evento(reglaId,"e".repeat(64),Clase.INGRESO,"MXN",new BigDecimal("250.00"),CalendarioFinanciero.hoy(),"Ingreso Revolut");
+        assertThrows(IllegalArgumentException.class,()->service.recibir(cap.clave(),ingreso));
+        var rule=new Regla(reglaId,"REVOLUT","com.revolut.revolut",null,null,cuenta.getId(),lista,null,true);
+        var enabled=service.configurar(usuario.getId(),new Configuracion(dispositivo,true,List.of(rule)));
+        assertTrue(service.estado(usuario.getId(),dispositivo).reglas().get(0).ingresosMxn());
+        var first=service.recibir(enabled.clave(),ingreso);
+        assertEquals("REGISTRADO",first.estado());
+        assertEquals(first.transaccionId(),service.recibir(enabled.clave(),ingreso).transaccionId());
+        assertEquals(new BigDecimal("1250.00"),saldo());
+        cuenta.setMoneda("USD");cuentas.saveAndFlush(cuenta);
+        var foreign=new Evento(reglaId,"f".repeat(64),Clase.INGRESO,"USD",new BigDecimal("25.00"),CalendarioFinanciero.hoy(),"Ingreso Revolut");
+        assertThrows(IllegalArgumentException.class,()->service.recibir(enabled.clave(),foreign));
+    }
+    @Test void consentimientoIngresoNoSeExtiendeAOtrosBancosOMonedas() {
+        var rule=new Regla(reglaId,"SANTANDER","mx.bancosantander.supermovil",null,null,cuenta.getId(),lista,null,true);
+        assertThrows(IllegalArgumentException.class,()->service.configurar(usuario.getId(),new Configuracion(dispositivo,true,List.of(rule))));
+        cuenta.setMoneda("USD");cuentas.saveAndFlush(cuenta);
+        var revolut=new Regla(reglaId,"REVOLUT","com.revolut.revolut",null,null,cuenta.getId(),lista,null,true);
+        assertThrows(IllegalArgumentException.class,()->service.configurar(usuario.getId(),new Configuracion(dispositivo,true,List.of(revolut))));
+    }
+    @Test void reglasAnterioresSinCampoIngresoConservanConsentimientoDesactivado() throws Exception {
+        String json=mapper.writeValueAsString(regla(cuenta.getId())).replace(",\"ingresosMxn\":false","");
+        assertFalse(mapper.readValue(json,Regla.class).ingresosMxn());
+    }
     @Autowired AutomatizacionAndroidService service;
     @Autowired UsuarioRepository usuarios;
     @Autowired CuentaRepository cuentas;

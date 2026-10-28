@@ -15,19 +15,23 @@ import java.util.Map;
 @Component
 public class GroqAiProvider implements AiProvider {
     @org.springframework.beans.factory.annotation.Autowired
-    public GroqAiProvider(RestClient.Builder builder,AiProperties properties,AiHttpClient cliente) {
-        this(cliente.configurar(builder),properties);
+    public GroqAiProvider(RestClient.Builder builder,AiProperties properties,AiHttpClient cliente,AiUsagePolicy policy) {
+        this(cliente.configurar(builder),properties,policy);
     }
     private static final String DEFAULT_MODEL = "openai/gpt-oss-20b";
 
     private final AiProperties.Groq properties;
     private final RestClient restClient;
+    private final AiUsagePolicy policy;
+    private final String endpoint;
 
-    public GroqAiProvider(RestClient.Builder builder, AiProperties properties) {
+    public GroqAiProvider(RestClient.Builder builder, AiProperties properties,AiUsagePolicy policy) {
         this.properties = properties.groq();
+        this.policy=policy;
         String baseUrl = this.properties == null || this.properties.baseUrl() == null
                 || this.properties.baseUrl().isBlank() ? "https://api.groq.com/openai/v1" : this.properties.baseUrl();
         this.restClient = builder.baseUrl(baseUrl).build();
+        this.endpoint=baseUrl;
     }
 
     @Override
@@ -43,7 +47,7 @@ public class GroqAiProvider implements AiProvider {
 
     @Override
     public boolean isConfigured() {
-        return properties != null && properties.apiKey() != null && !properties.apiKey().isBlank();
+        return properties != null && properties.apiKey() != null && !properties.apiKey().isBlank() && policy.enabled(id(),model());
     }
 
     @Override
@@ -52,6 +56,7 @@ public class GroqAiProvider implements AiProvider {
             throw new AiConfigurationException("Configura GROQ_API_KEY en el entorno del backend para conectar Groq.");
         }
 
+        policy.reserve(id(),model(),endpoint);
         try {
             Map<String, Object> payload = new HashMap<>();
             payload.put("model", model());
@@ -74,6 +79,7 @@ public class GroqAiProvider implements AiProvider {
                     .retrieve()
                     .body(JsonNode.class);
 
+            AiTokenMetrics.groq(response);
             String text = response == null ? "" : response.path("choices").path(0)
                     .path("message").path("content").asText("").trim();
             if (text.isBlank()) {

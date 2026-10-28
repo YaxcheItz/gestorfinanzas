@@ -12,6 +12,8 @@ async function syntheticAndroid(page: Page, baseURL: string, dark = false, priva
     const methods = ['read','consume','update','configure','clear','validate','retry','apps','settings','retryAutomatic','discard','getInfo','getLaunchUrl','removeListener','removeAllListeners'];
     const rules = [
       {id:'qa-rule-santander',proveedor:'SANTANDER',cuentaId:11,listaId:21,terminacion:null,paquete:'mx.bancosantander.supermovil'},
+      {id:'qa-rule-revolut',proveedor:'REVOLUT',cuentaId:13,listaId:21,terminacion:null,paquete:'com.revolut.revolut',ingresosMxn:false},
+      {id:'qa-rule-amex',proveedor:'AMEX',cuentaId:14,listaId:21,terminacion:null,paquete:'com.americanexpress.android.acctsvcs.mx'},
       ...['1234','5678'].map(terminacion=>({id:'qa-rule-sears-'+terminacion,proveedor:'SEARS',cuentaId:12,listaId:21,terminacion,paquete:'com.google.android.apps.messaging',remitente:'QA'})),
     ];
     const notices = [{id:'qa-1',revision:1,at:Date.now(),text:'Aviso sintético',packageName:'mx.bancosantander.supermovil',automaticStatus:'ready',automaticVersion:'qa-v1',canRetry:true},
@@ -51,7 +53,7 @@ async function syntheticAndroid(page: Page, baseURL: string, dark = false, priva
     let data: unknown = [];
     if(url.pathname.endsWith('/perfil'))data={id:995,nombre:'Prueba de interfaz',email:'ui@example.test',tema:dark?'OSCURO':'CLARO',monedaPredeterminada:'MXN',ocultarMontos:privacy};
     if(url.pathname.endsWith('/avisos'))data={content:[],totalPages:0};
-    if(url.pathname.endsWith('/cuentas'))data=[{id:11,nombre:'Crédito QA',tipo:'CREDITO',moneda:'MXN',activo:true},{id:12,nombre:'Sears QA',tipo:'CREDITO',moneda:'MXN',activo:true}];
+    if(url.pathname.endsWith('/cuentas'))data=[{id:11,nombre:'Crédito QA',tipo:'CREDITO',moneda:'MXN',activo:true},{id:12,nombre:'Sears QA',tipo:'CREDITO',moneda:'MXN',activo:true},{id:13,nombre:'Débito QA',tipo:'DEBITO',moneda:'MXN',activo:true},{id:14,nombre:'Amex QA',tipo:'CREDITO',moneda:'MXN',activo:true}];
     if(url.pathname.endsWith('/listas'))data=[{id:21,nombre:'Personal QA',moneda:'MXN',personal:true,rol:'PROPIETARIO',archivada:false,miembros:[]}];
     if(url.pathname.endsWith('/automatizacion/android'))data={id:'qa-credential',clave:'synthetic-key',vence:'2027-01-01T00:00:00Z',reglas:request.postDataJSON().reglas};
     await route.fulfill({json:{success:true,data}});
@@ -77,7 +79,7 @@ test('una compra pendiente usa el original nativo y no el guardado manual', asyn
 
 test('ocultar montos protege los envíos para revisión también en el lector de pantalla', async ({page,baseURL})=>{
   const writes=await syntheticAndroid(page,baseURL!,false,true);
-  const summary=page.getByRole('region',{name:'Registro de compras'});
+  const summary=page.getByRole('region',{name:'Registro automático'});
   await expect(summary).not.toContainText('25.1');
   await expect(summary).toContainText('Compra QA •••');
   expect(await summary.ariaSnapshot()).not.toMatch(/25[.,]10?|QA 27/);
@@ -93,6 +95,8 @@ for(const dark of [false,true]) {
     await expect(page.getByLabel('Cuenta de destino · Sears Visa',{exact:true})).toHaveValue(/12$/);
     await expect(page.getByLabel('Últimos cuatro dígitos (opcionales) · Santander',{exact:true})).toBeVisible();
     await expect(page.getByLabel('Terminaciones Sears (obligatorias)')).toHaveValue('1234, 5678');
+    await expect(page.getByRole('checkbox',{name:/Registrar también los pagos recibidos de Revolut/})).not.toBeChecked();
+    await expect(page.getByText(/Gastos de hoy no se suma/)).toBeVisible();
     for(const size of [{width:320,height:740},{width:844,height:390}]) {
       await page.setViewportSize(size);
       const geometry=await page.evaluate(readPageGeometry);

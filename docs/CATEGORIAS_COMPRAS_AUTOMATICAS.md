@@ -37,3 +37,15 @@ La entrada manual y otros canales mantienen su comportamiento. No se han añadid
 - Esta mejora del backend no requiere otra APK. El ajuste visual anterior de0.1.15/código16, SHA256 `85A337B3C968C28DA30F2ACCC0426FAD5755E1FE53B2E21810BC61BCDD7980C0`, ya se instaló en el Samsung conservando firma/datos y primera instalación2026-10-22.
 
 Fuente/CI/integración/publicación y evidencia real posterior se registran por separado en estado/plan y continuación local. No se harán compras ni QA en producción para probar categorías; la primera observación productiva será con un aviso habitual futuro. Los movimientos anteriores mantienen su categoría. Gmail deshabilitado y TalkBack omitido.
+
+### Entrega integrada y publicada
+
+Fuente `1ba0725163af70d782c6383b7632fad53bc686c7`: CI438/40575724417, CI439/40575773362 y Android88/40575773500 SUCCESS, catorce checks y Vercel correctos. #148 integrado a develop `eebe55d9f96491a82e7ba2f273f7607990c599fc`; #149 promovido después de CI440/40577476124, CI441/40577522771 y Android89/40577475831/90/40577522624 SUCCESS, quince checks y Vercel correctos. Main `18b721bca501f38780e0663454515f482f6a624c`; seguimiento posterior CI442/40579201303 y Android91/40579201427 en la continuación/evidencia privada, revalidar GitHub al retomar.
+
+Render7369733828 y VercelProduction7369749846 SUCCESS. A las2026-10-27T20:39:56.855Z pasaron health directo/proxy HTTPS, Google y65JS/CSS/manifiesto conservados; V11–V14 comprobadas en solo lectura20:39:55Z, sin migración nueva. Respaldo previo DPAPI20:32:48Z, descifrado/hash/catálogo verificados, sin restauración. Evidencias privadas `.local/categorias-auto-production-result.json`, `categorias-auto-production-schema.json` y `categorias-auto-delivery.json`.
+
+La publicación y las pruebas aisladas están comprobadas; todavía no se afirma una clasificación bancaria real observada en producción. La recuperación real anterior de Santander corresponde a Avisos0.1.15. Esta entrega no genera ni instala otro APK.
+
+## Formatos adicionales y actividad de reparto
+
+La entrega descrita en `docs/AVISOS_AMEX_REVOLUT.md` distingue Uber Eats (Comida) de Uber (Transporte), conservando el fallback ambiguo y las decisiones manuales. Los ingresos Revolut consentidos quedan fuera de la clasificación de gastos. El soporte del formato nativo requiere APK0.1.16; la entrega base del clasificador sigue siendo backend. No modifica categorías históricas.

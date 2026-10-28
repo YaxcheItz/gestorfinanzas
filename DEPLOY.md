@@ -36,9 +36,12 @@ Son obligatorias. El proceso no arranca si falta alguna.
 | `CORS_ORIGINS` | Origen del frontend, separado por comas si hay varios. |
 | `FRONTEND_URL` | URL pÃºblica del frontend. Se usa en los enlaces de correo. |
 | `GEMINI_API_KEY` | Opcional. Se usa cuando `AI_PROVIDER=gemini`. |
-| `AI_PROVIDER` | `gemini` (predeterminado) o `groq`. |
+| `AI_PROVIDER` | `groq` (predeterminado) o `gemini`, con cuentas Free sin facturación. OpenAI está deshabilitado. |
 | `GROQ_API_KEY` | Opcional. Necesaria cuando `AI_PROVIDER=groq`. Solo se configura en el backend. |
 | `GROQ_MODEL` | Modelo Groq; predeterminado `openai/gpt-oss-20b`. |
+| `AI_MODEL` / `AI_FALLBACK_MODEL` | Gemini: `gemini-3.5-flash-lite` / `gemini-2.5-flash-lite`. Solo modelos fijos permitidos; no alias latest. |
+| `AI_FREE_TIER_PROVIDERS` | `groq,gemini` tras confirmar ambos planes Free. Vacío deshabilita IA externa. No verifica facturación automáticamente. |
+| `AI_GLOBAL_REQUEST_LIMIT_24H` | `-1`: cuotas Free sin tope adicional; `0`: bloquear; positivo: presupuesto conjunto de intentos HTTP por ventana24h, requiere `ABUSE_LIMIT_STORE=postgres`. |
 | `MAIL_ENABLED` | `true` para activar el envÃ­o de correo. |
 | `MAIL_PROVIDER` | `resend` en Render. `smtp` en local. |
 | `RESEND_API_KEY` | Necesario cuando `MAIL_PROVIDER=resend`. |
