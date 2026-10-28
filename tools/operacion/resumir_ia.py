@@ -9,12 +9,15 @@ WINDOW_SIZE = 1024
 MAX_LINE = 4096
 RECORD = re.compile(
     r'(?<!\S)KAPTAL_AI_GENERATION provider=(openai|gemini|groq|unknown) '
-    r'outcome=(success|provider_error|invalid_request|busy|invalid_response) '
+    r'outcome=(success|provider_error|invalid_request|busy|invalid_response|budget_denied) '
     r'elapsed_ms=(0|[1-9][0-9]{0,14})\s*$')
+REQUEST = re.compile(r'(?<!\S)KAPTAL_AI_REQUEST provider=(groq|gemini) outcome=reserved\s*$')
+BUDGET = re.compile(r'(?<!\S)KAPTAL_AI_BUDGET outcome=(unverified|blocked|exhausted|unavailable)\s*$')
 
 
 def summarize(source):
     groups = {}
+    requests, budget = {}, {}
     accepted = ignored = 0
     while True:
         line = source.readline(MAX_LINE + 1)
@@ -24,6 +27,16 @@ def summarize(source):
             while line and not line.endswith('\n'):
                 line = source.readline(MAX_LINE + 1)
             ignored += 1
+            continue
+        request = REQUEST.search(line)
+        warning = BUDGET.search(line)
+        if request:
+            provider = request.group(1)
+            requests[provider] = requests.get(provider, 0) + 1
+            continue
+        if warning:
+            reason = warning.group(1)
+            budget[reason] = budget.get(reason, 0) + 1
             continue
         match = RECORD.search(line)
         if not match:
@@ -45,7 +58,8 @@ def summarize(source):
                        'windowCount': size, 'minWindowMs': values[0], 'maxWindowMs': values[-1],
                        'meanWindowMs': round(sum(values) / size, 3),
                        'p95WindowMs': values[(95 * size + 99) // 100 - 1]})
-    return {'format': 1, 'records': accepted, 'ignoredLines': ignored,
+    return {'format': 2, 'records': accepted, 'ignoredLines': ignored,
+            'outboundAttempts': dict(sorted(requests.items())), 'budgetEvents': dict(sorted(budget.items())),
             'maxWindowRecordsPerGroup': WINDOW_SIZE, 'groups': output}
 
 

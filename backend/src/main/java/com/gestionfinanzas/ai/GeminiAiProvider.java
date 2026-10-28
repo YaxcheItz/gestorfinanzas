@@ -17,14 +17,16 @@ import java.util.Map;
 @Component
 public class GeminiAiProvider implements AiProvider {
     @org.springframework.beans.factory.annotation.Autowired
-    public GeminiAiProvider(RestClient.Builder builder,AiProperties properties,AiHttpClient cliente) {
-        this(cliente.configurar(builder),properties);
+    public GeminiAiProvider(RestClient.Builder builder,AiProperties properties,AiHttpClient cliente,AiUsagePolicy policy) {
+        this(cliente.configurar(builder),properties,policy);
     }
     private final AiProperties properties;
     private final RestClient restClient;
+    private final AiUsagePolicy policy;
 
-    public GeminiAiProvider(RestClient.Builder builder, AiProperties properties) {
+    public GeminiAiProvider(RestClient.Builder builder, AiProperties properties,AiUsagePolicy policy) {
         this.properties = properties;
+        this.policy=policy;
         this.restClient = builder.baseUrl(properties.gemini().baseUrl()).build();
     }
 
@@ -40,7 +42,7 @@ public class GeminiAiProvider implements AiProvider {
 
     @Override
     public boolean isConfigured() {
-        return properties.gemini().apiKey() != null && !properties.gemini().apiKey().isBlank();
+        return properties.gemini().apiKey() != null && !properties.gemini().apiKey().isBlank() && policy.enabled(id(),model());
     }
 
     @Override
@@ -65,10 +67,13 @@ public class GeminiAiProvider implements AiProvider {
     }
 
     private String generateWithModel(String model, String prompt, int maxOutputTokens) {
+        policy.reserve(id(),model,properties.gemini().baseUrl());
         Map<String, Object> generationConfig = new HashMap<>();
         generationConfig.put("maxOutputTokens", maxOutputTokens);
         if (model.startsWith("gemini-2.5")) {
             generationConfig.put("thinkingConfig", Map.of("thinkingBudget", 0));
+        } else if(model.equals("gemini-3.5-flash-lite")) {
+            generationConfig.put("thinkingConfig",Map.of("thinkingLevel","minimal"));
         }
 
         JsonNode response;
