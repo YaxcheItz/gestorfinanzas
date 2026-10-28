@@ -50,3 +50,7 @@ El resumidor existente acepta formato2 y añade `outboundAttempts` por proveedor
 Pruebas con proveedores HTTP simulados: planes/modelos/orígenes permitidos, cero llamadas con bloqueo, cuota compartida, rechazo ante fallo del contador, cada intento de Gemini, borrado de audio y ausencia de fallback a OpenAI aunque exista una clave antigua. Suite backend local previa al último caso de Flash-Lite:579casos sin fallos/errores y ocho PostgreSQL reservados para CI;26focales y11Python correctas. Último caso del contrato Flash-Lite y CI exacto se registran en continuación/evidencia privada.
 
 Sin generaciones reales para QA, benchmarks pagados, escrituras financieras productivas ni otra APK por esta parte de backend. CI/PostgreSQL, integración, despliegue e instalación0.1.16se informan por separado. Etapa13 continúa abierta: tokens reales, cuotas efectivas por cuenta, p95 representativo, observación de uso habitual y operación/recuperación restante. No presentar la decisión Free como gratuidad ilimitada ni la velocidad publicada como rendimiento físico comprobado.
+
+## Representación REST del nivel de razonamiento
+
+Para GenerateContent se usa `generationConfig.thinkingConfig.thinkingLevel = "MINIMAL"`, valor canónico del enum [ThinkingLevel de la API REST](https://ai.google.dev/api/generate-content#ThinkingLevel). El formato de los ejemplos de otros SDKs/Interactions no sustituye el contrato REST. JSON comprobado con HTTP simulado; veinte casos focales Gemini/metadatos correctos, sin generación real de QA.
