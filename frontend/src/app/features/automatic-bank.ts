@@ -57,7 +57,7 @@ export class AutomaticBankComponent {
       if (this.summaryOwner !== user) {
         this.summaryOwner = user; this.state.set(null); this.loaded.set(false); this.consent = false;
         this.reconnectConsent = false;this.showEntries.set(false);
-        this.sender = ''; this.smsPackage = ''; this.listId = null;
+        this.sender = ''; this.smsPackage = ''; this.listId = null; this.revolutIncomeMxn = false;
         this.accounts.set([]); this.lists.set([]);
         for (const p of this.profiles) { p.account = null; p.suffix = ''; }
       }
@@ -117,10 +117,10 @@ export class AutomaticBankComponent {
     { provider: 'BBVA', name: 'BBVA', type: 'CREDITO', pkg: 'com.bancomer.mbanking', account: null as number | null, suffix: '' },
     { provider: 'SEARS', name: 'Sears Visa', type: 'CREDITO', pkg: '', account: null as number | null, suffix: '' },
   ];
-  smsPackage = ''; sender = ''; listId: number | null = null; consent = false;
+  smsPackage = ''; sender = ''; listId: number | null = null; consent = false; revolutIncomeMxn = false;
   opened(event: Event): void {
     if ((event.target as HTMLDetailsElement).open) void this.load();
-    else { this.consent = false; this.loaded.set(false); this.sender = ''; for (const p of this.profiles) { p.suffix = ''; p.account = null; } }
+    else { this.consent = false; this.revolutIncomeMxn = false; this.loaded.set(false); this.sender = ''; for (const p of this.profiles) { p.suffix = ''; p.account = null; } }
   }
   async load(): Promise<void> {
     if (this.busy()) return;
@@ -140,6 +140,7 @@ export class AutomaticBankComponent {
       this.lists.set(lists.data.filter(l => !l.archivada && l.rol !== 'LECTOR' && l.moneda === 'MXN'));
       this.smsApps.set(apps.filter(a => ['com.google.android.apps.messaging', 'com.samsung.android.messaging', 'com.android.mms'].includes(a.packageName)));
       const rules = state.rules ?? [];
+      this.revolutIncomeMxn = rules.find(r => r.proveedor === 'REVOLUT')?.ingresosMxn === true;
       const searsRules=rules.filter(r=>r.proveedor==='SEARS');
       const firstSears=searsRules[0];
       if(firstSears&&searsRules.some(r=>r.cuentaId!==firstSears.cuentaId||r.listaId!==firstSears.listaId
@@ -170,7 +171,14 @@ export class AutomaticBankComponent {
     const rules: AutomaticRule[] = selected.flatMap(p => (p.provider==='SEARS'?p.suffix.split(',').map(s=>s.trim()):[p.suffix||null]).map(suffix=>({ id: crypto.randomUUID(), proveedor: p.provider,
       paquete: p.provider === 'SEARS' ? this.smsPackage : p.pkg,
       remitente: p.provider === 'SEARS' ? this.sender.trim() : null, terminacion: suffix,
-      cuentaId: p.account!, listaId: this.listId!, categoriaId: null })));
+      cuentaId: p.account!, listaId: this.listId!, categoriaId: null,
+      ingresosMxn: p.provider === 'REVOLUT' && this.revolutIncomeMxn })));
+    for (const rule of rules) {
+      const saved = this.state()?.rules?.find(r => r.proveedor === rule.proveedor && r.paquete === rule.paquete
+        && (r.remitente ?? null) === rule.remitente && (r.terminacion ?? null) === rule.terminacion
+        && r.cuentaId === rule.cuentaId && r.listaId === rule.listaId);
+      if (saved) { rule.id = saved.id; rule.categoriaId = saved.categoriaId ?? null; }
+    }
     if(rules.length>10){this.error.set('Configura como máximo diez tarjetas y orígenes en este dispositivo.');return;}
     this.busy.set(true);
     try {

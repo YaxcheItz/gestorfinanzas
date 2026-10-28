@@ -65,6 +65,7 @@ final class AutomaticBankStore {
             for(int j=0;j<after.length();j++)if(original.getString("id").equals(after.getJSONObject(j).optString("id")))match=after.getJSONObject(j);
             if(match==null)return false;
             for(String field:fields)if(!String.valueOf(original.opt(field)).equals(String.valueOf(match.opt(field))))return false;
+            if(original.optBoolean("ingresosMxn")!=match.optBoolean("ingresosMxn"))return false;
         }
         return true;
     }
@@ -104,6 +105,7 @@ final class AutomaticBankStore {
                 .put("proveedor",entry.optString("proveedor",rule==null?"":rule.optString("proveedor")))
                 .put("cuentaId",entry.optLong("cuentaId",rule==null?0:rule.optLong("cuentaId")))
                 .put("descripcion",payload.optString("descripcion")).put("monto",payload.opt("monto"))
+                .put("clase",payload.optString("clase","COMPRA"))
                 .put("moneda",payload.optString("moneda","MXN")).put("fecha",payload.optString("fecha")));
         }
         return output;
@@ -118,11 +120,13 @@ final class AutomaticBankStore {
         }
         return false;
     }
-    private record Evaluation(String status,JSONObject rule,SearsPurchaseParser.Purchase purchase) {}
+    private record Evaluation(String status,JSONObject rule,SearsPurchaseParser.Purchase purchase,boolean income) {
+        Evaluation(String status,JSONObject rule,SearsPurchaseParser.Purchase purchase) { this(status,rule,purchase,false); }
+    }
     private static Evaluation evaluate(JSONObject state,long user,String pkg,String sender,String body,String key,long postedAt) throws Exception {
         if(!active(state,user))return new Evaluation("inactive",null,null);
         var rules=state.optJSONArray("rules");
-        JSONObject selected=null;SearsPurchaseParser.Purchase purchase=null;
+        JSONObject selected=null;SearsPurchaseParser.Purchase purchase=null;boolean income=false;
         boolean packageMatched=false,senderMatched=false,cardMismatch=false;
         if(rules!=null)for(int i=0;i<rules.length();i++) {
             var rule=rules.getJSONObject(i);
@@ -137,15 +141,20 @@ final class AutomaticBankStore {
             var date=java.time.LocalDate.now(java.time.ZoneId.of("America/Mexico_City"));
             var parsed=sears?SearsPurchaseParser.parse(sender,rule.optString("remitente"),suffix,body,date)
                 :BankPurchaseParser.parseNotification(rule.optString("proveedor"),pkg,suffix,key+":"+postedAt,sender,body,date);
+            boolean parsedIncome=false;
+            if(parsed==null&&"REVOLUT".equals(rule.optString("proveedor"))&&rule.optBoolean("ingresosMxn")) {
+                parsed=BankPurchaseParser.parseRevolutIncome(pkg,key+":"+postedAt,sender,body,date);
+                parsedIncome=parsed!=null;
+            }
             if(parsed==null) {
                 cardMismatch|=sears?SearsPurchaseParser.matchesWithoutConfiguredCard(body,date)
                     :BankPurchaseParser.parseNotification(rule.optString("proveedor"),pkg,null,key+":"+postedAt,sender,body,date)!=null;
                 continue;
             }
             if(selected!=null)return new Evaluation("ambiguous",null,null);
-            selected=rule;purchase=parsed;
+            selected=rule;purchase=parsed;income=parsedIncome;
         }
-        if(selected!=null)return new Evaluation("ready",selected,purchase);
+        if(selected!=null)return new Evaluation("ready",selected,purchase,income);
         return new Evaluation(!packageMatched?"app_not_linked":!senderMatched?"sender_mismatch":cardMismatch?"card_mismatch":"unsupported_format",null,null);
     }
     /** Same evaluation as reception, without changing queues or sending anything. */
@@ -164,7 +173,8 @@ final class AutomaticBankStore {
         String body=original.length>1?original[1].trim().replaceAll("\\s+"," "):"";
         boolean stable="SEARS".equals(rule.optString("proveedor"))||BankPurchaseParser.hasBankEvent(rule.optString("proveedor"),original[0],body);
         return output.put("canRetry",stable).put("preview",new JSONObject().put("cuentaId",rule.getLong("cuentaId"))
-            .put("listaId",rule.getLong("listaId")).put("categoriaId",rule.opt("categoriaId"))
+            .put("listaId",rule.getLong("listaId")).put("categoriaId",result.income()?JSONObject.NULL:rule.opt("categoriaId"))
+            .put("tipo",result.income()?"INGRESO":"GASTO")
             .put("monto",p.amount()).put("moneda","MXN").put("fecha",p.date().toString()).put("descripcion",p.merchant()));
     }
     void retryNotice(long user,JSONObject notice,String generation) throws Exception {
@@ -201,7 +211,7 @@ final class AutomaticBankStore {
             entries.remove(removable);
         }
         var payload = new JSONObject().put("reglaId",selected.getString("id")).put("eventoId",purchase.eventId())
-            .put("clase","COMPRA").put("moneda","MXN").put("monto",purchase.amount())
+            .put("clase",evaluation.income()?"INGRESO":"COMPRA").put("moneda","MXN").put("monto",purchase.amount())
             .put("fecha",purchase.date().toString()).put("descripcion",purchase.merchant());
         entries.put(new JSONObject().put("id",identity).put("notificationKey",notificationKey)
             .put("proveedor",selected.optString("proveedor")).put("cuentaId",selected.optLong("cuentaId"))

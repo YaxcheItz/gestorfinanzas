@@ -6,6 +6,50 @@ import java.time.LocalDate;
 import static org.junit.Assert.*;
 
 public class BankPurchaseParserTest {
+    @Test public void recognizesRevolutIncomeWithoutForwardingSender() {
+        String body="PERSONA QA te en- vió un pago. Presiona aquí para obtener más información";
+        var result=BankPurchaseParser.parseRevolutIncome(BankPurchaseParser.PACKAGES.get("REVOLUT"),"qa","Recibiste $250",body,date);
+        assertNotNull(result);assertEquals(new BigDecimal("250.00"),result.amount());
+        assertEquals("Ingreso Revolut",result.merchant());
+        assertEquals(result,BankPurchaseParser.parseRevolutIncome(BankPurchaseParser.PACKAGES.get("REVOLUT"),"qa",
+            "Recibiste $250.00 MXN",body.replace("en- vió","envió"),date));
+        assertNull(parse("REVOLUT",null,"Recibiste $250 "+body));
+    }
+    @Test public void rejectsForeignIncompleteAndImpersonatedRevolutIncome() {
+        String pkg=BankPurchaseParser.PACKAGES.get("REVOLUT");
+        String body="PERSONA QA te envió un pago. Presiona aquí para obtener más información";
+        for(String title:new String[]{"Recibiste $0","Recibiste $-25","Recibiste $25 USD","Recibiste €25",
+            "Recibiste $1,23.10","Recibiste $25.1","Recibiste $25 EUR","Gastaste $25"})
+            assertNull(BankPurchaseParser.parseRevolutIncome(pkg,"qa",title,body,date));
+        assertNull(BankPurchaseParser.parseRevolutIncome("com.example.fake","qa","Recibiste $25",body,date));
+        assertNull(BankPurchaseParser.parseRevolutIncome(pkg,"qa","Recibiste $25",body+" Cancelado",date));
+        assertNull(BankPurchaseParser.parseRevolutIncome(pkg,"qa","Recibiste $25","Transferencia pendiente",date));
+        assertNull(BankPurchaseParser.parseRevolutIncome(pkg,"","Recibiste $25",body,date));
+    }
+    @Test public void acceptsAmexMerchantTitleAndKeepsDailyTotalSeparate() {
+        var result=BankPurchaseParser.parseNotification("AMEX",BankPurchaseParser.PACKAGES.get("AMEX"),null,
+            "event-qa","COMERCIO QA","Gastaste $25.10 Gastos de hoy: $80.20",date);
+        assertNotNull(result);
+        assertEquals(new BigDecimal("25.10"),result.amount());
+        assertEquals("COMERCIO QA",result.merchant());
+        assertEquals(date,result.date());
+        assertEquals(result,BankPurchaseParser.parseNotification("AMEX",BankPurchaseParser.PACKAGES.get("AMEX"),null,
+            "event-qa","COMERCIO QA","Gastaste $25.10\nGastos de hoy: $80.20",date));
+    }
+    @Test public void rejectsAmbiguousAmexOriginsCardsAndBodies() {
+        String body="Gastaste $25.10 Gastos de hoy: $80.20";
+        for(String provider:new String[]{"SANTANDER","BBVA","REVOLUT"})
+            assertNull(BankPurchaseParser.parseNotification(provider,BankPurchaseParser.PACKAGES.get(provider),null,
+                "qa","COMERCIO QA",body,date));
+        assertNull(BankPurchaseParser.parseNotification("AMEX","com.example.fake",null,"qa","COMERCIO QA",body,date));
+        assertNull(BankPurchaseParser.parseNotification("AMEX",BankPurchaseParser.PACKAGES.get("AMEX"),"1234","qa","COMERCIO QA",body,date));
+        for(String title:new String[]{"","Compra rechazada","Devolución","OTP 123456","X".repeat(121)})
+            assertNull(BankPurchaseParser.parseNotification("AMEX",BankPurchaseParser.PACKAGES.get("AMEX"),null,"qa",title,body,date));
+        for(String invalid:new String[]{"Gastaste $25.10",body+" USD",body+" texto adicional",
+            body.replace("$25.10","$0.00"),body.replace("$25.10","$-25.10"),
+            body.replace("$25.10","$1,23.10"),body.replace("Gastaste","Recibiste")})
+            assertNull(BankPurchaseParser.parseNotification("AMEX",BankPurchaseParser.PACKAGES.get("AMEX"),null,"qa","COMERCIO QA",invalid,date));
+    }
     private final LocalDate date=LocalDate.of(2026,10,23);
     private SearsPurchaseParser.Purchase parse(String provider,String suffix,String text) {
         return BankPurchaseParser.parse(provider,BankPurchaseParser.PACKAGES.get(provider),suffix,"event-qa",text,date);

@@ -9,13 +9,14 @@ import { ApiResponse } from '../models/auth.models';
 export interface AutomaticState {
   deviceId: string; active: boolean; queued: number; registered: number; review: number; full: boolean; error: string;
   reason?: string;
-  entries?: { id: string; proveedor: string; cuentaId: number; status: string; descripcion: string; monto: number; moneda: string; fecha: string }[];
+  entries?: { id: string; proveedor: string; cuentaId: number; status: string; descripcion: string; monto: number; moneda: string; fecha: string; clase?: string }[];
   reviews?: { eventoId: string; descripcion: string; monto: number; moneda: string; fecha: string }[];
   rules?: AutomaticRule[];
 }
 export interface AutomaticRule {
   id: string; proveedor: string; paquete: string; remitente: string | null; terminacion: string | null;
   cuentaId: number; listaId: number; categoriaId: number | null;
+  ingresosMxn?: boolean;
 }
 interface Credential { id: string; clave: string; vence: string; reglas: AutomaticRule[]; }
 interface AutomaticPlugin {

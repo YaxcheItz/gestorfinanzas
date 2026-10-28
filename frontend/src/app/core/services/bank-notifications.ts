@@ -8,7 +8,7 @@ export interface BankNotice {
   automaticStatus?: string;
   automaticVersion?: string;
   canRetry?: boolean;
-  preview?: { cuentaId: number; listaId: number; categoriaId: number | null; monto: number; moneda: string; fecha: string; descripcion: string };
+  preview?: { cuentaId: number; listaId: number; categoriaId: number | null; monto: number; moneda: string; fecha: string; descripcion: string; tipo?: 'GASTO' | 'INGRESO' };
 }
 export interface NoticeApp { packageName: string; label: string; }
 interface NoticeState { granted: boolean; enabled: boolean; packages: string[]; notices: BankNotice[]; omitted: number; }

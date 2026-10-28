@@ -45,3 +45,7 @@ Fuente `1ba0725163af70d782c6383b7632fad53bc686c7`: CI438/40575724417, CI439/4057
 Render7369733828 y VercelProduction7369749846 SUCCESS. A las2026-10-27T20:39:56.855Z pasaron health directo/proxy HTTPS, Google y65JS/CSS/manifiesto conservados; V11–V14 comprobadas en solo lectura20:39:55Z, sin migración nueva. Respaldo previo DPAPI20:32:48Z, descifrado/hash/catálogo verificados, sin restauración. Evidencias privadas `.local/categorias-auto-production-result.json`, `categorias-auto-production-schema.json` y `categorias-auto-delivery.json`.
 
 La publicación y las pruebas aisladas están comprobadas; todavía no se afirma una clasificación bancaria real observada en producción. La recuperación real anterior de Santander corresponde a Avisos0.1.15. Esta entrega no genera ni instala otro APK.
+
+## Formatos adicionales y actividad de reparto
+
+La entrega descrita en `docs/AVISOS_AMEX_REVOLUT.md` distingue Uber Eats (Comida) de Uber (Transporte), conservando el fallback ambiguo y las decisiones manuales. Los ingresos Revolut consentidos quedan fuera de la clasificación de gastos. El soporte del formato nativo requiere APK0.1.16; la entrega base del clasificador sigue siendo backend. No modifica categorías históricas.
