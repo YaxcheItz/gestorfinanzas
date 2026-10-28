@@ -12,6 +12,44 @@ import static org.junit.Assert.*;
 
 @RunWith(AndroidJUnit4.class)
 public class AutomaticBankStoreTest {
+    @Test public void revolutIncomeRequiresConsentAndUniqueDestinationAndNeverBecomesPurchase() throws Exception {
+        String bank="com.revolut.revolut";
+        String body="PERSONA QA te envió un pago. Presiona aquí para obtener más información";
+        var rule=new JSONObject().put("id","00000000-0000-4000-8000-000000000002")
+            .put("proveedor","REVOLUT").put("paquete",bank).put("cuentaId",11).put("listaId",21);
+        store.write(store.read().put("rules",new JSONArray().put(rule)));
+        assertFalse(store.receive(71,bank,"Recibiste $250",body,"qa-income",100));
+        rule.put("ingresosMxn",true);
+        store.write(store.read().put("rules",new JSONArray().put(rule)));
+        assertTrue(store.receive(71,bank,"Recibiste $250",body,"qa-income",100));
+        assertTrue(store.receive(71,bank,"Recibiste $250",body,"qa-income",100));
+        var entries=store.read().getJSONArray("entries");assertEquals(1,entries.length());
+        var payload=entries.getJSONObject(0).getJSONObject("payload");
+        assertEquals("INGRESO",payload.getString("clase"));assertEquals("MXN",payload.getString("moneda"));
+        assertEquals("Ingreso Revolut",payload.getString("descripcion"));
+        assertFalse(payload.toString().contains("PERSONA"));
+        var other=new JSONObject(rule.toString()).put("id","00000000-0000-4000-8000-000000000003").put("cuentaId",12);
+        store.write(store.read().put("rules",new JSONArray().put(rule).put(other)));
+        assertFalse(store.receive(71,bank,"Recibiste $300",body,"qa-ambiguous",200));
+        assertEquals(1,store.read().getJSONArray("entries").length());
+    }
+    @Test public void amexSummaryUsesPurchaseAmountAndRejectsMultipleAccounts() throws Exception {
+        String bank=BankPurchaseParser.PACKAGES.get("AMEX");
+        var rule=new JSONObject().put("id","00000000-0000-4000-8000-000000000002")
+            .put("proveedor","AMEX").put("paquete",bank).put("cuentaId",11).put("listaId",21);
+        store.write(store.read().put("rules",new JSONArray().put(rule)));
+        assertTrue(store.receive(71,bank,"COMERCIO QA","Gastaste $25.10 Gastos de hoy: $80.20","qa-amex",100));
+        var payload=store.read().getJSONArray("entries").getJSONObject(0).getJSONObject("payload");
+        assertEquals("COMPRA",payload.getString("clase"));assertEquals(25.10,payload.getDouble("monto"),0.001);
+        var other=new JSONObject(rule.toString()).put("id","00000000-0000-4000-8000-000000000003");
+        store.write(store.read().put("rules",new JSONArray().put(rule).put(other)));
+        assertFalse(store.receive(71,bank,"COMERCIO QA","Gastaste $25.10 Gastos de hoy: $80.20","qa-ambiguous",200));
+    }
+    @Test public void incomeConsentIsPartOfRuleIdentityAndOldRulesRemainEquivalent() throws Exception {
+        var before=store.read().getJSONArray("rules");var after=new JSONArray(before.toString());
+        after.getJSONObject(0).put("ingresosMxn",false);assertTrue(AutomaticBankStore.sameRules(before,after));
+        after.getJSONObject(0).put("ingresosMxn",true);assertFalse(AutomaticBankStore.sameRules(before,after));
+    }
     private AutomaticBankStore store;
     private android.content.Context context;
     private final String pkg="com.google.android.apps.messaging";

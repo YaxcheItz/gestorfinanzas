@@ -15,7 +15,12 @@ public final class AutomatizacionAndroidRequest {
                         @NotBlank @Size(max=150) String paquete,
                         @Size(max=40) String remitente, @Pattern(regexp="[0-9]{4}") String terminacion,
                         @NotNull @Positive Long cuentaId, @NotNull @Positive Long listaId,
-                        @Positive Long categoriaId) {}
+                        @Positive Long categoriaId, boolean ingresosMxn) {
+        public Regla(UUID id,String proveedor,String paquete,String remitente,String terminacion,
+                     Long cuentaId,Long listaId,Long categoriaId) {
+            this(id,proveedor,paquete,remitente,terminacion,cuentaId,listaId,categoriaId,false);
+        }
+    }
 
     public record Configuracion(@NotNull UUID dispositivoId, boolean consentimiento,
                                 @NotEmpty @Size(max=10) List<@NotNull @Valid Regla> reglas) {}

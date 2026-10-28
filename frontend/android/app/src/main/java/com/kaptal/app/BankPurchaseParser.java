@@ -24,6 +24,20 @@ final class BankPurchaseParser {
     private static final Pattern NON_PURCHASE_TITLE=Pattern.compile(
         "\\b(?:rechazad[ao]|cancelad[ao]|no autorizad[ao]|no reconocid[ao]|intento|devoluci[oó]n)\\b",
         Pattern.CASE_INSENSITIVE|Pattern.UNICODE_CASE);
+    private static final Pattern AMEX_SUMMARY=Pattern.compile(
+        "^Gastaste \\$([0-9]{1,3}(?:,[0-9]{3})*|[0-9]{1,13})\\.([0-9]{2}) Gastos de hoy: \\$(?:[0-9]{1,3}(?:,[0-9]{3})*|[0-9]{1,13})\\.[0-9]{2}$");
+    private static final Pattern REVOLUT_INCOME=Pattern.compile(
+        "^Recibiste \\$([0-9]{1,3}(?:,[0-9]{3})*|[0-9]{1,13})(?:\\.([0-9]{2}))?(?: MXN)?$");
+    /** Call only with explicit consent that bare-dollar Revolut income means MXN. */
+    static SearsPurchaseParser.Purchase parseRevolutIncome(String pkg,String key,String title,String body,LocalDate date) {
+        if(!PACKAGES.get("REVOLUT").equals(pkg)||key==null||key.isBlank()||date==null||title==null||body==null
+            ||title.length()>100||body.length()>1000)return null;
+        var amount=REVOLUT_INCOME.matcher(title.trim().replaceAll("[\\s\\p{Z}]+"," "));
+        String text=body.trim().replaceAll("[\\s\\p{Z}]+"," ");
+        if(!amount.matches()||!text.matches(".{1,120} te en(?:- )?vió un pago\\. Presiona aquí para obtener más información\\.?"))return null;
+        return purchase(new BigDecimal(amount.group(1).replace(",","")+"."+(amount.group(2)==null?"00":amount.group(2))),
+            date,"Ingreso Revolut","REVOLUT|INGRESO|"+key);
+    }
     private static final Pattern NON_EXPENSE_PREFIX=Pattern.compile(
         "^(?:dep[oó]sito|abono|ingreso|devoluci[oó]n|transferencia|pago recibido|recibiste|te depositaron)\\b",
         Pattern.CASE_INSENSITIVE|Pattern.UNICODE_CASE);
@@ -36,6 +50,14 @@ final class BankPurchaseParser {
     }
     static SearsPurchaseParser.Purchase parseNotification(String provider,String pkg,String suffix,String key,
             String title,String body,LocalDate date) {
+        if("AMEX".equals(provider)&&PACKAGES.get("AMEX").equals(pkg)&&title!=null&&body!=null
+            &&title.length()<=120&&body.length()<=1000&&key!=null&&!key.isBlank()&&date!=null) {
+            if(isNonExpenseNotification(title,body)||NON_PURCHASE_TITLE.matcher(title).find())return null;
+            var summary=AMEX_SUMMARY.matcher(body.trim().replaceAll("[\\s\\p{Z}]+"," "));
+            // A configured card restriction cannot be verified from this cardless format.
+            if(summary.matches()&&(suffix==null||suffix.isEmpty()))return purchase(
+                new BigDecimal(summary.group(1).replace(",","")+"."+summary.group(2)),date,title.trim(),provider+"|"+key);
+        }
         if("SANTANDER".equals(provider)&&isNonExpenseNotification(title,body))return null;
         if("SANTANDER".equals(provider)&&title!=null&&NON_PURCHASE_TITLE.matcher(title.replaceAll("[\\s\\p{Z}]+"," ")).find())return null;
         var direct=parse(provider,pkg,suffix,key,body,date);

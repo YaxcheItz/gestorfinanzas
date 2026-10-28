@@ -73,6 +73,9 @@ public class AutomatizacionAndroidService {
             if(!rutas.add(ruta))throw new IllegalArgumentException("Dos reglas corresponden al mismo origen y tarjeta.");
             var cuenta=cuentas.findByIdAndUsuarioId(regla.cuentaId(),uid).orElseThrow(()->new IllegalArgumentException("Cuenta no disponible."));
             if(!cuenta.isActivo())throw new IllegalArgumentException("La cuenta está desactivada.");
+            if(regla.ingresosMxn()&&(!"REVOLUT".equals(regla.proveedor())||!"MXN".equals(cuenta.getMoneda())
+                ||cuenta.getTipo()!=com.gestionfinanzas.model.enums.TipoCuenta.DEBITO))
+                throw new IllegalArgumentException("Los ingresos automáticos requieren una cuenta Revolut de débito en MXN.");
             transacciones.validarListaCaptura(uid,regla.listaId());
             if(regla.categoriaId()!=null) {
                 var categoria=categorias.findAccessibleById(regla.categoriaId(),uid).orElseThrow(()->new IllegalArgumentException("Categoría no disponible."));
@@ -121,6 +124,8 @@ public class AutomatizacionAndroidService {
             throw new IllegalArgumentException("Ese movimiento necesita revisión.");
         if("SANTANDER".equals(regla.proveedor())&&evento.clase()!=Clase.COMPRA)
             throw new IllegalArgumentException("Esta conexión de Santander solo admite compras y gastos.");
+        if("REVOLUT".equals(regla.proveedor())&&evento.clase()==Clase.INGRESO&&!regla.ingresosMxn())
+            throw new IllegalArgumentException("Activa el consentimiento para ingresos Revolut en MXN.");
         var hoy=CalendarioFinanciero.hoy();
         if(evento.fecha().isAfter(hoy)||evento.fecha().isBefore(hoy.minusDays(31)))throw new IllegalArgumentException("La fecha necesita revisión.");
         var cuenta=cuentas.findByIdAndUsuarioId(regla.cuentaId(),usuario.getId()).orElseThrow(()->new IllegalArgumentException("Cuenta no disponible."));

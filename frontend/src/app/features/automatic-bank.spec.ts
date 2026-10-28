@@ -10,6 +10,25 @@ import { FinanzasService } from '../core/services/finanzas.service';
 import { AuthService } from '../core/services/auth.service';
 
 describe('Configuración bancaria guardada', () => {
+  it('conserva identidad y categoría fija al guardar una asociación existente', async () => {
+    const saved={id:'qa-existing',proveedor:'REVOLUT',paquete:'com.revolut.revolut',remitente:null,
+      terminacion:null,cuentaId:13,listaId:21,categoriaId:31,ingresosMxn:false};
+    c.state.set({active:true,queued:0,rules:[saved]} as any);
+    c.profiles.find(p=>p.provider==='REVOLUT')!.account=13;
+    c.listId=21;c.consent=true;c.revolutIncomeMxn=true;
+    await c.connect();
+    expect(automatic.configure.mock.calls[0][0]).toEqual([{...saved,ingresosMxn:true}]);
+  });
+  it('solo activa ingresos MXN de Revolut cuando se elige expresamente y conserva el valor guardado', async () => {
+    const state=await automatic.read();
+    state.rules.push({proveedor:'REVOLUT',cuentaId:13,listaId:21,terminacion:null,ingresosMxn:true});
+    await load();expect(c.revolutIncomeMxn).toBe(true);
+    c.consent=true;await c.connect();
+    const rules=automatic.configure.mock.calls[0][0];
+    expect(rules.find((r:any)=>r.proveedor==='REVOLUT').ingresosMxn).toBe(true);
+    expect(rules.filter((r:any)=>r.proveedor!=='REVOLUT').every((r:any)=>r.ingresosMxn===false)).toBe(true);
+    c.opened({target:{open:false}} as unknown as Event);expect(c.revolutIncomeMxn).toBe(false);
+  });
   const user = signal({ id: 71 });
   let automatic: any;
   let c: AutomaticBankComponent;

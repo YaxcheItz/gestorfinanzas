@@ -40,7 +40,9 @@ public class CategoriaCompraAutomaticaService {
         String texto=normalizar(descripcion);
         // An intermediary's name does not identify the underlying merchant's activity.
         if(Set.of("mercadopago","mercado pago","paypal","payu","stripe","clip").stream().anyMatch(p->contiene(texto,p)))return OTROS;
-        var coincidencias=GRUPOS.stream().filter(g->g.palabras().stream().anyMatch(p->contiene(texto,p))).toList();
+        // Food delivery is not a ride; preserve other activity words to detect ambiguity.
+        String actividad=texto.replaceAll("\\buber eats\\b","restaurante");
+        var coincidencias=GRUPOS.stream().filter(g->g.palabras().stream().anyMatch(p->contiene(actividad,p))).toList();
         return coincidencias.size()==1?coincidencias.get(0):OTROS;
     }
     private static boolean corresponde(Categoria categoria,Grupo grupo) {

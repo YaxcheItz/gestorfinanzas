@@ -29,6 +29,8 @@ class CategoriaCompraAutomaticaServiceTest {
     }
     @ParameterizedTest @CsvSource({
         "RESTAURANTE QA,Comida", "TAQUERÍA QA,Comida", "CAFÉ QA,Comida",
+        "DLO UBER EATS,Comida", "UBER,Transporte", "UBER EATS FARMACIA,Otros gastos",
+        "PAYPAL UBER EATS,Otros gastos", "UBEREATS QA,Otros gastos",
         "SUPERMERCADO QA,Supermercado", "TAXI QA,Transporte", "FARMACIA QA,Salud",
         "ELECTRICIDAD QA,Hogar", "CINE QA,Ocio", "COMERCIO QA,Otros gastos",
         "RESTAURANTE FARMACIA QA,Otros gastos", "PANCAFETERA QA,Otros gastos",
