@@ -37,3 +37,7 @@ El registro productivo de estos formatos y la primera categoría real siguen pen
 ## Revisión final del título e instalación diferida
 
 El título Amex se normaliza antes de comprobar rechazo, códigos sensibles y comercio, incluyendo saltos de línea y espacios Unicode. La regresión se reprodujo antes de corregirla;25unitarias Android, lint y release correctos. APK final0.1.16/código17: SHA256 `18702AB6D3323C3D15AE6FF465F42B9BD0BCC55F78E11BFD76E771A548DF375C`. Teléfono desconectado por el propietario y ADB vacío: instalación/prueba física final pendientes. La evidencia física Store/Worker anterior sigue separada del build final. CI/integración/producción se registran en estado y continuación privada.
+
+## Publicación conjunta verificada
+
+#155 integrada a main `5bc2ae6e2a8fbeb04e174740ad9639a73593619b` tras quince checks correctos. CI464/Android99 posteriores y Render7387852850/VercelProduction7387867984 SUCCESS. Verificación pública 2026-10-28T14:24:17.198Z:66estáticos, API directa/proxy y Google correctos; V11–V14 de solo lectura, sin migraciones nuevas. APK0.1.16final preparada, no instalada porque el teléfono está desconectado. Evidencia física anterior y observación real pendiente se mantienen separadas. Cierre de documentación/aislamiento en `.local/ampliacion-cierre.json`.
