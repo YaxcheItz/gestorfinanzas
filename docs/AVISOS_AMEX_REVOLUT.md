@@ -46,3 +46,8 @@ El título Amex se normaliza antes de comprobar rechazo, códigos sensibles y co
 ## Compatibilidad de ahorro y teléfono reconectado
 
 La selección Revolut admite cuentas AHORRO/DEBITO en MXN sin recrearlas. El propietario delegó usar la única asociación Amex sin filtro de terminación; no ampliar ese consentimiento a otras cuentas. Ver `docs/REVOLUT_CUENTA_AHORRO.md` y `.local/revolut-ahorro-delivery.json` para instalación0.1.17, publicación y guardado efectivos. Los apartados anteriores de teléfono desconectado son históricos.
+
+
+## Entrega y configuración completadas
+
+#158/#159 integradas, main `ddedff20ec3e9d4f36b54181abb3bce9eeda06a2` publicado con checks/deploys/API/Google/66estáticos correctos. APK0.1.17/código18 instalada; Revolut ahorro original con ingresos consentidos y Amex única sin filtro de tarjeta guardadas y recargadas. Referencia cifrada/consulta de solo lectura confirmaron cuenta/historial y demás asociaciones conservados. Configuración no equivale a recepción bancaria real: esta sigue pendiente del uso habitual. Evidencia exacta en `.local/revolut-ahorro-delivery.json`.
