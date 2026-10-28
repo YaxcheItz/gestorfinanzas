@@ -16,26 +16,24 @@ import java.util.Arrays;
 @Service
 public class AudioTranscriptionService {
     @org.springframework.beans.factory.annotation.Autowired
-    public AudioTranscriptionService(RestClient.Builder builder,AiProperties properties,AiHttpClient cliente) {
-        this(cliente.configurar(builder),properties);
+    public AudioTranscriptionService(RestClient.Builder builder,AiProperties properties,AiHttpClient cliente,AiUsagePolicy policy) {
+        this(cliente.configurar(builder),properties,policy);
     }
     private static final int MAX_AUDIO_BYTES = 5 * 1024 * 1024;
     private static final String GROQ_MODEL = "whisper-large-v3-turbo";
 
     private final AiProperties.Groq groq;
-    private final AiProperties.OpenAi openAi;
     private final RestClient groqClient;
-    private final RestClient openAiClient;
+    private final AiUsagePolicy policy;
+    private final String endpoint;
 
-    public AudioTranscriptionService(RestClient.Builder builder, AiProperties properties) {
+    public AudioTranscriptionService(RestClient.Builder builder, AiProperties properties,AiUsagePolicy policy) {
         this.groq = properties.groq();
-        this.openAi = properties.openai();
+        this.policy=policy;
         String groqUrl = groq == null || groq.baseUrl() == null || groq.baseUrl().isBlank()
                 ? "https://api.groq.com/openai/v1" : groq.baseUrl();
-        String openAiUrl = openAi == null || openAi.baseUrl() == null || openAi.baseUrl().isBlank()
-                ? "https://api.openai.com/v1" : openAi.baseUrl();
+        this.endpoint=groqUrl;
         this.groqClient = builder.clone().baseUrl(groqUrl).build();
-        this.openAiClient = builder.clone().baseUrl(openAiUrl).build();
     }
 
     public String transcribir(byte[] audio, String mimeType) {
@@ -57,19 +55,15 @@ public class AudioTranscriptionService {
         };
 
         try {
-            if (isConfigured(groq == null ? null : groq.apiKey())) {
+            if (isConfigured(groq == null ? null : groq.apiKey()) && policy.enabled("groq",GROQ_MODEL)) {
+                policy.reserve("groq",GROQ_MODEL,endpoint);
                 try {
                     return solicitar(groqClient, groq.apiKey(), GROQ_MODEL, audio, contentType, extension);
                 } catch (RestClientException | AiProviderException groqFailure) {
-                    if (!isConfigured(openAi == null ? null : openAi.apiKey())) {
-                        throw new AiProviderException("Groq no pudo transcribir el audio. Inténtalo de nuevo.");
-                    }
+                    throw new AiProviderException("Groq no pudo transcribir el audio. Inténtalo de nuevo o escribe el movimiento.");
                 }
             }
-            if (isConfigured(openAi == null ? null : openAi.apiKey())) {
-                return solicitar(openAiClient, openAi.apiKey(), "whisper-1", audio, contentType, extension);
-            }
-            throw new AiConfigurationException("Configura GROQ_API_KEY u OPENAI_API_KEY para habilitar el dictado en Firefox.");
+            throw new AiConfigurationException("Configura Groq en un plan gratuito para transcribir audio. También puedes escribir el movimiento.");
         } finally {
             Arrays.fill(audio, (byte) 0);
         }

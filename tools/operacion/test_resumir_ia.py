@@ -15,6 +15,26 @@ def record(ms=10, provider='openai', outcome='success'):
 
 
 class MetricsTest(unittest.TestCase):
+    def test_outbound_attempts_budget_denials_and_generations_stay_separate(self):
+        report = summarize(io.StringIO('KAPTAL_AI_REQUEST provider=groq outcome=reserved\n' * 2
+            + 'KAPTAL_AI_REQUEST provider=gemini outcome=reserved\n'
+            + 'KAPTAL_AI_BUDGET outcome=exhausted\n'
+            + record(provider='groq', outcome='budget_denied')))
+        self.assertEqual(report['format'], 2)
+        self.assertEqual(report['records'], 1)
+        self.assertEqual(report['outboundAttempts'], {'gemini': 1, 'groq': 2})
+        self.assertEqual(report['budgetEvents'], {'exhausted': 1})
+        self.assertEqual(report['ignoredLines'], 0)
+
+    def test_usage_records_with_unknown_fields_or_private_suffix_are_ignored(self):
+        text = ('KAPTAL_AI_REQUEST provider=PRIVATE_CANARY outcome=reserved\n'
+            + 'KAPTAL_AI_REQUEST provider=groq outcome=reserved PRIVATE_CANARY\n'
+            + 'KAPTAL_AI_BUDGET outcome=PRIVATE_CANARY\n')
+        report = summarize(io.StringIO(text))
+        self.assertEqual(report['ignoredLines'], 3)
+        self.assertEqual(report['outboundAttempts'], {})
+        self.assertEqual(report['budgetEvents'], {})
+        self.assertNotIn('PRIVATE_CANARY', json.dumps(report))
     def test_counts_and_nearest_rank_percentile(self):
         report = summarize(io.StringIO(''.join(record(n) for n in range(1, 21))))
         self.assertEqual(report['records'], 20)

@@ -20,6 +20,18 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 import static org.springframework.http.HttpMethod.POST;
 
 class GeminiAiProviderTest {
+    @Test void stableFlashLiteUsesMinimalThinkingWithoutPaidTools() {
+        var builder=RestClient.builder();var server=MockRestServiceServer.bindTo(builder).build();
+        server.expect(requestTo(BASE_URL+"/models/gemini-3.5-flash-lite:generateContent"))
+            .andExpect(jsonPath("$.generationConfig.thinkingConfig.thinkingLevel").value("minimal"))
+            .andExpect(jsonPath("$.tools").doesNotExist())
+            .andRespond(withSuccess("{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"synthetic\"}]}}]}",MediaType.APPLICATION_JSON));
+        var policy=org.mockito.Mockito.mock(AiUsagePolicy.class);
+        org.mockito.Mockito.when(policy.enabled("gemini","gemini-3.5-flash-lite")).thenReturn(true);
+        var properties=new AiProperties("gemini","gemini-3.5-flash-lite",null,new AiProperties.Gemini(API_KEY,BASE_URL));
+        assertEquals("synthetic",new GeminiAiProvider(builder,properties,policy).generate(PROMPT,24));
+        server.verify();
+    }
 
     private static final String API_KEY = "test-gemini-secret";
     private static final String BASE_URL = "https://gemini.test/v1beta";
@@ -154,6 +166,8 @@ class GeminiAiProviderTest {
                 fallbackModel,
                 new AiProperties.Gemini(apiKey, BASE_URL)
         );
-        return new GeminiAiProvider(builder, properties);
+        var policy=org.mockito.Mockito.mock(AiUsagePolicy.class);
+        org.mockito.Mockito.when(policy.enabled(org.mockito.ArgumentMatchers.anyString(),org.mockito.ArgumentMatchers.anyString())).thenReturn(true);
+        return new GeminiAiProvider(builder, properties,policy);
     }
 }

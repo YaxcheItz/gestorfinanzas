@@ -16,10 +16,10 @@ public class AiProviderRouter implements AiProvider {
 
     public AiProviderRouter(AiProperties properties, OpenAiProvider openAi,
                             GeminiAiProvider gemini, GroqAiProvider groq) {
-        List<AiProvider> providers = List.of(openAi, gemini, groq);
-        String requested = properties.provider() == null ? "openai" : properties.provider().trim().toLowerCase();
-        AiProvider preferred = providers.stream().filter(provider -> provider.id().equals(requested)).findFirst()
-                .orElse(openAi);
+        List<AiProvider> providers = List.of(groq, gemini, openAi);
+        String requested = properties.provider() == null ? "groq" : properties.provider().trim().toLowerCase();
+        AiProvider preferred = providers.stream().filter(provider -> requested.equals(provider.id())).findFirst()
+                .orElse(groq);
         this.selected = preferred.isConfigured() ? preferred : providers.stream()
                 .filter(AiProvider::isConfigured).findFirst().orElse(preferred);
         String providerId = selected.id();
@@ -53,6 +53,8 @@ public class AiProviderRouter implements AiProvider {
             }
             outcome = "success";
             return respuesta;
+        } catch(AiUsagePolicy.Denied ex) {
+            outcome="budget_denied";throw ex;
         } finally {
             if (acquired) simultaneas.release();
             // Fixed fields only: never log prompts, responses, exception messages or model identifiers.
