@@ -1,5 +1,15 @@
 # Kaptal: plan maestro y traspaso al siguiente chat
 
+## Rendimiento: evitar carga preliminar repetida del panel
+
+- Cierre anterior #172 integrado en develop f3edecb tras todos sus checks correctos. CI posterior de la entrega Android d965438 (40937900303/40937900369) tambien SUCCESS. Nueva parte `rendimiento/evitar-carga-inicial-duplicada`, creada desde develop remoto comprobado y actualizada a f3edecb. APK instalada sigue en0.1.18; no se accedio al telefono en esta parte.
+- Medidor local nuevo `frontend/scripts/measure-navigation.cjs`: doce contextos Chromium, respuestas vacias ficticias, sesiones vigente/expirada, API rapida/lenta y listas con/sin cache. Distingue estructura, datos de Inicio y estructura/datos de Movimientos; cuenta HTTP por endpoint. Bloquea red externa y escrituras salvo renovacion sintetica. Incluye asserts de errores JS, conteos y una sola renovacion exitosa. CI conserva JSON por SHA siete dias.
+- Hallazgo reproducido: al arrancar sin lista guardada, el panel hacia una carga sin contexto y otra al seleccionar la lista personal. Se difiere solo la primera carga sin cache hasta resolver listas. Lista conocida, recargas posteriores, lista vacia y error mantienen continuacion comprobada.
+- Dos regresiones rojas antes del cambio. 41 pruebas focales, 471 pruebas frontend/58 archivos y build productivo correctos. Dos tandas de doce contextos tras el cambio correctas, mas referencia repetida con worktree f3edecb. El caso sin cache pasa de15 a11 peticiones iniciales: resumen/analitica/presupuestos/recurrencias, una por endpoint en vez de dos.
+- No se demostro reduccion de latencia: con demoras artificiales250ms, control repetido sin cache1191ms mediana y cambio1252ms; otras muestras varian con el equipo. No son p95 ni datos representativos ni Android/Render. La mejora acreditada es eliminar cuatro solicitudes preliminares. Evidencia `.local/navigation-synthetic-before.json`, `navigation-synthetic-after.json`, `navigation-baseline-repeat.json` y `navigation-after-repeat.json`.
+- Fuente aun pendiente de CI/integracion/publicacion al registrar. Esta optimizacion no esta en la APK0.1.18 instalada; requiere futura entrega Android. Sin backend, migraciones, cuotas nuevas, IA real ni QA financiera productiva. Pendientes: CI, validar y distribuir el cambio; datos/latencia representativos, avisos habituales nuevos y funciones restantes de Etapa13 antes del diseno y seguridad.
+
+
 ## Entrega vigente: Android 0.1.18 instalada y alertas integradas
 
 - PR #171 integrado en develop `d965438e9271a0930bd06d2d4b88bd9802d747f1` desde fuente `9d8a9892cfeccfb25030914be95b38b40db206a9`, con CI40936454323/40936443225 y Android40936454561 SUCCESS, quince checks/Vercel correctos. Los PR #169 y #170 quedaron integrados por inclusion en #171; #168 tambien integrado.
