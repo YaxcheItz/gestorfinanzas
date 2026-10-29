@@ -1,5 +1,15 @@
 # Estado para retomar la sesión
 
+## Publicacion web del arranque no bloqueante
+
+- PR #166 integrado en develop `dd393ab1cba66f884bc59645ba69af196e94d74c` tras CI40879674259/Android40879674385 y todos sus checks correctos. Promocion #167 integrada en main `98ddb3f6c4606e339a2656c36b542be86ed3f866` tras CI40881247762, CI40881171519 y Android40881247681/40881171633 correctos. El cambio ya esta servido en la web.
+- Verificacion publica 2026-10-29T13:32:44.480Z: 66 JS/CSS/manifiesto coincidentes, salud API directa y proxy HTTP200/UP, Google configurado con cliente habitual. Siete estaticos locales difieren por CRLF/LF; contraste corregido con bytes canonicos de Git. Se conserva primer resultado en `.local/startup-production-first-result.json` y resultado verificado en `.local/startup-production-result.json`. Vercel del main indica exito. Estado exacto del despliegue Render aun no consultado por fallo de conexion local a GitHub; backend sin cambios en esta promocion.
+- Respaldo de solo lectura fresco `.local/promotion-20261029T131512Z`, cifrado DPAPI, descifrado/hash/catalogo comprobados; sin restauracion. Consulta publica puntual anterior: servidor activo y salud 167/172 ms; no demuestra arranque frio ni explica el sintoma del telefono. Evidencia `.local/render-latency.json`.
+- Mejora comprobada local y en CI: estructura visible antes de terminar renovacion retenida; guard espera y cero peticiones protegidas anticipadas/con token vencido. CI: 230/158/155 ms para casos 200/401/503. El 503 inmediato sintetico conserva credenciales y genera tres renovaciones de consumidores distintos; no afirmar intento unico ante fallo. No se redujo la espera real del backend con esta parte.
+- Android: la CI compila, pero no se entrego/instalo una nueva APK ni se midio fisicamente este cambio. El proyecto conserva 0.1.17/codigo18; el APK instalado no obtiene el cambio por publicar la web. Siguiente parte: version/entrega Android y pruebas con datos ficticios aislados, luego medir datos/navegacion y continuar Etapa13. Sin QA financiera productiva.
+- CI posterior del main 40882655365: seis trabajos SUCCESS, incluido E2E/PWA; Android40882655322 SUCCESS. Confirmados a las 13:41 UTC del 29 de octubre. Git directo local a GitHub fallo tras publicar; main remoto se confirma por conector, pero `origin/main` local puede seguir en 368c00c hasta completar fetch. Cierre documental en rama nueva desde develop remoto confirmado; no confundir referencias locales con estado remoto. Render Free confirmado por propietario; migracion al final si persiste lentitud.
+
+
 ## Mejora local: estructura visible durante renovacion de sesion
 
 - Parte `rendimiento/estructura-durante-renovacion`, creada desde `origin/develop` 959d87c actualizado y comprobado; incorpora los dos commits documentales anteriores. Render Free confirmado por el propietario; migracion aplazada al final si persiste la lentitud.
