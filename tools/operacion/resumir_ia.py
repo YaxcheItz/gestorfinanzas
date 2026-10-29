@@ -80,7 +80,15 @@ def summarize(source):
                        'windowCount': size, 'minWindowMs': values[0], 'maxWindowMs': values[-1],
                        'meanWindowMs': round(sum(values) / size, 3),
                        'p95WindowMs': values[(95 * size + 99) // 100 - 1]})
+    alerts = [{'code': 'budget_' + reason, 'count': count}
+              for reason, count in sorted(budget.items())]
+    for (provider, outcome), (count, _) in sorted(groups.items()):
+        if outcome in ('provider_error', 'invalid_response', 'busy', 'budget_denied'):
+            alerts.append({'code': outcome, 'provider': provider, 'count': count})
+    alerts.extend({'code': 'usage_unavailable', 'provider': provider, 'count': count}
+                  for provider, count in sorted(missing_tokens.items()))
     return {'format': 3, 'records': accepted, 'ignoredLines': ignored,
+            'operationalAlerts': alerts,
             'reportedTokenUsage': dict(sorted(tokens.items())), 'unavailableTokenUsage': dict(sorted(missing_tokens.items())),
             'outboundAttempts': dict(sorted(requests.items())), 'budgetEvents': dict(sorted(budget.items())),
             'maxWindowRecordsPerGroup': WINDOW_SIZE, 'groups': output}
