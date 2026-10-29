@@ -1,5 +1,16 @@
 # Kaptal: plan maestro y traspaso al siguiente chat
 
+## Entrega vigente: Android 0.1.18 instalada y alertas integradas
+
+- PR #171 integrado en develop `d965438e9271a0930bd06d2d4b88bd9802d747f1` desde fuente `9d8a9892cfeccfb25030914be95b38b40db206a9`, con CI40936454323/40936443225 y Android40936454561 SUCCESS, quince checks/Vercel correctos. Los PR #169 y #170 quedaron integrados por inclusion en #171; #168 tambien integrado.
+- Firma, build web/Capacitor, JVM/lint/release firmada correctos. 18 Python y27 JVM correctas. APK0.1.18/codigo19 con la misma firma de0.1.17 y86 archivos web identicos al build, no depurable. SHA256 `58f9cd5d0f5182d20c4bec4fe34d6650bd286c84ee0987284857120ff15bd11e`. Copias en `.local/releases/Kaptal-0.1.18.apk` y Descargas.
+- El propietario comunico que el telefono estaba conectado y autorizo continuar. Actualizacion por reemplazo correcta, misma identidad de instalacion y fecha inicial. APK extraido del paquete instalado coincide por hash. No se abrio la app para QA, leyeron datos financieros, modificaron asociaciones ni crearon movimientos. La continuidad de sesion en pantalla y el registro real nuevo no se verificaron. Evidencia separada en `.local/android-018-verification.json` y `.local/android-018-device-after.json`.
+- Nuevos formatos Amex/Revolut y estructura durante renovacion ya incluidos en la APK instalada. MXN predeterminado autorizado para avisos sin moneda; moneda extranjera explicita sigue diferenciada. Solo toma gasto individual, no total diario. Santander solo gastos; Sears, consentimiento de ingresos y asociaciones conservados por el alcance del cambio. No recuperar descartados ni reclasificar historial.
+- Alertas de operacion disponibles en el resumidor, con conteos y codigos permitidos; sin facturas/cuotas inferidas ni envios externos. Etapa13 sigue abierta para cuotas efectivas, duracion reportada, mediciones representativas y operacion restante. La interfaz guiada de nuevas tarjetas sigue como propuesta a revisar al final contigo.
+- Git directo volvio a funcionar: referencias actualizadas. Para superar el fallo previo se publicaron arboles identicos mediante conector y se verificaron objetos Git por SHA; los commits locales originales quedan conservados. Codigo cliente y herramienta integrados en develop. Web/backend siguen en main `98ddb3f6c4606e339a2656c36b542be86ed3f866`, sin cambios backend ni migracion en esta entrega.
+- CI posterior de develop40937900303 y Android40937900369 en curso al registrar. Cierre documental en rama nueva desde develop d965438; comprobar su PR/CI y conclusion de las ejecuciones posteriores antes de asumir estados. Sin prueba real de nuevos avisos ni medicion fisica de latencia; esperar uso habitual, sin compras de prueba, IA real o QA financiera productiva.
+
+
 ## Candidato Android 0.1.18: entrega sin usar el telefono
 
 - Instruccion vigente: publicar correcciones, validar CI, integrar alertas y preparar APK, sin instalar ni acceder al telefono. Rama nueva `mejoras/android-0-1-18-avisos` desde develop d32ed28 confirmado; combina alertas y formatos, conservando ambos bloques documentales. Version 0.1.18/codigo19.
