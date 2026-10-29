@@ -1,5 +1,15 @@
 # Estado para retomar la sesión
 
+## Avisos Amex/Revolut y moneda predeterminada
+
+- El propietario reporto dos gastos habituales no registrados. Los importes, comercios y terminaciones reales no se copiaron al repositorio ni se importaron como movimientos. Se reprodujeron estructuras equivalentes con datos ficticios. El telefono sigue ocupado: sin ADB, instalaciones, lectura de datos ni pruebas fisicas.
+- Decision explicita: todas sus cuentas usan MXN como predeterminado. Avisos sin moneda se interpretan como MXN; moneda extranjera explicita no se convierte ni ignora. No se crea interruptor adicional ni se reclasifica historial. La configuracion manual de Cuentas ya inicia en MXN. Consentimiento de ingresos y Santander solo gastos conservados.
+- Rama `correcciones/avisos-amex-revolut-formatos`, desde develop remoto confirmado; actualizada a d32ed28 tras integrar el cierre documental #168. Amex: formato MX$ con nombre de tarjeta y terminacion de cinco digitos. Amex/Revolut: resumen con importe entero o centavos, espacios y total diario; solo extrae el gasto individual. Paquete oficial y asociacion unica siguen obligatorios; restricciones de tarjeta no verificables se rechazan.
+- Dos regresiones de formatos reproducidas antes de sus cambios. Suite JVM final: 27 pruebas, cero fallos/errores. Gradle requirio ANDROID_HOME local, configurado solo en el proceso. Esto demuestra parsing local, no recepcion/registro bancario real. CI y entrega APK de esta parte pendientes. No recuperar descartados ni compras de prueba.
+- Solicitud nueva para el final: facilitar nuevas tarjetas y gastos/ingresos/transferencias desde Kaptal con una interfaz guiada. Propuesta y limites en docs/AUTOMATIZACION_TARJETAS_PROPUESTA.md; no prometer reconocer cualquier mensaje ni depender de Samsung. Diseno a revisar con el propietario antes de construir esa interfaz.
+- Etapa13 sigue en PR169, HEAD d593666, 18 pruebas Python correctas y E2E en CI al registrar; integrar conservando tanto el cierre #168 como sus nuevas notas si hay conflictos.
+
+
 ## Publicacion web del arranque no bloqueante
 
 - PR #166 integrado en develop `dd393ab1cba66f884bc59645ba69af196e94d74c` tras CI40879674259/Android40879674385 y todos sus checks correctos. Promocion #167 integrada en main `98ddb3f6c4606e339a2656c36b542be86ed3f866` tras CI40881247762, CI40881171519 y Android40881247681/40881171633 correctos. El cambio ya esta servido en la web.
