@@ -1,5 +1,13 @@
 # Estado para retomar la sesión
 
+## Rendimiento: línea base local e hipótesis de arranque
+
+- PR documental #164 integrado en develop `b55ba07b98e1f8b54b0a5012a0c5fe61c987ddcc`; CI482/40822694492, siete checks y Vercel correctos en el commit de la rama. Nueva parte `rendimiento/medicion-arranque-navegacion` actualizada desde ese develop.
+- Build Angular de producción correcto. Prueba Chromium local sin red externa, datos sintéticos, tres contextos nuevos: sesión vigente, estructura visible 298/164/151 ms y navegación a Movimientos 288/177/178 ms; sesión expirada, renovación simulada de 2000 ms, estructura visible 2518/3514/2465 ms y una renovación por intento. Evidencias `.local/measure-startup.cjs` y `.local/startup-synthetic.json`. La primera medición de navegación intentó una opción oculta y se corrigió usando el acceso visible a Movimientos.
+- Estos resultados prueban una dependencia del arranque con la espera artificial, no latencia de producción ni p95 ni rendimiento Android. La pantalla inicial existente ya comunica la espera. El inicializador espera la renovación y el guard también coordina el acceso; preservar la sesión y el comportamiento ante fallos.
+- `render.yaml` declara plan Free, sin confirmar aquí el plan activo. Según https://render.com/docs/free, una instancia Free se duerme después de 15 minutos sin tráfico y puede tardar aproximadamente un minuto en despertar; es hipótesis compatible con el síntoma, no diagnóstico confirmado. Pendiente contrastar plan activo y medición fría/caliente sin datos financieros reales, medir carga de datos y navegación en dispositivo, y solo entonces implementar y validar mejoras. No activar servicios pagados ni tareas de mantenimiento artificial sin revisar costes y condiciones.
+
+
 ## Herramientas globales y siguiente medición de rendimiento
 
 - Desde develop `3f5ff085bc50b7e8cdd42000c615514df46d7800` confirmado contra remoto se inició la rama documental `documentacion/herramientas-globales-rendimiento`. La categoría de reparto publicada conserva el historial; los avisos reales futuros de Revolut, Amex y la categoría bancaria siguen pendientes de observación habitual.
