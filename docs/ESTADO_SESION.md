@@ -1,5 +1,24 @@
 # Estado para retomar la sesión
 
+## Mejora local: estructura visible durante renovacion de sesion
+
+- Parte `rendimiento/estructura-durante-renovacion`, creada desde `origin/develop` 959d87c actualizado y comprobado; incorpora los dos commits documentales anteriores. Render Free confirmado por el propietario; migracion aplazada al final si persiste la lentitud.
+- El inicializador inicia la renovacion sin bloquear el dibujo de la estructura. El guard sigue esperando la sesion; el interceptor ahora espera la renovacion compartida antes de enviar peticiones protegidas si el token ya vencio. Se conserva el bloqueo entre pestanas, comprobacion de identidad y manejo de 401/fallo temporal. Estado visible: Preparando tu sesion. No se modifica backend ni datos.
+- TDD: dos regresiones nuevas fallaron antes del cambio. Despues: 41 pruebas focales y suite completa de 466 pruebas/58 archivos correctas; caso adicional 401 previo verificado en la suite focal final de 22 pruebas correctas. Build productivo correcto. Prueba Chromium con renovacion retenida: estructura visible antes de resolver, ruta protegida sin activar, cero peticiones protegidas antes de resolver y cero tokens vencidos enviados; 200 navega a Movimientos, 401 limpia sesion y redirige, 503 conserva credenciales. En el caso 503 sintetico inmediato se observaron tres intentos de consumidores distintos, no afirmar una sola renovacion para fallos.
+- Comparacion con la misma espera artificial de 2000 ms: estructura antes 2518/3514/2465 ms; ahora 194/224/200 ms. Sesion vigente ahora 232/194/235 ms, navegacion 237/222/230 ms. Son contextos locales nuevos, tres muestras por caso; no p95, Android ni tiempo de datos real. Evidencia local `.local/startup-after-synthetic.json`; la linea base original se conserva.
+- Comprobacion reproducible: `cd frontend`, `npm run build`, `node scripts/check-startup.cjs`. Solo servidor local, respuestas ficticias y trafico externo bloqueado. Integrada tambien en CI, antes de PWA. CI y produccion de esta rama pendientes al escribir. No afirmar desplegado.
+- Sigue: validar CI, revisar resultado, integrar/promover tras comprobaciones; medir dispositivo y espera de datos con fixtures. Etapa 13, diseno por secciones con el propietario y seguridad/privacidad siguen pendientes. Sin QA financiera productiva, IA real, cambios bancarios ni instalacion de APK en esta parte.
+
+
+## Seguimiento de rendimiento: evidencia actual
+
+- Decisión vigente del propietario: confirma que el servicio usa Render Free. Primero completar funciones, rendimiento, diseño y seguridad/privacidad. Si la lentitud persiste al finalizar, evaluar alternativas gratuitas de hosting y una posible migración; esta queda aplazada, sin cambiar ahora proveedor ni activar pagos. La confirmación del plan procede del propietario, no de una consulta al panel/API de Render.
+- Base: `develop` y `origin/develop` coinciden en `959d87c56bc988411852c5d5a742ec61384c3293`; rama `rendimiento/seguimiento-arranque-real`. `origin/main`: `368c00c8a2a3b36b18f01389020beeb9e9019ad9`. CI 40824579853: sus seis trabajos terminaron correctamente; Vercel indica éxito.
+- `main` programa Keep Warm cada diez minutos y GitHub lo indica activo. Sin embargo, el historial público consultado a las 05:49 UTC del 29 de octubre muestra las cinco últimas ejecuciones programadas a las 02:39 UTC del 29 y 23:29, 19:37, 14:17 y 07:28 UTC del 28, todas exitosas. Son intervalos de horas, no prueba de ausencia de otro tráfico ni de que Render se durmiera. No se cambió ni desactivó el workflow.
+- Render documenta suspensión de instancias Free tras 15 minutos sin tráfico y despertar aproximado de un minuto: https://render.com/docs/free. El propietario confirma el plan activo Free; no se ha consultado el panel/API. El mismo proveedor indica que `/robots.txt` responde automáticamente sin despertar una instancia Free dormida. Una consulta puntual recibió 401 desde el origen, compatible con servicio activo en ese instante; no demuestra estado previo.
+- API `/api/health` HTTP 200 en 0.886 s y portada HTTP 200 en 0.553 s en peticiones puntuales, sin conocer la inactividad previa. No son medición fría ni diagnóstico. Samsung visible por ADB, sin acceder a contenido ni medir app. La línea base sintética está en `.local/startup-synthetic.json`.
+- Pendiente: observar `/robots.txt` sin despertar el servicio y correlacionar con historial de ejecuciones, tráfico y tiempos de peticiones públicas, sin interrumpir Keep Warm. Medir arranque y navegación Android con datos ficticios y preservar la coordinación de sesión. Etapa 13, diseño y seguridad siguen abiertos.
+
 ## Rendimiento: línea base local e hipótesis de arranque
 
 - PR documental #164 integrado en develop `b55ba07b98e1f8b54b0a5012a0c5fe61c987ddcc`; CI482/40822694492, siete checks y Vercel correctos en el commit de la rama. Nueva parte `rendimiento/medicion-arranque-navegacion` actualizada desde ese develop.
