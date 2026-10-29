@@ -1,5 +1,13 @@
 # Kaptal: plan maestro y traspaso al siguiente chat
 
+## Cierre de peticiones iniciales: PR173 integrado
+
+- PR173 integrado en develop `732aea12f7b6eb2700a7ed86b3cf6123405a281b` desde `085a4dfdc75721372e77d8a4e1c3d690ac528191`, con CI40941725600, Android40941725581 y todos los checks/Vercel correctos. Medidor nuevo tambien correcto en CI: una solicitud de resumen por contexto en los doce recorridos. Artefacto `navigation-synthetic` conservado siete dias por workflow/SHA; copia extraida `.local/navigation-ci.json`.
+- Se evitan cuatro consultas preliminares del panel sin lista guardada. 41 focales,471 frontend, build y navegacion sintetica correctos. Control repetido1191ms frente a1252ms de datos: no se acredita menor latencia. Repeticion y muestras previas se conservan; no p95, Android, Render ni volumen representativo.
+- #172 y CI posterior de Android0.1.18 ya cerradas correctamente. Nueva parte integrada en develop; web/backend siguen main98ddb3f y telefono0.1.18 sin esta ultima modificacion. No se genero otra APK, se instalo ni accedio al dispositivo en esta parte. Etapa13 y comprobacion de avisos habituales nuevos siguen abiertas.
+- Siguiente: verificar CI posterior de develop732aea1 y cierre documental, decidir distribucion web/Android de este ajuste y continuar mediciones representativas con fixtures. Sin compras de prueba/QA financiera productiva/IA real/recuperar descartados/reclasificar historial. Diseno contigo por secciones despues de funciones/rendimiento; seguridad y privacidad al final.
+
+
 ## Rendimiento: evitar carga preliminar repetida del panel
 
 - Cierre anterior #172 integrado en develop f3edecb tras todos sus checks correctos. CI posterior de la entrega Android d965438 (40937900303/40937900369) tambien SUCCESS. Nueva parte `rendimiento/evitar-carga-inicial-duplicada`, creada desde develop remoto comprobado y actualizada a f3edecb. APK instalada sigue en0.1.18; no se accedio al telefono en esta parte.
