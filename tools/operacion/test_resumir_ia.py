@@ -31,6 +31,11 @@ class MetricsTest(unittest.TestCase):
     def test_successful_sample_without_warning_signals_has_no_alerts(self):
         self.assertEqual(summarize(io.StringIO(record(provider='groq')))['operationalAlerts'], [])
 
+    def test_budget_denial_is_visible_even_without_the_separate_budget_log(self):
+        report = summarize(io.StringIO(record(provider='groq', outcome='budget_denied')))
+        self.assertEqual(report['operationalAlerts'], [
+            {'code': 'budget_denied', 'provider': 'groq', 'count': 1}])
+
     def test_all_budget_signals_and_capacity_failures_are_visible_without_thresholds(self):
         reasons = ['blocked', 'exhausted', 'unavailable', 'unverified']
         text = ''.join(f'KAPTAL_AI_BUDGET outcome={reason}\n' for reason in reasons)

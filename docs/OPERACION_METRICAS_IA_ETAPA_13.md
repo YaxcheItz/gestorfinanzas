@@ -67,7 +67,7 @@ Se reutiliza el [logging parametrizado de SLF4J](https://www.slf4j.org/manual.ht
 El JSON formato3 incorpora el campo aditivo `operationalAlerts`. Cada entrada contiene `code`, `count` y, cuando corresponde, `provider`. Mantiene intactos generaciones, intentos, presupuesto y tokens. Las alertas se calculan sobre los registros aceptados de toda la entrada; los percentiles siguen usando su ventana acotada.
 
 - `budget_blocked`, `budget_exhausted`, `budget_unavailable`, `budget_unverified`: senales emitidas por el control existente; no equivalen a cuota del proveedor ni factura.
-- `provider_error`, `invalid_response`, `busy`: cantidad de generaciones con ese resultado por proveedor. No son conteos de intentos HTTP ni sumas de incidentes independientes.
+- `provider_error`, `invalid_response`, `busy`, `budget_denied`: cantidad de generaciones con ese resultado por proveedor. No son conteos de intentos HTTP ni sumas de incidentes independientes.
 - `usage_unavailable`: respuestas sin contadores de tokens, separadas de respuestas que reportan cero.
 
 Una misma operacion puede producir varias senales: no sumar alertas como total de fallos. Una lista vacia significa ausencia de esas senales en la muestra, no salud global, actividad reciente o coste cero. No se envian mensajes, correos o telemetria, ni se crean cuotas o umbrales. La salida solo conserva codigos permitidos y conteos; los prefijos y textos ajenos no se reproducen.

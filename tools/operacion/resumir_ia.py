@@ -83,7 +83,7 @@ def summarize(source):
     alerts = [{'code': 'budget_' + reason, 'count': count}
               for reason, count in sorted(budget.items())]
     for (provider, outcome), (count, _) in sorted(groups.items()):
-        if outcome in ('provider_error', 'invalid_response', 'busy'):
+        if outcome in ('provider_error', 'invalid_response', 'busy', 'budget_denied'):
             alerts.append({'code': outcome, 'provider': provider, 'count': count})
     alerts.extend({'code': 'usage_unavailable', 'provider': provider, 'count': count}
                   for provider, count in sorted(missing_tokens.items()))
