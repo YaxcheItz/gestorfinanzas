@@ -259,3 +259,15 @@ jobs:
           name: pwa-failures
           path: frontend/test-results/
           retention-days: 7
+
+      - name: Medir datos y navegacion con API sintetica
+        id: navigation
+        working-directory: frontend
+        run: node scripts/measure-navigation.cjs
+      - name: Evidencia de navegacion sintetica
+        uses: actions/upload-artifact@v4
+        if: always() && steps.navigation.outcome != 'skipped'
+        with:
+          name: navigation-synthetic-${{ github.sha }}
+          path: frontend/test-results/navigation-synthetic.json
+          retention-days: 7

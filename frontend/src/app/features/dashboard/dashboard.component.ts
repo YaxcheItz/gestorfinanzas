@@ -264,6 +264,7 @@ export class DashboardComponent implements OnInit {
   private preferenciaPeriodoLeida = false;
   private periodoModificado = false;
   private dashboardVersion = 0;
+  private esperandoListaInicial = false;
   readonly fechasRango = computed(() => this.tipoRango() === 'PERSONALIZADO' && this.rangoPersonalizado()
     ? this.rangoPersonalizado()!
     : resolverPeriodo({ ...this.configuracionPeriodo(), tipo: this.tipoRango() as TipoPeriodo }, this.referenciaPeriodo()));
@@ -507,7 +508,8 @@ export class DashboardComponent implements OnInit {
     let listaObservada = this.contextoLista.activaId();
     effect(() => {
       const id = this.contextoLista.activaId();
-      if (id === listaObservada) return;
+      const cargando = this.contextoLista.cargando();
+      if (id === listaObservada && !(this.esperandoListaInicial && !cargando)) return;
       listaObservada = id;
       untracked(() => {
         const moneda = this.contextoLista.activa()?.moneda; if (moneda) this.monedaResumen.set(moneda);
@@ -554,6 +556,12 @@ export class DashboardComponent implements OnInit {
   }
 
   cargarDashboard(): void {
+    // Evita cargar el agregado antes de conocer la lista personal en el primer arranque sin caché.
+    if (this.dashboardVersion === 0 && this.contextoLista.cargando() && this.contextoLista.activaId() === null) {
+      this.esperandoListaInicial = true;
+      return;
+    }
+    this.esperandoListaInicial = false;
     const hoy = fechaCivilFinanciera();
     if (this.referenciaPeriodo() === this.fechaHoy()) this.referenciaPeriodo.set(hoy);
     this.fechaHoy.set(hoy);

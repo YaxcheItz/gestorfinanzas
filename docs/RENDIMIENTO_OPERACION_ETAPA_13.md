@@ -57,3 +57,20 @@ Son latencias HTTP calientes de una muestra pequeña H2 local, no p95 productivo
 ## Referencias técnicas
 
 El análisis estático usa la [API oficial del compilador TypeScript](https://github.com/microsoft/TypeScript/wiki/Using-the-Compiler-API), con TypeScript5.9 ya instalado. La compresión usa [zlib de Node](https://nodejs.org/api/zlib.html). No se instaló una biblioteca adicional para medir.
+
+## Datos y navegacion: primera carga sin lista guardada
+
+Comando tras compilar frontend: `node scripts/measure-navigation.cjs`. Genera `frontend/test-results/navigation-synthetic.json`, tambien conservado por CI siete dias bajo el SHA. Tres contextos nuevos por caso: sesion vigente, renovacion artificial de2000ms, API artificial250ms con/sin lista guardada. Datos vacios ficticios; no consulta servicios externos, usuarios o IA reales. No mide SQL ni comportamiento de Android.
+
+Se espera una respuesta de listas antes de pedir el primer panel cuando no existe contexto guardado. Conserva el inicio con cache y continua cuando listas termina vacia o falla. Recargas y cambios posteriores conservan su comportamiento. La espera inicial depende de que listas termine su respuesta o error; no se anade un timeout nuevo.
+
+| Caso de control repetido | Peticiones iniciales antes/despues | Mediana local datos antes/despues, ms |
+| --- | --- | --- |
+| Sesion vigente, lista guardada | 11 / 11 | 618 / 626 |
+| Renovacion artificial2000ms, lista guardada | 12 / 12 | 2678 / 2671 |
+| API artificial250ms, sin lista guardada | 15 / 11 | 1191 / 1252 |
+| API artificial250ms, lista guardada | 11 / 11 | 858 / 759 |
+
+Estos datos acreditan la reduccion de cuatro solicitudes, no una mejora de velocidad. Tandas previas tuvieron otros tiempos; equipo, compilacion y recursos influyen. Tres muestras por caso no sustentan p95, ensayos de carga ni representatividad financiera. El medidor verifica estructura, fin de carga, navegacion, ausencia de errores JS/escrituras y conteos; no falla CI por umbrales de latencia.
+
+No se modifica la APK0.1.18 ya instalada ni el backend. Para aplicar el cambio a Android se necesita otra entrega. La primera renovacion y el tiempo del backend siguen pendientes de observacion representativa.
