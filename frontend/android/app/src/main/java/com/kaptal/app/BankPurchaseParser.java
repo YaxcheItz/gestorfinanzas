@@ -24,8 +24,11 @@ final class BankPurchaseParser {
     private static final Pattern NON_PURCHASE_TITLE=Pattern.compile(
         "\\b(?:rechazad[ao]|cancelad[ao]|no autorizad[ao]|no reconocid[ao]|intento|devoluci[oó]n)\\b",
         Pattern.CASE_INSENSITIVE|Pattern.UNICODE_CASE);
-    private static final Pattern AMEX_SUMMARY=Pattern.compile(
-        "^Gastaste \\$([0-9]{1,3}(?:,[0-9]{3})*|[0-9]{1,13})\\.([0-9]{2}) Gastos de hoy: \\$(?:[0-9]{1,3}(?:,[0-9]{3})*|[0-9]{1,13})\\.[0-9]{2}$");
+    private static final Pattern EXPENSE_SUMMARY=Pattern.compile(
+        "^Gastaste \\$\\s*([0-9]{1,3}(?:,[0-9]{3})*|[0-9]{1,13})(?:\\.([0-9]{2}))? Gastos de hoy: \\$\\s*(?:[0-9]{1,3}(?:,[0-9]{3})*|[0-9]{1,13})(?:\\.[0-9]{2})?$");
+    private static final Pattern AMEX_MXN=Pattern.compile(
+        "^Gastaste MX\\$\\s*([0-9]{1,3}(?:,[0-9]{3})*|[0-9]{1,13})\\.([0-9]{2}) en tu Tarjeta American Express terminaci[oó]n ([0-9]{5}) en ([^$]{1,120}?)[.!]?$",
+        Pattern.CASE_INSENSITIVE|Pattern.UNICODE_CASE);
     private static final Pattern REVOLUT_INCOME=Pattern.compile(
         "^Recibiste \\$([0-9]{1,3}(?:,[0-9]{3})*|[0-9]{1,13})(?:\\.([0-9]{2}))?(?: MXN)?$");
     /** Call only with explicit consent that bare-dollar Revolut income means MXN. */
@@ -50,14 +53,14 @@ final class BankPurchaseParser {
     }
     static SearsPurchaseParser.Purchase parseNotification(String provider,String pkg,String suffix,String key,
             String title,String body,LocalDate date) {
-        if("AMEX".equals(provider)&&PACKAGES.get("AMEX").equals(pkg)&&title!=null&&body!=null
+        if(("AMEX".equals(provider)||"REVOLUT".equals(provider))&&PACKAGES.get(provider).equals(pkg)&&title!=null&&body!=null
             &&title.length()<=120&&body.length()<=1000&&key!=null&&!key.isBlank()&&date!=null) {
             String heading=title.trim().replaceAll("[\\s\\p{Z}]+"," ");
             if(isNonExpenseNotification(heading,body)||NON_PURCHASE_TITLE.matcher(heading).find())return null;
-            var summary=AMEX_SUMMARY.matcher(body.trim().replaceAll("[\\s\\p{Z}]+"," "));
+            var summary=EXPENSE_SUMMARY.matcher(body.trim().replaceAll("[\\s\\p{Z}]+"," "));
             // A configured card restriction cannot be verified from this cardless format.
             if(summary.matches()&&(suffix==null||suffix.isEmpty()))return purchase(
-                new BigDecimal(summary.group(1).replace(",","")+"."+summary.group(2)),date,heading,provider+"|"+key);
+                new BigDecimal(summary.group(1).replace(",","")+"."+(summary.group(2)==null?"00":summary.group(2))),date,heading,provider+"|"+key);
         }
         if("SANTANDER".equals(provider)&&isNonExpenseNotification(title,body))return null;
         if("SANTANDER".equals(provider)&&title!=null&&NON_PURCHASE_TITLE.matcher(title.replaceAll("[\\s\\p{Z}]+"," ")).find())return null;
@@ -74,7 +77,15 @@ final class BankPurchaseParser {
     static SearsPurchaseParser.Purchase parse(String provider,String pkg,String suffix,String key,String body,LocalDate date) {
         if(provider==null || pkg==null || !pkg.equals(PACKAGES.get(provider)) || body==null || body.length()>1000
             || key==null || key.isBlank() || date==null) return null;
-        String normalized=body.trim().replaceAll("\\s+"," ");
+        String normalized=body.trim().replaceAll("[\\s\\p{Z}]+"," ");
+        if("AMEX".equals(provider)) {
+            var amex=AMEX_MXN.matcher(normalized);
+            if(amex.matches()) {
+                if(suffix!=null&&!suffix.isEmpty()&&!suffix.equals(amex.group(3)))return null;
+                return purchase(new BigDecimal(amex.group(1).replace(",","")+"."+amex.group(2)),date,
+                    amex.group(4).trim(),provider+"|"+key);
+            }
+        }
         if("SANTANDER".equals(provider)) {
             var bank=SANTANDER_CREDIT.matcher(normalized);
             if(bank.matches()) {
@@ -97,8 +108,8 @@ final class BankPurchaseParser {
         var match=PURCHASE.matcher(normalized);
         if(!match.matches()) return null;
         String currency=match.group(3);
-        // Revolut is multi-currency: a bare $ cannot distinguish MXN from USD.
-        if(currency==null ? "REVOLUT".equals(provider) : !currency.equalsIgnoreCase("MXN")&&!currency.equalsIgnoreCase("pesos")) return null;
+        // Owner-selected MXN default applies only when currency is not explicitly foreign.
+        if(currency!=null&&!currency.equalsIgnoreCase("MXN")&&!currency.equalsIgnoreCase("pesos")) return null;
         if(suffix!=null&&!suffix.isEmpty()&&!suffix.equals(match.group(5))) return null;
         try {
             return purchase(new BigDecimal(match.group(1).replace(",","")+"."+match.group(2)),date,

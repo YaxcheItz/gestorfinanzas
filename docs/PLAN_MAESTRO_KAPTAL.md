@@ -1,5 +1,31 @@
 # Kaptal: plan maestro y traspaso al siguiente chat
 
+## Candidato Android 0.1.18: entrega sin usar el telefono
+
+- Instruccion vigente: publicar correcciones, validar CI, integrar alertas y preparar APK, sin instalar ni acceder al telefono. Rama nueva `mejoras/android-0-1-18-avisos` desde develop d32ed28 confirmado; combina alertas y formatos, conservando ambos bloques documentales. Version 0.1.18/codigo19.
+- Git directo sigue fallando; el conector publico los mismos arboles de archivos que 011ef40 y141507d con metadatos/SHA nuevos: PR169 fuente API0cc7483 yPR170 fuente APIbbb0088. Preparar candidato conjunto para integrarlos una sola vez y revalidar el contenido completo. No confundir igualdad de arbol con igualdad de SHA.
+- Funciones: Amex MX$ con cinco digitos; resumen Amex/Revolut sin sumar total diario; MXN por defecto por instruccion explicita, moneda extranjera explicita diferenciada. Santander solo gastos, Sears y asociaciones conservados, sin recuperar descartados ni reclasificar historial.
+- Verificacion combinada: 18 pruebas Python correctas; 27 JVM correctas en fuente bancaria anterior. Build web y cap sync correctos. Release firmada/lint/JVM y CI final en curso al escribir; no afirmar APK validada ni instalada antes de comprobar sus resultados. Sin IA real ni QA financiera productiva.
+- Despues: confirmar CI e integracion del candidato, verificar firma/hash/version y entregar archivo APK. La instalacion y medicion fisica quedan pendientes hasta que el propietario deje de usar el telefono. Nueva interfaz de tarjetas se revisa al final con el propietario, segun propuesta documentada.
+
+
+## Etapa 13: alertas agregadas sin telefono
+
+- El propietario usa el telefono: entrega APK y mediciones fisicas aplazadas; continuar tareas independientes con fixtures. Rama `mejoras/etapa-13-alertas-agregadas` desde develop remoto `dd393ab1cba66f884bc59645ba69af196e94d74c`, actualizado/comprobado. Fetch recuperado y cierre anterior publicado en PR #168, pendiente de integrar. Main web 98ddb3f, CI/Android posteriores correctos segun cierre anterior.
+- `tools/operacion/resumir_ia.py` agrega `operationalAlerts` al formato3, sin cambiar los contadores anteriores. Agrupa senales de presupuesto, errores de proveedor/respuesta, capacidad ocupada y uso no reportado. Solo codigos/proveedores permitidos y conteos; sin umbrales inventados, latencias objetivo, facturas o cuotas deducidas. Alertas vacias solo significan que no se observaron esas senales en la entrada.
+- TDD: dos pruebas fallaron antes de implementar; 18 pruebas Python correctas despues, incluida CLI, canarios privados, lineas largas, ventanas acotadas y todas las senales admitidas. Compilacion Python y diff check correctos. Sin IA real, red de proveedores, datos financieros, APK ni acceso al dispositivo. CI/integracion de esta parte pendientes al escribir. No requiere desplegar backend para usar el resumidor.
+- Pendientes: CI e integracion; cuotas efectivas y duracion de audio realmente reportada siguen sin demostrarse. Medicion Android y entrega de APK cuando el telefono este disponible; continuar funciones/rendimiento antes del diseno por secciones y seguridad/privacidad. Migracion de hosting al final si hace falta.
+
+## Avisos Amex/Revolut y moneda predeterminada
+
+- El propietario reporto dos gastos habituales no registrados. Los importes, comercios y terminaciones reales no se copiaron al repositorio ni se importaron como movimientos. Se reprodujeron estructuras equivalentes con datos ficticios. El telefono sigue ocupado: sin ADB, instalaciones, lectura de datos ni pruebas fisicas.
+- Decision explicita: todas sus cuentas usan MXN como predeterminado. Avisos sin moneda se interpretan como MXN; moneda extranjera explicita no se convierte ni ignora. No se crea interruptor adicional ni se reclasifica historial. La configuracion manual de Cuentas ya inicia en MXN. Consentimiento de ingresos y Santander solo gastos conservados.
+- Rama `correcciones/avisos-amex-revolut-formatos`, desde develop remoto confirmado; actualizada a d32ed28 tras integrar el cierre documental #168. Amex: formato MX$ con nombre de tarjeta y terminacion de cinco digitos. Amex/Revolut: resumen con importe entero o centavos, espacios y total diario; solo extrae el gasto individual. Paquete oficial y asociacion unica siguen obligatorios; restricciones de tarjeta no verificables se rechazan.
+- Dos regresiones de formatos reproducidas antes de sus cambios. Suite JVM final: 27 pruebas, cero fallos/errores. Gradle requirio ANDROID_HOME local, configurado solo en el proceso. Esto demuestra parsing local, no recepcion/registro bancario real. CI y entrega APK de esta parte pendientes. No recuperar descartados ni compras de prueba.
+- Solicitud nueva para el final: facilitar nuevas tarjetas y gastos/ingresos/transferencias desde Kaptal con una interfaz guiada. Propuesta y limites en docs/AUTOMATIZACION_TARJETAS_PROPUESTA.md; no prometer reconocer cualquier mensaje ni depender de Samsung. Diseno a revisar con el propietario antes de construir esa interfaz.
+- Etapa13 sigue en PR169, HEAD d593666, 18 pruebas Python correctas y E2E en CI al registrar; integrar conservando tanto el cierre #168 como sus nuevas notas si hay conflictos.
+
+
 ## Publicacion web del arranque no bloqueante
 
 - PR #166 integrado en develop `dd393ab1cba66f884bc59645ba69af196e94d74c` tras CI40879674259/Android40879674385 y todos sus checks correctos. Promocion #167 integrada en main `98ddb3f6c4606e339a2656c36b542be86ed3f866` tras CI40881247762, CI40881171519 y Android40881247681/40881171633 correctos. El cambio ya esta servido en la web.

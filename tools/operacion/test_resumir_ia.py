@@ -15,6 +15,37 @@ def record(ms=10, provider='openai', outcome='success'):
 
 
 class MetricsTest(unittest.TestCase):
+    def test_operational_alerts_use_only_aggregate_signals(self):
+        report = summarize(io.StringIO(
+            'KAPTAL_AI_BUDGET outcome=exhausted\n' * 2
+            + 'KAPTAL_AI_USAGE provider=groq status=unavailable\n'
+            + record(provider='gemini', outcome='provider_error')
+            + 'PRIVATE_CANARY\n'))
+        self.assertEqual(report['operationalAlerts'], [
+            {'code': 'budget_exhausted', 'count': 2},
+            {'code': 'provider_error', 'provider': 'gemini', 'count': 1},
+            {'code': 'usage_unavailable', 'provider': 'groq', 'count': 1},
+        ])
+        self.assertNotIn('PRIVATE_CANARY', json.dumps(report))
+
+    def test_successful_sample_without_warning_signals_has_no_alerts(self):
+        self.assertEqual(summarize(io.StringIO(record(provider='groq')))['operationalAlerts'], [])
+
+    def test_budget_denial_is_visible_even_without_the_separate_budget_log(self):
+        report = summarize(io.StringIO(record(provider='groq', outcome='budget_denied')))
+        self.assertEqual(report['operationalAlerts'], [
+            {'code': 'budget_denied', 'provider': 'groq', 'count': 1}])
+
+    def test_all_budget_signals_and_capacity_failures_are_visible_without_thresholds(self):
+        reasons = ['blocked', 'exhausted', 'unavailable', 'unverified']
+        text = ''.join(f'KAPTAL_AI_BUDGET outcome={reason}\n' for reason in reasons)
+        text += record(provider='groq', outcome='busy') + record(provider='groq', outcome='invalid_response')
+        report = summarize(io.StringIO(text))
+        self.assertEqual([a['code'] for a in report['operationalAlerts']],
+                         ['budget_' + r for r in reasons] + ['busy', 'invalid_response'])
+        self.assertTrue(all(a['count'] == 1 for a in report['operationalAlerts']))
+        self.assertEqual(summarize(io.StringIO(''))['operationalAlerts'], [])
+
     def test_provider_token_counts_are_aggregated_without_inventing_a_cost(self):
         text = ('KAPTAL_AI_USAGE provider=gemini status=reported input_tokens=10 output_tokens=3 total_tokens=17\n' * 2
             + 'KAPTAL_AI_USAGE provider=groq status=reported input_tokens=4 output_tokens=2 total_tokens=6\n'
