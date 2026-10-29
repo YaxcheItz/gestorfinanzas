@@ -250,6 +250,7 @@ jobs:
           ABUSE_LIMIT_STORE: postgres
         run: |
           npm run build
+          node scripts/check-startup.cjs
           npx playwright test -c playwright.pwa.config.ts
       - name: Evidencia PWA
         uses: actions/upload-artifact@v4

@@ -17,7 +17,10 @@
         }
       </aside>
     }
-    <router-outlet />
+    <router-outlet #contenido="outlet" />
+    @if (!contenido.isActivated && authService.isAuthenticated()) {
+      <p role="status" class="mx-4 my-3">Preparando tu sesión…</p>
+    }
   </main>
   @if (authService.isAuthenticated()) {
     @defer (on idle; when captureLauncher.chat()) { <app-quick-capture /> }

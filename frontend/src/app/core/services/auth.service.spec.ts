@@ -40,6 +40,39 @@ describe('sesiones con los interceptores de la aplicación', () => {
     auth = TestBed.inject(AuthService);
   });
 
+  it('espera una sola renovacion antes de enviar peticiones con token caducado', () => {
+    vi.spyOn(auth, 'tokenCaducado').mockReturnValue(true);
+    http.get('/api/cuentas').subscribe();
+    http.get('/api/transacciones').subscribe();
+    backend.expectNone('/api/cuentas');
+    backend.expectNone('/api/transacciones');
+    backend.expectOne('/api/auth/refresh').flush(sesion('token-nuevo'));
+    for (const url of ['/api/cuentas', '/api/transacciones']) {
+      const request = backend.expectOne(url);
+      expect(request.request.headers.get('Authorization')).toBe('Bearer token-nuevo');
+      request.flush([]);
+    }
+  });
+
+  it('un fallo temporal previo no envia peticiones con el token vencido ni borra la sesion', () => {
+    vi.spyOn(auth, 'tokenCaducado').mockReturnValue(true);
+    const error = vi.fn();
+    http.get('/api/cuentas').subscribe({ error });
+    backend.expectOne('/api/auth/refresh').flush({}, { status: 503, statusText: 'Unavailable' });
+    backend.expectNone('/api/cuentas');
+    expect(error).toHaveBeenCalledOnce();
+    expect(auth.isAuthenticated()).toBe(true);
+  });
+
+  it('una renovacion previa rechazada cierra la sesion sin enviar la peticion protegida', () => {
+    vi.spyOn(auth, 'tokenCaducado').mockReturnValue(true);
+    http.get('/api/cuentas').subscribe({ error: () => undefined });
+    backend.expectOne('/api/auth/refresh').flush({}, { status: 401, statusText: 'Unauthorized' });
+    backend.expectNone('/api/cuentas');
+    expect(auth.isAuthenticated()).toBe(false);
+    expect(navigate).toHaveBeenCalledOnce();
+  });
+
   it('desvincula el dispositivo push antes de cerrar sesión sin borrar otros dispositivos', async () => {
     const subscription = { endpoint: 'https://fcm.googleapis.com/fcm/send/test', keys: { p256dh: 'public', auth: 'auth' } };
     push.isEnabled = true;
