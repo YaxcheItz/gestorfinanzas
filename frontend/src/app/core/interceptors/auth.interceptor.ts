@@ -27,6 +27,16 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const destino = new URL(req.url, window.location.origin);
   const esApi = destino.origin === base.origin && !destino.username && !destino.password
     && (destino.pathname === base.pathname || destino.pathname.startsWith(`${base.pathname}/`));
+  const esPeticionDeAuth = destino.pathname.startsWith(`${base.pathname}/auth/`);
+
+  // Evita la ráfaga de 401 al dibujar la estructura con una sesión pendiente de renovar.
+  if (token && esApi && !esPeticionDeAuth && navigator.onLine !== false && authService.tokenCaducado()) {
+    return authService.renovarSesion().pipe(
+      switchMap(() => next(req.clone({
+        setHeaders: { Authorization: `Bearer ${authService.getToken()}` }
+      })))
+    );
+  }
 
   if (token && esApi) {
     const authReq = req.clone({
@@ -36,7 +46,6 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     });
     return next(authReq).pipe(
       catchError((error) => {
-        const esPeticionDeAuth = destino.pathname.startsWith(`${base.pathname}/auth/`);
         if (error.status !== 401 || esPeticionDeAuth || !authService.getToken()
             || (authService.currentUser()?.id ?? null) !== usuarioId) {
           return throwError(() => error);
