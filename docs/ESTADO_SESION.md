@@ -1,5 +1,26 @@
 # Estado para retomar la sesión
 
+## Cierre de medicion HTTP aislada del panel
+
+- PR #179 integrado en develop `119f062d2dfe908799d6558f3215ee45eb36e250` desde `fddb8e5765ff20c4fafe8727fd55605024da9694`, tras CI 40982516661 y Android 40982516535 correctos. CI posterior 40983537127 y Android 40983536980 pendientes al registrar. CI posterior de `73fe852`: 40981893410 y 40981893489 correctos.
+- La prueba de API con 20 gastos ficticios paso en PostgreSQL local aislado en CI: resumen p50/p95 12,864/13,702 ms y analitica 10,197/11,526 ms, 20 lecturas calientes cada uno. Artefacto correspondiente al merge temporal `81ca2dcd8d89a77f7f6751e7414e050c651c43bc` conservado en `.local/panel-api-ci`; fuente del PR distinta del merge temporal. Referencia H2 local en `.local/panel-api-local-h2.json`. No comparar como si fueran entornos identicos, ni inferir p95 productivo, carga representativa, Android o arranque frio.
+- Solo cambia pruebas y documentacion: web sigue en main `a772aa3`; APK 0.1.19 preparada, sin instalar porque telefono desconectado. Esperar aviso habitual sin compras de prueba; seguir rendimiento y Etapa 13 antes de diseno y seguridad. Sin IA real ni QA financiera productiva.
+
+
+## Medicion HTTP aislada del panel (30 octubre)
+
+Se amplio `frontend/e2e/rendimiento-local.spec.ts` para medir resumen y analitica del panel sobre backend de pruebas, con 20 movimientos ficticios y dos cuentas (incluida la predeterminada). Antes de medir, comprueba que ambos agregados reflejen el gasto ficticio esperado. Con H2 local y proxy de desarrollo: tres calentamientos y 20 lecturas secuenciales por endpoint; resumen p50 18,542 ms/p95 22,816 ms, analitica p50 18,468 ms/p95 21,912 ms. La primera expectativa de una sola cuenta fallo porque el registro crea una cuenta de efectivo; se corrigio a dos y la prueba paso. Evidencia privada `.local/panel-api-local-h2.json`.
+
+Son muestras calientes pequenas, no p95 de produccion ni volumen representativo; no miden SQL por separado, red real, Android o arranque frio. CI ejecutara la misma prueba con PostgreSQL local aislado; no se realizaron llamadas de IA ni QA financiera productiva.
+
+
+## Distribucion del panel y Android 0.1.19 (30 octubre)
+
+- PR #175 promovido a main `a772aa331248a9eb95235c71f4abcbe074cd11c9` desde `b2c6496343fb1d4d008550616d3ecdb39730ea8a`, tras CI 40978646362 y Android 40978646370 correctos. Respaldo previo cifrado, comprobado y de lectura en `.local/promotion-20261030T001647Z`; sin restauracion. A las 00:27 UTC los 66 recursos web esperados y manifiesto coinciden, health directo/proxy y configuracion Google correctos: `.local/panel-startup-production-result.json`. No demuestra latencia ni arranque frio. CI posterior del main 40979689518 y Android 40979689697 pendientes al registrar.
+- PR #176 integrado en develop `af7de4d79cfc06b1c15b12b322439e7867bd25f4` desde `ec9504f924d1a18edeadaba8a4784f95e79aa7fc`, con CI 40978739823 y Android 40978739768 correctos. APK 0.1.19/codigo20 firmada con certificado anterior, SHA256 `a04de9e4f50bf1bab9177401ccf31f9aee9682742c43607462b5f8c5ba601063`, en `.local/releases/Kaptal-0.1.19.apk` y Descargas. Build release, lint y 27 pruebas JVM correctos; 86 recursos web identicos al build, ademas de dos archivos generados por Capacitor. Telefono desconectado: no instalada ni comprobada en dispositivo. CI posterior develop 40979697428 y Android 40979697467 pendientes al registrar.
+- Persisten mediciones representativas con datos ficticios, funciones y operacion de Etapa 13, y aviso bancario habitual nuevo; sin compras de prueba ni QA financiera productiva. La reduccion de solicitudes no demuestra menor latencia. Despues revisar diseno por secciones con el propietario y luego seguridad; hosting permanece sin migrar.
+
+
 ## Cierre de peticiones iniciales: PR173 integrado
 
 - PR173 integrado en develop `732aea12f7b6eb2700a7ed86b3cf6123405a281b` desde `085a4dfdc75721372e77d8a4e1c3d690ac528191`, con CI40941725600, Android40941725581 y todos los checks/Vercel correctos. Medidor nuevo tambien correcto en CI: una solicitud de resumen por contexto en los doce recorridos. Artefacto `navigation-synthetic` conservado siete dias por workflow/SHA; copia extraida `.local/navigation-ci.json`.
@@ -1442,3 +1463,13 @@ El usuario confirmó que la ventana es Codex CLI. La conversación actual y la p
 - Chromium, API sintética HTTP y service worker/IndexedDB reales: migración v2→v3, recarga offline, propuesta sin registro, aborto tardío, cola atómica, respuesta 503 tras registro sintético con reintento sin duplicados, bloqueo entre dos pestañas, manifiesto actualizado conservando texto y conflicto de borradores que impide recargar. Cuatro tamaños claro/oscuro sin overflow y sin errores JavaScript. Backend H2; no PostgreSQL, Safari/Firefox, dispositivo físico, IA ni movimientos de producción.
 - Informe docs/MEJORAS_ETAPA_5_OFFLINE_PWA.md; evidencias finales en replica/mejoras-etapa5/. Datos locales sujetos a cuota/borrado del navegador, sin cifrado nuevo; sincroniza con sesión válida y app abierta, sin operación con app cerrada. Se preservan logs iniciales de ajustes; usar los logs finales y verification.json para el estado vigente.
 - Sin commit, push, despliegue ni cambios de base de producción. Etapa 5 lista para revisión. Siguiente: etapa 6 de migraciones, PostgreSQL, CI y operación después de revisión/continuación del usuario. Google Wallet y Apple Wallet siguen pendientes de viabilidad oficial e implementación en el plan.
+
+## Medicion sintetica con datos no vacios
+
+El medidor incluye un caso adicional sin lista guardada, con 50 movimientos, ocho categorias y dos cuentas ficticias. En tres contextos Chromium verifica que se vea un movimiento en Inicio y el primero y ultimo en Movimientos; red externa bloqueada y sin escrituras. Con demora artificial de 250 ms por API, la estructura tomo 134/139/135 ms, datos del panel 992/990/996 ms y datos de navegacion 387/422/385 ms. Cada endpoint del panel se consulto una vez. Evidencia local `.local/navigation-populated.json`.
+
+El volumen es ilustrativo, no se ha contrastado con una distribucion real; no mide SQL, red real, Android ni Render, no permite calcular p95 representativo ni demuestra mejora de latencia. No se usan avisos ni datos financieros reales.
+
+## Correccion de nombres de categorias al editar
+
+La edicion aceptaba una cadena como ` A ` porque la validacion de la solicitud contaba espacios y el servicio solo rechazaba nombres demasiado largos despues de recortar. El servicio comprueba ahora entre 2 y 20 caracteres cuando se cambia el nombre, despues de recortar; conserva nombres antiguos sin cambios, incluidos los mayores de 20, al editar otros campos. Una regresion reprodujo el fallo y las cinco pruebas focales pasaron tras el cambio. Sin modificar historial, asociaciones ni categorias existentes. CI, integracion y publicacion pendientes al registrar; no requiere APK.
