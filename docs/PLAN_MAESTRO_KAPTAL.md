@@ -1,5 +1,12 @@
 # Kaptal: plan maestro y traspaso al siguiente chat
 
+## Android 0.1.19 instalado y correccion de categoria integrada
+
+- Al conectar el telefono, se actualizo Kaptal por reemplazo a 0.1.19/codigo20. El APK extraido del paquete coincide con el preparado: SHA256 `a04de9e4f50bf1bab9177401ccf31f9aee9682742c43607462b5f8c5ba601063`. UID 10477 y fecha inicial 2026-10-22 conservados. La consulta de listado del usuario secundario 150 fue denegada; el paquete principal se verifico. No se abrio la app ni se comprobo sesion visible o avisos reales. Evidencia `.local/android-019-verification.json`.
+- PR #181 integrado en develop `6d3f579ae7cfc0c920df205d61d098680168a185` desde `bdc89a768c79d3b447568a4d625567fc8ab437d0`; CI 40984501150 y 40984496267 correctos, cinco pruebas focales locales correctas. Rechaza nombres cambiados que al recortarse tienen menos de dos caracteres, y conserva nombres antiguos largos sin cambios. No altera el historial ni asociaciones.
+- Promocion #182 de `6d3f579` a main `a772aa3` abierta; checks 41007641837/41007642021 y respaldo cifrado `.local/promotion-20261030T051723Z`. No afirmar publicada hasta verificar integracion y despliegues. CI posterior de develop 41007581621 pendiente al registrar. Continuar Etapa13/rendimiento; despues diseno contigo y seguridad.
+
+
 ## Cierre de medicion HTTP aislada del panel
 
 - PR #179 integrado en develop `119f062d2dfe908799d6558f3215ee45eb36e250` desde `fddb8e5765ff20c4fafe8727fd55605024da9694`, tras CI 40982516661 y Android 40982516535 correctos. CI posterior 40983537127 y Android 40983536980 pendientes al registrar. CI posterior de `73fe852`: 40981893410 y 40981893489 correctos.
