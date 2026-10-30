@@ -1,5 +1,11 @@
 # Estado para retomar la sesión
 
+## Proteccion previa del destino PostgreSQL de pruebas
+
+La configuracion de Playwright iniciaba el backend antes de que `rendimiento-local.spec.ts` validara el destino de PostgreSQL. Se reprodujo sin conexiones: `playwright test --list` aceptaba una URL remota ficticia. Ahora la configuracion rechaza antes del arranque las URL que no tengan host literal localhost o 127.0.0.1, puerto valido y base `kaptal_ci_e2e`, y no acepta parametros ni credenciales en la URL. H2 en memoria sigue como opcion predeterminada. El test `node --test scripts/check-e2e-database.test.cjs` comprueba configuraciones aceptadas y rechazadas sin iniciar servidores; se incorpora a CI. La prueba E2E con H2 local tambien paso.
+
+El nombre de la base y localhost no demuestran que la instancia este vacia ni impiden un tunel a otro servidor; quien ejecute PostgreSQL debe garantizar una instancia y base de pruebas dedicadas. No se consultaron ni modificaron bases reales. CI e integracion pendientes al registrar.
+
 ## Desglose de solicitudes HTTP sinteticas
 
 El medidor local de navegacion registra duracion entre los eventos request y requestfinished para cada ruta `/api/`, sin parametros, cuerpos ni datos reales. Verifica una duracion finita por cada endpoint inicial del panel y que refleje la demora artificial configurada. En tres contextos con datos ficticios, sin lista guardada y demora de 250 ms por API, resumen tardo 273/268/267 ms, analitica 273/261/267 ms, presupuestos 273/261/267 ms y recurrencias 274/256/266 ms. Evidencia `.local/navigation-http-timings-final.json`; dos ejecuciones locales correctas.
