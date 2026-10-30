@@ -97,6 +97,9 @@ jobs:
       - name: Instalar dependencias
         run: npm ci
 
+      - name: Verificar aislamiento del destino E2E
+        run: node --test scripts/check-e2e-database.test.cjs
+
       - name: Compilar
         run: npm run build
 
