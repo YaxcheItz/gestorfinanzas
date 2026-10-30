@@ -1,5 +1,12 @@
 # Kaptal: plan maestro y traspaso al siguiente chat
 
+## Medicion HTTP aislada del panel (30 octubre)
+
+Se amplio `frontend/e2e/rendimiento-local.spec.ts` para medir resumen y analitica del panel sobre backend de pruebas, con 20 movimientos ficticios y dos cuentas (incluida la predeterminada). Antes de medir, comprueba que ambos agregados reflejen el gasto ficticio esperado. Con H2 local y proxy de desarrollo: tres calentamientos y 20 lecturas secuenciales por endpoint; resumen p50 18,542 ms/p95 22,816 ms, analitica p50 18,468 ms/p95 21,912 ms. La primera expectativa de una sola cuenta fallo porque el registro crea una cuenta de efectivo; se corrigio a dos y la prueba paso. Evidencia privada `.local/panel-api-local-h2.json`.
+
+Son muestras calientes pequenas, no p95 de produccion ni volumen representativo; no miden SQL por separado, red real, Android o arranque frio. CI ejecutara la misma prueba con PostgreSQL local aislado; no se realizaron llamadas de IA ni QA financiera productiva.
+
+
 ## Distribucion del panel y Android 0.1.19 (30 octubre)
 
 - PR #175 promovido a main `a772aa331248a9eb95235c71f4abcbe074cd11c9` desde `b2c6496343fb1d4d008550616d3ecdb39730ea8a`, tras CI 40978646362 y Android 40978646370 correctos. Respaldo previo cifrado, comprobado y de lectura en `.local/promotion-20261030T001647Z`; sin restauracion. A las 00:27 UTC los 66 recursos web esperados y manifiesto coinciden, health directo/proxy y configuracion Google correctos: `.local/panel-startup-production-result.json`. No demuestra latencia ni arranque frio. CI posterior del main 40979689518 y Android 40979689697 pendientes al registrar.

@@ -23,10 +23,24 @@ test('mide latencias HTTP locales sin cuerpos financieros ni proveedores externo
     } });
     expect(created.ok()).toBeTruthy();
   }
+  const range = 'desde=2026-10-01&hasta=2026-10-31';
+  const summary = await request.get(`/api/dashboard/resumen?${range}`, { headers });
+  expect(summary.status()).toBe(200);
+  const summaryData = (await summary.json()).data;
+  expect(Number(summaryData.gastosMes)).toBe(records);
+  expect(summaryData.totalCuentas).toBe(2); // Registro crea la cuenta de efectivo predeterminada.
+  await summary.dispose();
+  const analytics = await request.get(`/api/dashboard/analitica?${range}`, { headers });
+  expect(analytics.status()).toBe(200);
+  const analyticsData = (await analytics.json()).data;
+  expect(analyticsData.gastosPorCategoria.reduce((sum: number, item: {monto: number}) => sum + Number(item.monto), 0)).toBe(records);
+  await analytics.dispose();
   const groups = [
     { name: 'health', path: '/api/health' },
     { name: 'accounts', path: '/api/cuentas' },
     { name: 'transactions-page', path: '/api/transacciones?page=0&size=20' },
+    { name: 'dashboard-summary', path: `/api/dashboard/resumen?${range}` },
+    { name: 'dashboard-analytics', path: `/api/dashboard/analitica?${range}` },
   ];
   const samples = 20, warmup = 3;
   const measurements = [];
