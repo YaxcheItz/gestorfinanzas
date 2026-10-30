@@ -74,3 +74,9 @@ Se espera una respuesta de listas antes de pedir el primer panel cuando no exist
 Estos datos acreditan la reduccion de cuatro solicitudes, no una mejora de velocidad. Tandas previas tuvieron otros tiempos; equipo, compilacion y recursos influyen. Tres muestras por caso no sustentan p95, ensayos de carga ni representatividad financiera. El medidor verifica estructura, fin de carga, navegacion, ausencia de errores JS/escrituras y conteos; no falla CI por umbrales de latencia.
 
 No se modifica la APK0.1.18 ya instalada ni el backend. Para aplicar el cambio a Android se necesita otra entrega. La primera renovacion y el tiempo del backend siguen pendientes de observacion representativa.
+
+## Medicion sintetica con datos no vacios
+
+El medidor incluye un caso adicional sin lista guardada, con 50 movimientos, ocho categorias y dos cuentas ficticias. En tres contextos Chromium verifica que se vea un movimiento en Inicio y el primero y ultimo en Movimientos; red externa bloqueada y sin escrituras. Con demora artificial de 250 ms por API, la estructura tomo 134/139/135 ms, datos del panel 992/990/996 ms y datos de navegacion 387/422/385 ms. Cada endpoint del panel se consulto una vez. Evidencia local `.local/navigation-populated.json`.
+
+El volumen es ilustrativo, no se ha contrastado con una distribucion real; no mide SQL, red real, Android ni Render, no permite calcular p95 representativo ni demuestra mejora de latencia. No se usan avisos ni datos financieros reales.
