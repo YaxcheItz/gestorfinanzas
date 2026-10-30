@@ -164,7 +164,13 @@ public class AvisoFinancieroService {
     }
     private List<Long> coincidencias(AvisoFinanciero a,TransaccionRequest d) {
         if(d==null||d.cuentaId()==null||d.tipo()==null||d.fecha()==null||d.monto()==null)return List.of();
-        return movimientos.buscarCoincidenciasAviso(a.getUsuario().getId(),d.cuentaId(),d.tipo(),d.fecha(),d.monto(),PageRequest.of(0,5)).stream().map(Transaccion::getId).filter(id->!Objects.equals(id,a.getTransaccionId())).toList();
+        var ids=new ArrayList<>(movimientos.buscarCoincidenciasAviso(a.getUsuario().getId(),d.cuentaId(),d.tipo(),d.fecha(),d.monto(),PageRequest.of(0,5))
+            .stream().map(Transaccion::getId).filter(id->!Objects.equals(id,a.getTransaccionId())).toList());
+        if(d.tipo()==TipoTransaccion.INGRESO && ids.size()<5) {
+            movimientos.buscarTransferenciasDestinoAviso(a.getUsuario().getId(),d.cuentaId(),d.fecha(),d.monto(),a.getMoneda(),PageRequest.of(0,5-ids.size()))
+                .stream().map(Transaccion::getId).filter(id->!Objects.equals(id,a.getTransaccionId())).forEach(ids::add);
+        }
+        return ids;
     }
     private Vista vista(AvisoFinanciero a) {
         var d=datos(a);return new Vista(a.getId(),a.getOrigen(),a.getResumen(),a.getClase(),a.getEstado(),a.getMoneda(),d,a.getVersion(),a.getCreadoEn(),a.getTransaccionId(),"PENDIENTE".equals(a.getEstado())?coincidencias(a,d):List.of());

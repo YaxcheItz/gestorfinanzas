@@ -4,6 +4,8 @@ import com.gestionfinanzas.controller.AvisoFinancieroController.Clase;
 import com.gestionfinanzas.dto.request.AutomatizacionAndroidRequest.*;
 import com.gestionfinanzas.model.entity.*;
 import com.gestionfinanzas.model.enums.TipoCuenta;
+import com.gestionfinanzas.model.enums.TipoTransaccion;
+import com.gestionfinanzas.dto.request.TransaccionRequest;
 import com.gestionfinanzas.repository.*;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,8 +72,10 @@ class AutomatizacionAndroidIntegrationTest {
         assertFalse(mapper.readValue(json,Regla.class).ingresosMxn());
     }
     @Autowired AutomatizacionAndroidService service;
+    @Autowired TransaccionService movimientos;
     @Autowired UsuarioRepository usuarios;
     @Autowired CuentaRepository cuentas;
+    @Autowired TransaccionRepository transacciones;
     @Autowired ConexionAndroidRepository conexiones;
     @Autowired ListaService listas;
     @Autowired org.springframework.test.web.servlet.MockMvc mvc;
@@ -115,6 +119,95 @@ class AutomatizacionAndroidIntegrationTest {
         assertEquals("PENDIENTE",segundo.estado());
         assertFalse(segundo.coincidencias().isEmpty());
         assertEquals(new BigDecimal("975.00"),saldo());
+    }
+    @Test void ingresoQueCoincideConTransferenciaPropiaQuedaPendienteSinSumarDosVeces() {
+        var origen=cuentas.saveAndFlush(Cuenta.builder().usuario(usuario).nombre("Origen QA")
+            .tipo(TipoCuenta.DEBITO).moneda("MXN").saldoActual(new BigDecimal("500.00")).build());
+        var hoy=CalendarioFinanciero.hoy();
+        var transferencia=movimientos.crearTransaccion(usuario.getId(),new TransaccionRequest(origen.getId(),cuenta.getId(),null,
+            TipoTransaccion.TRANSFERENCIA,new BigDecimal("100.00"),null,hoy,"Traspaso QA",null,null,null,null));
+        assertEquals(new BigDecimal("1100.00"),saldo());
+        var rule=new Regla(reglaId,"REVOLUT","com.revolut.revolut",null,null,cuenta.getId(),lista,null,true);
+        var cap=service.configurar(usuario.getId(),new Configuracion(dispositivo,true,List.of(rule)));
+        var ingreso=new Evento(reglaId,"a".repeat(64),Clase.INGRESO,"MXN",new BigDecimal("100.00"),hoy,"Ingreso QA");
+        var aviso=service.recibir(cap.clave(),ingreso);
+        assertEquals("PENDIENTE",aviso.estado());
+        assertTrue(aviso.coincidencias().contains(transferencia.id()));
+        assertEquals(aviso.id(),service.recibir(cap.clave(),ingreso).id());
+        assertEquals(new BigDecimal("1100.00"),saldo());
+    }
+    @Test void ingresoCoincideConImporteConvertidoDeTransferenciaHaciaMxn() {
+        var origen=cuentas.saveAndFlush(Cuenta.builder().usuario(usuario).nombre("USD QA")
+            .tipo(TipoCuenta.AHORRO).moneda("USD").saldoActual(new BigDecimal("500.00")).build());
+        var hoy=CalendarioFinanciero.hoy();
+        var transferencia=movimientos.crearTransaccion(usuario.getId(),new TransaccionRequest(origen.getId(),cuenta.getId(),null,
+            TipoTransaccion.TRANSFERENCIA,new BigDecimal("5.00"),new BigDecimal("20.00"),hoy,"Cambio QA",null,null,null,null));
+        assertEquals(new BigDecimal("100.00"),transferencia.montoDestino());
+        var rule=new Regla(reglaId,"REVOLUT","com.revolut.revolut",null,null,cuenta.getId(),lista,null,true);
+        var cap=service.configurar(usuario.getId(),new Configuracion(dispositivo,true,List.of(rule)));
+        var ingreso=new Evento(reglaId,"b".repeat(64),Clase.INGRESO,"MXN",new BigDecimal("100.00"),hoy,"Ingreso QA");
+        var aviso=service.recibir(cap.clave(),ingreso);
+        assertEquals("PENDIENTE",aviso.estado());
+        assertTrue(aviso.coincidencias().contains(transferencia.id()));
+        assertEquals(new BigDecimal("1100.00"),saldo());
+    }
+    @Test void ingresosDeImporteOFechaDistintosNoCoincidenConTransferencia() {
+        var origen=cuentas.saveAndFlush(Cuenta.builder().usuario(usuario).nombre("Origen QA")
+            .tipo(TipoCuenta.DEBITO).moneda("MXN").saldoActual(new BigDecimal("500.00")).build());
+        var hoy=CalendarioFinanciero.hoy();
+        movimientos.crearTransaccion(usuario.getId(),new TransaccionRequest(origen.getId(),cuenta.getId(),null,
+            TipoTransaccion.TRANSFERENCIA,new BigDecimal("100.00"),null,hoy,"Traspaso QA",null,null,null,null));
+        var rule=new Regla(reglaId,"REVOLUT","com.revolut.revolut",null,null,cuenta.getId(),lista,null,true);
+        var cap=service.configurar(usuario.getId(),new Configuracion(dispositivo,true,List.of(rule)));
+        var distinto=new Evento(reglaId,"c".repeat(64),Clase.INGRESO,"MXN",new BigDecimal("101.00"),hoy,"Ingreso QA");
+        var ayer=new Evento(reglaId,"d".repeat(64),Clase.INGRESO,"MXN",new BigDecimal("100.00"),hoy.minusDays(1),"Ingreso QA");
+        assertEquals("REGISTRADO",service.recibir(cap.clave(),distinto).estado());
+        assertEquals("REGISTRADO",service.recibir(cap.clave(),ayer).estado());
+        assertEquals(new BigDecimal("1301.00"),saldo());
+    }
+    @Test void transferenciaAOtraCuentaNoBloqueaIngreso() {
+        var origen=cuentas.saveAndFlush(Cuenta.builder().usuario(usuario).nombre("Origen QA")
+            .tipo(TipoCuenta.DEBITO).moneda("MXN").saldoActual(new BigDecimal("500.00")).build());
+        var otroDestino=cuentas.saveAndFlush(Cuenta.builder().usuario(usuario).nombre("Destino QA")
+            .tipo(TipoCuenta.DEBITO).moneda("MXN").saldoActual(BigDecimal.ZERO).build());
+        var hoy=CalendarioFinanciero.hoy();
+        movimientos.crearTransaccion(usuario.getId(),new TransaccionRequest(origen.getId(),otroDestino.getId(),null,
+            TipoTransaccion.TRANSFERENCIA,new BigDecimal("100.00"),null,hoy,"Traspaso QA",null,null,null,null));
+        var rule=new Regla(reglaId,"REVOLUT","com.revolut.revolut",null,null,cuenta.getId(),lista,null,true);
+        var cap=service.configurar(usuario.getId(),new Configuracion(dispositivo,true,List.of(rule)));
+        var ingreso=new Evento(reglaId,"e".repeat(64),Clase.INGRESO,"MXN",new BigDecimal("100.00"),hoy,"Ingreso QA");
+        assertEquals("REGISTRADO",service.recibir(cap.clave(),ingreso).estado());
+        assertEquals(new BigDecimal("1100.00"),saldo());
+    }
+    @Test void transferenciaAnteriorSinMontoDestinoSoloUsaOrigenSiMonedasCoinciden() {
+        var origen=cuentas.saveAndFlush(Cuenta.builder().usuario(usuario).nombre("USD QA")
+            .tipo(TipoCuenta.DEBITO).moneda("USD").saldoActual(new BigDecimal("500.00")).build());
+        var hoy=CalendarioFinanciero.hoy();
+        var transferencia=movimientos.crearTransaccion(usuario.getId(),new TransaccionRequest(origen.getId(),cuenta.getId(),null,
+            TipoTransaccion.TRANSFERENCIA,new BigDecimal("5.00"),new BigDecimal("20.00"),hoy,"Cambio QA",null,null,null,null));
+        var antigua=transacciones.findById(transferencia.id()).orElseThrow();
+        antigua.setMontoDestino(null);transacciones.saveAndFlush(antigua);
+        var rule=new Regla(reglaId,"REVOLUT","com.revolut.revolut",null,null,cuenta.getId(),lista,null,true);
+        var cap=service.configurar(usuario.getId(),new Configuracion(dispositivo,true,List.of(rule)));
+        var ingreso=new Evento(reglaId,"f".repeat(64),Clase.INGRESO,"MXN",new BigDecimal("5.00"),hoy,"Ingreso QA");
+        assertEquals("REGISTRADO",service.recibir(cap.clave(),ingreso).estado());
+        assertEquals(new BigDecimal("1105.00"),saldo());
+    }
+    @Test void transferenciaAnteriorMismaMonedaSinMontoDestinoQuedaComoPosibleCoincidencia() {
+        var origen=cuentas.saveAndFlush(Cuenta.builder().usuario(usuario).nombre("Origen QA")
+            .tipo(TipoCuenta.DEBITO).moneda("MXN").saldoActual(new BigDecimal("500.00")).build());
+        var hoy=CalendarioFinanciero.hoy();
+        var transferencia=movimientos.crearTransaccion(usuario.getId(),new TransaccionRequest(origen.getId(),cuenta.getId(),null,
+            TipoTransaccion.TRANSFERENCIA,new BigDecimal("100.00"),null,hoy,"Traspaso QA",null,null,null,null));
+        var antigua=transacciones.findById(transferencia.id()).orElseThrow();
+        antigua.setMontoDestino(null);transacciones.saveAndFlush(antigua);
+        var rule=new Regla(reglaId,"REVOLUT","com.revolut.revolut",null,null,cuenta.getId(),lista,null,true);
+        var cap=service.configurar(usuario.getId(),new Configuracion(dispositivo,true,List.of(rule)));
+        var ingreso=new Evento(reglaId,"a".repeat(64),Clase.INGRESO,"MXN",new BigDecimal("100.00"),hoy,"Ingreso QA");
+        var aviso=service.recibir(cap.clave(),ingreso);
+        assertEquals("PENDIENTE",aviso.estado());
+        assertTrue(aviso.coincidencias().contains(transferencia.id()));
+        assertEquals(new BigDecimal("1100.00"),saldo());
     }
     @Test void creditoSinLimiteNiFechasRegistraDeudaSinInventarMetadatos() {
         cuenta.setTipo(TipoCuenta.CREDITO); cuenta.setSaldoActual(BigDecimal.ZERO);
