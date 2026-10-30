@@ -1,5 +1,12 @@
 # Kaptal: plan maestro y traspaso al siguiente chat
 
+## Cierre de medicion HTTP aislada del panel
+
+- PR #179 integrado en develop `119f062d2dfe908799d6558f3215ee45eb36e250` desde `fddb8e5765ff20c4fafe8727fd55605024da9694`, tras CI 40982516661 y Android 40982516535 correctos. CI posterior 40983537127 y Android 40983536980 pendientes al registrar. CI posterior de `73fe852`: 40981893410 y 40981893489 correctos.
+- La prueba de API con 20 gastos ficticios paso en PostgreSQL local aislado en CI: resumen p50/p95 12,864/13,702 ms y analitica 10,197/11,526 ms, 20 lecturas calientes cada uno. Artefacto correspondiente al merge temporal `81ca2dcd8d89a77f7f6751e7414e050c651c43bc` conservado en `.local/panel-api-ci`; fuente del PR distinta del merge temporal. Referencia H2 local en `.local/panel-api-local-h2.json`. No comparar como si fueran entornos identicos, ni inferir p95 productivo, carga representativa, Android o arranque frio.
+- Solo cambia pruebas y documentacion: web sigue en main `a772aa3`; APK 0.1.19 preparada, sin instalar porque telefono desconectado. Esperar aviso habitual sin compras de prueba; seguir rendimiento y Etapa 13 antes de diseno y seguridad. Sin IA real ni QA financiera productiva.
+
+
 ## Medicion HTTP aislada del panel (30 octubre)
 
 Se amplio `frontend/e2e/rendimiento-local.spec.ts` para medir resumen y analitica del panel sobre backend de pruebas, con 20 movimientos ficticios y dos cuentas (incluida la predeterminada). Antes de medir, comprueba que ambos agregados reflejen el gasto ficticio esperado. Con H2 local y proxy de desarrollo: tres calentamientos y 20 lecturas secuenciales por endpoint; resumen p50 18,542 ms/p95 22,816 ms, analitica p50 18,468 ms/p95 21,912 ms. La primera expectativa de una sola cuenta fallo porque el registro crea una cuenta de efectivo; se corrigio a dos y la prueba paso. Evidencia privada `.local/panel-api-local-h2.json`.
