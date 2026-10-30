@@ -19,8 +19,14 @@ const cases = [
   {name: 'valid', refreshMs: 0, apiMs: 0, cachedList: true},
   {name: 'expired', refreshMs: 2000, apiMs: 0, cachedList: true},
   {name: 'slow-api-no-list-cache', refreshMs: 0, apiMs: 250, cachedList: false},
-  {name: 'slow-api-cached-list', refreshMs: 0, apiMs: 250, cachedList: true}
+  {name: 'slow-api-cached-list', refreshMs: 0, apiMs: 250, cachedList: true},
+  {name: 'populated-no-list-cache', refreshMs: 0, apiMs: 250, cachedList: false, populated: true}
 ];
+
+const movements = Array.from({length: 50}, (_, i) => ({id: i + 1, cuentaId: 1,
+  cuentaNombre: 'Cuenta ficticia', categoriaId: i % 8 + 1, categoriaNombre: `Categoria ${i % 8 + 1}`,
+  tipo: 'GASTO', monto: 100 + i, moneda: 'MXN', fecha: '2026-01-15',
+  descripcion: `Movimiento ficticio ${i + 1}`, fechaCreacion: '2026-01-15T12:00:00'}));
 
 async function run() {
   for (let i = 0; ; i++) {
@@ -58,10 +64,15 @@ async function run() {
             await pause(scenario.apiMs);
             if (url.pathname === '/api/perfil') data = {...user, tema: 'CLARO', monedaPredeterminada: 'MXN'};
             else if (url.pathname === '/api/listas') data = [lista];
-            else if (url.pathname === '/api/dashboard/resumen') data = {totalCuentas: 0, resumenPorMoneda: [], ultimosMovimientos: []};
-            else if (url.pathname === '/api/dashboard/analitica') data = {gastosPorCategoria: [], ultimosSeisMeses: []};
+            else if (url.pathname === '/api/dashboard/resumen') data = scenario.populated ? {
+              totalCuentas: 2, resumenPorMoneda: [{moneda: 'MXN', balanceTotal: 10000, dineroDisponible: 10000,
+                deudaTarjetas: 0, ingresosMes: 20000, gastosMes: 5000, balanceMes: 15000, tasaAhorro: 75, totalCuentas: 2}],
+              ultimosMovimientos: movements.slice(0, 8)} : {totalCuentas: 0, resumenPorMoneda: [], ultimosMovimientos: []};
+            else if (url.pathname === '/api/dashboard/analitica') data = {gastosPorCategoria: scenario.populated ?
+              Array.from({length: 8}, (_, i) => ({categoriaId: i + 1, categoriaNombre: `Categoria ${i + 1}`, monto: 625, moneda: 'MXN'})) : [], ultimosSeisMeses: []};
             else if (url.pathname === '/api/presupuestos') data = {presupuestos: [], resumenPorMoneda: []};
-            else if (url.pathname === '/api/transacciones') data = {content: [], totalElements: 0, totalPages: 0, first: true, last: true};
+            else if (url.pathname === '/api/transacciones') data = scenario.populated ? {content: movements, totalElements: 50,
+              totalPages: 1, first: true, last: true, number: 0, size: 50} : {content: [], totalElements: 0, totalPages: 0, first: true, last: true};
           }
           await route.fulfill({status: 200, json: {success: true, data}});
         });
@@ -72,7 +83,8 @@ async function run() {
           await page.goto(`${origin}/dashboard`, {waitUntil: 'domcontentloaded'});
           await page.locator('.app-shell').waitFor({state: 'visible'});
           const shellMs = Math.round(performance.now()-start);
-          await page.locator('app-dashboard .home-empty').waitFor({state: 'visible'});
+          await page.locator(scenario.populated ? 'app-dashboard .dashboard-screen__recent-list' : 'app-dashboard .home-empty').waitFor({state: 'visible'});
+          if (scenario.populated) assert.ok(await page.getByText('Movimiento ficticio 1', {exact: true}).first().isVisible());
           await page.getByRole('status', {name: 'Cargando categorías', exact: true}).waitFor({state: 'hidden'});
           const dashboardDataMs = Math.round(performance.now()-start);
           await page.waitForLoadState('networkidle');
@@ -82,6 +94,10 @@ async function run() {
           await page.locator('app-transacciones').waitFor({state: 'visible'});
           const navigationShellMs = Math.round(performance.now()-navigate);
           await page.locator('app-transacciones .history-results[aria-busy="false"]').waitFor();
+          if (scenario.populated) {
+            assert.ok(await page.getByText('Movimiento ficticio 1', {exact: true}).first().isVisible());
+            assert.ok(await page.getByText('Movimiento ficticio 50', {exact: true}).first().isVisible());
+          }
           const navigationDataMs = Math.round(performance.now()-navigate);
           await page.waitForLoadState('networkidle');
           assert.equal(refreshes, scenario.refreshMs ? 1 : 0);
@@ -97,8 +113,8 @@ async function run() {
       groups.push({...scenario, samples});
     }
   } finally { await browser.close(); }
-  const report = {format: 1, environment: 'local Chromium; empty synthetic data; no external requests', node: process.version, groups,
-    limits: ['three fresh contexts per case', 'no production or Android measurement', 'no p95 or representative data volume', 'API and refresh delays are artificial', 'HTTP request counts are per page context, not SQL queries']};
+  const report = {format: 1, environment: 'local Chromium; synthetic data; no external requests', node: process.version, groups,
+    limits: ['three fresh contexts per case', 'no production or Android measurement', 'no p95; synthetic volume not validated as representative', 'API and refresh delays are artificial', 'HTTP request counts are per page context, not SQL queries']};
   mkdirSync(path.join(frontend, 'test-results'), {recursive: true});
   writeFileSync(path.join(frontend, 'test-results/navigation-synthetic.json'), JSON.stringify(report, null, 2));
   console.log(JSON.stringify(report));
