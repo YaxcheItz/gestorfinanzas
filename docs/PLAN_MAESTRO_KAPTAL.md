@@ -1290,3 +1290,9 @@ El volumen es ilustrativo, no se ha contrastado con una distribucion real; no mi
 ## Correccion de nombres de categorias al editar
 
 La edicion aceptaba una cadena como ` A ` porque la validacion de la solicitud contaba espacios y el servicio solo rechazaba nombres demasiado largos despues de recortar. El servicio comprueba ahora entre 2 y 20 caracteres cuando se cambia el nombre, despues de recortar; conserva nombres antiguos sin cambios, incluidos los mayores de 20, al editar otros campos. Una regresion reprodujo el fallo y las cinco pruebas focales pasaron tras el cambio. Sin modificar historial, asociaciones ni categorias existentes. CI, integracion y publicacion pendientes al registrar; no requiere APK.
+
+## Coincidencia de ingreso con transferencia propia anterior
+
+En H2 aislado se reprodujo que un ingreso consentido podia confirmarse despues de una transferencia propia al mismo destino, fecha, moneda e importe, sumando dos veces. La deteccion incorpora transferencias anteriores por cuenta destino, fecha, moneda e importe de destino; deja el aviso pendiente de revision, sin marcar automaticamente como duplicado ni alterar historial. Se cubren conversion, datos historicos, otra cuenta, fecha e importe distintos y reentregas; 22 pruebas de automatizacion Android del backend y 14 de avisos correctas con H2 ficticio. No hay evidencia de incidencia real.
+
+El orden inverso (ingreso primero y transferencia manual despues) y carreras simultaneas no quedan resueltos por este cambio; se investigan por separado. CI, integracion y publicacion pendientes al registrar. Sin QA financiera productiva ni IA real.
