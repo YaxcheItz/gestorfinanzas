@@ -6,6 +6,12 @@ La configuracion de Playwright iniciaba el backend antes de que `rendimiento-loc
 
 El nombre de la base y localhost no demuestran que la instancia este vacia ni impiden un tunel a otro servidor; quien ejecute PostgreSQL debe garantizar una instancia y base de pruebas dedicadas. No se consultaron ni modificaron bases reales. CI e integracion pendientes al registrar.
 
+## Desglose de solicitudes HTTP sinteticas
+
+El medidor local de navegacion registra duracion entre los eventos request y requestfinished para cada ruta `/api/`, sin parametros, cuerpos ni datos reales. Verifica una duracion finita por cada endpoint inicial del panel y que refleje la demora artificial configurada. En tres contextos con datos ficticios, sin lista guardada y demora de 250 ms por API, resumen tardo 273/268/267 ms, analitica 273/261/267 ms, presupuestos 273/261/267 ms y recurrencias 274/256/266 ms. Evidencia `.local/navigation-http-timings-final.json`; dos ejecuciones locales correctas.
+
+Estas duraciones incluyen la demora simulada, la ruta interceptada y el navegador; no son tiempo de servidor, SQL, red real ni Android. Tres muestras no establecen p95 ni representatividad y no demuestran una mejora de latencia. Sin llamadas de IA o QA financiera productiva. CI e integracion pendientes al registrar.
+
 
 ## Publicacion de validacion de categorias y Android instalado
 
