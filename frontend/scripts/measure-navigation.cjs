@@ -78,6 +78,18 @@ async function run() {
         });
         try {
           const page = await context.newPage();
+          const started = new Map(), requestDurations = {};
+          page.on('request', request => {
+            const url = new URL(request.url());
+            if (url.origin === origin && url.pathname.startsWith('/api/')) started.set(request, performance.now());
+          });
+          page.on('requestfinished', request => {
+            const start = started.get(request);
+            if (start === undefined) return;
+            const endpoint = new URL(request.url()).pathname;
+            (requestDurations[endpoint] ??= []).push(Math.round(performance.now() - start));
+            started.delete(request);
+          });
           page.on('pageerror', error => errors.push(error));
           const start = performance.now();
           await page.goto(`${origin}/dashboard`, {waitUntil: 'domcontentloaded'});
@@ -89,6 +101,7 @@ async function run() {
           const dashboardDataMs = Math.round(performance.now()-start);
           await page.waitForLoadState('networkidle');
           const startupRequests = {...counts};
+          const startupRequestDurations = structuredClone(requestDurations);
           const navigate = performance.now();
           await page.getByRole('link', {name: 'Movimientos', exact: true}).first().click();
           await page.locator('app-transacciones').waitFor({state: 'visible'});
@@ -105,16 +118,20 @@ async function run() {
           assert.equal(errors.length, 0, 'Errores JavaScript en la fixture');
           for (const endpoint of ['/api/dashboard/resumen', '/api/dashboard/analitica', '/api/presupuestos', '/api/recurrencias']) {
             assert.equal(startupRequests[endpoint], 1, `Carga inicial unica: ${endpoint}`);
+            assert.equal(startupRequestDurations[endpoint]?.length, 1, `Duracion inicial disponible: ${endpoint}`);
+            assert.ok(Number.isFinite(startupRequestDurations[endpoint][0]) && startupRequestDurations[endpoint][0] >= 0);
+            assert.ok(startupRequestDurations[endpoint][0] >= scenario.apiMs - 10, `Demora sintetica observada: ${endpoint}`);
           }
           assert.ok(counts['/api/transacciones'] >= 1);
-          samples.push({shellMs, dashboardDataMs, navigationShellMs, navigationDataMs, refreshes, startupRequests, allRequests: {...counts}});
+          samples.push({shellMs, dashboardDataMs, navigationShellMs, navigationDataMs, refreshes, startupRequests,
+            startupRequestDurations, allRequests: {...counts}});
         } finally { await context.close(); }
       }
       groups.push({...scenario, samples});
     }
   } finally { await browser.close(); }
   const report = {format: 1, environment: 'local Chromium; synthetic data; no external requests', node: process.version, groups,
-    limits: ['three fresh contexts per case', 'no production or Android measurement', 'no p95; synthetic volume not validated as representative', 'API and refresh delays are artificial', 'HTTP request counts are per page context, not SQL queries']};
+    limits: ['three fresh contexts per case', 'no production or Android measurement', 'no p95; synthetic volume not validated as representative', 'API and refresh delays are artificial', 'HTTP durations include simulated delay and browser routing, not server or SQL time', 'HTTP request counts are per page context, not SQL queries']};
   mkdirSync(path.join(frontend, 'test-results'), {recursive: true});
   writeFileSync(path.join(frontend, 'test-results/navigation-synthetic.json'), JSON.stringify(report, null, 2));
   console.log(JSON.stringify(report));

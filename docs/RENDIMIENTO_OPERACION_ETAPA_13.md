@@ -1,5 +1,12 @@
 # Medición inicial y operación — Etapa 13
 
+## Desglose de solicitudes HTTP sinteticas
+
+El medidor local de navegacion registra duracion entre los eventos request y requestfinished para cada ruta `/api/`, sin parametros, cuerpos ni datos reales. Verifica una duracion finita por cada endpoint inicial del panel y que refleje la demora artificial configurada. En tres contextos con datos ficticios, sin lista guardada y demora de 250 ms por API, resumen tardo 273/268/267 ms, analitica 273/261/267 ms, presupuestos 273/261/267 ms y recurrencias 274/256/266 ms. Evidencia `.local/navigation-http-timings-final.json`; dos ejecuciones locales correctas.
+
+Estas duraciones incluyen la demora simulada, la ruta interceptada y el navegador; no son tiempo de servidor, SQL, red real ni Android. Tres muestras no establecen p95 ni representatividad y no demuestran una mejora de latencia. Sin llamadas de IA o QA financiera productiva. CI e integracion pendientes al registrar.
+
+
 ## Cierre de medicion HTTP aislada del panel
 
 - PR #179 integrado en develop `119f062d2dfe908799d6558f3215ee45eb36e250` desde `fddb8e5765ff20c4fafe8727fd55605024da9694`, tras CI 40982516661 y Android 40982516535 correctos. CI posterior 40983537127 y Android 40983536980 pendientes al registrar. CI posterior de `73fe852`: 40981893410 y 40981893489 correctos.

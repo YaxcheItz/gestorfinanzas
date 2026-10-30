@@ -1,5 +1,12 @@
 # Estado para retomar la sesión
 
+## Desglose de solicitudes HTTP sinteticas
+
+El medidor local de navegacion registra duracion entre los eventos request y requestfinished para cada ruta `/api/`, sin parametros, cuerpos ni datos reales. Verifica una duracion finita por cada endpoint inicial del panel y que refleje la demora artificial configurada. En tres contextos con datos ficticios, sin lista guardada y demora de 250 ms por API, resumen tardo 273/268/267 ms, analitica 273/261/267 ms, presupuestos 273/261/267 ms y recurrencias 274/256/266 ms. Evidencia `.local/navigation-http-timings-final.json`; dos ejecuciones locales correctas.
+
+Estas duraciones incluyen la demora simulada, la ruta interceptada y el navegador; no son tiempo de servidor, SQL, red real ni Android. Tres muestras no establecen p95 ni representatividad y no demuestran una mejora de latencia. Sin llamadas de IA o QA financiera productiva. CI e integracion pendientes al registrar.
+
+
 ## Publicacion de validacion de categorias y Android instalado
 
 - PR #182 promovido a main `97d8639e3fde98566916aa609407918079fc49de` desde develop `6d3f579ae7cfc0c920df205d61d098680168a185`; CI 41007641837, Android 41007642021 y CI posterior de develop 41007581621 correctos. Render deployment 7431459675 y estado Vercel SUCCESS para ese main. A las 05:32 UTC los 66 recursos esperados, health directo/proxy y configuracion publica coincidieron; V11-V14 verificadas en lectura, sin migracion nueva. Respaldo cifrado previo `.local/promotion-20261030T051723Z`; sin restauracion. CI posterior de main 41008523018 pendiente y Android 41008523017 correcto al registrar. No se realizo edicion financiera productiva.
