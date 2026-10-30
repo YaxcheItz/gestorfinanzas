@@ -1500,3 +1500,7 @@ El volumen es ilustrativo, no se ha contrastado con una distribucion real; no mi
 ## Correccion de nombres de categorias al editar
 
 La edicion aceptaba una cadena como ` A ` porque la validacion de la solicitud contaba espacios y el servicio solo rechazaba nombres demasiado largos despues de recortar. El servicio comprueba ahora entre 2 y 20 caracteres cuando se cambia el nombre, despues de recortar; conserva nombres antiguos sin cambios, incluidos los mayores de 20, al editar otros campos. Una regresion reprodujo el fallo y las cinco pruebas focales pasaron tras el cambio. Sin modificar historial, asociaciones ni categorias existentes. CI, integracion y publicacion pendientes al registrar; no requiere APK.
+
+## Busqueda de hashtags Unicode
+
+La busqueda por texto agregaba hashtags sin aplicar la normalizacion NFKC usada al guardar etiquetas. Una regresion con etiqueta ficticia de ancho completo reprodujo el fallo en H2 aislado; ahora la busqueda usa la misma normalizacion que el guardado, tambien junto con texto libre. Se conservan el limite de ocho y el filtrado por lista y usuario. Las 20 pruebas de listas y etiquetas pasaron en H2 tras el cambio. No se alteraron etiquetas ni historial existentes; CI, integracion y publicacion pendientes al registrar.
