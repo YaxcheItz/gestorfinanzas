@@ -80,4 +80,14 @@ class CategoriaServiceTest {
                 "Nombre de categoría largo", TipoTransaccion.GASTO, "car", "#123456"
         )));
     }
+
+    @Test
+    void rechazaNombreDemasiadoCortoDespuesDeRecortarAlEditar() {
+        Categoria categoria = Categoria.builder().id(4L).nombre("Transporte").tipo(TipoTransaccion.GASTO).build();
+        when(categoriaRepository.findByIdAndUsuarioId(4L, 7L)).thenReturn(Optional.of(categoria));
+        when(categoriaRepository.save(any(Categoria.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        assertThrows(IllegalArgumentException.class, () -> service.actualizarCategoria(7L, 4L,
+                new CategoriaRequest(" A ", TipoTransaccion.GASTO, "car", "#123456")));
+        org.mockito.Mockito.verify(categoriaRepository, org.mockito.Mockito.never()).save(any());
+    }
 }
