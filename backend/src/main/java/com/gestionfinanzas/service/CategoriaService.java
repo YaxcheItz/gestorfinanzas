@@ -68,9 +68,7 @@ public class CategoriaService {
         Categoria categoria = categoriaRepository.findByIdAndUsuarioId(categoriaId, usuarioId)
                 .orElseThrow(() -> new IllegalArgumentException("Categoría personalizada no encontrada"));
         String nombre = request.nombre().trim();
-        if (nombre.length() > 20 && !nombre.equals(categoria.getNombre())) {
-            throw new IllegalArgumentException("El nombre debe tener entre 2 y 20 caracteres");
-        }
+        if (!nombre.equals(categoria.getNombre())) validarLongitudNombre(nombre);
         if (categoria.getTipo() != request.tipo()
                 && (transaccionRepository.existsByCategoriaId(categoriaId)
                 || presupuestoRepository.existsByCategoriaId(categoriaId))) {

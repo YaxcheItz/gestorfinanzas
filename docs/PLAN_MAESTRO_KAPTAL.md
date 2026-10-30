@@ -1252,3 +1252,7 @@ Continúa Kaptal leyendo AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAP
 El medidor incluye un caso adicional sin lista guardada, con 50 movimientos, ocho categorias y dos cuentas ficticias. En tres contextos Chromium verifica que se vea un movimiento en Inicio y el primero y ultimo en Movimientos; red externa bloqueada y sin escrituras. Con demora artificial de 250 ms por API, la estructura tomo 134/139/135 ms, datos del panel 992/990/996 ms y datos de navegacion 387/422/385 ms. Cada endpoint del panel se consulto una vez. Evidencia local `.local/navigation-populated.json`.
 
 El volumen es ilustrativo, no se ha contrastado con una distribucion real; no mide SQL, red real, Android ni Render, no permite calcular p95 representativo ni demuestra mejora de latencia. No se usan avisos ni datos financieros reales.
+
+## Correccion de nombres de categorias al editar
+
+La edicion aceptaba una cadena como ` A ` porque la validacion de la solicitud contaba espacios y el servicio solo rechazaba nombres demasiado largos despues de recortar. El servicio comprueba ahora entre 2 y 20 caracteres cuando se cambia el nombre, despues de recortar; conserva nombres antiguos sin cambios, incluidos los mayores de 20, al editar otros campos. Una regresion reprodujo el fallo y las cinco pruebas focales pasaron tras el cambio. Sin modificar historial, asociaciones ni categorias existentes. CI, integracion y publicacion pendientes al registrar; no requiere APK.
