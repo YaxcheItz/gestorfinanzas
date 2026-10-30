@@ -1,5 +1,12 @@
 # Kaptal: plan maestro y traspaso al siguiente chat
 
+## Proteccion previa del destino PostgreSQL de pruebas
+
+La configuracion de Playwright iniciaba el backend antes de que `rendimiento-local.spec.ts` validara el destino de PostgreSQL. Se reprodujo sin conexiones: `playwright test --list` aceptaba una URL remota ficticia. Ahora la configuracion rechaza antes del arranque las URL que no tengan host literal localhost o 127.0.0.1, puerto valido y base `kaptal_ci_e2e`, y no acepta parametros ni credenciales en la URL. H2 en memoria sigue como opcion predeterminada. El test `node --test scripts/check-e2e-database.test.cjs` comprueba configuraciones aceptadas y rechazadas sin iniciar servidores; se incorpora a CI. La prueba E2E con H2 local tambien paso.
+
+El nombre de la base y localhost no demuestran que la instancia este vacia ni impiden un tunel a otro servidor; quien ejecute PostgreSQL debe garantizar una instancia y base de pruebas dedicadas. No se consultaron ni modificaron bases reales. CI e integracion pendientes al registrar.
+
+
 ## Publicacion de validacion de categorias y Android instalado
 
 - PR #182 promovido a main `97d8639e3fde98566916aa609407918079fc49de` desde develop `6d3f579ae7cfc0c920df205d61d098680168a185`; CI 41007641837, Android 41007642021 y CI posterior de develop 41007581621 correctos. Render deployment 7431459675 y estado Vercel SUCCESS para ese main. A las 05:32 UTC los 66 recursos esperados, health directo/proxy y configuracion publica coincidieron; V11-V14 verificadas en lectura, sin migracion nueva. Respaldo cifrado previo `.local/promotion-20261030T051723Z`; sin restauracion. CI posterior de main 41008523018 pendiente y Android 41008523017 correcto al registrar. No se realizo edicion financiera productiva.
