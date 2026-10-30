@@ -1,5 +1,12 @@
 # Estado para retomar la sesión
 
+## Distribucion del panel y Android 0.1.19 (30 octubre)
+
+- PR #175 promovido a main `a772aa331248a9eb95235c71f4abcbe074cd11c9` desde `b2c6496343fb1d4d008550616d3ecdb39730ea8a`, tras CI 40978646362 y Android 40978646370 correctos. Respaldo previo cifrado, comprobado y de lectura en `.local/promotion-20261030T001647Z`; sin restauracion. A las 00:27 UTC los 66 recursos web esperados y manifiesto coinciden, health directo/proxy y configuracion Google correctos: `.local/panel-startup-production-result.json`. No demuestra latencia ni arranque frio. CI posterior del main 40979689518 y Android 40979689697 pendientes al registrar.
+- PR #176 integrado en develop `af7de4d79cfc06b1c15b12b322439e7867bd25f4` desde `ec9504f924d1a18edeadaba8a4784f95e79aa7fc`, con CI 40978739823 y Android 40978739768 correctos. APK 0.1.19/codigo20 firmada con certificado anterior, SHA256 `a04de9e4f50bf1bab9177401ccf31f9aee9682742c43607462b5f8c5ba601063`, en `.local/releases/Kaptal-0.1.19.apk` y Descargas. Build release, lint y 27 pruebas JVM correctos; 86 recursos web identicos al build, ademas de dos archivos generados por Capacitor. Telefono desconectado: no instalada ni comprobada en dispositivo. CI posterior develop 40979697428 y Android 40979697467 pendientes al registrar.
+- Persisten mediciones representativas con datos ficticios, funciones y operacion de Etapa 13, y aviso bancario habitual nuevo; sin compras de prueba ni QA financiera productiva. La reduccion de solicitudes no demuestra menor latencia. Despues revisar diseno por secciones con el propietario y luego seguridad; hosting permanece sin migrar.
+
+
 ## Cierre de peticiones iniciales: PR173 integrado
 
 - PR173 integrado en develop `732aea12f7b6eb2700a7ed86b3cf6123405a281b` desde `085a4dfdc75721372e77d8a4e1c3d690ac528191`, con CI40941725600, Android40941725581 y todos los checks/Vercel correctos. Medidor nuevo tambien correcto en CI: una solicitud de resumen por contexto en los doce recorridos. Artefacto `navigation-synthetic` conservado siete dias por workflow/SHA; copia extraida `.local/navigation-ci.json`.
