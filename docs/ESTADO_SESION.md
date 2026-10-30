@@ -1,5 +1,12 @@
 # Estado para retomar la sesión
 
+## Publicacion de validacion de categorias y Android instalado
+
+- PR #182 promovido a main `97d8639e3fde98566916aa609407918079fc49de` desde develop `6d3f579ae7cfc0c920df205d61d098680168a185`; CI 41007641837, Android 41007642021 y CI posterior de develop 41007581621 correctos. Render deployment 7431459675 y estado Vercel SUCCESS para ese main. A las 05:32 UTC los 66 recursos esperados, health directo/proxy y configuracion publica coincidieron; V11-V14 verificadas en lectura, sin migracion nueva. Respaldo cifrado previo `.local/promotion-20261030T051723Z`; sin restauracion. CI posterior de main 41008523018 pendiente y Android 41008523017 correcto al registrar. No se realizo edicion financiera productiva.
+- APK 0.1.19/codigo20 instalada por reemplazo: SHA256 extraido `a04de9e4f50bf1bab9177401ccf31f9aee9682742c43607462b5f8c5ba601063` coincide; UID y fecha inicial conservados. No se verificaron sesion visible ni avisos reales. El listado del usuario secundario 150 fue denegado; paquete principal comprobado.
+- Continuar Etapa13 y mediciones representativas; luego diseno por secciones con propietario y seguridad/privacidad. Esperar avisos habituales sin compras ni QA financiera productiva. La mejora de solicitudes no demuestra reduccion de latencia.
+
+
 ## Android 0.1.19 instalado y correccion de categoria integrada
 
 - Al conectar el telefono, se actualizo Kaptal por reemplazo a 0.1.19/codigo20. El APK extraido del paquete coincide con el preparado: SHA256 `a04de9e4f50bf1bab9177401ccf31f9aee9682742c43607462b5f8c5ba601063`. UID 10477 y fecha inicial 2026-10-22 conservados. La consulta de listado del usuario secundario 150 fue denegada; el paquete principal se verifico. No se abrio la app ni se comprobo sesion visible o avisos reales. Evidencia `.local/android-019-verification.json`.
