@@ -6,6 +6,32 @@ import java.time.LocalDate;
 import static org.junit.Assert.*;
 
 public class BankPurchaseParserTest {
+    @Test public void summaryUsesIndividualExpenseAndMxnDefaultForBothProviders() {
+        for(String provider:new String[]{"AMEX","REVOLUT"}) {
+            var parsed=BankPurchaseParser.parseNotification(provider,BankPurchaseParser.PACKAGES.get(provider),null,
+                "summary-qa","COMERCIO QA","Gastaste $47 Gastos de hoy: $ 120",date);
+            assertNotNull(parsed);assertEquals(new BigDecimal("47.00"),parsed.amount());
+            assertEquals("COMERCIO QA",parsed.merchant());
+            assertNull(BankPurchaseParser.parseNotification(provider,BankPurchaseParser.PACKAGES.get(provider),"1234",
+                "summary-qa","COMERCIO QA","Gastaste $47 Gastos de hoy: $ 120",date));
+        }
+    }
+    @Test public void acceptsExplicitAmexMxnAndFiveDigitCardWithSyntheticValues() {
+        String body="Gastaste MX$41.27 en tu Tarjeta American Express terminación 67890 en PAPELERIA QA";
+        var result=BankPurchaseParser.parseNotification("AMEX",BankPurchaseParser.PACKAGES.get("AMEX"),null,
+            "event-qa","Amex MX",body,date);
+        assertNotNull(result);
+        assertEquals(new BigDecimal("41.27"),result.amount());
+        assertEquals("PAPELERIA QA",result.merchant());
+        assertEquals(result,parse("AMEX","67890",body));
+        for(String invalid:new String[]{body.replace("MX$","US$"),body.replace("41.27","0.00"),
+            body.replace("67890","678901"),body.replace("PAPELERIA QA","OTP 987654"),body+" Saldo: $90.00"})
+            assertNull(parse("AMEX",null,invalid));
+        assertNull(parse("AMEX","12345",body));
+        assertNull(parse("REVOLUT",null,body));
+        assertNull(BankPurchaseParser.parseNotification("AMEX",BankPurchaseParser.PACKAGES.get("AMEX"),null,
+            "synthetic-amex","Compra rechazada",body,date));
+    }
     @Test public void normalizesAmexTitleBeforeRejectingCodesAndNonPurchases() {
         String body="Gastaste $25.10 Gastos de hoy: $80.20";
         for(String title:new String[]{"OTP\n123456","Compra no\nautorizada","Compra no\u00a0reconocida"})
@@ -45,7 +71,7 @@ public class BankPurchaseParserTest {
     }
     @Test public void rejectsAmbiguousAmexOriginsCardsAndBodies() {
         String body="Gastaste $25.10 Gastos de hoy: $80.20";
-        for(String provider:new String[]{"SANTANDER","BBVA","REVOLUT"})
+        for(String provider:new String[]{"SANTANDER","BBVA"})
             assertNull(BankPurchaseParser.parseNotification(provider,BankPurchaseParser.PACKAGES.get(provider),null,
                 "qa","COMERCIO QA",body,date));
         assertNull(BankPurchaseParser.parseNotification("AMEX","com.example.fake",null,"qa","COMERCIO QA",body,date));
@@ -71,7 +97,7 @@ public class BankPurchaseParserTest {
     @Test public void pesosAndMexicanProfilesAllowLocalDollarFormat() {
         assertNotNull(parse("BBVA",null,"Gastaste $25.10 en TIENDA QA con tu tarjeta"));
         assertNotNull(parse("REVOLUT",null,"Gastaste 25.10 pesos en TIENDA QA con tu tarjeta"));
-        assertNull(parse("REVOLUT",null,"Gastaste $25.10 en TIENDA QA con tu tarjeta"));
+        assertNotNull(parse("REVOLUT",null,"Gastaste $25.10 en TIENDA QA con tu tarjeta"));
     }
     @Test public void rejectsDifferentCurrencyIncompleteAndRejectedPurchases() {
         assertNull(parse("AMEX",null,"Gastaste $25.10 USD en TIENDA QA con tu tarjeta"));

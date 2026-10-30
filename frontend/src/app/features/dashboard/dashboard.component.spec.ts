@@ -9,6 +9,7 @@ import { FinanzasService } from '../../core/services/finanzas.service';
 import { PerfilService } from '../../core/services/perfil.service';
 import { ToastService } from '../../core/services/toast.service';
 import { DashboardComponent } from './dashboard.component';
+import { ListaContextoService } from '../../core/services/lista-contexto.service';
 
 describe('DashboardComponent movement dialog accessibility', () => {
   let crearTransaccion: ReturnType<typeof vi.fn>;
@@ -57,6 +58,44 @@ describe('DashboardComponent movement dialog accessibility', () => {
       ]
     });
     await TestBed.compileComponents();
+  });
+
+  it('espera las listas iniciales sin cache y carga una sola vez el contexto seleccionado', () => {
+    const contexto = TestBed.inject(ListaContextoService);
+    const resumen = vi.spyOn(TestBed.inject(FinanzasService), 'getDashboardResumen');
+    contexto.cargando.set(true);
+    const fixture = TestBed.createComponent(DashboardComponent); fixture.detectChanges();
+    expect(resumen).not.toHaveBeenCalled();
+    contexto.aplicar([{id:802,nombre:'Personal QA',moneda:'MXN',personal:true,rol:'PROPIETARIO',miembros:[]} as any]);
+    contexto.cargando.set(false); fixture.detectChanges();
+    expect(resumen).toHaveBeenCalledOnce();
+    fixture.destroy();
+  });
+
+  it.each([false, true])('continua sin lista si termina la carga inicial vacia; error=%s', (error) => {
+    const contexto = TestBed.inject(ListaContextoService);
+    const resumen = vi.spyOn(TestBed.inject(FinanzasService), 'getDashboardResumen');
+    contexto.cargando.set(true);
+    const fixture = TestBed.createComponent(DashboardComponent); fixture.detectChanges();
+    expect(resumen).not.toHaveBeenCalled();
+    if (error) contexto.error.set('Fallo sintetico');
+    contexto.cargando.set(false); fixture.detectChanges();
+    expect(resumen).toHaveBeenCalledOnce();
+    fixture.destroy();
+  });
+
+  it('carga la lista conocida sin esperar y conserva recargas posteriores de contexto', () => {
+    const contexto = TestBed.inject(ListaContextoService);
+    contexto.aplicar([{id:802,nombre:'Personal QA',moneda:'MXN',personal:true,rol:'PROPIETARIO',miembros:[]} as any]);
+    contexto.cargando.set(true);
+    const resumen = vi.spyOn(TestBed.inject(FinanzasService), 'getDashboardResumen');
+    const fixture = TestBed.createComponent(DashboardComponent); fixture.detectChanges();
+    expect(resumen).toHaveBeenCalledOnce();
+    contexto.cargando.set(false); fixture.detectChanges();
+    expect(resumen).toHaveBeenCalledOnce();
+    contexto.cargando.set(true); contexto.activaId.set(null); fixture.detectChanges();
+    expect(resumen).toHaveBeenCalledTimes(2);
+    fixture.destroy();
   });
 
   it('separa efectivo y deuda y muestra presupuesto restante solo en la moneda elegida',()=>{
