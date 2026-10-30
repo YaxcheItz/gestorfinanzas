@@ -1,5 +1,12 @@
 # Medición inicial y operación — Etapa 13
 
+## Medicion HTTP aislada del panel (30 octubre)
+
+Se amplio `frontend/e2e/rendimiento-local.spec.ts` para medir resumen y analitica del panel sobre backend de pruebas, con 20 movimientos ficticios y dos cuentas (incluida la predeterminada). Antes de medir, comprueba que ambos agregados reflejen el gasto ficticio esperado. Con H2 local y proxy de desarrollo: tres calentamientos y 20 lecturas secuenciales por endpoint; resumen p50 18,542 ms/p95 22,816 ms, analitica p50 18,468 ms/p95 21,912 ms. La primera expectativa de una sola cuenta fallo porque el registro crea una cuenta de efectivo; se corrigio a dos y la prueba paso. Evidencia privada `.local/panel-api-local-h2.json`.
+
+Son muestras calientes pequenas, no p95 de produccion ni volumen representativo; no miden SQL por separado, red real, Android o arranque frio. CI ejecutara la misma prueba con PostgreSQL local aislado; no se realizaron llamadas de IA ni QA financiera productiva.
+
+
 ## Entrega inicial
 
 Rama independiente `mejoras/etapa-13-mediciones-operacion` desde develop remoto `fd821fb79e9ed86d7fc0e229733df6589441fe3c`. Añade mediciones reproducibles y artefactos CI por SHA. No añade proveedores, telemetría externa, dependencias, migraciones ni recursos contratados.
