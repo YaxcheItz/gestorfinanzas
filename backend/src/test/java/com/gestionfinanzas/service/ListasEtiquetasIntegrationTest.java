@@ -147,6 +147,13 @@ class ListasEtiquetasIntegrationTest {
         assertEquals(0,buscar(a.getId(),lista,"%",null).getTotalElements());
         assertThrows(IllegalArgumentException.class,()->transacciones.crearTransaccion(b.getId(),gasto(cuentaA,lista,"Ajeno")));
     }
+    @Test void busquedaHashtagNormalizaUnicodeIgualQueAlGuardar() {
+        var movimiento=transacciones.crearTransaccion(a.getId(),gasto(cuentaA,lista,"Hotel", "\uFF36\uFF49\uFF41\uFF4A\uFF45"));
+        assertEquals(Set.of("viaje"), movimiento.etiquetas());
+        assertEquals(1,buscar(a.getId(),lista,"#\uFF36\uFF49\uFF41\uFF4A\uFF45",null).getTotalElements());
+        assertEquals(1,buscar(a.getId(),lista,"#viaje",null).getTotalElements());
+        assertEquals(1,buscar(a.getId(),lista,"HOTEL #\uFF36\uFF49\uFF41\uFF4A\uFF45",null).getTotalElements());
+    }
     @Test void terceroNoAccedeAListaNiMovimientosPorId() {
         var t=transacciones.crearTransaccion(a.getId(),gasto(cuentaA,lista,"Hotel"));
         assertThrows(PermisoCompartidoException.class,()->buscar(tercero.getId(),lista,null,null));

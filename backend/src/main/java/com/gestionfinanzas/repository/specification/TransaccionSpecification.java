@@ -86,10 +86,10 @@ public class TransaccionSpecification {
 
             if (filtro.autorId() != null) predicates.add(cb.equal(root.get("usuario").get("id"), filtro.autorId()));
             var etiquetas = new java.util.LinkedHashSet<>(com.gestionfinanzas.service.EtiquetasFinancieras.normalizar(filtro.etiquetas()));
-            String texto = filtro.busqueda() == null ? "" : filtro.busqueda().trim().toLowerCase(java.util.Locale.ROOT);
+            String texto = filtro.busqueda() == null ? "" : filtro.busqueda().trim();
             var hashtags = java.util.regex.Pattern.compile("(?:^|\\s)#([\\p{L}\\p{N}][\\p{L}\\p{N}_-]{0,31})(?=\\s|$)").matcher(texto);
-            while (hashtags.find()) etiquetas.add(hashtags.group(1));
-            texto = hashtags.replaceAll(" ").trim();
+            while (hashtags.find()) etiquetas.addAll(com.gestionfinanzas.service.EtiquetasFinancieras.normalizar(List.of(hashtags.group(1))));
+            texto = hashtags.replaceAll(" ").trim().toLowerCase(java.util.Locale.ROOT);
             if (etiquetas.size() > 8) throw new IllegalArgumentException("Busca hasta 8 etiquetas a la vez.");
             for (String etiqueta : etiquetas) predicates.add(cb.isMember(etiqueta, root.get("etiquetas")));
             if (!texto.isBlank()) {
