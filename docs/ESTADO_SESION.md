@@ -1,3 +1,11 @@
+## Android 0.1.20 instalado y revision de Inicio (3 noviembre 2026)
+
+PR194 integrado en develop 29b96f6f5da45f5f1380ddbae76cd4feb145730c; PR195 integrado en develop 928f3880048e5f787711467e4acb907f3c30e5da. CI 41709567026 y Android 41709567274 correctos para la fuente eff8e08ab4a0ea2f6723bd81214ea782a61ae559. Frontend 475 unitarias, E2E local 44 correctas y 4 PWA omitidas, pruebas Android release 27 correctas; build release correcto.
+
+APK 0.1.20/codigo21 instalada por actualizacion en Samsung SM-A546E. SHA256 preparado y extraido de la instalacion b2c569422ddc11d824b75f54951e51e46ad0ae759519301232e2a8e86c83fff7; misma firma que APK anterior, UID10477 y fecha inicial 2026-10-22 conservados. Los 86 archivos web esperados coinciden con el build. Evidencia .local/android-020-verification.json y APK .local/releases/Kaptal-0.1.20.apk. No se abrio la app ni se comprobo sesion visible o gesto fisico; listado de usuario secundario 150 denegado.
+
+Web no publicada por esta entrega: main remoto 97d8639e3fde98566916aa609407918079fc49de; PR192 de develop a main con CI pendiente. No acceder a datos financieros, hacer compras o QA productiva. Continuar revision de Inicio con el propietario por elementos, incluyendo etiquetas y futura configuracion de tarjetas; carreras de sesion y posible duplicacion de transferencias siguen abiertas. Revisar seguridad y privacidad despues; migrar alojamiento solo al final si persiste lentitud.
+
 ## Estado de revision y telefono (3 noviembre 2026)
 
 La correccion del gesto y las pruebas se subieron en 7a43f0ef0f2e051e1ad17dd8b0bcb4a65293b77f. La suite local H2 termino con 44 aprobadas y 4 PWA omitidas; la prueba focal ampliada aprobo scroll vertical/horizontal, ambas direcciones, cancelacion y las acciones al soltar. Build, 475 unitarias y arranque sintetico correctos. Al registrar, CI Android y todos los jobs excepto los dos E2E estaban correctos. El usuario autoriza usar el Samsung y mantener la APK actualizada cuando sea posible.
