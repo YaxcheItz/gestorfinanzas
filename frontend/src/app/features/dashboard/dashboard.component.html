@@ -3,7 +3,7 @@
       <div class="home-scroll-summary" [class.is-visible]="inicioCompacto()" aria-hidden="true"><span>Gastos · {{ etiquetaRangoSeleccionado() }}</span>@if(resumenMonedaSeleccionada(); as moneda){<strong>{{ moneda.gastosMes | monto:moneda.moneda:'symbol-narrow':'1.2-2' }} <small>{{ moneda.moneda }}</small></strong>}</div>
       <header class="dashboard-screen__header">
         <h1 class="sr-only">Resumen financiero</h1>
-        <div class="home-view-switch" role="group" aria-label="Vista del inicio"><button type="button" [attr.aria-pressed]="!vistaDetallada()" (click)="vistaDetallada.set(false)">Simple</button><button type="button" [attr.aria-pressed]="vistaDetallada()" (click)="vistaDetallada.set(true)">Detallada</button></div>
+        <div class="dashboard-screen__header-spacer"></div>
         <app-privacy-toggle/>
       </header>
 
@@ -84,10 +84,28 @@
         @else if (resumenMonedaSeleccionada(); as moneda) {
           <p class="dashboard-screen__amount" aria-live="polite">{{ moneda.gastosMes | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</p>
           <label class="home-currency"><span class="sr-only">Moneda del balance</span><select [ngModel]="monedaResumen()" (ngModelChange)="cambiarMoneda($event)" aria-label="Moneda del balance">@for (codigo of monedasResumen(); track codigo) {<option [value]="codigo">{{ codigo }}</option>}</select></label>
-          @if (vistaDetallada()) {
-            <button type="button" class="dashboard-screen__text-link" (click)="irAReportes()">Informe del periodo</button><div class="home-metrics"><span>Ingresos <strong>{{ moneda.ingresosMes | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong></span><span>Balance del periodo <strong>{{ moneda.ingresosMes - moneda.gastosMes | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong></span></div>
-            <details class="home-account-details"><summary>Mis cuentas ? todas las listas</summary><div><span>Dinero en cuentas</span><strong>{{ (moneda.dineroDisponible ?? moneda.balanceTotal) | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong></div>@if(moneda.deudaTarjetas != null && moneda.deudaTarjetas > 0){<div><span>Deuda de tarjetas</span><strong>{{ moneda.deudaTarjetas | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong></div><div><span>Saldo neto</span><strong>{{ moneda.balanceTotal | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong></div>}<button type="button" (click)="irACuentas()">{{ moneda.totalCuentas }} cuentas &rsaquo;</button></details>
-          }
+          <div class="home-metrics" role="region" aria-label="Resumen de ingresos y balance">
+            <div class="home-metric home-metric--income">
+              <span class="home-metric__label">Ingresos</span>
+              <strong class="home-metric__value">{{ moneda.ingresosMes | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong>
+            </div>
+            <div class="home-metric home-metric--balance">
+              <span class="home-metric__label">Balance del periodo</span>
+              <strong class="home-metric__value" [class.is-negative]="(moneda.ingresosMes - moneda.gastosMes) < 0">{{ (moneda.ingresosMes - moneda.gastosMes) | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong>
+            </div>
+            <div class="home-metric home-metric--accounts">
+              <span class="home-metric__label">Dinero en cuentas</span>
+              <strong class="home-metric__value">{{ (moneda.dineroDisponible ?? moneda.balanceTotal) | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong>
+            </div>
+          </div>
+          <div class="home-account-summary">
+            @if (moneda.deudaTarjetas != null && moneda.deudaTarjetas > 0) {
+              <span>Deuda de tarjetas: <strong>{{ moneda.deudaTarjetas | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong></span>
+              <span>Saldo neto: <strong>{{ moneda.balanceTotal | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong></span>
+            }
+            <button type="button" class="home-link-inline" (click)="irACuentas()">{{ moneda.totalCuentas }} cuentas &rsaquo;</button>
+            <button type="button" class="home-link-inline" (click)="irAReportes()">Informe del periodo &rsaquo;</button>
+          </div>
         } @else if (!error()) { <p class="dashboard-screen__amount">{{ 0 | monto:monedaResumen():'symbol-narrow':'1.2-2' }}</p> }
         <div class="home-period"><button type="button" class="home-period-arrow" (click)="cambiarPeriodo(-1)" [disabled]="cargandoPeriodoInicial() || !puedeRetroceder()" aria-label="Periodo anterior">&lsaquo;</button><button type="button" class="time-dropdown-btn" (click)="toggleModalRango()" [disabled]="cargandoPeriodoInicial()" [attr.aria-busy]="cargandoPeriodoInicial()" aria-haspopup="dialog" [attr.aria-expanded]="modalRangoAbierto()">{{ etiquetaRangoSeleccionado() }} <span aria-hidden="true">&#8964;</span></button><button type="button" class="home-period-arrow" (click)="cambiarPeriodo(1)" [disabled]="cargandoPeriodoInicial() || periodoEsActual()" aria-label="Periodo siguiente">&rsaquo;</button></div>
       </section>
@@ -104,14 +122,13 @@
                   <span class="home-category__track"><span class="home-category__bar" [style.height.%]="categoria.altura" aria-hidden="true"></span><span class="home-category__emoji"><app-categoria-icono [icono]="categoria.icono" clase="category-emoji-large"/></span></span>
                   <strong>{{ categoria.monto | monto:categoria.moneda:'symbol-narrow':'1.0-2' }}</strong><span class="home-category__name">{{ categoria.categoriaNombre }}</span>
                 </button>
-                <button type="button" class="home-category__more" (click)="categoriaContextual.set(categoria)" [attr.aria-label]="'Opciones de ' + categoria.categoriaNombre">&middot;&middot;&middot;</button>
               </article>
             }
           </div>
         } @else if (!loading() && !error()) {<div class="home-empty"><span aria-hidden="true">&#127793;</span><h2>Sin gastos todavía</h2><p>Cuéntanos qué gastaste, hablando o escribiendo.</p><button type="button" (click)="abrirChatRegistro()">Prefiero registrarlo a mano</button></div>}
       </section>
 
-      @if (vistaDetallada()) {
+      @if (presupuestosDashboard().length > 0 || presupuestoLoading() || presupuestoError()) {
         <section class="dashboard-screen__budgets" aria-labelledby="dashboard-budgets-title"><div class="dashboard-screen__section-heading"><div><h2 id="dashboard-budgets-title">Presupuestos</h2><p class="dashboard-budget-period">{{ periodoResumen() }} · mensual · todas mis listas</p></div><button type="button" class="dashboard-screen__text-link" (click)="irAPresupuestos()">Ver todos</button></div>
           @if (presupuestoLoading()) {<p class="home-inline-state">Cargando presupuestos…</p>}
           @else if (presupuestoError()) {<p class="home-inline-state" role="alert">{{ presupuestoError() }} <button type="button" (click)="cargarPresupuestos()">Reintentar</button></p>}
@@ -121,7 +138,7 @@
         </section>
       }
 
-      @if (vistaDetallada() && plantillasPorAtender().length > 0) {
+      @if (plantillasPorAtender().length > 0) {
         <section class="dashboard-screen__section dashboard-screen__upcoming" aria-labelledby="dashboard-upcoming-title">
           <div class="dashboard-screen__section-heading"><div class="dashboard-screen__title-with-icon"><span class="dashboard-screen__section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4m8-4v4M4 10h16m-11 4h2m-2 3h5"/></svg></span><div><p class="dashboard-screen__eyebrow">Pr&oacute;ximos 7 d&iacute;as</p><h2 id="dashboard-upcoming-title">Pagos programados</h2></div></div><button type="button" class="dashboard-screen__text-link" (click)="irARecurrentes()">Ver todos</button></div>
           @for (plantilla of plantillasPorAtender().slice(0, 3); track plantilla.id) {
@@ -132,15 +149,13 @@
       }
 
       <!-- 4. Lista de Actividad Reciente con botón Ver Todo -->
-      @if (loading() || error() || ultimosMovimientosLimitados().length > 0 || vistaDetallada()) {
+      @if (true) {
       <section class="dashboard-screen__section dashboard-screen__activity dashboard-screen__recent" aria-labelledby="dashboard-recent-title">
         <div class="dashboard-screen__section-heading">
           <div>
             <h2 id="dashboard-recent-title">Recientes</h2>
           </div>
-          <button type="button" class="dashboard-screen__text-link" (click)="irATransacciones()">
-            Ver todos <span aria-hidden="true">→</span>
-          </button>
+          <a routerLink="/transacciones" class="dashboard-screen__text-link" (click)="$event.preventDefault(); irATransacciones()" aria-label="Movimientos">Ver todos <span aria-hidden="true">→</span></a>
         </div>
         @if (loading()) {
           <div class="dashboard-loading-movements" role="status" aria-label="Cargando movimientos">

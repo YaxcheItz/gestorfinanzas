@@ -15,7 +15,7 @@ import { Router, RouterLink } from '@angular/router';
         <button type="button" class="workspace-selector" (click)="listas.abierta.set(true)" aria-label="Cambiar lista" aria-haspopup="dialog" [attr.aria-expanded]="listas.abierta()"><span aria-hidden="true">{{ listas.contexto.activa()?.emoji }}</span><span class="workspace-selector__name">{{ listas.contexto.activa()?.nombre || 'Mis movimientos' }}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 10 4 4 4-4"/></svg></button>
       </div>
       <nav class="workspace-shortcuts" aria-label="Accesos principales">
-        <a routerLink="/transacciones" [queryParams]="{listaId: listas.contexto.activaId()}" class="glass-icon" aria-label="Movimientos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M3 6h.01M3 12h.01M3 18h.01"/></svg></a>
+
         <a routerLink="/configuracion" class="glass-icon" aria-label="Configuración"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 3-1 3-3 1-3 3v4l3 3 3 1 1 3h4l1-3 3-1 3-3v-4l-3-3-3-1-1-3z"/><circle cx="12" cy="12" r="3"/></svg></a>
       </nav>
     </header>
@@ -29,6 +29,7 @@ import { Router, RouterLink } from '@angular/router';
       <nav aria-label="Herramientas de tu espacio">
         <div class="workspace-panel__primary">
           <a routerLink="/dashboard" (click)="cerrarMenu()">Inicio <span aria-hidden="true">&#8250;</span></a>
+          <a routerLink="/transacciones" [queryParams]="{listaId: listas.contexto.activaId()}" (click)="cerrarMenu()">Movimientos <span aria-hidden="true">&#8250;</span></a>
           <a routerLink="/cuentas" (click)="cerrarMenu()">Cuentas <span aria-hidden="true">&#8250;</span></a>
           <a routerLink="/metas" (click)="cerrarMenu()">Metas de ahorro <span aria-hidden="true">&#8250;</span></a>
           <a routerLink="/avisos" (click)="cerrarMenu()">Bandeja de avisos <span aria-hidden="true">&#8250;</span></a>
