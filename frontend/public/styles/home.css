@@ -45,7 +45,7 @@ html.dark .home-category__bar{filter:brightness(.85)}
 .dashboard-budget-period{font-size:12px;color:var(--kaptal-content-muted);margin-top:4px}
 .home-budget-row{display:flex;align-items:center;gap:16px;padding:12px 0}
 .home-budget-row>div{flex:1;min-width:0}.home-budget-row strong{font-size:14px;font-weight:600}.home-budget-row small{display:block;font-size:12px;color:var(--kaptal-content-muted);margin-top:4px}
-.home-budget-progress{height:6px;border-radius:999px;background:var(--kaptal-surface-subtle);overflow:hidden;margin-top:8px}.home-budget-progress>span{display:block;height:100%;background:#71B98B;border-radius:inherit}.home-budget-progress>span.is-over{background:var(--kaptal-voice)}
+
 .dashboard-screen__recent-list{display:flex;flex-direction:column;gap:0}
 .home-inline-state,.dashboard-screen__muted{font-size:13px;color:var(--kaptal-content-muted);line-height:1.6}.home-inline-state button{min-height:44px;color:var(--kaptal-brand)}
 .home-empty{display:flex;flex-direction:column;align-items:center;text-align:center;padding:24px 16px 32px;gap:12px}.home-empty>span{font-size:32px}.home-empty h2{font-size:18px;font-weight:600}.home-empty p{font-size:14px;color:var(--kaptal-content-muted);max-width:280px}.home-empty button{font-size:13px;min-height:44px;color:var(--kaptal-brand)}
@@ -95,3 +95,41 @@ html .monai-theme .time-option-card{border:0;border-radius:18px;background:var(-
 .period-custom{width:100%;min-height:48px;border-radius:16px;background:var(--kaptal-surface-subtle);margin-top:16px;font-size:14px}
 .period-error{font-size:14px;line-height:1.5;color:var(--kaptal-expense);margin-top:12px}
 .period-form :focus-visible{outline:2px solid var(--kaptal-brand);outline-offset:3px}.period-form :disabled{opacity:.6}
+
+/* ── MonAi Budget Progress & Dotted Threshold Indicator ──────── */
+.home-budget-row__title{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.home-budget-pill{font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;letter-spacing:.02em;line-height:1.3}
+.home-budget-pill--warning{background:rgba(245,158,11,.16);color:#b45309;border:1px solid rgba(245,158,11,.35)}
+html.dark .home-budget-pill--warning{background:rgba(245,158,11,.22);color:#fbbf24;border-color:rgba(245,158,11,.45)}
+.home-budget-pill--danger{background:rgba(239,68,68,.16);color:#b91c1c;border:1px solid rgba(239,68,68,.35)}
+html.dark .home-budget-pill--danger{background:rgba(239,68,68,.22);color:#f87171;border-color:rgba(239,68,68,.45)}
+.home-budget-percent{font-weight:600;margin-left:4px;color:var(--kaptal-content-muted)}
+.home-budget-progress{position:relative;height:8px;border-radius:999px;background:var(--kaptal-surface-subtle);overflow:visible;margin-top:8px;box-sizing:border-box}
+.home-budget-progress__track{position:relative;width:100%;height:100%;border-radius:inherit;overflow:hidden;background:inherit}
+.home-budget-progress__fill{display:block;height:100%;border-radius:inherit;background:#10b981;transition:width 350ms cubic-bezier(.34,1.3,.64,1),background-color 250ms ease}
+.home-budget-progress--warning .home-budget-progress__fill{background:#f59e0b}
+.home-budget-progress--over .home-budget-progress__fill{background:#ef4444}
+.home-budget-progress--warning::after,.home-budget-progress--over::after{content:'';position:absolute;inset:-3px;border-radius:999px;border:1.5px dashed #f59e0b;pointer-events:none;animation:monai-dash-pulse 2s cubic-bezier(.4,0,.6,1) infinite}
+.home-budget-progress--over::after{border-color:#ef4444;border-width:2px;animation:monai-dash-pulse 1.3s cubic-bezier(.4,0,.6,1) infinite}
+@keyframes monai-dash-pulse{0%,100%{opacity:.9;transform:scale(1)}50%{opacity:.35;transform:scale(1.02)}}
+
+/* ── Selected Category & Gesture Overlay ───────────────────────── */
+.home-category{position:relative}
+.home-category.is-selected .home-category__bar{box-shadow:0 0 0 2px var(--kaptal-content),0 4px 12px rgba(0,0,0,.15);transform:scaleY(1.04)}
+.home-category.is-selected .home-category__emoji{transform:scale(1.15)}
+.home-category__track.is-budget-warning{box-shadow:inset 0 0 0 2px #f59e0b;border-radius:26px}
+.home-category__track.is-budget-over{box-shadow:inset 0 0 0 2px #ef4444;border-radius:26px;animation:monai-dash-pulse 1.5s ease-in-out infinite}
+.home-category__gesture-guide{position:absolute;inset:-18px -24px;display:flex;flex-direction:column;justify-content:space-between;align-items:center;pointer-events:none;z-index:30;animation:gesture-guide-in 180ms cubic-bezier(.16,1,.3,1)}
+.gesture-pill{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700;background:var(--kaptal-surface);color:var(--kaptal-content);box-shadow:0 4px 14px rgba(0,0,0,.16);border:1px solid var(--kaptal-border);transition:transform 160ms cubic-bezier(.34,1.56,.64,1),background-color 160ms,color 160ms;opacity:.88}
+.gesture-pill--up.is-target{background:#15803d;color:#fff;border-color:#15803d;transform:translateY(-6px) scale(1.18);box-shadow:0 6px 18px rgba(21,128,61,.45);opacity:1}
+.gesture-pill--down.is-target{background:#ea580c;color:#fff;border-color:#ea580c;transform:translateY(6px) scale(1.18);box-shadow:0 6px 18px rgba(234,88,12,.45);opacity:1}
+@keyframes gesture-guide-in{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+
+/* ── Recents Filter Badge ───────────────────────────────────────── */
+.dashboard-screen__title-with-badge{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.home-filter-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:var(--kaptal-surface-subtle);border:1px solid var(--kaptal-border);color:var(--kaptal-content);font-size:12px;font-weight:600;cursor:pointer;transition:background-color 150ms ease,transform 100ms ease}
+.home-filter-chip:hover{background:var(--kaptal-surface)}
+.home-filter-chip:active{transform:scale(.96)}
+.home-filter-chip__icon{display:inline-block;width:16px;height:16px}
+.home-filter-chip__close{display:inline-grid;place-items:center;width:16px;height:16px;border-radius:50%;background:rgba(0,0,0,.08);font-size:13px;line-height:1}
+html.dark .home-filter-chip__close{background:rgba(255,255,255,.15)}

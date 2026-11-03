@@ -1,3 +1,23 @@
+# Estado para retomar la sesion
+
+## Diseno: categorias, filtrado inline, gestos y presupuestos estilo MonAi
+
+En rama `diseno/categorias-filtro-gestos-presupuestos`. Se implementaron tres mejoras clave en la pantalla de Inicio:
+1. **Filtrado inline de movimientos por categoria**: Al pulsar una barra de categoria en el grafico superior, la seccion de "Recientes" abajo cambia dinamicamente a mostrar solo los movimientos de esa categoria durante el periodo consultado, con una pastilla/chip de filtro activo (`[Icono + CategoriaNombre ×]`) que permite quitar el filtro en cualquier momento sin navegar a otra ventana.
+2. **Gestos en barras de categorias (0.5s mantener + deslizar)**: Al mantener presionada una barra de categoria (~450ms) se activa el modo gesto con overlay visual interactivo: deslizar hacia ARRIBA (dy < -25px) resalta y activa la accion de registrar un nuevo gasto en esa categoria (`+ Gasto`); deslizar hacia ABAJO (dy > 25px) resalta y abre la definicion/edicion de presupuesto (`Presupuesto`).
+3. **Presupuestos estilo MonAi**: Las barras de progreso ahora incorporan estilos dinamicos con linea punteada animada (`monai-dash-pulse`) al alcanzar el 80% o mas; transicion de verde a naranja (#f59e0b) en alerta y a rojo (#ef4444) en exceso; e indicadores visuales (`⚠️ Cerca del limite` / `⚠️ Excedido`) junto al nombre. En el grafico de categorias superior, las categorias con presupuesto tambien reflejan bordes de alerta y exceso.
+
+Comprobaciones locales:
+- Build productivo Angular exitoso
+- 474 pruebas frontend (58 archivos) todas verdes (incluye 3 pruebas unitarias nuevas para gestos, filtro inline y presupuesto)
+- `check-startup.cjs` (casos 200/401/503 con sesion sintetica) correcto
+- `measure-navigation.cjs` (12 escenarios de navegacion Chromium) correcto
+- Sin modificaciones a endpoints de produccion, base de datos ni APK (telefono desconectado; APK al final)
+
+## Diseno vista unificada de Inicio PR abierto pendiente de CI
+
+Cambios en rama diseno/unificar-vista-inicio-resumen commit 8d92385 pusheados. PR pendiente de abrir manualmente en https://github.com/YaxcheItz/gestorfinanzas/pull/new/diseno/unificar-vista-inicio-resumen base develop. Eliminado selector Simple/Detallada; vista unificada con metricas de Ingresos Balance y Dinero en cuentas siempre visibles en tarjetas grid. Seccion home-account-summary con acceso a Cuentas e Informe del periodo. Presupuestos y pagos programados sin depender de vistaDetallada. Recientes siempre visible con link routerLink accesible. Boton de Movimientos quitado de accesos rapidos de navbar conservado en menu lateral. home.css metricas en grid ingresos en verde balance negativo en rojo micro-animacion en barras. 471/471 pruebas correctas. Siguiente: merge del PR; continuar revision de diseno por secciones. APK al final. Carreras de sesion y duplicacion de transferencias permanecen pendientes.
+
 # Estado para retomar la sesión
 
 ## Revision de diseno: Inicio sin guia de primeros pasos

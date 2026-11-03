@@ -1,5 +1,19 @@
 # Kaptal: plan maestro y traspaso al siguiente chat
 
+## Diseno: categorias, filtrado inline, gestos y presupuestos estilo MonAi
+
+En rama `diseno/categorias-filtro-gestos-presupuestos`. Se implementaron tres mejoras clave en la pantalla de Inicio:
+1. **Filtrado inline de movimientos por categoria**: Al pulsar una barra de categoria en el grafico superior, la seccion de "Recientes" abajo cambia dinamicamente a mostrar solo los movimientos de esa categoria durante el periodo consultado, con una pastilla/chip de filtro activo (`[Icono + CategoriaNombre ×]`) que permite quitar el filtro en cualquier momento sin navegar a otra ventana.
+2. **Gestos en barras de categorias (0.5s mantener + deslizar)**: Al mantener presionada una barra de categoria (~450ms) se activa el modo gesto con overlay visual interactivo: deslizar hacia ARRIBA (dy < -25px) resalta y activa la accion de registrar un nuevo gasto en esa categoria (`+ Gasto`); deslizar hacia ABAJO (dy > 25px) resalta y abre la definicion/edicion de presupuesto (`Presupuesto`).
+3. **Presupuestos estilo MonAi**: Las barras de progreso ahora incorporan estilos dinamicos con linea punteada animada (`monai-dash-pulse`) al alcanzar el 80% o mas; transicion de verde a naranja (#f59e0b) en alerta y a rojo (#ef4444) en exceso; e indicadores visuales (`⚠️ Cerca del limite` / `⚠️ Excedido`) junto al nombre. En el grafico de categorias superior, las categorias con presupuesto tambien reflejan bordes de alerta y exceso.
+
+Comprobaciones locales:
+- Build productivo Angular exitoso
+- 474 pruebas frontend (58 archivos) todas verdes (incluye 3 pruebas unitarias nuevas para gestos, filtro inline y presupuesto)
+- `check-startup.cjs` (casos 200/401/503 con sesion sintetica) correcto
+- `measure-navigation.cjs` (12 escenarios de navegacion Chromium) correcto
+- Sin modificaciones a endpoints de produccion, base de datos ni APK (telefono desconectado; APK al final)
+
 ## Revision de diseno: Inicio sin guia de primeros pasos
 
 El propietario pidio pasar a revisar rendimiento y diseno por secciones y retirar o desactivar de momento la guia de primeros pasos en cualquier lugar de la app. Se desactivo su presencia en Inicio y se retiro el boton de Configuracion que la reabria; el componente y su preferencia local se conservan sin exponerse, para permitir recuperarla si algun dia se solicita. No se modifican la captura, cuentas, avisos ni datos financieros. Build, 471 pruebas frontend y E2E Chromium con escenarios ficticios correctos; CI, integracion y distribucion pendientes al registrar.

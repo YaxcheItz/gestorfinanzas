@@ -49,6 +49,7 @@ import {
   Presupuesto,
   PresupuestoResumen,
   TipoTransaccion,
+  Transaccion,
   TransaccionPayload
 } from '../../core/models/finanzas.models';
 
@@ -113,33 +114,134 @@ export class DashboardComponent implements OnInit {
   readonly graficoLoading = signal(false);
   readonly graficoError = signal(false);
   readonly categoriaContextual = signal<CategoriaInicio | null>(null);
+  readonly categoriaFiltroSeleccionada = signal<CategoriaInicio | null>(null);
+  readonly movimientosCategoria = signal<Transaccion[]>([]);
+  readonly cargandoMovimientosCategoria = signal(false);
+  readonly categoriaGestoActiva = signal<CategoriaInicio | null>(null);
+  readonly gestoAccionSeleccionada = signal<'GASTO' | 'PRESUPUESTO' | null>(null);
   private temporizadorCategoria?: ReturnType<typeof setTimeout>;
   private inicioPresionCategoria?: { x: number; y: number };
   private presionCategoriaConsumida = false;
+  private modoGestoIniciado = false;
 
   iniciarPresionCategoria(event: PointerEvent, categoria: CategoriaInicio): void {
     if (!event.isPrimary || event.button !== 0) return;
     this.cancelarPresionCategoria();
     this.presionCategoriaConsumida = false;
+    this.modoGestoIniciado = false;
     this.inicioPresionCategoria = { x: event.clientX, y: event.clientY };
     this.temporizadorCategoria = setTimeout(() => {
       this.presionCategoriaConsumida = true;
+      this.modoGestoIniciado = true;
+      this.categoriaGestoActiva.set(categoria);
       this.categoriaContextual.set(categoria);
-    }, 500);
+      this.gestoAccionSeleccionada.set(null);
+    }, 450);
   }
+
   moverPresionCategoria(event: PointerEvent): void {
     const inicio = this.inicioPresionCategoria;
-    if (inicio && Math.hypot(event.clientX - inicio.x, event.clientY - inicio.y) > 8) this.cancelarPresionCategoria();
+    if (!inicio) return;
+    const dx = event.clientX - inicio.x;
+    const dy = event.clientY - inicio.y;
+
+    if (!this.modoGestoIniciado) {
+      if (Math.hypot(dx, dy) > 8) this.cancelarPresionCategoria();
+      return;
+    }
+
+    if (dy < -25) {
+      this.gestoAccionSeleccionada.set('GASTO');
+    } else if (dy > 25) {
+      this.gestoAccionSeleccionada.set('PRESUPUESTO');
+    } else {
+      this.gestoAccionSeleccionada.set(null);
+    }
   }
+
+  finalizarPresionCategoria(event: PointerEvent, categoria: CategoriaInicio): void {
+    clearTimeout(this.temporizadorCategoria);
+    if (this.modoGestoIniciado) {
+      const accion = this.gestoAccionSeleccionada();
+      this.categoriaGestoActiva.set(null);
+      this.gestoAccionSeleccionada.set(null);
+      this.modoGestoIniciado = false;
+
+      if (accion === 'GASTO') {
+        this.categoriaContextual.set(null);
+        this.registrarCategoria(categoria);
+      } else if (accion === 'PRESUPUESTO') {
+        this.categoriaContextual.set(null);
+        this.abrirPresupuestoCategoria(categoria);
+      }
+      return;
+    }
+    this.cancelarPresionCategoria();
+  }
+
   @HostListener('window:pointerup')
   @HostListener('window:pointercancel')
   cancelarPresionCategoria(): void {
     clearTimeout(this.temporizadorCategoria);
     this.inicioPresionCategoria = undefined;
+    if (this.modoGestoIniciado) {
+      this.categoriaGestoActiva.set(null);
+      this.gestoAccionSeleccionada.set(null);
+      this.modoGestoIniciado = false;
+    }
   }
+
   tocarCategoria(categoria: CategoriaInicio): void {
     if (this.presionCategoriaConsumida) { this.presionCategoriaConsumida = false; return; }
-    this.irATransacciones(categoria.categoriaId);
+    if (this.categoriaFiltroSeleccionada()?.categoriaId === categoria.categoriaId) {
+      this.quitarFiltroCategoria();
+    } else {
+      this.seleccionarFiltroCategoria(categoria);
+    }
+  }
+
+  seleccionarFiltroCategoria(categoria: CategoriaInicio): void {
+    this.categoriaFiltroSeleccionada.set(categoria);
+    const enMemoria = (this.resumen()?.ultimosMovimientos ?? [])
+      .filter(m => m.categoriaId === categoria.categoriaId && m.moneda === this.monedaResumen());
+    this.movimientosCategoria.set(enMemoria);
+
+    const { desde, hasta } = this.fechasRango();
+    this.cargandoMovimientosCategoria.set(true);
+    this.finanzasService.getTransaccionesPaginadas({
+      categoriaId: categoria.categoriaId,
+      fechaInicio: desde,
+      fechaFin: hasta,
+      moneda: this.monedaResumen(),
+      ...(this.contextoLista.activaId() == null ? {} : { listaId: this.contextoLista.activaId() })
+    }, 0, 20).subscribe({
+      next: res => {
+        if (this.categoriaFiltroSeleccionada()?.categoriaId !== categoria.categoriaId) return;
+        if (res.success && res.data) {
+          this.movimientosCategoria.set(res.data.content);
+        }
+        this.cargandoMovimientosCategoria.set(false);
+      },
+      error: () => {
+        this.cargandoMovimientosCategoria.set(false);
+      }
+    });
+  }
+
+  quitarFiltroCategoria(): void {
+    this.categoriaFiltroSeleccionada.set(null);
+    this.movimientosCategoria.set([]);
+    this.cargandoMovimientosCategoria.set(false);
+  }
+
+  abrirPresupuestoCategoria(categoria: CategoriaInicio): void {
+    this.categoriaContextual.set(null);
+    void this.router.navigate(['/presupuestos'], {
+      queryParams: {
+        ...(this.contextoLista.activaId() == null ? {} : { listaId: this.contextoLista.activaId() }),
+        categoriaId: categoria.categoriaId
+      }
+    });
   }
   readonly categoriasInicio = computed<CategoriaInicio[]>(() => {
     const gastos = this.gastosCategoria().filter(item => item.moneda === this.monedaResumen() && item.monto > 0)

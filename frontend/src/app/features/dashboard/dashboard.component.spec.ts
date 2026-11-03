@@ -47,6 +47,7 @@ describe('DashboardComponent movement dialog accessibility', () => {
             registrarMovimientoRecurrente: () => of({ success: true, message: '', data: undefined }),
             getCuentas: () => of({ success: true, message: '', data: [] }),
             getCategorias: () => of({ success: true, message: '', data: [] }),
+            getTransaccionesPaginadas: () => of({ success: true, message: '', data: { content: [], totalElements: 0, totalPages: 0, size: 20, number: 0, first: true, last: true } }),
             crearTransaccion
           }
         },
@@ -144,7 +145,10 @@ describe('DashboardComponent movement dialog accessibility', () => {
     fixture.detectChanges();
     const button = fixture.nativeElement.querySelector('.home-category__bar-button') as HTMLButtonElement;
     button.click();
-    expect(TestBed.inject(Router).navigate).toHaveBeenCalledWith(['/transacciones'], { queryParams: { categoriaId: 7, fechaInicio: component.fechasRango().desde, fechaFin: component.fechasRango().hasta } });
+    expect(component.categoriaFiltroSeleccionada()?.categoriaId).toBe(7);
+    expect(TestBed.inject(Router).navigate).not.toHaveBeenCalled();
+    button.click();
+    expect(component.categoriaFiltroSeleccionada()).toBeNull();
     component.privacidad.alternarLocal();
     expect(component.categoriasInicio().every(item => item.altura === 0)).toBe(true);
     fixture.destroy();
@@ -713,6 +717,71 @@ describe('DashboardComponent movement dialog accessibility', () => {
 
       expect(component.esCompraMsi).toBe(false);
       expect(component.formMsi).toBeNull();
+    });
+  });
+  describe('gestos en categorias, filtrado inline y estilo monai de presupuestos', () => {
+    it('filtra movimientos en Inicio al tocar una categoria y quita el filtro al tocarla nuevamente o con quitarFiltroCategoria', () => {
+      const fixture = TestBed.createComponent(DashboardComponent);
+      const component = fixture.componentInstance;
+      const categoria = { categoriaId: 5, categoriaNombre: 'Transporte', moneda: 'MXN', monto: 100, tono: '#ccc', altura: 50, icono: 'bus' };
+
+      component.tocarCategoria(categoria);
+      expect(component.categoriaFiltroSeleccionada()?.categoriaId).toBe(5);
+
+      component.quitarFiltroCategoria();
+      expect(component.categoriaFiltroSeleccionada()).toBeNull();
+      expect(component.movimientosCategoria()).toEqual([]);
+      fixture.destroy();
+    });
+
+    it('ejecuta registro de gasto al mantener presionado y deslizar hacia arriba', () => {
+      vi.useFakeTimers();
+      const fixture = TestBed.createComponent(DashboardComponent);
+      try {
+        const component = fixture.componentInstance;
+        const categoria = { categoriaId: 9, categoriaNombre: 'Restaurantes', moneda: 'MXN', monto: 150, tono: '#faa', altura: 80, icono: 'utensils' };
+        const dispatchSpy = vi.spyOn(window, 'dispatchEvent');
+
+        component.iniciarPresionCategoria({ isPrimary: true, button: 0, clientX: 100, clientY: 200 } as PointerEvent, categoria);
+        vi.advanceTimersByTime(500);
+        expect(component.categoriaGestoActiva()?.categoriaId).toBe(9);
+
+        // Deslizar arriba (dy = -40)
+        component.moverPresionCategoria({ clientX: 100, clientY: 160 } as PointerEvent);
+        expect(component.gestoAccionSeleccionada()).toBe('GASTO');
+
+        component.finalizarPresionCategoria({} as PointerEvent, categoria);
+        expect(dispatchSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'kaptal-abrir-registro-rapido' }));
+        expect(component.categoriaGestoActiva()).toBeNull();
+      } finally {
+        fixture.destroy();
+        vi.useRealTimers();
+      }
+    });
+
+    it('navega a presupuestos de la categoria al mantener presionado y deslizar hacia abajo', () => {
+      vi.useFakeTimers();
+      const fixture = TestBed.createComponent(DashboardComponent);
+      try {
+        const component = fixture.componentInstance;
+        const categoria = { categoriaId: 9, categoriaNombre: 'Restaurantes', moneda: 'MXN', monto: 150, tono: '#faa', altura: 80, icono: 'utensils' };
+        const router = TestBed.inject(Router);
+
+        component.iniciarPresionCategoria({ isPrimary: true, button: 0, clientX: 100, clientY: 200 } as PointerEvent, categoria);
+        vi.advanceTimersByTime(500);
+        expect(component.categoriaGestoActiva()?.categoriaId).toBe(9);
+
+        // Deslizar abajo (dy = +40)
+        component.moverPresionCategoria({ clientX: 100, clientY: 240 } as PointerEvent);
+        expect(component.gestoAccionSeleccionada()).toBe('PRESUPUESTO');
+
+        component.finalizarPresionCategoria({} as PointerEvent, categoria);
+        expect(router.navigate).toHaveBeenCalledWith(['/presupuestos'], expect.objectContaining({ queryParams: expect.objectContaining({ categoriaId: 9 }) }));
+        expect(component.categoriaGestoActiva()).toBeNull();
+      } finally {
+        fixture.destroy();
+        vi.useRealTimers();
+      }
     });
   });
 });
