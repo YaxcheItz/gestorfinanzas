@@ -18,6 +18,12 @@ import { CategoriaIconoComponent } from '../categoria-icono/categoria-icono.comp
 
 export type MetodoCaptura = 'VOZ' | 'WHATSAPP' | 'TEXTO' | 'DESCONOCIDO';
 
+// ─── Constantes de comportamiento del swipe ──────────────────────────────────
+const SWIPE_THRESHOLD   = 44;    // px mínimos para reconocer swipe horizontal
+const TRAY_WIDTH        = 80;    // px que se revela del tray al abrir
+const DRAG_RESISTANCE   = 0.35;  // factor de fricción al arrastrar más allá del tray
+const CONFIRM_THRESHOLD = 120;   // px donde el ícono crece indicando acción disponible
+
 @Directive({
   selector: '[appSwipeActions]',
   standalone: true,
@@ -25,98 +31,214 @@ export type MetodoCaptura = 'VOZ' | 'WHATSAPP' | 'TEXTO' | 'DESCONOCIDO';
 })
 export class SwipeActionsDirective {
   @HostBinding('class.swipe-actions-open-delete') openDelete = false;
-  @HostBinding('class.swipe-actions-open-edit') openEdit = false;
+  @HostBinding('class.swipe-actions-open-edit')   openEdit   = false;
+  @HostBinding('class.swipe-actions--dragging')   dragging   = false;
+  @HostBinding('class.swipe-actions--confirmed')  confirmed  = false;
 
-  @Input() allowEdit = true;
+  @Input() allowEdit   = true;
   @Input() allowDelete = true;
 
   @Output() swipeDeleteReveal = new EventEmitter<void>();
-  @Output() swipeEditReveal = new EventEmitter<void>();
-  @Output() tap = new EventEmitter<void>();
+  @Output() swipeEditReveal   = new EventEmitter<void>();
+  @Output() tap               = new EventEmitter<void>();
 
-  private pointerStart: { id: number; x: number; y: number; moved: boolean } | null = null;
+  private host!: HTMLElement;
+  private content: HTMLElement | null = null;
+  private trayDelete: HTMLElement | null = null;
+  private trayEdit:   HTMLElement | null = null;
+
+  private start: { id: number; x: number; y: number } | null = null;
   private suppressTapUntil = 0;
+  private rafId = 0;
+  private currentDx = 0;
+  private direction: 'delete' | 'edit' | null = null;
 
   @HostListener('pointerdown', ['$event'])
-  onPointerDown(event: PointerEvent): void {
-    const target = event.target;
+  onPointerDown(e: PointerEvent): void {
+    const target = e.target;
     if (
-      !event.isPrimary
-      || event.button !== 0
+      !e.isPrimary || e.button !== 0
       || (target instanceof Element && target.closest('button, a, input, select, textarea'))
-    ) {
-      this.pointerStart = null;
+    ) return;
+
+    this.host       = e.currentTarget as HTMLElement;
+    this.content    = this.host.querySelector<HTMLElement>('.swipe-actions__content');
+    this.trayDelete = this.host.querySelector<HTMLElement>('.swipe-actions__tray--delete');
+    this.trayEdit   = this.host.querySelector<HTMLElement>('.swipe-actions__tray--edit');
+
+    // Si ya hay un tray abierto, lo cerramos y cancelamos el nuevo gesto
+    if (this.openDelete || this.openEdit) {
+      this.animateClose();
       return;
     }
 
-    this.pointerStart = { id: event.pointerId, x: event.clientX, y: event.clientY, moved: false };
-    (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+    this.start     = { id: e.pointerId, x: e.clientX, y: e.clientY };
+    this.direction = null;
+    this.currentDx = 0;
+    this.host.setPointerCapture(e.pointerId);
   }
 
   @HostListener('pointermove', ['$event'])
-  onPointerMove(event: PointerEvent): void {
-    if (!this.pointerStart || event.pointerId !== this.pointerStart.id) return;
-    const dx = event.clientX - this.pointerStart.x;
-    const dy = event.clientY - this.pointerStart.y;
-    if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
-      this.pointerStart.moved = true;
+  onPointerMove(e: PointerEvent): void {
+    if (!this.start || e.pointerId !== this.start.id) return;
+
+    const rawDx = e.clientX - this.start.x;
+    const rawDy = e.clientY - this.start.y;
+
+    // Determinar dirección dominante la primera vez que se mueve lo suficiente
+    if (!this.direction) {
+      if (Math.abs(rawDx) < 8 && Math.abs(rawDy) < 8) return;
+      // Si el movimiento es más vertical que horizontal → scroll, cancelamos
+      if (Math.abs(rawDy) > Math.abs(rawDx)) { this.start = null; return; }
+
+      if (rawDx < 0 && this.allowDelete)     this.direction = 'delete';
+      else if (rawDx > 0 && this.allowEdit)  this.direction = 'edit';
+      else { this.start = null; return; }
+
+      this.dragging = true;
+      this.disableTransition(this.content);
     }
+
+    // Calcular desplazamiento con resistencia más allá del ancho del tray
+    let dx = rawDx;
+    const sign     = this.direction === 'delete' ? -1 : 1;
+    const positive = dx * sign; // siempre positivo en la dirección del swipe
+    if (positive > TRAY_WIDTH) {
+      dx = sign * (TRAY_WIDTH + (positive - TRAY_WIDTH) * DRAG_RESISTANCE);
+    }
+    this.currentDx = dx;
+    this.confirmed = positive >= CONFIRM_THRESHOLD;
+
+    cancelAnimationFrame(this.rafId);
+    this.rafId = requestAnimationFrame(() => this.applyDrag(dx, positive));
   }
 
   @HostListener('pointerup', ['$event'])
-  onPointerUp(event: PointerEvent): void {
-    if (!this.pointerStart || event.pointerId !== this.pointerStart.id) return;
+  onPointerUp(e: PointerEvent): void {
+    if (!this.start || e.pointerId !== this.start.id) return;
+    const hadStart = this.start;
+    this.start     = null;
+    this.dragging  = false;
+    this.confirmed = false;
+    cancelAnimationFrame(this.rafId);
 
-    const deltaX = event.clientX - this.pointerStart.x;
-    const deltaY = event.clientY - this.pointerStart.y;
-    const moved = this.pointerStart.moved;
-    this.pointerStart = null;
+    const rawDx = e.clientX - hadStart.x;
+    const rawDy = e.clientY - hadStart.y;
 
-    const horizontal = Math.abs(deltaX) >= 44 && Math.abs(deltaX) >= Math.abs(deltaY) * 1.25;
-    if (horizontal) {
-      this.suppressTapUntil = Date.now() + 350;
-      if (deltaX < 0 && this.allowDelete) {
-        this.openEdit = false;
-        this.openDelete = true;
-        this.swipeDeleteReveal.emit();
-        return;
-      }
-      if (deltaX > 0 && this.allowEdit) {
-        this.openDelete = false;
-        this.openEdit = true;
-        this.swipeEditReveal.emit();
-        return;
+    if (!this.direction) {
+      // Fue un tap limpio (sin movimiento)
+      if (Math.abs(rawDx) < 8 && Math.abs(rawDy) < 8 && Date.now() > this.suppressTapUntil) {
+        this.tap.emit();
       }
       return;
     }
 
-    if (!moved && Date.now() > this.suppressTapUntil) {
-      if (this.openDelete || this.openEdit) {
-        this.close();
-        return;
+    this.enableTransition(this.content);
+    this.suppressTapUntil = Date.now() + 350;
+
+    const positive = Math.abs(this.currentDx);
+
+    if (positive >= SWIPE_THRESHOLD) {
+      // Revelar tray con spring
+      if (this.direction === 'delete') {
+        this.openDelete = true;
+        this.setContentX(-TRAY_WIDTH);
+        this.revealTray(this.trayDelete, true);
+        this.swipeDeleteReveal.emit();
+      } else {
+        this.openEdit = true;
+        this.setContentX(TRAY_WIDTH);
+        this.revealTray(this.trayEdit, true);
+        this.swipeEditReveal.emit();
       }
-      this.tap.emit();
+    } else {
+      // Spring-back: no alcanzó el umbral
+      this.animateClose();
     }
+
+    this.direction = null;
   }
 
   @HostListener('pointercancel')
   onPointerCancel(): void {
-    this.pointerStart = null;
+    if (!this.start) return;
+    this.start     = null;
+    this.dragging  = false;
+    this.confirmed = false;
+    this.direction = null;
+    cancelAnimationFrame(this.rafId);
+    this.animateClose();
   }
 
   @HostListener('document:keydown.escape')
-  closeOnEscape(): void {
-    this.close();
-  }
+  closeOnEscape(): void { this.close(); }
 
   toggleDelete(): void {
     this.openEdit = false;
-    this.openDelete = !this.openDelete;
+    if (this.openDelete) { this.animateClose(); }
+    else {
+      this.openDelete = true;
+      this.enableTransition(this.content);
+      this.setContentX(-TRAY_WIDTH);
+      this.revealTray(this.trayDelete, true);
+    }
   }
 
-  close(): void {
+  close(): void { this.animateClose(); }
+
+  // ── Helpers internos ──────────────────────────────────────────────────────
+
+  /** Aplica posición y escala del ícono durante el arrastre. */
+  private applyDrag(dx: number, positive: number): void {
+    if (!this.content) return;
+    this.content.style.transform = `translateX(${dx}px)`;
+
+    const tray = this.direction === 'delete' ? this.trayDelete : this.trayEdit;
+    if (tray) {
+      const ratio    = Math.min(positive / TRAY_WIDTH, 1);
+      const overRatio = Math.max(0, positive - TRAY_WIDTH) / Math.max(1, CONFIRM_THRESHOLD - TRAY_WIDTH);
+      const iconScale = 0.7 + 0.3 * ratio + (this.confirmed ? 0.15 * overRatio : 0);
+
+      tray.style.opacity   = String(Math.min(ratio * 1.4, 1));
+      tray.style.transform = `scaleX(${Math.min(ratio * 1.2, 1)})`;
+      const btn = tray.querySelector<HTMLElement>('.swipe-actions__action');
+      if (btn) btn.style.transform = `scale(${iconScale})`;
+    }
+  }
+
+  /** Devuelve la card a su posición original con animación spring. */
+  private animateClose(): void {
     this.openDelete = false;
-    this.openEdit = false;
+    this.openEdit   = false;
+    this.enableTransition(this.content);
+    this.setContentX(0);
+    [this.trayDelete, this.trayEdit].forEach(t => {
+      if (!t) return;
+      t.style.opacity   = '0';
+      t.style.transform = 'scaleX(0)';
+      const btn = t.querySelector<HTMLElement>('.swipe-actions__action');
+      if (btn) btn.style.transform = '';
+    });
+  }
+
+  private revealTray(tray: HTMLElement | null, show: boolean): void {
+    if (!tray) return;
+    tray.style.opacity   = show ? '1' : '0';
+    tray.style.transform = show ? 'scaleX(1)' : 'scaleX(0)';
+    const btn = tray.querySelector<HTMLElement>('.swipe-actions__action');
+    if (btn) btn.style.transform = show ? 'scale(1)' : '';
+  }
+
+  private setContentX(x: number): void {
+    if (this.content) this.content.style.transform = `translateX(${x}px)`;
+  }
+
+  private enableTransition(el: HTMLElement | null): void {
+    if (el) el.style.transition = 'transform 320ms cubic-bezier(0.34, 1.3, 0.64, 1)';
+  }
+
+  private disableTransition(el: HTMLElement | null): void {
+    if (el) el.style.transition = 'none';
   }
 }
 
@@ -230,6 +352,8 @@ export class SwipeActionsDirective {
       overflow: hidden;
       border-radius: 0.9rem;
     }
+
+    /* ── Trays (fondos de acción) ─────────────────────────────────────── */
     .swipe-actions__tray {
       position: absolute;
       inset-block: 0;
@@ -238,9 +362,17 @@ export class SwipeActionsDirective {
       align-items: stretch;
       width: 5rem;
       padding: 0.25rem;
+      /* Estado inicial: invisible y colapsado */
+      opacity: 0;
+      transform: scaleX(0);
+      transition:
+        opacity 300ms ease,
+        transform 300ms cubic-bezier(0.34, 1.3, 0.64, 1);
     }
-    .swipe-actions__tray--edit { inset-inline-start: 0; }
-    .swipe-actions__tray--delete { inset-inline-end: 0; }
+    .swipe-actions__tray--edit   { inset-inline-start: 0; transform-origin: left; }
+    .swipe-actions__tray--delete { inset-inline-end: 0;   transform-origin: right; }
+
+    /* ── Botones de acción ───────────────────────────────────────────── */
     .swipe-actions__action {
       display: flex;
       width: 100%;
@@ -252,6 +384,8 @@ export class SwipeActionsDirective {
       border-radius: 0.75rem;
       font-size: 0.7rem;
       font-weight: 700;
+      transition: transform 160ms cubic-bezier(0.34, 1.56, 0.64, 1);
+      transform-origin: center;
     }
     .swipe-actions__action svg {
       width: 1.25rem;
@@ -262,13 +396,21 @@ export class SwipeActionsDirective {
       color: #fff7ed;
     }
     .swipe-actions__action--delete {
-      background: #e11d48;
+      background: linear-gradient(160deg, #f43f5e, #e11d48);
       color: #fff;
     }
     .swipe-actions__action:disabled {
       pointer-events: none;
       opacity: 0;
     }
+
+    /* ── Contenido principal: se desliza sobre los trays ──────────────── */
+    .swipe-actions__content {
+      /* La transition la activa/desactiva la directiva por JS */
+      will-change: transform;
+    }
+
+    /* ── Card base ───────────────────────────────────────────────────── */
     .tx-item {
       display: flex;
       align-items: center;
@@ -385,6 +527,13 @@ export class SwipeActionsDirective {
     :host-context(html.dark) .tx-item__amount strong { color: var(--kaptal-content, #f3f4f6); }
     :host-context(html.dark) .tx-item__amount.is-income strong { color: var(--kaptal-income, #10b981); }
     :host-context(html.dark) .tx-item__amount.is-expense strong { color: var(--kaptal-content, #ffffff); }
+
+    /* ── Reducir animaciones ────────────────────────────────────────── */
+    @media (prefers-reduced-motion: reduce) {
+      .swipe-actions__tray,
+      .swipe-actions__action,
+      .swipe-actions__content { transition: none !important; }
+    }
   `]
 })
 export class MovimientoMobileCardComponent {
@@ -393,13 +542,15 @@ export class MovimientoMobileCardComponent {
   @Input() autoAccionAlSoltar = true;
   private readonly listas = inject(ListaContextoService);
   @Input() soloLectura = false;
-  @Output() editar = new EventEmitter<Transaccion>();
+  @Output() editar   = new EventEmitter<Transaccion>();
   @Output() eliminar = new EventEmitter<number>();
-  @Output() detalle = new EventEmitter<Transaccion>();
+  @Output() detalle  = new EventEmitter<Transaccion>();
 
   get puedeAdministrarse(): boolean {
     const lista = this.listas.listas().find(l => l.id === this.movimiento.listaId);
-    return !lista?.archivada && lista?.rol !== 'LECTOR' && !this.soloLectura && (this.listas.usuarioId() == null || this.movimiento.autorId == null || this.movimiento.autorId === this.listas.usuarioId()) && this.movimiento.cuentaId !== null
+    return !lista?.archivada && lista?.rol !== 'LECTOR' && !this.soloLectura
+      && (this.listas.usuarioId() == null || this.movimiento.autorId == null || this.movimiento.autorId === this.listas.usuarioId())
+      && this.movimiento.cuentaId !== null
       && (this.movimiento.tipo !== 'TRANSFERENCIA' || this.movimiento.cuentaDestinoId != null)
       && !this.movimiento.cashbackAutomatico
       && !this.movimiento.compraMsiId;
@@ -411,17 +562,14 @@ export class MovimientoMobileCardComponent {
 
   get fechaFormateada(): string {
     const ahora = new Date();
-    const hoy = new Date(Date.now() - ahora.getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
+    const hoy   = new Date(Date.now() - ahora.getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
     const ayerDate = new Date(ahora.getTime() - 86_400_000);
-    const ayer = new Date(ayerDate.getTime() - ayerDate.getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
-    if (this.movimiento.fecha === hoy) return 'Hoy';
+    const ayer  = new Date(ayerDate.getTime() - ayerDate.getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
+    if (this.movimiento.fecha === hoy)  return 'Hoy';
     if (this.movimiento.fecha === ayer) return 'Ayer';
     const fecha = new Date(`${this.movimiento.fecha}T00:00:00Z`);
     return new Intl.DateTimeFormat('es-MX', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-      timeZone: 'UTC'
+      day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC'
     }).format(fecha);
   }
 
@@ -455,7 +603,7 @@ export class MovimientoMobileCardComponent {
 
   get prefijoMonto(): string {
     if (this.esIngreso) return '+';
-    if (this.esGasto) return '−';
+    if (this.esGasto)   return '−';
     return '';
   }
 
@@ -472,9 +620,9 @@ export class MovimientoMobileCardComponent {
     return this.colorSeguro(this.movimiento.categoriaColor) ?? (this.esIngreso ? '#059669' : '#b45309');
   }
 
-  onSwipeDelete(actions: SwipeActionsDirective): void {
-    if (!this.autoAccionAlSoltar) return;
-    this.eliminar.emit(this.movimiento.id);
+  onSwipeDelete(_actions: SwipeActionsDirective): void {
+    // El tray se revela; el usuario debe pulsar el botón de Eliminar explícitamente.
+    // autoAccionAlSoltar queda disponible para llamadores que deseen dispararlo directamente.
   }
 
   onSwipeEdit(actions: SwipeActionsDirective): void {
@@ -488,7 +636,7 @@ export class MovimientoMobileCardComponent {
   }
 
   private hexToRgb(hex: string): { r: number; g: number; b: number } | null {
-    const raw = hex.replace('#', '');
+    const raw  = hex.replace('#', '');
     const full = raw.length === 3 ? raw.split('').map(c => c + c).join('') : raw;
     if (full.length !== 6) return null;
     const value = Number.parseInt(full, 16);
