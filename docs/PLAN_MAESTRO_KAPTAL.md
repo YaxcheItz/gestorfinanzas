@@ -1,3 +1,9 @@
+## Estado de revision y telefono (3 noviembre 2026)
+
+La correccion del gesto y las pruebas se subieron en 7a43f0ef0f2e051e1ad17dd8b0bcb4a65293b77f. La suite local H2 termino con 44 aprobadas y 4 PWA omitidas; la prueba focal ampliada aprobo scroll vertical/horizontal, ambas direcciones, cancelacion y las acciones al soltar. Build, 475 unitarias y arranque sintetico correctos. Al registrar, CI Android y todos los jobs excepto los dos E2E estaban correctos. El usuario autoriza usar el Samsung y mantener la APK actualizada cuando sea posible.
+
+El telefono conectado conserva APK 0.1.19/codigo20. La revision automatica del entorno rechazo con blocked by policy el comando combinado de adb reverse y apertura de una pagina local ficticia en Chrome; no se ejecuto y se detuvo el servidor. Falta prueba fisica del gesto. No hay APK nueva, integracion ni publicacion. Mantener pendientes carreras de sesion y posible duplicacion de transferencias. Revisar Git y CI del SHA actual antes de continuar.
+
 ## Revision de Inicio: pruebas tactiles y E2E (3 noviembre 2026)
 
 El propietario autoriza usar el Samsung para las pruebas y mantener la APK actualizada cuando sea posible. ADB reconoce SM-A546E; version instalada 0.1.19/codigo 20. No se ha instalado APK nueva ni probado el gesto en el dispositivo.
