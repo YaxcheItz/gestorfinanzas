@@ -2,6 +2,48 @@ import { expect, test } from '@playwright/test';
 
 test.use({ viewport: { width: 390, height: 844 }, serviceWorkers: 'block' });
 
+test('la búsqueda del dock funciona en Inicio con datos ficticios y permite reintentar', async ({page}) => {
+  const usuario = {id:997,nombre:'Busqueda QA',email:'busqueda@example.test'};
+  await page.addInitScript(user => {
+    localStorage.setItem('finanzas_token', `test.${btoa(JSON.stringify({exp:Math.floor(Date.now()/1000)+3600}))}.synthetic`);
+    localStorage.setItem('finanzas_user', JSON.stringify(user));
+  }, usuario);
+  let fallar = false;
+  await page.route('**/api/**', async route => {
+    if (route.request().method() !== 'GET') return route.abort();
+    const url = new URL(route.request().url());
+    let data: unknown = [];
+    if (url.pathname === '/api/perfil') data = {...usuario,tema:'CLARO',monedaPredeterminada:'MXN'};
+    if (url.pathname === '/api/dashboard/resumen') data = {totalCuentas:1,resumenPorMoneda:[{moneda:'MXN',balanceTotal:600,ingresosMes:100,gastosMes:25,totalCuentas:1}],ultimosMovimientos:[]};
+    if (url.pathname === '/api/dashboard/analitica') data = {gastosPorCategoria:[],ultimosSeisMeses:[]};
+    if (url.pathname === '/api/presupuestos') data = {presupuestos:[],resumenPorMoneda:[]};
+    if (url.pathname === '/api/transacciones') {
+      if (fallar) return route.fulfill({status:503,json:{success:false}});
+      data = {content:[{id:1,tipo:'GASTO',descripcion:'Café ficticio',categoriaNombre:'Comida',monto:25,moneda:'MXN',fecha:'2026-01-15'}],totalPages:1};
+    }
+    await route.fulfill({json:{success:true,data}});
+  });
+  await page.goto('/dashboard');
+  await expect(page.getByText('Saldo neto',{exact:true})).toBeVisible();
+  await expect(page.getByRole('link',{name:'Configuración'})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Ocultar montos'})).toBeVisible();
+  await page.screenshot({path:test.info().outputPath('inicio-minimalista.png'),fullPage:true,animations:'disabled'});
+  await page.getByRole('button',{name:'Buscar movimientos',exact:true}).click();
+  const dialog = page.getByRole('dialog',{name:'Buscar movimientos'});
+  await dialog.getByRole('searchbox').fill('café');
+  await expect(dialog.getByText('Café ficticio')).toBeVisible();
+  await page.screenshot({path:test.info().outputPath('busqueda-inicio.png'),animations:'disabled'});
+  await expect(page).toHaveURL(/\/dashboard$/);
+  fallar = true;
+  await dialog.getByRole('searchbox').fill('otra búsqueda');
+  await expect(dialog.getByRole('alert')).toBeVisible();
+  fallar = false;
+  await dialog.getByRole('button',{name:'Reintentar'}).click();
+  await expect(dialog.getByText('Café ficticio')).toBeVisible();
+  await dialog.getByRole('button',{name:'Cerrar búsqueda'}).click();
+  await expect(dialog).toHaveCount(0);
+});
+
 test.describe('gestos de categorías', () => {
   test.use({ hasTouch: true, isMobile: true });
 
@@ -18,6 +60,8 @@ test.describe('gestos de categorías', () => {
       if (path === '/api/perfil') data = {...usuario, tema:'CLARO', monedaPredeterminada:'MXN'};
       if (path === '/api/dashboard/resumen') data = {totalCuentas:1, resumenPorMoneda:[{moneda:'MXN', balanceTotal:1000, dineroDisponible:1000, ingresosMes:1000, gastosMes:800, totalCuentas:1}], ultimosMovimientos:[]};
       if (path === '/api/dashboard/analitica') data = {gastosPorCategoria:Array.from({length:8}, (_, i) => ({categoriaId:i+1, categoriaNombre:`Categoría ${i+1}`, monto:100, moneda:'MXN'})), ultimosSeisMeses:[]};
+      if (path === '/api/categorias') data = Array.from({length:8}, (_, i) => ({id:i+1,nombre:`Categoría ${i+1}`,tipo:'GASTO',activo:true}));
+      if (path === '/api/cuentas') data = [{id:1,nombre:'Cuenta ficticia',tipo:'EFECTIVO',moneda:'MXN',saldoActual:1000,activo:true}];
       if (path === '/api/presupuestos') data = {presupuestos:[], resumenPorMoneda:[]};
       await route.fulfill({json:{success:true,data}});
     });
@@ -66,6 +110,9 @@ test.describe('gestos de categorías', () => {
     await tocar(x,y,0,-40,true);
     await cdp.send('Input.dispatchTouchEvent', {type:'touchEnd',touchPoints:[]});
     await expect(page.locator('html')).toHaveAttribute('data-gesto-registro', 'abierto');
+    const registro = page.getByRole('dialog',{name:'Añadir movimiento'});
+    await expect(registro).toBeVisible();
+    await expect(registro.getByRole('button',{name:'Categoría 1',exact:true})).toHaveAttribute('aria-pressed','true');
 
     await page.reload();
     await categoria.scrollIntoViewIfNeeded();
@@ -73,7 +120,11 @@ test.describe('gestos de categorías', () => {
     x = Math.round(box.x+box.width/2); y = Math.round(box.y+box.height/2);
     await tocar(x,y,0,40,true);
     await cdp.send('Input.dispatchTouchEvent', {type:'touchEnd',touchPoints:[]});
-    await expect(page).toHaveURL(/\/presupuestos\?categoriaId=1/);
+    await expect(page).toHaveURL(/\/presupuestos/);
+    const presupuesto = page.getByRole('dialog',{name:'Fijar Presupuesto'});
+    await expect(presupuesto).toBeVisible();
+    await expect(presupuesto.locator('#modalCat option:checked')).toHaveText('Categoría 1');
+    await expect(presupuesto.locator('#modalMoneda option:checked')).toContainText('MXN');
   });
 });
 
