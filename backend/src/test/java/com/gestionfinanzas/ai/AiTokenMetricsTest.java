@@ -9,10 +9,13 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.client.RestClient;
 import org.springframework.test.web.client.MockRestServiceServer;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withException;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -67,5 +70,36 @@ class AiTokenMetricsTest {
         assertEquals(1,logs.list.size());
         assertEquals("KAPTAL_AI_USAGE provider="+provider+" status=reported input_tokens=11 output_tokens=7 total_tokens=18",logs.list.getFirst().getFormattedMessage());
         assertFalse(logs.list.getFirst().getFormattedMessage().contains("PRIVATE"));server.verify();
+    }
+
+    @ParameterizedTest @ValueSource(strings={"groq","gemini"})
+    void unavailableOnlyCountsResponsesThatReachUsageParsing(String provider) {
+        var properties=new AiProperties("groq","gemini-3.5-flash-lite",null,
+            new AiProperties.Gemini("synthetic","https://generativelanguage.googleapis.com/v1beta"),
+            new AiProperties.Groq("synthetic","https://api.groq.com/openai/v1","openai/gpt-oss-20b"));
+        var policy=mock(AiUsagePolicy.class);when(policy.enabled(anyString(),anyString())).thenReturn(true);
+        String url=provider.equals("groq")?"https://api.groq.com/openai/v1/chat/completions"
+            :"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent";
+        for (int scenario=0;scenario<4;scenario++) {
+            var builder=RestClient.builder();var server=MockRestServiceServer.bindTo(builder).build();
+            if (scenario==0) server.expect(requestTo(url)).andRespond(withStatus(HttpStatus.TOO_MANY_REQUESTS));
+            else if (scenario==1) server.expect(requestTo(url)).andRespond(withException(new java.io.IOException("synthetic failure")));
+            else if (scenario==2) server.expect(requestTo(url)).andRespond(withSuccess("{",MediaType.APPLICATION_JSON));
+            else {
+                String body=provider.equals("groq")?"{\"choices\":[{\"message\":{\"content\":\"ok\"}}]}":
+                    "{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"ok\"}]}}]}";
+                server.expect(requestTo(url)).andRespond(withSuccess(body,MediaType.APPLICATION_JSON));
+            }
+            AiProvider client=provider.equals("groq")?new GroqAiProvider(builder,properties,policy):new GeminiAiProvider(builder,properties,policy);
+            if (scenario<3) {
+                if (scenario<2) assertThrows(AiProviderException.class,()->client.generate("synthetic",50));
+                else assertThrows(org.springframework.web.client.RestClientException.class,()->client.generate("synthetic",50));
+                assertTrue(logs.list.isEmpty(),"El error anterior al parseo no emite uso");
+            } else {
+                assertEquals("ok",client.generate("synthetic",50));
+                assertEquals("KAPTAL_AI_USAGE provider="+provider+" status=unavailable",logs.list.getFirst().getFormattedMessage());
+            }
+            server.verify();
+        }
     }
 }
