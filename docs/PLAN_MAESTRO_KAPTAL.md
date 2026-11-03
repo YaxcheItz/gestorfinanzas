@@ -1,5 +1,12 @@
 # Kaptal: plan maestro y traspaso al siguiente chat
 
+## Revision de diseno: Inicio sin guia de primeros pasos
+
+El propietario pidio pasar a revisar rendimiento y diseno por secciones y retirar o desactivar de momento la guia de primeros pasos en cualquier lugar de la app. Se desactivo su presencia en Inicio y se retiro el boton de Configuracion que la reabria; el componente y su preferencia local se conservan sin exponerse, para permitir recuperarla si algun dia se solicita. No se modifican la captura, cuentas, avisos ni datos financieros. Build, 471 pruebas frontend y E2E Chromium con escenarios ficticios correctos; CI, integracion y distribucion pendientes al registrar.
+
+Siguiente: continuar la revision de Inicio con el propietario, incluyendo organizacion, resumen, categorias y vistas; no redisenar otras secciones sin revisarlas juntos. Las carreras de sesion y posible duplicacion de transferencias permanecen pendientes y no se declaran solucionadas.
+
+
 ## Dependencias de desarrollo que bloqueaban CI
 
 El 3 de noviembre las CI del PR188 fallaron por dos avisos moderados nuevos en herramientas de desarrollo: glob GHSA-3g3m-2fjr-6pw4 y minimatch GHSA-g3hv-75wg-m249. La auditoria `npm audit --omit=dev` no reporto avisos en dependencias de produccion; no demuestra ausencia de otras vulnerabilidades. Se probaron overrides a glob 14.0.3 y minimatch 11.0.4 para las cadenas de Angular CLI y Capacitor CLI, sin desactivar la comprobacion. Como cruzan versiones principales, la compatibilidad requiere vigilancia adicional.
