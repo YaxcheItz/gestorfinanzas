@@ -1,5 +1,23 @@
 # Estado para retomar la sesion
 
+
+## Diseno: selector de periodo superior MonAi, busqueda en dock y etiquetas (Tags)
+
+En rama `diseno/periodo-busqueda-dock-etiquetas`. Se implementaron tres mejoras solicitadas por el usuario:
+1. **Selector de periodo superior compacto y modal estilo MonAi**: El selector de fechas se movio a la parte superior del hero de Inicio, disenado con una pastilla compacta (`.home-period--compact`) con flechas de periodo, icono de calendario y chevron. Al tocarlo abre un modal redisenado con pestanas ("Meses", "Frecuencias", "Rango libre"), stepper de ano (`‹ 2026 ›`) y una cuadricula interactiva de 4x3 con los 12 meses (`ENE` a `DIC`) donde un solo toque selecciona el mes de inmediato, deshabilitando meses futuros y resaltando el seleccionado.
+2. **Boton de busqueda en dock inferior (`capture-dock`)**: En el dock inferior flotante, se agrego el boton de busqueda con icono de lupa a la izquierda junto al boton de registro manual (`+`), dejando el boton de microfono a la derecha. Al presionar el boton de busqueda navega directamente a `/transacciones?buscar=true`.
+3. **Etiquetas para gastos y movimientos (Tags)**: Se incorporo la seleccion rapida de etiquetas con chips interactivos (`#amigos`, `#trabajo`, `#vacaciones`, `#familia`, `#hogar`) e input de texto libre en:
+   - El modal de nuevo movimiento en Dashboard (`dashboard.component.html`/`ts`).
+   - El componente de captura rapida (`registro-rapido.component.ts`).
+   Permite alternar tags con un solo tap y se procesan con `parsearEtiquetas` antes de guardarse en el backend.
+
+Comprobaciones locales:
+- `npm --prefix frontend run build` exitoso (Angular produccion).
+- 474 pruebas frontend (58 archivos) todas verdes (`npx ng test --watch=false`).
+- `node frontend/scripts/check-startup.cjs` (200/401/503) correcto.
+- Telefono desconectado; APK al final de la revision de diseno.
+- Carreras de sesion y duplicacion de transferencias permanecen pendientes.
+
 ## Diseno: categorias, filtrado inline, gestos y presupuestos estilo MonAi
 
 En rama `diseno/categorias-filtro-gestos-presupuestos`. Se implementaron tres mejoras clave en la pantalla de Inicio:

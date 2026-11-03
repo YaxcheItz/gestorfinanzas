@@ -1,5 +1,6 @@
 import { ListaContextoService } from '../../core/services/lista-contexto.service';
 import { PeriodoConfig, TipoPeriodo, PERIODO_MENSUAL, resolverPeriodo, desplazarPeriodo, desplazarRangoLibre, validarRangoPeriodo, validarPeriodo, fechaCivilFinanciera } from '../../core/utils/periodo-financiero';
+import { parsearEtiquetas } from '../../core/utils/etiquetas';
 import { FeatureStylesService } from '../../core/services/feature-styles.service';
 ﻿import { TextoFinancieroPipe } from '../../core/pipes/texto-financiero.pipe';
 import { MontoPrivadoDirective } from '../../shared/directives/monto-privado.directive';
@@ -348,6 +349,57 @@ export class DashboardComponent implements OnInit {
   readonly editandoRango = signal(false);
   readonly guardandoPeriodo = signal(false);
   readonly modalRangoAbierto = signal(false);
+  readonly pestanaModalPeriodo = signal<'MESES' | 'OPCIONES' | 'PERSONALIZADO'>('MESES');
+  readonly anioNavegacionModal = signal<number>(new Date().getFullYear());
+  readonly mesesLista = [
+    { numero: 1, nombreCorto: 'Ene', nombreCompleto: 'Enero' },
+    { numero: 2, nombreCorto: 'Feb', nombreCompleto: 'Febrero' },
+    { numero: 3, nombreCorto: 'Mar', nombreCompleto: 'Marzo' },
+    { numero: 4, nombreCorto: 'Abr', nombreCompleto: 'Abril' },
+    { numero: 5, nombreCorto: 'May', nombreCompleto: 'Mayo' },
+    { numero: 6, nombreCorto: 'Jun', nombreCompleto: 'Junio' },
+    { numero: 7, nombreCorto: 'Jul', nombreCompleto: 'Julio' },
+    { numero: 8, nombreCorto: 'Ago', nombreCompleto: 'Agosto' },
+    { numero: 9, nombreCorto: 'Sep', nombreCompleto: 'Septiembre' },
+    { numero: 10, nombreCorto: 'Oct', nombreCompleto: 'Octubre' },
+    { numero: 11, nombreCorto: 'Nov', nombreCompleto: 'Noviembre' },
+    { numero: 12, nombreCorto: 'Dic', nombreCompleto: 'Diciembre' }
+  ];
+
+  cambiarAnioModal(delta: number): void {
+    const nuevo = this.anioNavegacionModal() + delta;
+    const anioMaximo = new Date(this.fechaHoy() + 'T12:00:00Z').getUTCFullYear();
+    if (delta > 0 && nuevo > anioMaximo) return;
+    if (delta < 0 && nuevo < 2000) return;
+    this.anioNavegacionModal.set(nuevo);
+  }
+
+  mesEsSeleccionado(mesNumero: number): boolean {
+    if (this.tipoRango() !== 'MES' || !this.esMesCalendario()) return false;
+    const fecha = this.periodoSeleccionado();
+    return fecha.getFullYear() === this.anioNavegacionModal() && (fecha.getMonth() + 1) === mesNumero;
+  }
+
+  mesEsFuturo(mesNumero: number): boolean {
+    const mesStr = String(mesNumero).padStart(2, '0');
+    const fechaMes = `${this.anioNavegacionModal()}-${mesStr}-01`;
+    return fechaMes > this.fechaHoy().slice(0, 7) + '-01';
+  }
+
+  seleccionarMesDirecto(mesNumero: number): void {
+    if (this.mesEsFuturo(mesNumero)) return;
+    const mesStr = String(mesNumero).padStart(2, '0');
+    const fechaReferencia = `${this.anioNavegacionModal()}-${mesStr}-01`;
+    const config: PeriodoConfig = { ...PERIODO_MENSUAL, tipo: 'MES', ancla: fechaReferencia, diaInicio: 1, diaQuincena: 16 };
+    this.periodoModificado = true;
+    this.referenciaPeriodo.set(fechaReferencia);
+    this.configuracionPeriodo.set(config);
+    this.tipoRango.set('MES');
+    this.rangoPersonalizado.set(null);
+    this.actualizarMesPresupuesto(fechaReferencia);
+    this.cargarDashboard();
+    this.cerrarModalRango();
+  }
   readonly cargandoPeriodoInicial = computed(() => this.perfilService.cargando() && !this.perfilService.perfil());
   readonly opcionesPeriodo: { tipo: TipoPeriodo; nombre: string; detalle: string }[] = [
     { tipo: 'MES', nombre: 'Mes', detalle: 'Inicio del mes a tu medida' },
@@ -384,9 +436,18 @@ export class DashboardComponent implements OnInit {
     if (this.modalRangoAbierto()) { this.cerrarModalRango(); return; }
     this.borradorPeriodo = { ...this.configuracionPeriodo() };
     this.guardarComoPredeterminado = false;
+    this.anioNavegacionModal.set(this.periodoSeleccionado().getFullYear());
+    this.pestanaModalPeriodo.set(
+      this.tipoRango() === 'PERSONALIZADO'
+        ? 'PERSONALIZADO'
+        : this.tipoRango() === 'MES' && this.esMesCalendario()
+          ? 'MESES'
+          : 'OPCIONES'
+    );
     if (this.tipoRango() === 'PERSONALIZADO') {
       this.editandoRango.set(true);
-      this.borradorDesde = this.fechasRango().desde; this.borradorHasta = this.fechasRango().hasta;
+      this.borradorDesde = this.fechasRango().desde;
+      this.borradorHasta = this.fechasRango().hasta;
     }
     this.errorRango.set('');
     this.modalRangoAbierto.set(true);
@@ -510,6 +571,25 @@ export class DashboardComponent implements OnInit {
   formCategoriaId: number | null = null;
   formFecha = new Date().toISOString().split('T')[0];
   formNotas = '';
+  formEtiquetasTexto = '';
+  readonly etiquetasSugeridas = ['amigos', 'trabajo', 'vacaciones', 'familia', 'hogar', 'pareja'];
+
+  alternarEtiquetaSugerida(nombre: string): void {
+    const limpia = nombre.replace(/^#/, '').trim();
+    const etiqueta = `#${limpia}`;
+    const regex = new RegExp(`(?:^|\\s)#${limpia}(?:\\s|$)`, 'i');
+    if (regex.test(this.formEtiquetasTexto)) {
+      this.formEtiquetasTexto = this.formEtiquetasTexto.replace(regex, ' ').replace(/\s+/g, ' ').trim();
+    } else {
+      this.formEtiquetasTexto = this.formEtiquetasTexto ? `${this.formEtiquetasTexto.trim()} ${etiqueta}` : etiqueta;
+    }
+  }
+
+  etiquetaEstaActiva(nombre: string): boolean {
+    const limpia = nombre.replace(/^#/, '').trim();
+    const regex = new RegExp(`(?:^|\\s)#${limpia}(?:\\s|$)`, 'i');
+    return regex.test(this.formEtiquetasTexto);
+  }
   private formIdempotencyKey = '';
   movimientoRecurrente = false;
   esCompraMsi = false;
@@ -952,6 +1032,7 @@ export class DashboardComponent implements OnInit {
       : null;
     this.formTipo.set(tipo);
     this.modalError.set(null);
+    this.formEtiquetasTexto = '';
     this.formMonto = null;
     this.formNotas = '';
     this.formIdempotencyKey = '';
@@ -1218,8 +1299,19 @@ export class DashboardComponent implements OnInit {
       return;
     }
 
+    let etiquetas: string[] | undefined;
+    if (this.formEtiquetasTexto.trim()) {
+      try {
+        etiquetas = parsearEtiquetas(this.formEtiquetasTexto);
+      } catch (err) {
+        this.modalError.set((err as Error).message);
+        return;
+      }
+    }
+
     const payload: TransaccionPayload = {
       listaId: this.contextoLista.activaId(),
+      etiquetas: etiquetas?.length ? etiquetas : undefined,
       cuentaId: this.formCuentaId,
       cuentaDestinoId: this.formTipo() === 'TRANSFERENCIA' ? this.formCuentaDestinoId : null,
       categoriaId: this.formTipo() !== 'TRANSFERENCIA' ? this.formCategoriaId : null,
@@ -1233,7 +1325,6 @@ export class DashboardComponent implements OnInit {
       notas: this.formNotas.trim() || null,
       frecuenciaRecurrencia: this.movimientoRecurrente ? this.frecuenciaRecurrencia : null,
       siguienteFechaRecurrencia: this.movimientoRecurrente ? this.siguienteFechaRecurrencia : null,
-      // Sin esto el servidor guardaba el gasto completo y sin cuotas: el MSI se perdía.
       msi: this.esCompraMsi ? this.formMsi : null
     };
 
