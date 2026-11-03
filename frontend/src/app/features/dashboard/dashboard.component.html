@@ -296,6 +296,8 @@
           </div>
         } @else if (error()) {
           <p class="dashboard-screen__muted">No pudimos consultar tus movimientos recientes. Usa Reintentar para volver a cargarlos.</p>
+        } @else if (errorMovimientosCategoria()) {
+          <p role="alert">No pudimos consultar los movimientos de esta categoría. <button type="button" (click)="seleccionarFiltroCategoria(categoriaFiltroSeleccionada()!)">Reintentar</button></p>
         } @else if (categoriaFiltroSeleccionada() && movimientosCategoria().length === 0) {
           <div class="dashboard-screen__inline-empty">
             <p>No hay gastos registrados en {{ categoriaFiltroSeleccionada()?.categoriaNombre }} durante este periodo.</p>

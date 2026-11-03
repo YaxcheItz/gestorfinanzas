@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { CategoriaPreferidaService } from '../../core/services/categoria-preferida.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
@@ -720,6 +720,27 @@ describe('DashboardComponent movement dialog accessibility', () => {
     });
   });
   describe('gestos en categorias, filtrado inline y estilo monai de presupuestos', () => {
+    it('ignora respuestas antiguas y distingue errores de una categoría vacía', () => {
+      const fixture = TestBed.createComponent(DashboardComponent);
+      const component = fixture.componentInstance;
+      const anterior = new Subject<any>();
+      const actual = new Subject<any>();
+      const consulta = vi.spyOn(TestBed.inject(FinanzasService), 'getTransaccionesPaginadas')
+        .mockReturnValueOnce(anterior).mockReturnValueOnce(actual);
+      const categoria = { categoriaId: 5, categoriaNombre: 'Transporte', moneda: 'MXN', monto: 100, tono: '#ccc', altura: 50, icono: 'bus' };
+      component.seleccionarFiltroCategoria(categoria);
+      component.seleccionarFiltroCategoria(categoria);
+      expect(consulta).toHaveBeenLastCalledWith(expect.objectContaining({ tipo: 'GASTO', categoriaId: 5 }), 0, 20);
+      anterior.error(new Error('error anterior'));
+      expect(component.cargandoMovimientosCategoria()).toBe(true);
+      expect(component.errorMovimientosCategoria()).toBe(false);
+      actual.error(new Error('error actual'));
+      expect(component.cargandoMovimientosCategoria()).toBe(false);
+      expect(component.errorMovimientosCategoria()).toBe(true);
+      component.quitarFiltroCategoria();
+      expect(component.errorMovimientosCategoria()).toBe(false);
+      fixture.destroy();
+    });
     it('filtra movimientos en Inicio al tocar una categoria y quita el filtro al tocarla nuevamente o con quitarFiltroCategoria', () => {
       const fixture = TestBed.createComponent(DashboardComponent);
       const component = fixture.componentInstance;

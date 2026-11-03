@@ -118,6 +118,8 @@ export class DashboardComponent implements OnInit {
   readonly categoriaFiltroSeleccionada = signal<CategoriaInicio | null>(null);
   readonly movimientosCategoria = signal<Transaccion[]>([]);
   readonly cargandoMovimientosCategoria = signal(false);
+  readonly errorMovimientosCategoria = signal(false);
+  private versionMovimientosCategoria = 0;
   readonly categoriaGestoActiva = signal<CategoriaInicio | null>(null);
   readonly gestoAccionSeleccionada = signal<'GASTO' | 'PRESUPUESTO' | null>(null);
   private temporizadorCategoria?: ReturnType<typeof setTimeout>;
@@ -202,37 +204,44 @@ export class DashboardComponent implements OnInit {
   }
 
   seleccionarFiltroCategoria(categoria: CategoriaInicio): void {
+    const version = ++this.versionMovimientosCategoria;
     this.categoriaFiltroSeleccionada.set(categoria);
-    const enMemoria = (this.resumen()?.ultimosMovimientos ?? [])
-      .filter(m => m.categoriaId === categoria.categoriaId && m.moneda === this.monedaResumen());
-    this.movimientosCategoria.set(enMemoria);
+    this.movimientosCategoria.set([]);
+    this.errorMovimientosCategoria.set(false);
 
     const { desde, hasta } = this.fechasRango();
     this.cargandoMovimientosCategoria.set(true);
     this.finanzasService.getTransaccionesPaginadas({
       categoriaId: categoria.categoriaId,
+      tipo: 'GASTO',
       fechaInicio: desde,
       fechaFin: hasta,
       moneda: this.monedaResumen(),
       ...(this.contextoLista.activaId() == null ? {} : { listaId: this.contextoLista.activaId() })
-    }, 0, 20).subscribe({
+    }, 0, 20).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: res => {
-        if (this.categoriaFiltroSeleccionada()?.categoriaId !== categoria.categoriaId) return;
+        if (version !== this.versionMovimientosCategoria) return;
         if (res.success && res.data) {
           this.movimientosCategoria.set(res.data.content);
+        } else {
+          this.errorMovimientosCategoria.set(true);
         }
         this.cargandoMovimientosCategoria.set(false);
       },
       error: () => {
+        if (version !== this.versionMovimientosCategoria) return;
+        this.errorMovimientosCategoria.set(true);
         this.cargandoMovimientosCategoria.set(false);
       }
     });
   }
 
   quitarFiltroCategoria(): void {
+    this.versionMovimientosCategoria++;
     this.categoriaFiltroSeleccionada.set(null);
     this.movimientosCategoria.set([]);
     this.cargandoMovimientosCategoria.set(false);
+    this.errorMovimientosCategoria.set(false);
   }
 
   abrirPresupuestoCategoria(categoria: CategoriaInicio): void {
@@ -658,6 +667,7 @@ export class DashboardComponent implements OnInit {
   }
 
   cambiarMoneda(moneda: string): void {
+    this.quitarFiltroCategoria();
     this.monedaResumen.set(moneda);
   }
 
@@ -743,6 +753,7 @@ export class DashboardComponent implements OnInit {
       return;
     }
     this.esperandoListaInicial = false;
+    this.quitarFiltroCategoria();
     const hoy = fechaCivilFinanciera();
     if (this.referenciaPeriodo() === this.fechaHoy()) this.referenciaPeriodo.set(hoy);
     this.fechaHoy.set(hoy);

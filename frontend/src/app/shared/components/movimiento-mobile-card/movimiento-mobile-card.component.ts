@@ -102,7 +102,8 @@ export class SwipeActionsDirective {
     // Calcular desplazamiento con resistencia más allá del ancho del tray
     let dx = rawDx;
     const sign     = this.direction === 'delete' ? -1 : 1;
-    const positive = dx * sign; // siempre positivo en la dirección del swipe
+    const positive = Math.max(0, dx * sign);
+    dx = positive * sign;
     if (positive > TRAY_WIDTH) {
       dx = sign * (TRAY_WIDTH + (positive - TRAY_WIDTH) * DRAG_RESISTANCE);
     }

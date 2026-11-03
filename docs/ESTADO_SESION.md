@@ -1,3 +1,7 @@
+## Revision de cambios de Inicio en curso (3 de noviembre de 2026)
+
+Se preservan los cuatro commits de diseno existentes en una rama nueva desde develop f490368. La revision corrigio que el filtro por categoria mostrara movimientos de otro periodo o moneda, aceptara respuestas atrasadas o presentara fallos como ausencia de gastos. La consulta filtra solo gastos; se anadio reintento. El gesto de tarjetas ya no revela una accion al invertir el arrastre. Build y 474 pruebas frontend anteriores a la prueba nueva correctos; 45 pruebas focales con la nueva prueba correctas. check-startup sintetico 200/401/503 correcto. CI, integracion, publicacion y comprobacion visual y fisica aun pendientes. La busqueda del dock abre Movimientos, cuya barra de busqueda esta visible; no se comprobo apertura automatica del teclado. No se realizaron operaciones financieras reales ni QA de IA. Persisten las carreras de sesion y transferencias, sin resolver.
+
 # Estado para retomar la sesion
 
 
