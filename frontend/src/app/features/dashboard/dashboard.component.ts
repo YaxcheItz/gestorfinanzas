@@ -142,6 +142,10 @@ export class DashboardComponent implements OnInit {
     }, 450);
   }
 
+  bloquearDesplazamientoCategoria(event: TouchEvent): void {
+    if (this.modoGestoIniciado && event.cancelable) event.preventDefault();
+  }
+
   moverPresionCategoria(event: PointerEvent): void {
     const inicio = this.inicioPresionCategoria;
     if (!inicio) return;

@@ -179,6 +179,7 @@
                   </div>
                 }
                 <button type="button" class="home-category__bar-button"
+                        (touchmove)="bloquearDesplazamientoCategoria($event)"
                         (pointerdown)="iniciarPresionCategoria($event,categoria)"
                         (pointermove)="moverPresionCategoria($event)"
                         (pointerup)="finalizarPresionCategoria($event,categoria)"

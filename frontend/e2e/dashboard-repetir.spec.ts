@@ -25,11 +25,9 @@ test('inicio separa deuda y monedas, y repetir crea solo un movimiento nuevo con
   const antes=(await movimientos()).length;
   let posts=0;page.on('request',r=>{if(r.method()==='POST' && new URL(r.url()).pathname==='/api/transacciones')posts++;});
   await page.goto('/login');await page.locator('#email').fill(email);await page.locator('#password').fill(password);await page.getByRole('button',{name:'Iniciar sesión',exact:true}).click();await expect(page).toHaveURL(/dashboard/);
-  await page.getByRole('button',{name:'Detallada',exact:true}).click();
-  await page.locator('.home-account-details > summary').click();
-  const hero=page.locator('.dashboard-screen__monthly'),budget=page.locator('.dashboard-budget-left');
+  const hero=page.locator('.dashboard-screen__monthly'),budget=page.locator('.dashboard-budget-left').first();
   await expect(hero).toContainText('Dinero en cuentas');await expect(hero.locator('.dashboard-screen__amount')).toContainText(/225[.,]00/);
-  await expect(hero.getByText('Deuda de tarjetas').locator('..')).toContainText(/200[.,]00/);await expect(budget).toContainText(/275[.,]00/);
+  await expect(hero.getByText('Deuda de tarjetas:',{exact:false})).toContainText(/200[.,]00/);await expect(budget).toContainText(/275[.,]00/);
   await page.getByRole('combobox',{name:'Moneda del balance'}).selectOption('USD');await expect(hero.locator('.dashboard-screen__amount')).toContainText(/0[.,]00/);await expect(budget).toContainText(/80[.,]00/);
   await page.getByRole('combobox',{name:'Moneda del balance'}).selectOption('MXN');
   await page.screenshot({path:testInfo.outputPath('inicio-movil.png'),fullPage:true});
@@ -46,7 +44,7 @@ test('inicio separa deuda y monedas, y repetir crea solo un movimiento nuevo con
   expect(posts).toBe(1);const despues=await movimientos();expect(despues.length).toBe(antes+1);
   const copia=despues.find((m:{descripcion:string})=>m.descripcion==='Cena repetida');expect(copia).toMatchObject({monto:30,cuentaId:banco,categoriaId:gastos[0].id,fecha,notas:'Nota original'});expect(copia.id).not.toBe(originalId);
   expect(despues.find((m:{id:number})=>m.id===originalId)).toMatchObject({monto:25,fecha:fechaOriginal,descripcion:'Cena repetible'});
-  await page.setViewportSize({width:390,height:844});await page.getByRole('link',{name:'Inicio',exact:true}).click();await page.getByRole('button',{name:'Detallada',exact:true}).click();await expect(budget).toContainText(/245[.,]00/);
+  await page.setViewportSize({width:390,height:844});await page.getByRole('link',{name:'Inicio',exact:true}).click();await expect(budget).toContainText(/245[.,]00/);
   await page.route('**/api/dashboard/analitica**',r=>r.fulfill({status:503,json:{success:false}}));
   await page.locator('.workspace-selector').click();
   await page.getByRole('button',{name:/^Herramientas/}).click();
