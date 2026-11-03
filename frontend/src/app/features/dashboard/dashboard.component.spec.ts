@@ -397,7 +397,7 @@ describe('DashboardComponent movement dialog accessibility', () => {
     });
   });
 
-  it('muestra categorias y recientes sin presupuestos en la vista simple', () => {
+  it('muestra categorias y recientes sin presupuestos en la vista unificada cuando no hay presupuestos', () => {
     const fixture = TestBed.createComponent(DashboardComponent);
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
@@ -406,13 +406,13 @@ describe('DashboardComponent movement dialog accessibility', () => {
     expect(root.querySelector('.dashboard-screen__actions')).toBeNull();
     expect(root.querySelector('#dashboard-budgets-title')).toBeNull();
     expect(root.querySelector('#home-categories-title')).toBeTruthy();
-    expect(root.querySelector('#dashboard-recent-title')).toBeNull();
+    expect(root.querySelector('#dashboard-recent-title')).toBeTruthy();
     expect(root.querySelector('.home-empty')).toBeTruthy();
     expect(text).not.toContain('As? va tu mes');
     expect(text).not.toContain('Tendencia de gastos');
   });
 
-  it('prioriza gasto y revela ingresos y cuentas solo en vista detallada', () => {
+  it('prioriza gasto y muestra ingresos, balance y cuentas de forma unificada', () => {
     const fixture = TestBed.createComponent(DashboardComponent);
     fixture.detectChanges();
     fixture.componentInstance.resumen.set({
@@ -436,13 +436,8 @@ describe('DashboardComponent movement dialog accessibility', () => {
       }]
     });
     fixture.detectChanges();
-
     const controlFinanciero = fixture.nativeElement.querySelector('.dashboard-screen__monthly') as HTMLElement;
     expect(controlFinanciero).toBeTruthy();
-    expect(controlFinanciero.textContent).toContain('Gastos del periodo');
-    expect(controlFinanciero.querySelector('.dashboard-screen__amount')?.textContent).toContain('2,500');
-    fixture.componentInstance.vistaDetallada.set(true);
-    fixture.detectChanges();
     expect(controlFinanciero.textContent).toContain('12,500');
     expect(controlFinanciero.textContent).toContain('Ingresos');
     expect(controlFinanciero.textContent).toContain('Balance del periodo');
