@@ -14,7 +14,6 @@ import { ConfirmDialogService } from '../../core/services/confirm-dialog.service
 import { FinanzasService } from '../../core/services/finanzas.service';
 import { PerfilService } from '../../core/services/perfil.service';
 import { PrivacidadService } from '../../core/services/privacidad.service';
-import { GuiaInicialService } from '../../core/services/guia-inicial.service';
 import { ScreenPrivacyComponent } from '../../shared/components/screen-privacy/screen-privacy.component';
 import { AppLockComponent } from '../../shared/components/app-lock/app-lock.component';
 import { ToastService } from '../../core/services/toast.service';
@@ -46,8 +45,6 @@ import {
           <p class="mt-1 text-xs text-slate-500 sm:text-sm">Personaliza Kaptal. Tus preferencias se guardan en tu cuenta.</p>
         </div>
       </header>
-
-      <button type="button" (click)="verPrimerosPasos()" class="min-h-11 rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold focus-visible:ring-2 focus-visible:ring-emerald-600">Ver primeros pasos</button>
 
       <nav aria-label="Secciones de configuración" class="-mx-3 flex gap-2 overflow-x-auto px-3 pb-1 sm:mx-0 sm:px-0">
         <a [routerLink]="[]" (click)="abrirSeccion($event)" fragment="appearance" class="inline-flex min-h-11 shrink-0 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Apariencia</a>
@@ -574,11 +571,6 @@ export class ConfiguracionComponent implements OnInit {
   }
 
   readonly authService = inject(AuthService);
-  private readonly guiaInicial = inject(GuiaInicialService);
-  verPrimerosPasos(): void {
-    this.guiaInicial.mostrar();
-    void this.router.navigate(['/dashboard'], { queryParams: { guia: 'inicio' } });
-  }
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);

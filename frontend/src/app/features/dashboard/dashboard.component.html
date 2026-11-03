@@ -92,8 +92,6 @@
         <div class="home-period"><button type="button" class="home-period-arrow" (click)="cambiarPeriodo(-1)" [disabled]="cargandoPeriodoInicial() || !puedeRetroceder()" aria-label="Periodo anterior">&lsaquo;</button><button type="button" class="time-dropdown-btn" (click)="toggleModalRango()" [disabled]="cargandoPeriodoInicial()" [attr.aria-busy]="cargandoPeriodoInicial()" aria-haspopup="dialog" [attr.aria-expanded]="modalRangoAbierto()">{{ etiquetaRangoSeleccionado() }} <span aria-hidden="true">&#8964;</span></button><button type="button" class="home-period-arrow" (click)="cambiarPeriodo(1)" [disabled]="cargandoPeriodoInicial() || periodoEsActual()" aria-label="Periodo siguiente">&rsaquo;</button></div>
       </section>
 
-      <app-guia-inicial />
-
       <section class="home-categories" aria-labelledby="home-categories-title">
         <h2 id="home-categories-title" class="sr-only">Gastos por categoría</h2>
         @if (graficoLoading() || contextoLista.cargando()) {<div class="home-chart-loading" role="status" aria-label="Cargando categorías"><span></span><span></span><span></span><span></span></div>}
