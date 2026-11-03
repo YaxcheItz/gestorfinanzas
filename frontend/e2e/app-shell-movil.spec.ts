@@ -2,6 +2,81 @@ import { expect, test } from '@playwright/test';
 
 test.use({ viewport: { width: 390, height: 844 }, serviceWorkers: 'block' });
 
+test.describe('gestos de categorías', () => {
+  test.use({ hasTouch: true, isMobile: true });
+
+  test('desplaza la página y el gráfico y permite ambos gestos tras mantener pulsado', async ({ page, context }) => {
+    const usuario = { id: 996, nombre: 'Gesto QA', email: 'gesto@example.test' };
+    await page.addInitScript(user => {
+      localStorage.setItem('finanzas_token', `test.${btoa(JSON.stringify({exp: Math.floor(Date.now()/1000)+3600}))}.synthetic`);
+      localStorage.setItem('finanzas_user', JSON.stringify(user));
+    }, usuario);
+    await page.route('**/api/**', async route => {
+      if (route.request().method() !== 'GET') return route.abort();
+      const path = new URL(route.request().url()).pathname;
+      let data: unknown = [];
+      if (path === '/api/perfil') data = {...usuario, tema:'CLARO', monedaPredeterminada:'MXN'};
+      if (path === '/api/dashboard/resumen') data = {totalCuentas:1, resumenPorMoneda:[{moneda:'MXN', balanceTotal:1000, dineroDisponible:1000, ingresosMes:1000, gastosMes:800, totalCuentas:1}], ultimosMovimientos:[]};
+      if (path === '/api/dashboard/analitica') data = {gastosPorCategoria:Array.from({length:8}, (_, i) => ({categoriaId:i+1, categoriaNombre:`Categoría ${i+1}`, monto:100, moneda:'MXN'})), ultimosSeisMeses:[]};
+      if (path === '/api/presupuestos') data = {presupuestos:[], resumenPorMoneda:[]};
+      await route.fulfill({json:{success:true,data}});
+    });
+    await page.goto('/dashboard');
+    const categoria = page.getByRole('button', {name:'Filtrar movimientos de Categoría 1'});
+    await categoria.scrollIntoViewIfNeeded();
+    const cdp = await context.newCDPSession(page);
+    const tocar = async (x: number, y: number, dx: number, dy: number, mantener: boolean) => {
+      await cdp.send('Input.dispatchTouchEvent', {type:'touchStart', touchPoints:[{x,y}]});
+      if (mantener) await page.waitForTimeout(600);
+      for (let n=1; n<=5; n++) {
+        await cdp.send('Input.dispatchTouchEvent', {type:'touchMove', touchPoints:[{x:Math.round(x+dx*n/5), y:Math.round(y+dy*n/5)}]});
+        await page.waitForTimeout(30);
+      }
+    };
+    let box = (await categoria.boundingBox())!;
+    let x = Math.round(box.x+box.width/2), y = Math.round(box.y+box.height/2);
+    const inicio = await page.evaluate(() => window.scrollY);
+    await tocar(x,y,0,-100,false);
+    await cdp.send('Input.dispatchTouchEvent', {type:'touchEnd',touchPoints:[]});
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(inicio);
+
+    const grafico = page.locator('.home-category-chart');
+    await grafico.scrollIntoViewIfNeeded();
+    box = (await grafico.boundingBox())!;
+    x = Math.round(box.x+box.width*.8); y = Math.round(box.y+box.height/2);
+    await tocar(x,y,-125,0,false);
+    await cdp.send('Input.dispatchTouchEvent', {type:'touchEnd',touchPoints:[]});
+    await expect.poll(() => grafico.evaluate(el => el.scrollLeft)).toBeGreaterThan(0);
+
+    for (const [direccion, selector] of [[-40,'.gesture-pill--up.is-target'], [40,'.gesture-pill--down.is-target']] as const) {
+      await page.reload();
+      await categoria.scrollIntoViewIfNeeded();
+      box = (await categoria.boundingBox())!;
+      x = Math.round(box.x+box.width/2); y = Math.round(box.y+box.height/2);
+      await tocar(x,y,0,direccion,true);
+      await expect(page.locator(selector)).toBeVisible();
+      await cdp.send('Input.dispatchTouchEvent', {type:'touchCancel',touchPoints:[]});
+      await expect(page.locator('.home-category.is-gesture-active')).toHaveCount(0);
+    }
+    await page.reload();
+    await categoria.scrollIntoViewIfNeeded();
+    await page.evaluate(() => window.addEventListener('kaptal-abrir-registro-rapido', () => document.documentElement.dataset['gestoRegistro'] = 'abierto'));
+    box = (await categoria.boundingBox())!;
+    x = Math.round(box.x+box.width/2); y = Math.round(box.y+box.height/2);
+    await tocar(x,y,0,-40,true);
+    await cdp.send('Input.dispatchTouchEvent', {type:'touchEnd',touchPoints:[]});
+    await expect(page.locator('html')).toHaveAttribute('data-gesto-registro', 'abierto');
+
+    await page.reload();
+    await categoria.scrollIntoViewIfNeeded();
+    box = (await categoria.boundingBox())!;
+    x = Math.round(box.x+box.width/2); y = Math.round(box.y+box.height/2);
+    await tocar(x,y,0,40,true);
+    await cdp.send('Input.dispatchTouchEvent', {type:'touchEnd',touchPoints:[]});
+    await expect(page).toHaveURL(/\/presupuestos\?categoriaId=1/);
+  });
+});
+
 test('el enlace al contenido aparece con teclado y mueve el foco al contenido principal', async ({ page }) => {
   await page.route('**/api/**', route => route.fulfill({json:{success:true,data:{configurado:false}}}));
   await page.goto('/login');
@@ -91,7 +166,7 @@ test('la carga lenta conserva estructura y los controles contextuales siguen vis
     const voice = page.getByRole('button', {name:'Registrar por voz o texto',exact:true});
     await expect(voice).toBeInViewport();
     await expect(page.getByRole('button',{name:'Añadir movimiento',exact:true})).toBeInViewport();
-    await expect(page.getByRole('link',{name:'Movimientos',exact:true})).toBeInViewport();
+    await expect(page.getByRole('button',{name:'Buscar movimientos',exact:true})).toBeInViewport();
     await expect(page.getByRole('link',{name:'Configuración',exact:true})).toBeInViewport();
     await expect(page.locator('.mobile-bottom-nav')).toHaveCount(0);
     const bounds = await voice.boundingBox();
