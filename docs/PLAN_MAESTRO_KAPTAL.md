@@ -1,4 +1,56 @@
+## Estado de revision y telefono (3 noviembre 2026)
+
+La correccion del gesto y las pruebas se subieron en 7a43f0ef0f2e051e1ad17dd8b0bcb4a65293b77f. La suite local H2 termino con 44 aprobadas y 4 PWA omitidas; la prueba focal ampliada aprobo scroll vertical/horizontal, ambas direcciones, cancelacion y las acciones al soltar. Build, 475 unitarias y arranque sintetico correctos. Al registrar, CI Android y todos los jobs excepto los dos E2E estaban correctos. El usuario autoriza usar el Samsung y mantener la APK actualizada cuando sea posible.
+
+El telefono conectado conserva APK 0.1.19/codigo20. La revision automatica del entorno rechazo con blocked by policy el comando combinado de adb reverse y apertura de una pagina local ficticia en Chrome; no se ejecuto y se detuvo el servidor. Falta prueba fisica del gesto. No hay APK nueva, integracion ni publicacion. Mantener pendientes carreras de sesion y posible duplicacion de transferencias. Revisar Git y CI del SHA actual antes de continuar.
+
+## Revision de Inicio: pruebas tactiles y E2E (3 noviembre 2026)
+
+El propietario autoriza usar el Samsung para las pruebas y mantener la APK actualizada cuando sea posible. ADB reconoce SM-A546E; version instalada 0.1.19/codigo 20. No se ha instalado APK nueva ni probado el gesto en el dispositivo.
+
+La regla provisional pan-x se retiro porque bloqueaba el desplazamiento vertical. La correccion local evita el desplazamiento solo despues de la pulsacion prolongada mediante touchmove cancelable. En Chromium con datos ficticios pasa una nueva regresion que comprueba desplazamientos vertical y horizontal, seleccion arriba/abajo, cancelacion y activacion de registro o navegacion a presupuestos al soltar. Build, 475 pruebas frontend y startup sintetico 200/401/503 correctos. Suite E2E completa local en curso al registrar; los cuatro escenarios que fallaron en CI pasaron previamente por separado en H2. Cambios sin commit, sin CI del nuevo SHA, sin integrar ni publicar. Verificar ejecucion, completar flujos y prueba fisica, CI y distribucion antes de cerrar. Mantener pendientes carreras de sesion y posible duplicacion de transferencias.
+
+## Continuación de revisión de Inicio: E2E y gesto táctil (3 de noviembre de 2026)
+
+PR #194 permanece borrador: ambos E2E remotos del SHA `9367118cb41c571e7dd8df181c394271e96b3314` fallaron en cuatro escenarios ligados al diseño. Ajustes de las cuatro pruebas pasan localmente con H2, en dos ejecuciones, pero no se han subido ni validado en CI. Build correcto; filtro de categoría comprobado con datos ficticios. Un gesto táctil simulado falló por la regla global `touch-action`; el ajuste local permite seleccionar hacia arriba, pendiente evaluar scroll horizontal y vertical, gesto contrario, cancelación y regresión automatizada. Samsung conectado, APK instalada 0.1.19; sin prueba física ni instalación nueva. Continuar y verificar todo antes de integrar o publicar. Carreras de sesión y posible duplicación de transferencias siguen abiertas.
+
+## Revision de cambios de Inicio en curso (3 de noviembre de 2026)
+
+Se preservan los cuatro commits de diseno existentes en una rama nueva desde develop f490368. La revision corrigio que el filtro por categoria mostrara movimientos de otro periodo o moneda, aceptara respuestas atrasadas o presentara fallos como ausencia de gastos. La consulta filtra solo gastos; se anadio reintento. El gesto de tarjetas ya no revela una accion al invertir el arrastre. Build y 474 pruebas frontend anteriores a la prueba nueva correctos; 45 pruebas focales con la nueva prueba correctas. check-startup sintetico 200/401/503 correcto. CI, integracion, publicacion y comprobacion visual y fisica aun pendientes. La busqueda del dock abre Movimientos, cuya barra de busqueda esta visible; no se comprobo apertura automatica del teclado. No se realizaron operaciones financieras reales ni QA de IA. Persisten las carreras de sesion y transferencias, sin resolver.
+
 # Kaptal: plan maestro y traspaso al siguiente chat
+
+
+## Diseno: selector de periodo superior MonAi, busqueda en dock y etiquetas (Tags)
+
+En rama `diseno/periodo-busqueda-dock-etiquetas`. Se implementaron tres mejoras solicitadas por el usuario:
+1. **Selector de periodo superior compacto y modal estilo MonAi**: El selector de fechas se movio a la parte superior del hero de Inicio, disenado con una pastilla compacta (`.home-period--compact`) con flechas de periodo, icono de calendario y chevron. Al tocarlo abre un modal redisenado con pestanas ("Meses", "Frecuencias", "Rango libre"), stepper de ano (`‹ 2026 ›`) y una cuadricula interactiva de 4x3 con los 12 meses (`ENE` a `DIC`) donde un solo toque selecciona el mes de inmediato, deshabilitando meses futuros y resaltando el seleccionado.
+2. **Boton de busqueda en dock inferior (`capture-dock`)**: En el dock inferior flotante, se agrego el boton de busqueda con icono de lupa a la izquierda junto al boton de registro manual (`+`), dejando el boton de microfono a la derecha. Al presionar el boton de busqueda navega directamente a `/transacciones?buscar=true`.
+3. **Etiquetas para gastos y movimientos (Tags)**: Se incorporo la seleccion rapida de etiquetas con chips interactivos (`#amigos`, `#trabajo`, `#vacaciones`, `#familia`, `#hogar`) e input de texto libre en:
+   - El modal de nuevo movimiento en Dashboard (`dashboard.component.html`/`ts`).
+   - El componente de captura rapida (`registro-rapido.component.ts`).
+   Permite alternar tags con un solo tap y se procesan con `parsearEtiquetas` antes de guardarse en el backend.
+
+Comprobaciones locales:
+- `npm --prefix frontend run build` exitoso (Angular produccion).
+- 474 pruebas frontend (58 archivos) todas verdes (`npx ng test --watch=false`).
+- `node frontend/scripts/check-startup.cjs` (200/401/503) correcto.
+- Telefono desconectado; APK al final de la revision de diseno.
+- Carreras de sesion y duplicacion de transferencias permanecen pendientes.
+
+## Diseno: categorias, filtrado inline, gestos y presupuestos estilo MonAi
+
+En rama `diseno/categorias-filtro-gestos-presupuestos`. Se implementaron tres mejoras clave en la pantalla de Inicio:
+1. **Filtrado inline de movimientos por categoria**: Al pulsar una barra de categoria en el grafico superior, la seccion de "Recientes" abajo cambia dinamicamente a mostrar solo los movimientos de esa categoria durante el periodo consultado, con una pastilla/chip de filtro activo (`[Icono + CategoriaNombre ×]`) que permite quitar el filtro en cualquier momento sin navegar a otra ventana.
+2. **Gestos en barras de categorias (0.5s mantener + deslizar)**: Al mantener presionada una barra de categoria (~450ms) se activa el modo gesto con overlay visual interactivo: deslizar hacia ARRIBA (dy < -25px) resalta y activa la accion de registrar un nuevo gasto en esa categoria (`+ Gasto`); deslizar hacia ABAJO (dy > 25px) resalta y abre la definicion/edicion de presupuesto (`Presupuesto`).
+3. **Presupuestos estilo MonAi**: Las barras de progreso ahora incorporan estilos dinamicos con linea punteada animada (`monai-dash-pulse`) al alcanzar el 80% o mas; transicion de verde a naranja (#f59e0b) en alerta y a rojo (#ef4444) en exceso; e indicadores visuales (`⚠️ Cerca del limite` / `⚠️ Excedido`) junto al nombre. En el grafico de categorias superior, las categorias con presupuesto tambien reflejan bordes de alerta y exceso.
+
+Comprobaciones locales:
+- Build productivo Angular exitoso
+- 474 pruebas frontend (58 archivos) todas verdes (incluye 3 pruebas unitarias nuevas para gestos, filtro inline y presupuesto)
+- `check-startup.cjs` (casos 200/401/503 con sesion sintetica) correcto
+- `measure-navigation.cjs` (12 escenarios de navegacion Chromium) correcto
+- Sin modificaciones a endpoints de produccion, base de datos ni APK (telefono desconectado; APK al final)
 
 ## Revision de diseno: Inicio sin guia de primeros pasos
 
