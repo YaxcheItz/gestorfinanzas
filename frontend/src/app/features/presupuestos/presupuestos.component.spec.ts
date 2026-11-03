@@ -4,6 +4,7 @@ import { FinanzasService } from '../../core/services/finanzas.service';
 import { ToastService } from '../../core/services/toast.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { PresupuestosComponent } from './presupuestos.component';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
 
 describe('PresupuestosComponent estados del período', () => {
   const vacio = { success: true, data: { presupuestos: [], resumenPorMoneda: [] } };
@@ -11,7 +12,8 @@ describe('PresupuestosComponent estados del período', () => {
   beforeEach(() => {
     getPresupuestos = vi.fn(() => of(vacio));
     TestBed.configureTestingModule({ imports: [PresupuestosComponent], providers: [
-      { provide: FinanzasService, useValue: { getPresupuestos, getCategorias: () => of({ success: true, data: [] }) } },
+      { provide: FinanzasService, useValue: { getPresupuestos, getCategorias: () => of({ success: true, data: [{id:7,nombre:'Comida',tipo:'GASTO'}] }) } },
+      { provide: ActivatedRoute, useValue: {snapshot:{queryParamMap:convertToParamMap({})}} },
       { provide: ToastService, useValue: { success: vi.fn(), error: vi.fn() } },
       { provide: ConfirmDialogService, useValue: { confirm: vi.fn() } },
     ] });
@@ -50,5 +52,42 @@ describe('PresupuestosComponent estados del período', () => {
     component.cargarPresupuestos();
     expect(component.error()).toContain('Vuelve a intentarlo');
     expect(component.loading()).toBe(false);
+  });
+
+  it('abre el formulario de la categoría y moneda indicadas cuando aún no existe presupuesto', () => {
+    TestBed.overrideProvider(ActivatedRoute, {useValue:{snapshot:{queryParamMap:convertToParamMap({categoriaId:'7',moneda:'USD'})}}});
+    const fixture = TestBed.createComponent(PresupuestosComponent); fixture.detectChanges();
+    expect(fixture.componentInstance.modalAbierto()).toBe(true);
+    expect(fixture.componentInstance.modoEdicion()).toBe(false);
+    expect(fixture.componentInstance.formCategoriaId).toBe(7);
+    expect(fixture.componentInstance.formMoneda).toBe('USD');
+  });
+
+  it('edita el presupuesto existente de la categoría y moneda elegidas', () => {
+    TestBed.overrideProvider(ActivatedRoute, {useValue:{snapshot:{queryParamMap:convertToParamMap({categoriaId:'7',moneda:'USD'})}}});
+    getPresupuestos.mockReturnValue(of({success:true,data:{presupuestos:[{id:8,categoriaId:7,moneda:'USD',listaId:null,montoLimite:300,porcentajeAlerta:80}],resumenPorMoneda:[]}}));
+    const fixture = TestBed.createComponent(PresupuestosComponent); fixture.detectChanges();
+    expect(fixture.componentInstance.modalAbierto()).toBe(true);
+    expect(fixture.componentInstance.modoEdicion()).toBe(true);
+    expect(fixture.componentInstance.formMontoLimite).toBe(300);
+  });
+
+  it('no ofrece crear otro presupuesto al existir uno de la categoría en otra moneda', () => {
+    TestBed.overrideProvider(ActivatedRoute, {useValue:{snapshot:{queryParamMap:convertToParamMap({categoriaId:'7',moneda:'USD'})}}});
+    getPresupuestos.mockReturnValue(of({success:true,data:{presupuestos:[{id:8,categoriaId:7,moneda:'MXN',listaId:null,montoLimite:300}],resumenPorMoneda:[]}}));
+    const fixture = TestBed.createComponent(PresupuestosComponent); fixture.detectChanges();
+    expect(fixture.componentInstance.modoEdicion()).toBe(true);
+    expect(fixture.componentInstance.formMoneda).toBe('MXN');
+    expect(fixture.componentInstance.formMontoLimite).toBe(300);
+  });
+
+  it('abre y consulta el mes y año seleccionados en Inicio', () => {
+    TestBed.overrideProvider(ActivatedRoute, {useValue:{snapshot:{queryParamMap:convertToParamMap({categoriaId:'7',moneda:'MXN',mes:'2',anio:'2022'})}}});
+    const fixture = TestBed.createComponent(PresupuestosComponent); fixture.detectChanges();
+    expect(getPresupuestos).toHaveBeenCalledWith(2,2022,null);
+    expect(fixture.componentInstance.mesSeleccionado()).toBe(2);
+    expect(fixture.componentInstance.anioSeleccionado()).toBe(2022);
+    expect(fixture.componentInstance.aniosDisponibles).toContain(2022);
+    expect(fixture.componentInstance.formCategoriaId).toBe(7);
   });
 });
