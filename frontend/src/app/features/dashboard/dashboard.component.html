@@ -1,11 +1,7 @@
 
     <div class="dashboard-screen" [class.home-is-compact]="inicioCompacto()">
       <div class="home-scroll-summary" [class.is-visible]="inicioCompacto()" aria-hidden="true"><span>Gastos · {{ etiquetaRangoSeleccionado() }}</span>@if(resumenMonedaSeleccionada(); as moneda){<strong>{{ moneda.gastosMes | monto:moneda.moneda:'symbol-narrow':'1.2-2' }} <small>{{ moneda.moneda }}</small></strong>}</div>
-      <header class="dashboard-screen__header">
-        <h1 class="sr-only">Resumen financiero</h1>
-        <div class="dashboard-screen__header-spacer"></div>
-        <app-privacy-toggle/>
-      </header>
+      <h1 class="sr-only">Resumen financiero</h1>
 
 
       <!-- Modal de Selección de Periodo Estilo MonAi -->
@@ -118,13 +114,11 @@
 
       <section #homeHero class="dashboard-screen__monthly" (touchstart)="onHeroTouchStart($event)" (touchmove)="onHeroTouchMove($event)" (touchend)="onHeroTouchEnd($event)" [style.transform]="heroSwipeTransform()" aria-labelledby="dashboard-balance-title">
         <div class="home-period home-period--compact">
-          <button type="button" class="home-period-arrow" (click)="cambiarPeriodo(-1)" [disabled]="cargandoPeriodoInicial() || !puedeRetroceder()" aria-label="Periodo anterior">&lsaquo;</button>
           <button type="button" class="time-dropdown-btn" (click)="toggleModalRango()" [disabled]="cargandoPeriodoInicial()" [attr.aria-busy]="cargandoPeriodoInicial()" aria-haspopup="dialog" [attr.aria-expanded]="modalRangoAbierto()">
             <span class="home-period__calendar-icon" aria-hidden="true">&#128197;</span>
             <span>{{ etiquetaRangoSeleccionado() }}</span>
             <span class="home-period__chevron" aria-hidden="true">&#8964;</span>
           </button>
-          <button type="button" class="home-period-arrow" (click)="cambiarPeriodo(1)" [disabled]="cargandoPeriodoInicial() || periodoEsActual()" aria-label="Periodo siguiente">&rsaquo;</button>
         </div>
         <p id="dashboard-balance-title" class="home-total-label">Gastos del periodo</p>
         @if (loading() || contextoLista.cargando()) { <div class="home-amount-loading" role="status" aria-label="Cargando gastos"></div> }
@@ -137,21 +131,9 @@
               <strong class="home-metric__value">{{ moneda.ingresosMes | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong>
             </div>
             <div class="home-metric home-metric--balance">
-              <span class="home-metric__label">Balance del periodo</span>
-              <strong class="home-metric__value" [class.is-negative]="(moneda.ingresosMes - moneda.gastosMes) < 0">{{ (moneda.ingresosMes - moneda.gastosMes) | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong>
+              <span class="home-metric__label">Saldo neto</span>
+              <strong class="home-metric__value" [class.is-negative]="moneda.balanceTotal < 0">{{ moneda.balanceTotal | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong>
             </div>
-            <div class="home-metric home-metric--accounts">
-              <span class="home-metric__label">Dinero en cuentas</span>
-              <strong class="home-metric__value">{{ (moneda.dineroDisponible ?? moneda.balanceTotal) | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong>
-            </div>
-          </div>
-          <div class="home-account-summary">
-            @if (moneda.deudaTarjetas != null && moneda.deudaTarjetas > 0) {
-              <span>Deuda de tarjetas: <strong>{{ moneda.deudaTarjetas | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong></span>
-              <span>Saldo neto: <strong>{{ moneda.balanceTotal | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong></span>
-            }
-            <button type="button" class="home-link-inline" (click)="irACuentas()">{{ moneda.totalCuentas }} cuentas &rsaquo;</button>
-            <button type="button" class="home-link-inline" (click)="irAReportes()">Informe del periodo &rsaquo;</button>
           </div>
         } @else if (!error()) { <p class="dashboard-screen__amount">{{ 0 | monto:monedaResumen():'symbol-narrow':'1.2-2' }}</p> }
         
@@ -200,6 +182,7 @@
               </article>
             }
           </div>
+          <p class="home-category-hint">Mantén una categoría y desliza ↑ para gasto o ↓ para presupuesto.</p>
         } @else if (!loading() && !error()) {<div class="home-empty"><span aria-hidden="true">&#127793;</span><h2>Sin gastos todavía</h2><p>Cuéntanos qué gastaste, hablando o escribiendo.</p><button type="button" (click)="abrirChatRegistro()">Prefiero registrarlo a mano</button></div>}
       </section>
 
@@ -231,8 +214,9 @@
                   </div>
                   <small class="dashboard-budget-left" [class.is-over]="presupuesto.montoDisponible < 0">
                     {{ presupuesto.montoDisponible < 0 ? 'Excedido en' : 'Queda' }} {{ (presupuesto.montoDisponible < 0 ? -presupuesto.montoDisponible : presupuesto.montoDisponible) | monto:presupuesto.moneda:'symbol-narrow':'1.2-2' }}
-                    <span class="home-budget-percent">({{ presupuesto.porcentajeConsumido }}%)</span>
+                    @if (!privacidad.ocultarMontos()) { <span class="home-budget-percent">({{ presupuesto.porcentajeConsumido }}%)</span> }
                   </small>
+                  <small>{{ presupuesto.montoGastado | monto:presupuesto.moneda:'symbol-narrow':'1.2-2' }} de {{ presupuesto.montoLimite | monto:presupuesto.moneda:'symbol-narrow':'1.2-2' }}</small>
                   <div class="home-budget-progress"
                        [class.home-budget-progress--warning]="presupuesto.porcentajeConsumido >= 80 && presupuesto.porcentajeConsumido < 100"
                        [class.home-budget-progress--over]="presupuesto.porcentajeConsumido >= 100"
@@ -320,6 +304,28 @@
       }
 
     </div>
+
+    @if (busquedaAbierta()) {
+      <div class="time-dropdown-backdrop" (click)="cerrarBusquedaInicio()">
+        <section class="home-search" role="dialog" aria-modal="true" aria-labelledby="buscar-inicio-title" appFocusTrap tabindex="-1" (focusTrapEscape)="cerrarBusquedaInicio()" (click)="$event.stopPropagation()">
+          <header class="home-search__header"><h2 id="buscar-inicio-title">Buscar movimientos</h2><button type="button" class="glass-icon" aria-label="Cerrar búsqueda" (click)="cerrarBusquedaInicio()">&times;</button></header>
+          <label class="sr-only" for="buscar-inicio">Buscar movimientos de esta lista</label>
+          <input id="buscar-inicio" type="search" autocomplete="off" maxlength="120" placeholder="Buscar movimientos o #etiquetas" [ngModel]="textoBusquedaInicio()" (ngModelChange)="cambiarBusquedaInicio($event)" />
+          <p class="home-search__hint">Busca en todos los periodos de esta lista.</p>
+          @if (buscandoInicio()) { <p role="status">Buscando movimientos…</p> }
+          @else if (errorBusquedaInicio()) { <p role="alert">No pudimos buscar. <button type="button" (click)="buscarInicio(paginaBusquedaInicio())">Reintentar</button></p> }
+          @else if (textoBusquedaInicio().trim() && resultadosBusquedaInicio().length === 0) { <p>No encontramos movimientos.</p> }
+          @else if (resultadosBusquedaInicio().length) {
+            <ul class="home-search__results">
+              @for (movimiento of resultadosBusquedaInicio(); track movimiento.id) {
+                <li><div><strong>{{ (movimiento.descripcion || movimiento.categoriaNombre || 'Movimiento') | textoFinanciero }}</strong><small>{{ movimiento.fecha }} · {{ etiquetaTipo(movimiento.tipo) }} · {{ movimiento.categoriaNombre || 'Sin categoría' }}</small></div><strong>{{ movimiento.monto | monto:movimiento.moneda:'symbol-narrow':'1.2-2' }}</strong></li>
+              }
+            </ul>
+            @if (paginasBusquedaInicio() > 1) { <nav class="home-search__pages" aria-label="Páginas de resultados"><button type="button" [disabled]="paginaBusquedaInicio() === 0" (click)="buscarInicio(paginaBusquedaInicio()-1)">Anterior</button><span>{{ paginaBusquedaInicio()+1 }} / {{ paginasBusquedaInicio() }}</span><button type="button" [disabled]="paginaBusquedaInicio()+1 >= paginasBusquedaInicio()" (click)="buscarInicio(paginaBusquedaInicio()+1)">Siguiente</button></nav> }
+          }
+        </section>
+      </div>
+    }
 
     @if (categoriaContextual(); as categoria) {
       <div class="home-sheet-backdrop" (click)="categoriaContextual.set(null)"><section class="home-context-sheet" role="dialog" aria-modal="true" aria-labelledby="category-context-title" appFocusTrap tabindex="-1" (focusTrapEscape)="categoriaContextual.set(null)" (click)="$event.stopPropagation()"><header><div><app-categoria-icono [icono]="categoria.icono" clase="category-emoji-large"/><h2 id="category-context-title">{{ categoria.categoriaNombre }}</h2></div><button type="button" class="glass-icon" (click)="categoriaContextual.set(null)" aria-label="Cerrar opciones de categoría">&times;</button></header><p>Gastado <strong>{{ categoria.monto | monto:categoria.moneda:'symbol-narrow':'1.2-2' }}</strong></p>@if(categoria.presupuesto; as presupuesto){<p>Presupuesto mensual <strong>{{ presupuesto.montoLimite | monto:presupuesto.moneda:'symbol-narrow':'1.2-2' }}</strong></p><p>{{ presupuesto.montoDisponible < 0 ? 'Excedido en' : 'Disponible' }} <strong>{{ (presupuesto.montoDisponible < 0 ? -presupuesto.montoDisponible : presupuesto.montoDisponible) | monto:presupuesto.moneda:'symbol-narrow':'1.2-2' }}</strong></p>}<nav><button type="button" (click)="registrarCategoria(categoria)">Añadir gasto</button><button type="button" (click)="categoriaContextual.set(null); irATransacciones(categoria.categoriaId)">Ver movimientos</button><button type="button" (click)="categoriaContextual.set(null); irAPresupuestos()">{{ categoria.presupuesto ? 'Editar presupuesto' : 'Definir presupuesto' }}</button></nav></section></div>

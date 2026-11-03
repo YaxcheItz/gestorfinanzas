@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subscription } from 'rxjs';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FinanzasService } from '../../core/services/finanzas.service';
 import { ToastService } from '../../core/services/toast.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
@@ -339,9 +340,6 @@ import {
                 Monto límite mensual ({{ formMoneda }})
               </label>
               <div class="relative rounded-xl shadow-2xs">
-                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 font-bold">
-                  {{ formMoneda }}
-                </div>
                 <input appMontoPrivado
                   id="modalMonto"
                   type="number"
@@ -351,7 +349,7 @@ import {
                   [(ngModel)]="formMontoLimite"
                   name="montoLimite"
                   placeholder="0.00"
-                  class="w-full pl-8 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 font-bold text-lg focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all dark:bg-slate-800 dark:border-slate-600 dark:text-white"
+                  class="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 font-bold text-lg focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all dark:bg-slate-800 dark:border-slate-600 dark:text-white"
                 />
               </div>
             </div>
@@ -561,6 +559,8 @@ export class PresupuestosComponent implements OnInit {
   private readonly toastService = inject(ToastService);
   private readonly confirmDialogService = inject(ConfirmDialogService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly route = inject(ActivatedRoute, {optional: true});
+  private readonly router = inject(Router, {optional: true});
   readonly contextoLista = inject(ListaContextoService);
   private presupuestoRequest?: Subscription;
 
@@ -610,10 +610,14 @@ export class PresupuestosComponent implements OnInit {
   readonly monedasDisponibles = MONEDAS_DISPONIBLES;
 
   private listaObservada: number | null | undefined = undefined;
+  private categoriaPendiente: number | null = null;
+  private monedaPendiente = 'MXN';
+  private categoriasCargadas = false;
 
   constructor() {
     effect(() => {
       const actual = this.contextoLista.activaId();
+      const cargandoLista = this.contextoLista.cargando();
       if (this.listaObservada === undefined) {
         this.listaObservada = actual;
         return;
@@ -621,7 +625,9 @@ export class PresupuestosComponent implements OnInit {
       if (this.listaObservada !== actual) {
         this.listaObservada = actual;
         untracked(() => this.cargarPresupuestos());
+        return;
       }
+      if (!cargandoLista) untracked(() => this.abrirCategoriaPendiente());
     });
   }
 
@@ -630,6 +636,11 @@ export class PresupuestosComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    const params = this.route?.snapshot.queryParamMap;
+    const id = Number(params?.get('categoriaId'));
+    const moneda = params?.get('moneda');
+    if (Number.isSafeInteger(id) && id > 0) this.categoriaPendiente = id;
+    if (moneda && this.monedasDisponibles.some(item => item.codigo === moneda)) this.monedaPendiente = moneda;
     this.cargarCategorias();
     this.cargarPresupuestos();
   }
@@ -648,6 +659,7 @@ export class PresupuestosComponent implements OnInit {
         this.loading.set(false);
         if (res.success && res.data) {
           this.resumen.set(res.data);
+          this.abrirCategoriaPendiente();
         } else {
           this.error.set('No pudimos consultar los presupuestos. Vuelve a intentarlo.');
         }
@@ -665,9 +677,39 @@ export class PresupuestosComponent implements OnInit {
         if (res.success && res.data) {
           const deGasto = res.data.filter(c => c.tipo === 'GASTO');
           this.categorias.set(deGasto);
+          this.categoriasCargadas = true;
+          this.abrirCategoriaPendiente();
+        } else if (this.categoriaPendiente) {
+          this.categoriaPendiente = null;
+          this.toastService.error('No pudimos cargar la categoría. Inténtalo de nuevo.');
+        }
+      },
+      error: () => {
+        if (this.categoriaPendiente) {
+          this.categoriaPendiente = null;
+          this.toastService.error('No pudimos cargar la categoría. Inténtalo de nuevo.');
         }
       }
     });
+  }
+
+  private abrirCategoriaPendiente(): void {
+    const id = this.categoriaPendiente;
+    const resumen = this.resumen();
+    if (!id || !this.categoriasCargadas || !resumen || this.contextoLista.cargando()) return;
+    this.categoriaPendiente = null;
+    if (this.router && this.route) void this.router.navigate([], {relativeTo:this.route, queryParams:{categoriaId:null,moneda:null}, queryParamsHandling:'merge', replaceUrl:true});
+    if (!this.contextoLista.puedeEscribir()) { this.toastService.error('Esta lista no permite editar presupuestos.'); return; }
+    if (!this.categorias().some(c => c.id === id)) { this.toastService.error('No encontramos la categoría seleccionada.'); return; }
+    const listaId = this.contextoLista.activaId();
+    // El backend mantiene un solo presupuesto por categoría, lista y mes, aunque cambie la moneda.
+    const existente = resumen.presupuestos.find(p => p.categoriaId === id && (p.listaId ?? null) === listaId);
+    if (existente) this.abrirModalEditar(existente);
+    else {
+      this.abrirModalNuevo();
+      this.formCategoriaId = id;
+      this.formMoneda = this.monedaPendiente;
+    }
   }
 
   cambiarMes(nuevoMes: number): void {
