@@ -1,3 +1,41 @@
+# Estado para retomar la sesion
+
+
+## Diseno: selector de periodo superior MonAi, busqueda en dock y etiquetas (Tags)
+
+En rama `diseno/periodo-busqueda-dock-etiquetas`. Se implementaron tres mejoras solicitadas por el usuario:
+1. **Selector de periodo superior compacto y modal estilo MonAi**: El selector de fechas se movio a la parte superior del hero de Inicio, disenado con una pastilla compacta (`.home-period--compact`) con flechas de periodo, icono de calendario y chevron. Al tocarlo abre un modal redisenado con pestanas ("Meses", "Frecuencias", "Rango libre"), stepper de ano (`‹ 2026 ›`) y una cuadricula interactiva de 4x3 con los 12 meses (`ENE` a `DIC`) donde un solo toque selecciona el mes de inmediato, deshabilitando meses futuros y resaltando el seleccionado.
+2. **Boton de busqueda en dock inferior (`capture-dock`)**: En el dock inferior flotante, se agrego el boton de busqueda con icono de lupa a la izquierda junto al boton de registro manual (`+`), dejando el boton de microfono a la derecha. Al presionar el boton de busqueda navega directamente a `/transacciones?buscar=true`.
+3. **Etiquetas para gastos y movimientos (Tags)**: Se incorporo la seleccion rapida de etiquetas con chips interactivos (`#amigos`, `#trabajo`, `#vacaciones`, `#familia`, `#hogar`) e input de texto libre en:
+   - El modal de nuevo movimiento en Dashboard (`dashboard.component.html`/`ts`).
+   - El componente de captura rapida (`registro-rapido.component.ts`).
+   Permite alternar tags con un solo tap y se procesan con `parsearEtiquetas` antes de guardarse en el backend.
+
+Comprobaciones locales:
+- `npm --prefix frontend run build` exitoso (Angular produccion).
+- 474 pruebas frontend (58 archivos) todas verdes (`npx ng test --watch=false`).
+- `node frontend/scripts/check-startup.cjs` (200/401/503) correcto.
+- Telefono desconectado; APK al final de la revision de diseno.
+- Carreras de sesion y duplicacion de transferencias permanecen pendientes.
+
+## Diseno: categorias, filtrado inline, gestos y presupuestos estilo MonAi
+
+En rama `diseno/categorias-filtro-gestos-presupuestos`. Se implementaron tres mejoras clave en la pantalla de Inicio:
+1. **Filtrado inline de movimientos por categoria**: Al pulsar una barra de categoria en el grafico superior, la seccion de "Recientes" abajo cambia dinamicamente a mostrar solo los movimientos de esa categoria durante el periodo consultado, con una pastilla/chip de filtro activo (`[Icono + CategoriaNombre ×]`) que permite quitar el filtro en cualquier momento sin navegar a otra ventana.
+2. **Gestos en barras de categorias (0.5s mantener + deslizar)**: Al mantener presionada una barra de categoria (~450ms) se activa el modo gesto con overlay visual interactivo: deslizar hacia ARRIBA (dy < -25px) resalta y activa la accion de registrar un nuevo gasto en esa categoria (`+ Gasto`); deslizar hacia ABAJO (dy > 25px) resalta y abre la definicion/edicion de presupuesto (`Presupuesto`).
+3. **Presupuestos estilo MonAi**: Las barras de progreso ahora incorporan estilos dinamicos con linea punteada animada (`monai-dash-pulse`) al alcanzar el 80% o mas; transicion de verde a naranja (#f59e0b) en alerta y a rojo (#ef4444) en exceso; e indicadores visuales (`⚠️ Cerca del limite` / `⚠️ Excedido`) junto al nombre. En el grafico de categorias superior, las categorias con presupuesto tambien reflejan bordes de alerta y exceso.
+
+Comprobaciones locales:
+- Build productivo Angular exitoso
+- 474 pruebas frontend (58 archivos) todas verdes (incluye 3 pruebas unitarias nuevas para gestos, filtro inline y presupuesto)
+- `check-startup.cjs` (casos 200/401/503 con sesion sintetica) correcto
+- `measure-navigation.cjs` (12 escenarios de navegacion Chromium) correcto
+- Sin modificaciones a endpoints de produccion, base de datos ni APK (telefono desconectado; APK al final)
+
+## Diseno vista unificada de Inicio PR abierto pendiente de CI
+
+Cambios en rama diseno/unificar-vista-inicio-resumen commit 8d92385 pusheados. PR pendiente de abrir manualmente en https://github.com/YaxcheItz/gestorfinanzas/pull/new/diseno/unificar-vista-inicio-resumen base develop. Eliminado selector Simple/Detallada; vista unificada con metricas de Ingresos Balance y Dinero en cuentas siempre visibles en tarjetas grid. Seccion home-account-summary con acceso a Cuentas e Informe del periodo. Presupuestos y pagos programados sin depender de vistaDetallada. Recientes siempre visible con link routerLink accesible. Boton de Movimientos quitado de accesos rapidos de navbar conservado en menu lateral. home.css metricas en grid ingresos en verde balance negativo en rojo micro-animacion en barras. 471/471 pruebas correctas. Siguiente: merge del PR; continuar revision de diseno por secciones. APK al final. Carreras de sesion y duplicacion de transferencias permanecen pendientes.
+
 # Estado para retomar la sesión
 
 ## Revision de diseno: Inicio sin guia de primeros pasos

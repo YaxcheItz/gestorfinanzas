@@ -83,7 +83,14 @@ type TipoRegistro = 'GASTO' | 'INGRESO' | 'TRANSFERENCIA';
               <details class="entry-details"><summary>Más categorías, fecha y detalles</summary>
                 @if (tipo !== 'TRANSFERENCIA') {<label>Todas las categorías<select name="categoria" [(ngModel)]="categoriaId" (ngModelChange)="consultarPresupuestoDisponible()"><option [ngValue]="null">Sin categoría</option>@for (categoria of categoriasDisponibles(); track categoria.id) {<option [ngValue]="categoria.id">{{ categoria.nombre }}</option>}</select></label>}
                 @if(!repitiendo()) {<label>Descripción <span class="entry-optional">opcional</span><input name="descripcion" [(ngModel)]="descripcion" maxlength="200" placeholder="Ej. tacos, sueldo o ahorro" /></label>}
-                <label>Lista<select name="listaMovimiento" [(ngModel)]="listaRegistroId" (ngModelChange)="consultarPresupuestoDisponible()">@for(lista of listasEditables(); track lista.id){<option [ngValue]="lista.id">{{ lista.emoji }} {{ lista.nombre }}</option>}</select></label><label>Etiquetas<input name="etiquetasMovimiento" [(ngModel)]="etiquetasTexto" placeholder="#visa #vacaciones" maxlength="271" /></label>
+                <label>Lista<select name="listaMovimiento" [(ngModel)]="listaRegistroId" (ngModelChange)="consultarPresupuestoDisponible()">@for(lista of listasEditables(); track lista.id){<option [ngValue]="lista.id">{{ lista.emoji }} {{ lista.nombre }}</option>}</select></label><label>Etiquetas
+                  <input name="etiquetasMovimiento" [(ngModel)]="etiquetasTexto" placeholder="#amigos #vacaciones" maxlength="271" />
+                </label>
+                <div class="entry-tags-quick" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">
+                  @for (sug of etiquetasSugeridas; track sug) {
+                    <button type="button" class="entry-tag-chip" style="font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid var(--kaptal-border);background:var(--kaptal-surface);color:var(--kaptal-content);cursor:pointer" [style.background]="etiquetaEstaActiva(sug) ? 'var(--kaptal-brand)' : ''" [style.color]="etiquetaEstaActiva(sug) ? '#fff' : ''" (click)="alternarEtiqueta(sug)">#{{ sug }}</button>
+                  }
+                </div>
                 <label>Fecha<input name="fecha" type="date" [(ngModel)]="fecha" (ngModelChange)="consultarPresupuestoDisponible()" required /></label><label>Nota<input name="nota" [(ngModel)]="nota" maxlength="500" /></label><button type="button" class="entry-text-button" (click)="avanzado()">Opciones avanzadas: recurrentes y meses sin intereses</button>
               </details>
             }
@@ -114,6 +121,20 @@ export class RegistroRapidoComponent implements OnDestroy {
   readonly contextoLista = inject(ListaContextoService);
   listaRegistroId: number | null = null;
   etiquetasTexto = '';
+  readonly etiquetasSugeridas = ['amigos', 'trabajo', 'vacaciones', 'familia', 'hogar'];
+  alternarEtiqueta(nombre: string): void {
+    const etiqueta = `#${nombre.replace(/^#/, '').trim()}`;
+    const regex = new RegExp(`(?:^|\\s)#${nombre}(?:\\s|$)`, 'i');
+    if (regex.test(this.etiquetasTexto)) {
+      this.etiquetasTexto = this.etiquetasTexto.replace(regex, ' ').replace(/\s+/g, ' ').trim();
+    } else {
+      this.etiquetasTexto = this.etiquetasTexto ? `${this.etiquetasTexto.trim()} ${etiqueta}` : etiqueta;
+    }
+  }
+  etiquetaEstaActiva(nombre: string): boolean {
+    const regex = new RegExp(`(?:^|\\s)#${nombre}(?:\\s|$)`, 'i');
+    return regex.test(this.etiquetasTexto);
+  }
   listasEditables() { return this.contextoLista.listas().filter(l => !l.archivada && l.rol !== 'LECTOR'); }
   nombreListaRegistro() { return this.contextoLista.listas().find(l => l.id === this.listaRegistroId)?.nombre ?? 'Personal'; }
   readonly open = signal(false);
