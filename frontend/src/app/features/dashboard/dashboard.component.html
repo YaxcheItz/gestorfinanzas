@@ -117,10 +117,37 @@
         @else if (categoriasInicio().length > 0) {
           <div class="home-category-chart" aria-label="Gastos por categoría, desliza para ver más" tabindex="0">
             @for (categoria of categoriasInicio(); track categoria.categoriaId) {
-              <article class="home-category" [style.--category-tone]="categoria.tono">
-                <button type="button" class="home-category__bar-button" (pointerdown)="iniciarPresionCategoria($event,categoria)" (pointermove)="moverPresionCategoria($event)" (pointerleave)="cancelarPresionCategoria()" (click)="tocarCategoria(categoria)" (contextmenu)="$event.preventDefault(); categoriaContextual.set(categoria)" [attr.aria-label]="'Ver movimientos de ' + categoria.categoriaNombre">
-                  <span class="home-category__track"><span class="home-category__bar" [style.height.%]="categoria.altura" aria-hidden="true"></span><span class="home-category__emoji"><app-categoria-icono [icono]="categoria.icono" clase="category-emoji-large"/></span></span>
-                  <strong>{{ categoria.monto | monto:categoria.moneda:'symbol-narrow':'1.0-2' }}</strong><span class="home-category__name">{{ categoria.categoriaNombre }}</span>
+              <article class="home-category"
+                       [class.is-selected]="categoriaFiltroSeleccionada()?.categoriaId === categoria.categoriaId"
+                       [class.is-gesture-active]="categoriaGestoActiva()?.categoriaId === categoria.categoriaId"
+                       [style.--category-tone]="categoria.tono">
+                @if (categoriaGestoActiva()?.categoriaId === categoria.categoriaId) {
+                  <div class="home-category__gesture-guide" aria-live="assertive">
+                    <div class="gesture-pill gesture-pill--up" [class.is-target]="gestoAccionSeleccionada() === 'GASTO'">
+                      <span aria-hidden="true">&#8593;</span> <strong>+ Gasto</strong>
+                    </div>
+                    <div class="gesture-pill gesture-pill--down" [class.is-target]="gestoAccionSeleccionada() === 'PRESUPUESTO'">
+                      <span aria-hidden="true">&#8595;</span> <strong>Presupuesto</strong>
+                    </div>
+                  </div>
+                }
+                <button type="button" class="home-category__bar-button"
+                        (pointerdown)="iniciarPresionCategoria($event,categoria)"
+                        (pointermove)="moverPresionCategoria($event)"
+                        (pointerup)="finalizarPresionCategoria($event,categoria)"
+                        (pointercancel)="cancelarPresionCategoria()"
+                        (pointerleave)="cancelarPresionCategoria()"
+                        (click)="tocarCategoria(categoria)"
+                        (contextmenu)="$event.preventDefault(); categoriaContextual.set(categoria)"
+                        [attr.aria-label]="'Filtrar movimientos de ' + categoria.categoriaNombre">
+                  <span class="home-category__track"
+                        [class.is-budget-warning]="categoria.presupuesto?.porcentajeConsumido! >= 80 && categoria.presupuesto?.porcentajeConsumido! < 100"
+                        [class.is-budget-over]="categoria.presupuesto?.porcentajeConsumido! >= 100">
+                    <span class="home-category__bar" [style.height.%]="categoria.altura" aria-hidden="true"></span>
+                    <span class="home-category__emoji"><app-categoria-icono [icono]="categoria.icono" clase="category-emoji-large"/></span>
+                  </span>
+                  <strong>{{ categoria.monto | monto:categoria.moneda:'symbol-narrow':'1.0-2' }}</strong>
+                  <span class="home-category__name">{{ categoria.categoriaNombre }}</span>
                 </button>
               </article>
             }
@@ -129,12 +156,55 @@
       </section>
 
       @if (presupuestosDashboard().length > 0 || presupuestoLoading() || presupuestoError()) {
-        <section class="dashboard-screen__budgets" aria-labelledby="dashboard-budgets-title"><div class="dashboard-screen__section-heading"><div><h2 id="dashboard-budgets-title">Presupuestos</h2><p class="dashboard-budget-period">{{ periodoResumen() }} · mensual · todas mis listas</p></div><button type="button" class="dashboard-screen__text-link" (click)="irAPresupuestos()">Ver todos</button></div>
+        <section class="dashboard-screen__budgets" aria-labelledby="dashboard-budgets-title">
+          <div class="dashboard-screen__section-heading">
+            <div>
+              <h2 id="dashboard-budgets-title">Presupuestos</h2>
+              <p class="dashboard-budget-period">{{ periodoResumen() }} · mensual · todas mis listas</p>
+            </div>
+            <button type="button" class="dashboard-screen__text-link" (click)="irAPresupuestos()">Ver todos</button>
+          </div>
           @if (presupuestoLoading()) {<p class="home-inline-state">Cargando presupuestos…</p>}
           @else if (presupuestoError()) {<p class="home-inline-state" role="alert">{{ presupuestoError() }} <button type="button" (click)="cargarPresupuestos()">Reintentar</button></p>}
-          @else { @for(presupuesto of presupuestosDashboard(); track presupuesto.id){
-            <div class="home-budget-row"><app-categoria-icono [icono]="presupuesto.categoriaIcono"/><div><strong>{{ presupuesto.categoriaNombre }}</strong><small class="dashboard-budget-left" [class.is-over]="presupuesto.montoDisponible < 0">{{ presupuesto.montoDisponible < 0 ? 'Excedido en' : 'Queda' }} {{ (presupuesto.montoDisponible < 0 ? -presupuesto.montoDisponible : presupuesto.montoDisponible) | monto:presupuesto.moneda:'symbol-narrow':'1.2-2' }}</small><div class="home-budget-progress" role="progressbar" [attr.aria-label]="'Presupuesto de ' + presupuesto.categoriaNombre" aria-valuemin="0" [attr.aria-valuemax]="privacidad.ocultarMontos() ? null : presupuesto.montoLimite" [attr.aria-valuenow]="privacidad.ocultarMontos() ? null : presupuestoGastadoLimitado(presupuesto.montoGastado,presupuesto.montoLimite)" [attr.aria-valuetext]="privacidad.ocultarMontos() ? 'Importe oculto' : null" [style.--budget-fill]="(privacidad.ocultarMontos() ? 0 : porcentajePresupuesto(presupuesto.porcentajeConsumido)) + '%'"><span [style.width]="'var(--budget-fill)'" [class.is-over]="presupuesto.estado === 'EXCEDIDO'"></span></div></div></div>
-          } @empty {<button type="button" class="dashboard-screen__text-link" (click)="irAPresupuestos()">Crear presupuesto</button>} }
+          @else {
+            @for(presupuesto of presupuestosDashboard(); track presupuesto.id){
+              <div class="home-budget-row"
+                   [class.is-warning]="presupuesto.porcentajeConsumido >= 80 && presupuesto.porcentajeConsumido < 100"
+                   [class.is-over]="presupuesto.porcentajeConsumido >= 100">
+                <app-categoria-icono [icono]="presupuesto.categoriaIcono"/>
+                <div>
+                  <div class="home-budget-row__title">
+                    <strong>{{ presupuesto.categoriaNombre }}</strong>
+                    @if (presupuesto.porcentajeConsumido >= 100) {
+                      <span class="home-budget-pill home-budget-pill--danger">⚠️ Excedido</span>
+                    } @else if (presupuesto.porcentajeConsumido >= 80) {
+                      <span class="home-budget-pill home-budget-pill--warning">⚠️ Cerca del límite</span>
+                    }
+                  </div>
+                  <small class="dashboard-budget-left" [class.is-over]="presupuesto.montoDisponible < 0">
+                    {{ presupuesto.montoDisponible < 0 ? 'Excedido en' : 'Queda' }} {{ (presupuesto.montoDisponible < 0 ? -presupuesto.montoDisponible : presupuesto.montoDisponible) | monto:presupuesto.moneda:'symbol-narrow':'1.2-2' }}
+                    <span class="home-budget-percent">({{ presupuesto.porcentajeConsumido }}%)</span>
+                  </small>
+                  <div class="home-budget-progress"
+                       [class.home-budget-progress--warning]="presupuesto.porcentajeConsumido >= 80 && presupuesto.porcentajeConsumido < 100"
+                       [class.home-budget-progress--over]="presupuesto.porcentajeConsumido >= 100"
+                       role="progressbar"
+                       [attr.aria-label]="'Presupuesto de ' + presupuesto.categoriaNombre"
+                       aria-valuemin="0"
+                       [attr.aria-valuemax]="privacidad.ocultarMontos() ? null : presupuesto.montoLimite"
+                       [attr.aria-valuenow]="privacidad.ocultarMontos() ? null : presupuestoGastadoLimitado(presupuesto.montoGastado,presupuesto.montoLimite)"
+                       [attr.aria-valuetext]="privacidad.ocultarMontos() ? 'Importe oculto' : null"
+                       [style.--budget-fill]="(privacidad.ocultarMontos() ? 0 : porcentajePresupuesto(presupuesto.porcentajeConsumido)) + '%'">
+                    <div class="home-budget-progress__track">
+                      <span class="home-budget-progress__fill" [style.width]="'var(--budget-fill)'" [class.is-over]="presupuesto.estado === 'EXCEDIDO'"></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            } @empty {
+              <button type="button" class="dashboard-screen__text-link" (click)="irAPresupuestos()">Crear presupuesto</button>
+            }
+          }
         </section>
       }
 
@@ -148,16 +218,29 @@
         </section>
       }
 
-      <!-- 4. Lista de Actividad Reciente con botón Ver Todo -->
+      <!-- 4. Lista de Actividad Reciente con botón Ver Todo y Filtro por Categoría -->
       @if (true) {
       <section class="dashboard-screen__section dashboard-screen__activity dashboard-screen__recent" aria-labelledby="dashboard-recent-title">
         <div class="dashboard-screen__section-heading">
-          <div>
-            <h2 id="dashboard-recent-title">Recientes</h2>
+          <div class="dashboard-screen__title-with-badge">
+            <h2 id="dashboard-recent-title">{{ categoriaFiltroSeleccionada() ? 'Movimientos filtrados' : 'Recientes' }}</h2>
+            @if (categoriaFiltroSeleccionada(); as cat) {
+              <button type="button" class="home-filter-chip" (click)="quitarFiltroCategoria()" aria-label="Quitar filtro de categoría">
+                <app-categoria-icono [icono]="cat.icono" clase="home-filter-chip__icon" />
+                <span>{{ cat.categoriaNombre }}</span>
+                <span class="home-filter-chip__close" aria-hidden="true">&times;</span>
+              </button>
+            }
           </div>
-          <a routerLink="/transacciones" class="dashboard-screen__text-link" (click)="$event.preventDefault(); irATransacciones()" aria-label="Movimientos">Ver todos <span aria-hidden="true">→</span></a>
+          @if (categoriaFiltroSeleccionada(); as cat) {
+            <button type="button" class="dashboard-screen__text-link" (click)="irATransacciones(cat.categoriaId)">
+              Ver en historial <span aria-hidden="true">&#8594;</span>
+            </button>
+          } @else {
+            <a routerLink="/transacciones" class="dashboard-screen__text-link" (click)="$event.preventDefault(); irATransacciones()" aria-label="Movimientos">Ver todos <span aria-hidden="true">&#8594;</span></a>
+          }
         </div>
-        @if (loading()) {
+        @if (loading() || cargandoMovimientosCategoria()) {
           <div class="dashboard-loading-movements" role="status" aria-label="Cargando movimientos">
             <span class="sr-only">Cargando movimientos…</span>
             @for (fila of [0, 1, 2]; track fila) {
@@ -166,14 +249,19 @@
           </div>
         } @else if (error()) {
           <p class="dashboard-screen__muted">No pudimos consultar tus movimientos recientes. Usa Reintentar para volver a cargarlos.</p>
-        } @else if ((ultimosMovimientosLimitados().length === 0)) {
+        } @else if (categoriaFiltroSeleccionada() && movimientosCategoria().length === 0) {
+          <div class="dashboard-screen__inline-empty">
+            <p>No hay gastos registrados en {{ categoriaFiltroSeleccionada()?.categoriaNombre }} durante este periodo.</p>
+            <button type="button" (click)="registrarCategoria(categoriaFiltroSeleccionada()!)">Añadir gasto en {{ categoriaFiltroSeleccionada()?.categoriaNombre }}</button>
+          </div>
+        } @else if (!categoriaFiltroSeleccionada() && (ultimosMovimientosLimitados().length === 0)) {
           <div class="dashboard-screen__inline-empty">
             <p>No hay movimientos en este período. Puedes añadir uno o consultar el historial.</p>
             @if((resumen()?.totalCuentas??0) === 0) {<button type="button" (click)="irACuentas()">Crear cuenta</button>} @else {<button type="button" (click)="abrirChatRegistro()">Añadir movimiento</button>}
           </div>
         } @else {
           <div class="dashboard-screen__recent-list">
-            @for (movimiento of ultimosMovimientosLimitados(); track movimiento.id) {
+            @for (movimiento of (categoriaFiltroSeleccionada() ? movimientosCategoria() : ultimosMovimientosLimitados()); track movimiento.id) {
               <app-movimiento-mobile-card [movimiento]="movimiento" (detalle)="verDetalleMovimiento($event.id)" (editar)="editarMovimiento($event.id)" (eliminar)="eliminarMovimiento($event)" />
             }
           </div>
