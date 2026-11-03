@@ -579,7 +579,7 @@ export class PresupuestosComponent implements OnInit {
     { numero: 12, nombre: 'Diciembre' }
   ];
 
-  readonly aniosDisponibles = [2024, 2025, 2026, 2027];
+  readonly aniosDisponibles = [new Date().getFullYear() - 2, new Date().getFullYear() - 1, new Date().getFullYear(), new Date().getFullYear() + 1];
 
   // Signals de Estado
   readonly mesSeleccionado = signal<number>(new Date().getMonth() + 1);
@@ -639,8 +639,16 @@ export class PresupuestosComponent implements OnInit {
     const params = this.route?.snapshot.queryParamMap;
     const id = Number(params?.get('categoriaId'));
     const moneda = params?.get('moneda');
+    const mes = Number(params?.get('mes'));
+    const anio = Number(params?.get('anio'));
     if (Number.isSafeInteger(id) && id > 0) this.categoriaPendiente = id;
     if (moneda && this.monedasDisponibles.some(item => item.codigo === moneda)) this.monedaPendiente = moneda;
+    if (this.categoriaPendiente && Number.isInteger(mes) && mes >= 1 && mes <= 12 && Number.isInteger(anio) && anio >= 2000 && anio <= 2100) {
+      this.mesSeleccionado.set(mes);
+      this.anioSeleccionado.set(anio);
+      if (!this.aniosDisponibles.includes(anio)) this.aniosDisponibles.push(anio);
+      this.aniosDisponibles.sort((a,b) => a-b);
+    }
     this.cargarCategorias();
     this.cargarPresupuestos();
   }
@@ -698,7 +706,7 @@ export class PresupuestosComponent implements OnInit {
     const resumen = this.resumen();
     if (!id || !this.categoriasCargadas || !resumen || this.contextoLista.cargando()) return;
     this.categoriaPendiente = null;
-    if (this.router && this.route) void this.router.navigate([], {relativeTo:this.route, queryParams:{categoriaId:null,moneda:null}, queryParamsHandling:'merge', replaceUrl:true});
+    if (this.router && this.route) void this.router.navigate([], {relativeTo:this.route, queryParams:{categoriaId:null,moneda:null,mes:null,anio:null}, queryParamsHandling:'merge', replaceUrl:true});
     if (!this.contextoLista.puedeEscribir()) { this.toastService.error('Esta lista no permite editar presupuestos.'); return; }
     if (!this.categorias().some(c => c.id === id)) { this.toastService.error('No encontramos la categoría seleccionada.'); return; }
     const listaId = this.contextoLista.activaId();
