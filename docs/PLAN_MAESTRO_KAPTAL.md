@@ -1,5 +1,12 @@
 # Kaptal: plan maestro y traspaso al siguiente chat
 
+## Dependencias de desarrollo que bloqueaban CI
+
+El 3 de noviembre las CI del PR188 fallaron por dos avisos moderados nuevos en herramientas de desarrollo: glob GHSA-3g3m-2fjr-6pw4 y minimatch GHSA-g3hv-75wg-m249. La auditoria `npm audit --omit=dev` no reporto avisos en dependencias de produccion; no demuestra ausencia de otras vulnerabilidades. Se probaron overrides a glob 14.0.3 y minimatch 11.0.4 para las cadenas de Angular CLI y Capacitor CLI, sin desactivar la comprobacion. Como cruzan versiones principales, la compatibilidad requiere vigilancia adicional.
+
+Comprobaciones locales: `npm ci`, `npm run security:check` sin avisos, build, 471 pruebas frontend, pruebas de aislamiento E2E, `npm pack --dry-run --ignore-scripts`, sincronizacion Capacitor, tests JVM/compilacion Android debug. No se instalo APK ni se toc? produccion. CI y publicacion pendientes al registrar. Fuentes: https://github.com/advisories/GHSA-3g3m-2fjr-6pw4 y https://github.com/advisories/GHSA-g3hv-75wg-m249.
+
+
 ## Proteccion previa del destino PostgreSQL de pruebas
 
 La configuracion de Playwright iniciaba el backend antes de que `rendimiento-local.spec.ts` validara el destino de PostgreSQL. Se reprodujo sin conexiones: `playwright test --list` aceptaba una URL remota ficticia. Ahora la configuracion rechaza antes del arranque las URL que no tengan host literal localhost o 127.0.0.1, puerto valido y base `kaptal_ci_e2e`, y no acepta parametros ni credenciales en la URL. H2 en memoria sigue como opcion predeterminada. El test `node --test scripts/check-e2e-database.test.cjs` comprueba configuraciones aceptadas y rechazadas sin iniciar servidores; se incorpora a CI. La prueba E2E con H2 local tambien paso.
