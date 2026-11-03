@@ -317,7 +317,9 @@ export class DashboardComponent implements OnInit {
       queryParams: {
         ...(this.contextoLista.activaId() == null ? {} : { listaId: this.contextoLista.activaId() }),
         categoriaId: categoria.categoriaId,
-        moneda: this.monedaResumen()
+        moneda: this.monedaResumen(),
+        mes: this.periodoSeleccionado().getMonth() + 1,
+        anio: this.periodoSeleccionado().getFullYear()
       }
     });
   }

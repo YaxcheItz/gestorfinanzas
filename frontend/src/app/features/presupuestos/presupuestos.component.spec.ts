@@ -80,4 +80,14 @@ describe('PresupuestosComponent estados del período', () => {
     expect(fixture.componentInstance.formMoneda).toBe('MXN');
     expect(fixture.componentInstance.formMontoLimite).toBe(300);
   });
+
+  it('abre y consulta el mes y año seleccionados en Inicio', () => {
+    TestBed.overrideProvider(ActivatedRoute, {useValue:{snapshot:{queryParamMap:convertToParamMap({categoriaId:'7',moneda:'MXN',mes:'2',anio:'2022'})}}});
+    const fixture = TestBed.createComponent(PresupuestosComponent); fixture.detectChanges();
+    expect(getPresupuestos).toHaveBeenCalledWith(2,2022,null);
+    expect(fixture.componentInstance.mesSeleccionado()).toBe(2);
+    expect(fixture.componentInstance.anioSeleccionado()).toBe(2022);
+    expect(fixture.componentInstance.aniosDisponibles).toContain(2022);
+    expect(fixture.componentInstance.formCategoriaId).toBe(7);
+  });
 });
