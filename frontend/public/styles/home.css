@@ -1,6 +1,7 @@
 /* Home: amount, period, categories and quick capture. */
 html .monai-theme .dashboard-screen{display:flex;flex-direction:column;gap:24px;width:min(100%,44rem);margin:auto;padding:0 20px 24px;min-width:0}
-.dashboard-screen__header{display:flex;justify-content:space-between;align-items:center;gap:16px;min-height:48px}
+.dashboard-screen__header{display:flex;justify-content:flex-end;align-items:center;gap:16px;min-height:44px}
+.dashboard-screen__header-spacer{flex:1}
 .home-view-switch{display:flex;gap:4px;padding:4px;border-radius:999px;background:var(--kaptal-surface-subtle)}
 .home-view-switch button{min-height:36px;padding:4px 12px;border-radius:999px;font-size:12px;color:var(--kaptal-content-muted)}
 .home-view-switch button[aria-pressed=true]{background:var(--kaptal-canvas);color:var(--kaptal-content);box-shadow:0 1px 4px rgb(0 0 0 / .04)}
@@ -8,9 +9,16 @@ html .monai-theme .dashboard-screen__monthly{display:flex;flex-direction:column;
 .home-total-label{font-size:13px;color:var(--kaptal-content-muted)}
 html .monai-theme .dashboard-screen__amount{margin:0;color:var(--kaptal-content);font-size:clamp(32px,11.7vw,52px);font-weight:700;line-height:1.12;letter-spacing:-.045em;font-variant-numeric:tabular-nums;max-width:100%;overflow-wrap:anywhere}
 .home-currency select{border:0!important;background:transparent!important;min-height:32px;padding:0 8px;color:var(--kaptal-content-muted);font-size:11px;font-weight:600}
-.home-metrics{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:8px 0}
-.home-metrics>span{display:flex;gap:6px;align-items:center;padding:8px 12px;border-radius:999px;background:var(--kaptal-surface-subtle);font-size:11px;color:var(--kaptal-content-muted)}
-.home-metrics strong{font-weight:600;color:var(--kaptal-content)}
+.home-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:8px;width:100%;max-width:390px;margin:12px auto 6px}
+.home-metric{display:flex;flex-direction:column;align-items:center;padding:10px 8px;border-radius:16px;background:var(--kaptal-surface-subtle);min-width:0;text-align:center}
+.home-metric__label{font-size:11px;font-weight:500;color:var(--kaptal-content-muted);margin-bottom:2px}
+.home-metric__value{font-size:13px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:var(--kaptal-content);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.home-metric--income .home-metric__value{color:#15803d}
+html.dark .home-metric--income .home-metric__value{color:#4ade80}
+.home-metric__value.is-negative{color:var(--kaptal-expense)}
+.home-account-summary{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:10px;font-size:12px;color:var(--kaptal-content-muted);margin:4px auto 6px;max-width:390px}
+.home-account-summary strong{color:var(--kaptal-content);font-weight:600}
+.home-link-inline{background:transparent;border:0;color:var(--kaptal-brand);font-size:12px;font-weight:600;padding:4px 6px;min-height:36px;cursor:pointer}
 .home-period{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px;max-width:100%}
 html .monai-theme .home-period .time-dropdown-btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 16px;min-height:44px;max-width:100%;border:0;border-radius:999px;background:var(--kaptal-surface-subtle);color:var(--kaptal-content);font-size:13px;font-weight:600;box-shadow:none}
 .home-period-arrow{width:44px;height:44px;border-radius:50%;font-size:24px;color:var(--kaptal-content-muted)}
@@ -22,7 +30,8 @@ html .monai-theme .home-period .time-dropdown-btn{display:flex;align-items:cente
 .home-category-chart{display:grid;grid-auto-flow:column;grid-auto-columns:64px;justify-content:safe center;align-items:end;gap:12px;overflow-x:auto;scroll-snap-type:x proximity;overscroll-behavior-inline:contain;scrollbar-width:none;padding:0 0 8px;min-width:0}
 .home-category-chart::-webkit-scrollbar{display:none}
 .home-category{min-width:0;text-align:center;scroll-snap-align:start}
-.home-category__bar-button{display:flex;flex-direction:column;align-items:center;width:100%;min-height:44px;gap:8px;color:var(--kaptal-content);text-decoration:none;border:0;background:transparent;border-radius:24px}
+.home-category__bar-button{display:flex;flex-direction:column;align-items:center;width:100%;min-height:44px;gap:6px;color:var(--kaptal-content);text-decoration:none;border:0;background:transparent;border-radius:24px;transition:transform 100ms ease}
+.home-category__bar-button:active{transform:scale(0.96)}
 .home-category__track{position:relative;display:flex;align-items:flex-end;justify-content:center;height:144px;width:52px;isolation:isolate}
 .home-category__bar{position:absolute;bottom:0;width:100%;border-radius:26px;background:var(--category-tone);min-height:8px}
 .home-category__emoji{position:relative;z-index:1;display:grid;place-items:center;width:48px;min-height:48px;padding-bottom:4px}
