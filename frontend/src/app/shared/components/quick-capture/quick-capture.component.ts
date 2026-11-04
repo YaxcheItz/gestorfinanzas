@@ -59,18 +59,18 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
       <div class="voice-dialog-backdrop" (click)="close()"></div>
       <section appDialogViewport role="dialog" aria-modal="true" tabindex="-1" (keydown)="tecladoPanel($event)" id="quick-capture-panel" class="capture-panel" aria-label="Kaptal, captura y reportes">
         <header class="capture-panel__head">
-          <div><strong>{{ escuchando() ? 'Te escucho' : transcribiendoVoz() ? 'Transcribiendo' : loading() ? 'Organizando' : 'Hablar o escribir' }}</strong></div>
+          <div><strong>{{ escuchando() ? 'Te escucho' : transcribiendoVoz() ? 'Transcribiendo' : loading() ? 'Organizando' : 'Añadir movimiento' }}</strong></div>
           <button type="button" class="capture-clear" (click)="limpiarChat()" [disabled]="loading() || confirming() !== null || escuchando()" aria-label="Limpiar historial del chat" title="Limpiar chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14M10 11v6m4-6v6"/></svg></button><app-privacy-toggle/><button type="button" (click)="close()" aria-label="Cerrar">×</button>
         </header>
         <div class="capture-panel__tools">
-          <div class="entry-mode" aria-label="Forma de añadir"><button type="button" (click)="abrirConTeclado()" [disabled]="loading() || confirming() !== null || escuchando()">Rápido</button><button type="button" class="is-active" aria-pressed="true">Escribir o dictar</button></div>
+          <button type="button" class="capture-manual" (click)="abrirConTeclado()" [disabled]="loading() || confirming() !== null || escuchando()">Introducir datos manualmente</button>
           @if (mode() === 'CAPTURE') {
             <button type="button" class="capture-recover" (click)="recuperarPropuestas()" [disabled]="recuperando() || loading() || confirming() !== null" aria-label="Recuperar propuestas pendientes" title="Recuperar propuestas pendientes" [attr.aria-busy]="recuperando()">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11a9 9 0 1 1 2.8 7M3 4v7h7M12 7v5l3 2"/></svg>
             </button>
           }
         </div>
-        <p class="capture-instructions">Revisa antes de guardar.</p>
+
     @if (escuchando()) {
       <div class="voice-waveform" role="status" aria-live="polite">
         <span class="voice-waveform__bars" aria-hidden="true">@for (nivel of nivelesAudio(); track $index) { <i [style.height.px]="4 + nivel * 24" style="animation: none"></i> }</span>
@@ -106,7 +106,7 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
           } @else {
           <div #chatScroll id="capture-chat-thread" class="capture-chat" (scroll)="actualizarSeguimiento($event)" aria-live="polite" aria-relevant="additions text" [attr.aria-busy]="loading()">
             @if (captureTurns().length === 0 && !pendingCaptureText()) {
-              <div class="capture-chat__intro"><span class="capture-chat__avatar" aria-hidden="true">✦</span><div><strong>Cuéntame qué gastaste</strong><p>{{ captureHint() }} Ejemplos:</p><div class="capture-chat__suggestions"><button type="button" (click)="usarEjemplo('Gasté 180 en comida')">Gasté $180 en comida</button><button type="button" (click)="usarEjemplo('Recibí 8500 de nómina')">Recibí $8,500 de nómina</button></div></div></div>
+              <div class="capture-chat__intro"><span class="capture-chat__avatar" aria-hidden="true">✦</span><div><strong>Escribe o dicta tu movimiento</strong><p>Incluye importe, concepto y etiquetas. Revísalo antes de guardar:</p><div class="capture-chat__suggestions"><button type="button" (click)="usarEjemplo('Gasté 180 en comida')">Gasté $180 en comida</button><button type="button" (click)="usarEjemplo('Recibí 8500 de nómina')">Recibí $8,500 de nómina</button></div></div></div>
             }
             @for (turn of captureTurns(); track turn.id) {
               <article class="capture-chat__user"><span>{{ turn.user | textoFinanciero }}</span></article>
@@ -170,10 +170,9 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
           </div>
           @if (!seguirFinal()) {<button type="button" class="capture-jump-latest" (click)="irAlFinal()">Ir al último mensaje ↓</button>}
           @if (permisoVoz()) {<section class="voice-permission" role="status"><p>El audio se enviará para transcribirlo. Revisa el movimiento antes de guardarlo.</p><button type="button" (click)="permitirVoz()">Permitir audio y grabar</button></section>}
-          <div class="chat-local-prompts" aria-label="Consultas y registros sugeridos"><button type="button" (click)="usarSugerencia('Reporte de hoy')" [disabled]="loading()">Hoy</button><button type="button" (click)="usarSugerencia('Top categorías de este mes')" [disabled]="loading()">Top categorías</button><button type="button" (click)="usarSugerencia('Alertas de presupuesto')" [disabled]="loading()">Presupuestos</button><button type="button" (click)="usarSugerencia('Saldo')" [disabled]="loading()">Saldos</button></div>
           <form class="capture-chat__composer" (ngSubmit)="submit()">
             <label class="sr-only" for="quick-capture-text">Escribe el movimiento que quieres registrar</label>
-            <textarea id="quick-capture-text" name="content" [(ngModel)]="content" (ngModelChange)="alCambiarTexto()" (keydown.enter)="enviarConEnter($event)" rows="1" maxlength="1200" enterkeyhint="send" placeholder="¿Qué gastaste?" [readOnly]="loading() || escuchando() || stopping()" [attr.aria-busy]="loading()"></textarea>
+            <textarea id="quick-capture-text" name="content" [(ngModel)]="content" (ngModelChange)="alCambiarTexto()" (keydown.enter)="enviarConEnter($event)" rows="1" maxlength="1200" enterkeyhint="send" placeholder="Ej. Café 45 #trabajo" [readOnly]="loading() || escuchando() || stopping()" [attr.aria-busy]="loading()"></textarea>
             <button type="button" class="capture-mic" (click)="toggleVoice()" [class.is-listening]="escuchando()" [disabled]="loading() || transcribiendoVoz() || stopping()" [attr.aria-label]="escuchando() ? 'Detener dictado' : 'Dictar movimiento'"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5m-4 0h8"/></svg></button>
             <button type="submit" class="capture-chat__send" [disabled]="loading() || catalogoCargando() || escuchando() || stopping() || !content.trim()" aria-label="Enviar movimiento"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 14-7-5 14-3-6-6-1Z"/><path d="m11 13 4-4"/></svg></button>
           </form>

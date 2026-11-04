@@ -1618,3 +1618,9 @@ La edicion aceptaba una cadena como ` A ` porque la validacion de la solicitud c
 ## Alcance de la se?al de uso no disponible
 
 Se precisa que `usage_unavailable` cuenta solo eventos emitidos tras procesar el uso de una respuesta; errores HTTP, transporte o deserializacion pueden terminar antes sin emitirlos. No equivale a todos los intentos sin contadores y su ausencia no demuestra consumo cero. Pruebas Groq/Gemini con HTTP simulado cubren 429, transporte, JSON invalido y respuesta 2xx sin uso; 15 pruebas focales correctas, sin llamadas reales ni credenciales heredadas. CI e integracion pendientes al registrar.
+
+## Captura escrita y permisos Android (2026-11-03)
+
+- La entrada principal de anadir abre escritura o dictado; se elimina el selector Rapido y queda accesible la introduccion manual para funciones existentes. Se simplifican el encabezado y las sugerencias. Las propuestas siguen requiriendo revision y confirmacion.
+- Se incorporan los permisos Android de grabacion a la correccion ya preparada; su funcionamiento fisico aun debe probarse con consentimiento del usuario. No se ha grabado audio ni probado una transaccion productiva.
+- 484 pruebas frontend pasan. La verificacion E2E, APK, CI, instalacion y publicacion se registraran por separado. Pendiente mejorar interpretacion por diccionario y evaluar proveedor gratuito, sin prometer reconocimiento perfecto.

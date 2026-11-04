@@ -14,7 +14,6 @@ test('chat mantiene escritura visible y guarda categoría offline sin duplicados
   await page.goto('/login');await page.locator('#email').fill(email);await page.locator('#password').fill(password);
   await page.getByRole('button',{name:'Iniciar sesión',exact:true}).click();await expect(page).toHaveURL(/dashboard/);
   await page.getByRole('button',{name:'Añadir movimiento',exact:true}).click();
-  await page.getByRole('button',{name:'Escribir o dictar',exact:true}).click();
   const panel=page.locator('#quick-capture-panel'),text=page.locator('#quick-capture-text');
   await expect(panel).toBeFocused();
   const opcionesIa=panel.locator('.capture-options > summary');
@@ -31,7 +30,7 @@ test('chat mantiene escritura visible y guarda categoría offline sin duplicados
   await expect(panel.getByRole('button',{name:'Limpiar historial del chat'})).toBeFocused();
   await opcionesIa.click();
   await expect(panel.getByRole('checkbox')).not.toBeVisible();
-  await expect(panel.getByRole('button',{name:'Rápido',exact:true})).toBeVisible();
+  await expect(panel.getByRole('button',{name:'Introducir datos manualmente',exact:true})).toBeVisible();
   await expect(panel.getByRole('button',{name:'Dictar movimiento'})).toBeVisible();
   expect(await panel.locator('.capture-chat').evaluate(e=>e.clientHeight)).toBeGreaterThan(250);
   await text.fill('Quiero revisar estos movimientos antes de guardarlos. '.repeat(15));
@@ -71,7 +70,7 @@ test('chat mantiene escritura visible y guarda categoría offline sin duplicados
     const movimientos=(await r.json()).data.content;
     return movimientos.filter((m:{monto:number;categoriaId:number|null})=>m.monto===25&&m.categoriaId!==null).length;
   },{timeout:30000}).toBe(1);
-  await page.setViewportSize({width:390,height:844});await panel.getByRole('button',{name:'Rápido',exact:true}).click();
+  await page.setViewportSize({width:390,height:844});await panel.getByRole('button',{name:'Introducir datos manualmente',exact:true}).click();
   await expect(page.getByRole('dialog',{name:'Añadir movimiento'})).toBeVisible();
   await expect(page).toHaveURL(/dashboard/);
 });

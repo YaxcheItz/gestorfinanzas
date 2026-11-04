@@ -17,7 +17,7 @@ test('registro rápido guarda gastos, ingresos y transferencias; conserva borrad
   await page.goto('/login');await page.locator('#email').fill(email);await page.locator('#password').fill(password);
   await page.getByRole('button',{name:'Iniciar sesión',exact:true}).click();await expect(page).toHaveURL(/dashboard/);
   const dialog=page.getByRole('dialog',{name:'Añadir movimiento'}),amount=page.locator('#quick-entry-amount');
-  const open=async()=>{await page.getByRole('button',{name:'Añadir movimiento',exact:true}).click();await expect(amount).toBeEnabled();};
+  const open=async()=>{await page.getByRole('button',{name:'Añadir movimiento',exact:true}).click();await page.locator('#quick-capture-panel').getByRole('button',{name:'Introducir datos manualmente'}).click();await expect(amount).toBeEnabled();};
   const selectBank=async()=>{await dialog.locator('select[name="cuenta"]').selectOption({label:'Banco Rápido · MXN'});};
   const movements=async()=>{const r=await page.request.get('/api/transacciones?size=100',{headers});expect(r.ok()).toBeTruthy();return (await r.json()).data.content;};
   await open();await expect(dialog.getByRole('button',{name:'Gasto',exact:true})).toHaveAttribute('aria-pressed','true');
@@ -49,7 +49,7 @@ test('registro rápido guarda gastos, ingresos y transferencias; conserva borrad
   await expect(dialog.getByRole('button',{name:categoryName.trim(),exact:true})).toHaveAttribute('aria-pressed','true');
   await amount.fill('12');await dialog.getByRole('button',{name:'Escribir o dictar',exact:true}).click();
   await expect(page.locator('#quick-capture-panel')).toBeVisible();
-  await page.locator('#quick-capture-panel').getByRole('button',{name:'Rápido',exact:true}).click();
+  await page.locator('#quick-capture-panel').getByRole('button',{name:'Introducir datos manualmente',exact:true}).click();
   await expect(amount).toHaveValue('12');await expect(page).toHaveURL(/dashboard/);
   await dialog.getByRole('button',{name:'Ingreso',exact:true}).click();await selectBank();await amount.fill('100');
   await dialog.getByRole('button',{name:'Guardar ingreso',exact:true}).click();await expect(dialog).not.toBeVisible();

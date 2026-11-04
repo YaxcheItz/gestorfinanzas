@@ -33,7 +33,7 @@ type TipoRegistro = 'GASTO' | 'INGRESO' | 'TRANSFERENCIA';
     <div appDialogViewport class="quick-entry-backdrop" (click)="cerrar()">
       <section class="quick-entry" role="dialog" aria-modal="true" aria-labelledby="quick-entry-title" (click)="$event.stopPropagation()" (keydown)="teclado($event)">
         <header><h2 id="quick-entry-title">{{ repitiendo() ? 'Repetir movimiento' : 'Añadir movimiento' }}</h2><app-privacy-toggle/><button type="button" class="utility-button" (click)="cerrar()" [disabled]="saving()" aria-label="Cerrar registro">×</button></header>
-        <div class="entry-mode" aria-label="Forma de añadir"><button type="button" class="is-active" aria-pressed="true">Rápido</button><button type="button" (click)="voz()" [disabled]="saving() || incierto">Escribir o dictar</button></div>
+        <button type="button" class="entry-text-button" (click)="voz()" [disabled]="saving() || incierto">Escribir o dictar</button>
         <form (ngSubmit)="guardar()">
           <fieldset [disabled]="saving() || incierto || loading()">
             <div class="entry-types" aria-label="Tipo de movimiento">@for (opcion of tipos; track opcion.value) {<button type="button" [class.is-active]="tipo === opcion.value" [attr.aria-pressed]="tipo === opcion.value" (click)="cambiarTipo(opcion.value)">{{ opcion.label }}</button>}</div>

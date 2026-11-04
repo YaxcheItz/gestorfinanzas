@@ -72,7 +72,7 @@ export class NavbarComponent {
     if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) this.cerrarMenu();
   }
   voz(): void { if (!this.listas.contexto.puedeEscribir()) { this.toast.error('Elige una lista activa con permiso de editor para registrar.'); return; } this.document.defaultView?.dispatchEvent(new CustomEvent('kaptal-abrir-captura-chat')); }
-  anadir(): void { if (!this.listas.contexto.puedeEscribir()) { this.toast.error('Elige una lista activa con permiso de editor para registrar.'); return; } this.document.defaultView?.dispatchEvent(new CustomEvent('kaptal-abrir-registro-rapido')); }
+  anadir(): void { if (!this.listas.contexto.puedeEscribir()) { this.toast.error('Elige una lista activa con permiso de editor para registrar.'); return; } this.document.defaultView?.dispatchEvent(new CustomEvent('kaptal-abrir-captura-chat')); }
   buscar(): void {
     if (this.esInicio()) {
       this.document.defaultView?.dispatchEvent(new CustomEvent('kaptal-buscar-inicio'));
