@@ -220,7 +220,7 @@ test('rechazar el micrófono permite seguir escribiendo sin enviar audio ni guar
   const dialog = page.getByRole('dialog', {name:'Kaptal, captura y reportes'});
   await dialog.getByRole('button', {name:'Dictar movimiento',exact:true}).click();
   await dialog.getByRole('button', {name:'Permitir audio y grabar',exact:true}).click();
-  await expect(dialog.getByRole('alert')).toContainText('El navegador bloqueó el micrófono');
+  await expect(dialog.getByRole('alert')).toContainText('El acceso al micrófono está bloqueado');
   await expect(dialog.getByRole('button', {name:'Dictar movimiento',exact:true})).toBeEnabled();
   await dialog.locator('#quick-capture-text').fill('Continuar por escrito');
   await expect(dialog.locator('#quick-capture-text')).toHaveValue('Continuar por escrito');

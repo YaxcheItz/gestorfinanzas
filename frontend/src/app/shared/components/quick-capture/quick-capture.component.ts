@@ -870,7 +870,7 @@ export class QuickCaptureComponent implements OnDestroy {
       if (generation !== this.voiceGeneration) return;
       this.stopVoice(true);
       const name = cause instanceof DOMException ? cause.name : '';
-      this.error.set(name === 'NotAllowedError' ? 'El navegador bloqueó el micrófono. Permite el acceso en los permisos del sitio o escribe el movimiento.' :
+      this.error.set(name === 'NotAllowedError' ? 'El acceso al micrófono está bloqueado. Revisa los permisos de Kaptal o del navegador y vuelve a intentarlo.' :
         name === 'NotFoundError' ? 'No encontré un micrófono disponible.' : 'No pude iniciar el micrófono. Revisa los permisos del navegador.');
     }
   }
