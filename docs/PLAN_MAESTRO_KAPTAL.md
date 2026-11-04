@@ -1404,3 +1404,9 @@ Se precisa que `usage_unavailable` cuenta solo eventos emitidos tras procesar el
 - La entrada principal de anadir abre escritura o dictado; se elimina el selector Rapido y queda accesible la introduccion manual para funciones existentes. Se simplifican el encabezado y las sugerencias. Las propuestas siguen requiriendo revision y confirmacion.
 - Se incorporan los permisos Android de grabacion a la correccion ya preparada; su funcionamiento fisico aun debe probarse con consentimiento del usuario. No se ha grabado audio ni probado una transaccion productiva.
 - 484 pruebas frontend pasan. La verificacion E2E, APK, CI, instalacion y publicacion se registraran por separado. Pendiente mejorar interpretacion por diccionario y evaluar proveedor gratuito, sin prometer reconocimiento perfecto.
+
+### Entrega Android 0.1.24
+
+- APK 0.1.24 (codigo 25) instalada por actualizacion en Samsung SM-A546E; primera instalacion conservada. El SHA-256 del paquete extraido del dispositivo coincide con el archivo local: 9fe9858f07257fcb6a9b33db698080dc8491d9f9225dddc5855d6e92ca1ad582. Certificado y 86 archivos web verificados.
+- PR #202: CI completa exitosa para 70c0deb4b44745795e8f5b210550748b0c0b80b1. El build local corresponde a cd02666 y los commits intermedios solo cambian pruebas. 485 pruebas frontend, 27 Android y pruebas de captura con datos ficticios pasan.
+- La declaracion de permiso de microfono se corrigio, pero la grabacion y el gesto aun no se probaron en esta version fisica. La mejora de interpretacion de texto, categoria y etiquetas continua pendiente. No se integro ni publico.
