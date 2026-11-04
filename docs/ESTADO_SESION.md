@@ -1636,3 +1636,8 @@ Se precisa que `usage_unavailable` cuenta solo eventos emitidos tras procesar el
 - El usuario confirmo que la app ya pide configurar Groq y que las etiquetas de gasto y presupuesto del gesto se cortan. La guia se mueve fuera del carrusel, centrada en la pantalla; conserva arriba para gasto, abajo para presupuesto y accion al soltar. Build Angular y dos E2E tactiles sinteticos pasaron, con limites visibles comprobados. Validacion fisica pendiente.
 - La transcripcion actual requiere Groq configurado en el backend; el registro escrito usa reglas propias primero. Groq Whisper ofrece plan gratuito sujeto a limites y controles de datos; Gemini gratis puede usar contenido para mejorar productos. No se configuro ninguna clave ni se envio audio. Fuentes: https://console.groq.com/docs/speech-to-text , https://console.groq.com/docs/your-data , https://ai.google.dev/gemini-api/docs/pricing .
 - APK 0.1.25 pendiente de generar, verificar e instalar; CI, integracion y publicacion pendientes.
+
+### Android 0.1.25 instalada
+
+- APK 0.1.25 codigo 26 instalada por actualizacion; hash del dispositivo 8cc5d114b00fc268caccfbf612d9bdcc12d029f563212754de66ba992a03b139 coincide con el archivo local; fecha de primera instalacion conservada. CI integral y APK pasaron para af4aebf6e01f5e231fdfd664d8c33b61f46875cb (PR #203).
+- Las etiquetas del gesto estan fuera del carrusel y en limites de pantalla en pruebas sinteticas; falta aceptacion fisica. No se abrio la app ni se consultaron finanzas. El proveedor Groq aun no esta configurado. No integrado ni publicado.
