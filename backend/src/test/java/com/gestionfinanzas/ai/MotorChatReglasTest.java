@@ -38,4 +38,7 @@ class MotorChatReglasTest {
  @Test void cuentaDesconocidaPideAclaracion(){assertNull(interpretar("Gaste 50 usando Banorte").datos());}
  @Test void abreviaturaConCategoriaFunciona(){assertEquals("GASTO",interpretar("tacos 80").datos().get("tipo"));}
  @Test void confirmaMemoriaDeCategoriaYCuenta(){var t=new TransaccionResponse(1L,2L,"Nu",null,null,8L,"Comida",null,null,TipoTransaccion.GASTO,new BigDecimal("20"),null,null,"MXN",null,hoy,"Taqueria Pepe",null,false,null);var r=motor.interpretar("Gaste 70 en Pepe",cuentas,categorias,List.of(t),hoy);assertEquals(2L,r.datos().get("cuentaId"));assertEquals(8L,r.datos().get("categoriaId"));}
+ @Test void aliasAmexReconoceSoloLaCuentaCorrespondiente(){var cs=List.of(cuenta(5,"American Express","MXN"),cuenta(6,"BBVA","MXN"));var r=motor.interpretar("Pague 50 en tacos con Amex",cs,categorias,List.of(),hoy,true);assertEquals(5L,r.datos().get("cuentaId"));assertEquals("tacos",r.datos().get("descripcion"));}
+ @Test void aliasAmexAmbiguoPideElegirCuenta(){var cs=List.of(cuenta(5,"American Express Oro","MXN"),cuenta(6,"American Express Azul","MXN"));var r=motor.interpretar("Pague 50 en tacos con Amex",cs,categorias,List.of(),hoy,true);assertNull(r.datos());assertTrue(r.respuesta().contains("varias cuentas"));}
+ @Test void reconoceTaqueriaComoComida(){assertEquals(8L,interpretar("Pague 50 en taqueria").datos().get("categoriaId"));}
 }

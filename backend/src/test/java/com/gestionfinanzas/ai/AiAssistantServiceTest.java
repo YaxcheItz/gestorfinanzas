@@ -129,4 +129,15 @@ class AiAssistantServiceTest {
         verify(actionService).interpretarCapturaRapida(7L,"Gasto en tacos 80");
         verify(provider,never()).generate(anyString(),anyInt());
     }
+    @Test
+    void etiquetaExplicitaNoSeMezclaConElConcepto() {
+        var propuesta = new AiActionService.ActionProposal("prueba", "CREATE_TRANSACTION", "Gasto", null);
+        when(actionService.interpretarCapturaRapida(7L, "Gaste 50 en tacos"))
+                .thenReturn(new AiActionService.AiActionResult("Revisa", propuesta));
+        when(actionService.pendientes(7L)).thenReturn(List.of(propuesta));
+        service.quickCapture(7L,new AiQuickCaptureRequest("Gaste 50 en tacos con etiqueta viaje",false,false));
+        verify(actionService).interpretarCapturaRapida(7L,"Gaste 50 en tacos");
+        verify(actionService).marcarContextoCaptura(7L, propuesta, null, java.util.Set.of("viaje"));
+        verify(provider,never()).generate(anyString(),anyInt());
+    }
 }

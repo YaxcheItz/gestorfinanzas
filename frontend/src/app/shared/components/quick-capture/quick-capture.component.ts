@@ -151,6 +151,7 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
                 @if (turn.suggestions?.length) {<div class="chat-followups">@for (suggestion of turn.suggestions; track suggestion) {<button type="button" (click)="usarSugerencia(suggestion)" [disabled]="loading() || confirming() !== null">{{ suggestion | textoFinanciero }}</button>}</div>}
                 @for (proposal of turn.actions; track proposal.id) {
                   <button type="button" class="capture-cancel" style="min-height:44px" (click)="abrirEdicion(proposal)" [disabled]="confirming()!==null">Editar propuesta</button>
+                  @if (etiquetasPropuesta(proposal).length) {<p>Etiquetas: {{ etiquetasPropuesta(proposal).join(', ') }}</p>}
                   @if (necesitaCategoria(proposal)) {
                     <section class="categorization-review" aria-label="Elige una categoría">
                       <article class="categorization-review__expense" draggable="true" (dragstart)="iniciarArrastre($event, proposal)" [attr.aria-label]="turn.user | textoFinanciero"><span class="categorization-review__grip" aria-hidden="true">⠿</span><div><small>Movimiento</small><strong>{{ proposal.summary | textoFinanciero }}</strong></div></article>
@@ -621,6 +622,10 @@ export class QuickCaptureComponent implements OnDestroy {
     });
   }
 
+  etiquetasPropuesta(proposal: AiActionProposal): string[] {
+    const etiquetas = proposal.data['etiquetas'];
+    return Array.isArray(etiquetas) ? etiquetas.filter((value): value is string => typeof value === 'string') : [];
+  }
   necesitaCategoria(proposal: AiActionProposal): boolean {
     return proposal.type === 'CREATE_TRANSACTION' && proposal.data['tipo'] !== 'TRANSFERENCIA' && !proposal.data['categoriaId'];
   }
