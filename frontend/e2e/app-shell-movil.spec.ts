@@ -143,9 +143,24 @@ test.describe('gestos de categorías', () => {
       x = Math.round(box.x+box.width/2); y = Math.round(box.y+box.height/2);
       await tocar(x,y,0,direccion,true);
       await expect(page.locator(selector)).toBeVisible();
+      await expect(page.locator('.home-context-sheet')).toHaveCount(0);
+      await categoria.dispatchEvent('contextmenu', {button:2});
+      await expect(page.locator('.home-context-sheet')).toHaveCount(0);
       await cdp.send('Input.dispatchTouchEvent', {type:'touchCancel',touchPoints:[]});
       await expect(page.locator('.home-category.is-gesture-active')).toHaveCount(0);
     }
+    await page.reload();
+    await categoria.scrollIntoViewIfNeeded();
+    box = (await categoria.boundingBox())!;
+    x = Math.round(box.x+box.width/2); y = Math.round(box.y+box.height/2);
+    await tocar(x,y,0,-40,true);
+    await expect(page.locator('.gesture-pill--up.is-target')).toBeVisible();
+    await cdp.send('Input.dispatchTouchEvent', {type:'touchMove',touchPoints:[{x,y:y+40}]});
+    await expect(page.locator('.gesture-pill--down.is-target')).toBeVisible();
+    await cdp.send('Input.dispatchTouchEvent', {type:'touchMove',touchPoints:[{x,y}]});
+    await cdp.send('Input.dispatchTouchEvent', {type:'touchEnd',touchPoints:[]});
+    await expect(page.locator('.home-context-sheet')).toHaveCount(0);
+    await expect(page).toHaveURL(/\/dashboard$/);
     await page.reload();
     await categoria.scrollIntoViewIfNeeded();
     await page.evaluate(() => window.addEventListener('kaptal-abrir-registro-rapido', () => document.documentElement.dataset['gestoRegistro'] = 'abierto'));

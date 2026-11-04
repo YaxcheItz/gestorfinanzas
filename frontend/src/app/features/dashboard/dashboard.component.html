@@ -168,7 +168,7 @@
                         (pointercancel)="cancelarPresionCategoria()"
                         (pointerleave)="cancelarPresionCategoria()"
                         (click)="tocarCategoria(categoria)"
-                        (contextmenu)="$event.preventDefault(); categoriaContextual.set(categoria)"
+                        (contextmenu)="abrirContextoCategoria($event,categoria)"
                         [attr.aria-label]="'Filtrar movimientos de ' + categoria.categoriaNombre">
                   <span class="home-category__track"
                         [class.is-budget-warning]="categoria.presupuesto?.porcentajeConsumido! >= 80 && categoria.presupuesto?.porcentajeConsumido! < 100"

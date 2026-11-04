@@ -183,7 +183,7 @@ describe('DashboardComponent movement dialog accessibility', () => {
     fixture.destroy();
   });
 
-  it('abre acciones al mantener pulsado, cancela al desplazar y no navega al soltar', () => {
+  it('abre acciones al soltar una pulsación sin arrastre y cancela si se desplaza antes', () => {
     vi.useFakeTimers();
     const fixture = TestBed.createComponent(DashboardComponent);
     try {
@@ -195,6 +195,8 @@ describe('DashboardComponent movement dialog accessibility', () => {
       expect(component.categoriaContextual()).toBeNull();
       component.iniciarPresionCategoria({isPrimary: true, button: 0, clientX: 0, clientY: 0} as PointerEvent, categoria);
       vi.advanceTimersByTime(500);
+      expect(component.categoriaContextual()).toBeNull();
+      component.finalizarPresionCategoria({} as PointerEvent, categoria);
       expect(component.categoriaContextual()).toEqual(categoria);
       component.cancelarPresionCategoria();
       component.tocarCategoria(categoria);
@@ -749,6 +751,47 @@ describe('DashboardComponent movement dialog accessibility', () => {
     });
   });
   describe('gestos en categorias, filtrado inline y estilo monai de presupuestos', () => {
+    it('permite cambiar o cancelar la acción antes de soltar sin abrir el menú', () => {
+      vi.useFakeTimers();
+      const fixture = TestBed.createComponent(DashboardComponent);
+      try {
+        const component = fixture.componentInstance;
+        const categoria = {categoriaId:9,categoriaNombre:'Comida',moneda:'MXN',monto:100,tono:'#faa',altura:80,icono:'food'};
+        const dispatch = vi.spyOn(window,'dispatchEvent');
+        const router = TestBed.inject(Router);
+        component.iniciarPresionCategoria({isPrimary:true,button:0,clientX:100,clientY:200} as PointerEvent,categoria);
+        vi.advanceTimersByTime(500);
+        expect(component.categoriaContextual()).toBeNull();
+        const contextMenu = {preventDefault:vi.fn()} as unknown as MouseEvent;
+        component.abrirContextoCategoria(contextMenu,categoria);
+        expect(contextMenu.preventDefault).toHaveBeenCalledOnce();
+        expect(component.categoriaContextual()).toBeNull();
+        component.moverPresionCategoria({clientX:100,clientY:160} as PointerEvent);
+        expect(component.gestoAccionSeleccionada()).toBe('GASTO');
+        component.moverPresionCategoria({clientX:100,clientY:240} as PointerEvent);
+        expect(component.gestoAccionSeleccionada()).toBe('PRESUPUESTO');
+        component.moverPresionCategoria({clientX:100,clientY:200} as PointerEvent);
+        component.finalizarPresionCategoria({} as PointerEvent,categoria);
+        expect(component.categoriaContextual()).toBeNull();
+        expect(dispatch).not.toHaveBeenCalledWith(expect.objectContaining({type:'kaptal-abrir-registro-rapido'}));
+        expect(router.navigate).not.toHaveBeenCalled();
+      } finally { fixture.destroy(); vi.useRealTimers(); }
+    });
+    it('mantiene el menú contextual al soltar sin arrastrar o usar clic derecho', () => {
+      vi.useFakeTimers();
+      const fixture = TestBed.createComponent(DashboardComponent);
+      try {
+        const component = fixture.componentInstance;
+        const categoria = {categoriaId:9,categoriaNombre:'Comida',moneda:'MXN',monto:100,tono:'#faa',altura:80,icono:'food'};
+        component.iniciarPresionCategoria({isPrimary:true,button:0,clientX:0,clientY:0} as PointerEvent,categoria);
+        vi.advanceTimersByTime(500);
+        component.finalizarPresionCategoria({} as PointerEvent,categoria);
+        expect(component.categoriaContextual()).toEqual(categoria);
+        component.cancelarPresionCategoria(); component.categoriaContextual.set(null);
+        component.abrirContextoCategoria({preventDefault:vi.fn()} as unknown as MouseEvent,categoria);
+        expect(component.categoriaContextual()).toEqual(categoria);
+      } finally { fixture.destroy(); vi.useRealTimers(); }
+    });
     it('ignora respuestas antiguas y distingue errores de una categoría vacía', () => {
       const fixture = TestBed.createComponent(DashboardComponent);
       const component = fixture.componentInstance;

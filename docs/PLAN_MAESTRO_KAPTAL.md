@@ -1,3 +1,11 @@
+## Gesto cancelable y diagnostico de microfono (3 noviembre 2026)
+
+El propietario confirmo en Android 0.1.21 que el gesto hacia presupuesto abre la categoria y periodo correctos, pero reporto que la interfaz cambiaba antes de soltar. Se reprodujo en prueba unitaria: el menu contextual se abria al finalizar el temporizador. La correccion conserva solo la guia mientras se mantiene el dedo, permite invertir direccion o volver al centro para cancelar, ejecuta al soltar y mantiene el menu si se suelta sin arrastrar; bloquea el contextmenu nativo durante el gesto. Build y 57 pruebas focales correctos; dos E2E tactiles sinteticos correctos. Aun sin CI ni prueba fisica de la correccion.
+
+El propietario reporto que el microfono no solicita permiso y dice que el navegador lo bloqueo. La APK 0.1.21 no declara RECORD_AUDIO; el cliente WebChrome de Capacitor solicita RECORD_AUDIO y MODIFY_AUDIO_SETTINGS al pedir captura de audio. Es una causa concreta que requiere corregir el manifiesto, verificar firma/permisos y probar en Android tras consentimiento; no se ha grabado ni enviado audio. Referencia https://developer.android.com/media/platform/mediarecorder .
+
+El propietario pide despues redisenar la captura escrita, mas compacta y minimalista, retirar la pesta?a Rapido, interpretar montos, categorias y etiquetas con reglas/diccionario y usar IA gratuita solo cuando haga falta. Investigar y conservar confirmacion antes de guardar, privacidad, opciones de error y limites gratuitos; no activar servicios de pago ni hacer QA con IA o datos financieros reales. Planificar como etapa nueva desde develop. La APK instalada aun es 0.1.21; la candidata 0.1.22 no incluye la correccion de gesto y no debe instalarse como entrega final.
+
 ## Revision de presupuesto entre listas (3 noviembre 2026)
 
 Se comprobo por ADB que el Samsung tiene Android 0.1.21/codigo 22 y que la APK extraida coincide con el archivo local SHA256 2a27535222387d0c15410249a36f69c0af4432ec2c444c614804f2514492fb77; sin abrir la app ni datos de usuario. PR196 integrado en develop f833ff6; PR197 y PR198 con CI correcta para sus SHA anteriores. Web sigue en main 97d8639; PR192 de promocion abierto.

@@ -189,18 +189,19 @@ export class DashboardComponent implements OnInit {
   private inicioPresionCategoria?: { x: number; y: number };
   private presionCategoriaConsumida = false;
   private modoGestoIniciado = false;
+  private gestoCategoriaDesplazado = false;
 
   iniciarPresionCategoria(event: PointerEvent, categoria: CategoriaInicio): void {
     if (!event.isPrimary || event.button !== 0) return;
     this.cancelarPresionCategoria();
     this.presionCategoriaConsumida = false;
     this.modoGestoIniciado = false;
+    this.gestoCategoriaDesplazado = false;
     this.inicioPresionCategoria = { x: event.clientX, y: event.clientY };
     this.temporizadorCategoria = setTimeout(() => {
       this.presionCategoriaConsumida = true;
       this.modoGestoIniciado = true;
       this.categoriaGestoActiva.set(categoria);
-      this.categoriaContextual.set(categoria);
       this.gestoAccionSeleccionada.set(null);
     }, 450);
   }
@@ -220,6 +221,7 @@ export class DashboardComponent implements OnInit {
       return;
     }
 
+    if (Math.abs(dy) > 25) this.gestoCategoriaDesplazado = true;
     if (dy < -25) {
       this.gestoAccionSeleccionada.set('GASTO');
     } else if (dy > 25) {
@@ -243,10 +245,17 @@ export class DashboardComponent implements OnInit {
       } else if (accion === 'PRESUPUESTO') {
         this.categoriaContextual.set(null);
         this.abrirPresupuestoCategoria(categoria);
+      } else if (!this.gestoCategoriaDesplazado) {
+        this.categoriaContextual.set(categoria);
       }
       return;
     }
     this.cancelarPresionCategoria();
+  }
+
+  abrirContextoCategoria(event: MouseEvent, categoria: CategoriaInicio): void {
+    event.preventDefault();
+    if (!this.inicioPresionCategoria) this.categoriaContextual.set(categoria);
   }
 
   @HostListener('window:pointerup')
