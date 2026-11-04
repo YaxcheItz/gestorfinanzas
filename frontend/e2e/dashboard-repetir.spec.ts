@@ -26,8 +26,8 @@ test('inicio separa deuda y monedas, y repetir crea solo un movimiento nuevo con
   let posts=0;page.on('request',r=>{if(r.method()==='POST' && new URL(r.url()).pathname==='/api/transacciones')posts++;});
   await page.goto('/login');await page.locator('#email').fill(email);await page.locator('#password').fill(password);await page.getByRole('button',{name:'Iniciar sesión',exact:true}).click();await expect(page).toHaveURL(/dashboard/);
   const hero=page.locator('.dashboard-screen__monthly'),budget=page.locator('.dashboard-budget-left').first();
-  await expect(hero).toContainText('Dinero en cuentas');await expect(hero.locator('.dashboard-screen__amount')).toContainText(/225[.,]00/);
-  await expect(hero.getByText('Deuda de tarjetas:',{exact:false})).toContainText(/200[.,]00/);await expect(budget).toContainText(/275[.,]00/);
+  await expect(hero).toContainText('Saldo neto');await expect(hero.locator('.dashboard-screen__amount')).toContainText(/225[.,]00/);
+  await expect(hero.locator('.home-metric--balance')).toContainText(/775[.,]00/);await expect(budget).toContainText(/275[.,]00/);
   await page.getByRole('combobox',{name:'Moneda del balance'}).selectOption('USD');await expect(hero.locator('.dashboard-screen__amount')).toContainText(/0[.,]00/);await expect(budget).toContainText(/80[.,]00/);
   await page.getByRole('combobox',{name:'Moneda del balance'}).selectOption('MXN');
   await page.screenshot({path:testInfo.outputPath('inicio-movil.png'),fullPage:true});
