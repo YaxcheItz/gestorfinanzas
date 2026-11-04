@@ -884,8 +884,10 @@ export class QuickCaptureComponent implements OnDestroy {
     this.cargarCategoriasCaptura();
     this.voiceCapture.set(true);
     this.voiceStartedAt = Date.now(); this.listening.set(true); this.updateTimer();
+    if (this.pantallaVoz()) this.changeDetector.detectChanges();
     this.timer = setInterval(() => {
       this.updateTimer();
+      if (this.pantallaVoz() && !this.destruido) this.changeDetector.detectChanges();
       if (Date.now() - this.voiceStartedAt >= 45_000) this.stopVoice();
     }, 250);
     try {
@@ -911,6 +913,7 @@ export class QuickCaptureComponent implements OnDestroy {
       const name = cause instanceof DOMException ? cause.name : '';
       this.error.set(name === 'NotAllowedError' ? 'El acceso al micrófono está bloqueado. Revisa los permisos de Kaptal o del navegador y vuelve a intentarlo.' :
         name === 'NotFoundError' ? 'No encontré un micrófono disponible.' : 'No pude iniciar el micrófono. Revisa los permisos del navegador.');
+      if (this.pantallaVoz() && !this.destruido) this.changeDetector.detectChanges();
     }
   }
   private stopVoice(discard = false): void {
@@ -918,6 +921,7 @@ export class QuickCaptureComponent implements OnDestroy {
     this.detenerNivelesAudio();
     this.discardAudio ||= discard;
     this.listening.set(false); this.finishTimer();
+    if (this.pantallaVoz() && !this.destruido) this.changeDetector.detectChanges();
     const recorder = this.mediaRecorder;
     if (recorder?.state === 'recording') { this.stopping.set(true); recorder.stop(); return; }
     if (this.stopping()) return;
@@ -938,6 +942,7 @@ export class QuickCaptureComponent implements OnDestroy {
     this.transcribiendoVoz.set(true);
     this.processingStep.set('TRANSCRIBIENDO');
     this.voiceMessage.set('Enviando audio para transcribir…');
+    if (this.pantallaVoz()) this.changeDetector.detectChanges();
     // Guardamos la suscripción para permitir cancelación
     this.transcripcionSub = this.finanzas.transcribirAudio(audio).subscribe({
       next: response => {
@@ -958,6 +963,7 @@ export class QuickCaptureComponent implements OnDestroy {
         this.pantallaVoz.set(false);
         this.open.set(true);
         this.mode.set('CAPTURE');
+        this.changeDetector.detectChanges();
         requestAnimationFrame(() => document.getElementById('quick-capture-text')?.focus());
       },
       error: error => {
@@ -968,6 +974,7 @@ export class QuickCaptureComponent implements OnDestroy {
         const msg = this.errorMessage(error);
         this.error.set(msg);
         this.toast.error(msg, '⚠️ Error de conexión');
+        if (this.pantallaVoz() && !this.destruido) this.changeDetector.detectChanges();
       }
     });
   }

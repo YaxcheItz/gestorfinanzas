@@ -47,6 +47,7 @@ describe('QuickCaptureComponent processing and gestures', () => {
           getPropuestasAi: vi.fn(() => of({success:true,data:[]})),
           descartarPropuestaAi: vi.fn(() => of({success:true})),
           confirmAiAction: vi.fn(() => of({success:true,message:'Guardado'})),
+          transcribirAudio: vi.fn(() => of({success:true,data:'Gasté 50 en café'})),
           editarPropuestaAi: vi.fn((id,datos,version) => of({success:true,data:{id,type:'CREATE_TRANSACTION',summary:'Actualizado',data:datos,version:version+1}})),
           capturaRapidaAi: () => new Observable(subscriber => {
             const subscription = result.subscribe(subscriber);
@@ -299,6 +300,32 @@ describe('QuickCaptureComponent processing and gestures', () => {
       component.close();
       if (anterior) Object.defineProperty(navigator, 'mediaDevices', anterior);
       else Reflect.deleteProperty(navigator, 'mediaDevices');
+    }
+  });
+
+  it('al transcribir deja el texto para revisar sin interpretar ni guardar', async () => {
+    vi.stubGlobal('isSecureContext', true);
+    const anterior = Object.getOwnPropertyDescriptor(navigator, 'mediaDevices');
+    Object.defineProperty(navigator, 'mediaDevices', {configurable:true,value:{getUserMedia:async()=>({getTracks:()=>[{stop:vi.fn()}]})}});
+    let recorder: any;
+    class Grabador {
+      static isTypeSupported() { return true; }
+      state = 'inactive'; mimeType = 'audio/webm'; ondataavailable: any; onerror: any; onstop: any;
+      constructor() { recorder = this; }
+      start() { this.state = 'recording'; }
+      stop() { this.state = 'inactive'; this.ondataavailable({data:new Blob(['audio'])}); this.onstop(); }
+    }
+    vi.stubGlobal('MediaRecorder', Grabador);
+    try {
+      component.abrirCapturaDesdeAcceso(new CustomEvent('kaptal-abrir-captura-chat',{detail:{voz:true}}));
+      component.permitirVoz(); await Promise.resolve();
+      expect(recorder.state).toBe('recording'); component.toggleVoice();
+      expect(component.content).toBe('Gasté 50 en café');
+      expect(component.open()).toBe(true); expect(component.pantallaVoz()).toBe(false);
+      expect(TestBed.inject(FinanzasService).confirmAiAction).not.toHaveBeenCalled();
+      expect(component.captureTurns()).toEqual([]);
+    } finally {
+      if(anterior) Object.defineProperty(navigator,'mediaDevices',anterior); else Reflect.deleteProperty(navigator,'mediaDevices');
     }
   });
 
