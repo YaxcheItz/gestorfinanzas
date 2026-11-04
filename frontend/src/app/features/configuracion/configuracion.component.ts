@@ -42,21 +42,9 @@ import {
         <div class="min-w-0">
           <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700 sm:text-xs">Preferencias de cuenta</p>
           <h1 class="mt-0.5 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Configuración</h1>
-          <p class="mt-1 text-xs text-slate-500 sm:text-sm">Personaliza Kaptal. Tus preferencias se guardan en tu cuenta.</p>
+          <p class="mt-1 text-xs text-slate-500 sm:text-sm">Encuentra tus preferencias, herramientas y opciones de cuenta en un solo lugar.</p>
         </div>
       </header>
-
-      <nav aria-label="Secciones de configuración" class="-mx-3 flex gap-2 overflow-x-auto px-3 pb-1 sm:mx-0 sm:px-0">
-        <a [routerLink]="[]" (click)="abrirSeccion($event)" fragment="appearance" class="inline-flex min-h-11 shrink-0 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Apariencia</a>
-        <a [routerLink]="[]" (click)="abrirSeccion($event)" fragment="profile" class="inline-flex min-h-11 shrink-0 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Perfil</a>
-        <a [routerLink]="[]" (click)="abrirSeccion($event)" fragment="notifications" class="inline-flex min-h-11 shrink-0 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Avisos</a>
-        <a [routerLink]="[]" (click)="abrirSeccion($event)" fragment="security" class="inline-flex min-h-11 shrink-0 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Seguridad</a>
-        <a [routerLink]="[]" (click)="abrirSeccion($event)" fragment="backup" class="inline-flex min-h-11 shrink-0 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Respaldo</a>
-        <a [routerLink]="[]" (click)="abrirSeccion($event)" fragment="categories" class="inline-flex min-h-11 shrink-0 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Categorías</a>
-        <a [routerLink]="[]" (click)="abrirSeccion($event)" fragment="recurring" class="inline-flex min-h-11 shrink-0 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Recurrentes</a>
-      </nav>
-
-      <section class="settings-management" aria-label="Herramientas financieras"><h2>Organiza tus finanzas</h2><nav><a routerLink="/cuentas">Cuentas y tarjetas <span>›</span></a><a routerLink="/categorias">Categorías <span>›</span></a><a [routerLink]="[]" (click)="abrirSeccion($event)" fragment="recurring">Recurrentes <span>›</span></a><a routerLink="/libro-diario">Libro diario <span>›</span></a><a routerLink="/pareja">Gastos compartidos <span>›</span></a></nav></section>
 
       @if (perfilService.error()) {
         <div role="alert" class="flex flex-col gap-3 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 sm:flex-row sm:items-center sm:justify-between">
@@ -65,7 +53,98 @@ import {
         </div>
       }
 
-      <section id="appearance" class="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6">
+      <div class="settings-group" aria-labelledby="settings-account">
+        <h2 id="settings-account">Tu cuenta</h2>
+      <details id="profile" class="settings-disclosure scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6" [open]="seccionAbierta() === 'profile'" (toggle)="alternarSeccion('profile', $event)">
+        <summary><strong>Perfil y WhatsApp</strong><span>Datos de tu cuenta y recordatorios por WhatsApp</span></summary>
+        <div class="settings-disclosure__content">
+        <div class="mb-5">
+          <div class="flex items-center gap-3">
+            <span role="img" [attr.aria-label]="'Avatar de ' + nombre" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-sm font-bold uppercase text-emerald-800">
+              {{ avatarIniciales() }}
+            </span>
+            <div class="min-w-0">
+              <h2 class="text-base font-bold text-slate-900">Perfil</h2>
+              <p class="mt-1 text-xs text-slate-500">Actualiza el nombre y correo asociados a tu cuenta.</p>
+            </div>
+          </div>
+        </div>
+        @if (perfilService.cargando()) {
+          <p role="status" class="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">Cargando los datos del perfil...</p>
+        } @else if (!perfilService.perfil()) {
+          <p class="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">Los datos del perfil no están disponibles. Comprueba la conexión con el servidor e inténtalo de nuevo.</p>
+        } @else {
+          <form (ngSubmit)="guardarPerfil()" class="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
+            <label class="block min-w-0 text-xs font-semibold text-slate-700">
+              Nombre
+              <input name="nombre" [(ngModel)]="nombre" required maxlength="100" autocomplete="name" class="mt-1.5 min-h-11 w-full min-w-0 rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm font-normal text-slate-900" />
+            </label>
+            <label class="block min-w-0 text-xs font-semibold text-slate-700">
+              Correo electrónico
+              <input name="email" [(ngModel)]="email" required type="email" maxlength="150" autocomplete="email" class="mt-1.5 min-h-11 w-full min-w-0 rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm font-normal text-slate-900" />
+            </label>
+                        <label class="block min-w-0 text-xs font-semibold text-slate-700">
+              Tel&eacute;fono WhatsApp (Recordatorios)
+              <input name="telefono" [(ngModel)]="telefono" maxlength="25" placeholder="Ej. 5219515791240" class="mt-1.5 min-h-11 w-full min-w-0 rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm font-normal text-slate-900" />
+            </label>
+            <div class="flex items-center min-h-11 md:mt-6 gap-3">
+              <input id="notif-wa" type="checkbox" name="notificacionesWhatsapp" [(ngModel)]="notificacionesWhatsapp" class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" />
+              <label for="notif-wa" class="text-xs font-semibold text-slate-700 cursor-pointer">
+                Recibir recordatorios por WhatsApp (D&iacute;a de corte, fecha de pago y cuotas MSI)
+              </label>
+            </div>
+            <div class="flex md:col-span-2 md:justify-end">
+              <button type="submit" [disabled]="guardandoPerfil() || !perfilService.perfil()" class="min-h-11 w-full rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50 md:w-auto">
+                {{ guardandoPerfil() ? 'Guardando...' : 'Guardar perfil' }}
+              </button>
+            </div>
+          </form>
+          <app-whatsapp-connection />
+          @if (notificacionesWhatsapp && puedeProbarWhatsApp) {
+            <button type="button" class="mt-3 min-h-11 rounded-full border px-4 text-sm" (click)="probarWhatsApp()" [disabled]="probandoWhatsApp()">Probar recordatorios de WhatsApp</button>
+          }
+        }
+      </div></details>
+
+      <details id="security" class="settings-disclosure scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6" [open]="seccionAbierta() === 'security'" (toggle)="alternarSeccion('security', $event)">
+        <summary><strong>Seguridad</strong><span>Privacidad, contraseña y sesión</span></summary>
+        <div class="settings-disclosure__content">
+        <app-screen-privacy />
+        <app-app-lock />
+        <div class="mb-5">
+          <h2 class="text-base font-bold text-slate-900">Seguridad</h2>
+          <p class="mt-1 text-xs text-slate-500">Usa entre 8 y 20 caracteres. Puedes incluir símbolos.</p>
+        </div>
+        <form (ngSubmit)="cambiarPassword()" class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <label class="block text-xs font-semibold text-slate-700">
+            Contraseña actual
+            <input name="passwordActual" [(ngModel)]="passwordActual" required type="password" autocomplete="current-password" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm font-normal text-slate-900" />
+          </label>
+          <label class="block text-xs font-semibold text-slate-700">
+            Nueva contraseña
+            <input name="passwordNueva" [(ngModel)]="passwordNueva" required minlength="8" maxlength="20" type="password" autocomplete="new-password" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm font-normal text-slate-900" />
+          </label>
+          <div class="flex justify-end sm:col-span-2">
+            <button type="submit" [disabled]="guardandoPassword()" class="min-h-11 rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">
+              {{ guardandoPassword() ? 'Actualizando...' : 'Cambiar contraseña' }}
+            </button>
+          </div>
+        </form>
+        <div class="mt-4 flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
+          <p class="text-sm text-slate-600">Sesión iniciada como {{ perfilService.perfil()?.email }}</p>
+          <button type="button" (click)="authService.logout()" class="min-h-11 rounded-xl px-4 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-50">
+            Cerrar sesión
+          </button>
+        </div>
+      </div></details>
+
+      </div>
+
+      <div class="settings-group" aria-labelledby="settings-preferences">
+        <h2 id="settings-preferences">Preferencias y avisos</h2>
+      <details id="appearance" class="settings-disclosure scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6" [open]="seccionAbierta() === 'appearance'" (toggle)="alternarSeccion('appearance', $event)">
+        <summary><strong>Apariencia y visualización</strong><span>Tema, moneda y visibilidad de montos</span></summary>
+        <div class="settings-disclosure__content">
         <div class="mb-5">
           <h2 class="text-base font-bold text-slate-900">Apariencia y visualización</h2>
           <p class="mt-1 text-xs text-slate-500">Los temas claro y oscuro y la moneda se sincronizan; Automático sigue el sistema en este dispositivo.</p>
@@ -132,56 +211,7 @@ import {
             </button>
           </div>
         </form>
-      </section>
-
-      <section id="profile" class="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6">
-        <div class="mb-5">
-          <div class="flex items-center gap-3">
-            <span role="img" [attr.aria-label]="'Avatar de ' + nombre" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-sm font-bold uppercase text-emerald-800">
-              {{ avatarIniciales() }}
-            </span>
-            <div class="min-w-0">
-              <h2 class="text-base font-bold text-slate-900">Perfil</h2>
-              <p class="mt-1 text-xs text-slate-500">Actualiza el nombre y correo asociados a tu cuenta.</p>
-            </div>
-          </div>
-        </div>
-        @if (perfilService.cargando()) {
-          <p role="status" class="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">Cargando los datos del perfil...</p>
-        } @else if (!perfilService.perfil()) {
-          <p class="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">Los datos del perfil no están disponibles. Comprueba la conexión con el servidor e inténtalo de nuevo.</p>
-        } @else {
-          <form (ngSubmit)="guardarPerfil()" class="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
-            <label class="block min-w-0 text-xs font-semibold text-slate-700">
-              Nombre
-              <input name="nombre" [(ngModel)]="nombre" required maxlength="100" autocomplete="name" class="mt-1.5 min-h-11 w-full min-w-0 rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm font-normal text-slate-900" />
-            </label>
-            <label class="block min-w-0 text-xs font-semibold text-slate-700">
-              Correo electrónico
-              <input name="email" [(ngModel)]="email" required type="email" maxlength="150" autocomplete="email" class="mt-1.5 min-h-11 w-full min-w-0 rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm font-normal text-slate-900" />
-            </label>
-                        <label class="block min-w-0 text-xs font-semibold text-slate-700">
-              Tel&eacute;fono WhatsApp (Recordatorios)
-              <input name="telefono" [(ngModel)]="telefono" maxlength="25" placeholder="Ej. 5219515791240" class="mt-1.5 min-h-11 w-full min-w-0 rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm font-normal text-slate-900" />
-            </label>
-            <div class="flex items-center min-h-11 md:mt-6 gap-3">
-              <input id="notif-wa" type="checkbox" name="notificacionesWhatsapp" [(ngModel)]="notificacionesWhatsapp" class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" />
-              <label for="notif-wa" class="text-xs font-semibold text-slate-700 cursor-pointer">
-                Recibir recordatorios por WhatsApp (D&iacute;a de corte, fecha de pago y cuotas MSI)
-              </label>
-            </div>
-            <div class="flex md:col-span-2 md:justify-end">
-              <button type="submit" [disabled]="guardandoPerfil() || !perfilService.perfil()" class="min-h-11 w-full rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50 md:w-auto">
-                {{ guardandoPerfil() ? 'Guardando...' : 'Guardar perfil' }}
-              </button>
-            </div>
-          </form>
-          <app-whatsapp-connection />
-          @if (notificacionesWhatsapp && puedeProbarWhatsApp) {
-            <button type="button" class="mt-3 min-h-11 rounded-full border px-4 text-sm" (click)="probarWhatsApp()" [disabled]="probandoWhatsApp()">Probar recordatorios de WhatsApp</button>
-          }
-        }
-      </section>
+      </div></details>
 
       <details id="notifications" class="settings-disclosure scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6 dark:border-slate-700 dark:bg-slate-900" [open]="seccionAbierta() === 'notifications'" (toggle)="alternarSeccion('notifications', $event)">
         <summary><strong>Avisos</strong><span>Notificaciones de este dispositivo</span></summary>
@@ -216,38 +246,100 @@ import {
         }
       </div></details>
 
-      <details id="security" class="settings-disclosure scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6" [open]="seccionAbierta() === 'security'" (toggle)="alternarSeccion('security', $event)">
-        <summary><strong>Seguridad</strong><span>Privacidad, contraseña y sesión</span></summary>
+      </div>
+
+      <div class="settings-group" aria-labelledby="settings-finances">
+        <h2 id="settings-finances">Organiza tus finanzas</h2>
+      <details id="categories" class="settings-disclosure scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6" [open]="seccionAbierta() === 'categories'" (toggle)="alternarSeccion('categories', $event)">
+        <summary><strong>Categorías</strong><span>Organiza cómo clasificas tus movimientos</span></summary>
         <div class="settings-disclosure__content">
-        <app-screen-privacy />
-        <app-app-lock />
-        <div class="mb-5">
-          <h2 class="text-base font-bold text-slate-900">Seguridad</h2>
-          <p class="mt-1 text-xs text-slate-500">Usa entre 8 y 20 caracteres. Puedes incluir símbolos.</p>
-        </div>
-        <form (ngSubmit)="cambiarPassword()" class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <label class="block text-xs font-semibold text-slate-700">
-            Contraseña actual
-            <input name="passwordActual" [(ngModel)]="passwordActual" required type="password" autocomplete="current-password" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm font-normal text-slate-900" />
-          </label>
-          <label class="block text-xs font-semibold text-slate-700">
-            Nueva contraseña
-            <input name="passwordNueva" [(ngModel)]="passwordNueva" required minlength="8" maxlength="20" type="password" autocomplete="new-password" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm font-normal text-slate-900" />
-          </label>
-          <div class="flex justify-end sm:col-span-2">
-            <button type="submit" [disabled]="guardandoPassword()" class="min-h-11 rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">
-              {{ guardandoPassword() ? 'Actualizando...' : 'Cambiar contraseña' }}
-            </button>
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 class="text-base font-bold text-slate-900">Categorías</h2>
+            <p class="mt-1 text-xs text-slate-500">Administra, archiva y restaura tus categorías personalizadas.</p>
           </div>
-        </form>
-        <div class="mt-4 flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
-          <p class="text-sm text-slate-600">Sesión iniciada como {{ perfilService.perfil()?.email }}</p>
-          <button type="button" (click)="authService.logout()" class="min-h-11 rounded-xl px-4 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-50">
-            Cerrar sesión
-          </button>
+          <a routerLink="/categorias" class="inline-flex min-h-10 items-center justify-center rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+            Administrar categorías
+          </a>
         </div>
       </div></details>
 
+      <details id="recurring" class="settings-disclosure scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6" [open]="seccionAbierta() === 'recurring'" (toggle)="alternarSeccion('recurring', $event)">
+        <summary><strong>Movimientos recurrentes</strong><span>Revisa tus registros programados</span></summary>
+        <div class="settings-disclosure__content">
+        <div class="mb-4 flex items-start justify-between gap-3">
+          <div>
+            <h2 class="text-base font-bold text-slate-900">Movimientos recurrentes</h2>
+            <p class="mt-1 text-xs text-slate-500">Kaptal no crea cargos automáticamente. Confirma cada movimiento cuando llegue su fecha.</p>
+          </div>
+          <button type="button" (click)="cargarPlantillas()" aria-label="Actualizar movimientos recurrentes" class="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50">Actualizar</button>
+        </div>
+
+        @if (errorPlantillas()) {
+          <div role="alert" class="flex justify-between gap-3 rounded-xl bg-rose-50 p-3 text-sm text-rose-700">
+            <span>{{ errorPlantillas() }}</span>
+            <button type="button" (click)="cargarPlantillas()" class="font-semibold underline">Reintentar</button>
+          </div>
+        } @else if (cargandoPlantillas()) {
+          <p class="py-6 text-center text-sm text-slate-400">Cargando plantillas...</p>
+        } @else if (plantillas().length === 0) {
+          <p class="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">Aún no hay movimientos recurrentes. Puedes crear uno al registrar un gasto o ingreso.</p>
+        } @else {
+          <div class="space-y-3">
+            @for (plantilla of plantillas(); track plantilla.id) {
+              <article class="rounded-xl border border-slate-200 p-3 sm:p-4">
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div class="min-w-0">
+                    <div class="flex flex-wrap items-center gap-2">
+                      <h3 class="font-semibold text-slate-900">{{ plantilla.categoriaNombre || (plantilla.tipo === 'INGRESO' ? 'Ingreso' : 'Gasto') }}</h3>
+                      <span [class]="plantilla.activa ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'" class="rounded-full px-2 py-0.5 text-[10px] font-semibold">
+                        {{ plantilla.cuotasTotales != null && (plantilla.cuotasPagadas ?? 0) >= plantilla.cuotasTotales ? 'Completada' : (plantilla.activa ? 'Activa' : 'En pausa') }}
+                      </span>
+                    </div>
+                    <p class="mt-1 text-xs text-slate-500">
+                      {{ plantilla.monto | monto:plantilla.moneda:'symbol':'1.2-2' }} · {{ frecuenciaTexto(plantilla.frecuencia) }} · {{ nombreCuentaVisible(plantilla.cuentaNombre) }}
+                    </p>
+                    <p class="mt-1 text-xs font-medium" [class.text-amber-700]="plantilla.activa && plantilla.siguienteFecha <= hoy" [class.text-slate-500]="!plantilla.activa || plantilla.siguienteFecha > hoy">
+                      @if (msiCompletada(plantilla)) {
+                        Plan de pagos completado
+                      } @else {
+                        {{ plantilla.siguienteFecha <= hoy && plantilla.activa ? 'Pendiente de confirmar' : 'Siguiente fecha' }}: {{ plantilla.siguienteFecha }}
+                      }
+                    </p>
+                    @if (plantilla.cuotasTotales != null) {
+                      <p class="mt-1 text-xs text-slate-500">MSI · {{ (plantilla.cuotasPagadas ?? 0) + 1 }} de {{ plantilla.cuotasTotales + 1 }} cuotas registradas</p>
+                      <p class="mt-1 text-xs text-slate-500">Pendiente: {{ (plantilla.montoPendiente ?? plantilla.monto * (plantilla.cuotasTotales - (plantilla.cuotasPagadas ?? 0))) | monto:plantilla.moneda:'symbol':'1.2-2' }}. La última cuota ajusta los centavos.</p>
+                    }
+                    @if (plantilla.notas) {
+                      <p class="mt-1 truncate text-xs text-slate-400">{{ plantilla.notas }}</p>
+                    }
+                  </div>
+                  <div class="flex shrink-0 flex-wrap gap-2">
+                    @if (plantilla.activa && plantilla.siguienteFecha <= hoy) {
+                      <button type="button" (click)="registrar(plantilla)" [disabled]="accionId() === plantilla.id" class="min-h-11 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">
+                        Registrar ahora
+                      </button>
+                    }
+                    <button type="button" (click)="cambiarEstado(plantilla)" [disabled]="accionId() === plantilla.id || msiCompletada(plantilla)" class="min-h-11 rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">
+                      {{ plantilla.activa ? 'Pausar' : 'Reanudar' }}
+                    </button>
+                    <button type="button" (click)="eliminar(plantilla)" [disabled]="accionId() === plantilla.id" class="min-h-11 rounded-lg px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-50">
+                      {{ msiCompletada(plantilla) ? 'Eliminar plan' : (plantilla.cuotasTotales != null ? 'Cancelar pendientes' : 'Eliminar') }}
+                    </button>
+                  </div>
+                </div>
+              </article>
+            }
+          </div>
+        }
+      </div></details>
+
+      <section class="settings-management" aria-label="Herramientas financieras"><h3>Más herramientas</h3><nav><a routerLink="/cuentas">Cuentas y tarjetas <span>›</span></a><a routerLink="/libro-diario">Libro diario <span>›</span></a><a routerLink="/pareja">Gastos compartidos <span>›</span></a></nav></section>
+
+      </div>
+
+      <div class="settings-group" aria-labelledby="settings-data">
+        <h2 id="settings-data">Tus datos</h2>
       <details id="backup" class="settings-disclosure scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6" [open]="seccionAbierta() === 'backup'" (toggle)="alternarSeccion('backup', $event)">
         <summary><strong>Respaldo y exportación</strong><span>Descarga tus datos o revisa una restauración</span></summary>
         <div class="settings-disclosure__content">
@@ -336,90 +428,6 @@ import {
         </div>
       </div></details>
 
-      <details id="categories" class="settings-disclosure scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6" [open]="seccionAbierta() === 'categories'" (toggle)="alternarSeccion('categories', $event)">
-        <summary><strong>Categorías</strong><span>Organiza cómo clasificas tus movimientos</span></summary>
-        <div class="settings-disclosure__content">
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 class="text-base font-bold text-slate-900">Categorías</h2>
-            <p class="mt-1 text-xs text-slate-500">Administra, archiva y restaura tus categorías personalizadas.</p>
-          </div>
-          <a routerLink="/categorias" class="inline-flex min-h-10 items-center justify-center rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-            Administrar categorías
-          </a>
-        </div>
-      </div></details>
-
-      <details id="recurring" class="settings-disclosure scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6" [open]="seccionAbierta() === 'recurring'" (toggle)="alternarSeccion('recurring', $event)">
-        <summary><strong>Movimientos recurrentes</strong><span>Revisa tus registros programados</span></summary>
-        <div class="settings-disclosure__content">
-        <div class="mb-4 flex items-start justify-between gap-3">
-          <div>
-            <h2 class="text-base font-bold text-slate-900">Movimientos recurrentes</h2>
-            <p class="mt-1 text-xs text-slate-500">Kaptal no crea cargos automáticamente. Confirma cada movimiento cuando llegue su fecha.</p>
-          </div>
-          <button type="button" (click)="cargarPlantillas()" aria-label="Actualizar movimientos recurrentes" class="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50">Actualizar</button>
-        </div>
-
-        @if (errorPlantillas()) {
-          <div role="alert" class="flex justify-between gap-3 rounded-xl bg-rose-50 p-3 text-sm text-rose-700">
-            <span>{{ errorPlantillas() }}</span>
-            <button type="button" (click)="cargarPlantillas()" class="font-semibold underline">Reintentar</button>
-          </div>
-        } @else if (cargandoPlantillas()) {
-          <p class="py-6 text-center text-sm text-slate-400">Cargando plantillas...</p>
-        } @else if (plantillas().length === 0) {
-          <p class="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">Aún no hay movimientos recurrentes. Puedes crear uno al registrar un gasto o ingreso.</p>
-        } @else {
-          <div class="space-y-3">
-            @for (plantilla of plantillas(); track plantilla.id) {
-              <article class="rounded-xl border border-slate-200 p-3 sm:p-4">
-                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div class="min-w-0">
-                    <div class="flex flex-wrap items-center gap-2">
-                      <h3 class="font-semibold text-slate-900">{{ plantilla.categoriaNombre || (plantilla.tipo === 'INGRESO' ? 'Ingreso' : 'Gasto') }}</h3>
-                      <span [class]="plantilla.activa ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'" class="rounded-full px-2 py-0.5 text-[10px] font-semibold">
-                        {{ plantilla.cuotasTotales != null && (plantilla.cuotasPagadas ?? 0) >= plantilla.cuotasTotales ? 'Completada' : (plantilla.activa ? 'Activa' : 'En pausa') }}
-                      </span>
-                    </div>
-                    <p class="mt-1 text-xs text-slate-500">
-                      {{ plantilla.monto | monto:plantilla.moneda:'symbol':'1.2-2' }} · {{ frecuenciaTexto(plantilla.frecuencia) }} · {{ nombreCuentaVisible(plantilla.cuentaNombre) }}
-                    </p>
-                    <p class="mt-1 text-xs font-medium" [class.text-amber-700]="plantilla.activa && plantilla.siguienteFecha <= hoy" [class.text-slate-500]="!plantilla.activa || plantilla.siguienteFecha > hoy">
-                      @if (msiCompletada(plantilla)) {
-                        Plan de pagos completado
-                      } @else {
-                        {{ plantilla.siguienteFecha <= hoy && plantilla.activa ? 'Pendiente de confirmar' : 'Siguiente fecha' }}: {{ plantilla.siguienteFecha }}
-                      }
-                    </p>
-                    @if (plantilla.cuotasTotales != null) {
-                      <p class="mt-1 text-xs text-slate-500">MSI · {{ (plantilla.cuotasPagadas ?? 0) + 1 }} de {{ plantilla.cuotasTotales + 1 }} cuotas registradas</p>
-                      <p class="mt-1 text-xs text-slate-500">Pendiente: {{ (plantilla.montoPendiente ?? plantilla.monto * (plantilla.cuotasTotales - (plantilla.cuotasPagadas ?? 0))) | monto:plantilla.moneda:'symbol':'1.2-2' }}. La última cuota ajusta los centavos.</p>
-                    }
-                    @if (plantilla.notas) {
-                      <p class="mt-1 truncate text-xs text-slate-400">{{ plantilla.notas }}</p>
-                    }
-                  </div>
-                  <div class="flex shrink-0 flex-wrap gap-2">
-                    @if (plantilla.activa && plantilla.siguienteFecha <= hoy) {
-                      <button type="button" (click)="registrar(plantilla)" [disabled]="accionId() === plantilla.id" class="min-h-11 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">
-                        Registrar ahora
-                      </button>
-                    }
-                    <button type="button" (click)="cambiarEstado(plantilla)" [disabled]="accionId() === plantilla.id || msiCompletada(plantilla)" class="min-h-11 rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">
-                      {{ plantilla.activa ? 'Pausar' : 'Reanudar' }}
-                    </button>
-                    <button type="button" (click)="eliminar(plantilla)" [disabled]="accionId() === plantilla.id" class="min-h-11 rounded-lg px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-50">
-                      {{ msiCompletada(plantilla) ? 'Eliminar plan' : (plantilla.cuotasTotales != null ? 'Cancelar pendientes' : 'Eliminar') }}
-                    </button>
-                  </div>
-                </div>
-              </article>
-            }
-          </div>
-        }
-      </div></details>
-
       <details id="danger" class="settings-disclosure scroll-mt-24 rounded-2xl border border-rose-200 bg-white p-4 shadow-xs sm:p-6 dark:border-rose-900" [open]="seccionAbierta() === 'danger'" (toggle)="alternarSeccion('danger', $event)">
         <summary><strong>Eliminar cuenta</strong><span>Acción permanente; requiere confirmación</span></summary>
         <div class="settings-disclosure__content">
@@ -447,6 +455,8 @@ import {
           Eliminar mi cuenta y todos sus datos
         </button>
       </div></details>
+
+      </div>
 
       @if (modalBorradoAbierto()) {
         <div class="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/60 p-3 sm:items-center" (click)="cerrarConfirmacionBorrado()">

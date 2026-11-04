@@ -435,7 +435,7 @@ test('acceso y recuperación conservan controles legibles y permiten reintentar'
   await page.screenshot({path:test.info().outputPath('recuperacion-movil.png')});
 });
 
-test('ajustes abre secciones por enlace y conserva la protección de eliminar cuenta', async ({ page }) => {
+test('ajustes abre secciones y conserva la protección de eliminar cuenta', async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem('finanzas_token', `test.${btoa(JSON.stringify({exp:Math.floor(Date.now()/1000)+3600}))}.synthetic`);
     localStorage.setItem('finanzas_user', JSON.stringify({id:994,nombre:'Ajustes',email:'ajustes@example.test'}));
@@ -447,11 +447,11 @@ test('ajustes abre secciones por enlace y conserva la protección de eliminar cu
   await page.goto('/configuracion');
   await expect(page.locator('#security')).not.toHaveAttribute('open');
   await page.screenshot({path:test.info().outputPath('ajustes-movil.png'),fullPage:true});
-  await page.getByRole('navigation',{name:'Secciones de configuración'}).getByRole('link',{name:'Seguridad',exact:true}).click();
+  await page.locator('#security summary').click();
   await expect(page.locator('#security')).toHaveAttribute('open','');
   await expect(page.getByRole('switch', { name: 'Proteger pantalla en este Android' })).toHaveCount(0);
   await expect(page.getByRole('switch', { name: 'Bloquear Kaptal al salir' })).toHaveCount(0);
-  await page.getByRole('navigation',{name:'Secciones de configuración'}).getByRole('link',{name:'Respaldo',exact:true}).click();
+  await page.locator('#backup summary').click();
   await expect(page.locator('#backup')).toHaveAttribute('open','');
   await expect(page.locator('#security')).not.toHaveAttribute('open');
   for (const width of [320,390,568]) {
