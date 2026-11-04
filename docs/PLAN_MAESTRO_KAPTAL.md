@@ -1,3 +1,9 @@
+## Configuracion organizada (4 noviembre 2026)
+
+Rama diseno/organizacion-configuracion creada desde develop dc0c230. Revision previa: accesos duplicados a categorias y recurrentes, perfil/apariencia siempre abiertos; se conservan seguridad, respaldo, eliminacion y conexiones. Nueva pantalla agrupa cuenta, preferencias y avisos, finanzas y datos; perfil y apariencia se pliegan, se retiran accesos duplicados conservando los apartados y fragmentos existentes. No se eliminaron funciones ni datos. WhatsApp sigue en Perfil, etiquetado explicitamente; configuracion futura de tarjetas sigue pendiente.
+
+Build y 486 pruebas frontend correctos; 16 pruebas focales; E2E H2 correctos para organizacion movil y fragmentos, respaldo/restauracion, recurrentes, proteccion de borrado y accesibilidad al 200 por ciento. Captura sintetica .local/configuracion-organizada-sintetica.png. ADB sin dispositivo; pendiente CI del SHA, aceptacion fisica, integracion y publicacion. PR #204 sigue abierto: CI 41865086704 fallo por dos pruebas E2E (selector ambiguo en captura y elemento desprendido en gesto), requiere diagnostico y correccion antes de integrar. Groq/voz aun no verificados. No se usaron datos financieros reales.
+
 ## Permiso de microfono Android en revision (3 noviembre 2026)
 
 El propietario reporto que Kaptal no mostraba permiso y decia que el navegador bloqueo el microfono. Se verifico que la APK 0.1.21 no declara RECORD_AUDIO y el BridgeWebChromeClient de Capacitor solicita RECORD_AUDIO y MODIFY_AUDIO_SETTINGS al usar captura de audio. Se declararon ambos en el manifiesto y se aclaro el mensaje de denegacion; la app conserva el consentimiento previo al acceso. Android exige declaracion y permiso en tiempo de ejecucion: https://developer.android.com/media/platform/mediarecorder . Build y 84 pruebas focales correctos; E2E, CI, empaquetado y prueba fisica aun pendientes al registrar. No se grabo ni envio audio.
