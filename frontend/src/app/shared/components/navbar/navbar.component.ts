@@ -4,10 +4,11 @@ import { ListasSheetComponent } from '../listas-sheet/listas-sheet.component';
 import { DOCUMENT } from '@angular/common';
 import { Component, ElementRef, ViewChild, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
+import { PrivacyToggleComponent } from '../privacy-toggle/privacy-toggle.component';
 
 @Component({
   selector: 'app-navbar', standalone: true,
-  imports: [RouterLink, ListasSheetComponent],
+  imports: [RouterLink, ListasSheetComponent, PrivacyToggleComponent],
   template: `
     <header class="workspace-tools">
       <div class="workspace-context">
@@ -15,7 +16,7 @@ import { Router, RouterLink } from '@angular/router';
         <button type="button" class="workspace-selector" (click)="listas.abierta.set(true)" aria-label="Cambiar lista" aria-haspopup="dialog" [attr.aria-expanded]="listas.abierta()"><span aria-hidden="true">{{ listas.contexto.activa()?.emoji }}</span><span class="workspace-selector__name">{{ listas.contexto.activa()?.nombre || 'Mis movimientos' }}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 10 4 4 4-4"/></svg></button>
       </div>
       <nav class="workspace-shortcuts" aria-label="Accesos principales">
-
+        @if (esInicio()) { <app-privacy-toggle/> }
         <a routerLink="/configuracion" class="glass-icon" aria-label="Configuración"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 3-1 3-3 1-3 3v4l3 3 3 1 1 3h4l1-3 3-1 3-3v-4l-3-3-3-1-1-3z"/><circle cx="12" cy="12" r="3"/></svg></a>
       </nav>
     </header>
@@ -73,6 +74,10 @@ export class NavbarComponent {
   voz(): void { if (!this.listas.contexto.puedeEscribir()) { this.toast.error('Elige una lista activa con permiso de editor para registrar.'); return; } this.document.defaultView?.dispatchEvent(new CustomEvent('kaptal-abrir-captura-chat')); }
   anadir(): void { if (!this.listas.contexto.puedeEscribir()) { this.toast.error('Elige una lista activa con permiso de editor para registrar.'); return; } this.document.defaultView?.dispatchEvent(new CustomEvent('kaptal-abrir-registro-rapido')); }
   buscar(): void {
+    if (this.esInicio()) {
+      this.document.defaultView?.dispatchEvent(new CustomEvent('kaptal-buscar-inicio'));
+      return;
+    }
     void this.router.navigate(['/transacciones'], {
       queryParams: {
         ...(this.listas.contexto.activaId() == null ? {} : { listaId: this.listas.contexto.activaId() }),

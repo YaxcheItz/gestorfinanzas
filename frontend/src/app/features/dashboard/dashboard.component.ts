@@ -35,7 +35,6 @@ import { MovimientoMobileCardComponent } from '../../shared/components/movimient
 import { FechaPickerComponent } from '../../shared/components/fecha-picker/fecha-picker.component';
 import { CategoriaIconoComponent } from '../../shared/components/categoria-icono/categoria-icono.component';
 import { MontoPipe } from '../../core/pipes/monto.pipe';
-import { PrivacyToggleComponent } from '../../shared/components/privacy-toggle/privacy-toggle.component';
 import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive';
 import { PrivacidadService } from '../../core/services/privacidad.service';
 import { MovimientosOfflineService, MovimientoPendiente } from '../../core/services/movimientos-offline.service';
@@ -80,7 +79,7 @@ type SpeechRecognitionWindow = Window & {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [ RouterLink, FocusTrapDirective, TextoFinancieroPipe, MontoPrivadoDirective, CommonModule, FormsModule, CategoriaSelectorComponent, CuentaSelectorComponent, MovimientoMobileCardComponent, MontoPipe, FechaPickerComponent, CategoriaIconoComponent, PrivacyToggleComponent],
+  imports: [ RouterLink, FocusTrapDirective, TextoFinancieroPipe, MontoPrivadoDirective, CommonModule, FormsModule, CategoriaSelectorComponent, CuentaSelectorComponent, MovimientoMobileCardComponent, MontoPipe, FechaPickerComponent, CategoriaIconoComponent],
   templateUrl: './dashboard.component.html',
 })
 export class DashboardComponent implements OnInit {
@@ -99,6 +98,70 @@ export class DashboardComponent implements OnInit {
   private readonly document = inject(DOCUMENT);
   private readonly destroyRef = inject(DestroyRef);
   private analiticaSub?: Subscription;
+  readonly busquedaAbierta = signal(false);
+  readonly textoBusquedaInicio = signal('');
+  readonly resultadosBusquedaInicio = signal<Transaccion[]>([]);
+  readonly buscandoInicio = signal(false);
+  readonly errorBusquedaInicio = signal(false);
+  readonly paginaBusquedaInicio = signal(0);
+  readonly paginasBusquedaInicio = signal(0);
+  private temporizadorBusquedaInicio?: ReturnType<typeof setTimeout>;
+  private versionBusquedaInicio = 0;
+
+  @HostListener('window:kaptal-buscar-inicio')
+  abrirBusquedaInicio(): void {
+    this.busquedaAbierta.set(true);
+    setTimeout(() => this.document.getElementById('buscar-inicio')?.focus());
+  }
+
+  cerrarBusquedaInicio(): void {
+    this.busquedaAbierta.set(false);
+    this.versionBusquedaInicio++;
+    clearTimeout(this.temporizadorBusquedaInicio);
+    this.buscandoInicio.set(false);
+    this.textoBusquedaInicio.set('');
+    this.resultadosBusquedaInicio.set([]);
+    this.errorBusquedaInicio.set(false);
+    this.paginasBusquedaInicio.set(0);
+    this.document.querySelector<HTMLElement>('.capture-dock__search')?.focus();
+  }
+
+  cambiarBusquedaInicio(texto: string): void {
+    this.textoBusquedaInicio.set(texto);
+    this.versionBusquedaInicio++;
+    clearTimeout(this.temporizadorBusquedaInicio);
+    this.resultadosBusquedaInicio.set([]);
+    this.errorBusquedaInicio.set(false);
+    this.paginasBusquedaInicio.set(0);
+    this.buscandoInicio.set(!!texto.trim());
+    if (texto.trim()) this.temporizadorBusquedaInicio = setTimeout(() => this.buscarInicio(0), 300);
+  }
+
+  buscarInicio(pagina: number): void {
+    const texto = this.textoBusquedaInicio().trim();
+    if (!texto) return;
+    const version = ++this.versionBusquedaInicio;
+    const listaId = this.contextoLista.activaId();
+    this.paginaBusquedaInicio.set(pagina);
+    this.buscandoInicio.set(true);
+    this.errorBusquedaInicio.set(false);
+    this.finanzasService.getTransaccionesPaginadas({busqueda: texto, ...(listaId == null ? {} : {listaId})}, pagina, 20)
+      .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+        next: respuesta => {
+          if (version !== this.versionBusquedaInicio || listaId !== this.contextoLista.activaId()) return;
+          this.buscandoInicio.set(false);
+          if (!respuesta.success || !respuesta.data) { this.errorBusquedaInicio.set(true); return; }
+          this.resultadosBusquedaInicio.set(respuesta.data.content);
+          this.paginaBusquedaInicio.set(pagina);
+          this.paginasBusquedaInicio.set(respuesta.data.totalPages);
+        },
+        error: () => {
+          if (version !== this.versionBusquedaInicio || listaId !== this.contextoLista.activaId()) return;
+          this.buscandoInicio.set(false);
+          this.errorBusquedaInicio.set(true);
+        }
+      });
+  }
   readonly vistaDetallada = signal(false);
   readonly inicioCompacto = signal(false);
   private observadorHero?: IntersectionObserver;
@@ -126,18 +189,19 @@ export class DashboardComponent implements OnInit {
   private inicioPresionCategoria?: { x: number; y: number };
   private presionCategoriaConsumida = false;
   private modoGestoIniciado = false;
+  private gestoCategoriaDesplazado = false;
 
   iniciarPresionCategoria(event: PointerEvent, categoria: CategoriaInicio): void {
     if (!event.isPrimary || event.button !== 0) return;
     this.cancelarPresionCategoria();
     this.presionCategoriaConsumida = false;
     this.modoGestoIniciado = false;
+    this.gestoCategoriaDesplazado = false;
     this.inicioPresionCategoria = { x: event.clientX, y: event.clientY };
     this.temporizadorCategoria = setTimeout(() => {
       this.presionCategoriaConsumida = true;
       this.modoGestoIniciado = true;
       this.categoriaGestoActiva.set(categoria);
-      this.categoriaContextual.set(categoria);
       this.gestoAccionSeleccionada.set(null);
     }, 450);
   }
@@ -157,6 +221,7 @@ export class DashboardComponent implements OnInit {
       return;
     }
 
+    if (Math.abs(dy) > 25) this.gestoCategoriaDesplazado = true;
     if (dy < -25) {
       this.gestoAccionSeleccionada.set('GASTO');
     } else if (dy > 25) {
@@ -180,10 +245,17 @@ export class DashboardComponent implements OnInit {
       } else if (accion === 'PRESUPUESTO') {
         this.categoriaContextual.set(null);
         this.abrirPresupuestoCategoria(categoria);
+      } else if (!this.gestoCategoriaDesplazado) {
+        this.categoriaContextual.set(categoria);
       }
       return;
     }
     this.cancelarPresionCategoria();
+  }
+
+  abrirContextoCategoria(event: MouseEvent, categoria: CategoriaInicio): void {
+    event.preventDefault();
+    if (!this.inicioPresionCategoria) this.categoriaContextual.set(categoria);
   }
 
   @HostListener('window:pointerup')
@@ -253,7 +325,10 @@ export class DashboardComponent implements OnInit {
     void this.router.navigate(['/presupuestos'], {
       queryParams: {
         ...(this.contextoLista.activaId() == null ? {} : { listaId: this.contextoLista.activaId() }),
-        categoriaId: categoria.categoriaId
+        categoriaId: categoria.categoriaId,
+        moneda: this.monedaResumen(),
+        mes: this.periodoSeleccionado().getMonth() + 1,
+        anio: this.periodoSeleccionado().getFullYear()
       }
     });
   }
@@ -678,6 +753,7 @@ export class DashboardComponent implements OnInit {
   @ViewChild('budgetScroller') budgetScroller?: ElementRef<HTMLDivElement>;
 
   constructor() {
+    this.destroyRef.onDestroy(() => clearTimeout(this.temporizadorBusquedaInicio));
     this.destroyRef.onDestroy(() => this.observadorHero?.disconnect());
     this.destroyRef.onDestroy(() => this.cancelarPresionCategoria());
     effect(() => {
@@ -705,6 +781,7 @@ export class DashboardComponent implements OnInit {
       const id = this.contextoLista.activaId();
       const cargando = this.contextoLista.cargando();
       if (id === listaObservada && !(this.esperandoListaInicial && !cargando)) return;
+        if (id !== listaObservada && this.busquedaAbierta()) this.cerrarBusquedaInicio();
       listaObservada = id;
       untracked(() => {
         const moneda = this.contextoLista.activa()?.moneda; if (moneda) this.monedaResumen.set(moneda);
