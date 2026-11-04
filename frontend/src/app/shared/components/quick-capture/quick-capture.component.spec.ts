@@ -65,6 +65,18 @@ describe('QuickCaptureComponent processing and gestures', () => {
 
   afterEach(() => { fixture.destroy(); vi.useRealTimers(); vi.unstubAllGlobals(); });
 
+  it('abre voz por separado sin iniciar el microfono y permite volver a escribir', () => {
+    component.abrirCapturaDesdeAcceso(new CustomEvent('kaptal-abrir-captura-chat', { detail: { voz: true } }));
+    expect(component.pantallaVoz()).toBe(true);
+    expect(component.open()).toBe(false);
+    expect(component.listening()).toBe(false);
+    component.toggleVoice();
+    expect(component.permisoVoz()).toBe(true);
+    component.abrirEscrituraDesdeVoz();
+    expect(component.pantallaVoz()).toBe(false);
+    expect(component.open()).toBe(true);
+  });
+
   it('muestra confirmación del servidor solamente tras un guardado exitoso', () => {
     const propuesta = { id: 'confirmacion-visible', type: 'CREATE_TRANSACTION', summary: 'Gasto', data: {}, version: 0 } as any;
     component.captureTurns.set([{ id: 1, user: 'Gasto', answer: 'Revisa', actions: [propuesta], voice: false }]);

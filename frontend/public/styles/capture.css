@@ -47,6 +47,22 @@
 .capture-proposal strong { margin-top: 0.2rem; color: #20372b; font-size: 0.74rem; line-height: 1.4; }
 .capture-proposal__actions { display: flex; justify-content: flex-end; gap: 0.45rem; margin-top: 0.6rem; }
 .capture-proposal__actions button { min-height: 2.2rem; border: 0; border-radius: 0.65rem; padding: 0 0.7rem; font-size: 0.7rem; font-weight: 700; }
+.voice-screen { position: fixed; z-index: 101; left: 50%; bottom: max(12px, env(safe-area-inset-bottom)); transform: translateX(-50%); width: min(calc(100% - 24px), 480px); max-height: 90dvh; overflow: auto; padding: 24px; border-radius: 28px; background: var(--kaptal-surface); color: var(--kaptal-content); box-shadow: 0 18px 60px rgb(0 0 0 / .25); text-align: center; }
+.voice-screen header { display: flex; align-items: start; justify-content: space-between; gap: 16px; text-align: left; }
+.voice-screen header small { font-size: .7rem; letter-spacing: .12em; color: var(--kaptal-content-muted); font-weight: 700; }
+.voice-screen header h2 { margin: 6px 0 0; font-size: 1.35rem; font-weight: 700; }
+.voice-screen header button { width: 44px; height: 44px; border-radius: 50%; background: var(--kaptal-surface-subtle); font-size: 1.5rem; }
+.voice-screen__hint,.voice-screen__note { color: var(--kaptal-content-muted); line-height: 1.5; font-size: .9rem; margin: 20px auto; }
+.voice-screen__mic { display: grid; place-items: center; width: 100px; height: 100px; margin: 32px auto 12px; border: 0; border-radius: 50%; background: var(--kaptal-voice); color: white; }
+.voice-screen__mic svg { width: 40px; height: 40px; }
+.voice-screen__status { font-weight: 700; min-height: 24px; }
+.voice-screen__levels { display: flex; align-items: center; justify-content: center; gap: 4px; height: 28px; }
+.voice-screen__levels i { width: 4px; border-radius: 4px; background: var(--kaptal-voice); }
+.voice-screen__text { min-height: 44px; padding: 0 16px; border-radius: 14px; background: var(--kaptal-surface-subtle); font-weight: 700; }
+.capture-chat__reply .capture-proposal { padding: 1rem; border-radius: 1rem; border-color: var(--kaptal-border); background: var(--kaptal-surface-subtle); }
+.capture-chat__reply .capture-proposal strong { font-size: .9rem; line-height: 1.5; overflow-wrap: anywhere; color: var(--kaptal-content); }
+.capture-chat__reply .capture-proposal small { font-size: .75rem; color: var(--kaptal-content-muted); }
+.capture-proposal__actions button { min-height: 44px; font-size: .8rem; }
 .capture-cancel { background: transparent; color: #66736a; }
 .capture-save { background: #1d6b49; color: white; }
 .capture-save:disabled { opacity: 0.55; }

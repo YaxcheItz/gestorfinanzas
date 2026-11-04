@@ -46,9 +46,8 @@ test('inicio separa deuda y monedas, y repetir crea solo un movimiento nuevo con
   expect(despues.find((m:{id:number})=>m.id===originalId)).toMatchObject({monto:25,fecha:fechaOriginal,descripcion:'Cena repetible'});
   await page.setViewportSize({width:390,height:844});await page.getByRole('link',{name:'Inicio',exact:true}).click();await expect(budget).toContainText(/245[.,]00/);
   await page.route('**/api/dashboard/analitica**',r=>r.fulfill({status:503,json:{success:false}}));
-  await page.locator('.workspace-selector').click();
-  await page.getByRole('button',{name:/^Herramientas/}).click();
-  await page.getByRole('link', { name: 'Reportes', exact: true }).click();
+  await page.getByRole('link',{name:'Configuración',exact:true}).click();
+  await page.getByRole('link', { name: /Reportes/ }).click();
   await expect(page.getByRole('heading', { name: 'No pudimos cargar tus datos' })).toBeVisible();
   await page.unroute('**/api/dashboard/analitica**');
   await page.getByRole('button', { name: 'Reintentar', exact: true }).click();

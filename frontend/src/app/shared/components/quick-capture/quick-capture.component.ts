@@ -5,7 +5,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { PrivacidadService } from '../../../core/services/privacidad.service';
 import { PrivacyToggleComponent } from '../privacy-toggle/privacy-toggle.component';
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, ElementRef, HostListener, OnDestroy, ViewChild, afterNextRender, afterRenderEffect, computed, effect, inject, signal, untracked } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, ElementRef, HostListener, OnDestroy, ViewChild, afterNextRender, afterRenderEffect, computed, effect, inject, signal, untracked } from '@angular/core';
 import { CaptureLauncherService } from '../../../core/services/capture-launcher.service';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -52,6 +52,23 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
             </button>
         </div>
       </div>
+    }
+
+    @if (pantallaVoz()) {
+      <div class="voice-dialog-backdrop" (click)="cerrarPantallaVoz()"></div>
+      <section appDialogViewport class="voice-screen" role="dialog" aria-modal="true" aria-labelledby="voice-title" (keydown.escape)="cerrarPantallaVoz()" tabindex="-1" id="voice-screen">
+        <header><div><small>CAPTURA POR VOZ</small><h2 id="voice-title">{{ escuchando() ? 'Te escucho' : transcribiendoVoz() ? 'Transcribiendo…' : 'Cuéntame tu movimiento' }}</h2></div><button type="button" (click)="cerrarPantallaVoz()" aria-label="Cerrar voz">×</button></header>
+        <p class="voice-screen__hint">{{ escuchando() ? 'Habla con naturalidad. Al terminar, toca detener.' : 'Habla de un gasto, ingreso o pregunta sobre tus finanzas.' }}</p>
+        <button type="button" class="voice-screen__mic" (click)="toggleVoice()" [disabled]="transcribiendoVoz() || stopping()" [attr.aria-label]="escuchando() ? 'Detener grabación' : 'Iniciar grabación'">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5m-4 0h8"/></svg>
+        </button>
+        <p class="voice-screen__status" role="status">{{ escuchando() ? 'Grabando · ' + cronometro() : transcribiendoVoz() ? 'Convirtiendo audio a texto…' : 'Toca el micrófono para comenzar' }}</p>
+        @if (escuchando()) {<div class="voice-screen__levels" aria-hidden="true">@for (nivel of nivelesAudio(); track $index) {<i [style.height.px]="4 + nivel * 24"></i>}</div>}
+        @if (permisoVoz()) {<div class="voice-permission"><p>El audio se enviará a Groq para transcribirlo.</p><button type="button" (click)="permitirVoz()">Permitir audio y grabar</button></div>}
+        @if (error()) {<p class="capture-error" role="alert">{{ error() }}</p>}
+        <p class="voice-screen__note">El texto aparecerá al terminar la grabación. Podrás revisarlo antes de continuar.</p>
+        <button type="button" class="voice-screen__text" (click)="abrirEscrituraDesdeVoz()">Prefiero escribir</button>
+      </section>
     }
 
     <!-- Voice Waveform: solo durante grabación activa -->
@@ -106,7 +123,7 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
           } @else {
           <div #chatScroll id="capture-chat-thread" class="capture-chat" (scroll)="actualizarSeguimiento($event)" aria-live="polite" aria-relevant="additions text" [attr.aria-busy]="loading()">
             @if (captureTurns().length === 0 && !pendingCaptureText()) {
-              <div class="capture-chat__intro"><span class="capture-chat__avatar" aria-hidden="true">✦</span><div><strong>Escribe o dicta tu movimiento</strong><p>Incluye importe, concepto y etiquetas. Revísalo antes de guardar:</p><div class="capture-chat__suggestions"><button type="button" (click)="usarEjemplo('Gasté 180 en comida')">Gasté $180 en comida</button><button type="button" (click)="usarEjemplo('Recibí 8500 de nómina')">Recibí $8,500 de nómina</button></div></div></div>
+              <div class="capture-chat__intro"><span class="capture-chat__avatar" aria-hidden="true">✦</span><div><strong>Escribe un movimiento o pregunta</strong><p>Cuéntame qué registraste o pide un informe. Podrás revisar antes de guardar.</p><div class="capture-chat__suggestions"><button type="button" (click)="usarEjemplo('Gasté 180 en comida')">Gasté $180 en comida</button><button type="button" (click)="usarEjemplo('Reporte de este mes')">Reporte de este mes</button></div></div></div>
             }
             @for (turn of captureTurns(); track turn.id) {
               <article class="capture-chat__user"><span>{{ turn.user | textoFinanciero }}</span></article>
@@ -224,6 +241,8 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
   styles:[`.capture-editor{display:grid;gap:12px;max-height:55dvh;overflow:auto;padding:16px;border:1px solid var(--border-color,#777);border-radius:16px}.capture-editor label{display:grid;gap:4px}.capture-editor input,.capture-editor select{min-height:44px;font-size:16px;padding:8px;background:var(--surface-color,transparent);color:inherit;border:1px solid #888;border-radius:8px}.capture-editor button{min-height:44px}`]
 })
 export class QuickCaptureComponent implements OnDestroy {
+  private readonly changeDetector = inject(ChangeDetectorRef);
+  readonly pantallaVoz = signal(false);
   private readonly styleAssets = inject(FeatureStylesService).load('capture');
   private readonly captureLauncher = inject(CaptureLauncherService);
   readonly offline=inject(MovimientosOfflineService);
@@ -305,7 +324,7 @@ export class QuickCaptureComponent implements OnDestroy {
         this.reportLoading.set(false); this.reportError.set(''); this.error.set(''); this.editando.set(null);
         this.recuperando.set(false);
         this.usuarioChat = usuarioId; this.captureTurns.set([]); this.content = ''; this.contexto = null; this.consent = false; this.voiceConsent = false;
-        this.capturaSub?.unsubscribe(); this.transcripcionSub?.unsubscribe(); this.stopVoice(true); this.loading.set(false); this.processingStep.set(null); this.open.set(false);
+        this.capturaSub?.unsubscribe(); this.transcripcionSub?.unsubscribe(); this.stopVoice(true); this.loading.set(false); this.processingStep.set(null); this.open.set(false); this.pantallaVoz.set(false);
         if (usuarioId!==null) void this.restaurarBorrador(usuarioId,this.chatGeneration);
       }
     });
@@ -482,7 +501,9 @@ export class QuickCaptureComponent implements OnDestroy {
     this.content = text;
     requestAnimationFrame(() => document.getElementById('quick-capture-text')?.focus());
   }
-  close(): void { this.limpiarHoldTimer(); this.pointerGesture = false; this.stopVoice(true); if (this.processingStep()) this.cancelarTranscripcion(); this.open.set(false); }
+  close(): void { this.limpiarHoldTimer(); this.pointerGesture = false; this.stopVoice(true); if (this.processingStep()) this.cancelarTranscripcion(); this.open.set(false); this.pantallaVoz.set(false); this.changeDetector.detectChanges(); }
+  cerrarPantallaVoz(): void { this.permisoVoz.set(false); this.close(); }
+  abrirEscrituraDesdeVoz(): void { this.stopVoice(true); if (this.processingStep()) this.cancelarTranscripcion(); this.permisoVoz.set(false); this.pantallaVoz.set(false); this.open.set(true); this.mode.set('CAPTURE'); this.changeDetector.detectChanges(); requestAnimationFrame(() => document.getElementById('quick-capture-text')?.focus()); }
   cambiarModo(mode: CaptureMode): void {
     this.stopVoice(true);
     if (this.processingStep()) this.cancelarTranscripcion();
@@ -787,8 +808,9 @@ export class QuickCaptureComponent implements OnDestroy {
     this.captureLauncher.attach('chat');
     this.seguirFinal.set(true);
     this.cargarCategoriasCaptura();
-    const detail = (event as CustomEvent<{ tipo?: string; content?: string }>).detail;
-    this.open.set(true);
+    const detail = (event as CustomEvent<{ tipo?: string; content?: string; voz?: boolean }>).detail;
+    this.pantallaVoz.set(detail?.voz === true);
+    this.open.set(detail?.voz !== true);
     this.mode.set('CAPTURE');
     this.error.set('');
     if (detail?.content) { this.usarSugerencia(detail.content); }
@@ -799,7 +821,7 @@ export class QuickCaptureComponent implements OnDestroy {
       this.captureHint.set('Hoy se usa por defecto. Indica ayer, una fecha o una cuenta si lo necesitas.');
     }
     requestAnimationFrame(() => {
-      const target = window.matchMedia('(pointer: coarse)').matches ? 'quick-capture-panel' : 'quick-capture-text';
+      const target = detail?.voz ? 'voice-screen' : window.matchMedia('(pointer: coarse)').matches ? 'quick-capture-panel' : 'quick-capture-text';
       document.getElementById(target)?.focus({ preventScroll: true });
     });
   }
@@ -844,7 +866,7 @@ export class QuickCaptureComponent implements OnDestroy {
   permitirVoz(): void { this.voiceConsent = true; this.permisoVoz.set(false); void this.startVoice(); }
   toggleVoice(): void {
     if (this.listening()) { this.stopVoice(); return; }
-    if (!this.consent && !this.voiceConsent) { this.permisoVoz.set(true); return; }
+    if (!this.consent && !this.voiceConsent) { this.permisoVoz.set(true); this.changeDetector.detectChanges(); return; }
     void this.startVoice();
   }
   private async startVoice(): Promise<void> {
@@ -932,10 +954,10 @@ export class QuickCaptureComponent implements OnDestroy {
         }
         this.content = text;
         this.voiceCapture.set(true);
-        this.voiceMessage.set('Transcripción lista. Revisa la propuesta antes de guardarla.');
+        this.voiceMessage.set('Transcripción lista. Revisa el texto antes de continuar.');
+        this.pantallaVoz.set(false);
         this.open.set(true);
         this.mode.set('CAPTURE');
-        this.submit();
         requestAnimationFrame(() => document.getElementById('quick-capture-text')?.focus());
       },
       error: error => {
