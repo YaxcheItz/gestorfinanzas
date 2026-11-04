@@ -203,10 +203,19 @@ describe('QuickCaptureComponent processing and gestures', () => {
     expect(navigate).not.toHaveBeenCalled();
   });
   it('pide permiso explicito antes de acceder al microfono', () => {
-    component.toggleVoice();
-    expect(component.permisoVoz()).toBe(true);
-    expect(component.listening()).toBe(false);
-    expect(component.processingStep()).toBeNull();
+    const anterior = Object.getOwnPropertyDescriptor(navigator, 'mediaDevices');
+    const obtener = vi.fn();
+    Object.defineProperty(navigator, 'mediaDevices', {configurable:true,value:{getUserMedia:obtener}});
+    try {
+      component.toggleVoice();
+      expect(component.permisoVoz()).toBe(true);
+      expect(component.listening()).toBe(false);
+      expect(component.processingStep()).toBeNull();
+      expect(obtener).not.toHaveBeenCalled();
+    } finally {
+      if (anterior) Object.defineProperty(navigator, 'mediaDevices', anterior);
+      else Reflect.deleteProperty(navigator, 'mediaDevices');
+    }
   });
 
   it('no permite iniciar otra grabacion mientras el grabador anterior termina', async () => {
