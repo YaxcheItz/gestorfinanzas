@@ -329,6 +329,23 @@ describe('QuickCaptureComponent processing and gestures', () => {
     }
   });
 
+  it('muestra una transcripcion provisional sin solapar solicitudes ni aceptar respuestas tras cancelar', () => {
+    const respuesta = new Subject<any>();
+    const transcribir = vi.spyOn(TestBed.inject(FinanzasService), 'transcribirAudio').mockReturnValue(respuesta);
+    component.pantallaVoz.set(true); component.listening.set(true);
+    (component as any).voiceGeneration = 7;
+    (component as any).audioChunks = [new Blob(['audio'])];
+    (component as any).mediaRecorder = {mimeType:'audio/webm',state:'inactive'};
+    (component as any).previsualizarAudio(7); (component as any).previsualizarAudio(7);
+    expect(transcribir).toHaveBeenCalledOnce();
+    respuesta.next({success:true,data:'Texto provisional'});
+    expect(component.transcripcionParcial()).toBe('Texto provisional');
+    component.cerrarPantallaVoz();
+    respuesta.next({success:true,data:'Respuesta tardía'});
+    expect(component.transcripcionParcial()).toBe('');
+    expect(TestBed.inject(FinanzasService).confirmAiAction).not.toHaveBeenCalled();
+  });
+
   it('libera el microfono si el permiso llega despues de cerrar el panel', async () => {
     vi.stubGlobal('isSecureContext', true);
     vi.stubGlobal('MediaRecorder', class { static isTypeSupported() { return true; } });

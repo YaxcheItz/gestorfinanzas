@@ -64,9 +64,11 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
         </button>
         <p class="voice-screen__status" role="status">{{ escuchando() ? 'Grabando · ' + cronometro() : transcribiendoVoz() ? 'Convirtiendo audio a texto…' : 'Toca el micrófono para comenzar' }}</p>
         @if (escuchando()) {<div class="voice-screen__levels" aria-hidden="true">@for (nivel of nivelesAudio(); track $index) {<i [style.height.px]="4 + nivel * 24"></i>}</div>}
-        @if (permisoVoz()) {<div class="voice-permission"><p>El audio se enviará a Groq para transcribirlo.</p><button type="button" (click)="permitirVoz()">Permitir audio y grabar</button></div>}
+        @if (permisoVoz()) {<div class="voice-permission"><p>El audio se enviará periódicamente a Groq para mostrar una transcripción y al terminar para revisarla.</p><button type="button" (click)="permitirVoz()">Permitir audio y grabar</button></div>}
         @if (error()) {<p class="capture-error" role="alert">{{ error() }}</p>}
-        <p class="voice-screen__note">El texto aparecerá al terminar la grabación. Podrás revisarlo antes de continuar.</p>
+        <div class="voice-screen__transcript" aria-label="Transcripción provisional" aria-live="polite">{{ transcripcionParcial() || (escuchando() ? 'Las palabras aparecerán aquí con unos segundos de retraso.' : 'Tu transcripción aparecerá aquí.') }}</div>
+        <p class="voice-screen__note">El texto provisional puede cambiar. Al terminar, revisa la transcripción antes de continuar.</p>
+        @if (error() && transcripcionParcial() && !escuchando() && !transcribiendoVoz()) {<button type="button" class="voice-screen__text" (click)="usarTranscripcionParcial()">Revisar texto parcial</button>}
         <button type="button" class="voice-screen__text" (click)="abrirEscrituraDesdeVoz()">Prefiero escribir</button>
       </section>
     }
@@ -243,6 +245,7 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
 export class QuickCaptureComponent implements OnDestroy {
   private readonly changeDetector = inject(ChangeDetectorRef);
   readonly pantallaVoz = signal(false);
+  readonly transcripcionParcial = signal('');
   private readonly styleAssets = inject(FeatureStylesService).load('capture');
   private readonly captureLauncher = inject(CaptureLauncherService);
   readonly offline=inject(MovimientosOfflineService);
@@ -320,7 +323,7 @@ export class QuickCaptureComponent implements OnDestroy {
         this.operaciones.unsubscribe(); this.operaciones=new Subscription();
         this.confirming.set(null); this.reportMessages.set([]); this.weeklyTransactions.set([]);
         this.categories.set([]); this.cuentasEdicion.set([]); this.borrador={};
-        this.pendingCaptureText.set(''); this.sourceInput.set(''); this.voiceMessage.set(''); this.aiConsentRequired.set(false);
+        this.pendingCaptureText.set(''); this.sourceInput.set(''); this.voiceMessage.set(''); this.transcripcionParcial.set(''); this.aiConsentRequired.set(false);
         this.reportLoading.set(false); this.reportError.set(''); this.error.set(''); this.editando.set(null);
         this.recuperando.set(false);
         this.usuarioChat = usuarioId; this.captureTurns.set([]); this.content = ''; this.contexto = null; this.consent = false; this.voiceConsent = false;
@@ -448,6 +451,9 @@ export class QuickCaptureComponent implements OnDestroy {
   private captureTurnId = 0;
   /** Suscripción activa de transcripción de audio (permite cancelar) */
   private transcripcionSub: Subscription | null = null;
+  private transcripcionParcialSub: Subscription | null = null;
+  private transcripcionParcialOcupada = false;
+  private ultimaVistaPrevia = 0;
   private capturaSub: Subscription | null = null;
   private readonly router = inject(Router);
   readonly nivelesAudio = signal<number[]>(Array(7).fill(0));
@@ -461,6 +467,7 @@ export class QuickCaptureComponent implements OnDestroy {
     void this.guardarBorradorAhora().catch(()=>{});
     this.operaciones.unsubscribe();
     this.transcripcionSub?.unsubscribe();
+    this.transcripcionParcialSub?.unsubscribe();
     this.capturaSub?.unsubscribe();
     this.limpiarHoldTimer();
     this.stopVoice(true);
@@ -502,7 +509,8 @@ export class QuickCaptureComponent implements OnDestroy {
     requestAnimationFrame(() => document.getElementById('quick-capture-text')?.focus());
   }
   close(): void { this.limpiarHoldTimer(); this.pointerGesture = false; this.stopVoice(true); if (this.processingStep()) this.cancelarTranscripcion(); this.open.set(false); this.pantallaVoz.set(false); this.changeDetector.detectChanges(); }
-  cerrarPantallaVoz(): void { this.permisoVoz.set(false); this.close(); }
+  cerrarPantallaVoz(): void { this.permisoVoz.set(false); this.close(); this.transcripcionParcial.set(''); }
+  usarTranscripcionParcial(): void { this.content = this.transcripcionParcial(); this.voiceCapture.set(true); this.abrirEscrituraDesdeVoz(); }
   abrirEscrituraDesdeVoz(): void { this.stopVoice(true); if (this.processingStep()) this.cancelarTranscripcion(); this.permisoVoz.set(false); this.pantallaVoz.set(false); this.open.set(true); this.mode.set('CAPTURE'); this.changeDetector.detectChanges(); requestAnimationFrame(() => document.getElementById('quick-capture-text')?.focus()); }
   cambiarModo(mode: CaptureMode): void {
     this.stopVoice(true);
@@ -881,6 +889,7 @@ export class QuickCaptureComponent implements OnDestroy {
     }
     this.discardAudio = false;
     this.audioChunks = [];
+    this.transcripcionParcial.set(''); this.ultimaVistaPrevia = 0;
     this.cargarCategoriasCaptura();
     this.voiceCapture.set(true);
     this.voiceStartedAt = Date.now(); this.listening.set(true); this.updateTimer();
@@ -888,6 +897,10 @@ export class QuickCaptureComponent implements OnDestroy {
     this.timer = setInterval(() => {
       this.updateTimer();
       if (this.pantallaVoz() && !this.destruido) this.changeDetector.detectChanges();
+      const segundos = Math.floor((Date.now() - this.voiceStartedAt) / 1000);
+      if (this.pantallaVoz() && segundos >= 5 && segundos - this.ultimaVistaPrevia >= 8) {
+        this.ultimaVistaPrevia = segundos; this.previsualizarAudio(generation);
+      }
       if (Date.now() - this.voiceStartedAt >= 45_000) this.stopVoice();
     }, 250);
     try {
@@ -918,6 +931,7 @@ export class QuickCaptureComponent implements OnDestroy {
   }
   private stopVoice(discard = false): void {
     ++this.voiceGeneration;
+    this.transcripcionParcialSub?.unsubscribe(); this.transcripcionParcialSub = null; this.transcripcionParcialOcupada = false;
     this.detenerNivelesAudio();
     this.discardAudio ||= discard;
     this.listening.set(false); this.finishTimer();
@@ -929,6 +943,21 @@ export class QuickCaptureComponent implements OnDestroy {
     this.audioStream = null;
     this.mediaRecorder = null;
     this.audioChunks = [];
+  }
+  private previsualizarAudio(generation: number): void {
+    if (this.transcripcionParcialOcupada || !this.listening() || !this.audioChunks.length || !this.mediaRecorder) return;
+    const audio = new Blob(this.audioChunks, {type:this.mediaRecorder.mimeType || 'audio/webm'});
+    if (!audio.size || audio.size > 5 * 1024 * 1024) return;
+    this.transcripcionParcialOcupada = true;
+    const sub = this.finanzas.transcribirAudio(audio).pipe(finalize(() => { this.transcripcionParcialOcupada = false; })).subscribe({
+      next: response => {
+        if (generation !== this.voiceGeneration || !this.listening()) return;
+        const texto = response.success ? response.data?.trim() : '';
+        if (texto) { this.transcripcionParcial.set(texto); if (this.pantallaVoz() && !this.destruido) this.changeDetector.detectChanges(); }
+      },
+      error: () => { /* La transcripción final conserva el audio completo. */ }
+    });
+    this.transcripcionParcialSub = sub.closed ? null : sub;
   }
   private procesarGrabacion(mimeType: string): void {
     this.audioStream?.getTracks().forEach(track => track.stop());
@@ -955,6 +984,7 @@ export class QuickCaptureComponent implements OnDestroy {
           this.error.set(msg);
           this.voiceMessage.set('');
           this.toast.warning(msg, '⚠️ Sin voz detectada');
+          if (this.pantallaVoz() && !this.destruido) this.changeDetector.detectChanges();
           return;
         }
         this.content = text;
