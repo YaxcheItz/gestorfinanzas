@@ -1445,3 +1445,5 @@ Se precisa que `usage_unavailable` cuenta solo eventos emitidos tras procesar el
 - Entrega Android 0.1.29: PR #213, commit 390448d39458a20d14468bb95e7d92783df6f5f2. APK generada, codigo 30, SHA-256 d30be1463908d4bc48c738167feccb67c804be644ab299a780c6ebe894f6c4ce; firma habitual verificada, 86 recursos web coinciden y 27 pruebas Android pasan. Pendientes CI exacta, instalacion y verificacion fisica. El usuario aclaro que el texto parcial si aparecio con retraso.
 
 - Android 0.1.29 instalada por actualizacion en Samsung SM-A546E. CI completa aprobada para 390448d39458a20d14468bb95e7d92783df6f5f2 (PR #213). Hash del archivo instalado coincide con la APK d30be1463908d4bc48c738167feccb67c804be644ab299a780c6ebe894f6c4ce; appId y fecha original conservados. Se solicitaron pruebas fisicas sin guardar de voz y captura escrita; pendientes sus resultados. No integrado ni publicado.
+
+- El propietario respondio que la prueba de la APK 0.1.29 funciona; se pidio precisar si se refiere a voz, captura escrita o ambas. No se presume el resultado especifico de cada prueba.
