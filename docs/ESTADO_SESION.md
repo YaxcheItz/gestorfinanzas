@@ -1,3 +1,7 @@
+## CI de Configuracion y WhatsApp (4 noviembre 2026)
+
+CI del SHA f051243 fallo en E2E porque la prueba WhatsApp intentaba llenar un formulario dentro de Perfil cerrado. Se actualizo el recorrido para abrir el apartado antes de interactuar. E2E local completo de WhatsApp con H2 y Miniflare paso con proveedor simulado y usuarios ficticios; ninguna conexion real. Backend, frontend, PostgreSQL y Android de esa CI pasaron. El nuevo commit requiere CI exacta; ADB sigue sin telefono, sin APK nueva ni publicacion. PR #204 sigue separado y su CI E2E fallo por selector ambiguo y elemento desprendido; no declarar captura resuelta.
+
 ## Configuracion organizada (4 noviembre 2026)
 
 Rama diseno/organizacion-configuracion creada desde develop dc0c230. Revision previa: accesos duplicados a categorias y recurrentes, perfil/apariencia siempre abiertos; se conservan seguridad, respaldo, eliminacion y conexiones. Nueva pantalla agrupa cuenta, preferencias y avisos, finanzas y datos; perfil y apariencia se pliegan, se retiran accesos duplicados conservando los apartados y fragmentos existentes. No se eliminaron funciones ni datos. WhatsApp sigue en Perfil, etiquetado explicitamente; configuracion futura de tarjetas sigue pendiente.

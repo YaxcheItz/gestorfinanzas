@@ -17,6 +17,7 @@ test('WhatsApp conecta desde móvil y aísla dos propietarios con cola persisten
  }
  await page.addInitScript(auth=>{localStorage.setItem('finanzas_token',auth.token);localStorage.setItem('finanzas_user',JSON.stringify({id:auth.id,nombre:auth.nombre,email:auth.email}));},a);
  await page.setViewportSize({width:390,height:844});await page.goto('/configuracion');
+ await page.locator('#profile summary').click();
  const section=page.locator('app-whatsapp-connection');
  await section.getByLabel('Número de WhatsApp').fill('+'+pa);
  await section.getByLabel('Permito consultar y registrar').check();
