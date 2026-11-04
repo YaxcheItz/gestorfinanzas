@@ -5,6 +5,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { PresupuestosComponent } from './presupuestos.component';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { ListaContextoService } from '../../core/services/lista-contexto.service';
 
 describe('PresupuestosComponent estados del período', () => {
   const vacio = { success: true, data: { presupuestos: [], resumenPorMoneda: [] } };
@@ -89,5 +90,23 @@ describe('PresupuestosComponent estados del período', () => {
     expect(fixture.componentInstance.anioSeleccionado()).toBe(2022);
     expect(fixture.componentInstance.aniosDisponibles).toContain(2022);
     expect(fixture.componentInstance.formCategoriaId).toBe(7);
+  });
+
+  it('espera el presupuesto de la nueva lista antes de abrir el formulario', () => {
+    TestBed.overrideProvider(ActivatedRoute, {useValue:{snapshot:{queryParamMap:convertToParamMap({categoriaId:'7',moneda:'MXN'})}}});
+    const pendiente = new Subject<any>();
+    getPresupuestos.mockReturnValueOnce(of({success:true,data:{presupuestos:[{id:8,categoriaId:7,moneda:'MXN',listaId:1,montoLimite:100}],resumenPorMoneda:[]}})).mockReturnValueOnce(pendiente);
+    const contexto = TestBed.inject(ListaContextoService);
+    contexto.aplicar([{id:1,nombre:'Lista A',personal:true,rol:'PROPIETARIO',miembros:[]},{id:2,nombre:'Lista B',personal:false,rol:'PROPIETARIO',miembros:[]}] as any);
+    contexto.cargando.set(true);
+    const fixture = TestBed.createComponent(PresupuestosComponent); fixture.detectChanges();
+    contexto.seleccionar(2); fixture.detectChanges();
+    contexto.cargando.set(false); fixture.detectChanges();
+    expect(fixture.componentInstance.modalAbierto()).toBe(false);
+    pendiente.next({success:true,data:{presupuestos:[{id:9,categoriaId:7,moneda:'MXN',listaId:2,montoLimite:200}],resumenPorMoneda:[]}});
+    expect(fixture.componentInstance.modalAbierto()).toBe(true);
+    expect(fixture.componentInstance.modoEdicion()).toBe(true);
+    expect(fixture.componentInstance.formMontoLimite).toBe(200);
+    fixture.destroy();
   });
 });

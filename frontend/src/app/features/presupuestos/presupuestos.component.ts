@@ -704,7 +704,7 @@ export class PresupuestosComponent implements OnInit {
   private abrirCategoriaPendiente(): void {
     const id = this.categoriaPendiente;
     const resumen = this.resumen();
-    if (!id || !this.categoriasCargadas || !resumen || this.contextoLista.cargando()) return;
+    if (!id || !this.categoriasCargadas || !resumen || this.contextoLista.cargando() || this.loading() || this.error()) return;
     this.categoriaPendiente = null;
     if (this.router && this.route) void this.router.navigate([], {relativeTo:this.route, queryParams:{categoriaId:null,moneda:null,mes:null,anio:null}, queryParamsHandling:'merge', replaceUrl:true});
     if (!this.contextoLista.puedeEscribir()) { this.toastService.error('Esta lista no permite editar presupuestos.'); return; }

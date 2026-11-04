@@ -1,3 +1,13 @@
+## Revision de presupuesto entre listas (3 noviembre 2026)
+
+Se comprobo por ADB que el Samsung tiene Android 0.1.21/codigo 22 y que la APK extraida coincide con el archivo local SHA256 2a27535222387d0c15410249a36f69c0af4432ec2c444c614804f2514492fb77; sin abrir la app ni datos de usuario. PR196 integrado en develop f833ff6; PR197 y PR198 con CI correcta para sus SHA anteriores. Web sigue en main 97d8639; PR192 de promocion abierto.
+
+Se reprodujo con listas ficticias que la apertura del presupuesto podia usar un resumen anterior al cambiar de lista durante una carga. Ahora espera a que termine correctamente la consulta actual; una regresion fracaso antes y paso tras corregirlo. Se verifico tambien en Chromium que el gesto abre el presupuesto existente de octubre de 2026, con categoria, importe y mes correctos, sin escrituras. Build, 482 unitarias frontend y 3 E2E focales correctos. La correccion aun requiere CI exacta y una APK nueva; 0.1.21 instalada no la contiene. La aceptacion fisica, publicaciones y carreras de sesion y posible duplicacion de transferencias siguen pendientes.
+
+## Android 0.1.21 instalada y lista para revision fisica (3 noviembre 2026)
+
+APK 0.1.21 (versionCode=22) instalada por actualizacion en Samsung SM-A546E (RZCW80EJNHX). Hash extraido del dispositivo 2a27535222387d0c15410249a36f69c0af4432ec2c444c614804f2514492fb77 coincide con el local preparado. firstInstallTime=2026-10-22 00:26:31 y UID=10477 conservados. Evidencia en .local/android-021-verification.json. No se abrio la app ni se accedio a datos financieros. Rama activa: diseno/inicio-minimalista-busqueda HEAD 94eac80, limpia y sincronizada con origen. Siguiente: revision fisica de los cambios de Inicio con el propietario; verificar PR#197/#198/#196/#192 y continuar revision visual por secciones.
+
 ## Inicio minimalista y busqueda en curso (3 noviembre 2026)
 
 El propietario pidio conservar gastos como protagonista; mostrar ingresos y saldo neto, sin deuda, dinero en cuentas ni accesos a cuentas/informe en ese bloque; ojo junto a Configuracion; calendario compacto; y busqueda dentro de Inicio. Tambien pidio gesto arriba para gasto y abajo para presupuesto y apariencia de presupuestos inspirada en MonAi. Rama diseno/inicio-minimalista-busqueda desde develop 928f388 comprobado.

@@ -47,6 +47,50 @@ test('la búsqueda del dock funciona en Inicio con datos ficticios y permite rei
 test.describe('gestos de categorías', () => {
   test.use({ hasTouch: true, isMobile: true });
 
+  test('abre el presupuesto existente de la categoría en el mes elegido', async ({page, context}) => {
+    const usuario = {id:998,nombre:'Periodo QA',email:'periodo@example.test'};
+    await page.clock.setFixedTime(new Date('2026-11-15T18:00:00Z'));
+    await page.addInitScript(user => {
+      localStorage.setItem('finanzas_token', `test.${btoa(JSON.stringify({exp:Math.floor(Date.now()/1000)+3600}))}.synthetic`);
+      localStorage.setItem('finanzas_user', JSON.stringify(user));
+    }, usuario);
+    const consultas: string[] = [];
+    const escrituras: string[] = [];
+    await page.route('**/api/**', async route => {
+      const request = route.request(), url = new URL(request.url());
+      if (request.method() !== 'GET') { escrituras.push(url.pathname); return route.abort(); }
+      let data: unknown = [];
+      if (url.pathname === '/api/perfil') data = {...usuario,tema:'CLARO',monedaPredeterminada:'MXN'};
+      if (url.pathname === '/api/dashboard/resumen') data = {totalCuentas:1,resumenPorMoneda:[{moneda:'MXN',balanceTotal:500,ingresosMes:0,gastosMes:100,totalCuentas:1}],ultimosMovimientos:[]};
+      if (url.pathname === '/api/dashboard/analitica') data = {gastosPorCategoria:[{categoriaId:1,categoriaNombre:'Comida ficticia',monto:100,moneda:'MXN'}],ultimosSeisMeses:[]};
+      if (url.pathname === '/api/categorias') data = [{id:1,nombre:'Comida ficticia',tipo:'GASTO',activo:true}];
+      if (url.pathname === '/api/presupuestos') {
+        consultas.push(url.search);
+        const octubre = url.searchParams.get('mes') === '10' && url.searchParams.get('anio') === '2026';
+        data = {presupuestos:octubre ? [{id:4,categoriaId:1,categoriaNombre:'Comida ficticia',moneda:'MXN',listaId:null,montoLimite:350,montoGastado:100,montoDisponible:250,porcentajeConsumido:28,porcentajeAlerta:80}] : [],resumenPorMoneda:[]};
+      }
+      await route.fulfill({json:{success:true,data}});
+    });
+    await page.goto('/dashboard');
+    await page.locator('.time-dropdown-btn').click();
+    await page.getByRole('dialog',{name:'Seleccionar periodo financiero'}).getByRole('button',{name:/Octubre/i}).click();
+    const categoria = page.getByRole('button',{name:'Filtrar movimientos de Comida ficticia'});
+    await categoria.scrollIntoViewIfNeeded();
+    const box = (await categoria.boundingBox())!, x = Math.round(box.x+box.width/2), y = Math.round(box.y+box.height/2);
+    const cdp = await context.newCDPSession(page);
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y}]});
+    await page.waitForTimeout(600);
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x,y:y+40}]});
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+    const dialog = page.getByRole('dialog',{name:'Editar Presupuesto'});
+    await expect(dialog).toBeVisible();
+    await expect(dialog.locator('#modalCat option:checked')).toHaveText('Comida ficticia');
+    await expect(dialog.locator('#modalMonto')).toHaveValue('350');
+    await expect(dialog).toContainText('Octubre 2026');
+    expect(consultas.some(q => new URLSearchParams(q).get('mes') === '10' && new URLSearchParams(q).get('anio') === '2026')).toBe(true);
+    expect(escrituras).toEqual([]);
+  });
+
   test('desplaza la página y el gráfico y permite ambos gestos tras mantener pulsado', async ({ page, context }) => {
     const usuario = { id: 996, nombre: 'Gesto QA', email: 'gesto@example.test' };
     await page.addInitScript(user => {
