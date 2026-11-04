@@ -223,6 +223,15 @@ describe('QuickCaptureComponent processing and gestures', () => {
     expect(component.error()).toBe('Error temporal');
   });
 
+  it('no elige automaticamente cuando restaurantes puede referirse a dos categorias', () => {
+    const propuesta = { id:'pendiente', type:'CREATE_TRANSACTION', summary:'Gasto', data:{tipo:'GASTO',monto:25,categoriaId:null}, version:0 } as any;
+    component.categories.set([{ id:1,nombre:'Comida',tipo:'GASTO',activo:true,esPersonalizada:true },{ id:2,nombre:'Alimentos y Supermercado',tipo:'GASTO',activo:true,esPersonalizada:true }]);
+    component.captureTurns.set([{id:1,user:'Gasto 25',answer:'Elige categoria',actions:[propuesta],voice:false}]);
+    component.content='restaurantes';component.submit();
+    expect(TestBed.inject(FinanzasService).editarPropuestaAi).not.toHaveBeenCalled();
+    expect(TestBed.inject(FinanzasService).confirmAiAction).not.toHaveBeenCalled();
+  });
+
   it('keeps a long press from triggering the manual form on release', () => {
     vi.useFakeTimers();
     const button = document.createElement('button');

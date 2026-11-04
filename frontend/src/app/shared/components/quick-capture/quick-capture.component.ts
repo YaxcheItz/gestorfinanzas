@@ -502,9 +502,10 @@ export class QuickCaptureComponent implements OnDestroy {
       const respuesta = normalizar(value).replace(/^(?:fue\s+)?(?:en\s+|de\s+|categoria\s+)?/, '').trim();
       const categorias = this.categoriasPara(pendientes[0]);
       let opciones = categorias.filter(categoria => normalizar(categoria.nombre) === respuesta);
-      if (!opciones.length && /^(?:restaurante|restaurantes)$/.test(respuesta)) {
-        opciones = categorias.filter(categoria => normalizar(categoria.nombre) === 'comida');
+      if (!opciones.length && /^(?:comida|restaurante|restaurantes)$/.test(respuesta)) {
+        opciones = categorias.filter(categoria => /^(?:comida|alimentos)(?:\b|$)/.test(normalizar(categoria.nombre)));
       }
+      if (opciones.length > 1) { this.error.set('Hay varias categorías posibles. Elige una de las opciones de la propuesta.'); return; }
       if (opciones.length === 1) {
         this.actualizarPropuesta(pendientes[0], {...pendientes[0].data, categoriaId: opciones[0].id}, () => {
           if (this.content.trim() === value) this.content = '';

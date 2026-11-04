@@ -23,7 +23,7 @@ public final class MotorChatReglas {
     private static final Map<String, Set<String>> DICCIONARIO = Map.ofEntries(
         Map.entry("comida", Set.of("tacos","taco","comida","restaurante","restaurantes","cafe","cafeteria","pizza","hamburguesa","desayuno","almuerzo","cena")),
         Map.entry("supermercado", Set.of("super","supermercado","despensa","abarrotes","walmart","soriana","chedraui")),
-        Map.entry("alimentos", Set.of("super","despensa","abarrotes","tacos","comida")),
+        Map.entry("alimentos", Set.of("super","despensa","abarrotes","tacos","comida","restaurante","restaurantes")),
         Map.entry("transporte", Set.of("uber","didi","taxi","gasolina","metro","camion","autobus","transporte")),
         Map.entry("servicios", Set.of("luz","agua","internet","telefono","gas","cfe")),
         Map.entry("hogar", Set.of("renta","hogar","muebles","alquiler")),
