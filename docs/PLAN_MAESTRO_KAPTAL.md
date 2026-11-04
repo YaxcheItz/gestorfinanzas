@@ -1,3 +1,7 @@
+## Revision de Configuracion e integracion (4 noviembre 2026)
+
+El propietario reviso y aprobo Configuracion en Android 0.1.26. PR206 integrado a develop 55904684f9b6442a29adccf0a2bbbc2ca05bf0b1; PR205 figura integrado por inclusion. PR204 captura tenia CI verde pero conflicto documental al combinar con develop; PR207 integracion/captura-configuracion-20261104 SHA 9766a6a887dc54309411071b698a40977e4cb4b4 combina ambos y conserva ambos documentos, CI en curso. Pendiente integrar tras CI exacta, publicar a main y preparar APK superior con captura. APK instalada 0.1.26 sin captura PR204. Solicitada prueba de voz ficticia sin guardar; estado Groq no confirmado. No acceder datos financieros. Mantener carreras de sesion y posible duplicacion de transferencias pendientes.
+
 ## CI de Configuracion y WhatsApp (4 noviembre 2026)
 
 CI del SHA f051243 fallo en E2E porque la prueba WhatsApp intentaba llenar un formulario dentro de Perfil cerrado. Se actualizo el recorrido para abrir el apartado antes de interactuar. E2E local completo de WhatsApp con H2 y Miniflare paso con proveedor simulado y usuarios ficticios; ninguna conexion real. Backend, frontend, PostgreSQL y Android de esa CI pasaron. El nuevo commit requiere CI exacta; ADB sigue sin telefono, sin APK nueva ni publicacion. PR #204 sigue separado y su CI E2E fallo por selector ambiguo y elemento desprendido; no declarar captura resuelta.
