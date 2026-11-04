@@ -21,6 +21,7 @@ class MotorChatReglasTest {
  private final List<CategoriaResponse> categorias=List.of(new CategoriaResponse(8L,"Comida",TipoTransaccion.GASTO,null,null,true,true));
  private MotorChatReglas.Resultado interpretar(String texto){return motor.interpretar(texto,cuentas,categorias,List.of(),hoy);}
  @Test void gastoUsaHoyYMontoExacto(){var r=interpretar("Gast\u00e9 80.50 en tacos");assertEquals("GASTO",r.datos().get("tipo"));assertEquals(new BigDecimal("80.50"),r.datos().get("monto"));assertEquals("2026-10-04",r.datos().get("fecha"));assertEquals(8L,r.datos().get("categoriaId"));}
+ @Test void restaurantesEnPluralSeAsociaAComida(){assertEquals(8L,interpretar("Gaste 80 en restaurantes").datos().get("categoriaId"));}
  @Test void ingresoReconoceAcentosYAyer(){var r=interpretar("Recib\u00ed 900 de sueldo ayer");assertEquals("INGRESO",r.datos().get("tipo"));assertEquals("2026-10-03",r.datos().get("fecha"));}
  @Test void fechaNoSeConfundeConImporte(){var r=interpretar("Gasto 50 en tacos 2026-09-30");assertEquals("2026-09-30",r.datos().get("fecha"));assertEquals(new BigDecimal("50.00"),r.datos().get("monto"));}
  @Test void fechaInvalidaPreguntaSinPropuesta(){assertNull(interpretar("Gasto 50 31/02/2026").datos());}

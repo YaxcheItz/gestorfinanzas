@@ -496,6 +496,23 @@ export class QuickCaptureComponent implements OnDestroy {
     if (listaId != null && !this.listas.puedeEscribir()) { this.error.set('Elige una lista donde puedas registrar.'); return; }
     const value = this.content.trim();
     if (!value || this.loading() || this.catalogoCargando() || this.listening() || this.stopping() || this.confirming() !== null) return;
+    const pendientes = this.captureTurns().flatMap(turn => turn.actions).filter(proposal => this.necesitaCategoria(proposal));
+    if (pendientes.length === 1) {
+      const normalizar = (texto: string) => texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+      const respuesta = normalizar(value).replace(/^(?:fue\s+)?(?:en\s+|de\s+|categoria\s+)?/, '').trim();
+      const categorias = this.categoriasPara(pendientes[0]);
+      let opciones = categorias.filter(categoria => normalizar(categoria.nombre) === respuesta);
+      if (!opciones.length && /^(?:restaurante|restaurantes)$/.test(respuesta)) {
+        opciones = categorias.filter(categoria => normalizar(categoria.nombre) === 'comida');
+      }
+      if (opciones.length === 1) {
+        this.actualizarPropuesta(pendientes[0], {...pendientes[0].data, categoriaId: opciones[0].id}, () => {
+          if (this.content.trim() === value) this.content = '';
+          this.marcarBorrador();
+        });
+        return;
+      }
+    }
     this.seguirFinal.set(true);
     if(!this.offline.conexion()){
       this.prepararEnDispositivo(value, listaId);return;
@@ -648,14 +665,14 @@ export class QuickCaptureComponent implements OnDestroy {
     }
     this.actualizarPropuesta(p,datos);
   }
-  private actualizarPropuesta(proposal:AiActionProposal,datos:Record<string,unknown>):void {
+  private actualizarPropuesta(proposal:AiActionProposal,datos:Record<string,unknown>,alActualizar?:()=>void):void {
     if (this.confirming()) return;
     if(proposal.local){
       const cuenta=this.cuentasEdicion().find(c=>c.id===datos['cuentaId'])?.nombre??'Cuenta por seleccionar';
       const destino=datos['tipo']==='TRANSFERENCIA'?' a '+(this.cuentasEdicion().find(c=>c.id===datos['cuentaDestinoId'])?.nombre??'destino por seleccionar'):'';
       const p={...proposal,data:{...datos},version:(proposal.version??0)+1,summary:`${datos['tipo']} de ${datos['monto']} · ${cuenta}${destino} · ${datos['fecha']}`};
       this.captureTurns.update(turns=>turns.map(t=>({...t,actions:t.actions.map(previo=>previo.id===p.id?p:previo)})));
-      this.editando.set(null);this.marcarBorrador();return;
+      this.editando.set(null);this.marcarBorrador();alActualizar?.();return;
     }
     if(!this.offline.conexion()){this.error.set('Editar una propuesta del servidor requiere conexión.');return;}
     this.confirming.set(proposal.id); const generation=this.chatGeneration;
@@ -663,7 +680,7 @@ export class QuickCaptureComponent implements OnDestroy {
       next:r => { if(generation!==this.chatGeneration)return; this.confirming.set(null);
         if(!r.success||!r.data){this.error.set(r.message||'No se pudo editar.');return;}
         this.captureTurns.update(turns=>turns.map(t=>({...t,actions:t.actions.map(p=>p.id===proposal.id?r.data!:p)})));
-        this.editando.set(null);this.error.set('');
+        this.editando.set(null);this.error.set('');alActualizar?.();
       },error:e=>{if(generation!==this.chatGeneration)return;this.confirming.set(null);this.error.set(this.errorMessage(e));}
     }));
   }

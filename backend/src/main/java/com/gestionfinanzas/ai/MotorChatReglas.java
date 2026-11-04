@@ -21,7 +21,7 @@ public final class MotorChatReglas {
     private static final Pattern FECHA = Pattern.compile("\\b(\\d{4}-\\d{2}-\\d{2}|\\d{1,2}/\\d{1,2}(?:/\\d{4})?)\\b");
     private static final Pattern RANGO = Pattern.compile("\\b(?:del|desde)\\s+(\\d{4}-\\d{2}-\\d{2})\\s+(?:al|hasta)\\s+(\\d{4}-\\d{2}-\\d{2})\\b");
     private static final Map<String, Set<String>> DICCIONARIO = Map.ofEntries(
-        Map.entry("comida", Set.of("tacos","taco","comida","restaurante","cafe","cafeteria","pizza","hamburguesa","desayuno","almuerzo","cena")),
+        Map.entry("comida", Set.of("tacos","taco","comida","restaurante","restaurantes","cafe","cafeteria","pizza","hamburguesa","desayuno","almuerzo","cena")),
         Map.entry("supermercado", Set.of("super","supermercado","despensa","abarrotes","walmart","soriana","chedraui")),
         Map.entry("alimentos", Set.of("super","despensa","abarrotes","tacos","comida")),
         Map.entry("transporte", Set.of("uber","didi","taxi","gasolina","metro","camion","autobus","transporte")),
