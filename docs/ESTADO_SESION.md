@@ -1,3 +1,33 @@
+## Permiso de microfono Android en revision (3 noviembre 2026)
+
+El propietario reporto que Kaptal no mostraba permiso y decia que el navegador bloqueo el microfono. Se verifico que la APK 0.1.21 no declara RECORD_AUDIO y el BridgeWebChromeClient de Capacitor solicita RECORD_AUDIO y MODIFY_AUDIO_SETTINGS al usar captura de audio. Se declararon ambos en el manifiesto y se aclaro el mensaje de denegacion; la app conserva el consentimiento previo al acceso. Android exige declaracion y permiso en tiempo de ejecucion: https://developer.android.com/media/platform/mediarecorder . Build y 84 pruebas focales correctos; E2E, CI, empaquetado y prueba fisica aun pendientes al registrar. No se grabo ni envio audio.
+
+El usuario pidio despues una captura escrita mas simple y compacta, quitar la pesta?a Rapido, interpretar datos con reglas/diccionario y recurrir a IA gratuita solo si es necesario. Investigar comportamiento, costos, privacidad y mantener confirmacion antes de guardar; no hacer llamadas reales de IA para QA ni conectar nuevos servicios de pago. Mantenerlo como etapa distinta; no afirmar redisenado. El usuario confirmo que el presupuesto se abre correctamente en Android 0.1.21, pero el gesto cambiaba de ventana antes de soltar; se corrigio y probo de forma sintetica, pendiente aceptacion fisica de la version nueva.
+
+## Gesto cancelable y diagnostico de microfono (3 noviembre 2026)
+
+El propietario confirmo en Android 0.1.21 que el gesto hacia presupuesto abre la categoria y periodo correctos, pero reporto que la interfaz cambiaba antes de soltar. Se reprodujo en prueba unitaria: el menu contextual se abria al finalizar el temporizador. La correccion conserva solo la guia mientras se mantiene el dedo, permite invertir direccion o volver al centro para cancelar, ejecuta al soltar y mantiene el menu si se suelta sin arrastrar; bloquea el contextmenu nativo durante el gesto. Build y 57 pruebas focales correctos; dos E2E tactiles sinteticos correctos. Aun sin CI ni prueba fisica de la correccion.
+
+El propietario reporto que el microfono no solicita permiso y dice que el navegador lo bloqueo. La APK 0.1.21 no declara RECORD_AUDIO; el cliente WebChrome de Capacitor solicita RECORD_AUDIO y MODIFY_AUDIO_SETTINGS al pedir captura de audio. Es una causa concreta que requiere corregir el manifiesto, verificar firma/permisos y probar en Android tras consentimiento; no se ha grabado ni enviado audio. Referencia https://developer.android.com/media/platform/mediarecorder .
+
+El propietario pide despues redisenar la captura escrita, mas compacta y minimalista, retirar la pesta?a Rapido, interpretar montos, categorias y etiquetas con reglas/diccionario y usar IA gratuita solo cuando haga falta. Investigar y conservar confirmacion antes de guardar, privacidad, opciones de error y limites gratuitos; no activar servicios de pago ni hacer QA con IA o datos financieros reales. Planificar como etapa nueva desde develop. La APK instalada aun es 0.1.21; la candidata 0.1.22 no incluye la correccion de gesto y no debe instalarse como entrega final.
+
+## Revision de presupuesto entre listas (3 noviembre 2026)
+
+Se comprobo por ADB que el Samsung tiene Android 0.1.21/codigo 22 y que la APK extraida coincide con el archivo local SHA256 2a27535222387d0c15410249a36f69c0af4432ec2c444c614804f2514492fb77; sin abrir la app ni datos de usuario. PR196 integrado en develop f833ff6; PR197 y PR198 con CI correcta para sus SHA anteriores. Web sigue en main 97d8639; PR192 de promocion abierto.
+
+Se reprodujo con listas ficticias que la apertura del presupuesto podia usar un resumen anterior al cambiar de lista durante una carga. Ahora espera a que termine correctamente la consulta actual; una regresion fracaso antes y paso tras corregirlo. Se verifico tambien en Chromium que el gesto abre el presupuesto existente de octubre de 2026, con categoria, importe y mes correctos, sin escrituras. Build, 482 unitarias frontend y 3 E2E focales correctos. La correccion aun requiere CI exacta y una APK nueva; 0.1.21 instalada no la contiene. La aceptacion fisica, publicaciones y carreras de sesion y posible duplicacion de transferencias siguen pendientes.
+
+## Android 0.1.21 instalada y lista para revision fisica (3 noviembre 2026)
+
+APK 0.1.21 (versionCode=22) instalada por actualizacion en Samsung SM-A546E (RZCW80EJNHX). Hash extraido del dispositivo 2a27535222387d0c15410249a36f69c0af4432ec2c444c614804f2514492fb77 coincide con el local preparado. firstInstallTime=2026-10-22 00:26:31 y UID=10477 conservados. Evidencia en .local/android-021-verification.json. No se abrio la app ni se accedio a datos financieros. Rama activa: diseno/inicio-minimalista-busqueda HEAD 94eac80, limpia y sincronizada con origen. Siguiente: revision fisica de los cambios de Inicio con el propietario; verificar PR#197/#198/#196/#192 y continuar revision visual por secciones.
+
+## Inicio minimalista y busqueda en curso (3 noviembre 2026)
+
+El propietario pidio conservar gastos como protagonista; mostrar ingresos y saldo neto, sin deuda, dinero en cuentas ni accesos a cuentas/informe en ese bloque; ojo junto a Configuracion; calendario compacto; y busqueda dentro de Inicio. Tambien pidio gesto arriba para gasto y abajo para presupuesto y apariencia de presupuestos inspirada en MonAi. Rama diseno/inicio-minimalista-busqueda desde develop 928f388 comprobado.
+
+Cambios locales: resumen y calendario simplificados; busqueda paginada de movimientos de todos los periodos de la lista activa, con errores y reintento; gesto de presupuesto corrige el enlace para abrir crear/editar en la categoria y moneda correspondientes. El backend mantiene un presupuesto por categoria/lista/mes aunque se cambie la moneda, por ello se abre el existente para evitar reemplazos no advertidos. En Inicio se muestran gasto y limite del presupuesto. Fuente de referencia https://www.get-monai.app/whats-new. Build productivo correcto; 480 pruebas frontend correctas, 53 focales posteriores correctas; 13 E2E locales correctas y 2 focales posteriores correctas con busqueda, desplazamiento, gesto arriba abre registro con categoria y gesto abajo abre presupuesto con categoria y moneda. Arranque 200/401/503 y navegacion sinteticos correctos. Se detecto y corrigio localmente que el gesto de presupuesto abriera el mes actual aunque Inicio estuviera en otro: se envia mes y anio y se comprueba con una regresion. Build y 54 pruebas focales pasaron despues; falta E2E del periodo, CI y revision fisica. PR198 y el APK 0.1.21 preparado son anteriores a esta correccion y deben actualizarse y reconstruirse; no instalar ese artefacto. No afirmar integrada, publicada o instalada. Android instalado sigue 0.1.20 y gesto fisico pendiente. Continuar sin datos financieros productivos; carreras de sesion y posible duplicacion de transferencias pendientes.
+
 ## Android 0.1.20 instalado y revision de Inicio (3 noviembre 2026)
 
 PR194 integrado en develop 29b96f6f5da45f5f1380ddbae76cd4feb145730c; PR195 integrado en develop 928f3880048e5f787711467e4acb907f3c30e5da. CI 41709567026 y Android 41709567274 correctos para la fuente eff8e08ab4a0ea2f6723bd81214ea782a61ae559. Frontend 475 unitarias, E2E local 44 correctas y 4 PWA omitidas, pruebas Android release 27 correctas; build release correcto.
@@ -1588,3 +1618,26 @@ La edicion aceptaba una cadena como ` A ` porque la validacion de la solicitud c
 ## Alcance de la se?al de uso no disponible
 
 Se precisa que `usage_unavailable` cuenta solo eventos emitidos tras procesar el uso de una respuesta; errores HTTP, transporte o deserializacion pueden terminar antes sin emitirlos. No equivale a todos los intentos sin contadores y su ausencia no demuestra consumo cero. Pruebas Groq/Gemini con HTTP simulado cubren 429, transporte, JSON invalido y respuesta 2xx sin uso; 15 pruebas focales correctas, sin llamadas reales ni credenciales heredadas. CI e integracion pendientes al registrar.
+
+## Captura escrita y permisos Android (2026-11-03)
+
+- La entrada principal de anadir abre escritura o dictado; se elimina el selector Rapido y queda accesible la introduccion manual para funciones existentes. Se simplifican el encabezado y las sugerencias. Las propuestas siguen requiriendo revision y confirmacion.
+- Se incorporan los permisos Android de grabacion a la correccion ya preparada; su funcionamiento fisico aun debe probarse con consentimiento del usuario. No se ha grabado audio ni probado una transaccion productiva.
+- 484 pruebas frontend pasan. La verificacion E2E, APK, CI, instalacion y publicacion se registraran por separado. Pendiente mejorar interpretacion por diccionario y evaluar proveedor gratuito, sin prometer reconocimiento perfecto.
+
+### Entrega Android 0.1.24
+
+- APK 0.1.24 (codigo 25) instalada por actualizacion en Samsung SM-A546E; primera instalacion conservada. El SHA-256 del paquete extraido del dispositivo coincide con el archivo local: 9fe9858f07257fcb6a9b33db698080dc8491d9f9225dddc5855d6e92ca1ad582. Certificado y 86 archivos web verificados.
+- PR #202: CI completa exitosa para 70c0deb4b44745795e8f5b210550748b0c0b80b1. El build local corresponde a cd02666 y los commits intermedios solo cambian pruebas. 485 pruebas frontend, 27 Android y pruebas de captura con datos ficticios pasan.
+- La declaracion de permiso de microfono se corrigio, pero la grabacion y el gesto aun no se probaron en esta version fisica. La mejora de interpretacion de texto, categoria y etiquetas continua pendiente. No se integro ni publico.
+
+## Indicador de gestos y proveedor de voz (2026-11-03)
+
+- El usuario confirmo que la app ya pide configurar Groq y que las etiquetas de gasto y presupuesto del gesto se cortan. La guia se mueve fuera del carrusel, centrada en la pantalla; conserva arriba para gasto, abajo para presupuesto y accion al soltar. Build Angular y dos E2E tactiles sinteticos pasaron, con limites visibles comprobados. Validacion fisica pendiente.
+- La transcripcion actual requiere Groq configurado en el backend; el registro escrito usa reglas propias primero. Groq Whisper ofrece plan gratuito sujeto a limites y controles de datos; Gemini gratis puede usar contenido para mejorar productos. No se configuro ninguna clave ni se envio audio. Fuentes: https://console.groq.com/docs/speech-to-text , https://console.groq.com/docs/your-data , https://ai.google.dev/gemini-api/docs/pricing .
+- APK 0.1.25 pendiente de generar, verificar e instalar; CI, integracion y publicacion pendientes.
+
+### Android 0.1.25 instalada
+
+- APK 0.1.25 codigo 26 instalada por actualizacion; hash del dispositivo 8cc5d114b00fc268caccfbf612d9bdcc12d029f563212754de66ba992a03b139 coincide con el archivo local; fecha de primera instalacion conservada. CI integral y APK pasaron para af4aebf6e01f5e231fdfd664d8c33b61f46875cb (PR #203).
+- Las etiquetas del gesto estan fuera del carrusel y en limites de pantalla en pruebas sinteticas; falta aceptacion fisica. No se abrio la app ni se consultaron finanzas. El proveedor Groq aun no esta configurado. No integrado ni publicado.

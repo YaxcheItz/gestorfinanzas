@@ -33,7 +33,7 @@ type TipoRegistro = 'GASTO' | 'INGRESO' | 'TRANSFERENCIA';
     <div appDialogViewport class="quick-entry-backdrop" (click)="cerrar()">
       <section class="quick-entry" role="dialog" aria-modal="true" aria-labelledby="quick-entry-title" (click)="$event.stopPropagation()" (keydown)="teclado($event)">
         <header><h2 id="quick-entry-title">{{ repitiendo() ? 'Repetir movimiento' : 'Añadir movimiento' }}</h2><app-privacy-toggle/><button type="button" class="utility-button" (click)="cerrar()" [disabled]="saving()" aria-label="Cerrar registro">×</button></header>
-        <div class="entry-mode" aria-label="Forma de añadir"><button type="button" class="is-active" aria-pressed="true">Rápido</button><button type="button" (click)="voz()" [disabled]="saving() || incierto">Escribir o dictar</button></div>
+        <button type="button" class="entry-text-button" (click)="voz()" [disabled]="saving() || incierto">Escribir o dictar</button>
         <form (ngSubmit)="guardar()">
           <fieldset [disabled]="saving() || incierto || loading()">
             <div class="entry-types" aria-label="Tipo de movimiento">@for (opcion of tipos; track opcion.value) {<button type="button" [class.is-active]="tipo === opcion.value" [attr.aria-pressed]="tipo === opcion.value" (click)="cambiarTipo(opcion.value)">{{ opcion.label }}</button>}</div>
@@ -138,6 +138,7 @@ export class RegistroRapidoComponent implements OnDestroy {
   listasEditables() { return this.contextoLista.listas().filter(l => !l.archivada && l.rol !== 'LECTOR'); }
   nombreListaRegistro() { return this.contextoLista.listas().find(l => l.id === this.listaRegistroId)?.nombre ?? 'Personal'; }
   readonly open = signal(false);
+  private conservarBorrador = false;
   readonly loading = signal(false);
   readonly saving = signal(false);
   readonly error = signal('');
@@ -183,7 +184,8 @@ export class RegistroRapidoComponent implements OnDestroy {
     if (this.incierto && this.pendiente && this.usuarioRegistro===this.auth.currentUser()?.id) { this.open.set(true); return; }
     const detail = (event as CustomEvent<{tipo?: TipoRegistro;categoriaId?:number;preservar?:boolean;repetir?:Partial<TransaccionPayload>}> | undefined)?.detail;
     if(detail?.repetir && !['GASTO','INGRESO','TRANSFERENCIA'].includes(detail.repetir.tipo??''))return;
-    if (detail?.preservar && !this.loading() && this.cuentas.length && this.usuarioRegistro === this.auth.currentUser()?.id) { this.open.set(true); this.enfocarMonto();return; }
+    if (detail?.preservar && this.conservarBorrador && !this.loading() && this.cuentas.length && this.usuarioRegistro === this.auth.currentUser()?.id) { this.conservarBorrador = false; this.open.set(true); this.enfocarMonto();return; }
+    this.conservarBorrador = false;
     this.usuarioRegistro = this.auth.currentUser()?.id ?? null;
     this.categoriaSolicitada = detail?.categoriaId ?? null;
     this.repeticion=detail?.repetir??null;this.repitiendo.set(!!this.repeticion);
@@ -349,7 +351,7 @@ export class RegistroRapidoComponent implements OnDestroy {
     }
   }
   private recordarCuenta(): void { try {this.document.defaultView?.localStorage.setItem(`kaptal_cuenta_rapida_${this.auth.currentUser()?.id}_${this.tipo}`,String(this.cuentaId));}catch{/* Preferencia opcional. */} }
-  voz(): void { this.cerrar(); this.document.defaultView?.dispatchEvent(new CustomEvent('kaptal-abrir-captura-chat', { detail: {tipo: this.tipo} })); }
+  voz(): void { this.conservarBorrador = true; this.cerrar(); this.document.defaultView?.dispatchEvent(new CustomEvent('kaptal-abrir-captura-chat', { detail: {tipo: this.tipo} })); }
   avanzado(): void {
     let etiquetas: string[];
     try { etiquetas = parsearEtiquetas(this.etiquetasTexto); } catch (e) { this.error.set(e instanceof Error ? e.message : 'Revisa las etiquetas.'); return; }

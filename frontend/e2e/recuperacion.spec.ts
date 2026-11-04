@@ -26,7 +26,6 @@ async function iniciar(page: Page) {
 
 async function abrirChat(page: Page) {
   await page.getByRole('button', { name: 'Añadir movimiento', exact: true }).click();
-  await page.getByRole('button', { name: 'Escribir o dictar', exact: true }).click();
   await expect(page.locator('#quick-capture-text')).toBeVisible();
 }
 
