@@ -1439,3 +1439,5 @@ Se precisa que `usage_unavailable` cuenta solo eventos emitidos tras procesar el
 - Pruebas: build de frontend, 34 unitarias enfocadas, dos E2E con audio sintético y respuestas simuladas, 27 unitarias Android, coincidencia de 86 recursos web y CI de GitHub. Las respuestas simuladas no prueban la transcripción real. Pendiente: aceptación de voz y revisión de la interfaz en el dispositivo sin guardar movimientos; luego decidir integración y publicación según comprobaciones.
 
 - El usuario confirmo que el microfono funciona en el telefono. Queda por precisar si vio texto antes de detener la grabacion y si pudo editar el resultado; no se infiere de su respuesta.
+
+- Aclaracion posterior del propietario: en la prueba real de la APK 0.1.28 el texto si aparecio mientras hablaba, con retraso, y quedo editable al detener. Se corrige la observacion anterior: no se requiere investigar ausencia de texto parcial como hecho confirmado. Solicita editar el resultado en la propia ventana de voz; PR #212 prepara ese cambio.
