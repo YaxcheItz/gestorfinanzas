@@ -66,10 +66,16 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
         @if (escuchando()) {<div class="voice-screen__levels" aria-hidden="true">@for (nivel of nivelesAudio(); track $index) {<i [style.height.px]="4 + nivel * 24"></i>}</div>}
         @if (permisoVoz()) {<div class="voice-permission"><p>El audio se enviará periódicamente a Groq para mostrar una transcripción y al terminar para revisarla.</p><button type="button" (click)="permitirVoz()">Permitir audio y grabar</button></div>}
         @if (error()) {<p class="capture-error" role="alert">{{ error() }}</p>}
+        @if (transcripcionLista()) {
+          <label for="voice-transcript">Revisa y edita tu transcripción</label>
+          <textarea id="voice-transcript" class="voice-screen__transcript" [(ngModel)]="content" rows="4"></textarea>
+          <button type="button" class="voice-screen__text" [disabled]="!content.trim()" (click)="abrirEscrituraDesdeVoz()">Continuar con este texto</button>
+        } @else {
         <div class="voice-screen__transcript" aria-label="Transcripción provisional" aria-live="polite">{{ transcripcionParcial() || (escuchando() ? 'Las palabras aparecerán aquí con unos segundos de retraso.' : 'Tu transcripción aparecerá aquí.') }}</div>
+        }
         <p class="voice-screen__note">El texto provisional puede cambiar. Al terminar, revisa la transcripción antes de continuar.</p>
         @if (error() && transcripcionParcial() && !escuchando() && !transcribiendoVoz()) {<button type="button" class="voice-screen__text" (click)="usarTranscripcionParcial()">Revisar texto parcial</button>}
-        <button type="button" class="voice-screen__text" (click)="abrirEscrituraDesdeVoz()">Prefiero escribir</button>
+        @if (!transcripcionLista()) {<button type="button" class="voice-screen__text" (click)="abrirEscrituraDesdeVoz()">Prefiero escribir</button>}
       </section>
     }
 
@@ -246,6 +252,7 @@ export class QuickCaptureComponent implements OnDestroy {
   private readonly changeDetector = inject(ChangeDetectorRef);
   readonly pantallaVoz = signal(false);
   readonly transcripcionParcial = signal('');
+  readonly transcripcionLista = signal(false);
   private readonly styleAssets = inject(FeatureStylesService).load('capture');
   private readonly captureLauncher = inject(CaptureLauncherService);
   readonly offline=inject(MovimientosOfflineService);
@@ -509,8 +516,8 @@ export class QuickCaptureComponent implements OnDestroy {
     requestAnimationFrame(() => document.getElementById('quick-capture-text')?.focus());
   }
   close(): void { this.limpiarHoldTimer(); this.pointerGesture = false; this.stopVoice(true); if (this.processingStep()) this.cancelarTranscripcion(); this.open.set(false); this.pantallaVoz.set(false); this.changeDetector.detectChanges(); }
-  cerrarPantallaVoz(): void { this.permisoVoz.set(false); this.close(); this.transcripcionParcial.set(''); }
-  usarTranscripcionParcial(): void { this.content = this.transcripcionParcial(); this.voiceCapture.set(true); this.abrirEscrituraDesdeVoz(); }
+  cerrarPantallaVoz(): void { this.permisoVoz.set(false); this.close(); this.transcripcionParcial.set(''); this.transcripcionLista.set(false); }
+  usarTranscripcionParcial(): void { this.content = this.transcripcionParcial(); this.voiceCapture.set(true); this.transcripcionLista.set(true); }
   abrirEscrituraDesdeVoz(): void { this.stopVoice(true); if (this.processingStep()) this.cancelarTranscripcion(); this.permisoVoz.set(false); this.pantallaVoz.set(false); this.open.set(true); this.mode.set('CAPTURE'); this.changeDetector.detectChanges(); requestAnimationFrame(() => document.getElementById('quick-capture-text')?.focus()); }
   cambiarModo(mode: CaptureMode): void {
     this.stopVoice(true);
@@ -817,6 +824,7 @@ export class QuickCaptureComponent implements OnDestroy {
     this.seguirFinal.set(true);
     this.cargarCategoriasCaptura();
     const detail = (event as CustomEvent<{ tipo?: string; content?: string; voz?: boolean }>).detail;
+    if (detail?.voz === true) { this.transcripcionLista.set(false); this.transcripcionParcial.set(''); }
     this.pantallaVoz.set(detail?.voz === true);
     this.open.set(detail?.voz !== true);
     this.mode.set('CAPTURE');
@@ -889,7 +897,7 @@ export class QuickCaptureComponent implements OnDestroy {
     }
     this.discardAudio = false;
     this.audioChunks = [];
-    this.transcripcionParcial.set(''); this.ultimaVistaPrevia = 0;
+    this.transcripcionParcial.set(''); this.transcripcionLista.set(false); this.ultimaVistaPrevia = 0;
     this.cargarCategoriasCaptura();
     this.voiceCapture.set(true);
     this.voiceStartedAt = Date.now(); this.listening.set(true); this.updateTimer();
@@ -990,11 +998,15 @@ export class QuickCaptureComponent implements OnDestroy {
         this.content = text;
         this.voiceCapture.set(true);
         this.voiceMessage.set('Transcripción lista. Revisa el texto antes de continuar.');
-        this.pantallaVoz.set(false);
-        this.open.set(true);
-        this.mode.set('CAPTURE');
-        this.changeDetector.detectChanges();
-        requestAnimationFrame(() => document.getElementById('quick-capture-text')?.focus());
+        if (this.pantallaVoz()) {
+          this.transcripcionLista.set(true);
+          this.changeDetector.detectChanges();
+        } else {
+          this.open.set(true);
+          this.mode.set('CAPTURE');
+          this.changeDetector.detectChanges();
+          requestAnimationFrame(() => document.getElementById('quick-capture-text')?.focus());
+        }
       },
       error: error => {
         this.processingStep.set(null);

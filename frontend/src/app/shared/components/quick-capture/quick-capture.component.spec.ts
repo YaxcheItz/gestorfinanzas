@@ -321,7 +321,10 @@ describe('QuickCaptureComponent processing and gestures', () => {
       component.permitirVoz(); await Promise.resolve();
       expect(recorder.state).toBe('recording'); component.toggleVoice();
       expect(component.content).toBe('Gasté 50 en café');
-      expect(component.open()).toBe(true); expect(component.pantallaVoz()).toBe(false);
+      expect(component.open()).toBe(false); expect(component.pantallaVoz()).toBe(true);
+      expect(component.transcripcionLista()).toBe(true);
+      component.content = 'Texto editado'; component.abrirEscrituraDesdeVoz();
+      expect(component.content).toBe('Texto editado'); expect(component.open()).toBe(true);
       expect(TestBed.inject(FinanzasService).confirmAiAction).not.toHaveBeenCalled();
       expect(component.captureTurns()).toEqual([]);
     } finally {

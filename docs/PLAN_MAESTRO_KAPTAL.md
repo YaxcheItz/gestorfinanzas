@@ -1460,3 +1460,8 @@ Se precisa que `usage_unavailable` cuenta solo eventos emitidos tras procesar el
 
 - APK 0.1.25 codigo 26 instalada por actualizacion; hash del dispositivo 8cc5d114b00fc268caccfbf612d9bdcc12d029f563212754de66ba992a03b139 coincide con el archivo local; fecha de primera instalacion conservada. CI integral y APK pasaron para af4aebf6e01f5e231fdfd664d8c33b61f46875cb (PR #203).
 - Las etiquetas del gesto estan fuera del carrusel y en limites de pantalla en pruebas sinteticas; falta aceptacion fisica. No se abrio la app ni se consultaron finanzas. El proveedor Groq aun no esta configurado. No integrado ni publicado.
+
+### Revision de voz dentro de su ventana (2026-11-04)
+- El usuario confirmo que el microfono transcribe, pero el texto solo aparecio al detener y salto al chat; solicita editarlo en la misma ventana. No se confirma la transcripcion parcial durante la grabacion.
+- Rama `correcciones/revision-voz-en-ventana`, creada desde develop y adelantada con el codigo de PR #211: la transcripcion final y la parcial recuperada se editan en la ventana de voz; solo al elegir Continuar se pasa el texto al chat, sin guardar movimientos. Build Angular y 34 pruebas del componente pasaron. E2E y CI pendientes al registrar.
+- Investigar por que el audio provisional no aparece en Samsung/Groq, sin presumir la causa ni exponer datos. Pendiente prueba fisica de la nueva interfaz, APK superior a 0.1.28, integracion y publicacion. Despues probar captura escrita, categoria y confirmacion con datos ficticios y continuar Inicio por secciones.

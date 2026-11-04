@@ -58,6 +58,11 @@ test('voz muestra avance provisional y conserva revisión antes de enviar', asyn
   await voice.getByRole('button',{name:'Permitir audio y grabar'}).click();
   await expect(voice.getByLabel('Transcripción provisional')).toHaveText('Texto provisional',{timeout:20000});
   await voice.getByRole('button',{name:'Detener grabación'}).click();
-  await expect(page.locator('#quick-capture-text')).toHaveValue('Texto final ficticio',{timeout:10000});
+  const texto=voice.locator('#voice-transcript');
+  await expect(texto).toHaveValue('Texto final ficticio',{timeout:10000});
+  await texto.fill('Texto ficticio editado');
+  await expect(page.locator('#quick-capture-panel')).toBeHidden();
+  await voice.getByRole('button',{name:'Continuar con este texto'}).click();
+  await expect(page.locator('#quick-capture-text')).toHaveValue('Texto ficticio editado');
   expect(transcripciones).toBe(2); expect(guardados).toBe(0);
 });

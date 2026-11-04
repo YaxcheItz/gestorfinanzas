@@ -574,3 +574,5 @@ html .monai-theme #quick-capture-panel .capture-panel__head strong{color:var(--k
 .chat-evidence{display:grid;gap:6px;margin-top:12px}
 .chat-evidence button{min-height:44px;text-align:left;padding:8px 0;border:0;border-top:1px solid currentColor;background:transparent;color:inherit;font:inherit;cursor:pointer}
 .chat-evidence small{display:block;font-size:12px;opacity:.75}
+
+textarea.voice-screen__transcript { display: block; box-sizing: border-box; width: 100%; resize: vertical; font: inherit; }
