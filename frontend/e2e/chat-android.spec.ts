@@ -13,7 +13,8 @@ test('una categoria escrita completa la propuesta y solo guardar crea el movimie
   expect(account.ok()).toBeTruthy();
   await page.goto('/login');await page.locator('#email').fill(email);await page.locator('#password').fill(password);
   await page.getByRole('button',{name:'Iniciar sesión',exact:true}).click();await expect(page).toHaveURL(/dashboard/);
-  await page.getByRole('button',{name:'Añadir movimiento',exact:true}).click();
+  await page.locator('.dashboard-screen__inline-empty').getByRole('button',{name:'Añadir movimiento',exact:true}).click();
+  await page.getByRole('dialog',{name:'Añadir movimiento'}).getByRole('button',{name:'Escribir o dictar'}).click();
   const panel=page.locator('#quick-capture-panel'), text=page.locator('#quick-capture-text');
   await text.fill('Gasté 25 en concepto ficticio');await panel.getByRole('button',{name:'Enviar movimiento'}).click();
   await expect(panel.locator('.categorization-review__drop').first()).toBeVisible();

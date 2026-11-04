@@ -1,3 +1,7 @@
+## Captura: reparacion de pruebas E2E (4 noviembre 2026)
+
+PR #204: CI anterior fallo por boton ambiguo y barra reemplazada durante la carga. Se identifica el acceso de la zona de Recientes, se abre Escribir o dictar en el formulario y se espera la consulta del periodo antes del gesto. Ambos recorridos pasaron localmente con H2 y datos ficticios. Falta CI del nuevo SHA; no afirmar que se corrigieron todos los errores de captura. La APK 0.1.26 preparada en PR206 contiene Configuracion, no contiene PR204; instalacion pendiente por desconexion USB.
+
 ## Captura escrita: comprobacion completa (4 noviembre 2026)
 
 La prueba E2E con H2 detecto que la categoria predeterminada se llama Alimentos y Supermercado. Se corrigio la asociacion de comida/restaurantes a esa categoria o Comida cuando hay una sola coincidencia; ante varias se pide elegir. E2E Chromium paso: propuesta ficticia, categoria por texto, cero movimientos antes de confirmar y uno con categoria e importe correctos despues. MotorChatReglas y 31 pruebas focales frontend correctos tras el ajuste. PR #204 en borrador depende de PR #203. No se conoce aun el resultado de CI del ultimo commit ni hay despliegue o APK nueva. Groq y aceptacion fisica del nuevo flujo siguen pendientes; no afirmar solucion de todos los errores de captura.

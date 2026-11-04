@@ -74,7 +74,9 @@ test.describe('gestos de categorías', () => {
     await page.goto('/dashboard');
     await page.locator('.time-dropdown-btn').click();
     await page.getByRole('dialog',{name:'Seleccionar periodo financiero'}).getByRole('button',{name:/Octubre/i}).click();
+    await expect.poll(() => consultas.some(q => new URLSearchParams(q).get('mes') === '10' && new URLSearchParams(q).get('anio') === '2026')).toBe(true);
     const categoria = page.getByRole('button',{name:'Filtrar movimientos de Comida ficticia'});
+    await expect(categoria).toBeVisible();
     await categoria.scrollIntoViewIfNeeded();
     const box = (await categoria.boundingBox())!, x = Math.round(box.x+box.width/2), y = Math.round(box.y+box.height/2);
     const cdp = await context.newCDPSession(page);
