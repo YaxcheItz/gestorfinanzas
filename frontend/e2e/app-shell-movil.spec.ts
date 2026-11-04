@@ -143,6 +143,13 @@ test.describe('gestos de categorías', () => {
       x = Math.round(box.x+box.width/2); y = Math.round(box.y+box.height/2);
       await tocar(x,y,0,direccion,true);
       await expect(page.locator(selector)).toBeVisible();
+      for (const pill of await page.locator('.gesture-pill').all()) {
+        await expect(pill).toBeInViewport();
+        expect(await pill.evaluate(el => {
+          const r = el.getBoundingClientRect();
+          return r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight && el.scrollWidth <= el.clientWidth;
+        })).toBe(true);
+      }
       await expect(page.locator('.home-context-sheet')).toHaveCount(0);
       await categoria.dispatchEvent('contextmenu', {button:2});
       await expect(page.locator('.home-context-sheet')).toHaveCount(0);

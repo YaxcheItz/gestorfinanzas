@@ -144,13 +144,7 @@
         @if (graficoLoading() || contextoLista.cargando()) {<div class="home-chart-loading" role="status" aria-label="Cargando categorías"><span></span><span></span><span></span><span></span></div>}
         @else if (graficoError()) {<p class="home-inline-state" role="alert">No pudimos cargar las categorías. <button type="button" (click)="cargarDashboard()">Reintentar</button></p>}
         @else if (categoriasInicio().length > 0) {
-          <div class="home-category-chart" aria-label="Gastos por categoría, desliza para ver más" tabindex="0">
-            @for (categoria of categoriasInicio(); track categoria.categoriaId) {
-              <article class="home-category"
-                       [class.is-selected]="categoriaFiltroSeleccionada()?.categoriaId === categoria.categoriaId"
-                       [class.is-gesture-active]="categoriaGestoActiva()?.categoriaId === categoria.categoriaId"
-                       [style.--category-tone]="categoria.tono">
-                @if (categoriaGestoActiva()?.categoriaId === categoria.categoriaId) {
+          @if (categoriaGestoActiva()) {
                   <div class="home-category__gesture-guide" aria-live="assertive">
                     <div class="gesture-pill gesture-pill--up" [class.is-target]="gestoAccionSeleccionada() === 'GASTO'">
                       <span aria-hidden="true">&#8593;</span> <strong>+ Gasto</strong>
@@ -160,6 +154,12 @@
                     </div>
                   </div>
                 }
+          <div class="home-category-chart" aria-label="Gastos por categoría, desliza para ver más" tabindex="0">
+            @for (categoria of categoriasInicio(); track categoria.categoriaId) {
+              <article class="home-category"
+                       [class.is-selected]="categoriaFiltroSeleccionada()?.categoriaId === categoria.categoriaId"
+                       [class.is-gesture-active]="categoriaGestoActiva()?.categoriaId === categoria.categoriaId"
+                       [style.--category-tone]="categoria.tono">
                 <button type="button" class="home-category__bar-button"
                         (touchmove)="bloquearDesplazamientoCategoria($event)"
                         (pointerdown)="iniciarPresionCategoria($event,categoria)"

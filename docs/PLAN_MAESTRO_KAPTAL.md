@@ -1410,3 +1410,9 @@ Se precisa que `usage_unavailable` cuenta solo eventos emitidos tras procesar el
 - APK 0.1.24 (codigo 25) instalada por actualizacion en Samsung SM-A546E; primera instalacion conservada. El SHA-256 del paquete extraido del dispositivo coincide con el archivo local: 9fe9858f07257fcb6a9b33db698080dc8491d9f9225dddc5855d6e92ca1ad582. Certificado y 86 archivos web verificados.
 - PR #202: CI completa exitosa para 70c0deb4b44745795e8f5b210550748b0c0b80b1. El build local corresponde a cd02666 y los commits intermedios solo cambian pruebas. 485 pruebas frontend, 27 Android y pruebas de captura con datos ficticios pasan.
 - La declaracion de permiso de microfono se corrigio, pero la grabacion y el gesto aun no se probaron en esta version fisica. La mejora de interpretacion de texto, categoria y etiquetas continua pendiente. No se integro ni publico.
+
+## Indicador de gestos y proveedor de voz (2026-11-03)
+
+- El usuario confirmo que la app ya pide configurar Groq y que las etiquetas de gasto y presupuesto del gesto se cortan. La guia se mueve fuera del carrusel, centrada en la pantalla; conserva arriba para gasto, abajo para presupuesto y accion al soltar. Build Angular y dos E2E tactiles sinteticos pasaron, con limites visibles comprobados. Validacion fisica pendiente.
+- La transcripcion actual requiere Groq configurado en el backend; el registro escrito usa reglas propias primero. Groq Whisper ofrece plan gratuito sujeto a limites y controles de datos; Gemini gratis puede usar contenido para mejorar productos. No se configuro ninguna clave ni se envio audio. Fuentes: https://console.groq.com/docs/speech-to-text , https://console.groq.com/docs/your-data , https://ai.google.dev/gemini-api/docs/pricing .
+- APK 0.1.25 pendiente de generar, verificar e instalar; CI, integracion y publicacion pendientes.
