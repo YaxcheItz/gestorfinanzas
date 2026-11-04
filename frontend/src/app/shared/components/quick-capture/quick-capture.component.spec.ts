@@ -192,6 +192,46 @@ describe('QuickCaptureComponent processing and gestures', () => {
     expect(component.captureTurns()[0].actions[0].version).toBe(1);
   });
 
+  it('aplica una respuesta escrita de categoria a la propuesta pendiente sin guardar', () => {
+    const propuesta = { id:'pendiente', type:'CREATE_TRANSACTION', summary:'Gasto', data:{tipo:'GASTO',monto:25,categoriaId:null}, version:0 } as any;
+    component.categories.set([{ id:1, nombre:'Comida', tipo:'GASTO', activo:true, esPersonalizada:true }]);
+    component.captureTurns.set([{id:1,user:'Gasto 25',answer:'Elige categoria',actions:[propuesta],voice:false}]);
+    component.content = 'fue en comida';
+    component.submit();
+    expect(TestBed.inject(FinanzasService).editarPropuestaAi).toHaveBeenCalledWith('pendiente',{...propuesta.data,categoriaId:1},0);
+    expect(TestBed.inject(FinanzasService).confirmAiAction).not.toHaveBeenCalled();
+    expect(component.captureTurns()[0].actions[0].data['categoriaId']).toBe(1);
+  });
+
+  it('interpreta restaurantes como comida en una propuesta pendiente', () => {
+    const propuesta = { id:'pendiente', type:'CREATE_TRANSACTION', summary:'Gasto', data:{tipo:'GASTO',monto:25,categoriaId:null}, version:0 } as any;
+    component.categories.set([{ id:1, nombre:'Comida', tipo:'GASTO', activo:true, esPersonalizada:true }]);
+    component.captureTurns.set([{id:1,user:'Gasto 25',answer:'Elige categoria',actions:[propuesta],voice:false}]);
+    component.content = 'restaurantes'; component.submit();
+    expect(component.captureTurns()[0].actions[0].data['categoriaId']).toBe(1);
+    expect(TestBed.inject(FinanzasService).confirmAiAction).not.toHaveBeenCalled();
+  });
+
+  it('conserva la respuesta escrita si falla la actualizacion de categoria', () => {
+    const propuesta = { id:'pendiente', type:'CREATE_TRANSACTION', summary:'Gasto', data:{tipo:'GASTO',monto:25,categoriaId:null}, version:0 } as any;
+    component.categories.set([{ id:1, nombre:'Comida', tipo:'GASTO', activo:true, esPersonalizada:true }]);
+    component.captureTurns.set([{id:1,user:'Gasto 25',answer:'Elige categoria',actions:[propuesta],voice:false}]);
+    vi.spyOn(TestBed.inject(FinanzasService), 'editarPropuestaAi').mockReturnValueOnce(of({success:false,message:'Error temporal'} as any));
+    component.content = 'comida'; component.submit();
+    expect(component.content).toBe('comida');
+    expect(component.captureTurns()[0].actions[0].data['categoriaId']).toBeNull();
+    expect(component.error()).toBe('Error temporal');
+  });
+
+  it('no elige automaticamente cuando restaurantes puede referirse a dos categorias', () => {
+    const propuesta = { id:'pendiente', type:'CREATE_TRANSACTION', summary:'Gasto', data:{tipo:'GASTO',monto:25,categoriaId:null}, version:0 } as any;
+    component.categories.set([{ id:1,nombre:'Comida',tipo:'GASTO',activo:true,esPersonalizada:true },{ id:2,nombre:'Alimentos y Supermercado',tipo:'GASTO',activo:true,esPersonalizada:true }]);
+    component.captureTurns.set([{id:1,user:'Gasto 25',answer:'Elige categoria',actions:[propuesta],voice:false}]);
+    component.content='restaurantes';component.submit();
+    expect(TestBed.inject(FinanzasService).editarPropuestaAi).not.toHaveBeenCalled();
+    expect(TestBed.inject(FinanzasService).confirmAiAction).not.toHaveBeenCalled();
+  });
+
   it('keeps a long press from triggering the manual form on release', () => {
     vi.useFakeTimers();
     const button = document.createElement('button');
