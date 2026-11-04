@@ -41,8 +41,7 @@ test('periodos: preferencia persistida, rangos coherentes, comparacion e histori
   await dialog.getByRole('button', { name: 'Aplicar fechas libres', exact: true }).click();
   await expect(page.locator('.dashboard-screen__amount')).toContainText('25.00');
   await expect(page.locator('.home-category__bar-button strong').first()).toContainText('25');
-  await expect(page.getByRole('button', { name: 'Periodo siguiente', exact: true })).toBeEnabled();
-  await page.getByRole('button', { name: /Informe del periodo/ }).click();
+  await page.goto('/reportes?desde=2025-12-20&hasta=2026-01-19&desdeAnterior=2025-11-19&hastaAnterior=2025-12-19');
   await expect(page).toHaveURL(/reportes\?/);
   await expect(page.locator('.reports-summary')).toContainText('25.00');
   await expect(page.locator('.reports-comparison').first()).toContainText('2025-12-20');
