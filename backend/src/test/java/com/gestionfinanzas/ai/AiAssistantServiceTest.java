@@ -152,11 +152,13 @@ class AiAssistantServiceTest {
         verify(actionService).interpret(eq(7L),contains("Asistente: Hola, dime"));
     }
     @Test
-    void chatEscritoAdmiteAccionesDelAsistentePeroVozNoLasEjecuta() {
+    void chatYVozDevuelvenAccionesDelAsistenteSinEjecutarlas() {
         when(provider.isConfigured()).thenReturn(true);
         var accion=new AiActionService.ActionProposal("a1","CREATE_ACCOUNT","Crear cuenta",null);
         when(actionService.interpret(eq(7L),anyString())).thenReturn(new AiActionService.AiActionResult("Revisa",accion));
         assertEquals("CREATE_ACCOUNT",service.quickCapture(7L,new AiQuickCaptureRequest("Crea una cuenta",true,false)).action().type());
-        assertThrows(IllegalArgumentException.class,()->service.quickCapture(7L,new AiQuickCaptureRequest("Crea una cuenta",true,true)));
+        when(actionService.pendientes(7L)).thenReturn(List.of(accion));
+        assertEquals("CREATE_ACCOUNT",service.quickCapture(7L,new AiQuickCaptureRequest("Crea una cuenta",true,true)).action().type());
+        verify(actionService,never()).confirm(eq(7L),anyString());
     }
 }

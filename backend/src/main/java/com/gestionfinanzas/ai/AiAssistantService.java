@@ -122,8 +122,6 @@ public class AiAssistantService {
         if (response.action() != null) acciones.add(response.action());
         if (acciones.stream().anyMatch(a -> "DEACTIVATE_CATEGORY".equals(a.type()) || "REACTIVATE_CATEGORY".equals(a.type())))
             throw new IllegalArgumentException("Gestiona las categorías desde su catálogo; no se archivan desde el chat.");
-        if (request.capturaPorVoz() && acciones.stream().anyMatch(a -> !"CREATE_TRANSACTION".equals(a.type())))
-            throw new IllegalArgumentException("Revisa esta acción en el chat antes de ejecutarla.");
         if (request.listaId() != null || !etiquetas.isEmpty()) {
             var propuestas = new java.util.LinkedHashMap<String, AiActionService.ActionProposal>();
             if (response.action() != null) propuestas.put(response.action().id(), response.action());

@@ -94,6 +94,13 @@ describe('QuickCaptureComponent processing and gestures', () => {
     expect(component.captureTurns()[0].answer).toBe('Este es tu resumen');
     expect(TestBed.inject(FinanzasService).confirmAiAction).not.toHaveBeenCalled();
   });
+  it('lleva una accion de voz al chat para revisarla sin ejecutarla', () => {
+    component.content='Crea una cuenta'; component.pantallaVoz.set(true); component.continuarConVoz();
+    result.next({success:true,data:{answer:'Revisa la cuenta',engine:'IA',actions:[{id:'accion-voz',type:'CREATE_ACCOUNT',version:0,summary:'Crear cuenta',data:{nombre:'Prueba'}}]}});
+    expect(component.open()).toBe(true);
+    expect(component.captureTurns()[0].actions[0].id).toBe('accion-voz');
+    expect(TestBed.inject(FinanzasService).confirmAiAction).not.toHaveBeenCalled();
+  });
 
   it('no guarda voz si la cuenta elegida no fue indicada entre varias cuentas', () => {
     component.categories.set([{id:10,nombre:'Comida',tipo:'GASTO',activo:true,esPersonalizada:true}]);
