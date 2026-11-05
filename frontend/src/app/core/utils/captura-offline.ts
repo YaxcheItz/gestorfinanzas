@@ -5,6 +5,16 @@ import { crearIdSolicitud } from './request-id';
 
 const normalizar=(texto:string)=>texto.normalize('NFD').replace(/\p{M}/gu,'').toLowerCase().trim().replace(/\s+/g,' ');
 
+const categoriasPorConcepto: ReadonlyArray<{nombres: string[]; palabras: string[]}> = [
+  {nombres:['comida','alimentacion','alimentos'],palabras:['restaurante','restaurantes','taco','tacos','taqueria','pizza','cafeteria','cafe','comida']},
+  {nombres:['supermercado','despensa'],palabras:['super','supermercado','despensa','abarrotes','walmart','soriana','chedraui']},
+  {nombres:['transporte'],palabras:['uber','didi','taxi','gasolina','metro','camion','autobus','caseta']},
+  {nombres:['salud'],palabras:['farmacia','doctor','medico','dentista','medicina']},
+  {nombres:['vivienda y servicios','servicios','hogar'],palabras:['luz','agua','internet','telefono','renta','cfe']},
+  {nombres:['entretenimiento'],palabras:['cine','netflix','spotify','videojuegos']},
+  {nombres:['salario','ingresos'],palabras:['nomina','sueldo','salario','quincena']}
+];
+
 /** Reglas deliberadamente limitadas: no usan balances ni envían texto a proveedores. */
 export function prepararCapturaOffline(texto:string,cuentas:Cuenta[],categorias:Categoria[],hoy=fechaFinanciera()):AiActionProposal {
   const limpio=normalizar(texto);
@@ -40,7 +50,14 @@ export function prepararCapturaOffline(texto:string,cuentas:Cuenta[],categorias:
     cuentaId=nombres?activas.find(c=>normalizar(c.nombre)===nombres[1].trim())?.id??null:null;
     cuentaDestinoId=nombres?activas.find(c=>normalizar(c.nombre)===nombres[2].trim())?.id??null:null;
   }
-  const coincidencias=categorias.filter(c=>c.activo&&c.tipo===tipo&&(' '+limpio+' ').includes(' '+normalizar(c.nombre)+' '));
+  const textoCategoria=limpio.replace(/\b(?:con\s+)?etiqueta\s+[\p{L}\d_-]+/gu,' ').replace(/#[\p{L}\d_-]+/gu,' ');
+  const disponibles=categorias.filter(c=>c.activo&&c.tipo===tipo);
+  const contiene=(texto:string,palabra:string)=>new RegExp(`(?:^|[^\\p{L}\\d])${palabra.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}(?=$|[^\\p{L}\\d])`,'u').test(texto);
+  let coincidencias=disponibles.filter(c=>contiene(textoCategoria,normalizar(c.nombre)));
+  if(!coincidencias.length){
+    const grupos=categoriasPorConcepto.filter(g=>g.palabras.some(p=>contiene(textoCategoria,p)));
+    coincidencias=disponibles.filter(c=>grupos.some(g=>g.nombres.includes(normalizar(c.nombre))));
+  }
   const cuenta=activas.find(c=>c.id===cuentaId)?.nombre??'Cuenta por seleccionar';
   const destino=tipo==='TRANSFERENCIA'?' a '+(activas.find(c=>c.id===cuentaDestinoId)?.nombre??'destino por seleccionar'):'';
   return {id:crearIdSolicitud(),local:true,version:0,type:'CREATE_TRANSACTION',summary:`${tipo} de ${monto} · ${cuenta}${destino} · ${fecha}`,
