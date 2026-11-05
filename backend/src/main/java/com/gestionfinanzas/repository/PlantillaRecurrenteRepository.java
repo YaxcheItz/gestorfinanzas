@@ -14,6 +14,10 @@ public interface PlantillaRecurrenteRepository extends JpaRepository<PlantillaRe
     List<PlantillaRecurrente> findByActivaTrueAndSiguienteFecha(java.time.LocalDate siguienteFecha);
     Optional<PlantillaRecurrente> findByIdAndUsuarioId(Long id, Long usuarioId);
     void deleteByCuentaId(Long cuentaId);
+    boolean existsByCategoriaId(Long categoriaId);
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    List<PlantillaRecurrente> findAllByCategoriaId(Long categoriaId);
+    long countByCategoriaId(Long categoriaId);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("DELETE FROM PlantillaRecurrente p WHERE p.usuario.id = :usuarioId")

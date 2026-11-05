@@ -1,11 +1,11 @@
 import { ListaContextoService } from '../../../core/services/lista-contexto.service';
-import { parsearEtiquetas } from '../../../core/utils/etiquetas';
+import { extraerEtiquetasCaptura } from '../../../core/utils/etiquetas';
 import { FeatureStylesService } from '../../../core/services/feature-styles.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { PrivacidadService } from '../../../core/services/privacidad.service';
 import { PrivacyToggleComponent } from '../privacy-toggle/privacy-toggle.component';
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, ElementRef, HostListener, OnDestroy, ViewChild, afterNextRender, afterRenderEffect, computed, effect, inject, signal, untracked } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, ElementRef, HostListener, OnDestroy, ViewChild, afterNextRender, afterRenderEffect, computed, effect, inject, signal, untracked } from '@angular/core';
 import { CaptureLauncherService } from '../../../core/services/capture-launcher.service';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -52,6 +52,31 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
             </button>
         </div>
       </div>
+    }
+
+    @if (pantallaVoz()) {
+      <div class="voice-dialog-backdrop" (click)="cerrarPantallaVoz()"></div>
+      <section appDialogViewport class="voice-screen" role="dialog" aria-modal="true" aria-labelledby="voice-title" (keydown.escape)="cerrarPantallaVoz()" tabindex="-1" id="voice-screen">
+        <header><div><small>CAPTURA POR VOZ</small><h2 id="voice-title">{{ escuchando() ? 'Te escucho' : transcribiendoVoz() ? 'Transcribiendo…' : 'Cuéntame tu movimiento' }}</h2></div><button type="button" (click)="cerrarPantallaVoz()" aria-label="Cerrar voz">×</button></header>
+        <p class="voice-screen__hint">{{ escuchando() ? 'Habla con naturalidad. Al terminar, toca detener.' : 'Habla de un gasto, ingreso o pregunta sobre tus finanzas.' }}</p>
+        <button type="button" class="voice-screen__mic" (click)="toggleVoice()" [disabled]="transcribiendoVoz() || stopping()" [attr.aria-label]="escuchando() ? 'Detener grabación' : 'Iniciar grabación'">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5m-4 0h8"/></svg>
+        </button>
+        <p class="voice-screen__status" role="status">{{ escuchando() ? 'Grabando · ' + cronometro() : transcribiendoVoz() ? 'Convirtiendo audio a texto…' : 'Toca el micrófono para comenzar' }}</p>
+        @if (escuchando()) {<div class="voice-screen__levels" aria-hidden="true">@for (nivel of nivelesAudio(); track $index) {<i [style.height.px]="4 + nivel * 24"></i>}</div>}
+        @if (permisoVoz()) {<div class="voice-permission"><p>El audio se enviará periódicamente a Groq para mostrar una transcripción y al terminar para revisarla.</p><button type="button" (click)="permitirVoz()">Permitir audio y grabar</button></div>}
+        @if (error()) {<p class="capture-error" role="alert">{{ error() }}</p>}
+        @if (transcripcionLista()) {
+          <label for="voice-transcript">Revisa y edita tu transcripción</label>
+          <textarea id="voice-transcript" class="voice-screen__transcript" [(ngModel)]="content" rows="4"></textarea>
+          <button type="button" class="voice-screen__text" [disabled]="!content.trim()" (click)="abrirEscrituraDesdeVoz()">Continuar con este texto</button>
+        } @else {
+        <div class="voice-screen__transcript" aria-label="Transcripción provisional" aria-live="polite">{{ transcripcionParcial() || (escuchando() ? 'Las palabras aparecerán aquí con unos segundos de retraso.' : 'Tu transcripción aparecerá aquí.') }}</div>
+        }
+        <p class="voice-screen__note">El texto provisional puede cambiar. Al terminar, revisa la transcripción antes de continuar.</p>
+        @if (error() && transcripcionParcial() && !escuchando() && !transcribiendoVoz()) {<button type="button" class="voice-screen__text" (click)="usarTranscripcionParcial()">Revisar texto parcial</button>}
+        @if (!transcripcionLista()) {<button type="button" class="voice-screen__text" (click)="abrirEscrituraDesdeVoz()">Prefiero escribir</button>}
+      </section>
     }
 
     <!-- Voice Waveform: solo durante grabación activa -->
@@ -106,7 +131,7 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
           } @else {
           <div #chatScroll id="capture-chat-thread" class="capture-chat" (scroll)="actualizarSeguimiento($event)" aria-live="polite" aria-relevant="additions text" [attr.aria-busy]="loading()">
             @if (captureTurns().length === 0 && !pendingCaptureText()) {
-              <div class="capture-chat__intro"><span class="capture-chat__avatar" aria-hidden="true">✦</span><div><strong>Escribe o dicta tu movimiento</strong><p>Incluye importe, concepto y etiquetas. Revísalo antes de guardar:</p><div class="capture-chat__suggestions"><button type="button" (click)="usarEjemplo('Gasté 180 en comida')">Gasté $180 en comida</button><button type="button" (click)="usarEjemplo('Recibí 8500 de nómina')">Recibí $8,500 de nómina</button></div></div></div>
+              <div class="capture-chat__intro"><span class="capture-chat__avatar" aria-hidden="true">✦</span><div><strong>Escribe un movimiento o pregunta</strong><p>Cuéntame qué registraste o pide un informe. Podrás revisar antes de guardar.</p><div class="capture-chat__suggestions"><button type="button" (click)="usarEjemplo('Gasté 180 en comida')">Gasté $180 en comida</button><button type="button" (click)="usarEjemplo('Reporte de este mes')">Reporte de este mes</button></div></div></div>
             }
             @for (turn of captureTurns(); track turn.id) {
               <article class="capture-chat__user"><span>{{ turn.user | textoFinanciero }}</span></article>
@@ -126,6 +151,7 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
                 @if (turn.suggestions?.length) {<div class="chat-followups">@for (suggestion of turn.suggestions; track suggestion) {<button type="button" (click)="usarSugerencia(suggestion)" [disabled]="loading() || confirming() !== null">{{ suggestion | textoFinanciero }}</button>}</div>}
                 @for (proposal of turn.actions; track proposal.id) {
                   <button type="button" class="capture-cancel" style="min-height:44px" (click)="abrirEdicion(proposal)" [disabled]="confirming()!==null">Editar propuesta</button>
+                  @if (etiquetasPropuesta(proposal).length) {<p>Etiquetas: {{ etiquetasPropuesta(proposal).join(', ') }}</p>}
                   @if (necesitaCategoria(proposal)) {
                     <section class="categorization-review" aria-label="Elige una categoría">
                       <article class="categorization-review__expense" draggable="true" (dragstart)="iniciarArrastre($event, proposal)" [attr.aria-label]="turn.user | textoFinanciero"><span class="categorization-review__grip" aria-hidden="true">⠿</span><div><small>Movimiento</small><strong>{{ proposal.summary | textoFinanciero }}</strong></div></article>
@@ -170,6 +196,13 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
           </div>
           @if (!seguirFinal()) {<button type="button" class="capture-jump-latest" (click)="irAlFinal()">Ir al último mensaje ↓</button>}
           @if (permisoVoz()) {<section class="voice-permission" role="status"><p>El audio se enviará para transcribirlo. Revisa el movimiento antes de guardarlo.</p><button type="button" (click)="permitirVoz()">Permitir audio y grabar</button></section>}
+          @if (etiquetasPersonales().length) {
+            <div class="capture-tags" aria-label="Etiquetas disponibles">
+              @for (etiqueta of etiquetasPersonales(); track etiqueta.id) {
+                <button type="button" (click)="insertarEtiqueta(etiqueta.nombre)" [disabled]="loading()" [attr.aria-label]="'Añadir etiqueta ' + etiqueta.nombre">#{{ etiqueta.nombre }}</button>
+              }
+            </div>
+          }
           <form class="capture-chat__composer" (ngSubmit)="submit()">
             <label class="sr-only" for="quick-capture-text">Escribe el movimiento que quieres registrar</label>
             <textarea id="quick-capture-text" name="content" [(ngModel)]="content" (ngModelChange)="alCambiarTexto()" (keydown.enter)="enviarConEnter($event)" rows="1" maxlength="1200" enterkeyhint="send" placeholder="Ej. Café 45 #trabajo" [readOnly]="loading() || escuchando() || stopping()" [attr.aria-busy]="loading()"></textarea>
@@ -224,6 +257,11 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
   styles:[`.capture-editor{display:grid;gap:12px;max-height:55dvh;overflow:auto;padding:16px;border:1px solid var(--border-color,#777);border-radius:16px}.capture-editor label{display:grid;gap:4px}.capture-editor input,.capture-editor select{min-height:44px;font-size:16px;padding:8px;background:var(--surface-color,transparent);color:inherit;border:1px solid #888;border-radius:8px}.capture-editor button{min-height:44px}`]
 })
 export class QuickCaptureComponent implements OnDestroy {
+  private readonly changeDetector = inject(ChangeDetectorRef);
+  readonly pantallaVoz = signal(false);
+  readonly transcripcionParcial = signal('');
+  readonly transcripcionLista = signal(false);
+  readonly etiquetasPersonales = signal<{id:number; nombre:string}[]>([]);
   private readonly styleAssets = inject(FeatureStylesService).load('capture');
   private readonly captureLauncher = inject(CaptureLauncherService);
   readonly offline=inject(MovimientosOfflineService);
@@ -300,12 +338,12 @@ export class QuickCaptureComponent implements OnDestroy {
         this.chatGeneration++;
         this.operaciones.unsubscribe(); this.operaciones=new Subscription();
         this.confirming.set(null); this.reportMessages.set([]); this.weeklyTransactions.set([]);
-        this.categories.set([]); this.cuentasEdicion.set([]); this.borrador={};
-        this.pendingCaptureText.set(''); this.sourceInput.set(''); this.voiceMessage.set(''); this.aiConsentRequired.set(false);
+        this.categories.set([]); this.cuentasEdicion.set([]); this.etiquetasPersonales.set([]); this.borrador={};
+        this.pendingCaptureText.set(''); this.sourceInput.set(''); this.voiceMessage.set(''); this.transcripcionParcial.set(''); this.aiConsentRequired.set(false);
         this.reportLoading.set(false); this.reportError.set(''); this.error.set(''); this.editando.set(null);
         this.recuperando.set(false);
         this.usuarioChat = usuarioId; this.captureTurns.set([]); this.content = ''; this.contexto = null; this.consent = false; this.voiceConsent = false;
-        this.capturaSub?.unsubscribe(); this.transcripcionSub?.unsubscribe(); this.stopVoice(true); this.loading.set(false); this.processingStep.set(null); this.open.set(false);
+        this.capturaSub?.unsubscribe(); this.transcripcionSub?.unsubscribe(); this.stopVoice(true); this.loading.set(false); this.processingStep.set(null); this.open.set(false); this.pantallaVoz.set(false);
         if (usuarioId!==null) void this.restaurarBorrador(usuarioId,this.chatGeneration);
       }
     });
@@ -429,6 +467,9 @@ export class QuickCaptureComponent implements OnDestroy {
   private captureTurnId = 0;
   /** Suscripción activa de transcripción de audio (permite cancelar) */
   private transcripcionSub: Subscription | null = null;
+  private transcripcionParcialSub: Subscription | null = null;
+  private transcripcionParcialOcupada = false;
+  private ultimaVistaPrevia = 0;
   private capturaSub: Subscription | null = null;
   private readonly router = inject(Router);
   readonly nivelesAudio = signal<number[]>(Array(7).fill(0));
@@ -442,6 +483,7 @@ export class QuickCaptureComponent implements OnDestroy {
     void this.guardarBorradorAhora().catch(()=>{});
     this.operaciones.unsubscribe();
     this.transcripcionSub?.unsubscribe();
+    this.transcripcionParcialSub?.unsubscribe();
     this.capturaSub?.unsubscribe();
     this.limpiarHoldTimer();
     this.stopVoice(true);
@@ -482,7 +524,10 @@ export class QuickCaptureComponent implements OnDestroy {
     this.content = text;
     requestAnimationFrame(() => document.getElementById('quick-capture-text')?.focus());
   }
-  close(): void { this.limpiarHoldTimer(); this.pointerGesture = false; this.stopVoice(true); if (this.processingStep()) this.cancelarTranscripcion(); this.open.set(false); }
+  close(): void { this.limpiarHoldTimer(); this.pointerGesture = false; this.stopVoice(true); if (this.processingStep()) this.cancelarTranscripcion(); this.open.set(false); this.pantallaVoz.set(false); this.changeDetector.detectChanges(); }
+  cerrarPantallaVoz(): void { this.permisoVoz.set(false); this.close(); this.transcripcionParcial.set(''); this.transcripcionLista.set(false); }
+  usarTranscripcionParcial(): void { this.content = this.transcripcionParcial(); this.voiceCapture.set(true); this.transcripcionLista.set(true); }
+  abrirEscrituraDesdeVoz(): void { this.stopVoice(true); if (this.processingStep()) this.cancelarTranscripcion(); this.permisoVoz.set(false); this.pantallaVoz.set(false); this.open.set(true); this.mode.set('CAPTURE'); this.changeDetector.detectChanges(); requestAnimationFrame(() => document.getElementById('quick-capture-text')?.focus()); }
   cambiarModo(mode: CaptureMode): void {
     this.stopVoice(true);
     if (this.processingStep()) this.cancelarTranscripcion();
@@ -496,6 +541,24 @@ export class QuickCaptureComponent implements OnDestroy {
     if (listaId != null && !this.listas.puedeEscribir()) { this.error.set('Elige una lista donde puedas registrar.'); return; }
     const value = this.content.trim();
     if (!value || this.loading() || this.catalogoCargando() || this.listening() || this.stopping() || this.confirming() !== null) return;
+    const pendientes = this.captureTurns().flatMap(turn => turn.actions).filter(proposal => this.necesitaCategoria(proposal));
+    if (pendientes.length === 1) {
+      const normalizar = (texto: string) => texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+      const respuesta = normalizar(value).replace(/^(?:fue\s+)?(?:en\s+|de\s+|categoria\s+)?/, '').trim();
+      const categorias = this.categoriasPara(pendientes[0]);
+      let opciones = categorias.filter(categoria => normalizar(categoria.nombre) === respuesta);
+      if (!opciones.length && /^(?:comida|restaurante|restaurantes)$/.test(respuesta)) {
+        opciones = categorias.filter(categoria => /^(?:comida|alimentos)(?:\b|$)/.test(normalizar(categoria.nombre)));
+      }
+      if (opciones.length > 1) { this.error.set('Hay varias categorías posibles. Elige una de las opciones de la propuesta.'); return; }
+      if (opciones.length === 1) {
+        this.actualizarPropuesta(pendientes[0], {...pendientes[0].data, categoriaId: opciones[0].id}, () => {
+          if (this.content.trim() === value) this.content = '';
+          this.marcarBorrador();
+        });
+        return;
+      }
+    }
     this.seguirFinal.set(true);
     if(!this.offline.conexion()){
       this.prepararEnDispositivo(value, listaId);return;
@@ -541,9 +604,7 @@ export class QuickCaptureComponent implements OnDestroy {
   private prepararEnDispositivo(value: string, listaId: number | null): void {
     try {
       if (!this.cuentasEdicion().length) throw new Error('Abre la app con conexión para guardar primero tus cuentas.');
-      const tags = value.match(/(?<![\p{L}\p{N}_])#[\p{L}\p{N}][\p{L}\p{N}_-]*/gu) ?? [];
-      const etiquetas = parsearEtiquetas(tags.join(' '));
-      const texto = value.replace(/(?<![\p{L}\p{N}_])#[\p{L}\p{N}][\p{L}\p{N}_-]*/gu, '').trim();
+      const { texto, etiquetas } = extraerEtiquetasCaptura(value);
       const proposal = prepararCapturaOffline(texto, this.cuentasEdicion(), this.categories());
       proposal.data = { ...proposal.data, ...(listaId == null ? {} : { listaId }), etiquetas };
       this.captureTurns.update(turns => [...turns, {id:++this.captureTurnId,user:value,
@@ -567,6 +628,17 @@ export class QuickCaptureComponent implements OnDestroy {
     });
   }
 
+  etiquetasPropuesta(proposal: AiActionProposal): string[] {
+    const etiquetas = proposal.data['etiquetas'];
+    return Array.isArray(etiquetas) ? etiquetas.filter((value): value is string => typeof value === 'string') : [];
+  }
+  insertarEtiqueta(nombre: string): void {
+    const existente = new Set((this.content.match(/(?<![\p{L}\p{N}_])#[\p{L}\p{N}][\p{L}\p{N}_-]*/gu) ?? []).map(tag => tag.slice(1).toLocaleLowerCase()));
+    if (existente.has(nombre.toLocaleLowerCase())) return;
+    const siguiente = `${this.content.trim()} #${nombre}`.trim();
+    if (siguiente.length > 1200) { this.error.set('El mensaje es demasiado largo para a?adir la etiqueta.'); return; }
+    this.content = siguiente; this.alCambiarTexto();
+  }
   necesitaCategoria(proposal: AiActionProposal): boolean {
     return proposal.type === 'CREATE_TRANSACTION' && proposal.data['tipo'] !== 'TRANSFERENCIA' && !proposal.data['categoriaId'];
   }
@@ -648,14 +720,14 @@ export class QuickCaptureComponent implements OnDestroy {
     }
     this.actualizarPropuesta(p,datos);
   }
-  private actualizarPropuesta(proposal:AiActionProposal,datos:Record<string,unknown>):void {
+  private actualizarPropuesta(proposal:AiActionProposal,datos:Record<string,unknown>,alActualizar?:()=>void):void {
     if (this.confirming()) return;
     if(proposal.local){
       const cuenta=this.cuentasEdicion().find(c=>c.id===datos['cuentaId'])?.nombre??'Cuenta por seleccionar';
       const destino=datos['tipo']==='TRANSFERENCIA'?' a '+(this.cuentasEdicion().find(c=>c.id===datos['cuentaDestinoId'])?.nombre??'destino por seleccionar'):'';
       const p={...proposal,data:{...datos},version:(proposal.version??0)+1,summary:`${datos['tipo']} de ${datos['monto']} · ${cuenta}${destino} · ${datos['fecha']}`};
       this.captureTurns.update(turns=>turns.map(t=>({...t,actions:t.actions.map(previo=>previo.id===p.id?p:previo)})));
-      this.editando.set(null);this.marcarBorrador();return;
+      this.editando.set(null);this.marcarBorrador();alActualizar?.();return;
     }
     if(!this.offline.conexion()){this.error.set('Editar una propuesta del servidor requiere conexión.');return;}
     this.confirming.set(proposal.id); const generation=this.chatGeneration;
@@ -663,7 +735,7 @@ export class QuickCaptureComponent implements OnDestroy {
       next:r => { if(generation!==this.chatGeneration)return; this.confirming.set(null);
         if(!r.success||!r.data){this.error.set(r.message||'No se pudo editar.');return;}
         this.captureTurns.update(turns=>turns.map(t=>({...t,actions:t.actions.map(p=>p.id===proposal.id?r.data!:p)})));
-        this.editando.set(null);this.error.set('');
+        this.editando.set(null);this.error.set('');alActualizar?.();
       },error:e=>{if(generation!==this.chatGeneration)return;this.confirming.set(null);this.error.set(this.errorMessage(e));}
     }));
   }
@@ -769,8 +841,15 @@ export class QuickCaptureComponent implements OnDestroy {
     this.captureLauncher.attach('chat');
     this.seguirFinal.set(true);
     this.cargarCategoriasCaptura();
-    const detail = (event as CustomEvent<{ tipo?: string; content?: string }>).detail;
-    this.open.set(true);
+    const generacion=this.chatGeneration;
+    this.operaciones.add(this.finanzas.getEtiquetasPersonales().subscribe({
+      next:r=>{if(generacion===this.chatGeneration)this.etiquetasPersonales.set(r.data??[]);},
+      error:()=>{if(generacion===this.chatGeneration)this.etiquetasPersonales.set([]);}
+    }));
+    const detail = (event as CustomEvent<{ tipo?: string; content?: string; voz?: boolean }>).detail;
+    if (detail?.voz === true) { this.transcripcionLista.set(false); this.transcripcionParcial.set(''); }
+    this.pantallaVoz.set(detail?.voz === true);
+    this.open.set(detail?.voz !== true);
     this.mode.set('CAPTURE');
     this.error.set('');
     if (detail?.content) { this.usarSugerencia(detail.content); }
@@ -781,7 +860,7 @@ export class QuickCaptureComponent implements OnDestroy {
       this.captureHint.set('Hoy se usa por defecto. Indica ayer, una fecha o una cuenta si lo necesitas.');
     }
     requestAnimationFrame(() => {
-      const target = window.matchMedia('(pointer: coarse)').matches ? 'quick-capture-panel' : 'quick-capture-text';
+      const target = detail?.voz ? 'voice-screen' : window.matchMedia('(pointer: coarse)').matches ? 'quick-capture-panel' : 'quick-capture-text';
       document.getElementById(target)?.focus({ preventScroll: true });
     });
   }
@@ -826,7 +905,7 @@ export class QuickCaptureComponent implements OnDestroy {
   permitirVoz(): void { this.voiceConsent = true; this.permisoVoz.set(false); void this.startVoice(); }
   toggleVoice(): void {
     if (this.listening()) { this.stopVoice(); return; }
-    if (!this.consent && !this.voiceConsent) { this.permisoVoz.set(true); return; }
+    if (!this.consent && !this.voiceConsent) { this.permisoVoz.set(true); this.changeDetector.detectChanges(); return; }
     void this.startVoice();
   }
   private async startVoice(): Promise<void> {
@@ -841,11 +920,18 @@ export class QuickCaptureComponent implements OnDestroy {
     }
     this.discardAudio = false;
     this.audioChunks = [];
+    this.transcripcionParcial.set(''); this.transcripcionLista.set(false); this.ultimaVistaPrevia = 0;
     this.cargarCategoriasCaptura();
     this.voiceCapture.set(true);
     this.voiceStartedAt = Date.now(); this.listening.set(true); this.updateTimer();
+    if (this.pantallaVoz()) this.changeDetector.detectChanges();
     this.timer = setInterval(() => {
       this.updateTimer();
+      if (this.pantallaVoz() && !this.destruido) this.changeDetector.detectChanges();
+      const segundos = Math.floor((Date.now() - this.voiceStartedAt) / 1000);
+      if (this.pantallaVoz() && segundos >= 5 && segundos - this.ultimaVistaPrevia >= 8) {
+        this.ultimaVistaPrevia = segundos; this.previsualizarAudio(generation);
+      }
       if (Date.now() - this.voiceStartedAt >= 45_000) this.stopVoice();
     }, 250);
     try {
@@ -871,13 +957,16 @@ export class QuickCaptureComponent implements OnDestroy {
       const name = cause instanceof DOMException ? cause.name : '';
       this.error.set(name === 'NotAllowedError' ? 'El acceso al micrófono está bloqueado. Revisa los permisos de Kaptal o del navegador y vuelve a intentarlo.' :
         name === 'NotFoundError' ? 'No encontré un micrófono disponible.' : 'No pude iniciar el micrófono. Revisa los permisos del navegador.');
+      if (this.pantallaVoz() && !this.destruido) this.changeDetector.detectChanges();
     }
   }
   private stopVoice(discard = false): void {
     ++this.voiceGeneration;
+    this.transcripcionParcialSub?.unsubscribe(); this.transcripcionParcialSub = null; this.transcripcionParcialOcupada = false;
     this.detenerNivelesAudio();
     this.discardAudio ||= discard;
     this.listening.set(false); this.finishTimer();
+    if (this.pantallaVoz() && !this.destruido) this.changeDetector.detectChanges();
     const recorder = this.mediaRecorder;
     if (recorder?.state === 'recording') { this.stopping.set(true); recorder.stop(); return; }
     if (this.stopping()) return;
@@ -885,6 +974,21 @@ export class QuickCaptureComponent implements OnDestroy {
     this.audioStream = null;
     this.mediaRecorder = null;
     this.audioChunks = [];
+  }
+  private previsualizarAudio(generation: number): void {
+    if (this.transcripcionParcialOcupada || !this.listening() || !this.audioChunks.length || !this.mediaRecorder) return;
+    const audio = new Blob(this.audioChunks, {type:this.mediaRecorder.mimeType || 'audio/webm'});
+    if (!audio.size || audio.size > 5 * 1024 * 1024) return;
+    this.transcripcionParcialOcupada = true;
+    const sub = this.finanzas.transcribirAudio(audio).pipe(finalize(() => { this.transcripcionParcialOcupada = false; })).subscribe({
+      next: response => {
+        if (generation !== this.voiceGeneration || !this.listening()) return;
+        const texto = response.success ? response.data?.trim() : '';
+        if (texto) { this.transcripcionParcial.set(texto); if (this.pantallaVoz() && !this.destruido) this.changeDetector.detectChanges(); }
+      },
+      error: () => { /* La transcripción final conserva el audio completo. */ }
+    });
+    this.transcripcionParcialSub = sub.closed ? null : sub;
   }
   private procesarGrabacion(mimeType: string): void {
     this.audioStream?.getTracks().forEach(track => track.stop());
@@ -898,6 +1002,7 @@ export class QuickCaptureComponent implements OnDestroy {
     this.transcribiendoVoz.set(true);
     this.processingStep.set('TRANSCRIBIENDO');
     this.voiceMessage.set('Enviando audio para transcribir…');
+    if (this.pantallaVoz()) this.changeDetector.detectChanges();
     // Guardamos la suscripción para permitir cancelación
     this.transcripcionSub = this.finanzas.transcribirAudio(audio).subscribe({
       next: response => {
@@ -910,15 +1015,21 @@ export class QuickCaptureComponent implements OnDestroy {
           this.error.set(msg);
           this.voiceMessage.set('');
           this.toast.warning(msg, '⚠️ Sin voz detectada');
+          if (this.pantallaVoz() && !this.destruido) this.changeDetector.detectChanges();
           return;
         }
         this.content = text;
         this.voiceCapture.set(true);
-        this.voiceMessage.set('Transcripción lista. Revisa la propuesta antes de guardarla.');
-        this.open.set(true);
-        this.mode.set('CAPTURE');
-        this.submit();
-        requestAnimationFrame(() => document.getElementById('quick-capture-text')?.focus());
+        this.voiceMessage.set('Transcripción lista. Revisa el texto antes de continuar.');
+        if (this.pantallaVoz()) {
+          this.transcripcionLista.set(true);
+          this.changeDetector.detectChanges();
+        } else {
+          this.open.set(true);
+          this.mode.set('CAPTURE');
+          this.changeDetector.detectChanges();
+          requestAnimationFrame(() => document.getElementById('quick-capture-text')?.focus());
+        }
       },
       error: error => {
         this.processingStep.set(null);
@@ -928,6 +1039,7 @@ export class QuickCaptureComponent implements OnDestroy {
         const msg = this.errorMessage(error);
         this.error.set(msg);
         this.toast.error(msg, '⚠️ Error de conexión');
+        if (this.pantallaVoz() && !this.destruido) this.changeDetector.detectChanges();
       }
     });
   }

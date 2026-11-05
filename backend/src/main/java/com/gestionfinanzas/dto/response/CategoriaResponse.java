@@ -10,8 +10,15 @@ public record CategoriaResponse(
     String icono,
     String color,
     boolean esPersonalizada,
-    boolean activo
+    boolean activo,
+    boolean historica
 ) {
+    public CategoriaResponse(Long id,String nombre,TipoTransaccion tipo,String icono,String color,boolean esPersonalizada,boolean activo) {
+        this(id,nombre,tipo,icono,color,esPersonalizada,activo,false);
+    }
+    public static CategoriaResponse fromHistorica(com.gestionfinanzas.model.entity.CategoriaHistorica c) {
+        return new CategoriaResponse(c.getId(),c.getNombre(),c.getTipo(),c.getIcono(),c.getColor(),true,false,true);
+    }
     public static CategoriaResponse fromEntity(Categoria categoria) {
         return new CategoriaResponse(
             categoria.getId(),

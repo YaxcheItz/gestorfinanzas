@@ -42,11 +42,13 @@ describe('QuickCaptureComponent processing and gestures', () => {
         { provide: AuthService, useValue: { currentUser: usuario } },
         { provide: FinanzasService, useValue: {
           getCategorias: () => of({data: []}),
+          getEtiquetasPersonales: () => of({data: [{id:4,nombre:'viaje'}]}),
           getCuentas: () => of({data: []}),
           chatWithAi: vi.fn(() => of({success:true,data:{answer:'Reporte',actions:[]}})),
           getPropuestasAi: vi.fn(() => of({success:true,data:[]})),
           descartarPropuestaAi: vi.fn(() => of({success:true})),
           confirmAiAction: vi.fn(() => of({success:true,message:'Guardado'})),
+          transcribirAudio: vi.fn(() => of({success:true,data:'Gasté 50 en café'})),
           editarPropuestaAi: vi.fn((id,datos,version) => of({success:true,data:{id,type:'CREATE_TRANSACTION',summary:'Actualizado',data:datos,version:version+1}})),
           capturaRapidaAi: () => new Observable(subscriber => {
             const subscription = result.subscribe(subscriber);
@@ -64,6 +66,26 @@ describe('QuickCaptureComponent processing and gestures', () => {
   });
 
   afterEach(() => { fixture.destroy(); vi.useRealTimers(); vi.unstubAllGlobals(); });
+
+  it('agrega una etiqueta disponible al texto sin duplicarla ni guardar', () => {
+    component.abrirCapturaDesdeAcceso(new CustomEvent('kaptal-abrir-captura-chat',{detail:{voz:true}}));
+    expect(component.etiquetasPersonales()).toEqual([{id:4,nombre:'viaje'}]);
+    component.content='Gaste 50 en cafe'; component.insertarEtiqueta('viaje'); component.insertarEtiqueta('viaje');
+    expect(component.content).toBe('Gaste 50 en cafe #viaje');
+    expect(TestBed.inject(FinanzasService).confirmAiAction).not.toHaveBeenCalled();
+  });
+
+  it('abre voz por separado sin iniciar el microfono y permite volver a escribir', () => {
+    component.abrirCapturaDesdeAcceso(new CustomEvent('kaptal-abrir-captura-chat', { detail: { voz: true } }));
+    expect(component.pantallaVoz()).toBe(true);
+    expect(component.open()).toBe(false);
+    expect(component.listening()).toBe(false);
+    component.toggleVoice();
+    expect(component.permisoVoz()).toBe(true);
+    component.abrirEscrituraDesdeVoz();
+    expect(component.pantallaVoz()).toBe(false);
+    expect(component.open()).toBe(true);
+  });
 
   it('muestra confirmación del servidor solamente tras un guardado exitoso', () => {
     const propuesta = { id: 'confirmacion-visible', type: 'CREATE_TRANSACTION', summary: 'Gasto', data: {}, version: 0 } as any;
@@ -192,6 +214,46 @@ describe('QuickCaptureComponent processing and gestures', () => {
     expect(component.captureTurns()[0].actions[0].version).toBe(1);
   });
 
+  it('aplica una respuesta escrita de categoria a la propuesta pendiente sin guardar', () => {
+    const propuesta = { id:'pendiente', type:'CREATE_TRANSACTION', summary:'Gasto', data:{tipo:'GASTO',monto:25,categoriaId:null}, version:0 } as any;
+    component.categories.set([{ id:1, nombre:'Comida', tipo:'GASTO', activo:true, esPersonalizada:true }]);
+    component.captureTurns.set([{id:1,user:'Gasto 25',answer:'Elige categoria',actions:[propuesta],voice:false}]);
+    component.content = 'fue en comida';
+    component.submit();
+    expect(TestBed.inject(FinanzasService).editarPropuestaAi).toHaveBeenCalledWith('pendiente',{...propuesta.data,categoriaId:1},0);
+    expect(TestBed.inject(FinanzasService).confirmAiAction).not.toHaveBeenCalled();
+    expect(component.captureTurns()[0].actions[0].data['categoriaId']).toBe(1);
+  });
+
+  it('interpreta restaurantes como comida en una propuesta pendiente', () => {
+    const propuesta = { id:'pendiente', type:'CREATE_TRANSACTION', summary:'Gasto', data:{tipo:'GASTO',monto:25,categoriaId:null}, version:0 } as any;
+    component.categories.set([{ id:1, nombre:'Comida', tipo:'GASTO', activo:true, esPersonalizada:true }]);
+    component.captureTurns.set([{id:1,user:'Gasto 25',answer:'Elige categoria',actions:[propuesta],voice:false}]);
+    component.content = 'restaurantes'; component.submit();
+    expect(component.captureTurns()[0].actions[0].data['categoriaId']).toBe(1);
+    expect(TestBed.inject(FinanzasService).confirmAiAction).not.toHaveBeenCalled();
+  });
+
+  it('conserva la respuesta escrita si falla la actualizacion de categoria', () => {
+    const propuesta = { id:'pendiente', type:'CREATE_TRANSACTION', summary:'Gasto', data:{tipo:'GASTO',monto:25,categoriaId:null}, version:0 } as any;
+    component.categories.set([{ id:1, nombre:'Comida', tipo:'GASTO', activo:true, esPersonalizada:true }]);
+    component.captureTurns.set([{id:1,user:'Gasto 25',answer:'Elige categoria',actions:[propuesta],voice:false}]);
+    vi.spyOn(TestBed.inject(FinanzasService), 'editarPropuestaAi').mockReturnValueOnce(of({success:false,message:'Error temporal'} as any));
+    component.content = 'comida'; component.submit();
+    expect(component.content).toBe('comida');
+    expect(component.captureTurns()[0].actions[0].data['categoriaId']).toBeNull();
+    expect(component.error()).toBe('Error temporal');
+  });
+
+  it('no elige automaticamente cuando restaurantes puede referirse a dos categorias', () => {
+    const propuesta = { id:'pendiente', type:'CREATE_TRANSACTION', summary:'Gasto', data:{tipo:'GASTO',monto:25,categoriaId:null}, version:0 } as any;
+    component.categories.set([{ id:1,nombre:'Comida',tipo:'GASTO',activo:true,esPersonalizada:true },{ id:2,nombre:'Alimentos y Supermercado',tipo:'GASTO',activo:true,esPersonalizada:true }]);
+    component.captureTurns.set([{id:1,user:'Gasto 25',answer:'Elige categoria',actions:[propuesta],voice:false}]);
+    component.content='restaurantes';component.submit();
+    expect(TestBed.inject(FinanzasService).editarPropuestaAi).not.toHaveBeenCalled();
+    expect(TestBed.inject(FinanzasService).confirmAiAction).not.toHaveBeenCalled();
+  });
+
   it('keeps a long press from triggering the manual form on release', () => {
     vi.useFakeTimers();
     const button = document.createElement('button');
@@ -248,6 +310,52 @@ describe('QuickCaptureComponent processing and gestures', () => {
       if (anterior) Object.defineProperty(navigator, 'mediaDevices', anterior);
       else Reflect.deleteProperty(navigator, 'mediaDevices');
     }
+  });
+
+  it('al transcribir deja el texto para revisar sin interpretar ni guardar', async () => {
+    vi.stubGlobal('isSecureContext', true);
+    const anterior = Object.getOwnPropertyDescriptor(navigator, 'mediaDevices');
+    Object.defineProperty(navigator, 'mediaDevices', {configurable:true,value:{getUserMedia:async()=>({getTracks:()=>[{stop:vi.fn()}]})}});
+    let recorder: any;
+    class Grabador {
+      static isTypeSupported() { return true; }
+      state = 'inactive'; mimeType = 'audio/webm'; ondataavailable: any; onerror: any; onstop: any;
+      constructor() { recorder = this; }
+      start() { this.state = 'recording'; }
+      stop() { this.state = 'inactive'; this.ondataavailable({data:new Blob(['audio'])}); this.onstop(); }
+    }
+    vi.stubGlobal('MediaRecorder', Grabador);
+    try {
+      component.abrirCapturaDesdeAcceso(new CustomEvent('kaptal-abrir-captura-chat',{detail:{voz:true}}));
+      component.permitirVoz(); await Promise.resolve();
+      expect(recorder.state).toBe('recording'); component.toggleVoice();
+      expect(component.content).toBe('Gasté 50 en café');
+      expect(component.open()).toBe(false); expect(component.pantallaVoz()).toBe(true);
+      expect(component.transcripcionLista()).toBe(true);
+      component.content = 'Texto editado'; component.abrirEscrituraDesdeVoz();
+      expect(component.content).toBe('Texto editado'); expect(component.open()).toBe(true);
+      expect(TestBed.inject(FinanzasService).confirmAiAction).not.toHaveBeenCalled();
+      expect(component.captureTurns()).toEqual([]);
+    } finally {
+      if(anterior) Object.defineProperty(navigator,'mediaDevices',anterior); else Reflect.deleteProperty(navigator,'mediaDevices');
+    }
+  });
+
+  it('muestra una transcripcion provisional sin solapar solicitudes ni aceptar respuestas tras cancelar', () => {
+    const respuesta = new Subject<any>();
+    const transcribir = vi.spyOn(TestBed.inject(FinanzasService), 'transcribirAudio').mockReturnValue(respuesta);
+    component.pantallaVoz.set(true); component.listening.set(true);
+    (component as any).voiceGeneration = 7;
+    (component as any).audioChunks = [new Blob(['audio'])];
+    (component as any).mediaRecorder = {mimeType:'audio/webm',state:'inactive'};
+    (component as any).previsualizarAudio(7); (component as any).previsualizarAudio(7);
+    expect(transcribir).toHaveBeenCalledOnce();
+    respuesta.next({success:true,data:'Texto provisional'});
+    expect(component.transcripcionParcial()).toBe('Texto provisional');
+    component.cerrarPantallaVoz();
+    respuesta.next({success:true,data:'Respuesta tardía'});
+    expect(component.transcripcionParcial()).toBe('');
+    expect(TestBed.inject(FinanzasService).confirmAiAction).not.toHaveBeenCalled();
   });
 
   it('libera el microfono si el permiso llega despues de cerrar el panel', async () => {

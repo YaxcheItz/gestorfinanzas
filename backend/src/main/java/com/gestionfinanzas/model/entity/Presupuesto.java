@@ -6,8 +6,9 @@ import lombok.*;
 import java.math.BigDecimal;
 
 @Entity
+@org.hibernate.annotations.DynamicUpdate
 @Table(name = "presupuestos", uniqueConstraints = {
-    @UniqueConstraint(name = "uk_presupuesto_usuario_cat_periodo_lista", columnNames = {"usuario_id", "categoria_id", "mes", "anio", "lista_id"})
+    @UniqueConstraint(name = "uk_presupuesto_usuario_cat_periodo_lista", columnNames = {"usuario_id", "categoria_id", "categoria_historica_id", "mes", "anio", "lista_id"})
 })
 @Getter
 @Setter
@@ -29,8 +30,16 @@ public class Presupuesto {
     private Usuario usuario;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "categoria_id", nullable = false)
+    @JoinColumn(name = "categoria_id")
     private Categoria categoria;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="categoria_historica_id")
+    private CategoriaHistorica categoriaHistorica;
+
+    public Categoria getCategoria() { return categoria != null ? categoria : categoriaHistorica == null ? null : categoriaHistorica.comoCategoria(); }
+    public void setCategoria(Categoria valor) { this.categoria=valor; this.categoriaHistorica=null; }
+    public void conservarCategoria(CategoriaHistorica historia) { this.categoriaHistorica=historia; this.categoria=null; }
+
 
     @Column(name = "monto_limite", nullable = false, precision = 15, scale = 2)
     private BigDecimal montoLimite;

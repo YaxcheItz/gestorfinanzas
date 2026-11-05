@@ -594,7 +594,7 @@
                 <span class="text-[11px] text-slate-400">Opcional</span>
               </div>
               <div class="flex flex-wrap gap-1.5">
-                @for (sug of etiquetasSugeridas; track sug) {
+                @for (sug of etiquetasSugeridas(); track sug) {
                   <button
                     type="button"
                     (click)="alternarEtiquetaSugerida(sug)"

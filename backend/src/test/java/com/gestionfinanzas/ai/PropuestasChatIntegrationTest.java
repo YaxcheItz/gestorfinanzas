@@ -108,6 +108,21 @@ class PropuestasChatIntegrationTest {
         acciones.confirm(a.getId(),p.id(),nueva.version());
         assertEquals(new BigDecimal("30.00"),transacciones.listarRecientes(a.getId()).getFirst().monto());
     }
+    @Test void agregarCategoriaConservaDatosYConfirmacionGuardaUnaVez() {
+        var categoria=categorias.crearCategoria(a.getId(),new CategoriaRequest("Comida",TipoTransaccion.GASTO,null,null));
+        var p=propuesta();
+        var datos=mapper.convertValue(p.data(),TransaccionRequest.class);
+        var conCategoria=new TransaccionRequest(datos.cuentaId(),null,categoria.id(),datos.tipo(),datos.monto(),null,datos.fecha(),datos.descripcion(),datos.notas(),null,null,null,datos.listaId(),datos.etiquetas());
+        var editada=acciones.editar(a.getId(),p.id(),p.version(),conCategoria);
+        assertTrue(transacciones.listarRecientes(a.getId()).isEmpty());
+        acciones.confirm(a.getId(),p.id(),editada.version());
+        acciones.confirm(a.getId(),p.id(),editada.version());
+        var guardadas=transacciones.listarRecientes(a.getId());
+        assertEquals(1,guardadas.size());
+        assertEquals(categoria.id(),guardadas.getFirst().categoriaId());
+        assertEquals(new BigDecimal("25.00"),guardadas.getFirst().monto());
+        assertEquals(datos.descripcion(),guardadas.getFirst().descripcion());
+    }
     @Test void descartarPersisteYNoBorraTransacciones() {
         var p=propuesta(); acciones.descartar(a.getId(),p.id());acciones.descartar(a.getId(),p.id());
         assertTrue(acciones.pendientes(a.getId()).isEmpty());

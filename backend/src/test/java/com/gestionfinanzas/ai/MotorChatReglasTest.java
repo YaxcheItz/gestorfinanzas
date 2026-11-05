@@ -21,6 +21,8 @@ class MotorChatReglasTest {
  private final List<CategoriaResponse> categorias=List.of(new CategoriaResponse(8L,"Comida",TipoTransaccion.GASTO,null,null,true,true));
  private MotorChatReglas.Resultado interpretar(String texto){return motor.interpretar(texto,cuentas,categorias,List.of(),hoy);}
  @Test void gastoUsaHoyYMontoExacto(){var r=interpretar("Gast\u00e9 80.50 en tacos");assertEquals("GASTO",r.datos().get("tipo"));assertEquals(new BigDecimal("80.50"),r.datos().get("monto"));assertEquals("2026-10-04",r.datos().get("fecha"));assertEquals(8L,r.datos().get("categoriaId"));}
+ @Test void restaurantesEnPluralSeAsociaAComida(){assertEquals(8L,interpretar("Gaste 80 en restaurantes").datos().get("categoriaId"));}
+ @Test void restaurantesSeAsociaACategoriaPredeterminadaDeAlimentos(){var categoriasPorDefecto=List.of(new CategoriaResponse(9L,"Alimentos y Supermercado",TipoTransaccion.GASTO,null,null,true,true));assertEquals(9L,motor.interpretar("Gaste 80 en restaurantes",cuentas,categoriasPorDefecto,List.of(),hoy).datos().get("categoriaId"));}
  @Test void ingresoReconoceAcentosYAyer(){var r=interpretar("Recib\u00ed 900 de sueldo ayer");assertEquals("INGRESO",r.datos().get("tipo"));assertEquals("2026-10-03",r.datos().get("fecha"));}
  @Test void fechaNoSeConfundeConImporte(){var r=interpretar("Gasto 50 en tacos 2026-09-30");assertEquals("2026-09-30",r.datos().get("fecha"));assertEquals(new BigDecimal("50.00"),r.datos().get("monto"));}
  @Test void fechaInvalidaPreguntaSinPropuesta(){assertNull(interpretar("Gasto 50 31/02/2026").datos());}
@@ -36,4 +38,7 @@ class MotorChatReglasTest {
  @Test void cuentaDesconocidaPideAclaracion(){assertNull(interpretar("Gaste 50 usando Banorte").datos());}
  @Test void abreviaturaConCategoriaFunciona(){assertEquals("GASTO",interpretar("tacos 80").datos().get("tipo"));}
  @Test void confirmaMemoriaDeCategoriaYCuenta(){var t=new TransaccionResponse(1L,2L,"Nu",null,null,8L,"Comida",null,null,TipoTransaccion.GASTO,new BigDecimal("20"),null,null,"MXN",null,hoy,"Taqueria Pepe",null,false,null);var r=motor.interpretar("Gaste 70 en Pepe",cuentas,categorias,List.of(t),hoy);assertEquals(2L,r.datos().get("cuentaId"));assertEquals(8L,r.datos().get("categoriaId"));}
+ @Test void aliasAmexReconoceSoloLaCuentaCorrespondiente(){var cs=List.of(cuenta(5,"American Express","MXN"),cuenta(6,"BBVA","MXN"));var r=motor.interpretar("Pague 50 en tacos con Amex",cs,categorias,List.of(),hoy,true);assertEquals(5L,r.datos().get("cuentaId"));assertEquals("tacos",r.datos().get("descripcion"));}
+ @Test void aliasAmexAmbiguoPideElegirCuenta(){var cs=List.of(cuenta(5,"American Express Oro","MXN"),cuenta(6,"American Express Azul","MXN"));var r=motor.interpretar("Pague 50 en tacos con Amex",cs,categorias,List.of(),hoy,true);assertNull(r.datos());assertTrue(r.respuesta().contains("varias cuentas"));}
+ @Test void reconoceTaqueriaComoComida(){assertEquals(8L,interpretar("Pague 50 en taqueria").datos().get("categoriaId"));}
 }

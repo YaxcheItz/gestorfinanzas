@@ -2,6 +2,7 @@ import { MontoPrivadoDirective } from '../../shared/directives/monto-privado.dir
 ﻿import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { map } from 'rxjs';
 import { Categoria, CategoriaPayload } from '../../core/models/finanzas.models';
 import { FinanzasService } from '../../core/services/finanzas.service';
 import { CategoriaOrdenService } from '../../core/services/categoria-orden.service';
@@ -17,7 +18,7 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
   standalone: true,
   imports: [MontoPrivadoDirective, CommonModule, FormsModule, CategoriaIconoComponent, FocusTrapDirective],
   template: `
-    <main class="finance-page max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-4 sm:space-y-6">
+    <main class="finance-page max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-5">
       <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
           <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">Mis categorías</h1>
@@ -35,22 +36,17 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
         </div>
       }
 
-      <div class="inline-flex max-w-full flex-wrap p-1 bg-slate-100 rounded-xl" role="group" aria-label="Filtrar categorías">
-        <button type="button" (click)="mostrarInactivas.set(false)" [attr.aria-pressed]="!mostrarInactivas()" [class]="!mostrarInactivas() ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600'" class="min-h-11 px-3 py-2 rounded-lg text-xs font-semibold cursor-pointer">Activas</button>
-        <button type="button" (click)="mostrarInactivas.set(true)" [attr.aria-pressed]="mostrarInactivas()" [class]="mostrarInactivas() ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600'" class="min-h-11 px-3 py-2 rounded-lg text-xs font-semibold cursor-pointer">Archivadas</button>
-      </div>
-
       @if (loading()) {
         <p class="p-12 bg-white border border-slate-200 rounded-2xl text-center text-sm text-slate-400">Cargando categorías...</p>
       } @else if (categoriasVisibles().length === 0) {
         <p class="p-12 bg-white border border-slate-200 rounded-2xl text-center text-sm text-slate-500">
-          {{ mostrarInactivas() ? 'No hay categorías archivadas.' : 'Aún no has creado categorías personalizadas.' }}
+          Aún no has creado categorías personalizadas.
         </p>
       } @else {
-        <section aria-label="Categorías personalizadas" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
+        <section aria-label="Categorías personalizadas" class="grid grid-cols-1 gap-2">
           @for (categoria of categoriasVisibles(); track categoria.id) {
             <article
-              class="min-w-0 bg-white p-3 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-wrap items-center gap-3 sm:gap-4"
+              class="min-w-0 bg-white p-3 rounded-2xl border border-slate-200 flex flex-wrap items-center gap-2 sm:gap-3"
               [class.opacity-70]="!categoria.activo"
               [attr.data-categoria-id]="categoria.id"
               [class.ring-2]="destinoTactil() === categoria.id"
@@ -74,25 +70,43 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
               </span>
               <div class="min-w-0 flex-1 basis-[8ch]">
                 <h2 class="font-semibold text-slate-900 truncate">{{ categoria.nombre }}</h2>
-                <p class="text-xs text-slate-500">{{ categoria.tipo === 'GASTO' ? 'Gasto' : 'Ingreso' }} · Personalizada</p>
+                <p class="text-xs text-slate-500">{{ categoria.tipo === 'GASTO' ? 'Gasto' : 'Ingreso' }}</p>
               </div>
-              <div class="flex shrink-0 flex-col">
+              <div class="flex shrink-0">
                 <button type="button" (click)="moverCategoria(categoria, -1)" [attr.aria-label]="'Subir ' + categoria.nombre" class="min-h-11 px-2 text-xs font-semibold text-slate-500 hover:text-emerald-700">↑</button>
                 <button type="button" (click)="moverCategoria(categoria, 1)" [attr.aria-label]="'Bajar ' + categoria.nombre" class="min-h-11 px-2 text-xs font-semibold text-slate-500 hover:text-emerald-700">↓</button>
               </div>
-              @if (categoria.activo) {
-                <div class="flex max-w-full shrink-0 flex-wrap flex-col sm:flex-row">
-                  <button type="button" (click)="abrirEditar(categoria)" class="min-h-11 px-2 text-slate-500 hover:text-slate-900 rounded-lg cursor-pointer" [attr.aria-label]="'Editar ' + categoria.nombre">Editar</button>
-                  <button type="button" (click)="cambiarEstado(categoria, false)" class="min-h-11 px-2 text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer" [attr.aria-label]="'Archivar ' + categoria.nombre">Archivar</button>
-                </div>
-              } @else {
-                <button type="button" (click)="cambiarEstado(categoria, true)" class="min-h-11 px-3 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 rounded-lg cursor-pointer">Restaurar</button>
-              }
+              <div class="flex max-w-full min-w-0 flex-wrap justify-end">
+                <button type="button" (click)="abrirEditar(categoria)" class="min-h-11 px-2 text-slate-500" [attr.aria-label]="'Editar ' + categoria.nombre">Editar</button>
+                <button type="button" (click)="eliminarCategoria(categoria)" class="min-h-11 px-2 text-rose-600" [attr.aria-label]="'Eliminar ' + categoria.nombre">Eliminar</button>
+              </div>
             </article>
           }
         </section>
       }
     </main>
+
+    @if (categoriaReasignar(); as origen) {
+      <div class="fixed inset-0 z-40 bg-slate-900/60 flex items-center justify-center p-4">
+        <section appFocusTrap (focusTrapEscape)="cerrarReasignacion()" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="reasignar-titulo" class="bg-white rounded-2xl w-full max-w-md max-h-[90dvh] overflow-y-auto p-5 space-y-4">
+          <h2 id="reasignar-titulo" class="text-lg font-bold">{{ eliminarAlConfirmar ? 'Eliminar' : 'Reasignar' }} {{ origen.nombre }}</h2>
+          @if (referenciasCategoria(); as referencias) {
+            <p class="text-sm text-slate-600">{{ referencias.movimientos }} movimientos anteriores y {{ referencias.lineasLibro }} líneas del libro diario conservarán su categoría histórica.</p>
+            <p class="text-sm text-slate-600">{{ referencias.presupuestosActivos ?? 0 }} presupuestos vigentes y {{ referencias.recurrenciasActivas ?? 0 }} recurrencias activas por reasignar.</p>
+            @if (!eliminarAlConfirmar || necesitaReasignacion()) {
+              <label for="categoria-destino" class="block font-semibold">Categoría de destino</label>
+              <select id="categoria-destino" [(ngModel)]="destinoReasignar" class="w-full min-h-11 rounded-xl border border-slate-300 px-3">
+                <option [ngValue]="null">Selecciona una categoría</option>
+                @for (destino of destinosReasignacion(); track destino.id) {<option [ngValue]="destino.id">{{ destino.nombre }}</option>}
+              </select>
+            }
+            @if (eliminarAlConfirmar) {<p class="text-sm text-slate-600">La categoría se eliminará del catálogo y no podrás restaurarla. Sus registros anteriores se conservarán.</p>}
+          } @else {<p role="status">Cargando referencias…</p>}
+          @if (errorReasignacion()) {<p role="alert" class="text-rose-700">{{ errorReasignacion() }}</p>}
+          <div class="flex flex-wrap justify-end gap-2"><button type="button" (click)="cerrarReasignacion()" [disabled]="reasignando()" class="min-h-11 px-3">Cancelar</button><button type="button" (click)="reasignarActivos()" [disabled]="reasignando() || !referenciasCategoria() || ((!eliminarAlConfirmar || necesitaReasignacion()) && destinoReasignar === null)" class="min-h-11 px-4 rounded-xl bg-emerald-700 text-white">{{ eliminarAlConfirmar ? 'Confirmar eliminación' : 'Reasignar' }}</button></div>
+        </section>
+      </div>
+    }
 
     @if (modalAbierto()) {
       <div class="fixed inset-0 z-40 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-2 sm:p-4">
@@ -194,11 +208,19 @@ export class CategoriasComponent implements OnInit, OnDestroy {
   private readonly perfilService = inject(PerfilService);
 
   readonly categorias = signal<Categoria[]>([]);
+  readonly categoriaReasignar = signal<Categoria | null>(null);
+  readonly destinosReasignacion = signal<Categoria[]>([]);
+  readonly errorReasignacion = signal('');
+  readonly referenciasCategoria = signal<{movimientos:number; presupuestos:number; recurrencias:number; lineasLibro:number; presupuestosActivos?:number; recurrenciasActivas?:number} | null>(null);
+  readonly reasignando = signal(false);
+  destinoReasignar: number | null = null;
+  eliminarAlConfirmar = false;
+  necesitaReasignacion(): boolean { const r=this.referenciasCategoria(); return !!r && ((r.presupuestosActivos??0)>0 || (r.recurrenciasActivas??0)>0); }
+
   readonly iconosDisponibles = ICONOS_CATEGORIA;
-  readonly categoriasVisibles = () => this.categorias().filter(c => c.activo !== this.mostrarInactivas());
+  readonly categoriasVisibles = () => this.categorias();
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
-  readonly mostrarInactivas = signal(false);
   readonly modalAbierto = signal(false);
   readonly guardando = signal(false);
   readonly cargandoPresupuesto = signal(false);
@@ -458,19 +480,28 @@ export class CategoriasComponent implements OnInit, OnDestroy {
     });
   }
 
-  cambiarEstado(categoria: Categoria, activa: boolean): void {
-    this.finanzasService.cambiarEstadoCategoria(categoria.id, activa).subscribe({
-      next: response => {
-        if (!response.success) {
-          this.toastService.error(response.message || 'No se pudo actualizar la categoría.');
-          return;
-        }
-        this.toastService.success(activa ? 'Categoría restaurada.' : 'Categoría archivada.');
-        this.cargar();
-      },
-      error: err => this.toastService.error(mensajeDeError(err, 'No se pudo actualizar la categoría.'))
+  abrirReasignacion(origen: Categoria, eliminar = false): void {
+    this.eliminarAlConfirmar=eliminar;
+    this.categoriaReasignar.set(origen); this.destinoReasignar=null; this.errorReasignacion.set(''); this.destinosReasignacion.set([]); this.referenciasCategoria.set(null);
+    this.finanzasService.referenciasCategoria(origen.id).subscribe({next:r=>{if(this.categoriaReasignar()?.id===origen.id)this.referenciasCategoria.set(r.data??null);},error:e=>{if(this.categoriaReasignar()?.id===origen.id)this.errorReasignacion.set(mensajeDeError(e,'No se pudieron cargar las referencias.'));}});
+    this.finanzasService.getCategorias().subscribe({next:r=>{if(this.categoriaReasignar()?.id===origen.id)this.destinosReasignacion.set((r.data??[]).filter(c=>c.activo && c.tipo===origen.tipo && c.id!==origen.id));},
+      error:e=>this.errorReasignacion.set(mensajeDeError(e,'No se pudieron cargar las categorías.'))});
+  }
+  cerrarReasignacion(): void { if (!this.reasignando()) this.categoriaReasignar.set(null); }
+  reasignarActivos(): void {
+    const origen=this.categoriaReasignar(), destino=this.destinoReasignar;
+    if (!origen || !this.referenciasCategoria() || ((!this.eliminarAlConfirmar || this.necesitaReasignacion()) && destino===null) || this.reasignando()) return;
+    this.reasignando.set(true); this.errorReasignacion.set('');
+    const operacion = this.eliminarAlConfirmar
+      ? this.finanzasService.eliminarCategoriaConReasignacion(origen.id,this.necesitaReasignacion()?destino:null).pipe(map(r=>({success:r.success,message:r.message})))
+      : this.finanzasService.reasignarCategoriaActivos(origen.id,destino!).pipe(map(r=>({success:r.success,message:r.message})));
+    operacion.subscribe({
+      next:r=>{this.reasignando.set(false);if(!r.success){this.errorReasignacion.set(r.message);return;}this.categoriaReasignar.set(null);this.toastService.success(this.eliminarAlConfirmar?'Categor\u00eda eliminada.':'Referencias reasignadas.');this.cargar();},
+      error:e=>{this.reasignando.set(false);this.errorReasignacion.set(mensajeDeError(e,'No se pudieron reasignar las referencias.'));}
     });
   }
+
+  eliminarCategoria(categoria: Categoria): void { this.abrirReasignacion(categoria,true); }
 
   seleccionarEmoji(valor: string): void {
     this.emojiPersonalizado = valor;

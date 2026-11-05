@@ -1,3 +1,19 @@
+## Transcripcion incremental en desarrollo (4 noviembre 2026)
+
+Rama mejoras/transcripcion-incremental creada desde develop 5590468 y actualizada con PR209. Vista previa Groq envia audio acumulado con intervalo aproximado de ocho segundos, maximo una solicitud simultanea, exige consentimiento, cancela previas al detener/cerrar y conserva grabacion completa para transcripcion final. La respuesta parcial puede cambiar; si falla la final se puede revisar texto parcial. No se guardan movimientos automaticamente ni se introduce proveedor nuevo. Audio generado localmente y respuestas Groq simuladas: E2E confirma avance durante grabacion y texto final editable; 34 pruebas focales y build pasan. No se ha verificado que Groq acepte archivos parciales ni latencia o cuota en Samsung; puede consumir mas cuota gratuita. Pendiente CI exacta, pruebas de dispositivo consentidas con frase ficticia, integracion, publicacion y APK; no afirmar tiempo real sin demora ni funcionamiento real probado. Usuario conecto Samsung; instalada 0.1.27. No usar datos financieros; carreras sesion y transferencias siguen pendientes.
+
+## Seguimiento de voz simulada (4 noviembre 2026)
+
+PR209 en curso. Prueba unitaria con grabador y respuesta simulados confirma consentimiento, texto revisable sin interpretar ni guardar al finalizar; 33 pruebas focales correctas. E2E local previo de pantalla, permiso y navegacion paso. Transcripcion en vivo NO implementada: Groq actual recibe archivo tras detener; los resultados parciales Android dependen del servicio, posible cambio de proveedor/privacidad requiere diseno y pruebas. No publicar ni instalar esta etapa incompleta; falta probar flujo grabacion real, accesibilidad, CI y dispositivo. Ver docs oficiales https://console.groq.com/docs/speech-to-text y https://developer.android.com/reference/android/speech/RecognitionListener .
+
+## Diseno de voz, escritura y herramientas en curso (4 noviembre 2026)
+
+Rama diseno/captura-voz-herramientas desde develop 5590468 con PR208 14d1f92 incorporado. Sin telefono por pedido del propietario. Mic abre pantalla separada con consentimiento y cancelacion; transcripcion Groq sigue por archivo al terminar, texto revisable antes de enviar: NO implementada transcripcion en vivo solicitada y grabacion real/fisica pendiente. Lapiz mantiene captura y consultas por reglas/IA consentida; tarjetas de propuesta ajustadas; lupa y lapiz a izquierda, microfono a derecha. Herramientas retiradas del selector de listas y enlaces trasladados a Configuracion. Build y 491 unitarias frontend antes de ajustes finales, 39 focales posteriores, E2E H2 de accesos y permiso, cuentas/presupuestos y repeticion correctos. Falta comprobar grabacion completa simulada, transcripcion continua, revision visual, CI, integracion, publicacion y APK nueva; no afirmar terminada la tarea. PR207/208 abiertos al inicio. Sin datos financieros reales. Carreras de sesion y posible duplicacion de transferencias siguen pendientes.
+
+## Revision de Configuracion e integracion (4 noviembre 2026)
+
+El propietario reviso y aprobo Configuracion en Android 0.1.26. PR206 integrado a develop 55904684f9b6442a29adccf0a2bbbc2ca05bf0b1; PR205 figura integrado por inclusion. PR204 captura tenia CI verde pero conflicto documental al combinar con develop; PR207 integracion/captura-configuracion-20261104 SHA 9766a6a887dc54309411071b698a40977e4cb4b4 combina ambos y conserva ambos documentos, CI en curso. Pendiente integrar tras CI exacta, publicar a main y preparar APK superior con captura. APK instalada 0.1.26 sin captura PR204. Solicitada prueba de voz ficticia sin guardar; estado Groq no confirmado. No acceder datos financieros. Mantener carreras de sesion y posible duplicacion de transferencias pendientes.
+
 ## CI de Configuracion y WhatsApp (4 noviembre 2026)
 
 CI del SHA f051243 fallo en E2E porque la prueba WhatsApp intentaba llenar un formulario dentro de Perfil cerrado. Se actualizo el recorrido para abrir el apartado antes de interactuar. E2E local completo de WhatsApp con H2 y Miniflare paso con proveedor simulado y usuarios ficticios; ninguna conexion real. Backend, frontend, PostgreSQL y Android de esa CI pasaron. El nuevo commit requiere CI exacta; ADB sigue sin telefono, sin APK nueva ni publicacion. PR #204 sigue separado y su CI E2E fallo por selector ambiguo y elemento desprendido; no declarar captura resuelta.
@@ -7,6 +23,19 @@ CI del SHA f051243 fallo en E2E porque la prueba WhatsApp intentaba llenar un fo
 Rama diseno/organizacion-configuracion creada desde develop dc0c230. Revision previa: accesos duplicados a categorias y recurrentes, perfil/apariencia siempre abiertos; se conservan seguridad, respaldo, eliminacion y conexiones. Nueva pantalla agrupa cuenta, preferencias y avisos, finanzas y datos; perfil y apariencia se pliegan, se retiran accesos duplicados conservando los apartados y fragmentos existentes. No se eliminaron funciones ni datos. WhatsApp sigue en Perfil, etiquetado explicitamente; configuracion futura de tarjetas sigue pendiente.
 
 Build y 486 pruebas frontend correctos; 16 pruebas focales; E2E H2 correctos para organizacion movil y fragmentos, respaldo/restauracion, recurrentes, proteccion de borrado y accesibilidad al 200 por ciento. Captura sintetica .local/configuracion-organizada-sintetica.png. ADB sin dispositivo; pendiente CI del SHA, aceptacion fisica, integracion y publicacion. PR #204 sigue abierto: CI 41865086704 fallo por dos pruebas E2E (selector ambiguo en captura y elemento desprendido en gesto), requiere diagnostico y correccion antes de integrar. Groq/voz aun no verificados. No se usaron datos financieros reales.
+## Captura: reparacion de pruebas E2E (4 noviembre 2026)
+
+PR #204: CI anterior fallo por boton ambiguo y barra reemplazada durante la carga. Se identifica el acceso de la zona de Recientes, se abre Escribir o dictar en el formulario y se espera la consulta del periodo antes del gesto. Ambos recorridos pasaron localmente con H2 y datos ficticios. Falta CI del nuevo SHA; no afirmar que se corrigieron todos los errores de captura. La APK 0.1.26 preparada en PR206 contiene Configuracion, no contiene PR204; instalacion pendiente por desconexion USB.
+
+## Captura escrita: comprobacion completa (4 noviembre 2026)
+
+La prueba E2E con H2 detecto que la categoria predeterminada se llama Alimentos y Supermercado. Se corrigio la asociacion de comida/restaurantes a esa categoria o Comida cuando hay una sola coincidencia; ante varias se pide elegir. E2E Chromium paso: propuesta ficticia, categoria por texto, cero movimientos antes de confirmar y uno con categoria e importe correctos despues. MotorChatReglas y 31 pruebas focales frontend correctos tras el ajuste. PR #204 en borrador depende de PR #203. No se conoce aun el resultado de CI del ultimo commit ni hay despliegue o APK nueva. Groq y aceptacion fisica del nuevo flujo siguen pendientes; no afirmar solucion de todos los errores de captura.
+
+## Captura escrita: categoria y confirmacion (4 noviembre 2026)
+
+El propietario confirmo visualmente que los gestos funcionan en Android 0.1.25. Informo que la captura volvia a pedir categoria o datos y fallaba al confirmar. Rama correcciones/captura-categorias-confirmacion creada desde develop f833ff6 y adelantada con PR203 388d9d4 aun no integrado. Se reprodujeron dos casos: restaurantes plural no asociaba Comida y responder una categoria a propuesta pendiente no la actualizaba. Se aceptan nombres exactos activos para una unica propuesta sin categoria y restaurante/restaurantes como Comida, sin guardar automaticamente; se conserva texto si falla la actualizacion. Motor reconoce restaurantes plural. Faltan mas sinonimos y diagnosticar otros casos de confirmacion reportados; no declarar resuelta la interpretacion general.
+
+Pruebas: build frontend; 488 unitarias frontend; MotorChatReglasTest, AiActionServiceTest y PropuestasChatIntegrationTest correctos y prueba H2 adicional de editar categoria, conservar datos y confirmar idempotentemente. PR, CI exacta, integracion, despliegue y validacion fisica pendientes. ADB sin dispositivos; no hay APK nueva ni instalacion. Groq: propietario estaba desplegando configuracion en Render; no comprobada ni probada voz. No operaciones financieras reales. Carreras de sesion y posible duplicacion de transferencias siguen pendientes.
 
 ## Permiso de microfono Android en revision (3 noviembre 2026)
 
@@ -1651,3 +1680,79 @@ Se precisa que `usage_unavailable` cuenta solo eventos emitidos tras procesar el
 
 - APK 0.1.25 codigo 26 instalada por actualizacion; hash del dispositivo 8cc5d114b00fc268caccfbf612d9bdcc12d029f563212754de66ba992a03b139 coincide con el archivo local; fecha de primera instalacion conservada. CI integral y APK pasaron para af4aebf6e01f5e231fdfd664d8c33b61f46875cb (PR #203).
 - Las etiquetas del gesto estan fuera del carrusel y en limites de pantalla en pruebas sinteticas; falta aceptacion fisica. No se abrio la app ni se consultaron finanzas. El proveedor Groq aun no esta configurado. No integrado ni publicado.
+
+### Revision de voz dentro de su ventana (2026-11-04)
+- El usuario confirmo que el microfono transcribe, pero el texto solo aparecio al detener y salto al chat; solicita editarlo en la misma ventana. No se confirma la transcripcion parcial durante la grabacion.
+- Rama `correcciones/revision-voz-en-ventana`, creada desde develop y adelantada con el codigo de PR #211: la transcripcion final y la parcial recuperada se editan en la ventana de voz; solo al elegir Continuar se pasa el texto al chat, sin guardar movimientos. Build Angular y 34 pruebas del componente pasaron. E2E y CI pendientes al registrar.
+- Investigar por que el audio provisional no aparece en Samsung/Groq, sin presumir la causa ni exponer datos. Pendiente prueba fisica de la nueva interfaz, APK superior a 0.1.28, integracion y publicacion. Despues probar captura escrita, categoria y confirmacion con datos ficticios y continuar Inicio por secciones.
+- E2E local: el caso de revision y edicion en ventana paso con audio y respuesta simulados; otro caso fallo al abrir el dialogo durante el arranque. Diagnostico y repeticion pendientes; no se declara toda la suite aprobada. PR #212 en borrador; APK 0.1.28 sigue instalada y no incluye esta correccion.
+- Repeticion E2E local: 2 de 2 casos aprobados; el fallo inicial de apertura no se reprodujo, causa no identificada. La prueba usa respuestas simuladas y no demuestra audio parcial real.
+
+### Captura: Amex y etiquetas expresadas en lenguaje natural
+- El usuario confirmo que la edicion de transcripcion funciona en la ventana de voz de Android 0.1.29. Solicita mejorar captura y administracion visual de categorias y etiquetas.
+- Rama mejoras/captura-diccionario-etiquetas, desde develop y adelantada con entrega #213: reconoce Amex/American Express para cuentas existentes y pide aclaracion ante varias; separa expresiones como con etiqueta viaje del concepto, conserva hashtags, amplia algunos sinonimos y muestra etiquetas en la propuesta. No guarda sin confirmacion. El reconocimiento nuevo de etiquetas se aplica al backend con conexion; el modo sin conexion sigue pendiente.
+- Build Angular y 34 pruebas de componente aprobados; 38 pruebas focales backend aprobadas; 53 pruebas anteriores incluyendo H2 aprobaron antes del ultimo ajuste al parser. CI, E2E actualizado, aceptacion del usuario, integracion y publicacion pendientes.
+- Pendiente implementar administracion minimalista de etiquetas (no hay catalogo independiente) y categorias, con eliminacion segura sin modificar historial, presupuestos ni recurrencias. No confundir archivar con borrar. Mantener 0.1.29 instalada hasta una entrega superior verificada.
+
+### Eliminacion de categorias (avance 2026-11-04)
+- El propietario pide quitar Archivar y utilizar Eliminar. Rama mejoras/eliminacion-categorias-etiquetas desde develop adelantada con PR #214: pantalla sin filtros ni botones de archivo; eliminacion fisica de categorias personalizadas sin referencias, con confirmacion. Categorias vinculadas a movimientos, presupuestos o recurrencias se rechazan para preservar los datos; queda pendiente una solucion para eliminarlas sin perder historial, y la seccion minimalista de etiquetas y categorias solicitada aun no esta terminada.
+- Compilacion Angular, 8 pruebas frontend y 7 pruebas CategoriaService pasaron. Falta prueba integral de eliminacion, CI, pruebas visuales, APK, integracion y publicacion. Las etiquetas se almacenan en movimientos y requieren diseno propio sin alterar datos. Usuario confirmo edicion de voz en APK 0.1.29.
+
+### Catalogo personal de etiquetas (avance 2026-11-04)
+- Rama mejoras/catalogo-etiquetas desde develop adelantada con PR #215. Prototipo: catalogo personal con crear/eliminar, interfaz accesible desde Ajustes y sugerencias en formulario manual. Eliminar del catalogo no modifica etiquetas de movimientos. No hay archivo en la pantalla de categorias; la eliminacion de categorias con referencias sigue pendiente de resolver sin perder historial.
+- Migracion V15 nueva: todavia requiere CI PostgreSQL, pruebas de migracion/recuperacion, seguridad de alcance por usuario, respaldo/restauracion, pruebas de interfaz y aceptacion. Las etiquetas anteriores aun no se importan automaticamente y el catalogo todavia no esta conectado a sugerencias del chat. No instalar ni publicar sin terminar esas comprobaciones.
+- Build Angular y 57 pruebas de Inicio/categorias aprobados; 9 pruebas unitarias backend para etiquetas/categorias aprobadas. Trabajos no integrados ni publicados; APK 0.1.29 permanece instalada.
+
+- La interfaz de etiquetas paso su prueba de creacion y eliminacion con servicio simulado; el commit de prueba es 7f008e4 en PR #216. Siguen pendientes respaldo, migracion PostgreSQL, alcance de acceso, integracion con chat y validacion visual. No integrado, publicado ni instalado.
+
+### Correccion de comprobacion de migracion
+- PR #216 fallo en comprobacion PostgreSQL; las pruebas aun esperaban V14 y usaban V15 para fallo simulado, que ahora coincide con la migracion del catalogo. Rama correcciones/migracion-etiquetas-ci desde develop adelantada con #216: actualiza las expectativas y agrega caso V14 a V15 que comprueba preservacion de etiquetas historicas. Falta confirmar la causa en el log de CI y ejecutar en PostgreSQL real: Docker local no esta disponible. No se han integrado ni publicado estos cambios.
+
+### Etiquetas disponibles en captura escrita
+- PR #217: PostgreSQL y recuperacion aprobaron para e36b881; CI integral aun debe comprobarse al momento de integrar. El fallo anterior se confirmo en dos expectativas fijadas a V14.
+- Rama mejoras/etiquetas-captura-escrita desde develop adelantada con #217: muestra etiquetas personales al redactar y permite agregarlas sin duplicarlas, sin guardar movimiento. Build Angular y 35 pruebas de captura pasaron; CI, pruebas visuales y APK pendientes.
+- Siguen pendientes respaldo/restauracion del catalogo, categorias vinculadas, revision minimalista final, integracion y publicacion. Sin modificar finanzas reales.
+
+### Respaldo de etiquetas personales
+- Rama mejoras/respaldo-etiquetas desde develop adelantada con PR #218. El respaldo incorpora nombres del catalogo personal; restaurar combina con los existentes y valida nombres, duplicados y limite de registros, conservando compatibilidad con respaldos anteriores sin el campo. Pruebas unitarias y H2: 34 aprobadas, con datos ficticios; pendiente CI PostgreSQL, prueba E2E y revision de compatibilidad completa. No integrado ni publicado.
+- El propietario desconectara el telefono: no generar ni instalar APK hasta completar cambios y verificaciones. Pendiente eliminacion segura de categorias vinculadas y revision visual de categorias/etiquetas.
+
+### Accesibilidad y restauracion con etiquetas
+- En CI del PR #217 fallaron una expectativa del filtro Archivadas ya retirado y el ajuste horizontal de Ajustes con letra grande. Rama correcciones/accesibilidad-categorias-etiquetas desde develop adelantada con #219: adapta la prueba al boton Eliminar y permite que el contenido de Ajustes se ajuste al ancho.
+- Dos E2E Chromium con cuentas ficticias, accesibilidad y respaldo/restauracion, pasaron localmente. PR #219 incluye respaldo de etiquetas y paso 34 pruebas unitarias/H2. CI exacta y pruebas PostgreSQL del cambio final pendientes; no integrado, publicado ni instalado. Telefono desconectado por decision del propietario.
+- Pendiente resolver eliminacion de categorias vinculadas sin archivo ni perdida historica, completar interfaz y validar en dispositivo cuando corresponda.
+
+### Captura sin conexion: etiquetas y Amex
+- Rama mejoras/captura-sin-conexion-etiquetas desde develop adelantada con PR #220: extrae etiquetas expresas y hashtags antes de preparar el concepto sin conexion, reconoce Amex/American Express entre cuentas existentes y no selecciona la unica cuenta cuando se menciona explicitamente otra cuenta desconocida. No guarda sin confirmacion. Build Angular y 49 pruebas focales correctos; CI y prueba E2E pendientes.
+- PR #219 respaldo y restauracion paso 34 pruebas H2/unitarias; PR #220 paso dos pruebas E2E locales de accesibilidad/respaldo. Falta comprobacion integral exacta, categorias vinculadas sin archivo ni perdida historica, revision visual y entrega. No se ha generado ni instalado una nueva APK, segun indicacion del propietario.
+
+### Preferencia sobre categorias vinculadas y diseno
+- El propietario indica que, al eliminar una categoria con presupuesto o recurrencia activa, se le pida reasignarlos primero; los movimientos anteriores deben conservar su informacion historica. No desea Archivar. La reasignacion guiada y el borrado real conservando historia todavia no estan implementados; el servidor bloquea la eliminacion y comunica el motivo. No afirmar que ese flujo esta terminado.
+- Rama diseno/categorias-gestion-compacta desde develop adelantada con #221: filas mas compactas, texto y acentos corregidos, y mensajes diferenciados de dependencias. Build Angular, 44 pruebas frontend y 7 pruebas backend pasaron. Falta revision visual, CI y E2E.
+- No generar ni instalar APK hasta completar los cambios; telefono desconectado segun instruccion. No integrado ni publicado.
+
+### Reasignacion de categoria antes de eliminar
+- El propietario indico pedir reasignar presupuestos y recurrencias activas antes de eliminar y conservar movimientos anteriores. Rama mejoras/reasignar-categoria-antes-eliminar desde develop, adelantada con #222. Se prepara una pantalla y servicio para seleccionar categoria del mismo tipo, revisar conflictos de presupuesto y reasignar presupuestos actuales/futuros y recurrencias activas; no elimina automaticamente ni modifica movimientos anteriores.
+- Build Angular, 9 pruebas de componente, 10 unitarias backend y un caso de integracion H2 con movimiento anterior aprobaron. Falta revisar concurrencia, acceso y preservacion de todas las referencias, prueba E2E y PostgreSQL, y la eliminacion real con historia; por ahora el servidor la bloquea. No integrado ni publicado. No generar APK hasta terminar todos los cambios, telefono desconectado por indicacion del propietario.
+
+### Proteccion de referencias del libro diario
+- Rama correcciones/proteger-categoria-libro-diario desde develop adelantada con PR #223: se detecto que LineaAsiento guarda categoriaId sin clave externa; la eliminacion ahora se rechaza si existe esa referencia historica. Se anadio prueba enfocada; 11 pruebas CategoriaService pasaron.
+- La reasignacion de referencias activas se probo con H2, pero sigue pendiente el diseno e implementacion de eliminacion real conservando historia, concurrencia, CI y E2E; no se habilito borrado de categorias vinculadas ni se usaron datos reales. No generar APK antes de completar etapas; telefono desconectado por indicacion del propietario.
+
+### Referencias antes de eliminar categoria
+- Rama mejoras/historial-categorias-eliminadas desde develop adelantada con #224: vista previa de conteos de movimientos, presupuestos, recurrencias y lineas del libro, con verificacion de propiedad de categoria. Build Angular, 9 pruebas frontend y 12 pruebas backend pasaron. La vista no habilita el borrado de categorias con historia.
+- La eliminacion historica real aun requiere migracion y adaptacion de informes, respaldo, transacciones y presupuestos; se mantiene bloqueada. No estan completos los cuatro puntos, ni hay despliegue ni APK nueva. Revisar CI exacta, E2E y diseno visual antes de integrar o publicar. El usuario pidio esperar a terminar todos los cambios para instalar.
+
+### Prueba integral pendiente de borrado historico
+- Rama mejoras/eliminar-categoria-con-historial desde develop adelantada con #225. Se anadio prueba E2E local con cuenta y movimiento ficticios: intenta eliminar una categoria utilizada y comprueba nombre en movimiento y respaldo. La prueba falla en la eliminacion porque el servidor conserva el bloqueo; no se ha implementado el borrado historico.
+- Las relaciones actuales de transacciones, presupuestos y recurrencias dependen de categorias; las lineas del libro conservan categoriaId sin FK y los informes y respaldos usan ese identificador. Falta implementar una representacion historica que permita borrar la categoria activa sin reclasificar, preservar todas estas referencias y restaurar respaldos; no sustituir por archivado. La prueba se conserva como regresion pendiente y no debe integrarse hasta pasar.
+- No se integraron ni publicaron cambios, ni se genero o instalo una APK. CI previa #225: frontend, backend y PostgreSQL aprobados; E2E estaba en curso al verificar. El propietario pidio completar los cuatro puntos antes de entregar.
+
+### Eliminacion real con referencia historica (2026-11-05)
+- Se implementa CategoriaHistorica en tabla independiente: al eliminar una categoria personal se conserva su identificador, nombre, tipo, icono y color; las referencias anteriores de movimientos, presupuestos pasados y recurrencias inactivas pasan a esa copia y se borra la fila del catalogo original. El libro diario conserva su identificador. No hay opcion de restaurar o archivar.
+- Presupuestos vigentes/futuros y recurrencias activas exigen destino del mismo tipo; la confirmacion puede reasignar y eliminar dentro de una sola transaccion. Conflictos de presupuesto revierten toda la operacion. Consultas, filtros, informes y respaldo v8 conservan la clasificacion historica. Restauracion reconstruye referencias historicas sin devolverlas al catalogo.
+- Migracion V16, preserva datos existentes sin reclasificacion masiva. Build frontend y 499 pruebas frontend pasaron; 657 pruebas backend pasaron con 9 reservadas a PostgreSQL; 4 pruebas de recurrencias posteriores pasaron. Tres E2E locales de accesibilidad, eliminacion con historia y respaldo pasaron; prueba ampliada de confirmacion y etiquetas en curso. CI PostgreSQL y despliegue pendientes. No generar ni instalar APK hasta completar comprobaciones.
+
+### Cierre visual de eliminacion y etiquetas
+- Revision final local: build Angular correcto y dos E2E Chromium aprobados tras compactar acciones de categorias: accesibilidad con letra grande y flujo ampliado de eliminacion, reasignacion de presupuesto activo, preservacion historica y alta/baja de etiqueta sin quitarla del movimiento anterior.
+- CI de 67e21e5: backend, frontend, PostgreSQL y APK aprobados; E2E remoto pendiente al registrar. ADB sin dispositivos. Todavia no integrado, publicado ni instalado; no se genero entrega nueva.

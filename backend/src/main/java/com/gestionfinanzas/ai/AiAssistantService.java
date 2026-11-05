@@ -98,11 +98,13 @@ public class AiAssistantService {
         String original = request.content().strip();
         if (request.contexto() != null && !request.contexto().isBlank()) original = request.contexto().strip() + " " + original;
         if (original.length() > 1200) throw new IllegalArgumentException("El mensaje combinado es demasiado largo; escribe de nuevo el movimiento completo.");
-        var matcher = java.util.regex.Pattern.compile("(?U)(?<![\\p{L}\\p{N}_])#([\\p{L}\\p{N}][\\p{L}\\p{N}_-]*)").matcher(original);
         var tags = new java.util.ArrayList<String>();
+        var etiquetaExplicita = java.util.regex.Pattern.compile("(?iu)(?<![\\p{L}\\p{N}_])(?:con\\s+)?(?:la\\s+)?etiqueta\\s+#?([\\p{L}\\p{N}][\\p{L}\\p{N}_-]*)").matcher(original);
+        while (etiquetaExplicita.find()) tags.add(etiquetaExplicita.group(1));
+        var matcher = java.util.regex.Pattern.compile("(?U)(?<![\\p{L}\\p{N}_])#([\\p{L}\\p{N}][\\p{L}\\p{N}_-]*)").matcher(etiquetaExplicita.replaceAll(""));
         while (matcher.find()) tags.add(matcher.group(1));
         var etiquetas = com.gestionfinanzas.service.EtiquetasFinancieras.normalizar(tags);
-        String mensaje=matcher.replaceAll("").strip();
+        String mensaje=matcher.replaceAll("").replaceAll("\\s+", " ").strip();
         AiActionService.AiActionResult local = actionService.interpretarCapturaRapida(userId, mensaje);
         AiChatResponse response;
         if (local != null) {

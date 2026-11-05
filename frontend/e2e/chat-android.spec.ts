@@ -3,6 +3,31 @@ import {registrarPrueba} from './registro-helper';
 
 test.use({viewport:{width:390,height:844},hasTouch:true,serviceWorkers:'block'});
 
+test('una categoria escrita completa la propuesta y solo guardar crea el movimiento',async({page})=>{
+  const password='Password123', email=`categoria-chat-${crypto.randomUUID()}@example.test`;
+  const registration=await registrarPrueba(page.request,{nombre:'QA captura',email,password});
+  expect(registration.ok()).toBeTruthy();
+  const auth=(await registration.json()).data;
+  const headers={Authorization:`Bearer ${auth.token}`};
+  const account=await page.request.post('/api/cuentas',{headers,data:{nombre:'Banco QA',tipo:'DEBITO',moneda:'MXN',saldoInicial:0}});
+  expect(account.ok()).toBeTruthy();
+  await page.goto('/login');await page.locator('#email').fill(email);await page.locator('#password').fill(password);
+  await page.getByRole('button',{name:'Iniciar sesión',exact:true}).click();await expect(page).toHaveURL(/dashboard/);
+  await page.locator('.dashboard-screen__inline-empty').getByRole('button',{name:'Añadir movimiento',exact:true}).click();
+  await page.getByRole('dialog',{name:'Añadir movimiento'}).getByRole('button',{name:'Escribir o dictar'}).click();
+  const panel=page.locator('#quick-capture-panel'), text=page.locator('#quick-capture-text');
+  await text.fill('Gasté 25 en concepto ficticio');await panel.getByRole('button',{name:'Enviar movimiento'}).click();
+  await expect(panel.locator('.categorization-review__drop').first()).toBeVisible();
+  await text.fill('fue en comida');await panel.getByRole('button',{name:'Enviar movimiento'}).click();
+  const save=panel.getByRole('button',{name:'Guardar movimiento',exact:true});await expect(save).toBeVisible();
+  const before=await page.request.get('/api/transacciones?size=100',{headers});
+  expect((await before.json()).data.content).toHaveLength(0);
+  await save.click();await expect(panel.getByText('Movimiento confirmado en tus cuentas', {exact:false})).toBeVisible();
+  const after=await page.request.get('/api/transacciones?size=100',{headers});
+  const movements=(await after.json()).data.content;
+  expect(movements).toHaveLength(1);expect(movements[0].monto).toBe(25);expect(movements[0].categoriaNombre).toBe('Alimentos y Supermercado');
+});
+
 test('chat mantiene escritura visible y guarda categoría offline sin duplicados',async({page},testInfo)=>{
   await page.context().setOffline(false);
   const password='Password123',email=`android-chat-${crypto.randomUUID()}@example.test`;

@@ -51,6 +51,51 @@ class ListasEtiquetasIntegrationTest {
         return transacciones.listarConFiltros(usuario,filtro(destino,texto,autor),PageRequest.of(0,10,Sort.by(Sort.Direction.DESC,"fecha","id")));
     }
     void invitar(String rol) {var invitacion=listas.invitar(a.getId(),lista,rol); listas.unirse(b.getId(),invitacion.codigo());}
+    @Autowired PresupuestoRepository presupuestosRepo;
+    @Autowired PlantillaRecurrenteRepository plantillasRepo;
+    @Autowired CategoriaRepository categoriasRepo;
+    @Test void reasignacionConservaMovimientoAnteriorYReasignaSoloActivos() {
+        var origen=categorias.crearCategoria(a.getId(),new CategoriaRequest("Origen",TipoTransaccion.GASTO,"car","#123456"));
+        var destino=categorias.crearCategoria(a.getId(),new CategoriaRequest("Destino",TipoTransaccion.GASTO,"car","#123456"));
+        var mes=java.time.YearMonth.from(CalendarioFinanciero.hoy());
+        var entidad=categoriasRepo.findById(origen.id()).orElseThrow();
+        var presupuesto=presupuestosRepo.save(Presupuesto.builder().usuario(a).categoria(entidad).mes(mes.getMonthValue()).anio(mes.getYear()).moneda("MXN").montoLimite(new BigDecimal("100")).build());
+        var recurrente=plantillasRepo.save(PlantillaRecurrente.builder().usuario(a).cuenta(cuentaA).categoria(entidad).tipo(TipoTransaccion.GASTO).monto(new BigDecimal("10")).frecuencia(FrecuenciaRecurrencia.MENSUAL).siguienteFecha(CalendarioFinanciero.hoy()).activa(true).build());
+        var movimiento=transacciones.crearTransaccion(a.getId(),new TransaccionRequest(cuentaA.getId(),null,origen.id(),TipoTransaccion.GASTO,new BigDecimal("25"),null,CalendarioFinanciero.hoy(),"Prueba",null,null,null,null,null,List.of()));
+        var resultado=categorias.reasignarActivos(a.getId(),origen.id(),destino.id());
+        assertEquals(1,resultado.presupuestos()); assertEquals(1,resultado.recurrencias());
+        assertEquals(destino.id(),presupuestosRepo.findById(presupuesto.getId()).orElseThrow().getCategoria().getId());
+        assertEquals(destino.id(),plantillasRepo.findById(recurrente.getId()).orElseThrow().getCategoria().getId());
+        assertEquals(origen.id(),transacciones.obtenerPorId(a.getId(),movimiento.id()).categoriaId());
+    }
+    @Autowired CategoriaHistoricaRepository categoriasHistoricas;
+    @Autowired TransaccionRepository transaccionesRepo;
+    @Autowired jakarta.persistence.EntityManager entityManager;
+    @Test void eliminaCategoriaConservandoMovimientosPresupuestoPasadoInformesYRespaldo() {
+        var origen=categorias.crearCategoria(a.getId(),new CategoriaRequest("Historia",TipoTransaccion.GASTO,"car","#123456"));
+        var mes=java.time.YearMonth.from(CalendarioFinanciero.hoy()).minusMonths(1);
+        var gasto=transacciones.crearTransaccion(a.getId(),new TransaccionRequest(cuentaA.getId(),null,origen.id(),TipoTransaccion.GASTO,new BigDecimal("25"),null,mes.atDay(1),"Ficticio",null,null,null,null,null,List.of("viaje")));
+        var pasado=presupuestosRepo.saveAndFlush(Presupuesto.builder().usuario(a).categoria(categoriasRepo.findById(origen.id()).orElseThrow()).mes(mes.getMonthValue()).anio(mes.getYear()).montoLimite(new BigDecimal("100")).moneda("MXN").build());
+        var saldo=cuentas.findById(cuentaA.getId()).orElseThrow().getSaldoActual();
+        categorias.eliminarCategoria(a.getId(),origen.id()); entityManager.flush(); entityManager.clear();
+        assertFalse(categoriasRepo.existsById(origen.id())); assertTrue(categoriasHistoricas.existsById(origen.id()));
+        var historial=transacciones.obtenerPorId(a.getId(),gasto.id());
+        assertEquals("Historia",historial.categoriaNombre()); assertEquals(origen.id(),historial.categoriaId());
+        assertEquals(saldo,cuentas.findById(cuentaA.getId()).orElseThrow().getSaldoActual());
+        assertEquals(new BigDecimal("25.00"),transaccionesRepo.sumGastosPorUsuarioYCategoriaYPeriodo(a.getId(),origen.id(),"MXN",mes.atDay(1),mes.atEndOfMonth()));
+        var agrupado=transaccionesRepo.findGastosPorCategoria(a.getId(),TipoTransaccion.GASTO,mes.atDay(1),mes.atEndOfMonth());
+        assertEquals("Historia",agrupado.get(0).categoriaNombre());
+        assertEquals("Historia",presupuestosRepo.findById(pasado.getId()).orElseThrow().getCategoria().getNombre());
+        var copia=respaldos.generar(a.getId());
+        assertTrue(copia.categoriasPersonalizadas().stream().anyMatch(c->c.id().equals(origen.id()) && c.historica()));
+        var destino=usuario("Restauracion");
+        restauracion.restaurar(destino.getId(),copia); entityManager.flush(); entityManager.clear();
+        var restaurada=respaldos.generar(destino.getId());
+        assertTrue(restaurada.categoriasPersonalizadas().stream().anyMatch(c->c.nombre().equals("Historia")&&c.historica()));
+        assertTrue(restaurada.transacciones().stream().anyMatch(t->"Historia".equals(t.categoriaNombre())));
+        assertTrue(categorias.listarTodasDelUsuario(destino.getId()).stream().noneMatch(c->c.nombre().equals("Historia")));
+    }
+
     @Test void propietarioCambiaRolSinPerderHistorialNiTocarSaldos() {
         invitar("EDITOR");
         var movimiento=transacciones.crearTransaccion(b.getId(),gasto(cuentaB,lista,"Cena de Bruno"));
@@ -179,7 +224,7 @@ class ListasEtiquetasIntegrationTest {
     @Test void respaldoActualRestauraListasYEtiquetasSinCompartirAcceso() {
         invitar("EDITOR");
         transacciones.crearTransaccion(a.getId(),gasto(cuentaA,lista,"Hotel","viaje","visa"));
-        var respaldo=respaldos.generar(a.getId());assertEquals(7,respaldo.version());
+        var respaldo=respaldos.generar(a.getId());assertEquals(8,respaldo.version());
         restauracion.restaurar(tercero.getId(),respaldo);
         var copias=listas.listar(tercero.getId());
         var viaje=copias.stream().filter(l->l.nombre().equals("Vacaciones")).findFirst().orElseThrow();

@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, DestroyRef, ElementRef, ViewChild, effect, inject, output, signal, untracked } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, ElementRef, ViewChild, effect, inject, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -19,7 +19,6 @@ export class ListasSheetComponent implements AfterViewInit {
   @ViewChild('codigo') private campoCodigo?: ElementRef<HTMLTextAreaElement>;
   readonly servicio = inject(ListasService);
   readonly contexto = this.servicio.contexto;
-  readonly herramientas = output<void>();
   readonly editando = signal<ListaFinanciera | 'NUEVA' | null>(null);
   readonly ocupada = signal(false);
   readonly error = signal('');
@@ -101,7 +100,6 @@ export class ListasSheetComponent implements AfterViewInit {
     try { await navigator.clipboard.writeText(codigo); }
     catch { this.campoCodigo?.nativeElement.focus(); this.campoCodigo?.nativeElement.select(); this.error.set('Selecciona el código y cópialo para compartirlo.'); }
   }
-  abrirHerramientas(): void { this.cerrar(); this.herramientas.emit(); }
   private ejecutar<T>(request: Observable<ApiResponse<T>>, listo: (data: T) => void): void {
     if (this.ocupada()) return;
     const usuario = this.contexto.usuarioId(); this.ocupada.set(true); this.error.set('');

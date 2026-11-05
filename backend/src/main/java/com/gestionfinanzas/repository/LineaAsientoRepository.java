@@ -9,6 +9,8 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface LineaAsientoRepository extends JpaRepository<LineaAsiento, Long> {
+    boolean existsByCategoriaId(Long categoriaId);
+    long countByCategoriaId(Long categoriaId);
 
     /**
      * Los borrados en lote de JPQL no disparan el CascadeType.ALL de AsientoContable hacia

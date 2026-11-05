@@ -47,6 +47,7 @@ describe('DashboardComponent movement dialog accessibility', () => {
             registrarMovimientoRecurrente: () => of({ success: true, message: '', data: undefined }),
             getCuentas: () => of({ success: true, message: '', data: [] }),
             getCategorias: () => of({ success: true, message: '', data: [] }),
+            getEtiquetasPersonales: () => of({ success: true, message: '', data: [] }),
             getTransaccionesPaginadas: () => of({ success: true, message: '', data: { content: [], totalElements: 0, totalPages: 0, size: 20, number: 0, first: true, last: true } }),
             crearTransaccion
           }

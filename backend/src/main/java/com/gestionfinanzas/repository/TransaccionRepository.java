@@ -45,6 +45,9 @@ public interface TransaccionRepository extends JpaRepository<Transaccion, Long>,
     boolean existsByCuentaIdOrCuentaDestinoId(Long cuentaId, Long cuentaDestinoId);
 
     boolean existsByCategoriaId(Long categoriaId);
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    List<Transaccion> findAllByCategoriaId(Long categoriaId);
+    long countByCategoriaId(Long categoriaId);
 
     List<Transaccion> findTop10ByUsuarioIdOrderByFechaDescIdDesc(Long usuarioId);
 
@@ -92,7 +95,7 @@ public interface TransaccionRepository extends JpaRepository<Transaccion, Long>,
 
     @Query("SELECT COALESCE(SUM(t.monto), 0) FROM Transaccion t " +
            "LEFT JOIN t.cuenta cuenta " +
-           "WHERE t.usuario.id = :usuarioId AND t.categoria.id = :categoriaId " +
+           "WHERE t.usuario.id = :usuarioId AND COALESCE(t.categoria.id, t.categoriaHistorica.id) = :categoriaId " +
            "AND t.tipo = com.gestionfinanzas.model.enums.TipoTransaccion.GASTO " +
            "AND COALESCE(cuenta.moneda, t.cuentaMonedaHistorica) = :moneda " +
            "AND t.fecha BETWEEN :inicio AND :fin")
@@ -106,7 +109,7 @@ public interface TransaccionRepository extends JpaRepository<Transaccion, Long>,
 
     @Query("SELECT COALESCE(SUM(t.monto), 0) FROM Transaccion t " +
            "LEFT JOIN t.cuenta cuenta " +
-           "WHERE t.usuario.id = :usuarioId AND t.categoria.id = :categoriaId " +
+           "WHERE t.usuario.id = :usuarioId AND COALESCE(t.categoria.id, t.categoriaHistorica.id) = :categoriaId " +
            "AND (:listaId IS NULL OR t.lista.id = :listaId) " +
            "AND t.tipo = com.gestionfinanzas.model.enums.TipoTransaccion.GASTO " +
            "AND COALESCE(cuenta.moneda, t.cuentaMonedaHistorica) = :moneda " +
@@ -123,7 +126,7 @@ public interface TransaccionRepository extends JpaRepository<Transaccion, Long>,
     @Query("SELECT t FROM Transaccion t " +
            "LEFT JOIN FETCH t.cuenta cuenta " +
            "LEFT JOIN FETCH t.categoria c " +
-           "WHERE t.usuario.id = :usuarioId AND t.categoria.id = :categoriaId " +
+           "WHERE t.usuario.id = :usuarioId AND COALESCE(t.categoria.id, t.categoriaHistorica.id) = :categoriaId " +
            "AND (:listaId IS NULL OR t.lista.id = :listaId) " +
            "AND t.tipo = com.gestionfinanzas.model.enums.TipoTransaccion.GASTO " +
            "AND COALESCE(cuenta.moneda, t.cuentaMonedaHistorica) = :moneda " +
@@ -152,7 +155,7 @@ public interface TransaccionRepository extends JpaRepository<Transaccion, Long>,
             "FROM Transaccion t LEFT JOIN t.cuenta cuenta WHERE t.usuario.id = :usuarioId " +
             "AND t.fecha BETWEEN :inicio AND :fin " +
             "AND (:cuentaId IS NULL OR t.cuenta.id = :cuentaId) " +
-            "AND (:categoriaId IS NULL OR t.categoria.id = :categoriaId) " +
+            "AND (:categoriaId IS NULL OR COALESCE(t.categoria.id, t.categoriaHistorica.id) = :categoriaId) " +
             "AND t.tipo IN (com.gestionfinanzas.model.enums.TipoTransaccion.INGRESO, com.gestionfinanzas.model.enums.TipoTransaccion.GASTO) " +
             "GROUP BY COALESCE(cuenta.moneda, t.cuentaMonedaHistorica), t.tipo")
     List<com.gestionfinanzas.dto.response.MovimientoConteo> findConteosPorMonedaYTipoFiltrado(
@@ -164,7 +167,7 @@ public interface TransaccionRepository extends JpaRepository<Transaccion, Long>,
             "FROM Transaccion t LEFT JOIN t.cuenta cuenta WHERE t.usuario.id = :usuarioId AND t.lista.id = :listaId " +
             "AND t.fecha BETWEEN :inicio AND :fin " +
             "AND (:cuentaId IS NULL OR t.cuenta.id = :cuentaId) " +
-            "AND (:categoriaId IS NULL OR t.categoria.id = :categoriaId) " +
+            "AND (:categoriaId IS NULL OR COALESCE(t.categoria.id, t.categoriaHistorica.id) = :categoriaId) " +
             "AND t.tipo IN (com.gestionfinanzas.model.enums.TipoTransaccion.INGRESO, com.gestionfinanzas.model.enums.TipoTransaccion.GASTO) " +
             "GROUP BY COALESCE(cuenta.moneda, t.cuentaMonedaHistorica), t.tipo")
     List<com.gestionfinanzas.dto.response.MovimientoConteo> findConteosPorMonedaYTipoEnLista(
@@ -177,11 +180,11 @@ public interface TransaccionRepository extends JpaRepository<Transaccion, Long>,
     List<Transaccion> findAllByPlantillaRecurrenteIdAndFechaGreaterThanEqualOrderByFechaAsc(Long plantillaId, LocalDate fecha);
 
     @Query("SELECT new com.gestionfinanzas.dto.response.DashboardGastoCategoriaResponse(" +
-    "c.id, COALESCE(c.nombre, 'Sin categoría'), c.color, SUM(t.monto), COALESCE(cuenta.moneda, t.cuentaMonedaHistorica)) " +
-    "FROM Transaccion t LEFT JOIN t.categoria c LEFT JOIN t.cuenta cuenta " +
+    "COALESCE(c.id,h.id), COALESCE(c.nombre,h.nombre, 'Sin categoría'), COALESCE(c.color,h.color), SUM(t.monto), COALESCE(cuenta.moneda, t.cuentaMonedaHistorica)) " +
+    "FROM Transaccion t LEFT JOIN t.categoria c LEFT JOIN t.categoriaHistorica h LEFT JOIN t.cuenta cuenta " +
            "WHERE t.usuario.id = :usuarioId AND t.tipo = :tipo " +
            "AND t.fecha BETWEEN :inicio AND :fin " +
-    "GROUP BY c.id, c.nombre, c.color, COALESCE(cuenta.moneda, t.cuentaMonedaHistorica) ORDER BY SUM(t.monto) DESC")
+    "GROUP BY c.id, h.id, c.nombre, h.nombre, c.color, h.color, COALESCE(cuenta.moneda, t.cuentaMonedaHistorica) ORDER BY SUM(t.monto) DESC")
     List<DashboardGastoCategoriaResponse> findGastosPorCategoria(
             @Param("usuarioId") Long usuarioId,
             @Param("tipo") TipoTransaccion tipo,
@@ -190,29 +193,29 @@ public interface TransaccionRepository extends JpaRepository<Transaccion, Long>,
     );
 
     @Query("SELECT new com.gestionfinanzas.ai.AiCategoriaAgregado(" +
-            "c.id, COALESCE(c.nombre, 'Sin categoría'), COALESCE(cuenta.moneda, t.cuentaMonedaHistorica), " +
+            "COALESCE(c.id,h.id), COALESCE(c.nombre,h.nombre, 'Sin categoría'), COALESCE(cuenta.moneda, t.cuentaMonedaHistorica), " +
             "SUM(t.monto), COUNT(t)) " +
-            "FROM Transaccion t LEFT JOIN t.categoria c LEFT JOIN t.cuenta cuenta " +
+            "FROM Transaccion t LEFT JOIN t.categoria c LEFT JOIN t.categoriaHistorica h LEFT JOIN t.cuenta cuenta " +
             "WHERE t.usuario.id = :usuarioId AND t.tipo = com.gestionfinanzas.model.enums.TipoTransaccion.GASTO " +
             "AND t.fecha BETWEEN :inicio AND :fin " +
             "AND (:cuentaId IS NULL OR t.cuenta.id = :cuentaId) " +
-            "AND (:categoriaId IS NULL OR t.categoria.id = :categoriaId) " +
-            "GROUP BY c.id, c.nombre, COALESCE(cuenta.moneda, t.cuentaMonedaHistorica) " +
+            "AND (:categoriaId IS NULL OR COALESCE(t.categoria.id, t.categoriaHistorica.id) = :categoriaId) " +
+            "GROUP BY c.id, h.id, c.nombre, h.nombre, COALESCE(cuenta.moneda, t.cuentaMonedaHistorica) " +
             "ORDER BY SUM(t.monto) DESC")
     List<com.gestionfinanzas.ai.AiCategoriaAgregado> findGastosPorCategoriaFiltrado(
             @Param("usuarioId") Long usuarioId, @Param("inicio") LocalDate inicio, @Param("fin") LocalDate fin,
             @Param("cuentaId") Long cuentaId, @Param("categoriaId") Long categoriaId);
 
     @Query("SELECT new com.gestionfinanzas.ai.AiCategoriaAgregado(" +
-            "c.id, COALESCE(c.nombre, 'Sin categoría'), COALESCE(cuenta.moneda, t.cuentaMonedaHistorica), " +
+            "COALESCE(c.id,h.id), COALESCE(c.nombre,h.nombre, 'Sin categoría'), COALESCE(cuenta.moneda, t.cuentaMonedaHistorica), " +
             "SUM(t.monto), COUNT(t)) " +
-            "FROM Transaccion t LEFT JOIN t.categoria c LEFT JOIN t.cuenta cuenta " +
+            "FROM Transaccion t LEFT JOIN t.categoria c LEFT JOIN t.categoriaHistorica h LEFT JOIN t.cuenta cuenta " +
             "WHERE t.usuario.id = :usuarioId AND t.lista.id = :listaId " +
             "AND t.tipo = com.gestionfinanzas.model.enums.TipoTransaccion.GASTO " +
             "AND t.fecha BETWEEN :inicio AND :fin " +
             "AND (:cuentaId IS NULL OR t.cuenta.id = :cuentaId) " +
-            "AND (:categoriaId IS NULL OR t.categoria.id = :categoriaId) " +
-            "GROUP BY c.id, c.nombre, COALESCE(cuenta.moneda, t.cuentaMonedaHistorica) " +
+            "AND (:categoriaId IS NULL OR COALESCE(t.categoria.id, t.categoriaHistorica.id) = :categoriaId) " +
+            "GROUP BY c.id, h.id, c.nombre, h.nombre, COALESCE(cuenta.moneda, t.cuentaMonedaHistorica) " +
             "ORDER BY SUM(t.monto) DESC")
     List<com.gestionfinanzas.ai.AiCategoriaAgregado> findGastosPorCategoriaFiltradoEnLista(
             @Param("usuarioId") Long usuarioId, @Param("listaId") Long listaId,
@@ -253,7 +256,7 @@ public interface TransaccionRepository extends JpaRepository<Transaccion, Long>,
             "FROM Transaccion t LEFT JOIN t.cuenta cuenta " +
             "WHERE t.usuario.id = :usuarioId AND t.fecha BETWEEN :inicio AND :fin " +
             "AND (:cuentaId IS NULL OR t.cuenta.id = :cuentaId) " +
-            "AND (:categoriaId IS NULL OR t.categoria.id = :categoriaId) " +
+            "AND (:categoriaId IS NULL OR COALESCE(t.categoria.id, t.categoriaHistorica.id) = :categoriaId) " +
             "AND t.tipo IN (com.gestionfinanzas.model.enums.TipoTransaccion.INGRESO, com.gestionfinanzas.model.enums.TipoTransaccion.GASTO) " +
             "GROUP BY COALESCE(cuenta.moneda, t.cuentaMonedaHistorica)")
     List<DashboardMonedaTotales> findTotalesMensualesPorMonedaFiltrado(
@@ -267,7 +270,7 @@ public interface TransaccionRepository extends JpaRepository<Transaccion, Long>,
             "FROM Transaccion t LEFT JOIN t.cuenta cuenta " +
             "WHERE t.usuario.id = :usuarioId AND t.lista.id = :listaId AND t.fecha BETWEEN :inicio AND :fin " +
             "AND (:cuentaId IS NULL OR t.cuenta.id = :cuentaId) " +
-            "AND (:categoriaId IS NULL OR t.categoria.id = :categoriaId) " +
+            "AND (:categoriaId IS NULL OR COALESCE(t.categoria.id, t.categoriaHistorica.id) = :categoriaId) " +
             "AND t.tipo IN (com.gestionfinanzas.model.enums.TipoTransaccion.INGRESO, com.gestionfinanzas.model.enums.TipoTransaccion.GASTO) " +
             "GROUP BY COALESCE(cuenta.moneda, t.cuentaMonedaHistorica)")
     List<DashboardMonedaTotales> findTotalesMensualesPorMonedaFiltradoEnLista(
@@ -276,11 +279,11 @@ public interface TransaccionRepository extends JpaRepository<Transaccion, Long>,
             @Param("cuentaId") Long cuentaId, @Param("categoriaId") Long categoriaId);
 
     @Query("SELECT new com.gestionfinanzas.dto.response.DashboardGastoCategoriaResponse(" +
-    "c.id, COALESCE(c.nombre, 'Sin categoría'), c.color, SUM(t.monto), COALESCE(cuenta.moneda, t.cuentaMonedaHistorica)) " +
-    "FROM Transaccion t LEFT JOIN t.categoria c LEFT JOIN t.cuenta cuenta " +
+    "COALESCE(c.id,h.id), COALESCE(c.nombre,h.nombre, 'Sin categoría'), COALESCE(c.color,h.color), SUM(t.monto), COALESCE(cuenta.moneda, t.cuentaMonedaHistorica)) " +
+    "FROM Transaccion t LEFT JOIN t.categoria c LEFT JOIN t.categoriaHistorica h LEFT JOIN t.cuenta cuenta " +
            "WHERE t.lista.id = :listaId AND t.tipo = :tipo " +
            "AND t.fecha BETWEEN :inicio AND :fin " +
-    "GROUP BY c.id, c.nombre, c.color, COALESCE(cuenta.moneda, t.cuentaMonedaHistorica) ORDER BY SUM(t.monto) DESC")
+    "GROUP BY c.id, h.id, c.nombre, h.nombre, c.color, h.color, COALESCE(cuenta.moneda, t.cuentaMonedaHistorica) ORDER BY SUM(t.monto) DESC")
     List<DashboardGastoCategoriaResponse> findGastosPorCategoriaDeLista(
             @Param("listaId") Long listaId,
             @Param("tipo") TipoTransaccion tipo,
