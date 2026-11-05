@@ -121,6 +121,9 @@ describe('QuickCaptureComponent processing and gestures', () => {
     vi.spyOn(component as any,'startVoice').mockResolvedValue(undefined);
     component.permitirVoz();
     expect(localStorage.getItem('kaptal.voice-consent.98765')).toBe('1');
+    usuario.set(null); fixture.detectChanges();
+    usuario.set({id:98765}); fixture.detectChanges();
+    expect(component.voiceConsent).toBe(true);
     component.revocarVoz();
     expect(localStorage.getItem('kaptal.voice-consent.98765')).toBeNull();
     expect(component.voiceConsent).toBe(false);
