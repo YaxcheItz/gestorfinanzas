@@ -1,5 +1,6 @@
 import { ListaContextoService } from '../../core/services/lista-contexto.service';
 import { PeriodoConfig, TipoPeriodo, PERIODO_MENSUAL, resolverPeriodo, desplazarPeriodo, desplazarRangoLibre, validarRangoPeriodo, validarPeriodo, fechaCivilFinanciera } from '../../core/utils/periodo-financiero';
+import { parsearEtiquetas } from '../../core/utils/etiquetas';
 import { FeatureStylesService } from '../../core/services/feature-styles.service';
 ﻿import { TextoFinancieroPipe } from '../../core/pipes/texto-financiero.pipe';
 import { MontoPrivadoDirective } from '../../shared/directives/monto-privado.directive';
@@ -20,7 +21,7 @@ import { CommonModule, DOCUMENT } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subscription } from 'rxjs';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { accionCaptura, AccionCaptura } from '../../core/utils/accion-captura';
 import { AuthService } from '../../core/services/auth.service';
 import { CategoriaPreferidaService } from '../../core/services/categoria-preferida.service';
@@ -34,8 +35,6 @@ import { MovimientoMobileCardComponent } from '../../shared/components/movimient
 import { FechaPickerComponent } from '../../shared/components/fecha-picker/fecha-picker.component';
 import { CategoriaIconoComponent } from '../../shared/components/categoria-icono/categoria-icono.component';
 import { MontoPipe } from '../../core/pipes/monto.pipe';
-import { PrivacyToggleComponent } from '../../shared/components/privacy-toggle/privacy-toggle.component';
-import { GuiaInicialComponent } from '../../shared/components/guia-inicial/guia-inicial.component';
 import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive';
 import { PrivacidadService } from '../../core/services/privacidad.service';
 import { MovimientosOfflineService, MovimientoPendiente } from '../../core/services/movimientos-offline.service';
@@ -50,6 +49,7 @@ import {
   Presupuesto,
   PresupuestoResumen,
   TipoTransaccion,
+  Transaccion,
   TransaccionPayload
 } from '../../core/models/finanzas.models';
 
@@ -79,7 +79,7 @@ type SpeechRecognitionWindow = Window & {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [ GuiaInicialComponent, FocusTrapDirective, TextoFinancieroPipe, MontoPrivadoDirective, CommonModule, FormsModule, CategoriaSelectorComponent, CuentaSelectorComponent, MovimientoMobileCardComponent, MontoPipe, FechaPickerComponent, CategoriaIconoComponent, PrivacyToggleComponent],
+  imports: [ RouterLink, FocusTrapDirective, TextoFinancieroPipe, MontoPrivadoDirective, CommonModule, FormsModule, CategoriaSelectorComponent, CuentaSelectorComponent, MovimientoMobileCardComponent, MontoPipe, FechaPickerComponent, CategoriaIconoComponent],
   templateUrl: './dashboard.component.html',
 })
 export class DashboardComponent implements OnInit {
@@ -98,6 +98,70 @@ export class DashboardComponent implements OnInit {
   private readonly document = inject(DOCUMENT);
   private readonly destroyRef = inject(DestroyRef);
   private analiticaSub?: Subscription;
+  readonly busquedaAbierta = signal(false);
+  readonly textoBusquedaInicio = signal('');
+  readonly resultadosBusquedaInicio = signal<Transaccion[]>([]);
+  readonly buscandoInicio = signal(false);
+  readonly errorBusquedaInicio = signal(false);
+  readonly paginaBusquedaInicio = signal(0);
+  readonly paginasBusquedaInicio = signal(0);
+  private temporizadorBusquedaInicio?: ReturnType<typeof setTimeout>;
+  private versionBusquedaInicio = 0;
+
+  @HostListener('window:kaptal-buscar-inicio')
+  abrirBusquedaInicio(): void {
+    this.busquedaAbierta.set(true);
+    setTimeout(() => this.document.getElementById('buscar-inicio')?.focus());
+  }
+
+  cerrarBusquedaInicio(): void {
+    this.busquedaAbierta.set(false);
+    this.versionBusquedaInicio++;
+    clearTimeout(this.temporizadorBusquedaInicio);
+    this.buscandoInicio.set(false);
+    this.textoBusquedaInicio.set('');
+    this.resultadosBusquedaInicio.set([]);
+    this.errorBusquedaInicio.set(false);
+    this.paginasBusquedaInicio.set(0);
+    this.document.querySelector<HTMLElement>('.capture-dock__search')?.focus();
+  }
+
+  cambiarBusquedaInicio(texto: string): void {
+    this.textoBusquedaInicio.set(texto);
+    this.versionBusquedaInicio++;
+    clearTimeout(this.temporizadorBusquedaInicio);
+    this.resultadosBusquedaInicio.set([]);
+    this.errorBusquedaInicio.set(false);
+    this.paginasBusquedaInicio.set(0);
+    this.buscandoInicio.set(!!texto.trim());
+    if (texto.trim()) this.temporizadorBusquedaInicio = setTimeout(() => this.buscarInicio(0), 300);
+  }
+
+  buscarInicio(pagina: number): void {
+    const texto = this.textoBusquedaInicio().trim();
+    if (!texto) return;
+    const version = ++this.versionBusquedaInicio;
+    const listaId = this.contextoLista.activaId();
+    this.paginaBusquedaInicio.set(pagina);
+    this.buscandoInicio.set(true);
+    this.errorBusquedaInicio.set(false);
+    this.finanzasService.getTransaccionesPaginadas({busqueda: texto, ...(listaId == null ? {} : {listaId})}, pagina, 20)
+      .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+        next: respuesta => {
+          if (version !== this.versionBusquedaInicio || listaId !== this.contextoLista.activaId()) return;
+          this.buscandoInicio.set(false);
+          if (!respuesta.success || !respuesta.data) { this.errorBusquedaInicio.set(true); return; }
+          this.resultadosBusquedaInicio.set(respuesta.data.content);
+          this.paginaBusquedaInicio.set(pagina);
+          this.paginasBusquedaInicio.set(respuesta.data.totalPages);
+        },
+        error: () => {
+          if (version !== this.versionBusquedaInicio || listaId !== this.contextoLista.activaId()) return;
+          this.buscandoInicio.set(false);
+          this.errorBusquedaInicio.set(true);
+        }
+      });
+  }
   readonly vistaDetallada = signal(false);
   readonly inicioCompacto = signal(false);
   private observadorHero?: IntersectionObserver;
@@ -114,33 +178,159 @@ export class DashboardComponent implements OnInit {
   readonly graficoLoading = signal(false);
   readonly graficoError = signal(false);
   readonly categoriaContextual = signal<CategoriaInicio | null>(null);
+  readonly categoriaFiltroSeleccionada = signal<CategoriaInicio | null>(null);
+  readonly movimientosCategoria = signal<Transaccion[]>([]);
+  readonly cargandoMovimientosCategoria = signal(false);
+  readonly errorMovimientosCategoria = signal(false);
+  private versionMovimientosCategoria = 0;
+  readonly categoriaGestoActiva = signal<CategoriaInicio | null>(null);
+  readonly gestoAccionSeleccionada = signal<'GASTO' | 'PRESUPUESTO' | null>(null);
   private temporizadorCategoria?: ReturnType<typeof setTimeout>;
   private inicioPresionCategoria?: { x: number; y: number };
   private presionCategoriaConsumida = false;
+  private modoGestoIniciado = false;
+  private gestoCategoriaDesplazado = false;
 
   iniciarPresionCategoria(event: PointerEvent, categoria: CategoriaInicio): void {
     if (!event.isPrimary || event.button !== 0) return;
     this.cancelarPresionCategoria();
     this.presionCategoriaConsumida = false;
+    this.modoGestoIniciado = false;
+    this.gestoCategoriaDesplazado = false;
     this.inicioPresionCategoria = { x: event.clientX, y: event.clientY };
     this.temporizadorCategoria = setTimeout(() => {
       this.presionCategoriaConsumida = true;
-      this.categoriaContextual.set(categoria);
-    }, 500);
+      this.modoGestoIniciado = true;
+      this.categoriaGestoActiva.set(categoria);
+      this.gestoAccionSeleccionada.set(null);
+    }, 450);
   }
+
+  bloquearDesplazamientoCategoria(event: TouchEvent): void {
+    if (this.modoGestoIniciado && event.cancelable) event.preventDefault();
+  }
+
   moverPresionCategoria(event: PointerEvent): void {
     const inicio = this.inicioPresionCategoria;
-    if (inicio && Math.hypot(event.clientX - inicio.x, event.clientY - inicio.y) > 8) this.cancelarPresionCategoria();
+    if (!inicio) return;
+    const dx = event.clientX - inicio.x;
+    const dy = event.clientY - inicio.y;
+
+    if (!this.modoGestoIniciado) {
+      if (Math.hypot(dx, dy) > 8) this.cancelarPresionCategoria();
+      return;
+    }
+
+    if (Math.abs(dy) > 25) this.gestoCategoriaDesplazado = true;
+    if (dy < -25) {
+      this.gestoAccionSeleccionada.set('GASTO');
+    } else if (dy > 25) {
+      this.gestoAccionSeleccionada.set('PRESUPUESTO');
+    } else {
+      this.gestoAccionSeleccionada.set(null);
+    }
   }
+
+  finalizarPresionCategoria(event: PointerEvent, categoria: CategoriaInicio): void {
+    clearTimeout(this.temporizadorCategoria);
+    if (this.modoGestoIniciado) {
+      const accion = this.gestoAccionSeleccionada();
+      this.categoriaGestoActiva.set(null);
+      this.gestoAccionSeleccionada.set(null);
+      this.modoGestoIniciado = false;
+
+      if (accion === 'GASTO') {
+        this.categoriaContextual.set(null);
+        this.registrarCategoria(categoria);
+      } else if (accion === 'PRESUPUESTO') {
+        this.categoriaContextual.set(null);
+        this.abrirPresupuestoCategoria(categoria);
+      } else if (!this.gestoCategoriaDesplazado) {
+        this.categoriaContextual.set(categoria);
+      }
+      return;
+    }
+    this.cancelarPresionCategoria();
+  }
+
+  abrirContextoCategoria(event: MouseEvent, categoria: CategoriaInicio): void {
+    event.preventDefault();
+    if (!this.inicioPresionCategoria) this.categoriaContextual.set(categoria);
+  }
+
   @HostListener('window:pointerup')
   @HostListener('window:pointercancel')
   cancelarPresionCategoria(): void {
     clearTimeout(this.temporizadorCategoria);
     this.inicioPresionCategoria = undefined;
+    if (this.modoGestoIniciado) {
+      this.categoriaGestoActiva.set(null);
+      this.gestoAccionSeleccionada.set(null);
+      this.modoGestoIniciado = false;
+    }
   }
+
   tocarCategoria(categoria: CategoriaInicio): void {
     if (this.presionCategoriaConsumida) { this.presionCategoriaConsumida = false; return; }
-    this.irATransacciones(categoria.categoriaId);
+    if (this.categoriaFiltroSeleccionada()?.categoriaId === categoria.categoriaId) {
+      this.quitarFiltroCategoria();
+    } else {
+      this.seleccionarFiltroCategoria(categoria);
+    }
+  }
+
+  seleccionarFiltroCategoria(categoria: CategoriaInicio): void {
+    const version = ++this.versionMovimientosCategoria;
+    this.categoriaFiltroSeleccionada.set(categoria);
+    this.movimientosCategoria.set([]);
+    this.errorMovimientosCategoria.set(false);
+
+    const { desde, hasta } = this.fechasRango();
+    this.cargandoMovimientosCategoria.set(true);
+    this.finanzasService.getTransaccionesPaginadas({
+      categoriaId: categoria.categoriaId,
+      tipo: 'GASTO',
+      fechaInicio: desde,
+      fechaFin: hasta,
+      moneda: this.monedaResumen(),
+      ...(this.contextoLista.activaId() == null ? {} : { listaId: this.contextoLista.activaId() })
+    }, 0, 20).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: res => {
+        if (version !== this.versionMovimientosCategoria) return;
+        if (res.success && res.data) {
+          this.movimientosCategoria.set(res.data.content);
+        } else {
+          this.errorMovimientosCategoria.set(true);
+        }
+        this.cargandoMovimientosCategoria.set(false);
+      },
+      error: () => {
+        if (version !== this.versionMovimientosCategoria) return;
+        this.errorMovimientosCategoria.set(true);
+        this.cargandoMovimientosCategoria.set(false);
+      }
+    });
+  }
+
+  quitarFiltroCategoria(): void {
+    this.versionMovimientosCategoria++;
+    this.categoriaFiltroSeleccionada.set(null);
+    this.movimientosCategoria.set([]);
+    this.cargandoMovimientosCategoria.set(false);
+    this.errorMovimientosCategoria.set(false);
+  }
+
+  abrirPresupuestoCategoria(categoria: CategoriaInicio): void {
+    this.categoriaContextual.set(null);
+    void this.router.navigate(['/presupuestos'], {
+      queryParams: {
+        ...(this.contextoLista.activaId() == null ? {} : { listaId: this.contextoLista.activaId() }),
+        categoriaId: categoria.categoriaId,
+        moneda: this.monedaResumen(),
+        mes: this.periodoSeleccionado().getMonth() + 1,
+        anio: this.periodoSeleccionado().getFullYear()
+      }
+    });
   }
   readonly categoriasInicio = computed<CategoriaInicio[]>(() => {
     const gastos = this.gastosCategoria().filter(item => item.moneda === this.monedaResumen() && item.monto > 0)
@@ -247,6 +437,57 @@ export class DashboardComponent implements OnInit {
   readonly editandoRango = signal(false);
   readonly guardandoPeriodo = signal(false);
   readonly modalRangoAbierto = signal(false);
+  readonly pestanaModalPeriodo = signal<'MESES' | 'OPCIONES' | 'PERSONALIZADO'>('MESES');
+  readonly anioNavegacionModal = signal<number>(new Date().getFullYear());
+  readonly mesesLista = [
+    { numero: 1, nombreCorto: 'Ene', nombreCompleto: 'Enero' },
+    { numero: 2, nombreCorto: 'Feb', nombreCompleto: 'Febrero' },
+    { numero: 3, nombreCorto: 'Mar', nombreCompleto: 'Marzo' },
+    { numero: 4, nombreCorto: 'Abr', nombreCompleto: 'Abril' },
+    { numero: 5, nombreCorto: 'May', nombreCompleto: 'Mayo' },
+    { numero: 6, nombreCorto: 'Jun', nombreCompleto: 'Junio' },
+    { numero: 7, nombreCorto: 'Jul', nombreCompleto: 'Julio' },
+    { numero: 8, nombreCorto: 'Ago', nombreCompleto: 'Agosto' },
+    { numero: 9, nombreCorto: 'Sep', nombreCompleto: 'Septiembre' },
+    { numero: 10, nombreCorto: 'Oct', nombreCompleto: 'Octubre' },
+    { numero: 11, nombreCorto: 'Nov', nombreCompleto: 'Noviembre' },
+    { numero: 12, nombreCorto: 'Dic', nombreCompleto: 'Diciembre' }
+  ];
+
+  cambiarAnioModal(delta: number): void {
+    const nuevo = this.anioNavegacionModal() + delta;
+    const anioMaximo = new Date(this.fechaHoy() + 'T12:00:00Z').getUTCFullYear();
+    if (delta > 0 && nuevo > anioMaximo) return;
+    if (delta < 0 && nuevo < 2000) return;
+    this.anioNavegacionModal.set(nuevo);
+  }
+
+  mesEsSeleccionado(mesNumero: number): boolean {
+    if (this.tipoRango() !== 'MES' || !this.esMesCalendario()) return false;
+    const fecha = this.periodoSeleccionado();
+    return fecha.getFullYear() === this.anioNavegacionModal() && (fecha.getMonth() + 1) === mesNumero;
+  }
+
+  mesEsFuturo(mesNumero: number): boolean {
+    const mesStr = String(mesNumero).padStart(2, '0');
+    const fechaMes = `${this.anioNavegacionModal()}-${mesStr}-01`;
+    return fechaMes > this.fechaHoy().slice(0, 7) + '-01';
+  }
+
+  seleccionarMesDirecto(mesNumero: number): void {
+    if (this.mesEsFuturo(mesNumero)) return;
+    const mesStr = String(mesNumero).padStart(2, '0');
+    const fechaReferencia = `${this.anioNavegacionModal()}-${mesStr}-01`;
+    const config: PeriodoConfig = { ...PERIODO_MENSUAL, tipo: 'MES', ancla: fechaReferencia, diaInicio: 1, diaQuincena: 16 };
+    this.periodoModificado = true;
+    this.referenciaPeriodo.set(fechaReferencia);
+    this.configuracionPeriodo.set(config);
+    this.tipoRango.set('MES');
+    this.rangoPersonalizado.set(null);
+    this.actualizarMesPresupuesto(fechaReferencia);
+    this.cargarDashboard();
+    this.cerrarModalRango();
+  }
   readonly cargandoPeriodoInicial = computed(() => this.perfilService.cargando() && !this.perfilService.perfil());
   readonly opcionesPeriodo: { tipo: TipoPeriodo; nombre: string; detalle: string }[] = [
     { tipo: 'MES', nombre: 'Mes', detalle: 'Inicio del mes a tu medida' },
@@ -283,9 +524,18 @@ export class DashboardComponent implements OnInit {
     if (this.modalRangoAbierto()) { this.cerrarModalRango(); return; }
     this.borradorPeriodo = { ...this.configuracionPeriodo() };
     this.guardarComoPredeterminado = false;
+    this.anioNavegacionModal.set(this.periodoSeleccionado().getFullYear());
+    this.pestanaModalPeriodo.set(
+      this.tipoRango() === 'PERSONALIZADO'
+        ? 'PERSONALIZADO'
+        : this.tipoRango() === 'MES' && this.esMesCalendario()
+          ? 'MESES'
+          : 'OPCIONES'
+    );
     if (this.tipoRango() === 'PERSONALIZADO') {
       this.editandoRango.set(true);
-      this.borradorDesde = this.fechasRango().desde; this.borradorHasta = this.fechasRango().hasta;
+      this.borradorDesde = this.fechasRango().desde;
+      this.borradorHasta = this.fechasRango().hasta;
     }
     this.errorRango.set('');
     this.modalRangoAbierto.set(true);
@@ -409,6 +659,25 @@ export class DashboardComponent implements OnInit {
   formCategoriaId: number | null = null;
   formFecha = new Date().toISOString().split('T')[0];
   formNotas = '';
+  formEtiquetasTexto = '';
+  readonly etiquetasSugeridas = signal<string[]>([]);
+
+  alternarEtiquetaSugerida(nombre: string): void {
+    const limpia = nombre.replace(/^#/, '').trim();
+    const etiqueta = `#${limpia}`;
+    const regex = new RegExp(`(?:^|\\s)#${limpia}(?:\\s|$)`, 'i');
+    if (regex.test(this.formEtiquetasTexto)) {
+      this.formEtiquetasTexto = this.formEtiquetasTexto.replace(regex, ' ').replace(/\s+/g, ' ').trim();
+    } else {
+      this.formEtiquetasTexto = this.formEtiquetasTexto ? `${this.formEtiquetasTexto.trim()} ${etiqueta}` : etiqueta;
+    }
+  }
+
+  etiquetaEstaActiva(nombre: string): boolean {
+    const limpia = nombre.replace(/^#/, '').trim();
+    const regex = new RegExp(`(?:^|\\s)#${limpia}(?:\\s|$)`, 'i');
+    return regex.test(this.formEtiquetasTexto);
+  }
   private formIdempotencyKey = '';
   movimientoRecurrente = false;
   esCompraMsi = false;
@@ -477,12 +746,14 @@ export class DashboardComponent implements OnInit {
   }
 
   cambiarMoneda(moneda: string): void {
+    this.quitarFiltroCategoria();
     this.monedaResumen.set(moneda);
   }
 
   @ViewChild('budgetScroller') budgetScroller?: ElementRef<HTMLDivElement>;
 
   constructor() {
+    this.destroyRef.onDestroy(() => clearTimeout(this.temporizadorBusquedaInicio));
     this.destroyRef.onDestroy(() => this.observadorHero?.disconnect());
     this.destroyRef.onDestroy(() => this.cancelarPresionCategoria());
     effect(() => {
@@ -510,6 +781,7 @@ export class DashboardComponent implements OnInit {
       const id = this.contextoLista.activaId();
       const cargando = this.contextoLista.cargando();
       if (id === listaObservada && !(this.esperandoListaInicial && !cargando)) return;
+        if (id !== listaObservada && this.busquedaAbierta()) this.cerrarBusquedaInicio();
       listaObservada = id;
       untracked(() => {
         const moneda = this.contextoLista.activa()?.moneda; if (moneda) this.monedaResumen.set(moneda);
@@ -562,6 +834,7 @@ export class DashboardComponent implements OnInit {
       return;
     }
     this.esperandoListaInicial = false;
+    this.quitarFiltroCategoria();
     const hoy = fechaCivilFinanciera();
     if (this.referenciaPeriodo() === this.fechaHoy()) this.referenciaPeriodo.set(hoy);
     this.fechaHoy.set(hoy);
@@ -842,6 +1115,7 @@ export class DashboardComponent implements OnInit {
   }
 
   abrirModal(params: TipoTransaccion | { tipo: TipoTransaccion; categoriaId?: number | null } = 'GASTO'): void {
+    this.finanzasService.getEtiquetasPersonales().subscribe({next:r=>this.etiquetasSugeridas.set((r.data ?? []).map(e=>e.nombre)),error:()=>this.etiquetasSugeridas.set([])});
     const tipo = typeof params === 'string' ? params : params.tipo;
     const catId = typeof params === 'object' ? params.categoriaId : null;
 
@@ -851,6 +1125,7 @@ export class DashboardComponent implements OnInit {
       : null;
     this.formTipo.set(tipo);
     this.modalError.set(null);
+    this.formEtiquetasTexto = '';
     this.formMonto = null;
     this.formNotas = '';
     this.formIdempotencyKey = '';
@@ -1117,8 +1392,19 @@ export class DashboardComponent implements OnInit {
       return;
     }
 
+    let etiquetas: string[] | undefined;
+    if (this.formEtiquetasTexto.trim()) {
+      try {
+        etiquetas = parsearEtiquetas(this.formEtiquetasTexto);
+      } catch (err) {
+        this.modalError.set((err as Error).message);
+        return;
+      }
+    }
+
     const payload: TransaccionPayload = {
       listaId: this.contextoLista.activaId(),
+      etiquetas: etiquetas?.length ? etiquetas : undefined,
       cuentaId: this.formCuentaId,
       cuentaDestinoId: this.formTipo() === 'TRANSFERENCIA' ? this.formCuentaDestinoId : null,
       categoriaId: this.formTipo() !== 'TRANSFERENCIA' ? this.formCategoriaId : null,
@@ -1132,7 +1418,6 @@ export class DashboardComponent implements OnInit {
       notas: this.formNotas.trim() || null,
       frecuenciaRecurrencia: this.movimientoRecurrente ? this.frecuenciaRecurrencia : null,
       siguienteFechaRecurrencia: this.movimientoRecurrente ? this.siguienteFechaRecurrencia : null,
-      // Sin esto el servidor guardaba el gasto completo y sin cuotas: el MSI se perdía.
       msi: this.esCompraMsi ? this.formMsi : null
     };
 

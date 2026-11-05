@@ -63,7 +63,7 @@ import java.util.function.Function;
 @Slf4j
 public class RestauracionRespaldoService {
 
-    private static final int VERSION_COMPATIBLE = 7;
+    private static final int VERSION_COMPATIBLE = 8;
     private static final int MAX_REGISTROS = 20_000;
     private static final Map<String, CategoriaInicial> CATEGORIAS_INICIALES = Map.of(
             "Alimentos y Supermercado", new CategoriaInicial(TipoTransaccion.GASTO, "shopping-cart", "#f59e0b"),
@@ -76,6 +76,8 @@ public class RestauracionRespaldoService {
             "Otros Ingresos", new CategoriaInicial(TipoTransaccion.INGRESO, "plus-circle", "#84cc16")
     );
 
+    private final com.gestionfinanzas.repository.EtiquetaPersonalRepository etiquetaPersonalRepository;
+    private final CategoriaService categoriaService;
     private final UsuarioRepository usuarioRepository;
     private final CuentaRepository cuentaRepository;
     private final CategoriaRepository categoriaRepository;
@@ -149,6 +151,14 @@ public class RestauracionRespaldoService {
         Map<Long, Long> transacciones;
         String etapa = "cuentas";
         try {
+            etapa = "etiquetas personales";
+            if (respaldo.etiquetasPersonales() != null) for (String nombre : respaldo.etiquetasPersonales()) {
+                String limpio = EtiquetasFinancieras.normalizar(List.of(nombre)).iterator().next();
+                if (!etiquetaPersonalRepository.existsByUsuarioIdAndNombre(usuarioId, limpio)) {
+                    etiquetaPersonalRepository.save(com.gestionfinanzas.model.entity.EtiquetaPersonal.builder().usuarioId(usuarioId).nombre(limpio).build());
+                }
+            }
+            etapa = "cuentas";
             cuentas = restaurarCuentas(usuario, respaldo.cuentas());
             categorias = restaurarCategorias(usuario, respaldo.categoriasPersonalizadas());
             etapa = "listas";
@@ -168,6 +178,10 @@ public class RestauracionRespaldoService {
             restaurarLibroDiario(usuario, respaldo.libroDiario(), transacciones, cuentas, categorias);
             etapa = "gastos compartidos";
             restaurarParejas(usuario, respaldo.parejas());
+            etapa="categorias historicas";
+            for (var categoria : respaldo.categoriasPersonalizadas()) {
+                if (categoria.historica()) categoriaService.eliminarCategoria(usuarioId, categorias.get(categoria.id()));
+            }
         } catch (RuntimeException exception) {
             log.error("Restauracion revertida en la etapa '{}' para el usuario {}. Causa: {}",
                     etapa, usuarioId, exception.getMessage(), exception);
@@ -445,9 +459,19 @@ public class RestauracionRespaldoService {
                 + respaldo.presupuestos().size() + respaldo.recurrencias().size()
                 + respaldo.historialMovimientos().size() + respaldo.libroDiario().size()
                 + respaldo.transacciones().size()
+                + (respaldo.etiquetasPersonales() == null ? 0 : respaldo.etiquetasPersonales().size())
                 + (respaldo.parejas() == null ? 0 : contarMovimientosPareja(respaldo.parejas()));
         if (total > MAX_REGISTROS) {
             throw new IllegalArgumentException("El respaldo supera el límite de registros permitido.");
+        }
+
+        if (respaldo.etiquetasPersonales() != null) {
+            Set<String> nombres = new HashSet<>();
+            for (String etiqueta : respaldo.etiquetasPersonales()) {
+                if (etiqueta == null) throw new IllegalArgumentException("Etiqueta personal no v?lida en el respaldo.");
+                String limpio = EtiquetasFinancieras.normalizar(List.of(etiqueta)).iterator().next();
+                if (!nombres.add(limpio)) throw new IllegalArgumentException("El respaldo contiene etiquetas personales duplicadas.");
+            }
         }
 
         Set<Long> cuentaIds = idsUnicos(respaldo.cuentas(), CuentaResponse::id, "cuentas");
@@ -752,7 +776,7 @@ public class RestauracionRespaldoService {
                     .tipo(origen.tipo())
                     .icono(origen.icono())
                     .color(origen.color())
-                    .activo(origen.activo())
+                    .activo(origen.historica() ? true : origen.activo())
                     .build());
             mapa.put(origen.id(), guardada.getId());
         }

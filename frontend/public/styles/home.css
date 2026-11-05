@@ -1,6 +1,7 @@
 /* Home: amount, period, categories and quick capture. */
 html .monai-theme .dashboard-screen{display:flex;flex-direction:column;gap:24px;width:min(100%,44rem);margin:auto;padding:0 20px 24px;min-width:0}
-.dashboard-screen__header{display:flex;justify-content:space-between;align-items:center;gap:16px;min-height:48px}
+.dashboard-screen__header{display:flex;justify-content:flex-end;align-items:center;gap:16px;min-height:44px}
+.dashboard-screen__header-spacer{flex:1}
 .home-view-switch{display:flex;gap:4px;padding:4px;border-radius:999px;background:var(--kaptal-surface-subtle)}
 .home-view-switch button{min-height:36px;padding:4px 12px;border-radius:999px;font-size:12px;color:var(--kaptal-content-muted)}
 .home-view-switch button[aria-pressed=true]{background:var(--kaptal-canvas);color:var(--kaptal-content);box-shadow:0 1px 4px rgb(0 0 0 / .04)}
@@ -8,9 +9,16 @@ html .monai-theme .dashboard-screen__monthly{display:flex;flex-direction:column;
 .home-total-label{font-size:13px;color:var(--kaptal-content-muted)}
 html .monai-theme .dashboard-screen__amount{margin:0;color:var(--kaptal-content);font-size:clamp(32px,11.7vw,52px);font-weight:700;line-height:1.12;letter-spacing:-.045em;font-variant-numeric:tabular-nums;max-width:100%;overflow-wrap:anywhere}
 .home-currency select{border:0!important;background:transparent!important;min-height:32px;padding:0 8px;color:var(--kaptal-content-muted);font-size:11px;font-weight:600}
-.home-metrics{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:8px 0}
-.home-metrics>span{display:flex;gap:6px;align-items:center;padding:8px 12px;border-radius:999px;background:var(--kaptal-surface-subtle);font-size:11px;color:var(--kaptal-content-muted)}
-.home-metrics strong{font-weight:600;color:var(--kaptal-content)}
+.home-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:8px;width:100%;max-width:390px;margin:12px auto 6px}
+.home-metric{display:flex;flex-direction:column;align-items:center;padding:10px 8px;border-radius:16px;background:var(--kaptal-surface-subtle);min-width:0;text-align:center}
+.home-metric__label{font-size:11px;font-weight:500;color:var(--kaptal-content-muted);margin-bottom:2px}
+.home-metric__value{font-size:13px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:var(--kaptal-content);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.home-metric--income .home-metric__value{color:#15803d}
+html.dark .home-metric--income .home-metric__value{color:#4ade80}
+.home-metric__value.is-negative{color:var(--kaptal-expense)}
+.home-account-summary{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:10px;font-size:12px;color:var(--kaptal-content-muted);margin:4px auto 6px;max-width:390px}
+.home-account-summary strong{color:var(--kaptal-content);font-weight:600}
+.home-link-inline{background:transparent;border:0;color:var(--kaptal-brand);font-size:12px;font-weight:600;padding:4px 6px;min-height:36px;cursor:pointer}
 .home-period{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px;max-width:100%}
 html .monai-theme .home-period .time-dropdown-btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 16px;min-height:44px;max-width:100%;border:0;border-radius:999px;background:var(--kaptal-surface-subtle);color:var(--kaptal-content);font-size:13px;font-weight:600;box-shadow:none}
 .home-period-arrow{width:44px;height:44px;border-radius:50%;font-size:24px;color:var(--kaptal-content-muted)}
@@ -21,8 +29,10 @@ html .monai-theme .home-period .time-dropdown-btn{display:flex;align-items:cente
 .home-categories{min-width:0;position:relative}
 .home-category-chart{display:grid;grid-auto-flow:column;grid-auto-columns:64px;justify-content:safe center;align-items:end;gap:12px;overflow-x:auto;scroll-snap-type:x proximity;overscroll-behavior-inline:contain;scrollbar-width:none;padding:0 0 8px;min-width:0}
 .home-category-chart::-webkit-scrollbar{display:none}
+.home-category-hint{margin:0;text-align:center;color:var(--kaptal-content-muted);font-size:11px;line-height:1.4}
 .home-category{min-width:0;text-align:center;scroll-snap-align:start}
-.home-category__bar-button{display:flex;flex-direction:column;align-items:center;width:100%;min-height:44px;gap:8px;color:var(--kaptal-content);text-decoration:none;border:0;background:transparent;border-radius:24px}
+.home-category__bar-button{display:flex;flex-direction:column;align-items:center;width:100%;min-height:44px;gap:6px;color:var(--kaptal-content);text-decoration:none;border:0;background:transparent;border-radius:24px;transition:transform 100ms ease}
+.home-category__bar-button:active{transform:scale(0.96)}
 .home-category__track{position:relative;display:flex;align-items:flex-end;justify-content:center;height:144px;width:52px;isolation:isolate}
 .home-category__bar{position:absolute;bottom:0;width:100%;border-radius:26px;background:var(--category-tone);min-height:8px}
 .home-category__emoji{position:relative;z-index:1;display:grid;place-items:center;width:48px;min-height:48px;padding-bottom:4px}
@@ -36,7 +46,7 @@ html.dark .home-category__bar{filter:brightness(.85)}
 .dashboard-budget-period{font-size:12px;color:var(--kaptal-content-muted);margin-top:4px}
 .home-budget-row{display:flex;align-items:center;gap:16px;padding:12px 0}
 .home-budget-row>div{flex:1;min-width:0}.home-budget-row strong{font-size:14px;font-weight:600}.home-budget-row small{display:block;font-size:12px;color:var(--kaptal-content-muted);margin-top:4px}
-.home-budget-progress{height:6px;border-radius:999px;background:var(--kaptal-surface-subtle);overflow:hidden;margin-top:8px}.home-budget-progress>span{display:block;height:100%;background:#71B98B;border-radius:inherit}.home-budget-progress>span.is-over{background:var(--kaptal-voice)}
+
 .dashboard-screen__recent-list{display:flex;flex-direction:column;gap:0}
 .home-inline-state,.dashboard-screen__muted{font-size:13px;color:var(--kaptal-content-muted);line-height:1.6}.home-inline-state button{min-height:44px;color:var(--kaptal-brand)}
 .home-empty{display:flex;flex-direction:column;align-items:center;text-align:center;padding:24px 16px 32px;gap:12px}.home-empty>span{font-size:32px}.home-empty h2{font-size:18px;font-weight:600}.home-empty p{font-size:14px;color:var(--kaptal-content-muted);max-width:280px}.home-empty button{font-size:13px;min-height:44px;color:var(--kaptal-brand)}
@@ -86,3 +96,295 @@ html .monai-theme .time-option-card{border:0;border-radius:18px;background:var(-
 .period-custom{width:100%;min-height:48px;border-radius:16px;background:var(--kaptal-surface-subtle);margin-top:16px;font-size:14px}
 .period-error{font-size:14px;line-height:1.5;color:var(--kaptal-expense);margin-top:12px}
 .period-form :focus-visible{outline:2px solid var(--kaptal-brand);outline-offset:3px}.period-form :disabled{opacity:.6}
+
+/* ── MonAi Budget Progress & Dotted Threshold Indicator ──────── */
+.home-budget-row__title{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.home-budget-pill{font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;letter-spacing:.02em;line-height:1.3}
+.home-budget-pill--warning{background:rgba(245,158,11,.16);color:#b45309;border:1px solid rgba(245,158,11,.35)}
+html.dark .home-budget-pill--warning{background:rgba(245,158,11,.22);color:#fbbf24;border-color:rgba(245,158,11,.45)}
+.home-budget-pill--danger{background:rgba(239,68,68,.16);color:#b91c1c;border:1px solid rgba(239,68,68,.35)}
+html.dark .home-budget-pill--danger{background:rgba(239,68,68,.22);color:#f87171;border-color:rgba(239,68,68,.45)}
+.home-budget-percent{font-weight:600;margin-left:4px;color:var(--kaptal-content-muted)}
+.home-budget-progress{position:relative;height:8px;border-radius:999px;background:var(--kaptal-surface-subtle);overflow:visible;margin-top:8px;box-sizing:border-box}
+.home-budget-progress__track{position:relative;width:100%;height:100%;border-radius:inherit;overflow:hidden;background:inherit}
+.home-budget-progress__fill{display:block;height:100%;border-radius:inherit;background:#10b981;transition:width 350ms cubic-bezier(.34,1.3,.64,1),background-color 250ms ease}
+.home-budget-progress--warning .home-budget-progress__fill{background:#f59e0b}
+.home-budget-progress--over .home-budget-progress__fill{background:#ef4444}
+.home-budget-progress--warning::after,.home-budget-progress--over::after{content:'';position:absolute;inset:-3px;border-radius:999px;border:1.5px dashed #f59e0b;pointer-events:none;animation:monai-dash-pulse 2s cubic-bezier(.4,0,.6,1) infinite}
+.home-budget-progress--over::after{border-color:#ef4444;border-width:2px;animation:monai-dash-pulse 1.3s cubic-bezier(.4,0,.6,1) infinite}
+@keyframes monai-dash-pulse{0%,100%{opacity:.9;transform:scale(1)}50%{opacity:.35;transform:scale(1.02)}}
+
+/* ── Selected Category & Gesture Overlay ───────────────────────── */
+.home-category{position:relative}
+.home-category.is-selected .home-category__bar{box-shadow:0 0 0 2px var(--kaptal-content),0 4px 12px rgba(0,0,0,.15);transform:scaleY(1.04)}
+.home-category.is-selected .home-category__emoji{transform:scale(1.15)}
+.home-category__track.is-budget-warning{box-shadow:inset 0 0 0 2px #f59e0b;border-radius:26px}
+.home-category__track.is-budget-over{box-shadow:inset 0 0 0 2px #ef4444;border-radius:26px;animation:monai-dash-pulse 1.5s ease-in-out infinite}
+.home-category__gesture-guide{position:fixed;top:calc(env(safe-area-inset-top) + 12px);left:50%;transform:translateX(-50%);display:flex;align-items:center;justify-content:center;gap:8px;width:max-content;max-width:calc(100vw - 24px);padding:6px;border:1px solid var(--kaptal-border);border-radius:999px;background:var(--kaptal-surface);box-shadow:0 4px 14px rgba(0,0,0,.16);pointer-events:none;z-index:100}
+.gesture-pill{display:inline-flex;align-items:center;gap:4px;padding:6px 10px;border-radius:999px;font-size:12px;line-height:1.4;font-weight:700;white-space:nowrap;color:var(--kaptal-content);transition:background-color 160ms,color 160ms;opacity:.8}
+.gesture-pill--up.is-target{background:#15803d;color:#fff;opacity:1}
+.gesture-pill--down.is-target{background:#c2410c;color:#fff;opacity:1}
+@keyframes gesture-guide-in{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+
+/* ── Recents Filter Badge ───────────────────────────────────────── */
+.dashboard-screen__title-with-badge{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.home-filter-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:var(--kaptal-surface-subtle);border:1px solid var(--kaptal-border);color:var(--kaptal-content);font-size:12px;font-weight:600;cursor:pointer;transition:background-color 150ms ease,transform 100ms ease}
+.home-filter-chip:hover{background:var(--kaptal-surface)}
+.home-filter-chip:active{transform:scale(.96)}
+.home-filter-chip__icon{display:inline-block;width:16px;height:16px}
+.home-filter-chip__close{display:inline-grid;place-items:center;width:16px;height:16px;border-radius:50%;background:rgba(0,0,0,.08);font-size:13px;line-height:1}
+html.dark .home-filter-chip__close{background:rgba(255,255,255,.15)}
+
+
+/* ─── MonAi Style Period Selector & Modal ─────────────────────────────── */
+.home-period--compact {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-bottom: 6px;
+  background: var(--kaptal-surface-subtle);
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--kaptal-border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+.home-period--compact .home-period-arrow {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--kaptal-content-muted);
+  font-size: 18px;
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+.home-period--compact .home-period-arrow:hover:not(:disabled) {
+  background: var(--kaptal-surface);
+  color: var(--kaptal-content);
+}
+.home-period--compact .home-period-arrow:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.home-period--compact .time-dropdown-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  color: var(--kaptal-content);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.home-period__calendar-icon {
+  font-size: 13px;
+  opacity: 0.85;
+}
+.home-period__chevron {
+  font-size: 11px;
+  color: var(--kaptal-content-muted);
+  transition: transform 180ms ease;
+}
+.time-dropdown-btn[aria-expanded='true'] .home-period__chevron {
+  transform: rotate(180deg);
+}
+
+/* Modal contenedor MonAi */
+.monai-period-modal {
+  max-width: 420px;
+  width: 92%;
+  border-radius: 24px;
+  padding: 20px;
+  background: var(--kaptal-surface);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.22);
+  border: 1px solid var(--kaptal-border);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: monai-modal-pop 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes monai-modal-pop {
+  from { opacity: 0; transform: scale(0.95) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.monai-period-modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-bottom: 1px solid var(--kaptal-border);
+  padding-bottom: 12px;
+}
+.monai-period-modal__nav-tabs {
+  display: flex;
+  background: var(--kaptal-surface-subtle);
+  padding: 3px;
+  border-radius: 999px;
+  gap: 2px;
+}
+.monai-period-modal__nav-tabs button {
+  border: none;
+  background: transparent;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 999px;
+  color: var(--kaptal-content-muted);
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+.monai-period-modal__nav-tabs button.is-active {
+  background: var(--kaptal-surface);
+  color: var(--kaptal-content);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+.monai-period-modal__close {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: var(--kaptal-surface-subtle);
+  color: var(--kaptal-content-muted);
+  font-size: 20px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+/* Stepper de año */
+.monai-year-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 12px;
+  margin-bottom: 12px;
+}
+.monai-year-stepper button {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--kaptal-border);
+  background: var(--kaptal-surface-subtle);
+  color: var(--kaptal-content);
+  font-size: 20px;
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+.monai-year-stepper button:hover:not(:disabled) {
+  background: var(--kaptal-surface);
+}
+.monai-year-stepper button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.monai-year-title {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--kaptal-content);
+}
+
+/* Cuadrícula de 12 meses estilo MonAi */
+.monai-month-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+.monai-month-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 6px;
+  border-radius: 16px;
+  border: 1px solid var(--kaptal-border);
+  background: var(--kaptal-surface-subtle);
+  color: var(--kaptal-content);
+  cursor: pointer;
+  transition: transform 120ms ease, background-color 150ms ease, border-color 150ms ease;
+}
+.monai-month-btn:hover:not(:disabled) {
+  background: var(--kaptal-surface);
+  border-color: var(--kaptal-brand);
+  transform: translateY(-2px);
+}
+.monai-month-btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+.monai-month-btn.is-selected {
+  background: var(--kaptal-brand);
+  border-color: var(--kaptal-brand);
+  color: var(--kaptal-on-brand);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+}
+.monai-month-btn.is-selected .monai-month-full {
+  color: rgba(255, 255, 255, 0.85);
+}
+.monai-month-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.monai-month-short {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.monai-month-full {
+  font-size: 10px;
+  text-transform: capitalize;
+  color: var(--kaptal-content-muted);
+  margin-top: 2px;
+}
+
+/* ─── Etiquetas Chips (Tags) ─────────────────────────────────────────── */
+.entry-tags-quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+.entry-tag-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid var(--kaptal-border);
+  background: var(--kaptal-surface-subtle);
+  color: var(--kaptal-content);
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+.entry-tag-chip:hover {
+  background: var(--kaptal-surface);
+  border-color: var(--kaptal-brand);
+}
+.entry-tag-chip.is-active {
+  background: var(--kaptal-brand);
+  border-color: var(--kaptal-brand);
+  color: var(--kaptal-on-brand);
+}
+
+/* Inicio: resumen compacto y busqueda local en la vista. */
+.home-period--compact{padding:0;border:0;box-shadow:none;background:transparent}
+html .monai-theme .home-period .time-dropdown-btn{min-height:44px;padding:6px 12px;font-size:12px}
+.home-metrics{grid-template-columns:repeat(2,minmax(0,1fr));max-width:320px;gap:16px}
+.home-metric{background:transparent;padding:4px;min-width:0}
+.home-metric__value{font-size:14px;white-space:normal;overflow:visible;overflow-wrap:anywhere}
+.home-search{width:min(100%,32rem);max-height:85dvh;overflow:auto;margin:auto 0 0;padding:20px 20px calc(24px + env(safe-area-inset-bottom));border-radius:24px 24px 0 0;background:var(--kaptal-surface);color:var(--kaptal-content)}
+.home-search__header{display:flex;align-items:center;justify-content:space-between;gap:12px}.home-search__header h2{font-size:18px;font-weight:700}.home-search__header button{min-width:44px;min-height:44px;font-size:24px}
+.home-search input{width:100%;min-height:48px;padding:10px 14px;border:1px solid var(--kaptal-border);border-radius:14px;background:var(--kaptal-surface-subtle);color:var(--kaptal-content);font-size:16px}
+.home-search__hint{margin:8px 0 16px;color:var(--kaptal-content-muted);font-size:12px}.home-search__results{list-style:none;padding:0;margin:0}.home-search__results li{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--kaptal-border)}.home-search__results li>div{min-width:0;overflow-wrap:anywhere}.home-search__results small{display:block;color:var(--kaptal-content-muted)}.home-search__results li>strong{flex:none;font-variant-numeric:tabular-nums}.home-search__pages{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:16px}.home-search__pages button{min-height:44px;padding:0 12px}.home-search__pages button:disabled{opacity:.45}
+@media(min-width:768px){.home-search{margin:auto;border-radius:24px}}

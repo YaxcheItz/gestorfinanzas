@@ -1,6 +1,13 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const postgres = process.env['E2E_DATABASE_URL'];
+if (postgres !== undefined) {
+  const match = /^jdbc:postgresql:\/\/(?:localhost|127\.0\.0\.1)(?::([0-9]{1,5}))?\/kaptal_ci_e2e$/.exec(postgres);
+  const port = match?.[1] ? Number(match[1]) : 5432;
+  if (!match || port < 1 || port > 65535) {
+    throw new Error('E2E_DATABASE_URL debe apuntar a la base de pruebas local kaptal_ci_e2e');
+  }
+}
 const postgresSchema = process.env['E2E_DATABASE_SCHEMA'] ?? 'finanzas';
 const frontendPort = process.env['E2E_FRONTEND_PORT'] ?? '14200';
 const backendCommand = process.platform === 'win32' ? '.\\mvnw.cmd' : 'sh ./mvnw';

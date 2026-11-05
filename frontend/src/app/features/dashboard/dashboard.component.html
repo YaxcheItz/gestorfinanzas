@@ -1,61 +1,95 @@
 
     <div class="dashboard-screen" [class.home-is-compact]="inicioCompacto()">
       <div class="home-scroll-summary" [class.is-visible]="inicioCompacto()" aria-hidden="true"><span>Gastos · {{ etiquetaRangoSeleccionado() }}</span>@if(resumenMonedaSeleccionada(); as moneda){<strong>{{ moneda.gastosMes | monto:moneda.moneda:'symbol-narrow':'1.2-2' }} <small>{{ moneda.moneda }}</small></strong>}</div>
-      <header class="dashboard-screen__header">
-        <h1 class="sr-only">Resumen financiero</h1>
-        <div class="home-view-switch" role="group" aria-label="Vista del inicio"><button type="button" [attr.aria-pressed]="!vistaDetallada()" (click)="vistaDetallada.set(false)">Simple</button><button type="button" [attr.aria-pressed]="vistaDetallada()" (click)="vistaDetallada.set(true)">Detallada</button></div>
-        <app-privacy-toggle/>
-      </header>
+      <h1 class="sr-only">Resumen financiero</h1>
 
 
-      <!-- Modal de Selección de Rango de Tiempo (Time Dropdown Modal) -->
+      <!-- Modal de Selección de Periodo Estilo MonAi -->
       @if (modalRangoAbierto()) {
         <div class="time-dropdown-backdrop" (click)="cerrarModalRango()">
-          <div class="time-dropdown-modal" appFocusTrap tabindex="-1" (focusTrapEscape)="cerrarModalRango()" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-label="Seleccionar rango de tiempo">
-            <header class="time-dropdown-modal__head">
-              <h3>Periodo</h3>
-              <button type="button" (click)="cerrarModalRango()" aria-label="Cerrar modal">×</button>
+          <div class="time-dropdown-modal monai-period-modal" appFocusTrap tabindex="-1" (focusTrapEscape)="cerrarModalRango()" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-label="Seleccionar periodo financiero">
+            <header class="monai-period-modal__head">
+              <div class="monai-period-modal__nav-tabs" role="tablist" aria-label="Modo de selección de fecha">
+                <button type="button" role="tab" [attr.aria-selected]="pestanaModalPeriodo() === 'MESES'" [class.is-active]="pestanaModalPeriodo() === 'MESES'" (click)="pestanaModalPeriodo.set('MESES'); editandoRango.set(false)">Meses</button>
+                <button type="button" role="tab" [attr.aria-selected]="pestanaModalPeriodo() === 'OPCIONES'" [class.is-active]="pestanaModalPeriodo() === 'OPCIONES'" (click)="pestanaModalPeriodo.set('OPCIONES'); editandoRango.set(false)">Frecuencias</button>
+                <button type="button" role="tab" [attr.aria-selected]="pestanaModalPeriodo() === 'PERSONALIZADO'" [class.is-active]="pestanaModalPeriodo() === 'PERSONALIZADO'" (click)="pestanaModalPeriodo.set('PERSONALIZADO'); seleccionarRango('PERSONALIZADO')">Rango libre</button>
+              </div>
+              <button type="button" class="monai-period-modal__close" (click)="cerrarModalRango()" aria-label="Cerrar modal">&times;</button>
             </header>
-            <p class="period-help">Fechas de Ciudad de México. El inicio y el fin se incluyen.</p>
-            <form (ngSubmit)="aplicarPeriodo()" class="period-form">
-              <fieldset [disabled]="guardandoPeriodo()">
-                <legend class="sr-only">Tipo de periodo</legend>
-                <div class="period-options">
-                  @for (opcion of opcionesPeriodo; track opcion.tipo) {
-                    <label class="period-choice" [class.is-active]="!editandoRango() && borradorPeriodo.tipo === opcion.tipo">
-                      <input type="radio" name="tipoPeriodo" [value]="opcion.tipo" [checked]="!editandoRango() && borradorPeriodo.tipo === opcion.tipo" (change)="borradorPeriodo.tipo = opcion.tipo; editandoRango.set(false)" />
-                      <span><strong>{{ opcion.nombre }}</strong><small>{{ opcion.detalle }}</small></span>
-                    </label>
+
+            <!-- Pestaña 1: Selector de Meses estilo MonAi (Cuadrícula interactiva) -->
+            @if (pestanaModalPeriodo() === 'MESES') {
+              <div class="monai-period-view monai-period-view--months">
+                <div class="monai-year-stepper">
+                  <button type="button" (click)="cambiarAnioModal(-1)" [disabled]="anioNavegacionModal() <= 2000" aria-label="Año anterior">&lsaquo;</button>
+                  <strong class="monai-year-title">{{ anioNavegacionModal() }}</strong>
+                  <button type="button" (click)="cambiarAnioModal(1)" [disabled]="anioNavegacionModal() >= 2100" aria-label="Año siguiente">&rsaquo;</button>
+                </div>
+                <div class="monai-month-grid" role="grid" aria-label="Meses del año">
+                  @for (mes of mesesLista; track mes.numero) {
+                    <button type="button"
+                            class="monai-month-btn"
+                            [class.is-selected]="mesEsSeleccionado(mes.numero)"
+                            [disabled]="mesEsFuturo(mes.numero)"
+                            [attr.aria-pressed]="mesEsSeleccionado(mes.numero)"
+                            (click)="seleccionarMesDirecto(mes.numero)">
+                      <span class="monai-month-short">{{ mes.nombreCorto }}</span>
+                      <small class="monai-month-full">{{ mes.nombreCompleto }}</small>
+                    </button>
                   }
                 </div>
-                @if (!editandoRango()) {
-                  @if (borradorPeriodo.tipo === 'SEMANA' || borradorPeriodo.tipo === 'CATORCENA') {
-                    <label class="period-field">Fecha de anclaje<input type="date" name="anclaPeriodo" min="2000-01-01" max="2100-12-31" required [(ngModel)]="borradorPeriodo.ancla" /></label>
-                    <p class="period-help">Cada ciclo empieza a partir de esta fecha, también hacia atrás.</p>
-                  }
-                  @if (borradorPeriodo.tipo === 'MES' || borradorPeriodo.tipo === 'QUINCENA') {
-                    <label class="period-field">Día de inicio<input type="number" name="diaInicioPeriodo" min="1" [max]="borradorPeriodo.tipo === 'QUINCENA' ? 27 : 31" required [(ngModel)]="borradorPeriodo.diaInicio" /></label>
-                  }
-                  @if (borradorPeriodo.tipo === 'QUINCENA') {
-                    <label class="period-field">Segundo inicio del mes<input type="number" name="diaQuincenaPeriodo" [min]="borradorPeriodo.diaInicio + 1" max="31" required [(ngModel)]="borradorPeriodo.diaQuincena" /></label>
-                  }
-                  @if (borradorPeriodo.tipo === 'MES' || borradorPeriodo.tipo === 'QUINCENA') {
-                    <p class="period-help">Los días que no existan se ajustan al último del mes. La elección original se conserva.</p>
-                  }
-                  <label class="period-default"><input type="checkbox" name="guardarPeriodo" [(ngModel)]="guardarComoPredeterminado" /> Usar al abrir Inicio</label>
-                  <p class="period-help">Sin marcar, sólo cambia esta consulta. Puedes guardar otra preferencia cuando quieras.</p>
-                  <button type="submit" class="period-apply">{{ guardandoPeriodo() ? 'Guardando…' : 'Aplicar periodo' }}</button>
-                }
-              </fieldset>
-            </form>
-            <button type="button" class="period-custom" [attr.aria-pressed]="editandoRango()" (click)="seleccionarRango('PERSONALIZADO')" [disabled]="guardandoPeriodo()">Rango personalizado</button>
-            @if (editandoRango()) {
-              <form (ngSubmit)="aplicarRangoPersonalizado()" class="period-form">
-                <label class="period-field">Desde<input type="date" name="desde" required min="2000-01-01" [max]="fechaHoy()" [(ngModel)]="borradorDesde" /></label>
-                <label class="period-field">Hasta<input type="date" name="hasta" required [min]="borradorDesde || '2000-01-01'" [max]="fechaHoy()" [(ngModel)]="borradorHasta" /></label>
-                <button type="submit" class="period-apply">Aplicar fechas</button>
-              </form>
+                <p class="period-help text-center">Toca cualquier mes para consultar sus movimientos al instante.</p>
+              </div>
             }
+
+            <!-- Pestaña 2: Frecuencias configurables (Mes, Quincena, Semana, Hoy, Todo) -->
+            @if (pestanaModalPeriodo() === 'OPCIONES') {
+              <div class="monai-period-view">
+                <p class="period-help">Configura la periodicidad de tus consultas.</p>
+                <form (ngSubmit)="aplicarPeriodo()" class="period-form">
+                  <fieldset [disabled]="guardandoPeriodo()">
+                    <legend class="sr-only">Tipo de periodo</legend>
+                    <div class="period-options">
+                      @for (opcion of opcionesPeriodo; track opcion.tipo) {
+                        <label class="period-choice" [class.is-active]="!editandoRango() && borradorPeriodo.tipo === opcion.tipo">
+                          <input type="radio" name="tipoPeriodo" [value]="opcion.tipo" [checked]="!editandoRango() && borradorPeriodo.tipo === opcion.tipo" (change)="borradorPeriodo.tipo = opcion.tipo; editandoRango.set(false)" />
+                          <span><strong>{{ opcion.nombre }}</strong><small>{{ opcion.detalle }}</small></span>
+                        </label>
+                      }
+                    </div>
+                    @if (!editandoRango()) {
+                      @if (borradorPeriodo.tipo === 'SEMANA' || borradorPeriodo.tipo === 'CATORCENA') {
+                        <label class="period-field">Fecha de anclaje<input type="date" name="anclaPeriodo" min="2000-01-01" max="2100-12-31" required [(ngModel)]="borradorPeriodo.ancla" /></label>
+                        <p class="period-help">Cada ciclo empieza a partir de esta fecha, también hacia atrás.</p>
+                      }
+                      @if (borradorPeriodo.tipo === 'MES' || borradorPeriodo.tipo === 'QUINCENA') {
+                        <label class="period-field">Día de inicio<input type="number" name="diaInicioPeriodo" min="1" [max]="borradorPeriodo.tipo === 'QUINCENA' ? 27 : 31" required [(ngModel)]="borradorPeriodo.diaInicio" /></label>
+                      }
+                      @if (borradorPeriodo.tipo === 'QUINCENA') {
+                        <label class="period-field">Segundo inicio del mes<input type="number" name="diaQuincenaPeriodo" [min]="borradorPeriodo.diaInicio + 1" max="31" required [(ngModel)]="borradorPeriodo.diaQuincena" /></label>
+                      }
+                      @if (borradorPeriodo.tipo === 'MES' || borradorPeriodo.tipo === 'QUINCENA') {
+                        <p class="period-help">Los días que no existan se ajustan al último del mes.</p>
+                      }
+                      <label class="period-default"><input type="checkbox" name="guardarPeriodo" [(ngModel)]="guardarComoPredeterminado" /> Usar al abrir Inicio</label>
+                      <button type="submit" class="period-apply">{{ guardandoPeriodo() ? 'Guardando…' : 'Aplicar periodo' }}</button>
+                    }
+                  </fieldset>
+                </form>
+              </div>
+            }
+
+            <!-- Pestaña 3: Rango Libre / Personalizado -->
+            @if (pestanaModalPeriodo() === 'PERSONALIZADO') {
+              <div class="monai-period-view">
+                <form (ngSubmit)="aplicarRangoPersonalizado()" class="period-form">
+                  <label class="period-field">Desde<input type="date" name="desde" required min="2000-01-01" [max]="fechaHoy()" [(ngModel)]="borradorDesde" /></label>
+                  <label class="period-field">Hasta<input type="date" name="hasta" required [min]="borradorDesde || '2000-01-01'" [max]="fechaHoy()" [(ngModel)]="borradorHasta" /></label>
+                  <button type="submit" class="period-apply">Aplicar fechas libres</button>
+                </form>
+              </div>
+            }
+
             @if (errorRango()) { <p class="period-error" role="alert">{{ errorRango() }}</p> }
           </div>
         </div>
@@ -79,51 +113,134 @@
       }
 
       <section #homeHero class="dashboard-screen__monthly" (touchstart)="onHeroTouchStart($event)" (touchmove)="onHeroTouchMove($event)" (touchend)="onHeroTouchEnd($event)" [style.transform]="heroSwipeTransform()" aria-labelledby="dashboard-balance-title">
+        <div class="home-period home-period--compact">
+          <button type="button" class="time-dropdown-btn" (click)="toggleModalRango()" [disabled]="cargandoPeriodoInicial()" [attr.aria-busy]="cargandoPeriodoInicial()" aria-haspopup="dialog" [attr.aria-expanded]="modalRangoAbierto()">
+            <span class="home-period__calendar-icon" aria-hidden="true">&#128197;</span>
+            <span>{{ etiquetaRangoSeleccionado() }}</span>
+            <span class="home-period__chevron" aria-hidden="true">&#8964;</span>
+          </button>
+        </div>
         <p id="dashboard-balance-title" class="home-total-label">Gastos del periodo</p>
         @if (loading() || contextoLista.cargando()) { <div class="home-amount-loading" role="status" aria-label="Cargando gastos"></div> }
         @else if (resumenMonedaSeleccionada(); as moneda) {
           <p class="dashboard-screen__amount" aria-live="polite">{{ moneda.gastosMes | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</p>
           <label class="home-currency"><span class="sr-only">Moneda del balance</span><select [ngModel]="monedaResumen()" (ngModelChange)="cambiarMoneda($event)" aria-label="Moneda del balance">@for (codigo of monedasResumen(); track codigo) {<option [value]="codigo">{{ codigo }}</option>}</select></label>
-          @if (vistaDetallada()) {
-            <button type="button" class="dashboard-screen__text-link" (click)="irAReportes()">Informe del periodo</button><div class="home-metrics"><span>Ingresos <strong>{{ moneda.ingresosMes | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong></span><span>Balance del periodo <strong>{{ moneda.ingresosMes - moneda.gastosMes | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong></span></div>
-            <details class="home-account-details"><summary>Mis cuentas ? todas las listas</summary><div><span>Dinero en cuentas</span><strong>{{ (moneda.dineroDisponible ?? moneda.balanceTotal) | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong></div>@if(moneda.deudaTarjetas != null && moneda.deudaTarjetas > 0){<div><span>Deuda de tarjetas</span><strong>{{ moneda.deudaTarjetas | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong></div><div><span>Saldo neto</span><strong>{{ moneda.balanceTotal | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong></div>}<button type="button" (click)="irACuentas()">{{ moneda.totalCuentas }} cuentas &rsaquo;</button></details>
-          }
+          <div class="home-metrics" role="region" aria-label="Resumen de ingresos y balance">
+            <div class="home-metric home-metric--income">
+              <span class="home-metric__label">Ingresos</span>
+              <strong class="home-metric__value">{{ moneda.ingresosMes | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong>
+            </div>
+            <div class="home-metric home-metric--balance">
+              <span class="home-metric__label">Saldo neto</span>
+              <strong class="home-metric__value" [class.is-negative]="moneda.balanceTotal < 0">{{ moneda.balanceTotal | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong>
+            </div>
+          </div>
         } @else if (!error()) { <p class="dashboard-screen__amount">{{ 0 | monto:monedaResumen():'symbol-narrow':'1.2-2' }}</p> }
-        <div class="home-period"><button type="button" class="home-period-arrow" (click)="cambiarPeriodo(-1)" [disabled]="cargandoPeriodoInicial() || !puedeRetroceder()" aria-label="Periodo anterior">&lsaquo;</button><button type="button" class="time-dropdown-btn" (click)="toggleModalRango()" [disabled]="cargandoPeriodoInicial()" [attr.aria-busy]="cargandoPeriodoInicial()" aria-haspopup="dialog" [attr.aria-expanded]="modalRangoAbierto()">{{ etiquetaRangoSeleccionado() }} <span aria-hidden="true">&#8964;</span></button><button type="button" class="home-period-arrow" (click)="cambiarPeriodo(1)" [disabled]="cargandoPeriodoInicial() || periodoEsActual()" aria-label="Periodo siguiente">&rsaquo;</button></div>
+        
       </section>
-
-      <app-guia-inicial />
 
       <section class="home-categories" aria-labelledby="home-categories-title">
         <h2 id="home-categories-title" class="sr-only">Gastos por categoría</h2>
         @if (graficoLoading() || contextoLista.cargando()) {<div class="home-chart-loading" role="status" aria-label="Cargando categorías"><span></span><span></span><span></span><span></span></div>}
         @else if (graficoError()) {<p class="home-inline-state" role="alert">No pudimos cargar las categorías. <button type="button" (click)="cargarDashboard()">Reintentar</button></p>}
         @else if (categoriasInicio().length > 0) {
+          @if (categoriaGestoActiva()) {
+                  <div class="home-category__gesture-guide" aria-live="assertive">
+                    <div class="gesture-pill gesture-pill--up" [class.is-target]="gestoAccionSeleccionada() === 'GASTO'">
+                      <span aria-hidden="true">&#8593;</span> <strong>+ Gasto</strong>
+                    </div>
+                    <div class="gesture-pill gesture-pill--down" [class.is-target]="gestoAccionSeleccionada() === 'PRESUPUESTO'">
+                      <span aria-hidden="true">&#8595;</span> <strong>Presupuesto</strong>
+                    </div>
+                  </div>
+                }
           <div class="home-category-chart" aria-label="Gastos por categoría, desliza para ver más" tabindex="0">
             @for (categoria of categoriasInicio(); track categoria.categoriaId) {
-              <article class="home-category" [style.--category-tone]="categoria.tono">
-                <button type="button" class="home-category__bar-button" (pointerdown)="iniciarPresionCategoria($event,categoria)" (pointermove)="moverPresionCategoria($event)" (pointerleave)="cancelarPresionCategoria()" (click)="tocarCategoria(categoria)" (contextmenu)="$event.preventDefault(); categoriaContextual.set(categoria)" [attr.aria-label]="'Ver movimientos de ' + categoria.categoriaNombre">
-                  <span class="home-category__track"><span class="home-category__bar" [style.height.%]="categoria.altura" aria-hidden="true"></span><span class="home-category__emoji"><app-categoria-icono [icono]="categoria.icono" clase="category-emoji-large"/></span></span>
-                  <strong>{{ categoria.monto | monto:categoria.moneda:'symbol-narrow':'1.0-2' }}</strong><span class="home-category__name">{{ categoria.categoriaNombre }}</span>
+              <article class="home-category"
+                       [class.is-selected]="categoriaFiltroSeleccionada()?.categoriaId === categoria.categoriaId"
+                       [class.is-gesture-active]="categoriaGestoActiva()?.categoriaId === categoria.categoriaId"
+                       [style.--category-tone]="categoria.tono">
+                <button type="button" class="home-category__bar-button"
+                        (touchmove)="bloquearDesplazamientoCategoria($event)"
+                        (pointerdown)="iniciarPresionCategoria($event,categoria)"
+                        (pointermove)="moverPresionCategoria($event)"
+                        (pointerup)="finalizarPresionCategoria($event,categoria)"
+                        (pointercancel)="cancelarPresionCategoria()"
+                        (pointerleave)="cancelarPresionCategoria()"
+                        (click)="tocarCategoria(categoria)"
+                        (contextmenu)="abrirContextoCategoria($event,categoria)"
+                        [attr.aria-label]="'Filtrar movimientos de ' + categoria.categoriaNombre">
+                  <span class="home-category__track"
+                        [class.is-budget-warning]="categoria.presupuesto?.porcentajeConsumido! >= 80 && categoria.presupuesto?.porcentajeConsumido! < 100"
+                        [class.is-budget-over]="categoria.presupuesto?.porcentajeConsumido! >= 100">
+                    <span class="home-category__bar" [style.height.%]="categoria.altura" aria-hidden="true"></span>
+                    <span class="home-category__emoji"><app-categoria-icono [icono]="categoria.icono" clase="category-emoji-large"/></span>
+                  </span>
+                  <strong>{{ categoria.monto | monto:categoria.moneda:'symbol-narrow':'1.0-2' }}</strong>
+                  <span class="home-category__name">{{ categoria.categoriaNombre }}</span>
                 </button>
-                <button type="button" class="home-category__more" (click)="categoriaContextual.set(categoria)" [attr.aria-label]="'Opciones de ' + categoria.categoriaNombre">&middot;&middot;&middot;</button>
               </article>
             }
           </div>
+          <p class="home-category-hint">Mantén una categoría y desliza ↑ para gasto o ↓ para presupuesto.</p>
         } @else if (!loading() && !error()) {<div class="home-empty"><span aria-hidden="true">&#127793;</span><h2>Sin gastos todavía</h2><p>Cuéntanos qué gastaste, hablando o escribiendo.</p><button type="button" (click)="abrirChatRegistro()">Prefiero registrarlo a mano</button></div>}
       </section>
 
-      @if (vistaDetallada()) {
-        <section class="dashboard-screen__budgets" aria-labelledby="dashboard-budgets-title"><div class="dashboard-screen__section-heading"><div><h2 id="dashboard-budgets-title">Presupuestos</h2><p class="dashboard-budget-period">{{ periodoResumen() }} · mensual · todas mis listas</p></div><button type="button" class="dashboard-screen__text-link" (click)="irAPresupuestos()">Ver todos</button></div>
+      @if (presupuestosDashboard().length > 0 || presupuestoLoading() || presupuestoError()) {
+        <section class="dashboard-screen__budgets" aria-labelledby="dashboard-budgets-title">
+          <div class="dashboard-screen__section-heading">
+            <div>
+              <h2 id="dashboard-budgets-title">Presupuestos</h2>
+              <p class="dashboard-budget-period">{{ periodoResumen() }} · mensual · todas mis listas</p>
+            </div>
+            <button type="button" class="dashboard-screen__text-link" (click)="irAPresupuestos()">Ver todos</button>
+          </div>
           @if (presupuestoLoading()) {<p class="home-inline-state">Cargando presupuestos…</p>}
           @else if (presupuestoError()) {<p class="home-inline-state" role="alert">{{ presupuestoError() }} <button type="button" (click)="cargarPresupuestos()">Reintentar</button></p>}
-          @else { @for(presupuesto of presupuestosDashboard(); track presupuesto.id){
-            <div class="home-budget-row"><app-categoria-icono [icono]="presupuesto.categoriaIcono"/><div><strong>{{ presupuesto.categoriaNombre }}</strong><small class="dashboard-budget-left" [class.is-over]="presupuesto.montoDisponible < 0">{{ presupuesto.montoDisponible < 0 ? 'Excedido en' : 'Queda' }} {{ (presupuesto.montoDisponible < 0 ? -presupuesto.montoDisponible : presupuesto.montoDisponible) | monto:presupuesto.moneda:'symbol-narrow':'1.2-2' }}</small><div class="home-budget-progress" role="progressbar" [attr.aria-label]="'Presupuesto de ' + presupuesto.categoriaNombre" aria-valuemin="0" [attr.aria-valuemax]="privacidad.ocultarMontos() ? null : presupuesto.montoLimite" [attr.aria-valuenow]="privacidad.ocultarMontos() ? null : presupuestoGastadoLimitado(presupuesto.montoGastado,presupuesto.montoLimite)" [attr.aria-valuetext]="privacidad.ocultarMontos() ? 'Importe oculto' : null" [style.--budget-fill]="(privacidad.ocultarMontos() ? 0 : porcentajePresupuesto(presupuesto.porcentajeConsumido)) + '%'"><span [style.width]="'var(--budget-fill)'" [class.is-over]="presupuesto.estado === 'EXCEDIDO'"></span></div></div></div>
-          } @empty {<button type="button" class="dashboard-screen__text-link" (click)="irAPresupuestos()">Crear presupuesto</button>} }
+          @else {
+            @for(presupuesto of presupuestosDashboard(); track presupuesto.id){
+              <div class="home-budget-row"
+                   [class.is-warning]="presupuesto.porcentajeConsumido >= 80 && presupuesto.porcentajeConsumido < 100"
+                   [class.is-over]="presupuesto.porcentajeConsumido >= 100">
+                <app-categoria-icono [icono]="presupuesto.categoriaIcono"/>
+                <div>
+                  <div class="home-budget-row__title">
+                    <strong>{{ presupuesto.categoriaNombre }}</strong>
+                    @if (presupuesto.porcentajeConsumido >= 100) {
+                      <span class="home-budget-pill home-budget-pill--danger">⚠️ Excedido</span>
+                    } @else if (presupuesto.porcentajeConsumido >= 80) {
+                      <span class="home-budget-pill home-budget-pill--warning">⚠️ Cerca del límite</span>
+                    }
+                  </div>
+                  <small class="dashboard-budget-left" [class.is-over]="presupuesto.montoDisponible < 0">
+                    {{ presupuesto.montoDisponible < 0 ? 'Excedido en' : 'Queda' }} {{ (presupuesto.montoDisponible < 0 ? -presupuesto.montoDisponible : presupuesto.montoDisponible) | monto:presupuesto.moneda:'symbol-narrow':'1.2-2' }}
+                    @if (!privacidad.ocultarMontos()) { <span class="home-budget-percent">({{ presupuesto.porcentajeConsumido }}%)</span> }
+                  </small>
+                  <small>{{ presupuesto.montoGastado | monto:presupuesto.moneda:'symbol-narrow':'1.2-2' }} de {{ presupuesto.montoLimite | monto:presupuesto.moneda:'symbol-narrow':'1.2-2' }}</small>
+                  <div class="home-budget-progress"
+                       [class.home-budget-progress--warning]="presupuesto.porcentajeConsumido >= 80 && presupuesto.porcentajeConsumido < 100"
+                       [class.home-budget-progress--over]="presupuesto.porcentajeConsumido >= 100"
+                       role="progressbar"
+                       [attr.aria-label]="'Presupuesto de ' + presupuesto.categoriaNombre"
+                       aria-valuemin="0"
+                       [attr.aria-valuemax]="privacidad.ocultarMontos() ? null : presupuesto.montoLimite"
+                       [attr.aria-valuenow]="privacidad.ocultarMontos() ? null : presupuestoGastadoLimitado(presupuesto.montoGastado,presupuesto.montoLimite)"
+                       [attr.aria-valuetext]="privacidad.ocultarMontos() ? 'Importe oculto' : null"
+                       [style.--budget-fill]="(privacidad.ocultarMontos() ? 0 : porcentajePresupuesto(presupuesto.porcentajeConsumido)) + '%'">
+                    <div class="home-budget-progress__track">
+                      <span class="home-budget-progress__fill" [style.width]="'var(--budget-fill)'" [class.is-over]="presupuesto.estado === 'EXCEDIDO'"></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            } @empty {
+              <button type="button" class="dashboard-screen__text-link" (click)="irAPresupuestos()">Crear presupuesto</button>
+            }
+          }
         </section>
       }
 
-      @if (vistaDetallada() && plantillasPorAtender().length > 0) {
+      @if (plantillasPorAtender().length > 0) {
         <section class="dashboard-screen__section dashboard-screen__upcoming" aria-labelledby="dashboard-upcoming-title">
           <div class="dashboard-screen__section-heading"><div class="dashboard-screen__title-with-icon"><span class="dashboard-screen__section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4m8-4v4M4 10h16m-11 4h2m-2 3h5"/></svg></span><div><p class="dashboard-screen__eyebrow">Pr&oacute;ximos 7 d&iacute;as</p><h2 id="dashboard-upcoming-title">Pagos programados</h2></div></div><button type="button" class="dashboard-screen__text-link" (click)="irARecurrentes()">Ver todos</button></div>
           @for (plantilla of plantillasPorAtender().slice(0, 3); track plantilla.id) {
@@ -133,18 +250,29 @@
         </section>
       }
 
-      <!-- 4. Lista de Actividad Reciente con botón Ver Todo -->
-      @if (loading() || error() || ultimosMovimientosLimitados().length > 0 || vistaDetallada()) {
+      <!-- 4. Lista de Actividad Reciente con botón Ver Todo y Filtro por Categoría -->
+      @if (true) {
       <section class="dashboard-screen__section dashboard-screen__activity dashboard-screen__recent" aria-labelledby="dashboard-recent-title">
         <div class="dashboard-screen__section-heading">
-          <div>
-            <h2 id="dashboard-recent-title">Recientes</h2>
+          <div class="dashboard-screen__title-with-badge">
+            <h2 id="dashboard-recent-title">{{ categoriaFiltroSeleccionada() ? 'Movimientos filtrados' : 'Recientes' }}</h2>
+            @if (categoriaFiltroSeleccionada(); as cat) {
+              <button type="button" class="home-filter-chip" (click)="quitarFiltroCategoria()" aria-label="Quitar filtro de categoría">
+                <app-categoria-icono [icono]="cat.icono" clase="home-filter-chip__icon" />
+                <span>{{ cat.categoriaNombre }}</span>
+                <span class="home-filter-chip__close" aria-hidden="true">&times;</span>
+              </button>
+            }
           </div>
-          <button type="button" class="dashboard-screen__text-link" (click)="irATransacciones()">
-            Ver todos <span aria-hidden="true">→</span>
-          </button>
+          @if (categoriaFiltroSeleccionada(); as cat) {
+            <button type="button" class="dashboard-screen__text-link" (click)="irATransacciones(cat.categoriaId)">
+              Ver en historial <span aria-hidden="true">&#8594;</span>
+            </button>
+          } @else {
+            <a routerLink="/transacciones" class="dashboard-screen__text-link" (click)="$event.preventDefault(); irATransacciones()" aria-label="Movimientos">Ver todos <span aria-hidden="true">&#8594;</span></a>
+          }
         </div>
-        @if (loading()) {
+        @if (loading() || cargandoMovimientosCategoria()) {
           <div class="dashboard-loading-movements" role="status" aria-label="Cargando movimientos">
             <span class="sr-only">Cargando movimientos…</span>
             @for (fila of [0, 1, 2]; track fila) {
@@ -153,14 +281,21 @@
           </div>
         } @else if (error()) {
           <p class="dashboard-screen__muted">No pudimos consultar tus movimientos recientes. Usa Reintentar para volver a cargarlos.</p>
-        } @else if ((ultimosMovimientosLimitados().length === 0)) {
+        } @else if (errorMovimientosCategoria()) {
+          <p role="alert">No pudimos consultar los movimientos de esta categoría. <button type="button" (click)="seleccionarFiltroCategoria(categoriaFiltroSeleccionada()!)">Reintentar</button></p>
+        } @else if (categoriaFiltroSeleccionada() && movimientosCategoria().length === 0) {
+          <div class="dashboard-screen__inline-empty">
+            <p>No hay gastos registrados en {{ categoriaFiltroSeleccionada()?.categoriaNombre }} durante este periodo.</p>
+            <button type="button" (click)="registrarCategoria(categoriaFiltroSeleccionada()!)">Añadir gasto en {{ categoriaFiltroSeleccionada()?.categoriaNombre }}</button>
+          </div>
+        } @else if (!categoriaFiltroSeleccionada() && (ultimosMovimientosLimitados().length === 0)) {
           <div class="dashboard-screen__inline-empty">
             <p>No hay movimientos en este período. Puedes añadir uno o consultar el historial.</p>
             @if((resumen()?.totalCuentas??0) === 0) {<button type="button" (click)="irACuentas()">Crear cuenta</button>} @else {<button type="button" (click)="abrirChatRegistro()">Añadir movimiento</button>}
           </div>
         } @else {
           <div class="dashboard-screen__recent-list">
-            @for (movimiento of ultimosMovimientosLimitados(); track movimiento.id) {
+            @for (movimiento of (categoriaFiltroSeleccionada() ? movimientosCategoria() : ultimosMovimientosLimitados()); track movimiento.id) {
               <app-movimiento-mobile-card [movimiento]="movimiento" (detalle)="verDetalleMovimiento($event.id)" (editar)="editarMovimiento($event.id)" (eliminar)="eliminarMovimiento($event)" />
             }
           </div>
@@ -169,6 +304,28 @@
       }
 
     </div>
+
+    @if (busquedaAbierta()) {
+      <div class="time-dropdown-backdrop" (click)="cerrarBusquedaInicio()">
+        <section class="home-search" role="dialog" aria-modal="true" aria-labelledby="buscar-inicio-title" appFocusTrap tabindex="-1" (focusTrapEscape)="cerrarBusquedaInicio()" (click)="$event.stopPropagation()">
+          <header class="home-search__header"><h2 id="buscar-inicio-title">Buscar movimientos</h2><button type="button" class="glass-icon" aria-label="Cerrar búsqueda" (click)="cerrarBusquedaInicio()">&times;</button></header>
+          <label class="sr-only" for="buscar-inicio">Buscar movimientos de esta lista</label>
+          <input id="buscar-inicio" type="search" autocomplete="off" maxlength="120" placeholder="Buscar movimientos o #etiquetas" [ngModel]="textoBusquedaInicio()" (ngModelChange)="cambiarBusquedaInicio($event)" />
+          <p class="home-search__hint">Busca en todos los periodos de esta lista.</p>
+          @if (buscandoInicio()) { <p role="status">Buscando movimientos…</p> }
+          @else if (errorBusquedaInicio()) { <p role="alert">No pudimos buscar. <button type="button" (click)="buscarInicio(paginaBusquedaInicio())">Reintentar</button></p> }
+          @else if (textoBusquedaInicio().trim() && resultadosBusquedaInicio().length === 0) { <p>No encontramos movimientos.</p> }
+          @else if (resultadosBusquedaInicio().length) {
+            <ul class="home-search__results">
+              @for (movimiento of resultadosBusquedaInicio(); track movimiento.id) {
+                <li><div><strong>{{ (movimiento.descripcion || movimiento.categoriaNombre || 'Movimiento') | textoFinanciero }}</strong><small>{{ movimiento.fecha }} · {{ etiquetaTipo(movimiento.tipo) }} · {{ movimiento.categoriaNombre || 'Sin categoría' }}</small></div><strong>{{ movimiento.monto | monto:movimiento.moneda:'symbol-narrow':'1.2-2' }}</strong></li>
+              }
+            </ul>
+            @if (paginasBusquedaInicio() > 1) { <nav class="home-search__pages" aria-label="Páginas de resultados"><button type="button" [disabled]="paginaBusquedaInicio() === 0" (click)="buscarInicio(paginaBusquedaInicio()-1)">Anterior</button><span>{{ paginaBusquedaInicio()+1 }} / {{ paginasBusquedaInicio() }}</span><button type="button" [disabled]="paginaBusquedaInicio()+1 >= paginasBusquedaInicio()" (click)="buscarInicio(paginaBusquedaInicio()+1)">Siguiente</button></nav> }
+          }
+        </section>
+      </div>
+    }
 
     @if (categoriaContextual(); as categoria) {
       <div class="home-sheet-backdrop" (click)="categoriaContextual.set(null)"><section class="home-context-sheet" role="dialog" aria-modal="true" aria-labelledby="category-context-title" appFocusTrap tabindex="-1" (focusTrapEscape)="categoriaContextual.set(null)" (click)="$event.stopPropagation()"><header><div><app-categoria-icono [icono]="categoria.icono" clase="category-emoji-large"/><h2 id="category-context-title">{{ categoria.categoriaNombre }}</h2></div><button type="button" class="glass-icon" (click)="categoriaContextual.set(null)" aria-label="Cerrar opciones de categoría">&times;</button></header><p>Gastado <strong>{{ categoria.monto | monto:categoria.moneda:'symbol-narrow':'1.2-2' }}</strong></p>@if(categoria.presupuesto; as presupuesto){<p>Presupuesto mensual <strong>{{ presupuesto.montoLimite | monto:presupuesto.moneda:'symbol-narrow':'1.2-2' }}</strong></p><p>{{ presupuesto.montoDisponible < 0 ? 'Excedido en' : 'Disponible' }} <strong>{{ (presupuesto.montoDisponible < 0 ? -presupuesto.montoDisponible : presupuesto.montoDisponible) | monto:presupuesto.moneda:'symbol-narrow':'1.2-2' }}</strong></p>}<nav><button type="button" (click)="registrarCategoria(categoria)">Añadir gasto</button><button type="button" (click)="categoriaContextual.set(null); irATransacciones(categoria.categoriaId)">Ver movimientos</button><button type="button" (click)="categoriaContextual.set(null); irAPresupuestos()">{{ categoria.presupuesto ? 'Editar presupuesto' : 'Definir presupuesto' }}</button></nav></section></div>
@@ -427,6 +584,41 @@
                 />
               </div>
             }
+
+            <!-- SECCIÓN: Etiquetas para movimientos -->
+            <div class="space-y-2">
+              <div class="flex items-center justify-between">
+                <label for="form-etiquetas-input" class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Etiquetas
+                </label>
+                <span class="text-[11px] text-slate-400">Opcional</span>
+              </div>
+              <div class="flex flex-wrap gap-1.5">
+                @for (sug of etiquetasSugeridas(); track sug) {
+                  <button
+                    type="button"
+                    (click)="alternarEtiquetaSugerida(sug)"
+                    [class.bg-emerald-600]="etiquetaEstaActiva(sug)"
+                    [class.text-white]="etiquetaEstaActiva(sug)"
+                    [class.border-emerald-600]="etiquetaEstaActiva(sug)"
+                    class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 transition-all hover:bg-slate-200 active:scale-95 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                    <span>#{{ sug }}</span>
+                    @if (etiquetaEstaActiva(sug)) {
+                      <span aria-hidden="true">&times;</span>
+                    }
+                  </button>
+                }
+              </div>
+              <input
+                id="form-etiquetas-input"
+                type="text"
+                name="formEtiquetas"
+                [(ngModel)]="formEtiquetasTexto"
+                placeholder="#amigos #vacaciones #restaurante"
+                maxlength="271"
+                class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 transition-all focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+              />
+            </div>
 
             <!-- SECCIÓN: Opciones adicionales (colapsable) -->
             @if (formTipo() !== 'TRANSFERENCIA') {

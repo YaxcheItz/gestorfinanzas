@@ -143,6 +143,16 @@ export class FinanzasService {
   }
 
   // --- Categorías ---
+  getEtiquetasPersonales(): Observable<ApiResponse<{id:number; nombre:string}[]>> {
+    return this.http.get<ApiResponse<{id:number; nombre:string}[]>>(`${this.baseUrl}/etiquetas`);
+  }
+  crearEtiquetaPersonal(nombre: string): Observable<ApiResponse<{id:number; nombre:string}>> {
+    return this.http.post<ApiResponse<{id:number; nombre:string}>>(`${this.baseUrl}/etiquetas`, {nombre});
+  }
+  eliminarEtiquetaPersonal(id: number): Observable<ApiResponse<void>> {
+    return this.http.delete<ApiResponse<void>>(`${this.baseUrl}/etiquetas/${id}`);
+  }
+
   getCategorias(): Observable<ApiResponse<Categoria[]>> {
     return this.http.get<ApiResponse<Categoria[]>>(`${this.baseUrl}/categorias`);
   }
@@ -157,6 +167,22 @@ export class FinanzasService {
 
   actualizarCategoria(id: number, payload: CategoriaPayload): Observable<ApiResponse<Categoria>> {
     return this.http.put<ApiResponse<Categoria>>(`${this.baseUrl}/categorias/${id}`, payload);
+  }
+
+  referenciasCategoria(id:number): Observable<ApiResponse<{movimientos:number; presupuestos:number; recurrencias:number; lineasLibro:number; presupuestosActivos?:number; recurrenciasActivas?:number}>> {
+    return this.http.get<ApiResponse<{movimientos:number; presupuestos:number; recurrencias:number; lineasLibro:number; presupuestosActivos?:number; recurrenciasActivas?:number}>>(`${this.baseUrl}/categorias/${id}/referencias`);
+  }
+
+  reasignarCategoriaActivos(id: number, categoriaDestinoId: number): Observable<ApiResponse<{presupuestos:number; recurrencias:number}>> {
+    return this.http.post<ApiResponse<{presupuestos:number; recurrencias:number}>>(`${this.baseUrl}/categorias/${id}/reasignar-activos`, {categoriaDestinoId});
+  }
+
+  eliminarCategoriaConReasignacion(id:number,categoriaDestinoId:number|null): Observable<ApiResponse<void>> {
+    return this.http.post<ApiResponse<void>>(`${this.baseUrl}/categorias/${id}/eliminar`,{categoriaDestinoId});
+  }
+
+  eliminarCategoria(id: number): Observable<ApiResponse<void>> {
+    return this.http.delete<ApiResponse<void>>(`${this.baseUrl}/categorias/${id}`);
   }
 
   cambiarEstadoCategoria(id: number, activa: boolean): Observable<ApiResponse<void>> {

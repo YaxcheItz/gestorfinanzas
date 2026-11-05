@@ -57,9 +57,17 @@ describe('Registro rapido: guardado y privacidad', () => {
   });
 
   it('conserva monto y cuenta al alternar con escribir',()=>{
-    component.monto='45';component.cuentaId=2;component.cerrar();
+    component.monto='45';component.cuentaId=2;component.voz();
     component.abrir(new CustomEvent('registro',{detail:{preservar:true}}));
     expect(component.monto).toBe('45');expect(component.cuentaId).toBe(2);
+  });
+
+  it('inicia una solicitud nueva tras guardar al abrir desde escritura',()=>{
+    component.monto='25';component.guardar();const primera=crear.mock.calls[0][1];
+    respuesta.next({success:true});respuesta.complete();respuesta=new Subject();
+    component.abrir(new CustomEvent('registro',{detail:{preservar:true}}));
+    expect(component.monto).toBe('');component.monto='30';component.guardar();
+    expect(crear.mock.calls[1][1]).not.toBe(primera);
   });
 
   it('repetir prepara fecha de hoy y una solicitud nueva, sin guardar hasta confirmar',()=>{

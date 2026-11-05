@@ -20,6 +20,7 @@ test('presupuesto respeta lista y moneda, oculta importes y restaura limites ind
   await page.goto('/login');await page.locator('#email').fill(email);await page.locator('#password').fill(password);
   await page.getByRole('button',{name:'Iniciar sesi\u00f3n',exact:true}).click();await expect(page).toHaveURL(/dashboard/);
   await page.getByRole('button',{name:'A\u00f1adir movimiento',exact:true}).click();
+  await page.locator('#quick-capture-panel').getByRole('button',{name:'Introducir datos manualmente'}).click();
   const dialog=page.getByRole('dialog',{name:'A\u00f1adir movimiento',exact:true});
   await dialog.locator('select[name="cuenta"]').selectOption({label:'Banco Presupuestos \u00b7 MXN'});
   await page.locator('#quick-entry-amount').fill('25');await dialog.locator('summary').click();
@@ -30,7 +31,7 @@ test('presupuesto respeta lista y moneda, oculta importes y restaura limites ind
   for(const width of [320,390]){await page.setViewportSize({width,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);}
   await page.screenshot({path:info.outputPath('presupuesto-movil-privado.png')});
   await dialog.locator('select[name="cuenta"]').selectOption({label:'Banco USD \u00b7 USD'});await expect(presupuesto).toHaveCount(0);
-  const archivoRespuesta=await page.request.get('/api/perfil/respaldo',{headers});expect(archivoRespuesta.ok()).toBeTruthy();const archivo=await archivoRespuesta.json();expect(archivo.version).toBe(7);
+  const archivoRespuesta=await page.request.get('/api/perfil/respaldo',{headers});expect(archivoRespuesta.ok()).toBeTruthy();const archivo=await archivoRespuesta.json();expect(archivo.version).toBe(8);
   const nuevo=await registrarPrueba(page.request,{nombre:'QA restauracion',email:`restore-budget-${crypto.randomUUID()}@example.test`,password});expect(nuevo.ok()).toBeTruthy();
   const destino={Authorization:`Bearer ${(await nuevo.json()).data.token}`};
   const restaurar=await page.request.post('/api/perfil/respaldo/restaurar',{headers:destino,data:archivo});expect(restaurar.ok()).toBeTruthy();

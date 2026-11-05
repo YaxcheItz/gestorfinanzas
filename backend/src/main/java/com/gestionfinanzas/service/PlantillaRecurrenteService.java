@@ -34,6 +34,9 @@ public class PlantillaRecurrenteService {
                 && plantilla.getCuotasPagadas() >= plantilla.getCuotasTotales()) {
             throw new IllegalArgumentException("Esta compra MSI ya terminó");
         }
+        if (activa && plantilla.getCategoriaHistorica() != null) {
+            throw new IllegalArgumentException("La categor\u00eda de esta recurrencia fue eliminada. Crea una recurrencia con una categor\u00eda actual antes de continuar.");
+        }
         if (activa) validarFechaSiguiente(plantilla);
         plantilla.setActiva(activa);
         return PlantillaRecurrenteResponse.fromEntity(plantillaRepository.save(plantilla));

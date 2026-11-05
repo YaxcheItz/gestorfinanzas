@@ -20,5 +20,11 @@ html .monai-theme .settings-page :is(input:not([type="checkbox"]), select) { fon
 .settings-disclosure__content > div:first-child h2 { font-size: .875rem; }
 .settings-management { padding: 1rem; border: 1px solid var(--kaptal-border); border-radius: 1rem; background: var(--kaptal-surface); }
 .settings-management h2 { font-weight: 700; margin-bottom: .75rem; }
+.settings-management h3 { font-weight: 700; margin-bottom: .75rem; }
+.settings-group { display: grid; gap: .75rem; }
+.settings-group > h2 { color: var(--kaptal-content-muted); font-size: .875rem; font-weight: 700; margin: .5rem .25rem 0; }
 .settings-management nav { display: grid; gap: .5rem; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
 .settings-management a { display: flex; justify-content: space-between; align-items: center; min-height: 48px; padding: .7rem; border-radius: .75rem; background: var(--kaptal-surface-subtle); color: var(--kaptal-content); }
+
+.settings-group, .settings-group > * { min-width: 0; }
+.settings-group a { max-width: 100%; overflow-wrap: anywhere; white-space: normal; text-align: center; }

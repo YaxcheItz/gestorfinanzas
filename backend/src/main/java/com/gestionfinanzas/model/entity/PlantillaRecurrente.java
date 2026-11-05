@@ -11,6 +11,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
+@org.hibernate.annotations.DynamicUpdate
 @Table(name = "plantillas_recurrentes", indexes = {
         @Index(name = "idx_plantilla_recurrente_usuario_fecha", columnList = "usuario_id, siguiente_fecha")
 })
@@ -52,6 +53,14 @@ public class PlantillaRecurrente {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "categoria_id")
     private Categoria categoria;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="categoria_historica_id")
+    private CategoriaHistorica categoriaHistorica;
+
+    public Categoria getCategoria() { return categoria != null ? categoria : categoriaHistorica == null ? null : categoriaHistorica.comoCategoria(); }
+    public void setCategoria(Categoria valor) { this.categoria=valor; this.categoriaHistorica=null; }
+    public void conservarCategoria(CategoriaHistorica historia) { this.categoriaHistorica=historia; this.categoria=null; }
+
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)

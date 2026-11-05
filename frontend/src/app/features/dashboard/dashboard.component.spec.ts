@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { CategoriaPreferidaService } from '../../core/services/categoria-preferida.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
@@ -47,6 +47,8 @@ describe('DashboardComponent movement dialog accessibility', () => {
             registrarMovimientoRecurrente: () => of({ success: true, message: '', data: undefined }),
             getCuentas: () => of({ success: true, message: '', data: [] }),
             getCategorias: () => of({ success: true, message: '', data: [] }),
+            getEtiquetasPersonales: () => of({ success: true, message: '', data: [] }),
+            getTransaccionesPaginadas: () => of({ success: true, message: '', data: { content: [], totalElements: 0, totalPages: 0, size: 20, number: 0, first: true, last: true } }),
             crearTransaccion
           }
         },
@@ -98,14 +100,43 @@ describe('DashboardComponent movement dialog accessibility', () => {
     fixture.destroy();
   });
 
-  it('separa efectivo y deuda y muestra presupuesto restante solo en la moneda elegida',()=>{
+  it('muestra saldo neto y presupuesto restante en la moneda elegida',()=>{
     const fixture=TestBed.createComponent(DashboardComponent);fixture.detectChanges();const component=fixture.componentInstance;
     component.resumen.set({resumenPorMoneda:[{moneda:'MXN',balanceTotal:600,dineroDisponible:1000,deudaTarjetas:400,ingresosMes:100,gastosMes:25,totalCuentas:2},{moneda:'USD',balanceTotal:200,dineroDisponible:200,deudaTarjetas:0,ingresosMes:50,gastosMes:5,totalCuentas:1}],ultimosMovimientos:[]} as any);
     component.presupuestoResumen.set({presupuestos:[{id:1,moneda:'MXN',categoriaNombre:'Comida',montoLimite:500,montoGastado:200,montoDisponible:300,porcentajeConsumido:40}],resumenPorMoneda:[{moneda:'MXN',totalDisponible:300},{moneda:'USD',totalDisponible:10}]} as any);
     component.vistaDetallada.set(true);fixture.detectChanges();const hero=fixture.nativeElement.querySelector('.dashboard-screen__monthly').textContent;
-    expect(hero).toContain('Dinero en cuentas');expect(hero).toContain('1,000');expect(hero).toContain('Deuda de tarjetas');expect(hero).toContain('400');
+    expect(hero).toContain('Saldo neto');expect(hero).toContain('600');expect(hero).not.toContain('Deuda de tarjetas');expect(hero).not.toContain('Dinero en cuentas');
     expect(component.presupuestoMonedaSeleccionada()?.totalDisponible).toBe(300);
     component.monedaResumen.set('USD');expect(component.presupuestoMonedaSeleccionada()?.totalDisponible).toBe(10);
+    fixture.destroy();
+  });
+  it('busca en todos los periodos de la lista y descarta respuestas anteriores', () => {
+    const anterior = new Subject<any>(), actual = new Subject<any>();
+    const consulta = vi.spyOn(TestBed.inject(FinanzasService), 'getTransaccionesPaginadas').mockReturnValueOnce(anterior).mockReturnValueOnce(actual);
+    const contexto = TestBed.inject(ListaContextoService);
+    contexto.aplicar([{id:802,nombre:'Personal QA',moneda:'MXN',personal:true,rol:'PROPIETARIO',miembros:[]} as any]);
+    const fixture = TestBed.createComponent(DashboardComponent); fixture.detectChanges();
+    const component = fixture.componentInstance;
+    component.textoBusquedaInicio.set('cafe'); component.buscarInicio(0);
+    component.textoBusquedaInicio.set('#viaje'); component.buscarInicio(1);
+    expect(consulta).toHaveBeenLastCalledWith({busqueda:'#viaje',listaId:802},1,20);
+    anterior.next({success:true,data:{content:[{id:1}],totalPages:1}});
+    actual.next({success:true,data:{content:[{id:2}],totalPages:3}});
+    expect(component.resultadosBusquedaInicio().map(m=>m.id)).toEqual([2]);
+    expect(component.paginaBusquedaInicio()).toBe(1);
+    component.cerrarBusquedaInicio();
+    expect(component.resultadosBusquedaInicio()).toEqual([]);
+    fixture.destroy();
+  });
+  it('permite reintentar una busqueda fallida', () => {
+    const consulta = vi.spyOn(TestBed.inject(FinanzasService), 'getTransaccionesPaginadas').mockReturnValueOnce(throwError(() => new Error('offline'))).mockReturnValueOnce(of({success:true,data:{content:[],totalPages:0}} as any));
+    const fixture = TestBed.createComponent(DashboardComponent); fixture.detectChanges();
+    const component = fixture.componentInstance;
+    component.textoBusquedaInicio.set('cafe'); component.buscarInicio(0);
+    expect(component.errorBusquedaInicio()).toBe(true);
+    component.buscarInicio(0);
+    expect(consulta).toHaveBeenCalledTimes(2);
+    expect(component.errorBusquedaInicio()).toBe(false);
     fixture.destroy();
   });
   it('oculta tambien la proporcion y valores accesibles del presupuesto al activar privacidad', () => {
@@ -144,13 +175,16 @@ describe('DashboardComponent movement dialog accessibility', () => {
     fixture.detectChanges();
     const button = fixture.nativeElement.querySelector('.home-category__bar-button') as HTMLButtonElement;
     button.click();
-    expect(TestBed.inject(Router).navigate).toHaveBeenCalledWith(['/transacciones'], { queryParams: { categoriaId: 7, fechaInicio: component.fechasRango().desde, fechaFin: component.fechasRango().hasta } });
+    expect(component.categoriaFiltroSeleccionada()?.categoriaId).toBe(7);
+    expect(TestBed.inject(Router).navigate).not.toHaveBeenCalled();
+    button.click();
+    expect(component.categoriaFiltroSeleccionada()).toBeNull();
     component.privacidad.alternarLocal();
     expect(component.categoriasInicio().every(item => item.altura === 0)).toBe(true);
     fixture.destroy();
   });
 
-  it('abre acciones al mantener pulsado, cancela al desplazar y no navega al soltar', () => {
+  it('abre acciones al soltar una pulsación sin arrastre y cancela si se desplaza antes', () => {
     vi.useFakeTimers();
     const fixture = TestBed.createComponent(DashboardComponent);
     try {
@@ -162,6 +196,8 @@ describe('DashboardComponent movement dialog accessibility', () => {
       expect(component.categoriaContextual()).toBeNull();
       component.iniciarPresionCategoria({isPrimary: true, button: 0, clientX: 0, clientY: 0} as PointerEvent, categoria);
       vi.advanceTimersByTime(500);
+      expect(component.categoriaContextual()).toBeNull();
+      component.finalizarPresionCategoria({} as PointerEvent, categoria);
       expect(component.categoriaContextual()).toEqual(categoria);
       component.cancelarPresionCategoria();
       component.tocarCategoria(categoria);
@@ -397,7 +433,7 @@ describe('DashboardComponent movement dialog accessibility', () => {
     });
   });
 
-  it('muestra categorias y recientes sin presupuestos en la vista simple', () => {
+  it('muestra categorias y recientes sin presupuestos en la vista unificada cuando no hay presupuestos', () => {
     const fixture = TestBed.createComponent(DashboardComponent);
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
@@ -406,13 +442,13 @@ describe('DashboardComponent movement dialog accessibility', () => {
     expect(root.querySelector('.dashboard-screen__actions')).toBeNull();
     expect(root.querySelector('#dashboard-budgets-title')).toBeNull();
     expect(root.querySelector('#home-categories-title')).toBeTruthy();
-    expect(root.querySelector('#dashboard-recent-title')).toBeNull();
+    expect(root.querySelector('#dashboard-recent-title')).toBeTruthy();
     expect(root.querySelector('.home-empty')).toBeTruthy();
     expect(text).not.toContain('As? va tu mes');
     expect(text).not.toContain('Tendencia de gastos');
   });
 
-  it('prioriza gasto y revela ingresos y cuentas solo en vista detallada', () => {
+  it('prioriza gasto y muestra ingresos, balance y cuentas de forma unificada', () => {
     const fixture = TestBed.createComponent(DashboardComponent);
     fixture.detectChanges();
     fixture.componentInstance.resumen.set({
@@ -436,17 +472,12 @@ describe('DashboardComponent movement dialog accessibility', () => {
       }]
     });
     fixture.detectChanges();
-
     const controlFinanciero = fixture.nativeElement.querySelector('.dashboard-screen__monthly') as HTMLElement;
     expect(controlFinanciero).toBeTruthy();
-    expect(controlFinanciero.textContent).toContain('Gastos del periodo');
-    expect(controlFinanciero.querySelector('.dashboard-screen__amount')?.textContent).toContain('2,500');
-    fixture.componentInstance.vistaDetallada.set(true);
-    fixture.detectChanges();
     expect(controlFinanciero.textContent).toContain('12,500');
     expect(controlFinanciero.textContent).toContain('Ingresos');
-    expect(controlFinanciero.textContent).toContain('Balance del periodo');
-    expect(controlFinanciero.textContent).toContain('2 cuentas');
+    expect(controlFinanciero.textContent).toContain('Saldo neto');
+    expect(controlFinanciero.textContent).not.toContain('2 cuentas');
 
     // Los montos largos se parten antes de desbordar la tarjeta.
     expect(controlFinanciero.querySelector('.dashboard-screen__amount')).toBeTruthy();
@@ -718,6 +749,133 @@ describe('DashboardComponent movement dialog accessibility', () => {
 
       expect(component.esCompraMsi).toBe(false);
       expect(component.formMsi).toBeNull();
+    });
+  });
+  describe('gestos en categorias, filtrado inline y estilo monai de presupuestos', () => {
+    it('permite cambiar o cancelar la acción antes de soltar sin abrir el menú', () => {
+      vi.useFakeTimers();
+      const fixture = TestBed.createComponent(DashboardComponent);
+      try {
+        const component = fixture.componentInstance;
+        const categoria = {categoriaId:9,categoriaNombre:'Comida',moneda:'MXN',monto:100,tono:'#faa',altura:80,icono:'food'};
+        const dispatch = vi.spyOn(window,'dispatchEvent');
+        const router = TestBed.inject(Router);
+        component.iniciarPresionCategoria({isPrimary:true,button:0,clientX:100,clientY:200} as PointerEvent,categoria);
+        vi.advanceTimersByTime(500);
+        expect(component.categoriaContextual()).toBeNull();
+        const contextMenu = {preventDefault:vi.fn()} as unknown as MouseEvent;
+        component.abrirContextoCategoria(contextMenu,categoria);
+        expect(contextMenu.preventDefault).toHaveBeenCalledOnce();
+        expect(component.categoriaContextual()).toBeNull();
+        component.moverPresionCategoria({clientX:100,clientY:160} as PointerEvent);
+        expect(component.gestoAccionSeleccionada()).toBe('GASTO');
+        component.moverPresionCategoria({clientX:100,clientY:240} as PointerEvent);
+        expect(component.gestoAccionSeleccionada()).toBe('PRESUPUESTO');
+        component.moverPresionCategoria({clientX:100,clientY:200} as PointerEvent);
+        component.finalizarPresionCategoria({} as PointerEvent,categoria);
+        expect(component.categoriaContextual()).toBeNull();
+        expect(dispatch).not.toHaveBeenCalledWith(expect.objectContaining({type:'kaptal-abrir-registro-rapido'}));
+        expect(router.navigate).not.toHaveBeenCalled();
+      } finally { fixture.destroy(); vi.useRealTimers(); }
+    });
+    it('mantiene el menú contextual al soltar sin arrastrar o usar clic derecho', () => {
+      vi.useFakeTimers();
+      const fixture = TestBed.createComponent(DashboardComponent);
+      try {
+        const component = fixture.componentInstance;
+        const categoria = {categoriaId:9,categoriaNombre:'Comida',moneda:'MXN',monto:100,tono:'#faa',altura:80,icono:'food'};
+        component.iniciarPresionCategoria({isPrimary:true,button:0,clientX:0,clientY:0} as PointerEvent,categoria);
+        vi.advanceTimersByTime(500);
+        component.finalizarPresionCategoria({} as PointerEvent,categoria);
+        expect(component.categoriaContextual()).toEqual(categoria);
+        component.cancelarPresionCategoria(); component.categoriaContextual.set(null);
+        component.abrirContextoCategoria({preventDefault:vi.fn()} as unknown as MouseEvent,categoria);
+        expect(component.categoriaContextual()).toEqual(categoria);
+      } finally { fixture.destroy(); vi.useRealTimers(); }
+    });
+    it('ignora respuestas antiguas y distingue errores de una categoría vacía', () => {
+      const fixture = TestBed.createComponent(DashboardComponent);
+      const component = fixture.componentInstance;
+      const anterior = new Subject<any>();
+      const actual = new Subject<any>();
+      const consulta = vi.spyOn(TestBed.inject(FinanzasService), 'getTransaccionesPaginadas')
+        .mockReturnValueOnce(anterior).mockReturnValueOnce(actual);
+      const categoria = { categoriaId: 5, categoriaNombre: 'Transporte', moneda: 'MXN', monto: 100, tono: '#ccc', altura: 50, icono: 'bus' };
+      component.seleccionarFiltroCategoria(categoria);
+      component.seleccionarFiltroCategoria(categoria);
+      expect(consulta).toHaveBeenLastCalledWith(expect.objectContaining({ tipo: 'GASTO', categoriaId: 5 }), 0, 20);
+      anterior.error(new Error('error anterior'));
+      expect(component.cargandoMovimientosCategoria()).toBe(true);
+      expect(component.errorMovimientosCategoria()).toBe(false);
+      actual.error(new Error('error actual'));
+      expect(component.cargandoMovimientosCategoria()).toBe(false);
+      expect(component.errorMovimientosCategoria()).toBe(true);
+      component.quitarFiltroCategoria();
+      expect(component.errorMovimientosCategoria()).toBe(false);
+      fixture.destroy();
+    });
+    it('filtra movimientos en Inicio al tocar una categoria y quita el filtro al tocarla nuevamente o con quitarFiltroCategoria', () => {
+      const fixture = TestBed.createComponent(DashboardComponent);
+      const component = fixture.componentInstance;
+      const categoria = { categoriaId: 5, categoriaNombre: 'Transporte', moneda: 'MXN', monto: 100, tono: '#ccc', altura: 50, icono: 'bus' };
+
+      component.tocarCategoria(categoria);
+      expect(component.categoriaFiltroSeleccionada()?.categoriaId).toBe(5);
+
+      component.quitarFiltroCategoria();
+      expect(component.categoriaFiltroSeleccionada()).toBeNull();
+      expect(component.movimientosCategoria()).toEqual([]);
+      fixture.destroy();
+    });
+
+    it('ejecuta registro de gasto al mantener presionado y deslizar hacia arriba', () => {
+      vi.useFakeTimers();
+      const fixture = TestBed.createComponent(DashboardComponent);
+      try {
+        const component = fixture.componentInstance;
+        const categoria = { categoriaId: 9, categoriaNombre: 'Restaurantes', moneda: 'MXN', monto: 150, tono: '#faa', altura: 80, icono: 'utensils' };
+        const dispatchSpy = vi.spyOn(window, 'dispatchEvent');
+
+        component.iniciarPresionCategoria({ isPrimary: true, button: 0, clientX: 100, clientY: 200 } as PointerEvent, categoria);
+        vi.advanceTimersByTime(500);
+        expect(component.categoriaGestoActiva()?.categoriaId).toBe(9);
+
+        // Deslizar arriba (dy = -40)
+        component.moverPresionCategoria({ clientX: 100, clientY: 160 } as PointerEvent);
+        expect(component.gestoAccionSeleccionada()).toBe('GASTO');
+
+        component.finalizarPresionCategoria({} as PointerEvent, categoria);
+        expect(dispatchSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'kaptal-abrir-registro-rapido' }));
+        expect(component.categoriaGestoActiva()).toBeNull();
+      } finally {
+        fixture.destroy();
+        vi.useRealTimers();
+      }
+    });
+
+    it('navega a presupuestos de la categoria al mantener presionado y deslizar hacia abajo', () => {
+      vi.useFakeTimers();
+      const fixture = TestBed.createComponent(DashboardComponent);
+      try {
+        const component = fixture.componentInstance;
+        const categoria = { categoriaId: 9, categoriaNombre: 'Restaurantes', moneda: 'MXN', monto: 150, tono: '#faa', altura: 80, icono: 'utensils' };
+        const router = TestBed.inject(Router);
+
+        component.iniciarPresionCategoria({ isPrimary: true, button: 0, clientX: 100, clientY: 200 } as PointerEvent, categoria);
+        vi.advanceTimersByTime(500);
+        expect(component.categoriaGestoActiva()?.categoriaId).toBe(9);
+
+        // Deslizar abajo (dy = +40)
+        component.moverPresionCategoria({ clientX: 100, clientY: 240 } as PointerEvent);
+        expect(component.gestoAccionSeleccionada()).toBe('PRESUPUESTO');
+
+        component.finalizarPresionCategoria({} as PointerEvent, categoria);
+        expect(router.navigate).toHaveBeenCalledWith(['/presupuestos'], expect.objectContaining({ queryParams: expect.objectContaining({ categoriaId: 9 }) }));
+        expect(component.categoriaGestoActiva()).toBeNull();
+      } finally {
+        fixture.destroy();
+        vi.useRealTimers();
+      }
     });
   });
 });

@@ -265,7 +265,8 @@ public class TransaccionService {
         if (transaccion.getPlantillaRecurrente() != null && request.modoEdicionRecurrencia() != null
                 && request.modoEdicionRecurrencia() != com.gestionfinanzas.model.enums.ModoEdicionRecurrencia.SOLO_ESTA
                 && request.tipo() == TipoTransaccion.TRANSFERENCIA) throw new IllegalArgumentException("Una serie no puede convertirse en transferencia.");
-        DatosTransaccion datos = prepararTransaccion(usuarioId, request);
+        var categoriaHistoricaAnterior=transaccion.getCategoriaHistorica();
+        DatosTransaccion datos = prepararTransaccion(usuarioId, request, categoriaHistoricaAnterior == null ? null : transaccion.getCategoria());
         validarLimiteCredito(datos.cuentaOrigen(), datos.tipo(), request.monto(), transaccion);
         if (tipoAnterior == TipoTransaccion.GASTO) {
             eliminarCashbackGenerado(transaccion);
@@ -282,7 +283,8 @@ public class TransaccionService {
         transaccion.setCuentaMonedaHistorica(datos.cuentaOrigen().getMoneda());
         transaccion.setCuentaDestinoNombreHistorico(datos.cuentaDestino() != null ? datos.cuentaDestino().getNombre() : null);
         transaccion.setCuentaDestinoMonedaHistorica(datos.cuentaDestino() != null ? datos.cuentaDestino().getMoneda() : null);
-        transaccion.setCategoria(datos.categoria());
+        if (categoriaHistoricaAnterior != null && java.util.Objects.equals(categoriaHistoricaAnterior.getId(), request.categoriaId())) transaccion.conservarCategoria(categoriaHistoricaAnterior);
+        else transaccion.setCategoria(datos.categoria());
         transaccion.setTipo(request.tipo());
         transaccion.setMonto(request.monto());
         transaccion.setMontoDestino(datos.montoDestino());
@@ -307,7 +309,8 @@ public class TransaccionService {
                     || modo == com.gestionfinanzas.model.enums.ModoEdicionRecurrencia.TODA_LA_SERIE) {
                 plantillaAsociada.setTipo(request.tipo());
                 plantillaAsociada.setMonto(request.monto());
-                plantillaAsociada.setCategoria(datos.categoria());
+                if (categoriaHistoricaAnterior != null && java.util.Objects.equals(categoriaHistoricaAnterior.getId(), request.categoriaId())) plantillaAsociada.conservarCategoria(categoriaHistoricaAnterior);
+                else plantillaAsociada.setCategoria(datos.categoria());
                 plantillaAsociada.setCuenta(datos.cuentaOrigen());
                 plantillaAsociada.setNotas(normalizarNotas(request.notas()));
                 plantillaAsociada.setLista(transaccion.getLista());
@@ -326,7 +329,8 @@ public class TransaccionService {
                             if (tSerie.getLista() != null) listaService.escribir(usuarioId, tSerie.getLista().getId());
                             if (datos.categoria() != null && datos.categoria().getTipo() != tSerie.getTipo()) throw new IllegalArgumentException("La categor\u00eda no corresponde a todos los tipos del historial. Edita solo este movimiento o los siguientes.");
                             var antesSerie = TransaccionResponse.fromEntity(tSerie);
-                            tSerie.setCategoria(datos.categoria());
+                            if (categoriaHistoricaAnterior != null && java.util.Objects.equals(categoriaHistoricaAnterior.getId(), request.categoriaId())) tSerie.conservarCategoria(categoriaHistoricaAnterior);
+                            else tSerie.setCategoria(datos.categoria());
                             tSerie.setNotas(normalizarNotas(request.notas()));
                             tSerie.setLista(transaccion.getLista());
                             tSerie.setEtiquetas(new java.util.LinkedHashSet<>(transaccion.getEtiquetas()));
@@ -424,7 +428,8 @@ public class TransaccionService {
         }
     }
 
-    private DatosTransaccion prepararTransaccion(Long usuarioId, TransaccionRequest request) {
+    private DatosTransaccion prepararTransaccion(Long usuarioId, TransaccionRequest request) { return prepararTransaccion(usuarioId,request,null); }
+    private DatosTransaccion prepararTransaccion(Long usuarioId, TransaccionRequest request, Categoria categoriaAnterior) {
         if (request.monto() == null || request.monto().signum() <= 0
                 || request.monto().stripTrailingZeros().scale() > 2
                 || request.monto().compareTo(new BigDecimal("9999999999999.99")) > 0) {
@@ -447,6 +452,7 @@ public class TransaccionService {
         Categoria categoria = null;
         if (request.categoriaId() != null) {
             categoria = categoriaRepository.findAccessibleById(request.categoriaId(), usuarioId)
+                    .or(() -> categoriaAnterior != null && categoriaAnterior.getId().equals(request.categoriaId()) ? java.util.Optional.of(categoriaAnterior) : java.util.Optional.empty())
                     .orElseThrow(() -> new IllegalArgumentException("Categoría no encontrada o no accesible"));
             if (categoria.getTipo() != request.tipo()) {
                 throw new IllegalArgumentException("La categoría debe corresponder al tipo de transacción");

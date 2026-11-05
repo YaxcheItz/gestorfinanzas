@@ -134,4 +134,18 @@ describe('ConfiguracionComponent data safety', () => {
     expect(fixture.nativeElement.querySelector('app-whatsapp-connection')).toBeTruthy();
     expect(fixture.nativeElement.textContent).not.toContain('Obtener PIN');
   });
+
+  it('organiza las secciones por tema y mantiene cerradas las opciones al entrar', () => {
+    const page = fixture.nativeElement as HTMLElement;
+    expect(Array.from(page.querySelectorAll('.settings-group > h2')).map(h => h.textContent?.trim())).toEqual([
+      'Tu cuenta', 'Preferencias y avisos', 'Organiza tus finanzas', 'Tus datos'
+    ]);
+    for (const id of ['profile','security','appearance','notifications','categories','recurring','backup','danger']) {
+      const section = page.querySelector<HTMLDetailsElement>(`#${id}`);
+      expect(section).toBeTruthy();
+      expect(section?.open).toBe(false);
+    }
+    expect(Array.from(page.querySelectorAll('a')).filter(a => a.textContent?.trim() === 'Administrar categorías')).toHaveLength(1);
+    expect(push.requestSubscription).not.toHaveBeenCalled();
+  });
 });

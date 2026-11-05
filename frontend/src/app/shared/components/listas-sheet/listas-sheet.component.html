@@ -8,7 +8,6 @@
     }
     <button class="secundario" type="button" (click)="editar('NUEVA')">＋ Nueva lista</button>
     <button class="secundario" type="button" (click)="mostrarUnion.set(true)">Tengo un código de invitación</button>
-    <button class="herramientas" type="button" (click)="abrirHerramientas()">Herramientas ›</button>
   } @else if (mostrarUnion()) {
     <p>Al unirte verás los movimientos compartidos. Cada persona conserva el control de sus propias cuentas.</p>
     <form (ngSubmit)="unirse()"><label>Código de invitación<input name="codigoUnion" [(ngModel)]="codigoUnion" required maxlength="64" autocomplete="off" /></label><button class="guardar" [disabled]="ocupada()" type="submit">Unirme</button></form>

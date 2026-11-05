@@ -123,6 +123,11 @@ class RestauracionRespaldoServiceTest {
     @Autowired
     private PagoParejaRepository pagoRepository;
 
+    @Autowired private com.gestionfinanzas.repository.EtiquetaPersonalRepository etiquetaPersonalRepository;
+
+    private CategoriaService categoriaService;
+    @Autowired private com.gestionfinanzas.repository.CategoriaHistoricaRepository categoriasHistoricas;
+    @Autowired private com.gestionfinanzas.repository.LineaAsientoRepository lineas;
     private ObjectMapper objectMapper;
     private RestauracionRespaldoService servicio;
 
@@ -144,11 +149,25 @@ class RestauracionRespaldoServiceTest {
                         throw excepcion.getCause();
                     }
                 }));
+        categoriaService=new CategoriaService(categoriasHistoricas,categoriaRepository,usuarios,transaccionRepository,presupuestoRepository,plantillaRepository,lineas);
         servicio = new RestauracionRespaldoService(
-                usuarios, cuentaRepository, categoriaRepository, presupuestoRepository,
+                etiquetaPersonalRepository, categoriaService, usuarios, cuentaRepository, categoriaRepository, presupuestoRepository,
                 plantillaRepository, transaccionRepository, auditoriaRepository, asientoRepository,
                 parejaRepository, aportacionRepository, gastoRepository, repartoRepository, pagoRepository,
                 objectMapper, mock(com.gestionfinanzas.repository.ListaRepository.class), mock(com.gestionfinanzas.repository.ListaMiembroRepository.class), mock(ListaService.class), mock(com.gestionfinanzas.repository.AvisoFinancieroRepository.class));
+    }
+
+    @Test
+    void restauraEtiquetasPersonalesSinBorrarLasExistentes() {
+        Usuario usuario=crearUsuario();
+        etiquetaPersonalRepository.save(com.gestionfinanzas.model.entity.EtiquetaPersonal.builder().usuarioId(usuario.getId()).nombre("existente").build());
+        var anterior=archivoCompleto().build();
+        var respaldo=new RespaldoFinancieroResponse(anterior.version(),anterior.generadoEn(),anterior.perfil(),anterior.cuentas(),
+            anterior.categoriasPersonalizadas(),anterior.presupuestos(),anterior.recurrencias(),anterior.historialMovimientos(),
+            anterior.libroDiario(),anterior.transacciones(),anterior.relacionesCashback(),anterior.parejas(),anterior.listas(),List.of("Viaje","existente"));
+        servicio.restaurar(usuario.getId(),respaldo);
+        var nombres=etiquetaPersonalRepository.findByUsuarioIdOrderByNombreAsc(usuario.getId()).stream().map(e->e.getNombre()).toList();
+        assertEquals(List.of("existente","viaje"),nombres);
     }
 
     @Test

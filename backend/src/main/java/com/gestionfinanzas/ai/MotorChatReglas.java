@@ -21,13 +21,13 @@ public final class MotorChatReglas {
     private static final Pattern FECHA = Pattern.compile("\\b(\\d{4}-\\d{2}-\\d{2}|\\d{1,2}/\\d{1,2}(?:/\\d{4})?)\\b");
     private static final Pattern RANGO = Pattern.compile("\\b(?:del|desde)\\s+(\\d{4}-\\d{2}-\\d{2})\\s+(?:al|hasta)\\s+(\\d{4}-\\d{2}-\\d{2})\\b");
     private static final Map<String, Set<String>> DICCIONARIO = Map.ofEntries(
-        Map.entry("comida", Set.of("tacos","taco","comida","restaurante","cafe","cafeteria","pizza","hamburguesa","desayuno","almuerzo","cena")),
+        Map.entry("comida", Set.of("tacos","taco","comida","restaurante","restaurantes","cafe","cafeteria","pizza","hamburguesa","desayuno","almuerzo","cena","comedor","taqueria","pizzeria","panaderia")),
         Map.entry("supermercado", Set.of("super","supermercado","despensa","abarrotes","walmart","soriana","chedraui")),
-        Map.entry("alimentos", Set.of("super","despensa","abarrotes","tacos","comida")),
-        Map.entry("transporte", Set.of("uber","didi","taxi","gasolina","metro","camion","autobus","transporte")),
+        Map.entry("alimentos", Set.of("super","despensa","abarrotes","tacos","comida","restaurante","restaurantes")),
+        Map.entry("transporte", Set.of("uber","didi","taxi","gasolina","metro","camion","autobus","transporte","peaje","estacionamiento")),
         Map.entry("servicios", Set.of("luz","agua","internet","telefono","gas","cfe")),
         Map.entry("hogar", Set.of("renta","hogar","muebles","alquiler")),
-        Map.entry("salud", Set.of("farmacia","doctor","medicina","hospital","salud")),
+        Map.entry("salud", Set.of("farmacia","doctor","medicina","hospital","salud","dentista","medico")),
         Map.entry("entretenimiento", Set.of("cine","netflix","spotify","juegos","entretenimiento")),
         Map.entry("salario", Set.of("nomina","sueldo","salario","quincena")),
         Map.entry("ingresos", Set.of("nomina","sueldo","salario","quincena"))
@@ -147,6 +147,9 @@ public final class MotorChatReglas {
         List<CuentaResponse> cuentas=cuentasEntrada.stream().filter(CuentaResponse::activo).toList();
         String sinFechas=FECHA.matcher(periodo.texto()).replaceAll(" ");
         for (CuentaResponse cuenta:cuentas) sinFechas=sinFechas.replaceAll("(?<![\\p{L}\\d])"+Pattern.quote(normalizar(cuenta.nombre()))+"(?![\\p{L}\\d])"," ");
+        if (cuentas.stream().anyMatch(c -> esAmericanExpress(normalizar(c.nombre())))) {
+            sinFechas=sinFechas.replaceAll("\\b(?:amex|american express)\\b", " ");
+        }
         Matcher matcher=MONTO.matcher(sinFechas);
         if (!matcher.find()) {
             if (tipo==null) return null;
@@ -233,7 +236,11 @@ public final class MotorChatReglas {
     private static boolean coincideCuenta(String texto,CuentaResponse cuenta) {
         String nombre=normalizar(cuenta.nombre());
         if(palabra(texto,nombre))return true;
+        if (esAmericanExpress(nombre) && (palabra(texto,"amex") || palabra(texto,"american express"))) return true;
         return Arrays.stream(nombre.split("\\W+")).filter(t -> t.length()>=3&&!Set.of("cuenta","tarjeta","credito","debito","billetera","ahorro").contains(t)).anyMatch(t -> palabra(texto,t));
+    }
+    private static boolean esAmericanExpress(String nombre) {
+        return palabra(nombre,"amex") || palabra(nombre,"american express");
     }
     private static String moneda(String texto) {
         for(String m:List.of("MXN","USD","EUR","CAD","GBP"))if(palabra(texto,m.toLowerCase(Locale.ROOT)))return m;

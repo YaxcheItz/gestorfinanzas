@@ -30,8 +30,10 @@ export function prepararCapturaOffline(texto:string,cuentas:Cuenta[],categorias:
   const monto=Number(importe.replace(/,/g,''));
   if(!Number.isFinite(monto)||monto<0.01||monto>9999999999999.99)throw new Error('El monto debe ser positivo y tener hasta 13 dígitos enteros.');
   const activas=cuentas.filter(c=>c.activo);
-  const menciones=activas.filter(c=>(' '+limpio+' ').includes(' '+normalizar(c.nombre)+' '));
-  let cuentaId:number|null=menciones.length===1?menciones[0].id:activas.length===1?activas[0].id:null;
+  const tieneAmex=(valor:string)=>/\bamex\b|\bamerican express\b/.test(valor);
+  const menciones=activas.filter(c=>(' '+limpio+' ').includes(' '+normalizar(c.nombre)+' ') || (tieneAmex(limpio)&&tieneAmex(normalizar(c.nombre))));
+  const cuentaExplicita=/\b(desde|con|usando|cuenta|tarjeta)\b/.test(limpio);
+  let cuentaId:number|null=menciones.length===1?menciones[0].id:!cuentaExplicita&&activas.length===1?activas[0].id:null;
   let cuentaDestinoId:number|null=null;
   if(tipo==='TRANSFERENCIA'){
     const nombres=limpio.replace(/\b\d{4}-\d{2}-\d{2}\b/g,'').replace(/\b(hoy|ayer|anteayer|manana)\b/g,'').match(/\b(?:de|desde) (.+?) a (.+)$/);

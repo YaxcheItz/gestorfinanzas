@@ -19,7 +19,8 @@ public record RespaldoFinancieroResponse(
         List<TransaccionResponse> transacciones,
         List<CashbackRespaldo> relacionesCashback,
         List<ParejaRespaldo> parejas,
-        List<ListaRespaldo> listas
+        List<ListaRespaldo> listas,
+        List<String> etiquetasPersonales
 ) {
     public RespaldoFinancieroResponse(int version, Instant generadoEn, PerfilResponse perfil, List<CuentaResponse> cuentas,
             List<CategoriaResponse> categoriasPersonalizadas, List<PresupuestoRespaldo> presupuestos,
@@ -27,7 +28,15 @@ public record RespaldoFinancieroResponse(
             List<AsientoContableResponse> libroDiario, List<TransaccionResponse> transacciones,
             List<CashbackRespaldo> relacionesCashback, List<ParejaRespaldo> parejas) {
         this(version, generadoEn, perfil, cuentas, categoriasPersonalizadas, presupuestos, recurrencias,
-                historialMovimientos, libroDiario, transacciones, relacionesCashback, parejas, null);
+                historialMovimientos, libroDiario, transacciones, relacionesCashback, parejas, null, null);
+    }
+    public RespaldoFinancieroResponse(int version, Instant generadoEn, PerfilResponse perfil, List<CuentaResponse> cuentas,
+            List<CategoriaResponse> categoriasPersonalizadas, List<PresupuestoRespaldo> presupuestos,
+            List<PlantillaRecurrenteResponse> recurrencias, List<AuditoriaTransaccionResponse> historialMovimientos,
+            List<AsientoContableResponse> libroDiario, List<TransaccionResponse> transacciones,
+            List<CashbackRespaldo> relacionesCashback, List<ParejaRespaldo> parejas, List<ListaRespaldo> listas) {
+        this(version, generadoEn, perfil, cuentas, categoriasPersonalizadas, presupuestos, recurrencias,
+                historialMovimientos, libroDiario, transacciones, relacionesCashback, parejas, listas, null);
     }
     public record ListaRespaldo(Long id, String nombre, String emoji, String moneda, boolean personal, boolean archivada) {}
     public record CashbackRespaldo(Long transaccionId, Long origenId) {}

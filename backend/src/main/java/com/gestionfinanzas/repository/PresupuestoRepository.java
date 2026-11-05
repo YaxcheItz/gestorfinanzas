@@ -18,7 +18,7 @@ public interface PresupuestoRepository extends JpaRepository<Presupuesto, Long> 
     Optional<Presupuesto> findByUsuarioIdAndCategoriaIdAndMesAndAnioAndListaId(Long usuarioId, Long categoriaId, int mes, int anio, Long listaId);
     Optional<Presupuesto> findByUsuarioIdAndCategoriaIdAndMesAndAnioAndListaIsNull(Long usuarioId, Long categoriaId, int mes, int anio);
 
-    @Query("SELECT p FROM Presupuesto p WHERE p.usuario.id = :usuarioId AND (:listaId IS NULL OR p.lista.id = :listaId) AND p.mes = :mes AND p.anio = :anio ORDER BY p.categoria.nombre ASC")
+    @Query("SELECT p FROM Presupuesto p LEFT JOIN p.categoria c LEFT JOIN p.categoriaHistorica h WHERE p.usuario.id = :usuarioId AND (:listaId IS NULL OR p.lista.id = :listaId) AND p.mes = :mes AND p.anio = :anio ORDER BY COALESCE(c.nombre,h.nombre) ASC")
     List<Presupuesto> findByUsuarioIdAndFiltroListaAndMesAndAnio(
             @Param("usuarioId") Long usuarioId,
             @Param("listaId") Long listaId,
@@ -26,7 +26,7 @@ public interface PresupuestoRepository extends JpaRepository<Presupuesto, Long> 
             @Param("anio") int anio
     );
 
-    @Query("SELECT p FROM Presupuesto p WHERE p.usuario.id = :usuarioId AND p.categoria.id = :categoriaId AND ((:listaId IS NULL AND p.lista IS NULL) OR p.lista.id = :listaId) AND p.mes = :mes AND p.anio = :anio")
+    @Query("SELECT p FROM Presupuesto p LEFT JOIN p.categoria c LEFT JOIN p.categoriaHistorica h WHERE p.usuario.id = :usuarioId AND COALESCE(c.id,h.id) = :categoriaId AND ((:listaId IS NULL AND p.lista IS NULL) OR p.lista.id = :listaId) AND p.mes = :mes AND p.anio = :anio")
     List<Presupuesto> findCandidatosParaDisponible(
             @Param("usuarioId") Long usuarioId,
             @Param("categoriaId") Long categoriaId,
@@ -37,6 +37,9 @@ public interface PresupuestoRepository extends JpaRepository<Presupuesto, Long> 
 
     Optional<Presupuesto> findByIdAndUsuarioId(Long id, Long usuarioId);
     boolean existsByCategoriaId(Long categoriaId);
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    List<Presupuesto> findAllByCategoriaId(Long categoriaId);
+    long countByCategoriaId(Long categoriaId);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("DELETE FROM Presupuesto p WHERE p.usuario.id = :usuarioId")

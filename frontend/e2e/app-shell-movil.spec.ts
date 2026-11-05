@@ -2,6 +2,200 @@ import { expect, test } from '@playwright/test';
 
 test.use({ viewport: { width: 390, height: 844 }, serviceWorkers: 'block' });
 
+test('la búsqueda del dock funciona en Inicio con datos ficticios y permite reintentar', async ({page}) => {
+  const usuario = {id:997,nombre:'Busqueda QA',email:'busqueda@example.test'};
+  await page.addInitScript(user => {
+    localStorage.setItem('finanzas_token', `test.${btoa(JSON.stringify({exp:Math.floor(Date.now()/1000)+3600}))}.synthetic`);
+    localStorage.setItem('finanzas_user', JSON.stringify(user));
+  }, usuario);
+  let fallar = false;
+  await page.route('**/api/**', async route => {
+    if (route.request().method() !== 'GET') return route.abort();
+    const url = new URL(route.request().url());
+    let data: unknown = [];
+    if (url.pathname === '/api/perfil') data = {...usuario,tema:'CLARO',monedaPredeterminada:'MXN'};
+    if (url.pathname === '/api/dashboard/resumen') data = {totalCuentas:1,resumenPorMoneda:[{moneda:'MXN',balanceTotal:600,ingresosMes:100,gastosMes:25,totalCuentas:1}],ultimosMovimientos:[]};
+    if (url.pathname === '/api/dashboard/analitica') data = {gastosPorCategoria:[],ultimosSeisMeses:[]};
+    if (url.pathname === '/api/presupuestos') data = {presupuestos:[],resumenPorMoneda:[]};
+    if (url.pathname === '/api/transacciones') {
+      if (fallar) return route.fulfill({status:503,json:{success:false}});
+      data = {content:[{id:1,tipo:'GASTO',descripcion:'Café ficticio',categoriaNombre:'Comida',monto:25,moneda:'MXN',fecha:'2026-01-15'}],totalPages:1};
+    }
+    await route.fulfill({json:{success:true,data}});
+  });
+  await page.goto('/dashboard');
+  await expect(page.getByText('Saldo neto',{exact:true})).toBeVisible();
+  await expect(page.getByRole('link',{name:'Configuración'})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Ocultar montos'})).toBeVisible();
+  await page.screenshot({path:test.info().outputPath('inicio-minimalista.png'),fullPage:true,animations:'disabled'});
+  await page.getByRole('button',{name:'Buscar movimientos',exact:true}).click();
+  const dialog = page.getByRole('dialog',{name:'Buscar movimientos'});
+  await dialog.getByRole('searchbox').fill('café');
+  await expect(dialog.getByText('Café ficticio')).toBeVisible();
+  await page.screenshot({path:test.info().outputPath('busqueda-inicio.png'),animations:'disabled'});
+  await expect(page).toHaveURL(/\/dashboard$/);
+  fallar = true;
+  await dialog.getByRole('searchbox').fill('otra búsqueda');
+  await expect(dialog.getByRole('alert')).toBeVisible();
+  fallar = false;
+  await dialog.getByRole('button',{name:'Reintentar'}).click();
+  await expect(dialog.getByText('Café ficticio')).toBeVisible();
+  await dialog.getByRole('button',{name:'Cerrar búsqueda'}).click();
+  await expect(dialog).toHaveCount(0);
+});
+
+test.describe('gestos de categorías', () => {
+  test.use({ hasTouch: true, isMobile: true });
+
+  test('abre el presupuesto existente de la categoría en el mes elegido', async ({page, context}) => {
+    const usuario = {id:998,nombre:'Periodo QA',email:'periodo@example.test'};
+    await page.clock.setFixedTime(new Date('2026-11-15T18:00:00Z'));
+    await page.addInitScript(user => {
+      localStorage.setItem('finanzas_token', `test.${btoa(JSON.stringify({exp:Math.floor(Date.now()/1000)+3600}))}.synthetic`);
+      localStorage.setItem('finanzas_user', JSON.stringify(user));
+    }, usuario);
+    const consultas: string[] = [];
+    const escrituras: string[] = [];
+    await page.route('**/api/**', async route => {
+      const request = route.request(), url = new URL(request.url());
+      if (request.method() !== 'GET') { escrituras.push(url.pathname); return route.abort(); }
+      let data: unknown = [];
+      if (url.pathname === '/api/perfil') data = {...usuario,tema:'CLARO',monedaPredeterminada:'MXN'};
+      if (url.pathname === '/api/dashboard/resumen') data = {totalCuentas:1,resumenPorMoneda:[{moneda:'MXN',balanceTotal:500,ingresosMes:0,gastosMes:100,totalCuentas:1}],ultimosMovimientos:[]};
+      if (url.pathname === '/api/dashboard/analitica') data = {gastosPorCategoria:[{categoriaId:1,categoriaNombre:'Comida ficticia',monto:100,moneda:'MXN'}],ultimosSeisMeses:[]};
+      if (url.pathname === '/api/categorias') data = [{id:1,nombre:'Comida ficticia',tipo:'GASTO',activo:true}];
+      if (url.pathname === '/api/presupuestos') {
+        consultas.push(url.search);
+        const octubre = url.searchParams.get('mes') === '10' && url.searchParams.get('anio') === '2026';
+        data = {presupuestos:octubre ? [{id:4,categoriaId:1,categoriaNombre:'Comida ficticia',moneda:'MXN',listaId:null,montoLimite:350,montoGastado:100,montoDisponible:250,porcentajeConsumido:28,porcentajeAlerta:80}] : [],resumenPorMoneda:[]};
+      }
+      await route.fulfill({json:{success:true,data}});
+    });
+    await page.goto('/dashboard');
+    await page.locator('.time-dropdown-btn').click();
+    await page.getByRole('dialog',{name:'Seleccionar periodo financiero'}).getByRole('button',{name:/Octubre/i}).click();
+    await expect.poll(() => consultas.some(q => new URLSearchParams(q).get('mes') === '10' && new URLSearchParams(q).get('anio') === '2026')).toBe(true);
+    const categoria = page.getByRole('button',{name:'Filtrar movimientos de Comida ficticia'});
+    await expect(categoria).toBeVisible();
+    await categoria.scrollIntoViewIfNeeded();
+    const box = (await categoria.boundingBox())!, x = Math.round(box.x+box.width/2), y = Math.round(box.y+box.height/2);
+    const cdp = await context.newCDPSession(page);
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y}]});
+    await page.waitForTimeout(600);
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x,y:y+40}]});
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+    const dialog = page.getByRole('dialog',{name:'Editar Presupuesto'});
+    await expect(dialog).toBeVisible();
+    await expect(dialog.locator('#modalCat option:checked')).toHaveText('Comida ficticia');
+    await expect(dialog.locator('#modalMonto')).toHaveValue('350');
+    await expect(dialog).toContainText('Octubre 2026');
+    expect(consultas.some(q => new URLSearchParams(q).get('mes') === '10' && new URLSearchParams(q).get('anio') === '2026')).toBe(true);
+    expect(escrituras).toEqual([]);
+  });
+
+  test('desplaza la página y el gráfico y permite ambos gestos tras mantener pulsado', async ({ page, context }) => {
+    const usuario = { id: 996, nombre: 'Gesto QA', email: 'gesto@example.test' };
+    await page.addInitScript(user => {
+      localStorage.setItem('finanzas_token', `test.${btoa(JSON.stringify({exp: Math.floor(Date.now()/1000)+3600}))}.synthetic`);
+      localStorage.setItem('finanzas_user', JSON.stringify(user));
+    }, usuario);
+    await page.route('**/api/**', async route => {
+      if (route.request().method() !== 'GET') return route.abort();
+      const path = new URL(route.request().url()).pathname;
+      let data: unknown = [];
+      if (path === '/api/perfil') data = {...usuario, tema:'CLARO', monedaPredeterminada:'MXN'};
+      if (path === '/api/dashboard/resumen') data = {totalCuentas:1, resumenPorMoneda:[{moneda:'MXN', balanceTotal:1000, dineroDisponible:1000, ingresosMes:1000, gastosMes:800, totalCuentas:1}], ultimosMovimientos:[]};
+      if (path === '/api/dashboard/analitica') data = {gastosPorCategoria:Array.from({length:8}, (_, i) => ({categoriaId:i+1, categoriaNombre:`Categoría ${i+1}`, monto:100, moneda:'MXN'})), ultimosSeisMeses:[]};
+      if (path === '/api/categorias') data = Array.from({length:8}, (_, i) => ({id:i+1,nombre:`Categoría ${i+1}`,tipo:'GASTO',activo:true}));
+      if (path === '/api/cuentas') data = [{id:1,nombre:'Cuenta ficticia',tipo:'EFECTIVO',moneda:'MXN',saldoActual:1000,activo:true}];
+      if (path === '/api/presupuestos') data = {presupuestos:[], resumenPorMoneda:[]};
+      await route.fulfill({json:{success:true,data}});
+    });
+    await page.goto('/dashboard');
+    const categoria = page.getByRole('button', {name:'Filtrar movimientos de Categoría 1'});
+    await categoria.scrollIntoViewIfNeeded();
+    const cdp = await context.newCDPSession(page);
+    const tocar = async (x: number, y: number, dx: number, dy: number, mantener: boolean) => {
+      await cdp.send('Input.dispatchTouchEvent', {type:'touchStart', touchPoints:[{x,y}]});
+      if (mantener) await page.waitForTimeout(600);
+      for (let n=1; n<=5; n++) {
+        await cdp.send('Input.dispatchTouchEvent', {type:'touchMove', touchPoints:[{x:Math.round(x+dx*n/5), y:Math.round(y+dy*n/5)}]});
+        await page.waitForTimeout(30);
+      }
+    };
+    let box = (await categoria.boundingBox())!;
+    let x = Math.round(box.x+box.width/2), y = Math.round(box.y+box.height/2);
+    const inicio = await page.evaluate(() => window.scrollY);
+    await tocar(x,y,0,-100,false);
+    await cdp.send('Input.dispatchTouchEvent', {type:'touchEnd',touchPoints:[]});
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(inicio);
+
+    const grafico = page.locator('.home-category-chart');
+    await grafico.scrollIntoViewIfNeeded();
+    box = (await grafico.boundingBox())!;
+    x = Math.round(box.x+box.width*.8); y = Math.round(box.y+box.height/2);
+    await tocar(x,y,-125,0,false);
+    await cdp.send('Input.dispatchTouchEvent', {type:'touchEnd',touchPoints:[]});
+    await expect.poll(() => grafico.evaluate(el => el.scrollLeft)).toBeGreaterThan(0);
+
+    for (const [direccion, selector] of [[-40,'.gesture-pill--up.is-target'], [40,'.gesture-pill--down.is-target']] as const) {
+      await page.reload();
+      await categoria.scrollIntoViewIfNeeded();
+      box = (await categoria.boundingBox())!;
+      x = Math.round(box.x+box.width/2); y = Math.round(box.y+box.height/2);
+      await tocar(x,y,0,direccion,true);
+      await expect(page.locator(selector)).toBeVisible();
+      for (const pill of await page.locator('.gesture-pill').all()) {
+        await expect(pill).toBeInViewport();
+        expect(await pill.evaluate(el => {
+          const r = el.getBoundingClientRect();
+          return r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight && el.scrollWidth <= el.clientWidth;
+        })).toBe(true);
+      }
+      await expect(page.locator('.home-context-sheet')).toHaveCount(0);
+      await categoria.dispatchEvent('contextmenu', {button:2});
+      await expect(page.locator('.home-context-sheet')).toHaveCount(0);
+      await cdp.send('Input.dispatchTouchEvent', {type:'touchCancel',touchPoints:[]});
+      await expect(page.locator('.home-category.is-gesture-active')).toHaveCount(0);
+    }
+    await page.reload();
+    await categoria.scrollIntoViewIfNeeded();
+    box = (await categoria.boundingBox())!;
+    x = Math.round(box.x+box.width/2); y = Math.round(box.y+box.height/2);
+    await tocar(x,y,0,-40,true);
+    await expect(page.locator('.gesture-pill--up.is-target')).toBeVisible();
+    await cdp.send('Input.dispatchTouchEvent', {type:'touchMove',touchPoints:[{x,y:y+40}]});
+    await expect(page.locator('.gesture-pill--down.is-target')).toBeVisible();
+    await cdp.send('Input.dispatchTouchEvent', {type:'touchMove',touchPoints:[{x,y}]});
+    await cdp.send('Input.dispatchTouchEvent', {type:'touchEnd',touchPoints:[]});
+    await expect(page.locator('.home-context-sheet')).toHaveCount(0);
+    await expect(page).toHaveURL(/\/dashboard$/);
+    await page.reload();
+    await categoria.scrollIntoViewIfNeeded();
+    await page.evaluate(() => window.addEventListener('kaptal-abrir-registro-rapido', () => document.documentElement.dataset['gestoRegistro'] = 'abierto'));
+    box = (await categoria.boundingBox())!;
+    x = Math.round(box.x+box.width/2); y = Math.round(box.y+box.height/2);
+    await tocar(x,y,0,-40,true);
+    await cdp.send('Input.dispatchTouchEvent', {type:'touchEnd',touchPoints:[]});
+    await expect(page.locator('html')).toHaveAttribute('data-gesto-registro', 'abierto');
+    const registro = page.getByRole('dialog',{name:'Añadir movimiento'});
+    await expect(registro).toBeVisible();
+    await expect(registro.getByRole('button',{name:'Categoría 1',exact:true})).toHaveAttribute('aria-pressed','true');
+
+    await page.reload();
+    await categoria.scrollIntoViewIfNeeded();
+    box = (await categoria.boundingBox())!;
+    x = Math.round(box.x+box.width/2); y = Math.round(box.y+box.height/2);
+    await tocar(x,y,0,40,true);
+    await cdp.send('Input.dispatchTouchEvent', {type:'touchEnd',touchPoints:[]});
+    await expect(page).toHaveURL(/\/presupuestos/);
+    const presupuesto = page.getByRole('dialog',{name:'Fijar Presupuesto'});
+    await expect(presupuesto).toBeVisible();
+    await expect(presupuesto.locator('#modalCat option:checked')).toHaveText('Categoría 1');
+    await expect(presupuesto.locator('#modalMoneda option:checked')).toContainText('MXN');
+  });
+});
+
 test('el enlace al contenido aparece con teclado y mueve el foco al contenido principal', async ({ page }) => {
   await page.route('**/api/**', route => route.fulfill({json:{success:true,data:{configurado:false}}}));
   await page.goto('/login');
@@ -35,7 +229,7 @@ test('rechazar el micrófono permite seguir escribiendo sin enviar audio ni guar
   const dialog = page.getByRole('dialog', {name:'Kaptal, captura y reportes'});
   await dialog.getByRole('button', {name:'Dictar movimiento',exact:true}).click();
   await dialog.getByRole('button', {name:'Permitir audio y grabar',exact:true}).click();
-  await expect(dialog.getByRole('alert')).toContainText('El navegador bloqueó el micrófono');
+  await expect(dialog.getByRole('alert')).toContainText('El acceso al micrófono está bloqueado');
   await expect(dialog.getByRole('button', {name:'Dictar movimiento',exact:true})).toBeEnabled();
   await dialog.locator('#quick-capture-text').fill('Continuar por escrito');
   await expect(dialog.locator('#quick-capture-text')).toHaveValue('Continuar por escrito');
@@ -91,7 +285,7 @@ test('la carga lenta conserva estructura y los controles contextuales siguen vis
     const voice = page.getByRole('button', {name:'Registrar por voz o texto',exact:true});
     await expect(voice).toBeInViewport();
     await expect(page.getByRole('button',{name:'Añadir movimiento',exact:true})).toBeInViewport();
-    await expect(page.getByRole('link',{name:'Movimientos',exact:true})).toBeInViewport();
+    await expect(page.getByRole('button',{name:'Buscar movimientos',exact:true})).toBeInViewport();
     await expect(page.getByRole('link',{name:'Configuración',exact:true})).toBeInViewport();
     await expect(page.locator('.mobile-bottom-nav')).toHaveCount(0);
     const bounds = await voice.boundingBox();
@@ -142,9 +336,8 @@ test('cuentas y presupuestos conservan monedas, acciones y estados en pantallas 
   }
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: test.info().outputPath('cuentas-movil.png'), fullPage: true });
-  await page.getByRole('button',{name:'Cambiar lista',exact:true}).click();
-  await page.getByRole('button',{name:/^Herramientas/}).click();
-  await page.getByRole('link', { name: 'Presupuestos', exact: true }).click();
+  await page.getByRole('link',{name:'Configuración',exact:true}).click();
+  await page.getByRole('link', { name: /Presupuestos/ }).click();
   await expect(page.locator('.budget-remaining')).toContainText('Te excediste');
   await expect(page.locator('.budget-remaining')).toContainText(/20[.,]00/);
   await expect(page.locator('.budget-overview__percent')).toHaveClass(/is-over/);
@@ -243,7 +436,7 @@ test('acceso y recuperación conservan controles legibles y permiten reintentar'
   await page.screenshot({path:test.info().outputPath('recuperacion-movil.png')});
 });
 
-test('ajustes abre secciones por enlace y conserva la protección de eliminar cuenta', async ({ page }) => {
+test('ajustes abre secciones y conserva la protección de eliminar cuenta', async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem('finanzas_token', `test.${btoa(JSON.stringify({exp:Math.floor(Date.now()/1000)+3600}))}.synthetic`);
     localStorage.setItem('finanzas_user', JSON.stringify({id:994,nombre:'Ajustes',email:'ajustes@example.test'}));
@@ -255,11 +448,11 @@ test('ajustes abre secciones por enlace y conserva la protección de eliminar cu
   await page.goto('/configuracion');
   await expect(page.locator('#security')).not.toHaveAttribute('open');
   await page.screenshot({path:test.info().outputPath('ajustes-movil.png'),fullPage:true});
-  await page.getByRole('navigation',{name:'Secciones de configuración'}).getByRole('link',{name:'Seguridad',exact:true}).click();
+  await page.locator('#security summary').click();
   await expect(page.locator('#security')).toHaveAttribute('open','');
   await expect(page.getByRole('switch', { name: 'Proteger pantalla en este Android' })).toHaveCount(0);
   await expect(page.getByRole('switch', { name: 'Bloquear Kaptal al salir' })).toHaveCount(0);
-  await page.getByRole('navigation',{name:'Secciones de configuración'}).getByRole('link',{name:'Respaldo',exact:true}).click();
+  await page.locator('#backup summary').click();
   await expect(page.locator('#backup')).toHaveAttribute('open','');
   await expect(page.locator('#security')).not.toHaveAttribute('open');
   for (const width of [320,390,568]) {

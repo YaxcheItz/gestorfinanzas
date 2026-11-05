@@ -1,4 +1,174 @@
+## Transcripcion incremental en desarrollo (4 noviembre 2026)
+
+Rama mejoras/transcripcion-incremental creada desde develop 5590468 y actualizada con PR209. Vista previa Groq envia audio acumulado con intervalo aproximado de ocho segundos, maximo una solicitud simultanea, exige consentimiento, cancela previas al detener/cerrar y conserva grabacion completa para transcripcion final. La respuesta parcial puede cambiar; si falla la final se puede revisar texto parcial. No se guardan movimientos automaticamente ni se introduce proveedor nuevo. Audio generado localmente y respuestas Groq simuladas: E2E confirma avance durante grabacion y texto final editable; 34 pruebas focales y build pasan. No se ha verificado que Groq acepte archivos parciales ni latencia o cuota en Samsung; puede consumir mas cuota gratuita. Pendiente CI exacta, pruebas de dispositivo consentidas con frase ficticia, integracion, publicacion y APK; no afirmar tiempo real sin demora ni funcionamiento real probado. Usuario conecto Samsung; instalada 0.1.27. No usar datos financieros; carreras sesion y transferencias siguen pendientes.
+
+## Seguimiento de voz simulada (4 noviembre 2026)
+
+PR209 en curso. Prueba unitaria con grabador y respuesta simulados confirma consentimiento, texto revisable sin interpretar ni guardar al finalizar; 33 pruebas focales correctas. E2E local previo de pantalla, permiso y navegacion paso. Transcripcion en vivo NO implementada: Groq actual recibe archivo tras detener; los resultados parciales Android dependen del servicio, posible cambio de proveedor/privacidad requiere diseno y pruebas. No publicar ni instalar esta etapa incompleta; falta probar flujo grabacion real, accesibilidad, CI y dispositivo. Ver docs oficiales https://console.groq.com/docs/speech-to-text y https://developer.android.com/reference/android/speech/RecognitionListener .
+
+## Diseno de voz, escritura y herramientas en curso (4 noviembre 2026)
+
+Rama diseno/captura-voz-herramientas desde develop 5590468 con PR208 14d1f92 incorporado. Sin telefono por pedido del propietario. Mic abre pantalla separada con consentimiento y cancelacion; transcripcion Groq sigue por archivo al terminar, texto revisable antes de enviar: NO implementada transcripcion en vivo solicitada y grabacion real/fisica pendiente. Lapiz mantiene captura y consultas por reglas/IA consentida; tarjetas de propuesta ajustadas; lupa y lapiz a izquierda, microfono a derecha. Herramientas retiradas del selector de listas y enlaces trasladados a Configuracion. Build y 491 unitarias frontend antes de ajustes finales, 39 focales posteriores, E2E H2 de accesos y permiso, cuentas/presupuestos y repeticion correctos. Falta comprobar grabacion completa simulada, transcripcion continua, revision visual, CI, integracion, publicacion y APK nueva; no afirmar terminada la tarea. PR207/208 abiertos al inicio. Sin datos financieros reales. Carreras de sesion y posible duplicacion de transferencias siguen pendientes.
+
+## Revision de Configuracion e integracion (4 noviembre 2026)
+
+El propietario reviso y aprobo Configuracion en Android 0.1.26. PR206 integrado a develop 55904684f9b6442a29adccf0a2bbbc2ca05bf0b1; PR205 figura integrado por inclusion. PR204 captura tenia CI verde pero conflicto documental al combinar con develop; PR207 integracion/captura-configuracion-20261104 SHA 9766a6a887dc54309411071b698a40977e4cb4b4 combina ambos y conserva ambos documentos, CI en curso. Pendiente integrar tras CI exacta, publicar a main y preparar APK superior con captura. APK instalada 0.1.26 sin captura PR204. Solicitada prueba de voz ficticia sin guardar; estado Groq no confirmado. No acceder datos financieros. Mantener carreras de sesion y posible duplicacion de transferencias pendientes.
+
+## CI de Configuracion y WhatsApp (4 noviembre 2026)
+
+CI del SHA f051243 fallo en E2E porque la prueba WhatsApp intentaba llenar un formulario dentro de Perfil cerrado. Se actualizo el recorrido para abrir el apartado antes de interactuar. E2E local completo de WhatsApp con H2 y Miniflare paso con proveedor simulado y usuarios ficticios; ninguna conexion real. Backend, frontend, PostgreSQL y Android de esa CI pasaron. El nuevo commit requiere CI exacta; ADB sigue sin telefono, sin APK nueva ni publicacion. PR #204 sigue separado y su CI E2E fallo por selector ambiguo y elemento desprendido; no declarar captura resuelta.
+
+## Configuracion organizada (4 noviembre 2026)
+
+Rama diseno/organizacion-configuracion creada desde develop dc0c230. Revision previa: accesos duplicados a categorias y recurrentes, perfil/apariencia siempre abiertos; se conservan seguridad, respaldo, eliminacion y conexiones. Nueva pantalla agrupa cuenta, preferencias y avisos, finanzas y datos; perfil y apariencia se pliegan, se retiran accesos duplicados conservando los apartados y fragmentos existentes. No se eliminaron funciones ni datos. WhatsApp sigue en Perfil, etiquetado explicitamente; configuracion futura de tarjetas sigue pendiente.
+
+Build y 486 pruebas frontend correctos; 16 pruebas focales; E2E H2 correctos para organizacion movil y fragmentos, respaldo/restauracion, recurrentes, proteccion de borrado y accesibilidad al 200 por ciento. Captura sintetica .local/configuracion-organizada-sintetica.png. ADB sin dispositivo; pendiente CI del SHA, aceptacion fisica, integracion y publicacion. PR #204 sigue abierto: CI 41865086704 fallo por dos pruebas E2E (selector ambiguo en captura y elemento desprendido en gesto), requiere diagnostico y correccion antes de integrar. Groq/voz aun no verificados. No se usaron datos financieros reales.
+## Captura: reparacion de pruebas E2E (4 noviembre 2026)
+
+PR #204: CI anterior fallo por boton ambiguo y barra reemplazada durante la carga. Se identifica el acceso de la zona de Recientes, se abre Escribir o dictar en el formulario y se espera la consulta del periodo antes del gesto. Ambos recorridos pasaron localmente con H2 y datos ficticios. Falta CI del nuevo SHA; no afirmar que se corrigieron todos los errores de captura. La APK 0.1.26 preparada en PR206 contiene Configuracion, no contiene PR204; instalacion pendiente por desconexion USB.
+
+## Captura escrita: comprobacion completa (4 noviembre 2026)
+
+La prueba E2E con H2 detecto que la categoria predeterminada se llama Alimentos y Supermercado. Se corrigio la asociacion de comida/restaurantes a esa categoria o Comida cuando hay una sola coincidencia; ante varias se pide elegir. E2E Chromium paso: propuesta ficticia, categoria por texto, cero movimientos antes de confirmar y uno con categoria e importe correctos despues. MotorChatReglas y 31 pruebas focales frontend correctos tras el ajuste. PR #204 en borrador depende de PR #203. No se conoce aun el resultado de CI del ultimo commit ni hay despliegue o APK nueva. Groq y aceptacion fisica del nuevo flujo siguen pendientes; no afirmar solucion de todos los errores de captura.
+
+## Captura escrita: categoria y confirmacion (4 noviembre 2026)
+
+El propietario confirmo visualmente que los gestos funcionan en Android 0.1.25. Informo que la captura volvia a pedir categoria o datos y fallaba al confirmar. Rama correcciones/captura-categorias-confirmacion creada desde develop f833ff6 y adelantada con PR203 388d9d4 aun no integrado. Se reprodujeron dos casos: restaurantes plural no asociaba Comida y responder una categoria a propuesta pendiente no la actualizaba. Se aceptan nombres exactos activos para una unica propuesta sin categoria y restaurante/restaurantes como Comida, sin guardar automaticamente; se conserva texto si falla la actualizacion. Motor reconoce restaurantes plural. Faltan mas sinonimos y diagnosticar otros casos de confirmacion reportados; no declarar resuelta la interpretacion general.
+
+Pruebas: build frontend; 488 unitarias frontend; MotorChatReglasTest, AiActionServiceTest y PropuestasChatIntegrationTest correctos y prueba H2 adicional de editar categoria, conservar datos y confirmar idempotentemente. PR, CI exacta, integracion, despliegue y validacion fisica pendientes. ADB sin dispositivos; no hay APK nueva ni instalacion. Groq: propietario estaba desplegando configuracion en Render; no comprobada ni probada voz. No operaciones financieras reales. Carreras de sesion y posible duplicacion de transferencias siguen pendientes.
+
+## Permiso de microfono Android en revision (3 noviembre 2026)
+
+El propietario reporto que Kaptal no mostraba permiso y decia que el navegador bloqueo el microfono. Se verifico que la APK 0.1.21 no declara RECORD_AUDIO y el BridgeWebChromeClient de Capacitor solicita RECORD_AUDIO y MODIFY_AUDIO_SETTINGS al usar captura de audio. Se declararon ambos en el manifiesto y se aclaro el mensaje de denegacion; la app conserva el consentimiento previo al acceso. Android exige declaracion y permiso en tiempo de ejecucion: https://developer.android.com/media/platform/mediarecorder . Build y 84 pruebas focales correctos; E2E, CI, empaquetado y prueba fisica aun pendientes al registrar. No se grabo ni envio audio.
+
+El usuario pidio despues una captura escrita mas simple y compacta, quitar la pesta?a Rapido, interpretar datos con reglas/diccionario y recurrir a IA gratuita solo si es necesario. Investigar comportamiento, costos, privacidad y mantener confirmacion antes de guardar; no hacer llamadas reales de IA para QA ni conectar nuevos servicios de pago. Mantenerlo como etapa distinta; no afirmar redisenado. El usuario confirmo que el presupuesto se abre correctamente en Android 0.1.21, pero el gesto cambiaba de ventana antes de soltar; se corrigio y probo de forma sintetica, pendiente aceptacion fisica de la version nueva.
+
+## Gesto cancelable y diagnostico de microfono (3 noviembre 2026)
+
+El propietario confirmo en Android 0.1.21 que el gesto hacia presupuesto abre la categoria y periodo correctos, pero reporto que la interfaz cambiaba antes de soltar. Se reprodujo en prueba unitaria: el menu contextual se abria al finalizar el temporizador. La correccion conserva solo la guia mientras se mantiene el dedo, permite invertir direccion o volver al centro para cancelar, ejecuta al soltar y mantiene el menu si se suelta sin arrastrar; bloquea el contextmenu nativo durante el gesto. Build y 57 pruebas focales correctos; dos E2E tactiles sinteticos correctos. Aun sin CI ni prueba fisica de la correccion.
+
+El propietario reporto que el microfono no solicita permiso y dice que el navegador lo bloqueo. La APK 0.1.21 no declara RECORD_AUDIO; el cliente WebChrome de Capacitor solicita RECORD_AUDIO y MODIFY_AUDIO_SETTINGS al pedir captura de audio. Es una causa concreta que requiere corregir el manifiesto, verificar firma/permisos y probar en Android tras consentimiento; no se ha grabado ni enviado audio. Referencia https://developer.android.com/media/platform/mediarecorder .
+
+El propietario pide despues redisenar la captura escrita, mas compacta y minimalista, retirar la pesta?a Rapido, interpretar montos, categorias y etiquetas con reglas/diccionario y usar IA gratuita solo cuando haga falta. Investigar y conservar confirmacion antes de guardar, privacidad, opciones de error y limites gratuitos; no activar servicios de pago ni hacer QA con IA o datos financieros reales. Planificar como etapa nueva desde develop. La APK instalada aun es 0.1.21; la candidata 0.1.22 no incluye la correccion de gesto y no debe instalarse como entrega final.
+
+## Revision de presupuesto entre listas (3 noviembre 2026)
+
+Se comprobo por ADB que el Samsung tiene Android 0.1.21/codigo 22 y que la APK extraida coincide con el archivo local SHA256 2a27535222387d0c15410249a36f69c0af4432ec2c444c614804f2514492fb77; sin abrir la app ni datos de usuario. PR196 integrado en develop f833ff6; PR197 y PR198 con CI correcta para sus SHA anteriores. Web sigue en main 97d8639; PR192 de promocion abierto.
+
+Se reprodujo con listas ficticias que la apertura del presupuesto podia usar un resumen anterior al cambiar de lista durante una carga. Ahora espera a que termine correctamente la consulta actual; una regresion fracaso antes y paso tras corregirlo. Se verifico tambien en Chromium que el gesto abre el presupuesto existente de octubre de 2026, con categoria, importe y mes correctos, sin escrituras. Build, 482 unitarias frontend y 3 E2E focales correctos. La correccion aun requiere CI exacta y una APK nueva; 0.1.21 instalada no la contiene. La aceptacion fisica, publicaciones y carreras de sesion y posible duplicacion de transferencias siguen pendientes.
+
+## Android 0.1.21 instalada correctamente (3 noviembre 2026)
+
+APK 0.1.21/versionCode=22 instalada por actualizacion en Samsung SM-A546E. Hash extraido del dispositivo 2a27535222387d0c15410249a36f69c0af4432ec2c444c614804f2514492fb77 coincide con el preparado. CI del SHA 5e673df todos los checks success. firstInstallTime y UID 10477 conservados. No se abrio la app. Evidencia .local/android-021-verification.json. Rama diseno/inicio-minimalista-busqueda HEAD 94eac80. PR197 borrador abierto, todos los checks success. Siguiente: revision fisica con el propietario y continuar revision visual de Inicio por secciones.
+
+## Inicio minimalista y busqueda en curso (3 noviembre 2026)
+
+El propietario pidio conservar gastos como protagonista; mostrar ingresos y saldo neto, sin deuda, dinero en cuentas ni accesos a cuentas/informe en ese bloque; ojo junto a Configuracion; calendario compacto; y busqueda dentro de Inicio. Tambien pidio gesto arriba para gasto y abajo para presupuesto y apariencia de presupuestos inspirada en MonAi. Rama diseno/inicio-minimalista-busqueda desde develop 928f388 comprobado.
+
+Cambios locales: resumen y calendario simplificados; busqueda paginada de movimientos de todos los periodos de la lista activa, con errores y reintento; gesto de presupuesto corrige el enlace para abrir crear/editar en la categoria y moneda correspondientes. El backend mantiene un presupuesto por categoria/lista/mes aunque se cambie la moneda, por ello se abre el existente para evitar reemplazos no advertidos. En Inicio se muestran gasto y limite del presupuesto. Fuente de referencia https://www.get-monai.app/whats-new. Build productivo correcto; 480 pruebas frontend correctas, 53 focales posteriores correctas; 13 E2E locales correctas y 2 focales posteriores correctas con busqueda, desplazamiento, gesto arriba abre registro con categoria y gesto abajo abre presupuesto con categoria y moneda. Arranque 200/401/503 y navegacion sinteticos correctos. Se detecto y corrigio localmente que el gesto de presupuesto abriera el mes actual aunque Inicio estuviera en otro: se envia mes y anio y se comprueba con una regresion. Build y 54 pruebas focales pasaron despues; falta E2E del periodo, CI y revision fisica. PR198 y el APK 0.1.21 preparado son anteriores a esta correccion y deben actualizarse y reconstruirse; no instalar ese artefacto. No afirmar integrada, publicada o instalada. Android instalado sigue 0.1.20 y gesto fisico pendiente. Continuar sin datos financieros productivos; carreras de sesion y posible duplicacion de transferencias pendientes.
+
+## Android 0.1.20 instalado y revision de Inicio (3 noviembre 2026)
+
+PR194 integrado en develop 29b96f6f5da45f5f1380ddbae76cd4feb145730c; PR195 integrado en develop 928f3880048e5f787711467e4acb907f3c30e5da. CI 41709567026 y Android 41709567274 correctos para la fuente eff8e08ab4a0ea2f6723bd81214ea782a61ae559. Frontend 475 unitarias, E2E local 44 correctas y 4 PWA omitidas, pruebas Android release 27 correctas; build release correcto.
+
+APK 0.1.20/codigo21 instalada por actualizacion en Samsung SM-A546E. SHA256 preparado y extraido de la instalacion b2c569422ddc11d824b75f54951e51e46ad0ae759519301232e2a8e86c83fff7; misma firma que APK anterior, UID10477 y fecha inicial 2026-10-22 conservados. Los 86 archivos web esperados coinciden con el build. Evidencia .local/android-020-verification.json y APK .local/releases/Kaptal-0.1.20.apk. No se abrio la app ni se comprobo sesion visible o gesto fisico; listado de usuario secundario 150 denegado.
+
+Web no publicada por esta entrega: main remoto 97d8639e3fde98566916aa609407918079fc49de; PR192 de develop a main con CI pendiente. No acceder a datos financieros, hacer compras o QA productiva. Continuar revision de Inicio con el propietario por elementos, incluyendo etiquetas y futura configuracion de tarjetas; carreras de sesion y posible duplicacion de transferencias siguen abiertas. Revisar seguridad y privacidad despues; migrar alojamiento solo al final si persiste lentitud.
+
+## Estado de revision y telefono (3 noviembre 2026)
+
+La correccion del gesto y las pruebas se subieron en 7a43f0ef0f2e051e1ad17dd8b0bcb4a65293b77f. La suite local H2 termino con 44 aprobadas y 4 PWA omitidas; la prueba focal ampliada aprobo scroll vertical/horizontal, ambas direcciones, cancelacion y las acciones al soltar. Build, 475 unitarias y arranque sintetico correctos. Al registrar, CI Android y todos los jobs excepto los dos E2E estaban correctos. El usuario autoriza usar el Samsung y mantener la APK actualizada cuando sea posible.
+
+El telefono conectado conserva APK 0.1.19/codigo20. La revision automatica del entorno rechazo con blocked by policy el comando combinado de adb reverse y apertura de una pagina local ficticia en Chrome; no se ejecuto y se detuvo el servidor. Falta prueba fisica del gesto. No hay APK nueva, integracion ni publicacion. Mantener pendientes carreras de sesion y posible duplicacion de transferencias. Revisar Git y CI del SHA actual antes de continuar.
+
+## Revision de Inicio: pruebas tactiles y E2E (3 noviembre 2026)
+
+El propietario autoriza usar el Samsung para las pruebas y mantener la APK actualizada cuando sea posible. ADB reconoce SM-A546E; version instalada 0.1.19/codigo 20. No se ha instalado APK nueva ni probado el gesto en el dispositivo.
+
+La regla provisional pan-x se retiro porque bloqueaba el desplazamiento vertical. La correccion local evita el desplazamiento solo despues de la pulsacion prolongada mediante touchmove cancelable. En Chromium con datos ficticios pasa una nueva regresion que comprueba desplazamientos vertical y horizontal, seleccion arriba/abajo, cancelacion y activacion de registro o navegacion a presupuestos al soltar. Build, 475 pruebas frontend y startup sintetico 200/401/503 correctos. Suite E2E completa local en curso al registrar; los cuatro escenarios que fallaron en CI pasaron previamente por separado en H2. Cambios sin commit, sin CI del nuevo SHA, sin integrar ni publicar. Verificar ejecucion, completar flujos y prueba fisica, CI y distribucion antes de cerrar. Mantener pendientes carreras de sesion y posible duplicacion de transferencias.
+
+## Continuación de revisión de Inicio: E2E y gesto táctil (3 de noviembre de 2026)
+
+PR #194 permanece borrador: ambos E2E remotos del SHA `9367118cb41c571e7dd8df181c394271e96b3314` fallaron en cuatro escenarios ligados al diseño. Ajustes de las cuatro pruebas pasan localmente con H2, en dos ejecuciones, pero no se han subido ni validado en CI. Build correcto; filtro de categoría comprobado con datos ficticios. Un gesto táctil simulado falló por la regla global `touch-action`; el ajuste local permite seleccionar hacia arriba, pendiente evaluar scroll horizontal y vertical, gesto contrario, cancelación y regresión automatizada. Samsung conectado, APK instalada 0.1.19; sin prueba física ni instalación nueva. Continuar y verificar todo antes de integrar o publicar. Carreras de sesión y posible duplicación de transferencias siguen abiertas.
+
+## Revision de cambios de Inicio en curso (3 de noviembre de 2026)
+
+Se preservan los cuatro commits de diseno existentes en una rama nueva desde develop f490368. La revision corrigio que el filtro por categoria mostrara movimientos de otro periodo o moneda, aceptara respuestas atrasadas o presentara fallos como ausencia de gastos. La consulta filtra solo gastos; se anadio reintento. El gesto de tarjetas ya no revela una accion al invertir el arrastre. Build y 474 pruebas frontend anteriores a la prueba nueva correctos; 45 pruebas focales con la nueva prueba correctas. check-startup sintetico 200/401/503 correcto. CI, integracion, publicacion y comprobacion visual y fisica aun pendientes. La busqueda del dock abre Movimientos, cuya barra de busqueda esta visible; no se comprobo apertura automatica del teclado. No se realizaron operaciones financieras reales ni QA de IA. Persisten las carreras de sesion y transferencias, sin resolver.
+
 # Kaptal: plan maestro y traspaso al siguiente chat
+
+
+## Diseno: selector de periodo superior MonAi, busqueda en dock y etiquetas (Tags)
+
+En rama `diseno/periodo-busqueda-dock-etiquetas`. Se implementaron tres mejoras solicitadas por el usuario:
+1. **Selector de periodo superior compacto y modal estilo MonAi**: El selector de fechas se movio a la parte superior del hero de Inicio, disenado con una pastilla compacta (`.home-period--compact`) con flechas de periodo, icono de calendario y chevron. Al tocarlo abre un modal redisenado con pestanas ("Meses", "Frecuencias", "Rango libre"), stepper de ano (`‹ 2026 ›`) y una cuadricula interactiva de 4x3 con los 12 meses (`ENE` a `DIC`) donde un solo toque selecciona el mes de inmediato, deshabilitando meses futuros y resaltando el seleccionado.
+2. **Boton de busqueda en dock inferior (`capture-dock`)**: En el dock inferior flotante, se agrego el boton de busqueda con icono de lupa a la izquierda junto al boton de registro manual (`+`), dejando el boton de microfono a la derecha. Al presionar el boton de busqueda navega directamente a `/transacciones?buscar=true`.
+3. **Etiquetas para gastos y movimientos (Tags)**: Se incorporo la seleccion rapida de etiquetas con chips interactivos (`#amigos`, `#trabajo`, `#vacaciones`, `#familia`, `#hogar`) e input de texto libre en:
+   - El modal de nuevo movimiento en Dashboard (`dashboard.component.html`/`ts`).
+   - El componente de captura rapida (`registro-rapido.component.ts`).
+   Permite alternar tags con un solo tap y se procesan con `parsearEtiquetas` antes de guardarse en el backend.
+
+Comprobaciones locales:
+- `npm --prefix frontend run build` exitoso (Angular produccion).
+- 474 pruebas frontend (58 archivos) todas verdes (`npx ng test --watch=false`).
+- `node frontend/scripts/check-startup.cjs` (200/401/503) correcto.
+- Telefono desconectado; APK al final de la revision de diseno.
+- Carreras de sesion y duplicacion de transferencias permanecen pendientes.
+
+## Diseno: categorias, filtrado inline, gestos y presupuestos estilo MonAi
+
+En rama `diseno/categorias-filtro-gestos-presupuestos`. Se implementaron tres mejoras clave en la pantalla de Inicio:
+1. **Filtrado inline de movimientos por categoria**: Al pulsar una barra de categoria en el grafico superior, la seccion de "Recientes" abajo cambia dinamicamente a mostrar solo los movimientos de esa categoria durante el periodo consultado, con una pastilla/chip de filtro activo (`[Icono + CategoriaNombre ×]`) que permite quitar el filtro en cualquier momento sin navegar a otra ventana.
+2. **Gestos en barras de categorias (0.5s mantener + deslizar)**: Al mantener presionada una barra de categoria (~450ms) se activa el modo gesto con overlay visual interactivo: deslizar hacia ARRIBA (dy < -25px) resalta y activa la accion de registrar un nuevo gasto en esa categoria (`+ Gasto`); deslizar hacia ABAJO (dy > 25px) resalta y abre la definicion/edicion de presupuesto (`Presupuesto`).
+3. **Presupuestos estilo MonAi**: Las barras de progreso ahora incorporan estilos dinamicos con linea punteada animada (`monai-dash-pulse`) al alcanzar el 80% o mas; transicion de verde a naranja (#f59e0b) en alerta y a rojo (#ef4444) en exceso; e indicadores visuales (`⚠️ Cerca del limite` / `⚠️ Excedido`) junto al nombre. En el grafico de categorias superior, las categorias con presupuesto tambien reflejan bordes de alerta y exceso.
+
+Comprobaciones locales:
+- Build productivo Angular exitoso
+- 474 pruebas frontend (58 archivos) todas verdes (incluye 3 pruebas unitarias nuevas para gestos, filtro inline y presupuesto)
+- `check-startup.cjs` (casos 200/401/503 con sesion sintetica) correcto
+- `measure-navigation.cjs` (12 escenarios de navegacion Chromium) correcto
+- Sin modificaciones a endpoints de produccion, base de datos ni APK (telefono desconectado; APK al final)
+
+## Revision de diseno: Inicio sin guia de primeros pasos
+
+El propietario pidio pasar a revisar rendimiento y diseno por secciones y retirar o desactivar de momento la guia de primeros pasos en cualquier lugar de la app. Se desactivo su presencia en Inicio y se retiro el boton de Configuracion que la reabria; el componente y su preferencia local se conservan sin exponerse, para permitir recuperarla si algun dia se solicita. No se modifican la captura, cuentas, avisos ni datos financieros. Build, 471 pruebas frontend y E2E Chromium con escenarios ficticios correctos; CI, integracion y distribucion pendientes al registrar.
+
+Siguiente: continuar la revision de Inicio con el propietario, incluyendo organizacion, resumen, categorias y vistas; no redisenar otras secciones sin revisarlas juntos. Las carreras de sesion y posible duplicacion de transferencias permanecen pendientes y no se declaran solucionadas.
+
+
+## Dependencias de desarrollo que bloqueaban CI
+
+El 3 de noviembre las CI del PR188 fallaron por dos avisos moderados nuevos en herramientas de desarrollo: glob GHSA-3g3m-2fjr-6pw4 y minimatch GHSA-g3hv-75wg-m249. La auditoria `npm audit --omit=dev` no reporto avisos en dependencias de produccion; no demuestra ausencia de otras vulnerabilidades. Se probaron overrides a glob 14.0.3 y minimatch 11.0.4 para las cadenas de Angular CLI y Capacitor CLI, sin desactivar la comprobacion. Como cruzan versiones principales, la compatibilidad requiere vigilancia adicional.
+
+Comprobaciones locales: `npm ci`, `npm run security:check` sin avisos, build, 471 pruebas frontend, pruebas de aislamiento E2E, `npm pack --dry-run --ignore-scripts`, sincronizacion Capacitor, tests JVM/compilacion Android debug. No se instalo APK ni se toc? produccion. CI y publicacion pendientes al registrar. Fuentes: https://github.com/advisories/GHSA-3g3m-2fjr-6pw4 y https://github.com/advisories/GHSA-g3hv-75wg-m249.
+
+
+## Proteccion previa del destino PostgreSQL de pruebas
+
+La configuracion de Playwright iniciaba el backend antes de que `rendimiento-local.spec.ts` validara el destino de PostgreSQL. Se reprodujo sin conexiones: `playwright test --list` aceptaba una URL remota ficticia. Ahora la configuracion rechaza antes del arranque las URL que no tengan host literal localhost o 127.0.0.1, puerto valido y base `kaptal_ci_e2e`, y no acepta parametros ni credenciales en la URL. H2 en memoria sigue como opcion predeterminada. El test `node --test scripts/check-e2e-database.test.cjs` comprueba configuraciones aceptadas y rechazadas sin iniciar servidores; se incorpora a CI. La prueba E2E con H2 local tambien paso.
+
+El nombre de la base y localhost no demuestran que la instancia este vacia ni impiden un tunel a otro servidor; quien ejecute PostgreSQL debe garantizar una instancia y base de pruebas dedicadas. No se consultaron ni modificaron bases reales. CI e integracion pendientes al registrar.
+
+## Desglose de solicitudes HTTP sinteticas
+
+El medidor local de navegacion registra duracion entre los eventos request y requestfinished para cada ruta `/api/`, sin parametros, cuerpos ni datos reales. Verifica una duracion finita por cada endpoint inicial del panel y que refleje la demora artificial configurada. En tres contextos con datos ficticios, sin lista guardada y demora de 250 ms por API, resumen tardo 273/268/267 ms, analitica 273/261/267 ms, presupuestos 273/261/267 ms y recurrencias 274/256/266 ms. Evidencia `.local/navigation-http-timings-final.json`; dos ejecuciones locales correctas.
+
+Estas duraciones incluyen la demora simulada, la ruta interceptada y el navegador; no son tiempo de servidor, SQL, red real ni Android. Tres muestras no establecen p95 ni representatividad y no demuestran una mejora de latencia. Sin llamadas de IA o QA financiera productiva. CI e integracion pendientes al registrar.
+
+
+## Publicacion de validacion de categorias y Android instalado
+
+- PR #182 promovido a main `97d8639e3fde98566916aa609407918079fc49de` desde develop `6d3f579ae7cfc0c920df205d61d098680168a185`; CI 41007641837, Android 41007642021 y CI posterior de develop 41007581621 correctos. Render deployment 7431459675 y estado Vercel SUCCESS para ese main. A las 05:32 UTC los 66 recursos esperados, health directo/proxy y configuracion publica coincidieron; V11-V14 verificadas en lectura, sin migracion nueva. Respaldo cifrado previo `.local/promotion-20261030T051723Z`; sin restauracion. CI posterior de main 41008523018 pendiente y Android 41008523017 correcto al registrar. No se realizo edicion financiera productiva.
+- APK 0.1.19/codigo20 instalada por reemplazo: SHA256 extraido `a04de9e4f50bf1bab9177401ccf31f9aee9682742c43607462b5f8c5ba601063` coincide; UID y fecha inicial conservados. No se verificaron sesion visible ni avisos reales. El listado del usuario secundario 150 fue denegado; paquete principal comprobado.
+- Continuar Etapa13 y mediciones representativas; luego diseno por secciones con propietario y seguridad/privacidad. Esperar avisos habituales sin compras ni QA financiera productiva. La mejora de solicitudes no demuestra reduccion de latencia.
+
+
+## Android 0.1.19 instalado y correccion de categoria integrada
+
+- Al conectar el telefono, se actualizo Kaptal por reemplazo a 0.1.19/codigo20. El APK extraido del paquete coincide con el preparado: SHA256 `a04de9e4f50bf1bab9177401ccf31f9aee9682742c43607462b5f8c5ba601063`. UID 10477 y fecha inicial 2026-10-22 conservados. La consulta de listado del usuario secundario 150 fue denegada; el paquete principal se verifico. No se abrio la app ni se comprobo sesion visible o avisos reales. Evidencia `.local/android-019-verification.json`.
+- PR #181 integrado en develop `6d3f579ae7cfc0c920df205d61d098680168a185` desde `bdc89a768c79d3b447568a4d625567fc8ab437d0`; CI 40984501150 y 40984496267 correctos, cinco pruebas focales locales correctas. Rechaza nombres cambiados que al recortarse tienen menos de dos caracteres, y conserva nombres antiguos largos sin cambios. No altera el historial ni asociaciones.
+- Promocion #182 de `6d3f579` a main `a772aa3` abierta; checks 41007641837/41007642021 y respaldo cifrado `.local/promotion-20261030T051723Z`. No afirmar publicada hasta verificar integracion y despliegues. CI posterior de develop 41007581621 pendiente al registrar. Continuar Etapa13/rendimiento; despues diseno contigo y seguridad.
+
 
 ## Cierre de medicion HTTP aislada del panel
 
@@ -1263,3 +1433,110 @@ El volumen es ilustrativo, no se ha contrastado con una distribucion real; no mi
 ## Correccion de nombres de categorias al editar
 
 La edicion aceptaba una cadena como ` A ` porque la validacion de la solicitud contaba espacios y el servicio solo rechazaba nombres demasiado largos despues de recortar. El servicio comprueba ahora entre 2 y 20 caracteres cuando se cambia el nombre, despues de recortar; conserva nombres antiguos sin cambios, incluidos los mayores de 20, al editar otros campos. Una regresion reprodujo el fallo y las cinco pruebas focales pasaron tras el cambio. Sin modificar historial, asociaciones ni categorias existentes. CI, integracion y publicacion pendientes al registrar; no requiere APK.
+
+## Alcance de la se?al de uso no disponible
+
+Se precisa que `usage_unavailable` cuenta solo eventos emitidos tras procesar el uso de una respuesta; errores HTTP, transporte o deserializacion pueden terminar antes sin emitirlos. No equivale a todos los intentos sin contadores y su ausencia no demuestra consumo cero. Pruebas Groq/Gemini con HTTP simulado cubren 429, transporte, JSON invalido y respuesta 2xx sin uso; 15 pruebas focales correctas, sin llamadas reales ni credenciales heredadas. CI e integracion pendientes al registrar.
+
+## Captura escrita y permisos Android (2026-11-03)
+
+- La entrada principal de anadir abre escritura o dictado; se elimina el selector Rapido y queda accesible la introduccion manual para funciones existentes. Se simplifican el encabezado y las sugerencias. Las propuestas siguen requiriendo revision y confirmacion.
+- Se incorporan los permisos Android de grabacion a la correccion ya preparada; su funcionamiento fisico aun debe probarse con consentimiento del usuario. No se ha grabado audio ni probado una transaccion productiva.
+- 484 pruebas frontend pasan. La verificacion E2E, APK, CI, instalacion y publicacion se registraran por separado. Pendiente mejorar interpretacion por diccionario y evaluar proveedor gratuito, sin prometer reconocimiento perfecto.
+
+### Entrega Android 0.1.24
+
+- APK 0.1.24 (codigo 25) instalada por actualizacion en Samsung SM-A546E; primera instalacion conservada. El SHA-256 del paquete extraido del dispositivo coincide con el archivo local: 9fe9858f07257fcb6a9b33db698080dc8491d9f9225dddc5855d6e92ca1ad582. Certificado y 86 archivos web verificados.
+- PR #202: CI completa exitosa para 70c0deb4b44745795e8f5b210550748b0c0b80b1. El build local corresponde a cd02666 y los commits intermedios solo cambian pruebas. 485 pruebas frontend, 27 Android y pruebas de captura con datos ficticios pasan.
+- La declaracion de permiso de microfono se corrigio, pero la grabacion y el gesto aun no se probaron en esta version fisica. La mejora de interpretacion de texto, categoria y etiquetas continua pendiente. No se integro ni publico.
+
+## Indicador de gestos y proveedor de voz (2026-11-03)
+
+- El usuario confirmo que la app ya pide configurar Groq y que las etiquetas de gasto y presupuesto del gesto se cortan. La guia se mueve fuera del carrusel, centrada en la pantalla; conserva arriba para gasto, abajo para presupuesto y accion al soltar. Build Angular y dos E2E tactiles sinteticos pasaron, con limites visibles comprobados. Validacion fisica pendiente.
+- La transcripcion actual requiere Groq configurado en el backend; el registro escrito usa reglas propias primero. Groq Whisper ofrece plan gratuito sujeto a limites y controles de datos; Gemini gratis puede usar contenido para mejorar productos. No se configuro ninguna clave ni se envio audio. Fuentes: https://console.groq.com/docs/speech-to-text , https://console.groq.com/docs/your-data , https://ai.google.dev/gemini-api/docs/pricing .
+- APK 0.1.25 pendiente de generar, verificar e instalar; CI, integracion y publicacion pendientes.
+
+### Android 0.1.25 instalada
+
+- APK 0.1.25 codigo 26 instalada por actualizacion; hash del dispositivo 8cc5d114b00fc268caccfbf612d9bdcc12d029f563212754de66ba992a03b139 coincide con el archivo local; fecha de primera instalacion conservada. CI integral y APK pasaron para af4aebf6e01f5e231fdfd664d8c33b61f46875cb (PR #203).
+- Las etiquetas del gesto estan fuera del carrusel y en limites de pantalla en pruebas sinteticas; falta aceptacion fisica. No se abrio la app ni se consultaron finanzas. El proveedor Groq aun no esta configurado. No integrado ni publicado.
+
+### Revision de voz dentro de su ventana (2026-11-04)
+- El usuario confirmo que el microfono transcribe, pero el texto solo aparecio al detener y salto al chat; solicita editarlo en la misma ventana. No se confirma la transcripcion parcial durante la grabacion.
+- Rama `correcciones/revision-voz-en-ventana`, creada desde develop y adelantada con el codigo de PR #211: la transcripcion final y la parcial recuperada se editan en la ventana de voz; solo al elegir Continuar se pasa el texto al chat, sin guardar movimientos. Build Angular y 34 pruebas del componente pasaron. E2E y CI pendientes al registrar.
+- Investigar por que el audio provisional no aparece en Samsung/Groq, sin presumir la causa ni exponer datos. Pendiente prueba fisica de la nueva interfaz, APK superior a 0.1.28, integracion y publicacion. Despues probar captura escrita, categoria y confirmacion con datos ficticios y continuar Inicio por secciones.
+- E2E local: el caso de revision y edicion en ventana paso con audio y respuesta simulados; otro caso fallo al abrir el dialogo durante el arranque. Diagnostico y repeticion pendientes; no se declara toda la suite aprobada. PR #212 en borrador; APK 0.1.28 sigue instalada y no incluye esta correccion.
+- Repeticion E2E local: 2 de 2 casos aprobados; el fallo inicial de apertura no se reprodujo, causa no identificada. La prueba usa respuestas simuladas y no demuestra audio parcial real.
+
+### Captura: Amex y etiquetas expresadas en lenguaje natural
+- El usuario confirmo que la edicion de transcripcion funciona en la ventana de voz de Android 0.1.29. Solicita mejorar captura y administracion visual de categorias y etiquetas.
+- Rama mejoras/captura-diccionario-etiquetas, desde develop y adelantada con entrega #213: reconoce Amex/American Express para cuentas existentes y pide aclaracion ante varias; separa expresiones como con etiqueta viaje del concepto, conserva hashtags, amplia algunos sinonimos y muestra etiquetas en la propuesta. No guarda sin confirmacion. El reconocimiento nuevo de etiquetas se aplica al backend con conexion; el modo sin conexion sigue pendiente.
+- Build Angular y 34 pruebas de componente aprobados; 38 pruebas focales backend aprobadas; 53 pruebas anteriores incluyendo H2 aprobaron antes del ultimo ajuste al parser. CI, E2E actualizado, aceptacion del usuario, integracion y publicacion pendientes.
+- Pendiente implementar administracion minimalista de etiquetas (no hay catalogo independiente) y categorias, con eliminacion segura sin modificar historial, presupuestos ni recurrencias. No confundir archivar con borrar. Mantener 0.1.29 instalada hasta una entrega superior verificada.
+
+### Eliminacion de categorias (avance 2026-11-04)
+- El propietario pide quitar Archivar y utilizar Eliminar. Rama mejoras/eliminacion-categorias-etiquetas desde develop adelantada con PR #214: pantalla sin filtros ni botones de archivo; eliminacion fisica de categorias personalizadas sin referencias, con confirmacion. Categorias vinculadas a movimientos, presupuestos o recurrencias se rechazan para preservar los datos; queda pendiente una solucion para eliminarlas sin perder historial, y la seccion minimalista de etiquetas y categorias solicitada aun no esta terminada.
+- Compilacion Angular, 8 pruebas frontend y 7 pruebas CategoriaService pasaron. Falta prueba integral de eliminacion, CI, pruebas visuales, APK, integracion y publicacion. Las etiquetas se almacenan en movimientos y requieren diseno propio sin alterar datos. Usuario confirmo edicion de voz en APK 0.1.29.
+
+### Catalogo personal de etiquetas (avance 2026-11-04)
+- Rama mejoras/catalogo-etiquetas desde develop adelantada con PR #215. Prototipo: catalogo personal con crear/eliminar, interfaz accesible desde Ajustes y sugerencias en formulario manual. Eliminar del catalogo no modifica etiquetas de movimientos. No hay archivo en la pantalla de categorias; la eliminacion de categorias con referencias sigue pendiente de resolver sin perder historial.
+- Migracion V15 nueva: todavia requiere CI PostgreSQL, pruebas de migracion/recuperacion, seguridad de alcance por usuario, respaldo/restauracion, pruebas de interfaz y aceptacion. Las etiquetas anteriores aun no se importan automaticamente y el catalogo todavia no esta conectado a sugerencias del chat. No instalar ni publicar sin terminar esas comprobaciones.
+- Build Angular y 57 pruebas de Inicio/categorias aprobados; 9 pruebas unitarias backend para etiquetas/categorias aprobadas. Trabajos no integrados ni publicados; APK 0.1.29 permanece instalada.
+
+- La interfaz de etiquetas paso su prueba de creacion y eliminacion con servicio simulado; el commit de prueba es 7f008e4 en PR #216. Siguen pendientes respaldo, migracion PostgreSQL, alcance de acceso, integracion con chat y validacion visual. No integrado, publicado ni instalado.
+
+### Correccion de comprobacion de migracion
+- PR #216 fallo en comprobacion PostgreSQL; las pruebas aun esperaban V14 y usaban V15 para fallo simulado, que ahora coincide con la migracion del catalogo. Rama correcciones/migracion-etiquetas-ci desde develop adelantada con #216: actualiza las expectativas y agrega caso V14 a V15 que comprueba preservacion de etiquetas historicas. Falta confirmar la causa en el log de CI y ejecutar en PostgreSQL real: Docker local no esta disponible. No se han integrado ni publicado estos cambios.
+
+### Etiquetas disponibles en captura escrita
+- PR #217: PostgreSQL y recuperacion aprobaron para e36b881; CI integral aun debe comprobarse al momento de integrar. El fallo anterior se confirmo en dos expectativas fijadas a V14.
+- Rama mejoras/etiquetas-captura-escrita desde develop adelantada con #217: muestra etiquetas personales al redactar y permite agregarlas sin duplicarlas, sin guardar movimiento. Build Angular y 35 pruebas de captura pasaron; CI, pruebas visuales y APK pendientes.
+- Siguen pendientes respaldo/restauracion del catalogo, categorias vinculadas, revision minimalista final, integracion y publicacion. Sin modificar finanzas reales.
+
+### Respaldo de etiquetas personales
+- Rama mejoras/respaldo-etiquetas desde develop adelantada con PR #218. El respaldo incorpora nombres del catalogo personal; restaurar combina con los existentes y valida nombres, duplicados y limite de registros, conservando compatibilidad con respaldos anteriores sin el campo. Pruebas unitarias y H2: 34 aprobadas, con datos ficticios; pendiente CI PostgreSQL, prueba E2E y revision de compatibilidad completa. No integrado ni publicado.
+- El propietario desconectara el telefono: no generar ni instalar APK hasta completar cambios y verificaciones. Pendiente eliminacion segura de categorias vinculadas y revision visual de categorias/etiquetas.
+
+### Accesibilidad y restauracion con etiquetas
+- En CI del PR #217 fallaron una expectativa del filtro Archivadas ya retirado y el ajuste horizontal de Ajustes con letra grande. Rama correcciones/accesibilidad-categorias-etiquetas desde develop adelantada con #219: adapta la prueba al boton Eliminar y permite que el contenido de Ajustes se ajuste al ancho.
+- Dos E2E Chromium con cuentas ficticias, accesibilidad y respaldo/restauracion, pasaron localmente. PR #219 incluye respaldo de etiquetas y paso 34 pruebas unitarias/H2. CI exacta y pruebas PostgreSQL del cambio final pendientes; no integrado, publicado ni instalado. Telefono desconectado por decision del propietario.
+- Pendiente resolver eliminacion de categorias vinculadas sin archivo ni perdida historica, completar interfaz y validar en dispositivo cuando corresponda.
+
+### Captura sin conexion: etiquetas y Amex
+- Rama mejoras/captura-sin-conexion-etiquetas desde develop adelantada con PR #220: extrae etiquetas expresas y hashtags antes de preparar el concepto sin conexion, reconoce Amex/American Express entre cuentas existentes y no selecciona la unica cuenta cuando se menciona explicitamente otra cuenta desconocida. No guarda sin confirmacion. Build Angular y 49 pruebas focales correctos; CI y prueba E2E pendientes.
+- PR #219 respaldo y restauracion paso 34 pruebas H2/unitarias; PR #220 paso dos pruebas E2E locales de accesibilidad/respaldo. Falta comprobacion integral exacta, categorias vinculadas sin archivo ni perdida historica, revision visual y entrega. No se ha generado ni instalado una nueva APK, segun indicacion del propietario.
+
+### Preferencia sobre categorias vinculadas y diseno
+- El propietario indica que, al eliminar una categoria con presupuesto o recurrencia activa, se le pida reasignarlos primero; los movimientos anteriores deben conservar su informacion historica. No desea Archivar. La reasignacion guiada y el borrado real conservando historia todavia no estan implementados; el servidor bloquea la eliminacion y comunica el motivo. No afirmar que ese flujo esta terminado.
+- Rama diseno/categorias-gestion-compacta desde develop adelantada con #221: filas mas compactas, texto y acentos corregidos, y mensajes diferenciados de dependencias. Build Angular, 44 pruebas frontend y 7 pruebas backend pasaron. Falta revision visual, CI y E2E.
+- No generar ni instalar APK hasta completar los cambios; telefono desconectado segun instruccion. No integrado ni publicado.
+
+### Reasignacion de categoria antes de eliminar
+- El propietario indico pedir reasignar presupuestos y recurrencias activas antes de eliminar y conservar movimientos anteriores. Rama mejoras/reasignar-categoria-antes-eliminar desde develop, adelantada con #222. Se prepara una pantalla y servicio para seleccionar categoria del mismo tipo, revisar conflictos de presupuesto y reasignar presupuestos actuales/futuros y recurrencias activas; no elimina automaticamente ni modifica movimientos anteriores.
+- Build Angular, 9 pruebas de componente, 10 unitarias backend y un caso de integracion H2 con movimiento anterior aprobaron. Falta revisar concurrencia, acceso y preservacion de todas las referencias, prueba E2E y PostgreSQL, y la eliminacion real con historia; por ahora el servidor la bloquea. No integrado ni publicado. No generar APK hasta terminar todos los cambios, telefono desconectado por indicacion del propietario.
+
+### Proteccion de referencias del libro diario
+- Rama correcciones/proteger-categoria-libro-diario desde develop adelantada con PR #223: se detecto que LineaAsiento guarda categoriaId sin clave externa; la eliminacion ahora se rechaza si existe esa referencia historica. Se anadio prueba enfocada; 11 pruebas CategoriaService pasaron.
+- La reasignacion de referencias activas se probo con H2, pero sigue pendiente el diseno e implementacion de eliminacion real conservando historia, concurrencia, CI y E2E; no se habilito borrado de categorias vinculadas ni se usaron datos reales. No generar APK antes de completar etapas; telefono desconectado por indicacion del propietario.
+
+### Referencias antes de eliminar categoria
+- Rama mejoras/historial-categorias-eliminadas desde develop adelantada con #224: vista previa de conteos de movimientos, presupuestos, recurrencias y lineas del libro, con verificacion de propiedad de categoria. Build Angular, 9 pruebas frontend y 12 pruebas backend pasaron. La vista no habilita el borrado de categorias con historia.
+- La eliminacion historica real aun requiere migracion y adaptacion de informes, respaldo, transacciones y presupuestos; se mantiene bloqueada. No estan completos los cuatro puntos, ni hay despliegue ni APK nueva. Revisar CI exacta, E2E y diseno visual antes de integrar o publicar. El usuario pidio esperar a terminar todos los cambios para instalar.
+
+### Prueba integral pendiente de borrado historico
+- Rama mejoras/eliminar-categoria-con-historial desde develop adelantada con #225. Se anadio prueba E2E local con cuenta y movimiento ficticios: intenta eliminar una categoria utilizada y comprueba nombre en movimiento y respaldo. La prueba falla en la eliminacion porque el servidor conserva el bloqueo; no se ha implementado el borrado historico.
+- Las relaciones actuales de transacciones, presupuestos y recurrencias dependen de categorias; las lineas del libro conservan categoriaId sin FK y los informes y respaldos usan ese identificador. Falta implementar una representacion historica que permita borrar la categoria activa sin reclasificar, preservar todas estas referencias y restaurar respaldos; no sustituir por archivado. La prueba se conserva como regresion pendiente y no debe integrarse hasta pasar.
+- No se integraron ni publicaron cambios, ni se genero o instalo una APK. CI previa #225: frontend, backend y PostgreSQL aprobados; E2E estaba en curso al verificar. El propietario pidio completar los cuatro puntos antes de entregar.
+
+### Eliminacion real con referencia historica (2026-11-05)
+- Se implementa CategoriaHistorica en tabla independiente: al eliminar una categoria personal se conserva su identificador, nombre, tipo, icono y color; las referencias anteriores de movimientos, presupuestos pasados y recurrencias inactivas pasan a esa copia y se borra la fila del catalogo original. El libro diario conserva su identificador. No hay opcion de restaurar o archivar.
+- Presupuestos vigentes/futuros y recurrencias activas exigen destino del mismo tipo; la confirmacion puede reasignar y eliminar dentro de una sola transaccion. Conflictos de presupuesto revierten toda la operacion. Consultas, filtros, informes y respaldo v8 conservan la clasificacion historica. Restauracion reconstruye referencias historicas sin devolverlas al catalogo.
+- Migracion V16, preserva datos existentes sin reclasificacion masiva. Build frontend y 499 pruebas frontend pasaron; 657 pruebas backend pasaron con 9 reservadas a PostgreSQL; 4 pruebas de recurrencias posteriores pasaron. Tres E2E locales de accesibilidad, eliminacion con historia y respaldo pasaron; prueba ampliada de confirmacion y etiquetas en curso. CI PostgreSQL y despliegue pendientes. No generar ni instalar APK hasta completar comprobaciones.
+
+### Cierre visual de eliminacion y etiquetas
+- Revision final local: build Angular correcto y dos E2E Chromium aprobados tras compactar acciones de categorias: accesibilidad con letra grande y flujo ampliado de eliminacion, reasignacion de presupuesto activo, preservacion historica y alta/baja de etiqueta sin quitarla del movimiento anterior.
+- CI de 67e21e5: backend, frontend, PostgreSQL y APK aprobados; E2E remoto pendiente al registrar. ADB sin dispositivos. Todavia no integrado, publicado ni instalado; no se genero entrega nueva.
+### Integracion de captura y catalogos; entrega Android 0.1.30
+- PR #226 integrado en develop 370f760 tras todos los checks exitosos del SHA 1f20944, incluidas dos ejecuciones E2E completas, PostgreSQL, backend, frontend y Android.
+- Nueva rama mejoras/android-030-entrega-catalogos creada desde develop actualizado. Se incrementa Android de 0.1.29/codigo30 a 0.1.30/codigo31. Generacion, firma, contenido y CI exacta de esta entrega pendientes al registrar; no instalada. Telefono desconectado voluntariamente.
+- Produccion aun pendiente. No se accedio a datos financieros reales ni se cambio la sesion del telefono. Pendientes de usuario: validacion fisica de captura y catalogos tras instalacion; no declarar carreras de sesion ni duplicacion de transferencias resueltas.

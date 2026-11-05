@@ -26,4 +26,9 @@ describe('Captura offline sin saldos ni IA', () => {
     expect(()=>validarPayloadOffline(datos,cuentas,[])).toThrow();
     expect(()=>validarPayloadOffline({...datos,monto:25},[],[])).toThrow('cuenta');
   });
+  it('resuelve Amex o deja la cuenta para revision si no coincide', () => {
+    const amex=[{...cuentas[0],id:3,nombre:'American Express'}];
+    expect(prepararCapturaOffline('Pague 50 en cafe con Amex',amex,[]).data['cuentaId']).toBe(3);
+    expect(prepararCapturaOffline('Pague 50 en cafe con Amex',[cuentas[0]],[]).data['cuentaId']).toBeNull();
+  });
 });

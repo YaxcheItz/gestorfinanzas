@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -78,5 +79,26 @@ public class CategoriaController {
     ) {
         categoriaService.cambiarEstadoCategoria(userDetails.getId(), id, activa);
         return ResponseEntity.ok(ApiResponse.ok("Estado de categoría actualizado", null));
+    }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> eliminarCategoria(@PathVariable Long id, @AuthenticationPrincipal CustomUserDetails usuario) {
+        categoriaService.eliminarCategoria(usuario.getId(), id);
+        return ResponseEntity.ok(ApiResponse.ok("Categoría eliminada", null));
+    }
+    @GetMapping("/{id}/referencias")
+    public ResponseEntity<ApiResponse<CategoriaService.Referencias>> referencias(@PathVariable Long id, @AuthenticationPrincipal CustomUserDetails usuario) {
+        return ResponseEntity.ok(ApiResponse.ok("Referencias de categor\u00eda", categoriaService.referencias(usuario.getId(), id)));
+    }
+    public record ReasignarRequest(@jakarta.validation.constraints.NotNull Long categoriaDestinoId) {}
+    @PostMapping("/{id}/reasignar-activos")
+    public ResponseEntity<ApiResponse<CategoriaService.Reasignacion>> reasignarActivos(
+            @PathVariable Long id, @Valid @RequestBody ReasignarRequest request, @AuthenticationPrincipal CustomUserDetails usuario) {
+        return ResponseEntity.ok(ApiResponse.ok("Referencias reasignadas", categoriaService.reasignarActivos(usuario.getId(), id, request.categoriaDestinoId())));
+    }
+    public record EliminarRequest(Long categoriaDestinoId) {}
+    @PostMapping("/{id}/eliminar")
+    public ResponseEntity<ApiResponse<Void>> reasignarYEliminar(@PathVariable Long id,@Valid @RequestBody EliminarRequest request,@AuthenticationPrincipal CustomUserDetails usuario) {
+        categoriaService.reasignarYEliminar(usuario.getId(),id,request.categoriaDestinoId());
+        return ResponseEntity.ok(ApiResponse.ok("Categor\u00eda eliminada",null));
     }
 }
