@@ -1704,3 +1704,6 @@ Se precisa que `usage_unavailable` cuenta solo eventos emitidos tras procesar el
 - Build Angular y 57 pruebas de Inicio/categorias aprobados; 9 pruebas unitarias backend para etiquetas/categorias aprobadas. Trabajos no integrados ni publicados; APK 0.1.29 permanece instalada.
 
 - La interfaz de etiquetas paso su prueba de creacion y eliminacion con servicio simulado; el commit de prueba es 7f008e4 en PR #216. Siguen pendientes respaldo, migracion PostgreSQL, alcance de acceso, integracion con chat y validacion visual. No integrado, publicado ni instalado.
+
+### Correccion de comprobacion de migracion
+- PR #216 fallo en comprobacion PostgreSQL; las pruebas aun esperaban V14 y usaban V15 para fallo simulado, que ahora coincide con la migracion del catalogo. Rama correcciones/migracion-etiquetas-ci desde develop adelantada con #216: actualiza las expectativas y agrega caso V14 a V15 que comprueba preservacion de etiquetas historicas. Falta confirmar la causa en el log de CI y ejecutar en PostgreSQL real: Docker local no esta disponible. No se han integrado ni publicado estos cambios.
