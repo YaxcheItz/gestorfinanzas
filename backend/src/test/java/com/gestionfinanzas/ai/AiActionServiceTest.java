@@ -29,6 +29,16 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class AiActionServiceTest {
+    @Test
+    void iaNoPreparaArchivadoDeCategorias() {
+        when(provider.generate(org.mockito.ArgumentMatchers.anyString(), anyInt())).thenReturn("""
+                {"answer":"No disponible","action":{"type":"DEACTIVATE_CATEGORY","summary":"Archivar","data":{"categoriaId":1}}}
+                """);
+        var resultado=service.interpret(7L,"Archiva la categoria de prueba");
+        assertNull(resultado.action());
+        assertTrue(resultado.answer().contains("No se ha realizado ningún cambio"));
+        verify(propuestas,never()).save(org.mockito.ArgumentMatchers.any());
+    }
     private final java.util.Map<String,com.gestionfinanzas.model.entity.PropuestaChat> filas=new java.util.HashMap<>();
     private final com.gestionfinanzas.repository.PropuestaChatRepository propuestas=mock(com.gestionfinanzas.repository.PropuestaChatRepository.class);
     private final com.gestionfinanzas.repository.UsuarioRepository usuarios=mock(com.gestionfinanzas.repository.UsuarioRepository.class);

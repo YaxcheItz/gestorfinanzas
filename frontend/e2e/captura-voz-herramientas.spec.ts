@@ -34,7 +34,7 @@ test('accesos separan voz y escritura y llevan herramientas a ajustes', async ({
   await expect(page.getByRole('link', { name: 'Presupuestos', exact: false })).toBeVisible();
 });
 
-test('voz muestra avance provisional y conserva revisión antes de enviar', async ({ page }) => {
+test('voz revisada guarda una vez sin enviar el texto al chat', async ({ page }) => {
   test.setTimeout(45000);
   await page.setViewportSize({width:390,height:844});
   await page.addInitScript(() => {
@@ -49,8 +49,9 @@ test('voz muestra avance provisional y conserva revisión antes de enviar', asyn
   await page.route('**/api/**', async route => {
     const path = new URL(route.request().url()).pathname;
     if(path.endsWith('/asistente/voz/transcribir')) {transcripciones++; await route.fulfill({json:{success:true,data:transcripciones===1?'Texto provisional':'Texto final ficticio'}}); return;}
-    if(path.includes('/confirmar')) guardados++;
-    const data = path === '/api/perfil' ? {id:998,nombre:'Prueba',email:'prueba@example.test',tema:'CLARO',monedaPredeterminada:'MXN'} : [];
+    if(path.endsWith('/asistente/captura-rapida')) {await route.fulfill({json:{success:true,data:{answer:'Propuesta',engine:'REGLAS',actions:[{id:'voz-sintetica',type:'CREATE_TRANSACTION',version:0,summary:'Gasto ficticio',data:{tipo:'GASTO',monto:50,cuentaId:1,categoriaId:10,fecha:'2026-11-05'}}]}}});return;}
+    if(path.includes('/confirmar')) {guardados++; await route.fulfill({json:{success:true,data:{completed:true}}});return;}
+    const data = path === '/api/perfil' ? {id:998,nombre:'Prueba',email:'prueba@example.test',tema:'CLARO',monedaPredeterminada:'MXN'} : path === '/api/cuentas' ? [{id:1,nombre:'Efectivo',activo:true,tipo:'EFECTIVO',moneda:'MXN'}] : path === '/api/categorias' ? [{id:10,nombre:'Comida',tipo:'GASTO',activo:true,esPersonalizada:true}] : [];
     await route.fulfill({json:{success:true,data}});
   });
   await page.goto('/dashboard'); await page.locator('.capture-dock__voice').click();
@@ -60,9 +61,11 @@ test('voz muestra avance provisional y conserva revisión antes de enviar', asyn
   await voice.getByRole('button',{name:'Detener grabación'}).click();
   const texto=voice.locator('#voice-transcript');
   await expect(texto).toHaveValue('Texto final ficticio',{timeout:10000});
-  await texto.fill('Texto ficticio editado');
+  await texto.fill('Gasté 50 en tacos');
   await expect(page.locator('#quick-capture-panel')).toBeHidden();
   await voice.getByRole('button',{name:'Continuar con este texto'}).click();
-  await expect(page.locator('#quick-capture-text')).toHaveValue('Texto ficticio editado');
-  expect(transcripciones).toBe(2); expect(guardados).toBe(0);
+  await expect(voice.getByText('Movimiento guardado.')).toBeVisible();
+  await expect(voice.getByRole('button',{name:'Revisar movimientos'})).toBeVisible();
+  await expect(page.locator('#quick-capture-panel')).toBeHidden();
+  expect(transcripciones).toBe(2); expect(guardados).toBe(1);
 });

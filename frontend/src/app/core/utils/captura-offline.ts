@@ -5,6 +5,19 @@ import { crearIdSolicitud } from './request-id';
 
 const normalizar=(texto:string)=>texto.normalize('NFD').replace(/\p{M}/gu,'').toLowerCase().trim().replace(/\s+/g,' ');
 
+const categoriasPorConcepto: ReadonlyArray<{nombres: string[]; palabras: string[]}> = [
+  {nombres:['comida','alimentacion','alimentos','alimentos y supermercado'],palabras:['restaurante','restaurantes','taco','tacos','taqueria','pizza','cafeteria','cafe','comida','antojitos','fondita','quesadilla','quesadillas','torta','tortas','tamal','tamales','chilaquiles','lonche']},
+  {nombres:['supermercado','despensa','alimentos y supermercado'],palabras:['super','supermercado','despensa','abarrotes','walmart','soriana','chedraui']},
+  {nombres:['transporte'],palabras:['uber','didi','taxi','gasolina','metro','camion','autobus','caseta','combi','colectivo']},
+  {nombres:['salud'],palabras:['farmacia','doctor','medico','dentista','medicina']},
+  {nombres:['gimnasio'],palabras:['gym','gimnasio','pesas','entrenamiento']},
+  {nombres:['compras'],palabras:['ropa','zapatos','audifonos','electronica']},
+  {nombres:['recargas'],palabras:['recarga','recargas']},
+  {nombres:['vivienda y servicios','servicios','hogar'],palabras:['luz','agua','internet','telefono','renta','cfe']},
+  {nombres:['entretenimiento'],palabras:['cine','netflix','spotify','videojuegos']},
+  {nombres:['salario','ingresos'],palabras:['nomina','sueldo','salario','quincena']}
+];
+
 /** Reglas deliberadamente limitadas: no usan balances ni envían texto a proveedores. */
 export function prepararCapturaOffline(texto:string,cuentas:Cuenta[],categorias:Categoria[],hoy=fechaFinanciera()):AiActionProposal {
   const limpio=normalizar(texto);
@@ -12,7 +25,7 @@ export function prepararCapturaOffline(texto:string,cuentas:Cuenta[],categorias:
   if(/\b(msi|meses|mensual|recurrente|cada|anual)\b/.test(limpio))throw new Error('MSI y recurrencias necesitan conexión. El texto sigue disponible.');
   const tipo=/^(?:por favor )?(?:(?:registra|anota) (?:un )?)?(transferi|transfiere|transferencia)/.test(limpio)?'TRANSFERENCIA'
     :/^(?:por favor )?(?:(?:registra|anota) (?:un )?)?(recibi|ingrese|ingreso)/.test(limpio)?'INGRESO'
-    :/^(?:por favor )?(?:(?:registra|anota) (?:un )?)?(gaste|gasto|pague|compra|compre)/.test(limpio)?'GASTO':null;
+    :/^(?:por favor )?(?:(?:registra|anota) (?:un )?)?(gaste|gasto|pague|compra|compre|me eche|me gaste|me compre|me cobraron|fui por)\b/.test(limpio)?'GASTO':null;
   if(!tipo)throw new Error('Sin conexión puedes preparar un gasto, ingreso o transferencia con monto. Reportes, IA y voz necesitan conexión.');
   if(/^pague.*\b(tarjeta|deuda|credito)\b/.test(limpio))throw new Error('Indica una transferencia con cuenta origen y destino para pagar una tarjeta.');
   const fechas=texto.match(/\b\d{4}-\d{2}-\d{2}\b/g)??[];
@@ -40,7 +53,26 @@ export function prepararCapturaOffline(texto:string,cuentas:Cuenta[],categorias:
     cuentaId=nombres?activas.find(c=>normalizar(c.nombre)===nombres[1].trim())?.id??null:null;
     cuentaDestinoId=nombres?activas.find(c=>normalizar(c.nombre)===nombres[2].trim())?.id??null:null;
   }
-  const coincidencias=categorias.filter(c=>c.activo&&c.tipo===tipo&&(' '+limpio+' ').includes(' '+normalizar(c.nombre)+' '));
+  const textoCategoria=limpio.replace(/\b(?:con\s+)?etiqueta\s+[\p{L}\d_-]+/gu,' ').replace(/#[\p{L}\d_-]+/gu,' ');
+  const disponibles=categorias.filter(c=>c.activo&&c.tipo===tipo);
+  const contiene=(texto:string,palabra:string)=>new RegExp(`(?:^|[^\\p{L}\\d])${palabra.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}(?=$|[^\\p{L}\\d])`,'u').test(texto);
+  let coincidencias=disponibles.filter(c=>contiene(textoCategoria,normalizar(c.nombre)));
+  if(coincidencias.length>1 && new Set(coincidencias.map(c=>normalizar(c.nombre))).size===1){
+    const personales=coincidencias.filter(c=>c.esPersonalizada);
+    if(personales.length===1)coincidencias=personales;
+  }
+  if(!coincidencias.length){
+    const grupos=categoriasPorConcepto.filter(g=>g.palabras.some(p=>contiene(textoCategoria,p)));
+    coincidencias=disponibles.filter(c=>grupos.some(g=>g.nombres.includes(normalizar(c.nombre))));
+    if(coincidencias.length>1){
+      const personales=coincidencias.filter(c=>c.esPersonalizada);
+      const directas=coincidencias.filter(c=>normalizar(c.nombre)!=='alimentos y supermercado');
+      const pistasComunes=grupos.flatMap(g=>g.palabras.filter(p=>contiene(textoCategoria,p)))
+        .filter(p=>coincidencias.every(c=>grupos.some(g=>g.nombres.includes(normalizar(c.nombre))&&g.palabras.includes(p))));
+      if(pistasComunes.length && directas.length===1)coincidencias=directas;
+      else if(pistasComunes.length && directas.length===0 && personales.length===1)coincidencias=personales;
+    }
+  }
   const cuenta=activas.find(c=>c.id===cuentaId)?.nombre??'Cuenta por seleccionar';
   const destino=tipo==='TRANSFERENCIA'?' a '+(activas.find(c=>c.id===cuentaDestinoId)?.nombre??'destino por seleccionar'):'';
   return {id:crearIdSolicitud(),local:true,version:0,type:'CREATE_TRANSACTION',summary:`${tipo} de ${monto} · ${cuenta}${destino} · ${fecha}`,

@@ -41,7 +41,7 @@ public class AiActionService {
     private static final String ACTIONS = """
             CREATE_TRANSACTION, UPDATE_TRANSACTION, DELETE_TRANSACTION,
             CREATE_ACCOUNT, UPDATE_ACCOUNT, DELETE_ACCOUNT, DEACTIVATE_ACCOUNT, REACTIVATE_ACCOUNT,
-            CREATE_CATEGORY, UPDATE_CATEGORY, DEACTIVATE_CATEGORY, REACTIVATE_CATEGORY,
+            CREATE_CATEGORY, UPDATE_CATEGORY,
             UPSERT_BUDGET, DELETE_BUDGET,
             REGISTER_RECURRING, PAUSE_RECURRING, RESUME_RECURRING, DELETE_RECURRING
             """;
@@ -106,7 +106,6 @@ public class AiActionService {
                 - CREATE_ACCOUNT / UPDATE_ACCOUNT: campos de CuentaRequest y, para UPDATE, cuentaId.
                 - DELETE_ACCOUNT / DEACTIVATE_ACCOUNT / REACTIVATE_ACCOUNT: cuentaId.
                 - CREATE_CATEGORY / UPDATE_CATEGORY: campos de CategoriaRequest y, para UPDATE, categoriaId.
-                - DEACTIVATE_CATEGORY / REACTIVATE_CATEGORY: categoriaId.
                 - UPSERT_BUDGET: campos de PresupuestoRequest.
                 - DELETE_BUDGET: presupuestoId.
                 - REGISTER_RECURRING / PAUSE_RECURRING / RESUME_RECURRING / DELETE_RECURRING:
@@ -156,7 +155,7 @@ public class AiActionService {
             String summary = action.path("summary").asText("").trim();
             JsonNode data = action.path("data");
             if (!isSupported(type) || summary.isBlank() || !data.isObject()) {
-                return new AiActionResult(answer, null, List.of(), report);
+                return new AiActionResult("No pude preparar esa acción. No se ha realizado ningún cambio.", null, List.of(), report);
             }
 
             return crearPropuesta(userId, type, summary, data, answer, report);
@@ -624,7 +623,7 @@ public class AiActionService {
         return switch (type) {
             case "CREATE_TRANSACTION", "UPDATE_TRANSACTION", "DELETE_TRANSACTION",
                     "CREATE_ACCOUNT", "UPDATE_ACCOUNT", "DELETE_ACCOUNT", "DEACTIVATE_ACCOUNT", "REACTIVATE_ACCOUNT",
-                    "CREATE_CATEGORY", "UPDATE_CATEGORY", "DEACTIVATE_CATEGORY", "REACTIVATE_CATEGORY",
+                    "CREATE_CATEGORY", "UPDATE_CATEGORY",
                     "UPSERT_BUDGET", "DELETE_BUDGET",
                     "REGISTER_RECURRING", "PAUSE_RECURRING", "RESUME_RECURRING", "DELETE_RECURRING" -> true;
             default -> false;
