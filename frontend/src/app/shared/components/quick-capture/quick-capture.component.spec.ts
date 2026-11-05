@@ -78,6 +78,12 @@ describe('QuickCaptureComponent processing and gestures', () => {
     expect(component.pantallaVoz()).toBe(true);
     expect(component.voiceMessage()).toContain('guardado');
   });
+  it('espera el catalogo antes de interpretar la transcripcion', () => {
+    const captura=vi.spyOn(TestBed.inject(FinanzasService),'capturaRapidaAi');
+    component.catalogoCargando.set(true); component.content='Gaste 50 en tacos'; component.continuarConVoz();
+    expect(captura).not.toHaveBeenCalled();
+    expect(component.voiceMessage()).not.toContain('Interpretando');
+  });
 
   it('pide aclarar categoria incompleta sin guardar la voz', () => {
     component.cuentasEdicion.set([{id:1,nombre:'Efectivo',tipo:'EFECTIVO',moneda:'MXN',activo:true} as any]);

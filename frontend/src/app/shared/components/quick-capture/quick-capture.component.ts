@@ -72,7 +72,7 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
         @if (transcripcionLista()) {
           <label for="voice-transcript">Revisa y edita tu transcripción</label>
           <textarea id="voice-transcript" class="voice-screen__transcript" [(ngModel)]="content" rows="4"></textarea>
-          <button type="button" class="voice-screen__text" [disabled]="!content.trim() || loading() || confirming() !== null" (click)="continuarConVoz()">Continuar con este texto</button>
+          <button type="button" class="voice-screen__text" [disabled]="!content.trim() || loading() || catalogoCargando() || confirming() !== null" (click)="continuarConVoz()">Continuar con este texto</button>
           <button type="button" class="voice-screen__text" [disabled]="loading() || confirming() !== null" (click)="abrirEscrituraDesdeVoz()">Escribir en el chat</button>
         } @else {
         <div class="voice-screen__transcript" aria-label="Transcripción provisional" aria-live="polite">{{ transcripcionParcial() || (escuchando() ? 'Las palabras aparecerán aquí con unos segundos de retraso.' : 'Tu transcripción aparecerá aquí.') }}</div>
@@ -548,14 +548,14 @@ export class QuickCaptureComponent implements OnDestroy {
   usarTranscripcionParcial(): void { this.content = this.transcripcionParcial(); this.voiceCapture.set(true); this.transcripcionLista.set(true); }
   abrirEscrituraDesdeVoz(): void { this.stopVoice(true); if (this.processingStep()) this.cancelarTranscripcion(); this.voiceCapture.set(false); this.permisoVoz.set(false); this.pantallaVoz.set(false); this.open.set(true); this.mode.set('CAPTURE'); this.changeDetector.detectChanges(); requestAnimationFrame(() => document.getElementById('quick-capture-text')?.focus()); }
   continuarConVoz(): void {
-    if (!this.content.trim() || this.loading() || this.confirming() !== null || !this.offline.conexion()) {
+    if (!this.content.trim() || this.loading() || this.catalogoCargando() || this.confirming() !== null || !this.offline.conexion()) {
       if (!this.offline.conexion()) this.error.set('Conéctate para guardar la captura de voz.');
       return;
     }
     this.guardadoVozCompletado.set(false); this.voiceCapture.set(true); this.confirmarVozAlResolver = true;
     this.voiceMessage.set('Interpretando tu mensaje…');
     this.submit();
-    if (!this.loading()) this.confirmarVozAlResolver = false;
+    if (!this.loading() && this.confirmarVozAlResolver) { this.confirmarVozAlResolver = false; this.voiceMessage.set(''); }
   }
   revisarMovimientosVoz(): void { this.close(); void this.router.navigate(['/transacciones']); }
   cambiarModo(mode: CaptureMode): void {
