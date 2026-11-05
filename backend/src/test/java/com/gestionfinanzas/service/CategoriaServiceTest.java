@@ -6,6 +6,7 @@ import com.gestionfinanzas.model.entity.Usuario;
 import com.gestionfinanzas.model.enums.TipoTransaccion;
 import com.gestionfinanzas.repository.CategoriaRepository;
 import com.gestionfinanzas.repository.PresupuestoRepository;
+import com.gestionfinanzas.repository.PlantillaRecurrenteRepository;
 import com.gestionfinanzas.repository.TransaccionRepository;
 import com.gestionfinanzas.repository.UsuarioRepository;
 import org.junit.jupiter.api.Test;
@@ -25,8 +26,9 @@ class CategoriaServiceTest {
     private final UsuarioRepository usuarioRepository = mock(UsuarioRepository.class);
     private final TransaccionRepository transaccionRepository = mock(TransaccionRepository.class);
     private final PresupuestoRepository presupuestoRepository = mock(PresupuestoRepository.class);
+    private final PlantillaRecurrenteRepository plantillas = mock(PlantillaRecurrenteRepository.class);
     private final CategoriaService service = new CategoriaService(
-            categoriaRepository, usuarioRepository, transaccionRepository, presupuestoRepository
+            categoriaRepository, usuarioRepository, transaccionRepository, presupuestoRepository, plantillas
     );
     @Test
     void noDuplicaCategoriaCreadaPorUnAvisoMientrasLaCreacionManualEspera() {
@@ -89,5 +91,17 @@ class CategoriaServiceTest {
         assertThrows(IllegalArgumentException.class, () -> service.actualizarCategoria(7L, 4L,
                 new CategoriaRequest(" A ", TipoTransaccion.GASTO, "car", "#123456")));
         org.mockito.Mockito.verify(categoriaRepository, org.mockito.Mockito.never()).save(any());
+    }
+    @Test void eliminaCategoriaSinReferencias() {
+        var categoria=Categoria.builder().id(4L).nombre("Prueba").build();
+        when(categoriaRepository.findByIdAndUsuarioId(4L,7L)).thenReturn(Optional.of(categoria));
+        service.eliminarCategoria(7L,4L); verify(categoriaRepository).delete(categoria);
+    }
+    @Test void rechazaEliminarCategoriaConRecurrencias() {
+        var categoria=Categoria.builder().id(4L).nombre("Prueba").build();
+        when(categoriaRepository.findByIdAndUsuarioId(4L,7L)).thenReturn(Optional.of(categoria));
+        when(plantillas.existsByCategoriaId(4L)).thenReturn(true);
+        assertThrows(IllegalArgumentException.class,()->service.eliminarCategoria(7L,4L));
+        org.mockito.Mockito.verify(categoriaRepository,org.mockito.Mockito.never()).delete(any());
     }
 }

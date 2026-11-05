@@ -7,6 +7,7 @@ import com.gestionfinanzas.model.entity.Usuario;
 import com.gestionfinanzas.model.enums.TipoTransaccion;
 import com.gestionfinanzas.repository.CategoriaRepository;
 import com.gestionfinanzas.repository.PresupuestoRepository;
+import com.gestionfinanzas.repository.PlantillaRecurrenteRepository;
 import com.gestionfinanzas.repository.TransaccionRepository;
 import com.gestionfinanzas.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ public class CategoriaService {
     private final UsuarioRepository usuarioRepository;
     private final TransaccionRepository transaccionRepository;
     private final PresupuestoRepository presupuestoRepository;
+    private final PlantillaRecurrenteRepository plantillaRecurrenteRepository;
 
     @Transactional(readOnly = true)
     public List<CategoriaResponse> listarCategorias(Long usuarioId) {
@@ -91,6 +93,18 @@ public class CategoriaService {
                 .orElseThrow(() -> new IllegalArgumentException("Categoría personalizada no encontrada"));
         categoria.setActivo(activa);
         categoriaRepository.save(categoria);
+    }
+
+    @Transactional
+    public void eliminarCategoria(Long usuarioId, Long categoriaId) {
+        Categoria categoria = categoriaRepository.findByIdAndUsuarioId(categoriaId, usuarioId)
+                .orElseThrow(() -> new IllegalArgumentException("Categor?a personalizada no encontrada"));
+        if (transaccionRepository.existsByCategoriaId(categoriaId)
+                || presupuestoRepository.existsByCategoriaId(categoriaId)
+                || plantillaRecurrenteRepository.existsByCategoriaId(categoriaId)) {
+            throw new IllegalArgumentException("Esta categor?a est? vinculada a movimientos, presupuestos o recurrencias y no se puede eliminar conservando esos registros.");
+        }
+        categoriaRepository.delete(categoria);
     }
 
     @Transactional(readOnly = true)
