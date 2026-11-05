@@ -169,6 +169,10 @@ export class FinanzasService {
     return this.http.put<ApiResponse<Categoria>>(`${this.baseUrl}/categorias/${id}`, payload);
   }
 
+  reasignarCategoriaActivos(id: number, categoriaDestinoId: number): Observable<ApiResponse<{presupuestos:number; recurrencias:number}>> {
+    return this.http.post<ApiResponse<{presupuestos:number; recurrencias:number}>>(`${this.baseUrl}/categorias/${id}/reasignar-activos`, {categoriaDestinoId});
+  }
+
   eliminarCategoria(id: number): Observable<ApiResponse<void>> {
     return this.http.delete<ApiResponse<void>>(`${this.baseUrl}/categorias/${id}`);
   }

@@ -108,6 +108,35 @@ public class CategoriaService {
         categoriaRepository.delete(categoria);
     }
 
+    public record Reasignacion(int presupuestos, int recurrencias) {}
+
+    @Transactional
+    public Reasignacion reasignarActivos(Long usuarioId, Long origenId, Long destinoId) {
+        if (origenId.equals(destinoId)) throw new IllegalArgumentException("Elige una categor\u00eda distinta.");
+        Categoria origen = categoriaRepository.findByIdAndUsuarioId(origenId, usuarioId)
+                .orElseThrow(() -> new IllegalArgumentException("Categor\u00eda de origen no encontrada."));
+        Categoria destino = categoriaRepository.findAccessibleById(destinoId, usuarioId)
+                .orElseThrow(() -> new IllegalArgumentException("Categor\u00eda de destino no disponible."));
+        if (origen.getTipo() != destino.getTipo()) throw new IllegalArgumentException("Elige una categor\u00eda del mismo tipo.");
+        java.time.YearMonth actual = java.time.YearMonth.from(CalendarioFinanciero.hoy());
+        var presupuestos = presupuestoRepository.findAllByUsuarioIdOrderByAnioDescMesDescIdAsc(usuarioId).stream()
+                .filter(p -> p.getCategoria().getId().equals(origenId))
+                .filter(p -> !java.time.YearMonth.of(p.getAnio(), p.getMes()).isBefore(actual)).toList();
+        for (var p : presupuestos) {
+            Long listaId = p.getLista() == null ? null : p.getLista().getId();
+            var existente = listaId == null
+                    ? presupuestoRepository.findByUsuarioIdAndCategoriaIdAndMesAndAnioAndListaIsNull(usuarioId, destinoId, p.getMes(), p.getAnio())
+                    : presupuestoRepository.findByUsuarioIdAndCategoriaIdAndMesAndAnioAndListaId(usuarioId, destinoId, p.getMes(), p.getAnio(), listaId);
+            if (existente.isPresent()) throw new IllegalArgumentException("La categor\u00eda de destino ya tiene un presupuesto en el mismo periodo y lista. Resuelve el conflicto antes de continuar.");
+        }
+        var recurrentes = plantillaRecurrenteRepository.findAllByUsuarioIdOrderBySiguienteFechaAsc(usuarioId).stream()
+                .filter(p -> p.isActiva() && p.getCategoria() != null && p.getCategoria().getId().equals(origenId)).toList();
+        presupuestos.forEach(p -> p.setCategoria(destino));
+        recurrentes.forEach(p -> p.setCategoria(destino));
+        presupuestoRepository.saveAll(presupuestos); plantillaRecurrenteRepository.saveAll(recurrentes);
+        return new Reasignacion(presupuestos.size(), recurrentes.size());
+    }
+
     @Transactional(readOnly = true)
     public Categoria obtenerCategoriaAccesible(Long categoriaId, Long usuarioId) {
         return categoriaRepository.findAccessibleById(categoriaId, usuarioId)

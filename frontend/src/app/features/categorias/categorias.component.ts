@@ -77,6 +77,7 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
               </div>
               <div class="flex shrink-0 flex-wrap">
                 <button type="button" (click)="abrirEditar(categoria)" class="min-h-11 px-2 text-slate-500" [attr.aria-label]="'Editar ' + categoria.nombre">Editar</button>
+                <button type="button" (click)="abrirReasignacion(categoria)" class="min-h-11 px-2 text-slate-600" [attr.aria-label]="'Reasignar referencias de ' + categoria.nombre">Reasignar</button>
                 <button type="button" (click)="eliminarCategoria(categoria)" class="min-h-11 px-2 text-rose-600" [attr.aria-label]="'Eliminar ' + categoria.nombre">Eliminar</button>
               </div>
             </article>
@@ -84,6 +85,22 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
         </section>
       }
     </main>
+
+    @if (categoriaReasignar(); as origen) {
+      <div class="fixed inset-0 z-40 bg-slate-900/60 flex items-center justify-center p-4">
+        <section appFocusTrap (focusTrapEscape)="cerrarReasignacion()" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="reasignar-titulo" class="bg-white rounded-2xl w-full max-w-md p-5 space-y-4">
+          <h2 id="reasignar-titulo" class="text-lg font-bold">Reasignar {{ origen.nombre }}</h2>
+          <p class="text-sm text-slate-600">Se moverán los presupuestos actuales o futuros y las recurrencias activas. Los movimientos anteriores no cambiaran. Esta acción no elimina la categoría.</p>
+          <label for="categoria-destino" class="block font-semibold">Categoría de destino</label>
+          <select id="categoria-destino" [(ngModel)]="destinoReasignar" class="w-full min-h-11 rounded-xl border border-slate-300 px-3">
+            <option [ngValue]="null">Selecciona una categoría</option>
+            @for (destino of destinosReasignacion(); track destino.id) {<option [ngValue]="destino.id">{{ destino.nombre }}</option>}
+          </select>
+          @if (errorReasignacion()) {<p role="alert" class="text-rose-700">{{ errorReasignacion() }}</p>}
+          <div class="flex flex-wrap justify-end gap-2"><button type="button" (click)="cerrarReasignacion()" [disabled]="reasignando()" class="min-h-11 px-3">Cancelar</button><button type="button" (click)="reasignarActivos()" [disabled]="reasignando() || destinoReasignar === null" class="min-h-11 px-4 rounded-xl bg-emerald-700 text-white">Reasignar</button></div>
+        </section>
+      </div>
+    }
 
     @if (modalAbierto()) {
       <div class="fixed inset-0 z-40 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-2 sm:p-4">
@@ -185,6 +202,12 @@ export class CategoriasComponent implements OnInit, OnDestroy {
   private readonly perfilService = inject(PerfilService);
 
   readonly categorias = signal<Categoria[]>([]);
+  readonly categoriaReasignar = signal<Categoria | null>(null);
+  readonly destinosReasignacion = signal<Categoria[]>([]);
+  readonly errorReasignacion = signal('');
+  readonly reasignando = signal(false);
+  destinoReasignar: number | null = null;
+
   readonly iconosDisponibles = ICONOS_CATEGORIA;
   readonly categoriasVisibles = () => this.categorias();
   readonly loading = signal(true);
@@ -445,6 +468,22 @@ export class CategoriasComponent implements OnInit, OnDestroy {
         this.guardando.set(false);
         this.modalError.set(mensajeDeError(err, 'No se pudo guardar la categoría.'));
       }
+    });
+  }
+
+  abrirReasignacion(origen: Categoria): void {
+    this.categoriaReasignar.set(origen); this.destinoReasignar=null; this.errorReasignacion.set(''); this.destinosReasignacion.set([]);
+    this.finanzasService.getCategorias().subscribe({next:r=>this.destinosReasignacion.set((r.data??[]).filter(c=>c.activo && c.tipo===origen.tipo && c.id!==origen.id)),
+      error:e=>this.errorReasignacion.set(mensajeDeError(e,'No se pudieron cargar las categorías.'))});
+  }
+  cerrarReasignacion(): void { if (!this.reasignando()) this.categoriaReasignar.set(null); }
+  reasignarActivos(): void {
+    const origen=this.categoriaReasignar(), destino=this.destinoReasignar;
+    if (!origen || destino===null || this.reasignando()) return;
+    this.reasignando.set(true); this.errorReasignacion.set('');
+    this.finanzasService.reasignarCategoriaActivos(origen.id,destino).subscribe({
+      next:r=>{this.reasignando.set(false);if(!r.success){this.errorReasignacion.set(r.message);return;}this.categoriaReasignar.set(null);this.toastService.success('Referencias reasignadas.');},
+      error:e=>{this.reasignando.set(false);this.errorReasignacion.set(mensajeDeError(e,'No se pudieron reasignar las referencias.'));}
     });
   }
 

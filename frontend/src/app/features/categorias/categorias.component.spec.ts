@@ -11,6 +11,8 @@ describe('CategoriasComponent category management', () => {
   let fixture: ReturnType<typeof TestBed.createComponent<CategoriasComponent>>;
   let finanzas: {
     getMisCategorias: ReturnType<typeof vi.fn>;
+    getCategorias: ReturnType<typeof vi.fn>;
+    reasignarCategoriaActivos: ReturnType<typeof vi.fn>;
     getPresupuestos: ReturnType<typeof vi.fn>;
     crearCategoria: ReturnType<typeof vi.fn>;
     actualizarCategoria: ReturnType<typeof vi.fn>;
@@ -33,6 +35,8 @@ describe('CategoriasComponent category management', () => {
   beforeEach(async () => {
     finanzas = {
       getMisCategorias: vi.fn(() => of({ success: true, message: '', data: [category] })),
+      getCategorias: vi.fn(() => of({success:true,data:[category,{...category,id:5,nombre:'Comida'}]})),
+      reasignarCategoriaActivos: vi.fn(() => of({success:true,data:{presupuestos:1,recurrencias:1}})),
       getPresupuestos: vi.fn(() => of({ success: true, message: '', data: budgetSummary })),
       crearCategoria: vi.fn(() => of({ success: true, message: '', data: category })),
       actualizarCategoria: vi.fn(() => of({ success: true, message: '', data: category })),
@@ -54,6 +58,14 @@ describe('CategoriasComponent category management', () => {
   });
 
   afterEach(() => fixture.destroy());
+
+  it('solo reasigna al elegir destino y confirmar', () => {
+    const component=fixture.componentInstance; component.abrirReasignacion(category);
+    expect(component.destinosReasignacion().map(c=>c.id)).toEqual([5]);
+    component.reasignarActivos(); expect(finanzas.reasignarCategoriaActivos).not.toHaveBeenCalled();
+    component.destinoReasignar=5; component.reasignarActivos();
+    expect(finanzas.reasignarCategoriaActivos).toHaveBeenCalledWith(4,5);
+  });
 
   it('limits a category name to 20 characters and submits its chosen color', () => {
     const component = fixture.componentInstance;

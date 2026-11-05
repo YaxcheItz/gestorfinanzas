@@ -51,6 +51,23 @@ class ListasEtiquetasIntegrationTest {
         return transacciones.listarConFiltros(usuario,filtro(destino,texto,autor),PageRequest.of(0,10,Sort.by(Sort.Direction.DESC,"fecha","id")));
     }
     void invitar(String rol) {var invitacion=listas.invitar(a.getId(),lista,rol); listas.unirse(b.getId(),invitacion.codigo());}
+    @Autowired PresupuestoRepository presupuestosRepo;
+    @Autowired PlantillaRecurrenteRepository plantillasRepo;
+    @Autowired CategoriaRepository categoriasRepo;
+    @Test void reasignacionConservaMovimientoAnteriorYReasignaSoloActivos() {
+        var origen=categorias.crearCategoria(a.getId(),new CategoriaRequest("Origen",TipoTransaccion.GASTO,"car","#123456"));
+        var destino=categorias.crearCategoria(a.getId(),new CategoriaRequest("Destino",TipoTransaccion.GASTO,"car","#123456"));
+        var mes=java.time.YearMonth.from(CalendarioFinanciero.hoy());
+        var entidad=categoriasRepo.findById(origen.id()).orElseThrow();
+        var presupuesto=presupuestosRepo.save(Presupuesto.builder().usuario(a).categoria(entidad).mes(mes.getMonthValue()).anio(mes.getYear()).moneda("MXN").montoLimite(new BigDecimal("100")).build());
+        var recurrente=plantillasRepo.save(PlantillaRecurrente.builder().usuario(a).cuenta(cuentaA).categoria(entidad).tipo(TipoTransaccion.GASTO).monto(new BigDecimal("10")).frecuencia(FrecuenciaRecurrencia.MENSUAL).siguienteFecha(CalendarioFinanciero.hoy()).activa(true).build());
+        var movimiento=transacciones.crearTransaccion(a.getId(),new TransaccionRequest(cuentaA.getId(),null,origen.id(),TipoTransaccion.GASTO,new BigDecimal("25"),null,CalendarioFinanciero.hoy(),"Prueba",null,null,null,null,null,List.of()));
+        var resultado=categorias.reasignarActivos(a.getId(),origen.id(),destino.id());
+        assertEquals(1,resultado.presupuestos()); assertEquals(1,resultado.recurrencias());
+        assertEquals(destino.id(),presupuestosRepo.findById(presupuesto.getId()).orElseThrow().getCategoria().getId());
+        assertEquals(destino.id(),plantillasRepo.findById(recurrente.getId()).orElseThrow().getCategoria().getId());
+        assertEquals(origen.id(),transacciones.obtenerPorId(a.getId(),movimiento.id()).categoriaId());
+    }
     @Test void propietarioCambiaRolSinPerderHistorialNiTocarSaldos() {
         invitar("EDITOR");
         var movimiento=transacciones.crearTransaccion(b.getId(),gasto(cuentaB,lista,"Cena de Bruno"));
