@@ -660,7 +660,7 @@ export class DashboardComponent implements OnInit {
   formFecha = new Date().toISOString().split('T')[0];
   formNotas = '';
   formEtiquetasTexto = '';
-  readonly etiquetasSugeridas = ['amigos', 'trabajo', 'vacaciones', 'familia', 'hogar', 'pareja'];
+  readonly etiquetasSugeridas = signal<string[]>([]);
 
   alternarEtiquetaSugerida(nombre: string): void {
     const limpia = nombre.replace(/^#/, '').trim();
@@ -1115,6 +1115,7 @@ export class DashboardComponent implements OnInit {
   }
 
   abrirModal(params: TipoTransaccion | { tipo: TipoTransaccion; categoriaId?: number | null } = 'GASTO'): void {
+    this.finanzasService.getEtiquetasPersonales().subscribe({next:r=>this.etiquetasSugeridas.set((r.data ?? []).map(e=>e.nombre)),error:()=>this.etiquetasSugeridas.set([])});
     const tipo = typeof params === 'string' ? params : params.tipo;
     const catId = typeof params === 'object' ? params.categoriaId : null;
 

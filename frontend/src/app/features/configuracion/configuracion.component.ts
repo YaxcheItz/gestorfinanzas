@@ -264,6 +264,12 @@ import {
         </div>
       </div></details>
 
+      <div class="settings-disclosure rounded-2xl border border-slate-200 bg-white p-4 sm:p-6">
+        <h2 class="font-semibold">Etiquetas</h2>
+        <p class="mt-1 text-sm text-slate-500">Organiza tus etiquetas personales.</p>
+        <a routerLink="/etiquetas" class="inline-flex min-h-11 items-center rounded-xl border border-slate-300 px-4 mt-3 font-semibold">Administrar etiquetas</a>
+      </div>
+
       <details id="recurring" class="settings-disclosure scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6" [open]="seccionAbierta() === 'recurring'" (toggle)="alternarSeccion('recurring', $event)">
         <summary><strong>Movimientos recurrentes</strong><span>Revisa tus registros programados</span></summary>
         <div class="settings-disclosure__content">

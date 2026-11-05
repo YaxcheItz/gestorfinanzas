@@ -143,6 +143,16 @@ export class FinanzasService {
   }
 
   // --- Categorías ---
+  getEtiquetasPersonales(): Observable<ApiResponse<{id:number; nombre:string}[]>> {
+    return this.http.get<ApiResponse<{id:number; nombre:string}[]>>(`${this.baseUrl}/etiquetas`);
+  }
+  crearEtiquetaPersonal(nombre: string): Observable<ApiResponse<{id:number; nombre:string}>> {
+    return this.http.post<ApiResponse<{id:number; nombre:string}>>(`${this.baseUrl}/etiquetas`, {nombre});
+  }
+  eliminarEtiquetaPersonal(id: number): Observable<ApiResponse<void>> {
+    return this.http.delete<ApiResponse<void>>(`${this.baseUrl}/etiquetas/${id}`);
+  }
+
   getCategorias(): Observable<ApiResponse<Categoria[]>> {
     return this.http.get<ApiResponse<Categoria[]>>(`${this.baseUrl}/categorias`);
   }
