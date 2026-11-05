@@ -196,6 +196,13 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
           </div>
           @if (!seguirFinal()) {<button type="button" class="capture-jump-latest" (click)="irAlFinal()">Ir al último mensaje ↓</button>}
           @if (permisoVoz()) {<section class="voice-permission" role="status"><p>El audio se enviará para transcribirlo. Revisa el movimiento antes de guardarlo.</p><button type="button" (click)="permitirVoz()">Permitir audio y grabar</button></section>}
+          @if (etiquetasPersonales().length) {
+            <div class="capture-tags" aria-label="Etiquetas disponibles">
+              @for (etiqueta of etiquetasPersonales(); track etiqueta.id) {
+                <button type="button" (click)="insertarEtiqueta(etiqueta.nombre)" [disabled]="loading()" [attr.aria-label]="'A?adir etiqueta ' + etiqueta.nombre">#{{ etiqueta.nombre }}</button>
+              }
+            </div>
+          }
           <form class="capture-chat__composer" (ngSubmit)="submit()">
             <label class="sr-only" for="quick-capture-text">Escribe el movimiento que quieres registrar</label>
             <textarea id="quick-capture-text" name="content" [(ngModel)]="content" (ngModelChange)="alCambiarTexto()" (keydown.enter)="enviarConEnter($event)" rows="1" maxlength="1200" enterkeyhint="send" placeholder="Ej. Café 45 #trabajo" [readOnly]="loading() || escuchando() || stopping()" [attr.aria-busy]="loading()"></textarea>
@@ -254,6 +261,7 @@ export class QuickCaptureComponent implements OnDestroy {
   readonly pantallaVoz = signal(false);
   readonly transcripcionParcial = signal('');
   readonly transcripcionLista = signal(false);
+  readonly etiquetasPersonales = signal<{id:number; nombre:string}[]>([]);
   private readonly styleAssets = inject(FeatureStylesService).load('capture');
   private readonly captureLauncher = inject(CaptureLauncherService);
   readonly offline=inject(MovimientosOfflineService);
@@ -330,7 +338,7 @@ export class QuickCaptureComponent implements OnDestroy {
         this.chatGeneration++;
         this.operaciones.unsubscribe(); this.operaciones=new Subscription();
         this.confirming.set(null); this.reportMessages.set([]); this.weeklyTransactions.set([]);
-        this.categories.set([]); this.cuentasEdicion.set([]); this.borrador={};
+        this.categories.set([]); this.cuentasEdicion.set([]); this.etiquetasPersonales.set([]); this.borrador={};
         this.pendingCaptureText.set(''); this.sourceInput.set(''); this.voiceMessage.set(''); this.transcripcionParcial.set(''); this.aiConsentRequired.set(false);
         this.reportLoading.set(false); this.reportError.set(''); this.error.set(''); this.editando.set(null);
         this.recuperando.set(false);
@@ -626,6 +634,13 @@ export class QuickCaptureComponent implements OnDestroy {
     const etiquetas = proposal.data['etiquetas'];
     return Array.isArray(etiquetas) ? etiquetas.filter((value): value is string => typeof value === 'string') : [];
   }
+  insertarEtiqueta(nombre: string): void {
+    const existente = new Set((this.content.match(/(?<![\p{L}\p{N}_])#[\p{L}\p{N}][\p{L}\p{N}_-]*/gu) ?? []).map(tag => tag.slice(1).toLocaleLowerCase()));
+    if (existente.has(nombre.toLocaleLowerCase())) return;
+    const siguiente = `${this.content.trim()} #${nombre}`.trim();
+    if (siguiente.length > 1200) { this.error.set('El mensaje es demasiado largo para a?adir la etiqueta.'); return; }
+    this.content = siguiente; this.alCambiarTexto();
+  }
   necesitaCategoria(proposal: AiActionProposal): boolean {
     return proposal.type === 'CREATE_TRANSACTION' && proposal.data['tipo'] !== 'TRANSFERENCIA' && !proposal.data['categoriaId'];
   }
@@ -828,6 +843,11 @@ export class QuickCaptureComponent implements OnDestroy {
     this.captureLauncher.attach('chat');
     this.seguirFinal.set(true);
     this.cargarCategoriasCaptura();
+    const generacion=this.chatGeneration;
+    this.operaciones.add(this.finanzas.getEtiquetasPersonales().subscribe({
+      next:r=>{if(generacion===this.chatGeneration)this.etiquetasPersonales.set(r.data??[]);},
+      error:()=>{if(generacion===this.chatGeneration)this.etiquetasPersonales.set([]);}
+    }));
     const detail = (event as CustomEvent<{ tipo?: string; content?: string; voz?: boolean }>).detail;
     if (detail?.voz === true) { this.transcripcionLista.set(false); this.transcripcionParcial.set(''); }
     this.pantallaVoz.set(detail?.voz === true);

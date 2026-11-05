@@ -1487,3 +1487,8 @@ Se precisa que `usage_unavailable` cuenta solo eventos emitidos tras procesar el
 
 ### Correccion de comprobacion de migracion
 - PR #216 fallo en comprobacion PostgreSQL; las pruebas aun esperaban V14 y usaban V15 para fallo simulado, que ahora coincide con la migracion del catalogo. Rama correcciones/migracion-etiquetas-ci desde develop adelantada con #216: actualiza las expectativas y agrega caso V14 a V15 que comprueba preservacion de etiquetas historicas. Falta confirmar la causa en el log de CI y ejecutar en PostgreSQL real: Docker local no esta disponible. No se han integrado ni publicado estos cambios.
+
+### Etiquetas disponibles en captura escrita
+- PR #217: PostgreSQL y recuperacion aprobaron para e36b881; CI integral aun debe comprobarse al momento de integrar. El fallo anterior se confirmo en dos expectativas fijadas a V14.
+- Rama mejoras/etiquetas-captura-escrita desde develop adelantada con #217: muestra etiquetas personales al redactar y permite agregarlas sin duplicarlas, sin guardar movimiento. Build Angular y 35 pruebas de captura pasaron; CI, pruebas visuales y APK pendientes.
+- Siguen pendientes respaldo/restauracion del catalogo, categorias vinculadas, revision minimalista final, integracion y publicacion. Sin modificar finanzas reales.

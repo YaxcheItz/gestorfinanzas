@@ -576,3 +576,6 @@ html .monai-theme #quick-capture-panel .capture-panel__head strong{color:var(--k
 .chat-evidence small{display:block;font-size:12px;opacity:.75}
 
 textarea.voice-screen__transcript { display: block; box-sizing: border-box; width: 100%; resize: vertical; font: inherit; }
+
+.capture-tags { display:flex; gap:.5rem; overflow-x:auto; padding:.25rem 0; }
+.capture-tags button { min-height:44px; flex:none; padding:0 .8rem; border-radius:999px; background:var(--kaptal-surface-subtle); color:var(--kaptal-content); font-weight:600; }

@@ -42,6 +42,7 @@ describe('QuickCaptureComponent processing and gestures', () => {
         { provide: AuthService, useValue: { currentUser: usuario } },
         { provide: FinanzasService, useValue: {
           getCategorias: () => of({data: []}),
+          getEtiquetasPersonales: () => of({data: [{id:4,nombre:'viaje'}]}),
           getCuentas: () => of({data: []}),
           chatWithAi: vi.fn(() => of({success:true,data:{answer:'Reporte',actions:[]}})),
           getPropuestasAi: vi.fn(() => of({success:true,data:[]})),
@@ -65,6 +66,14 @@ describe('QuickCaptureComponent processing and gestures', () => {
   });
 
   afterEach(() => { fixture.destroy(); vi.useRealTimers(); vi.unstubAllGlobals(); });
+
+  it('agrega una etiqueta disponible al texto sin duplicarla ni guardar', () => {
+    component.abrirCapturaDesdeAcceso(new CustomEvent('kaptal-abrir-captura-chat',{detail:{voz:true}}));
+    expect(component.etiquetasPersonales()).toEqual([{id:4,nombre:'viaje'}]);
+    component.content='Gaste 50 en cafe'; component.insertarEtiqueta('viaje'); component.insertarEtiqueta('viaje');
+    expect(component.content).toBe('Gaste 50 en cafe #viaje');
+    expect(TestBed.inject(FinanzasService).confirmAiAction).not.toHaveBeenCalled();
+  });
 
   it('abre voz por separado sin iniciar el microfono y permite volver a escribir', () => {
     component.abrirCapturaDesdeAcceso(new CustomEvent('kaptal-abrir-captura-chat', { detail: { voz: true } }));
