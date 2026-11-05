@@ -83,13 +83,14 @@ export class FinanzasService {
     return this.http.post<ApiResponse<AiChatResponse>>(`${this.baseUrl}/asistente/chat`, request);
   }
 
-  capturaRapidaAi(content: string, consentimientoDatosFinancieros: boolean, capturaPorVoz = false, contexto?: string | null, listaId = this.listas.activaId()): Observable<ApiResponse<AiChatResponse>> {
+  capturaRapidaAi(content: string, consentimientoDatosFinancieros: boolean, capturaPorVoz = false, contexto?: string | null, listaId = this.listas.activaId(), historial: AiChatMessage[] = []): Observable<ApiResponse<AiChatResponse>> {
     return this.http.post<ApiResponse<AiChatResponse>>(`${this.baseUrl}/asistente/captura-rapida`, {
       content,
       consentimientoDatosFinancieros,
       capturaPorVoz,
       ...(listaId == null ? {} : { listaId }),
-      contexto
+      contexto,
+      ...(consentimientoDatosFinancieros && historial.length ? { historial } : {})
     });
   }
 

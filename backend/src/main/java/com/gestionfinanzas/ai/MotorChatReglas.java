@@ -21,13 +21,16 @@ public final class MotorChatReglas {
     private static final Pattern FECHA = Pattern.compile("\\b(\\d{4}-\\d{2}-\\d{2}|\\d{1,2}/\\d{1,2}(?:/\\d{4})?)\\b");
     private static final Pattern RANGO = Pattern.compile("\\b(?:del|desde)\\s+(\\d{4}-\\d{2}-\\d{2})\\s+(?:al|hasta)\\s+(\\d{4}-\\d{2}-\\d{2})\\b");
     private static final Map<String, Set<String>> DICCIONARIO = Map.ofEntries(
-        Map.entry("comida", Set.of("tacos","taco","comida","restaurante","restaurantes","cafe","cafeteria","pizza","hamburguesa","desayuno","almuerzo","cena","comedor","taqueria","pizzeria","panaderia")),
+        Map.entry("comida", Set.of("tacos","taco","comida","restaurante","restaurantes","cafe","cafeteria","pizza","hamburguesa","desayuno","almuerzo","cena","comedor","taqueria","pizzeria","panaderia","antojitos","fondita","quesadillas","tortas","tamales","chilaquiles")),
         Map.entry("supermercado", Set.of("super","supermercado","despensa","abarrotes","walmart","soriana","chedraui")),
         Map.entry("alimentos", Set.of("super","despensa","abarrotes","tacos","comida","restaurante","restaurantes")),
-        Map.entry("transporte", Set.of("uber","didi","taxi","gasolina","metro","camion","autobus","transporte","peaje","estacionamiento")),
-        Map.entry("servicios", Set.of("luz","agua","internet","telefono","gas","cfe")),
+        Map.entry("transporte", Set.of("uber","didi","taxi","gasolina","metro","camion","autobus","transporte","peaje","estacionamiento","caseta","uberx","colectivo")),
+        Map.entry("servicios", Set.of("luz","agua","internet","telefono","gas","cfe","renta","alquiler")),
         Map.entry("hogar", Set.of("renta","hogar","muebles","alquiler")),
         Map.entry("salud", Set.of("farmacia","doctor","medicina","hospital","salud","dentista","medico")),
+        Map.entry("gimnasio", Set.of("gym","gimnasio","pesas","entrenamiento")),
+        Map.entry("compras", Set.of("ropa","zapatos","audifonos","electronica")),
+        Map.entry("recargas", Set.of("recarga","recargas")),
         Map.entry("entretenimiento", Set.of("cine","netflix","spotify","juegos","entretenimiento")),
         Map.entry("salario", Set.of("nomina","sueldo","salario","quincena")),
         Map.entry("ingresos", Set.of("nomina","sueldo","salario","quincena"))
@@ -211,12 +214,34 @@ public final class MotorChatReglas {
         CategoriaResponse categoria=null;
         if (!transfer) {
             List<CategoriaResponse> opciones=categorias.stream().filter(c -> c.activo()&&c.tipo()==tipoFinal).toList();
-            // Nombre exacto primero; luego memoria confirmada del concepto; finalmente diccionario de palabras.
-            categoria=opciones.stream().filter(c -> palabra(texto,normalizar(c.nombre()))).max(Comparator.comparingInt(c -> c.nombre().length())).orElse(null);
+            // Solo seleccionar automaticamente si la evidencia identifica una categoria unica.
+            List<CategoriaResponse> exactas=opciones.stream().filter(c -> palabra(texto,normalizar(c.nombre()))).toList();
+            if(exactas.size()==1) categoria=exactas.getFirst();
+            else if(exactas.size()>1 && exactas.stream().map(c -> normalizar(c.nombre())).distinct().count()==1) {
+                var personales=exactas.stream().filter(CategoriaResponse::esPersonalizada).toList();
+                if(personales.size()==1) categoria=personales.getFirst();
+            }
             if(categoria==null && !concepto.isBlank()) {
                 Set<String> palabras=new HashSet<>(Arrays.asList(concepto.split("\\W+")));
-                categoria=recientes.stream().filter(t -> t.tipo()==tipoFinal && t.categoriaId()!=null && t.descripcion()!=null && Arrays.stream(normalizar(t.descripcion()).split("\\W+")).anyMatch(w -> w.length()>2&&palabras.contains(w))).map(t -> opciones.stream().filter(c -> c.id().equals(t.categoriaId())).findFirst().orElse(null)).filter(Objects::nonNull).findFirst().orElse(null);
-                if(categoria==null) categoria=opciones.stream().filter(c -> DICCIONARIO.entrySet().stream().anyMatch(e -> normalizar(c.nombre()).contains(e.getKey()) && !Collections.disjoint(e.getValue(),palabras))).findFirst().orElse(null);
+                if(exactas.isEmpty()) {
+                    List<CategoriaResponse> porDiccionario=opciones.stream().filter(c -> DICCIONARIO.entrySet().stream().anyMatch(e -> normalizar(c.nombre()).contains(e.getKey()) && !Collections.disjoint(e.getValue(),palabras))).toList();
+                    if(porDiccionario.size()==1) categoria=porDiccionario.getFirst();
+                    else if(porDiccionario.size()>1) {
+                        var personales=porDiccionario.stream().filter(CategoriaResponse::esPersonalizada).toList();
+                        var palabrasComunes=new HashSet<>(palabras);
+                        for(var candidata:porDiccionario) {
+                            var pistas=new HashSet<String>();
+                            DICCIONARIO.forEach((nombre,alias)->{if(normalizar(candidata.nombre()).contains(nombre)) pistas.addAll(alias);});
+                            palabrasComunes.retainAll(pistas);
+                        }
+                        if(personales.size()==1 && !palabrasComunes.isEmpty()) categoria=personales.getFirst();
+                    }
+                    else if(porDiccionario.isEmpty()) {
+                        var ids=recientes.stream().filter(t -> t.tipo()==tipoFinal && t.categoriaId()!=null && t.descripcion()!=null && Arrays.stream(normalizar(t.descripcion()).split("\\W+")).anyMatch(w -> w.length()>2&&palabras.contains(w))).map(TransaccionResponse::categoriaId).collect(java.util.stream.Collectors.toSet());
+                        var historicas=opciones.stream().filter(c -> ids.contains(c.id())).toList();
+                        if(historicas.size()==1) categoria=historicas.getFirst();
+                    }
+                }
             }
         }
         Map<String,Object> datos=new LinkedHashMap<>();

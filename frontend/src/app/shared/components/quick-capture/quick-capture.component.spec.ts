@@ -67,6 +67,93 @@ describe('QuickCaptureComponent processing and gestures', () => {
 
   afterEach(() => { fixture.destroy(); vi.useRealTimers(); vi.unstubAllGlobals(); });
 
+  it('guarda voz una sola vez cuando cuenta y categoria son claras', () => {
+    component.categories.set([{id: 10, nombre:'Comida', tipo:'GASTO', activo:true, esPersonalizada:true}]);
+    component.cuentasEdicion.set([{id: 1, nombre:'Efectivo', tipo:'EFECTIVO', moneda:'MXN', activo:true} as any]);
+    component.content='Gaste 50 en tacos'; component.pantallaVoz.set(true);
+    const confirmar=vi.spyOn(TestBed.inject(FinanzasService),'confirmAiAction');
+    component.continuarConVoz();
+    result.next({success:true,data:{answer:'Preparado', engine:'REGLAS', actions:[{id:'voz-1',type:'CREATE_TRANSACTION',version:0,summary:'Gasto',data:{tipo:'GASTO',monto:50,cuentaId:1,categoriaId:10,fecha:'2026-11-05'}}]}});
+    expect(confirmar).toHaveBeenCalledOnce();
+    expect(component.pantallaVoz()).toBe(true);
+    expect(component.voiceMessage()).toContain('guardado');
+  });
+
+  it('pide aclarar categoria incompleta sin guardar la voz', () => {
+    component.cuentasEdicion.set([{id:1,nombre:'Efectivo',tipo:'EFECTIVO',moneda:'MXN',activo:true} as any]);
+    component.content='Gaste 50'; component.pantallaVoz.set(true); component.continuarConVoz();
+    result.next({success:true,data:{answer:'Revisar',engine:'REGLAS',actions:[{id:'voz-2',type:'CREATE_TRANSACTION',version:0,summary:'Gasto',data:{tipo:'GASTO',monto:50,cuentaId:1,categoriaId:null,fecha:'2026-11-05'}}]}});
+    expect(TestBed.inject(FinanzasService).confirmAiAction).not.toHaveBeenCalled();
+    expect(component.open()).toBe(true);
+  });
+
+  it('no guarda voz si la cuenta elegida no fue indicada entre varias cuentas', () => {
+    component.categories.set([{id:10,nombre:'Comida',tipo:'GASTO',activo:true,esPersonalizada:true}]);
+    component.cuentasEdicion.set([{id:1,nombre:'Nu',activo:true},{id:2,nombre:'Banco',activo:true}] as any);
+    component.content='Gaste 50 en tacos para la nube'; component.continuarConVoz();
+    result.next({success:true,data:{answer:'Revisar',engine:'REGLAS',actions:[{id:'voz-3',type:'CREATE_TRANSACTION',version:0,summary:'Gasto',data:{tipo:'GASTO',monto:50,cuentaId:1,categoriaId:10,fecha:'2026-11-05'}}]}});
+    expect(TestBed.inject(FinanzasService).confirmAiAction).not.toHaveBeenCalled();
+  });
+
+  it('no crea otra propuesta tras perder la respuesta de confirmacion de voz', () => {
+    component.categories.set([{id:10,nombre:'Comida',tipo:'GASTO',activo:true,esPersonalizada:true}]);
+    component.cuentasEdicion.set([{id:1,nombre:'Efectivo',activo:true}] as any);
+    vi.spyOn(TestBed.inject(FinanzasService),'confirmAiAction').mockReturnValueOnce(new Observable(sub=>sub.error(new HttpErrorResponse({status:0}))));
+    component.content='Gaste 50 en tacos'; component.pantallaVoz.set(true); component.transcripcionLista.set(true); component.continuarConVoz();
+    result.next({success:true,data:{answer:'Revisar',engine:'REGLAS',actions:[{id:'voz-4',type:'CREATE_TRANSACTION',version:0,summary:'Gasto',data:{tipo:'GASTO',monto:50,cuentaId:1,categoriaId:10,fecha:'2026-11-05'}}]}});
+    expect(component.transcripcionLista()).toBe(false);
+    expect(component.open()).toBe(true);
+    expect(component.captureTurns()[0].actions[0].id).toBe('voz-4');
+    expect(component.voiceMessage()).toContain('Revisa Actividad');
+  });
+  it('no reutiliza aclaraciones pendientes para guardar otra captura de voz', () => {
+    const anterior={id:'anterior',type:'CREATE_TRANSACTION',summary:'Gasto',data:{tipo:'GASTO',monto:10,categoriaId:null},version:0} as any;
+    component.captureTurns.set([{id:1,user:'Gasto anterior',answer:'Categoria?',actions:[anterior],voice:false}]);
+    (component as any).contexto='Gasto anterior'; component.content='Gaste 50 en comida';
+    const captura=vi.spyOn(TestBed.inject(FinanzasService),'capturaRapidaAi');
+    component.continuarConVoz();
+    expect(captura).toHaveBeenCalledWith('Gaste 50 en comida',false,true,null,null,[]);
+    expect(TestBed.inject(FinanzasService).editarPropuestaAi).not.toHaveBeenCalled();
+  });
+
+  it('recuerda y permite retirar el consentimiento de voz por usuario', () => {
+    usuario.set({id:98765}); fixture.detectChanges();
+    vi.spyOn(component as any,'startVoice').mockResolvedValue(undefined);
+    component.permitirVoz();
+    expect(localStorage.getItem('kaptal.voice-consent.98765')).toBe('1');
+    component.revocarVoz();
+    expect(localStorage.getItem('kaptal.voice-consent.98765')).toBeNull();
+    expect(component.voiceConsent).toBe(false);
+  });
+
+  it('el consentimiento de IA no permite por si solo enviar audio', () => {
+    component.consent=true; component.voiceConsent=false; component.toggleVoice();
+    expect(component.permisoVoz()).toBe(true);
+    expect(component.listening()).toBe(false);
+  });
+
+  it('comparte historial con IA solo cuando el usuario lo permite', () => {
+    const captura=vi.spyOn(TestBed.inject(FinanzasService),'capturaRapidaAi');
+    component.captureTurns.set([{id:1,user:'Hola',answer:'Hola, dime',actions:[],voice:false}]);
+    component.content='Otra pregunta'; component.submit();
+    expect(captura).toHaveBeenLastCalledWith('Otra pregunta',false,false,null,null,[]);
+    result.next({success:true,data:{answer:'Respuesta',actions:[]}});
+    component.consent=true; component.content='Continua'; component.submit();
+    expect(captura.mock.calls.at(-1)?.[5]).toEqual(expect.arrayContaining([{role:'USER',content:'Hola'},{role:'ASSISTANT',content:'Hola, dime'}]));
+  });
+
+  it('una eliminacion propuesta por el asistente requiere dos pasos', () => {
+    const propuesta={id:'borrar-1',type:'DELETE_ACCOUNT',summary:'Eliminar cuenta de prueba',data:{cuentaId:99}} as any;
+    component.captureTurns.set([{id:1,user:'elimina la cuenta',answer:'Revisa',actions:[propuesta],voice:false}]);
+    component.open.set(true); fixture.detectChanges();
+    const boton=()=>Array.from(fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLButtonElement>).find(b=>b.textContent?.includes('eliminación'))!;
+    boton().click(); fixture.detectChanges();
+    expect(TestBed.inject(FinanzasService).confirmAiAction).not.toHaveBeenCalled();
+    expect(boton().textContent).toContain('Confirmar');
+    boton().click();
+    expect(TestBed.inject(FinanzasService).confirmAiAction).toHaveBeenCalledOnce();
+  });
+
   it('agrega una etiqueta disponible al texto sin duplicarla ni guardar', () => {
     component.abrirCapturaDesdeAcceso(new CustomEvent('kaptal-abrir-captura-chat',{detail:{voz:true}}));
     expect(component.etiquetasPersonales()).toEqual([{id:4,nombre:'viaje'}]);
@@ -85,6 +172,13 @@ describe('QuickCaptureComponent processing and gestures', () => {
     component.abrirEscrituraDesdeVoz();
     expect(component.pantallaVoz()).toBe(false);
     expect(component.open()).toBe(true);
+  });
+
+  it('no cierra voz al ejecutar por primera vez el efecto de identidad', () => {
+    usuario.set({id:42});
+    component.abrirCapturaDesdeAcceso(new CustomEvent('kaptal-abrir-captura-chat',{detail:{voz:true}}));
+    fixture.detectChanges();
+    expect(component.pantallaVoz()).toBe(true);
   });
 
   it('muestra confirmación del servidor solamente tras un guardado exitoso', () => {
@@ -297,7 +391,7 @@ describe('QuickCaptureComponent processing and gestures', () => {
     }
     vi.stubGlobal('MediaRecorder', Grabador);
     try {
-      component.consent = true;
+      component.voiceConsent = true;
       component.toggleVoice(); await Promise.resolve();
       expect(component.listening()).toBe(true);
       component.toggleVoice(); expect(component.stopping()).toBe(true);
@@ -367,7 +461,7 @@ describe('QuickCaptureComponent processing and gestures', () => {
     Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: {getUserMedia: obtener} });
     const detener = vi.fn();
     try {
-      component.consent = true; component.toggleVoice(); component.close();
+      component.voiceConsent = true; component.toggleVoice(); component.close();
       resolver({getTracks:()=>[{stop:detener}]}); await Promise.resolve();
       expect(detener).toHaveBeenCalledOnce();expect(component.listening()).toBe(false);
     } finally {
@@ -380,7 +474,7 @@ describe('QuickCaptureComponent processing and gestures', () => {
     const capture=vi.spyOn(TestBed.inject(FinanzasService),'capturaRapidaAi');
     component.open.set(true);
     component.usarSugerencia('Reporte de hoy');
-    expect(capture).toHaveBeenCalledWith('Reporte de hoy',false,false,null,null);
+    expect(capture).toHaveBeenCalledWith('Reporte de hoy',false,false,null,null,[]);
     result.next({success:true,data:{answer:'Resumen',engine:'REGLAS',actions:[],report:{title:'Hoy',labels:['Gastos'],values:[80],unit:'MXN'}}});
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.chat-local-report').textContent).toContain('Gastos');
@@ -391,10 +485,10 @@ describe('QuickCaptureComponent processing and gestures', () => {
     component.content='Gasto en tacos';component.submit();
     result.next({success:true,data:{answer:'Monto?',actions:[],contexto:'Gasto en tacos'}});
     component.content='80';component.submit();
-    expect(capture).toHaveBeenLastCalledWith('80',false,false,'Gasto en tacos',null);
+    expect(capture).toHaveBeenLastCalledWith('80',false,false,'Gasto en tacos',null,[]);
     result.next({success:true,data:{answer:'Listo',actions:[],contexto:'Gasto en tacos'}});
     component.content='Reporte de hoy';component.submit();
-    expect(capture).toHaveBeenLastCalledWith('Reporte de hoy',false,false,null,null);
+    expect(capture).toHaveBeenLastCalledWith('Reporte de hoy',false,false,null,null,[]);
   });
   it('does not require a category for a transfer', () => {
     expect(component.necesitaCategoria({id:'t',type:'CREATE_TRANSACTION',summary:'Transferencia',data:{tipo:'TRANSFERENCIA',monto:80}})).toBe(false);

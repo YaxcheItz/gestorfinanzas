@@ -140,4 +140,23 @@ class AiAssistantServiceTest {
         verify(actionService).marcarContextoCaptura(7L, propuesta, null, java.util.Set.of("viaje"));
         verify(provider,never()).generate(anyString(),anyInt());
     }
+    @Test
+    void capturaSoloPasaHistorialAlProveedorConConsentimiento() {
+        var historial=List.of(new AiChatRequest.Message(AiChatRequest.Role.USER,"Hola"),new AiChatRequest.Message(AiChatRequest.Role.ASSISTANT,"Hola, dime"));
+        assertThrows(IllegalArgumentException.class,()->service.quickCapture(7L,new AiQuickCaptureRequest("Cuentame mas",false,false,null,null,historial)));
+        verify(provider,never()).isConfigured();
+        when(provider.isConfigured()).thenReturn(true);
+        when(actionService.interpret(eq(7L),contains("Usuario: Hola"))).thenReturn(new AiActionService.AiActionResult("Respuesta",null));
+        var resultado=service.quickCapture(7L,new AiQuickCaptureRequest("Cuentame mas",true,false,null,null,historial));
+        assertEquals("Respuesta",resultado.answer());
+        verify(actionService).interpret(eq(7L),contains("Asistente: Hola, dime"));
+    }
+    @Test
+    void chatEscritoAdmiteAccionesDelAsistentePeroVozNoLasEjecuta() {
+        when(provider.isConfigured()).thenReturn(true);
+        var accion=new AiActionService.ActionProposal("a1","CREATE_ACCOUNT","Crear cuenta",null);
+        when(actionService.interpret(eq(7L),anyString())).thenReturn(new AiActionService.AiActionResult("Revisa",accion));
+        assertEquals("CREATE_ACCOUNT",service.quickCapture(7L,new AiQuickCaptureRequest("Crea una cuenta",true,false)).action().type());
+        assertThrows(IllegalArgumentException.class,()->service.quickCapture(7L,new AiQuickCaptureRequest("Crea una cuenta",true,true)));
+    }
 }

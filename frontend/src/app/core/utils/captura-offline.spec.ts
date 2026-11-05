@@ -38,4 +38,10 @@ describe('Captura offline sin saldos ni IA', () => {
     expect(prepararCapturaOffline('Gaste 50 en regalo con etiqueta gasolina',cuentas,cats).data['categoriaId']).toBeNull();
     expect(prepararCapturaOffline('Gaste 50 en tacos y gasolina',cuentas,cats).data['categoriaId']).toBeNull();
   });
+  it('prefiere una categoria personal a una generica para el mismo concepto', () => {
+    const cats=[{id:10,nombre:'Comida',tipo:'GASTO',activo:true,esPersonalizada:true},{id:11,nombre:'Alimentos y Supermercado',tipo:'GASTO',activo:true,esPersonalizada:false}] as Categoria[];
+    expect(prepararCapturaOffline('Gaste 50 en restaurantes',cuentas,cats).data['categoriaId']).toBe(10);
+    const distintas=[cats[0],{id:12,nombre:'Transporte',tipo:'GASTO',activo:true,esPersonalizada:false}] as Categoria[];
+    expect(prepararCapturaOffline('Gaste 50 en tacos y gasolina',cuentas,distintas).data['categoriaId']).toBeNull();
+  });
 });
