@@ -1492,3 +1492,7 @@ Se precisa que `usage_unavailable` cuenta solo eventos emitidos tras procesar el
 - PR #217: PostgreSQL y recuperacion aprobaron para e36b881; CI integral aun debe comprobarse al momento de integrar. El fallo anterior se confirmo en dos expectativas fijadas a V14.
 - Rama mejoras/etiquetas-captura-escrita desde develop adelantada con #217: muestra etiquetas personales al redactar y permite agregarlas sin duplicarlas, sin guardar movimiento. Build Angular y 35 pruebas de captura pasaron; CI, pruebas visuales y APK pendientes.
 - Siguen pendientes respaldo/restauracion del catalogo, categorias vinculadas, revision minimalista final, integracion y publicacion. Sin modificar finanzas reales.
+
+### Respaldo de etiquetas personales
+- Rama mejoras/respaldo-etiquetas desde develop adelantada con PR #218. El respaldo incorpora nombres del catalogo personal; restaurar combina con los existentes y valida nombres, duplicados y limite de registros, conservando compatibilidad con respaldos anteriores sin el campo. Pruebas unitarias y H2: 34 aprobadas, con datos ficticios; pendiente CI PostgreSQL, prueba E2E y revision de compatibilidad completa. No integrado ni publicado.
+- El propietario desconectara el telefono: no generar ni instalar APK hasta completar cambios y verificaciones. Pendiente eliminacion segura de categorias vinculadas y revision visual de categorias/etiquetas.

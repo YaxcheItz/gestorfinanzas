@@ -42,6 +42,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class RespaldoFinancieroService {
 
+    private final com.gestionfinanzas.repository.EtiquetaPersonalRepository etiquetaPersonalRepository;
     private final PerfilService perfilService;
     private final com.gestionfinanzas.repository.ListaRepository listaRepository;
     private final CuentaRepository cuentaRepository;
@@ -113,7 +114,8 @@ public class RespaldoFinancieroService {
                 relacionesCashback,
                 mapearParejas(usuarioId),
                 listasRespaldo.values().stream().map(l -> new RespaldoFinancieroResponse.ListaRespaldo(
-                        l.getId(), l.getNombre(), l.getEmoji(), l.getMoneda(), l.getClave() != null, l.isArchivada())).toList()
+                        l.getId(), l.getNombre(), l.getEmoji(), l.getMoneda(), l.getClave() != null, l.isArchivada())).toList(),
+                etiquetaPersonalRepository.findByUsuarioIdOrderByNombreAsc(usuarioId).stream().map(com.gestionfinanzas.model.entity.EtiquetaPersonal::getNombre).toList()
         );
     }
 

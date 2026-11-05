@@ -31,8 +31,9 @@ class RespaldoFinancieroServiceTest {
     private final TransaccionRepository transaccionRepository = mock(TransaccionRepository.class);
     private final AuditoriaTransaccionService auditoriaService = mock(AuditoriaTransaccionService.class);
     private final LibroDiarioService libroDiarioService = mock(LibroDiarioService.class);
+    private final com.gestionfinanzas.repository.EtiquetaPersonalRepository etiquetas = mock(com.gestionfinanzas.repository.EtiquetaPersonalRepository.class);
     private final RespaldoFinancieroService respaldoService = new RespaldoFinancieroService(
-            perfilService, mock(com.gestionfinanzas.repository.ListaRepository.class),
+            etiquetas, perfilService, mock(com.gestionfinanzas.repository.ListaRepository.class),
             cuentaRepository,
             categoriaRepository,
             presupuestoRepository,
@@ -46,6 +47,13 @@ class RespaldoFinancieroServiceTest {
             mock(RepartoGastoRepository.class),
             mock(PagoParejaRepository.class)
     );
+
+    @Test void respaldoIncluyeSoloEtiquetasDelUsuario() {
+        when(etiquetas.findByUsuarioIdOrderByNombreAsc(42L)).thenReturn(java.util.List.of(com.gestionfinanzas.model.entity.EtiquetaPersonal.builder().nombre("viaje").build()));
+        var respaldo=respaldoService.generar(42L);
+        assertEquals(java.util.List.of("viaje"),respaldo.etiquetasPersonales());
+        verify(etiquetas).findByUsuarioIdOrderByNombreAsc(42L);
+    }
 
     @Test
     void generaUnRespaldoVersionadoSoloParaElUsuarioSolicitado() {
