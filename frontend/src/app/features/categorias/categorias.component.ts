@@ -70,15 +70,14 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
               </span>
               <div class="min-w-0 flex-1 basis-[8ch]">
                 <h2 class="font-semibold text-slate-900 truncate">{{ categoria.nombre }}</h2>
-                <p class="text-xs text-slate-500">{{ categoria.tipo === 'GASTO' ? 'Gasto' : 'Ingreso' }} · Personalizada</p>
+                <p class="text-xs text-slate-500">{{ categoria.tipo === 'GASTO' ? 'Gasto' : 'Ingreso' }}</p>
               </div>
-              <div class="flex shrink-0 flex-col">
+              <div class="flex shrink-0">
                 <button type="button" (click)="moverCategoria(categoria, -1)" [attr.aria-label]="'Subir ' + categoria.nombre" class="min-h-11 px-2 text-xs font-semibold text-slate-500 hover:text-emerald-700">↑</button>
                 <button type="button" (click)="moverCategoria(categoria, 1)" [attr.aria-label]="'Bajar ' + categoria.nombre" class="min-h-11 px-2 text-xs font-semibold text-slate-500 hover:text-emerald-700">↓</button>
               </div>
-              <div class="flex w-full min-w-0 flex-wrap justify-end">
+              <div class="flex max-w-full min-w-0 flex-wrap justify-end">
                 <button type="button" (click)="abrirEditar(categoria)" class="min-h-11 px-2 text-slate-500" [attr.aria-label]="'Editar ' + categoria.nombre">Editar</button>
-                <button type="button" (click)="abrirReasignacion(categoria)" class="min-h-11 px-2 text-slate-600" [attr.aria-label]="'Reasignar referencias de ' + categoria.nombre">Reasignar</button>
                 <button type="button" (click)="eliminarCategoria(categoria)" class="min-h-11 px-2 text-rose-600" [attr.aria-label]="'Eliminar ' + categoria.nombre">Eliminar</button>
               </div>
             </article>
