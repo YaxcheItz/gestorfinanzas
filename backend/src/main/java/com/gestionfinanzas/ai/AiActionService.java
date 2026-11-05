@@ -155,7 +155,7 @@ public class AiActionService {
             String summary = action.path("summary").asText("").trim();
             JsonNode data = action.path("data");
             if (!isSupported(type) || summary.isBlank() || !data.isObject()) {
-                return new AiActionResult(answer, null, List.of(), report);
+                return new AiActionResult("No pude preparar esa acción. No se ha realizado ningún cambio.", null, List.of(), report);
             }
 
             return crearPropuesta(userId, type, summary, data, answer, report);

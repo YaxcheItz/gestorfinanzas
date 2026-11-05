@@ -34,7 +34,9 @@ class AiActionServiceTest {
         when(provider.generate(org.mockito.ArgumentMatchers.anyString(), anyInt())).thenReturn("""
                 {"answer":"No disponible","action":{"type":"DEACTIVATE_CATEGORY","summary":"Archivar","data":{"categoriaId":1}}}
                 """);
-        assertNull(service.interpret(7L,"Archiva la categoria de prueba").action());
+        var resultado=service.interpret(7L,"Archiva la categoria de prueba");
+        assertNull(resultado.action());
+        assertTrue(resultado.answer().contains("No se ha realizado ningún cambio"));
         verify(propuestas,never()).save(org.mockito.ArgumentMatchers.any());
     }
     private final java.util.Map<String,com.gestionfinanzas.model.entity.PropuestaChat> filas=new java.util.HashMap<>();
