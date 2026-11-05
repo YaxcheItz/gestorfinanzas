@@ -29,9 +29,8 @@ test('pantallas principales conservan nombres accesibles, foco y geometría con 
     if (path === '/cuentas') await expect(page.locator('.account-card').filter({ hasText: 'Cuenta de ensayo' })).toBeVisible();
     if (path === '/categorias') await expect(page.getByRole('region', { name: 'Categorías personalizadas', exact: true })).toBeVisible();
     if (path === '/categorias') {
-      const filters = page.getByRole('group', { name: 'Filtrar categorías', exact: true });
-      await expect(filters.getByRole('button', { name: 'Activas', exact: true })).toHaveAttribute('aria-pressed', 'true');
-      await expect(filters.getByRole('button', { name: 'Archivadas', exact: true })).toHaveAttribute('aria-pressed', 'false');
+      await expect(page.getByRole('button', { name: /Archivar / })).toHaveCount(0);
+      await expect(page.getByRole('button', { name: /Eliminar / }).first()).toBeVisible();
     }
     for (const viewport of [{ width: 320, height: 740 }, { width: 740, height: 320 }]) {
       await page.setViewportSize(viewport);

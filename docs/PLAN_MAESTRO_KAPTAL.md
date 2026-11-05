@@ -1496,3 +1496,8 @@ Se precisa que `usage_unavailable` cuenta solo eventos emitidos tras procesar el
 ### Respaldo de etiquetas personales
 - Rama mejoras/respaldo-etiquetas desde develop adelantada con PR #218. El respaldo incorpora nombres del catalogo personal; restaurar combina con los existentes y valida nombres, duplicados y limite de registros, conservando compatibilidad con respaldos anteriores sin el campo. Pruebas unitarias y H2: 34 aprobadas, con datos ficticios; pendiente CI PostgreSQL, prueba E2E y revision de compatibilidad completa. No integrado ni publicado.
 - El propietario desconectara el telefono: no generar ni instalar APK hasta completar cambios y verificaciones. Pendiente eliminacion segura de categorias vinculadas y revision visual de categorias/etiquetas.
+
+### Accesibilidad y restauracion con etiquetas
+- En CI del PR #217 fallaron una expectativa del filtro Archivadas ya retirado y el ajuste horizontal de Ajustes con letra grande. Rama correcciones/accesibilidad-categorias-etiquetas desde develop adelantada con #219: adapta la prueba al boton Eliminar y permite que el contenido de Ajustes se ajuste al ancho.
+- Dos E2E Chromium con cuentas ficticias, accesibilidad y respaldo/restauracion, pasaron localmente. PR #219 incluye respaldo de etiquetas y paso 34 pruebas unitarias/H2. CI exacta y pruebas PostgreSQL del cambio final pendientes; no integrado, publicado ni instalado. Telefono desconectado por decision del propietario.
+- Pendiente resolver eliminacion de categorias vinculadas sin archivo ni perdida historica, completar interfaz y validar en dispositivo cuando corresponda.
