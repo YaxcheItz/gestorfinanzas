@@ -20,6 +20,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CategoriaService {
 
+    private final com.gestionfinanzas.repository.CategoriaHistoricaRepository historicas;
     private final CategoriaRepository categoriaRepository;
     private final UsuarioRepository usuarioRepository;
     private final TransaccionRepository transaccionRepository;
@@ -100,22 +101,39 @@ public class CategoriaService {
     public void eliminarCategoria(Long usuarioId, Long categoriaId) {
         Categoria categoria = categoriaRepository.findByIdAndUsuarioId(categoriaId, usuarioId)
                 .orElseThrow(() -> new IllegalArgumentException("Categoría personalizada no encontrada"));
-        if (presupuestoRepository.existsByCategoriaId(categoriaId) || plantillaRecurrenteRepository.existsByCategoriaId(categoriaId)) {
-            throw new IllegalArgumentException("Reasigna los presupuestos y movimientos recurrentes de esta categoría antes de eliminarla.");
+        var presupuestos=presupuestoRepository.findAllByCategoriaId(categoriaId);
+        var recurrentes=plantillaRecurrenteRepository.findAllByCategoriaId(categoriaId);
+        var actual=java.time.YearMonth.from(CalendarioFinanciero.hoy());
+        if (presupuestos.stream().anyMatch(p -> !java.time.YearMonth.of(p.getAnio(),p.getMes()).isBefore(actual))
+                || recurrentes.stream().anyMatch(com.gestionfinanzas.model.entity.PlantillaRecurrente::isActiva)) {
+            throw new IllegalArgumentException("Reasigna los presupuestos vigentes y movimientos recurrentes activos antes de eliminar.");
         }
-        if (transaccionRepository.existsByCategoriaId(categoriaId) || lineaAsientoRepository.existsByCategoriaId(categoriaId)) {
-            throw new IllegalArgumentException("Esta categoría tiene movimientos anteriores. Todavía no se puede eliminar conservando su historial.");
+        var movimientos=transaccionRepository.findAllByCategoriaId(categoriaId);
+        if (!presupuestos.isEmpty() || !recurrentes.isEmpty() || !movimientos.isEmpty() || lineaAsientoRepository.existsByCategoriaId(categoriaId)) {
+            var copia=historicas.saveAndFlush(com.gestionfinanzas.model.entity.CategoriaHistorica.copiar(categoria));
+            presupuestos.forEach(p -> p.conservarCategoria(copia));
+            recurrentes.forEach(p -> p.conservarCategoria(copia));
+            movimientos.forEach(p -> p.conservarCategoria(copia));
+            presupuestoRepository.flush();
         }
         categoriaRepository.delete(categoria);
     }
 
-    public record Referencias(long movimientos, long presupuestos, long recurrencias, long lineasLibro) {}
+    public record Referencias(long movimientos, long presupuestos, long recurrencias, long lineasLibro, long presupuestosActivos, long recurrenciasActivas) {}
     @Transactional(readOnly = true)
     public Referencias referencias(Long usuarioId, Long categoriaId) {
         categoriaRepository.findByIdAndUsuarioId(categoriaId, usuarioId)
                 .orElseThrow(() -> new IllegalArgumentException("Categor\u00eda no encontrada."));
         return new Referencias(transaccionRepository.countByCategoriaId(categoriaId), presupuestoRepository.countByCategoriaId(categoriaId),
-                plantillaRecurrenteRepository.countByCategoriaId(categoriaId), lineaAsientoRepository.countByCategoriaId(categoriaId));
+                plantillaRecurrenteRepository.countByCategoriaId(categoriaId), lineaAsientoRepository.countByCategoriaId(categoriaId),
+                presupuestoRepository.findAllByUsuarioIdOrderByAnioDescMesDescIdAsc(usuarioId).stream().filter(p->p.getCategoria().getId().equals(categoriaId)).filter(p->!java.time.YearMonth.of(p.getAnio(),p.getMes()).isBefore(java.time.YearMonth.from(CalendarioFinanciero.hoy()))).count(),
+                plantillaRecurrenteRepository.findAllByUsuarioIdOrderBySiguienteFechaAsc(usuarioId).stream().filter(p->p.isActiva()&&p.getCategoria()!=null&&p.getCategoria().getId().equals(categoriaId)).count());
+    }
+
+    @Transactional
+    public void reasignarYEliminar(Long usuarioId,Long id,Long destinoId) {
+        if (destinoId != null) reasignarActivos(usuarioId,id,destinoId);
+        eliminarCategoria(usuarioId,id);
     }
 
     public record Reasignacion(int presupuestos, int recurrencias) {}

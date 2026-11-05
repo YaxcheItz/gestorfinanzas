@@ -43,6 +43,7 @@ import java.util.List;
 public class RespaldoFinancieroService {
 
     private final com.gestionfinanzas.repository.EtiquetaPersonalRepository etiquetaPersonalRepository;
+    private final com.gestionfinanzas.repository.CategoriaHistoricaRepository categoriaHistoricaRepository;
     private final PerfilService perfilService;
     private final com.gestionfinanzas.repository.ListaRepository listaRepository;
     private final CuentaRepository cuentaRepository;
@@ -68,6 +69,7 @@ public class RespaldoFinancieroService {
                 .findByUsuarioIdOrderByActivoDescNombreAsc(usuarioId).stream()
                 .map(CategoriaResponse::fromEntity)
                 .toList();
+        categorias = java.util.stream.Stream.concat(categorias.stream(), categoriaHistoricaRepository.findByUsuarioIdOrderByIdAsc(usuarioId).stream().map(CategoriaResponse::fromHistorica)).toList();
         var entidadesPresupuestos = presupuestoRepository.findAllByUsuarioIdOrderByAnioDescMesDescIdAsc(usuarioId);
         List<RespaldoFinancieroResponse.PresupuestoRespaldo> presupuestos = entidadesPresupuestos.stream()
                 .map(RespaldoFinancieroService::mapearPresupuesto)
@@ -101,7 +103,7 @@ public class RespaldoFinancieroService {
                 .map(com.gestionfinanzas.model.entity.PlantillaRecurrente::getLista).filter(java.util.Objects::nonNull)
                 .forEach(l -> listasRespaldo.put(l.getId(), l));
         return new RespaldoFinancieroResponse(
-                7,
+                8,
                 Instant.now(),
                 perfilService.obtener(usuarioId),
                 cuentas,

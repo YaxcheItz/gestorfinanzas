@@ -95,4 +95,10 @@ public class CategoriaController {
             @PathVariable Long id, @Valid @RequestBody ReasignarRequest request, @AuthenticationPrincipal CustomUserDetails usuario) {
         return ResponseEntity.ok(ApiResponse.ok("Referencias reasignadas", categoriaService.reasignarActivos(usuario.getId(), id, request.categoriaDestinoId())));
     }
+    public record EliminarRequest(Long categoriaDestinoId) {}
+    @PostMapping("/{id}/eliminar")
+    public ResponseEntity<ApiResponse<Void>> reasignarYEliminar(@PathVariable Long id,@Valid @RequestBody EliminarRequest request,@AuthenticationPrincipal CustomUserDetails usuario) {
+        categoriaService.reasignarYEliminar(usuario.getId(),id,request.categoriaDestinoId());
+        return ResponseEntity.ok(ApiResponse.ok("Categor\u00eda eliminada",null));
+    }
 }

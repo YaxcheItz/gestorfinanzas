@@ -20,7 +20,7 @@ test('pantallas principales conservan nombres accesibles, foco y geometría con 
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.name));
   const accessibility = await page.context().newCDPSession(page);
-  for (const path of ['/dashboard', '/cuentas', '/transacciones', '/presupuestos', '/categorias', '/metas', '/configuracion', '/avisos']) {
+  for (const path of ['/dashboard', '/cuentas', '/transacciones', '/presupuestos', '/categorias', '/etiquetas', '/metas', '/configuracion', '/avisos']) {
     await page.goto(path);
     await expect(page.locator('#main-content')).toBeVisible();
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();

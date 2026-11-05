@@ -125,6 +125,9 @@ class RestauracionRespaldoServiceTest {
 
     @Autowired private com.gestionfinanzas.repository.EtiquetaPersonalRepository etiquetaPersonalRepository;
 
+    private CategoriaService categoriaService;
+    @Autowired private com.gestionfinanzas.repository.CategoriaHistoricaRepository categoriasHistoricas;
+    @Autowired private com.gestionfinanzas.repository.LineaAsientoRepository lineas;
     private ObjectMapper objectMapper;
     private RestauracionRespaldoService servicio;
 
@@ -146,8 +149,9 @@ class RestauracionRespaldoServiceTest {
                         throw excepcion.getCause();
                     }
                 }));
+        categoriaService=new CategoriaService(categoriasHistoricas,categoriaRepository,usuarios,transaccionRepository,presupuestoRepository,plantillaRepository,lineas);
         servicio = new RestauracionRespaldoService(
-                etiquetaPersonalRepository, usuarios, cuentaRepository, categoriaRepository, presupuestoRepository,
+                etiquetaPersonalRepository, categoriaService, usuarios, cuentaRepository, categoriaRepository, presupuestoRepository,
                 plantillaRepository, transaccionRepository, auditoriaRepository, asientoRepository,
                 parejaRepository, aportacionRepository, gastoRepository, repartoRepository, pagoRepository,
                 objectMapper, mock(com.gestionfinanzas.repository.ListaRepository.class), mock(com.gestionfinanzas.repository.ListaMiembroRepository.class), mock(ListaService.class), mock(com.gestionfinanzas.repository.AvisoFinancieroRepository.class));

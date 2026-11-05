@@ -62,10 +62,10 @@ public class TransaccionSpecification {
                         .forEach(categorias::add);
             }
             if (!categorias.isEmpty()) {
-                predicates.add(root.get("categoria").get("id").in(categorias));
+                predicates.add(cb.coalesce(root.join("categoria", JoinType.LEFT).get("id"), root.join("categoriaHistorica", JoinType.LEFT).get("id")).in(categorias));
             }
             if (filtro.sinCategoria()) {
-                predicates.add(cb.isNull(root.get("categoria")));
+                predicates.add(cb.and(cb.isNull(root.get("categoria")), cb.isNull(root.get("categoriaHistorica"))));
             }
 
             // 5. Rango de Fechas
@@ -98,7 +98,7 @@ public class TransaccionSpecification {
                 for (String termino : texto.split("\\s+")) {
                     String pattern = "%" + termino.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%";
                     List<Predicate> partes = new ArrayList<>();
-                    for (var campo : List.of(root.<String>get("descripcion"), root.<String>get("notas"), categoria.<String>get("nombre"), cuenta.<String>get("nombre"), root.<String>get("cuentaNombreHistorico"), root.get("usuario").<String>get("nombre"))) {
+                    for (var campo : List.of(root.<String>get("descripcion"), root.<String>get("notas"), categoria.<String>get("nombre"), root.join("categoriaHistorica", JoinType.LEFT).<String>get("nombre"), cuenta.<String>get("nombre"), root.<String>get("cuentaNombreHistorico"), root.get("usuario").<String>get("nombre"))) {
                         partes.add(cb.like(cb.lower(campo), pattern, '\\'));
                     }
                     if (termino.matches("[0-9]+([.,][0-9]{1,2})?")) partes.add(cb.equal(root.get("monto"), new java.math.BigDecimal(termino.replace(',', '.'))));

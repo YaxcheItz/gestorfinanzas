@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
+@org.hibernate.annotations.DynamicUpdate
 @Table(name = "transacciones", indexes = {
     @Index(name = "idx_transaccion_usuario_fecha", columnList = "usuario_id, fecha"),
     @Index(name = "idx_transaccion_cuenta", columnList = "cuenta_id")
@@ -59,6 +60,14 @@ public class Transaccion {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "categoria_id")
     private Categoria categoria;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="categoria_historica_id")
+    private CategoriaHistorica categoriaHistorica;
+
+    public Categoria getCategoria() { return categoria != null ? categoria : categoriaHistorica == null ? null : categoriaHistorica.comoCategoria(); }
+    public void setCategoria(Categoria valor) { this.categoria=valor; this.categoriaHistorica=null; }
+    public void conservarCategoria(CategoriaHistorica historia) { this.categoriaHistorica=historia; this.categoria=null; }
+
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)

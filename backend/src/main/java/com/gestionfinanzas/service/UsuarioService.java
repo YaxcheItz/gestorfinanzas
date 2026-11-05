@@ -28,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class UsuarioService {
 
+    private final com.gestionfinanzas.repository.CategoriaHistoricaRepository categoriaHistoricaRepository;
     private final UsuarioRepository usuarioRepository;
     private final ListaService listaService;
     private final PasswordEncoder passwordEncoder;
@@ -142,6 +143,7 @@ public class UsuarioService {
         sesionService.eliminarTodas(usuarioId);
 
         categoriaRepository.deleteByUsuarioId(usuarioId);
+        categoriaHistoricaRepository.deleteByUsuarioId(usuarioId);
         cuentaRepository.deleteByUsuarioId(usuarioId);
 
         // Los borrados en lote anteriores limpian el contexto de persistencia, asi que se

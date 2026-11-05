@@ -169,12 +169,16 @@ export class FinanzasService {
     return this.http.put<ApiResponse<Categoria>>(`${this.baseUrl}/categorias/${id}`, payload);
   }
 
-  referenciasCategoria(id:number): Observable<ApiResponse<{movimientos:number; presupuestos:number; recurrencias:number; lineasLibro:number}>> {
-    return this.http.get<ApiResponse<{movimientos:number; presupuestos:number; recurrencias:number; lineasLibro:number}>>(`${this.baseUrl}/categorias/${id}/referencias`);
+  referenciasCategoria(id:number): Observable<ApiResponse<{movimientos:number; presupuestos:number; recurrencias:number; lineasLibro:number; presupuestosActivos?:number; recurrenciasActivas?:number}>> {
+    return this.http.get<ApiResponse<{movimientos:number; presupuestos:number; recurrencias:number; lineasLibro:number; presupuestosActivos?:number; recurrenciasActivas?:number}>>(`${this.baseUrl}/categorias/${id}/referencias`);
   }
 
   reasignarCategoriaActivos(id: number, categoriaDestinoId: number): Observable<ApiResponse<{presupuestos:number; recurrencias:number}>> {
     return this.http.post<ApiResponse<{presupuestos:number; recurrencias:number}>>(`${this.baseUrl}/categorias/${id}/reasignar-activos`, {categoriaDestinoId});
+  }
+
+  eliminarCategoriaConReasignacion(id:number,categoriaDestinoId:number|null): Observable<ApiResponse<void>> {
+    return this.http.post<ApiResponse<void>>(`${this.baseUrl}/categorias/${id}/eliminar`,{categoriaDestinoId});
   }
 
   eliminarCategoria(id: number): Observable<ApiResponse<void>> {

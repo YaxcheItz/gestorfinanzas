@@ -111,4 +111,10 @@ class PlantillaRecurrenteServiceTest {
         assertFalse(resp.activa());
         assertEquals(LocalDate.of(2026, 11, 1), resp.fechaFin());
     }
+    @Test void noReactivaRecurrenciaConCategoriaEliminada() {
+        var plantilla=PlantillaRecurrente.builder().id(99L).activa(false).categoriaHistorica(com.gestionfinanzas.model.entity.CategoriaHistorica.builder().id(4L).build()).build();
+        when(plantillaRepository.findByIdAndUsuarioId(99L,3L)).thenReturn(Optional.of(plantilla));
+        assertThrows(IllegalArgumentException.class,()->service.cambiarEstado(3L,99L,true));
+        verify(plantillaRepository,never()).save(any());
+    }
 }

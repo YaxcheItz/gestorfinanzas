@@ -63,7 +63,7 @@ import java.util.function.Function;
 @Slf4j
 public class RestauracionRespaldoService {
 
-    private static final int VERSION_COMPATIBLE = 7;
+    private static final int VERSION_COMPATIBLE = 8;
     private static final int MAX_REGISTROS = 20_000;
     private static final Map<String, CategoriaInicial> CATEGORIAS_INICIALES = Map.of(
             "Alimentos y Supermercado", new CategoriaInicial(TipoTransaccion.GASTO, "shopping-cart", "#f59e0b"),
@@ -77,6 +77,7 @@ public class RestauracionRespaldoService {
     );
 
     private final com.gestionfinanzas.repository.EtiquetaPersonalRepository etiquetaPersonalRepository;
+    private final CategoriaService categoriaService;
     private final UsuarioRepository usuarioRepository;
     private final CuentaRepository cuentaRepository;
     private final CategoriaRepository categoriaRepository;
@@ -177,6 +178,10 @@ public class RestauracionRespaldoService {
             restaurarLibroDiario(usuario, respaldo.libroDiario(), transacciones, cuentas, categorias);
             etapa = "gastos compartidos";
             restaurarParejas(usuario, respaldo.parejas());
+            etapa="categorias historicas";
+            for (var categoria : respaldo.categoriasPersonalizadas()) {
+                if (categoria.historica()) categoriaService.eliminarCategoria(usuarioId, categorias.get(categoria.id()));
+            }
         } catch (RuntimeException exception) {
             log.error("Restauracion revertida en la etapa '{}' para el usuario {}. Causa: {}",
                     etapa, usuarioId, exception.getMessage(), exception);
@@ -771,7 +776,7 @@ public class RestauracionRespaldoService {
                     .tipo(origen.tipo())
                     .icono(origen.icono())
                     .color(origen.color())
-                    .activo(origen.activo())
+                    .activo(origen.historica() ? true : origen.activo())
                     .build());
             mapa.put(origen.id(), guardada.getId());
         }

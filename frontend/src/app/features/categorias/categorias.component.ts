@@ -2,6 +2,7 @@ import { MontoPrivadoDirective } from '../../shared/directives/monto-privado.dir
 ﻿import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { map } from 'rxjs';
 import { Categoria, CategoriaPayload } from '../../core/models/finanzas.models';
 import { FinanzasService } from '../../core/services/finanzas.service';
 import { CategoriaOrdenService } from '../../core/services/categoria-orden.service';
@@ -75,7 +76,7 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
                 <button type="button" (click)="moverCategoria(categoria, -1)" [attr.aria-label]="'Subir ' + categoria.nombre" class="min-h-11 px-2 text-xs font-semibold text-slate-500 hover:text-emerald-700">↑</button>
                 <button type="button" (click)="moverCategoria(categoria, 1)" [attr.aria-label]="'Bajar ' + categoria.nombre" class="min-h-11 px-2 text-xs font-semibold text-slate-500 hover:text-emerald-700">↓</button>
               </div>
-              <div class="flex shrink-0 flex-wrap">
+              <div class="flex w-full min-w-0 flex-wrap justify-end">
                 <button type="button" (click)="abrirEditar(categoria)" class="min-h-11 px-2 text-slate-500" [attr.aria-label]="'Editar ' + categoria.nombre">Editar</button>
                 <button type="button" (click)="abrirReasignacion(categoria)" class="min-h-11 px-2 text-slate-600" [attr.aria-label]="'Reasignar referencias de ' + categoria.nombre">Reasignar</button>
                 <button type="button" (click)="eliminarCategoria(categoria)" class="min-h-11 px-2 text-rose-600" [attr.aria-label]="'Eliminar ' + categoria.nombre">Eliminar</button>
@@ -88,16 +89,22 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
 
     @if (categoriaReasignar(); as origen) {
       <div class="fixed inset-0 z-40 bg-slate-900/60 flex items-center justify-center p-4">
-        <section appFocusTrap (focusTrapEscape)="cerrarReasignacion()" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="reasignar-titulo" class="bg-white rounded-2xl w-full max-w-md p-5 space-y-4">
-          <h2 id="reasignar-titulo" class="text-lg font-bold">Reasignar {{ origen.nombre }}</h2>
-          <p class="text-sm text-slate-600">Se moverán los presupuestos actuales o futuros y las recurrencias activas. Los movimientos anteriores no cambiaran. Esta acción no elimina la categoría.</p>
-          <label for="categoria-destino" class="block font-semibold">Categoría de destino</label>
-          <select id="categoria-destino" [(ngModel)]="destinoReasignar" class="w-full min-h-11 rounded-xl border border-slate-300 px-3">
-            <option [ngValue]="null">Selecciona una categoría</option>
-            @for (destino of destinosReasignacion(); track destino.id) {<option [ngValue]="destino.id">{{ destino.nombre }}</option>}
-          </select>
+        <section appFocusTrap (focusTrapEscape)="cerrarReasignacion()" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="reasignar-titulo" class="bg-white rounded-2xl w-full max-w-md max-h-[90dvh] overflow-y-auto p-5 space-y-4">
+          <h2 id="reasignar-titulo" class="text-lg font-bold">{{ eliminarAlConfirmar ? 'Eliminar' : 'Reasignar' }} {{ origen.nombre }}</h2>
+          @if (referenciasCategoria(); as referencias) {
+            <p class="text-sm text-slate-600">{{ referencias.movimientos }} movimientos anteriores y {{ referencias.lineasLibro }} líneas del libro diario conservarán su categoría histórica.</p>
+            <p class="text-sm text-slate-600">{{ referencias.presupuestosActivos ?? 0 }} presupuestos vigentes y {{ referencias.recurrenciasActivas ?? 0 }} recurrencias activas por reasignar.</p>
+            @if (!eliminarAlConfirmar || necesitaReasignacion()) {
+              <label for="categoria-destino" class="block font-semibold">Categoría de destino</label>
+              <select id="categoria-destino" [(ngModel)]="destinoReasignar" class="w-full min-h-11 rounded-xl border border-slate-300 px-3">
+                <option [ngValue]="null">Selecciona una categoría</option>
+                @for (destino of destinosReasignacion(); track destino.id) {<option [ngValue]="destino.id">{{ destino.nombre }}</option>}
+              </select>
+            }
+            @if (eliminarAlConfirmar) {<p class="text-sm text-slate-600">La categoría se eliminará del catálogo y no podrás restaurarla. Sus registros anteriores se conservarán.</p>}
+          } @else {<p role="status">Cargando referencias…</p>}
           @if (errorReasignacion()) {<p role="alert" class="text-rose-700">{{ errorReasignacion() }}</p>}
-          <div class="flex flex-wrap justify-end gap-2"><button type="button" (click)="cerrarReasignacion()" [disabled]="reasignando()" class="min-h-11 px-3">Cancelar</button><button type="button" (click)="reasignarActivos()" [disabled]="reasignando() || destinoReasignar === null" class="min-h-11 px-4 rounded-xl bg-emerald-700 text-white">Reasignar</button></div>
+          <div class="flex flex-wrap justify-end gap-2"><button type="button" (click)="cerrarReasignacion()" [disabled]="reasignando()" class="min-h-11 px-3">Cancelar</button><button type="button" (click)="reasignarActivos()" [disabled]="reasignando() || !referenciasCategoria() || ((!eliminarAlConfirmar || necesitaReasignacion()) && destinoReasignar === null)" class="min-h-11 px-4 rounded-xl bg-emerald-700 text-white">{{ eliminarAlConfirmar ? 'Confirmar eliminación' : 'Reasignar' }}</button></div>
         </section>
       </div>
     }
@@ -205,9 +212,11 @@ export class CategoriasComponent implements OnInit, OnDestroy {
   readonly categoriaReasignar = signal<Categoria | null>(null);
   readonly destinosReasignacion = signal<Categoria[]>([]);
   readonly errorReasignacion = signal('');
-  readonly referenciasCategoria = signal<{movimientos:number; presupuestos:number; recurrencias:number; lineasLibro:number} | null>(null);
+  readonly referenciasCategoria = signal<{movimientos:number; presupuestos:number; recurrencias:number; lineasLibro:number; presupuestosActivos?:number; recurrenciasActivas?:number} | null>(null);
   readonly reasignando = signal(false);
   destinoReasignar: number | null = null;
+  eliminarAlConfirmar = false;
+  necesitaReasignacion(): boolean { const r=this.referenciasCategoria(); return !!r && ((r.presupuestosActivos??0)>0 || (r.recurrenciasActivas??0)>0); }
 
   readonly iconosDisponibles = ICONOS_CATEGORIA;
   readonly categoriasVisibles = () => this.categorias();
@@ -472,33 +481,28 @@ export class CategoriasComponent implements OnInit, OnDestroy {
     });
   }
 
-  abrirReasignacion(origen: Categoria): void {
+  abrirReasignacion(origen: Categoria, eliminar = false): void {
+    this.eliminarAlConfirmar=eliminar;
     this.categoriaReasignar.set(origen); this.destinoReasignar=null; this.errorReasignacion.set(''); this.destinosReasignacion.set([]); this.referenciasCategoria.set(null);
     this.finanzasService.referenciasCategoria(origen.id).subscribe({next:r=>{if(this.categoriaReasignar()?.id===origen.id)this.referenciasCategoria.set(r.data??null);},error:e=>{if(this.categoriaReasignar()?.id===origen.id)this.errorReasignacion.set(mensajeDeError(e,'No se pudieron cargar las referencias.'));}});
-    this.finanzasService.getCategorias().subscribe({next:r=>this.destinosReasignacion.set((r.data??[]).filter(c=>c.activo && c.tipo===origen.tipo && c.id!==origen.id)),
+    this.finanzasService.getCategorias().subscribe({next:r=>{if(this.categoriaReasignar()?.id===origen.id)this.destinosReasignacion.set((r.data??[]).filter(c=>c.activo && c.tipo===origen.tipo && c.id!==origen.id));},
       error:e=>this.errorReasignacion.set(mensajeDeError(e,'No se pudieron cargar las categorías.'))});
   }
   cerrarReasignacion(): void { if (!this.reasignando()) this.categoriaReasignar.set(null); }
   reasignarActivos(): void {
     const origen=this.categoriaReasignar(), destino=this.destinoReasignar;
-    if (!origen || destino===null || this.reasignando()) return;
+    if (!origen || !this.referenciasCategoria() || ((!this.eliminarAlConfirmar || this.necesitaReasignacion()) && destino===null) || this.reasignando()) return;
     this.reasignando.set(true); this.errorReasignacion.set('');
-    this.finanzasService.reasignarCategoriaActivos(origen.id,destino).subscribe({
-      next:r=>{this.reasignando.set(false);if(!r.success){this.errorReasignacion.set(r.message);return;}this.categoriaReasignar.set(null);this.toastService.success('Referencias reasignadas.');},
+    const operacion = this.eliminarAlConfirmar
+      ? this.finanzasService.eliminarCategoriaConReasignacion(origen.id,this.necesitaReasignacion()?destino:null).pipe(map(r=>({success:r.success,message:r.message})))
+      : this.finanzasService.reasignarCategoriaActivos(origen.id,destino!).pipe(map(r=>({success:r.success,message:r.message})));
+    operacion.subscribe({
+      next:r=>{this.reasignando.set(false);if(!r.success){this.errorReasignacion.set(r.message);return;}this.categoriaReasignar.set(null);this.toastService.success(this.eliminarAlConfirmar?'Categor\u00eda eliminada.':'Referencias reasignadas.');this.cargar();},
       error:e=>{this.reasignando.set(false);this.errorReasignacion.set(mensajeDeError(e,'No se pudieron reasignar las referencias.'));}
     });
   }
 
-  eliminarCategoria(categoria: Categoria): void {
-    if (!window.confirm(`¿Eliminar la categoría ${categoria.nombre}?`)) return;
-    this.finanzasService.eliminarCategoria(categoria.id).subscribe({
-      next: response => {
-        if (!response.success) { this.toastService.error(response.message || 'No se pudo eliminar la categoría.'); return; }
-        this.toastService.success('Categoría eliminada.'); this.cargar();
-      },
-      error: err => this.toastService.error(mensajeDeError(err, 'No se pudo eliminar la categoría.'))
-    });
-  }
+  eliminarCategoria(categoria: Categoria): void { this.abrirReasignacion(categoria,true); }
 
   seleccionarEmoji(valor: string): void {
     this.emojiPersonalizado = valor;
