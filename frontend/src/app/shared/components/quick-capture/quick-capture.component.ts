@@ -1,5 +1,5 @@
 import { ListaContextoService } from '../../../core/services/lista-contexto.service';
-import { parsearEtiquetas } from '../../../core/utils/etiquetas';
+import { extraerEtiquetasCaptura } from '../../../core/utils/etiquetas';
 import { FeatureStylesService } from '../../../core/services/feature-styles.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { PrivacidadService } from '../../../core/services/privacidad.service';
@@ -604,9 +604,7 @@ export class QuickCaptureComponent implements OnDestroy {
   private prepararEnDispositivo(value: string, listaId: number | null): void {
     try {
       if (!this.cuentasEdicion().length) throw new Error('Abre la app con conexión para guardar primero tus cuentas.');
-      const tags = value.match(/(?<![\p{L}\p{N}_])#[\p{L}\p{N}][\p{L}\p{N}_-]*/gu) ?? [];
-      const etiquetas = parsearEtiquetas(tags.join(' '));
-      const texto = value.replace(/(?<![\p{L}\p{N}_])#[\p{L}\p{N}][\p{L}\p{N}_-]*/gu, '').trim();
+      const { texto, etiquetas } = extraerEtiquetasCaptura(value);
       const proposal = prepararCapturaOffline(texto, this.cuentasEdicion(), this.categories());
       proposal.data = { ...proposal.data, ...(listaId == null ? {} : { listaId }), etiquetas };
       this.captureTurns.update(turns => [...turns, {id:++this.captureTurnId,user:value,

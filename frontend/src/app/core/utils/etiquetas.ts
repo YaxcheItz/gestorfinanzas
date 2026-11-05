@@ -7,3 +7,11 @@ export function parsearEtiquetas(texto: string): string[] {
     return etiqueta;
   }))];
 }
+
+/** Extrae etiquetas expresas, sin interpretar el resto del concepto. */
+export function extraerEtiquetasCaptura(texto: string): { texto: string; etiquetas: string[] } {
+  const nombres: string[] = [];
+  const sinExplicitas = texto.replace(/(?<![\p{L}\p{N}_])(?:con\s+)?(?:la\s+)?etiqueta\s+#?([\p{L}\p{N}][\p{L}\p{N}_-]*)/giu, (_, nombre: string) => { nombres.push(nombre); return ' '; });
+  const sinHashtags = sinExplicitas.replace(/(?<![\p{L}\p{N}_])#([\p{L}\p{N}][\p{L}\p{N}_-]*)/gu, (_, nombre: string) => { nombres.push(nombre); return ' '; });
+  return {texto: sinHashtags.replace(/\s+/g, ' ').trim(), etiquetas: parsearEtiquetas(nombres.join(' '))};
+}
