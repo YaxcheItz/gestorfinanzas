@@ -647,6 +647,10 @@ export class QuickCaptureComponent implements OnDestroy {
 
   private puedeGuardarVoz(propuesta: AiActionProposal, texto: string): boolean {
     const d = propuesta.data;
+    const normalizar = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const textoNormal = normalizar(texto);
+    // Un ejemplo, una pregunta o una negacion no constituye una orden inequívoca de registro.
+    if (/[¿?]/.test(texto) || /\b(no|nunca|ni|si|quizas|ojala|ejemplo|prueba|simula|simular|simulado|supongamos|imagina|hipotetico|podria|seria|cancela|cancelar|cuanto|cuanta|cuantos|cuantas)\b/.test(textoNormal)) return false;
     if (propuesta.local || propuesta.type !== 'CREATE_TRANSACTION' || !['GASTO','INGRESO'].includes(String(d['tipo'])) ||
         !Number.isFinite(Number(d['monto'])) || Number(d['monto']) <= 0 || !d['categoriaId'] || !d['cuentaId'] || !d['fecha']) return false;
     if (!this.categories().some(c => c.activo && c.tipo === d['tipo'] && c.id === d['categoriaId'])) return false;
@@ -654,8 +658,7 @@ export class QuickCaptureComponent implements OnDestroy {
     const cuenta = activas.find(c => c.id === d['cuentaId']);
     if (!cuenta) return false;
     if (activas.length === 1) return true;
-    const normalizar = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-    const textoNormal = normalizar(texto), nombre = normalizar(cuenta.nombre);
+    const nombre = normalizar(cuenta.nombre);
     const nombreLiteral=nombre.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
     return new RegExp(`(?:^|[^\\p{L}\\d])${nombreLiteral}(?=$|[^\\p{L}\\d])`,'u').test(textoNormal)
       || (/\bamex\b/.test(textoNormal) && /\bamerican express\b/.test(nombre));

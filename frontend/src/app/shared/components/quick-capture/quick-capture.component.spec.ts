@@ -94,6 +94,14 @@ describe('QuickCaptureComponent processing and gestures', () => {
     result.next({success:true,data:{answer:'Revisar',engine:'REGLAS',actions:[{id:'voz-3',type:'CREATE_TRANSACTION',version:0,summary:'Gasto',data:{tipo:'GASTO',monto:50,cuentaId:1,categoriaId:10,fecha:'2026-11-05'}}]}});
     expect(TestBed.inject(FinanzasService).confirmAiAction).not.toHaveBeenCalled();
   });
+  it.each(['No gaste 50 en tacos','Por ejemplo gaste 50 en tacos','¿Gaste 50 en tacos?'])('no guarda automaticamente una negacion, ejemplo o pregunta: %s', texto => {
+    component.categories.set([{id:10,nombre:'Comida',tipo:'GASTO',activo:true,esPersonalizada:true}]);
+    component.cuentasEdicion.set([{id:1,nombre:'Efectivo',activo:true}] as any);
+    component.content=texto; component.pantallaVoz.set(true); component.continuarConVoz();
+    result.next({success:true,data:{answer:'Revisar',engine:'REGLAS',actions:[{id:'voz-ambigua',type:'CREATE_TRANSACTION',version:0,summary:'Gasto',data:{tipo:'GASTO',monto:50,cuentaId:1,categoriaId:10,fecha:'2026-11-05'}}]}});
+    expect(TestBed.inject(FinanzasService).confirmAiAction).not.toHaveBeenCalled();
+    expect(component.open()).toBe(true);
+  });
 
   it('no crea otra propuesta tras perder la respuesta de confirmacion de voz', () => {
     component.categories.set([{id:10,nombre:'Comida',tipo:'GASTO',activo:true,esPersonalizada:true}]);
