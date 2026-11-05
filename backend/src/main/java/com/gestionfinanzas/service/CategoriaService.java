@@ -25,6 +25,7 @@ public class CategoriaService {
     private final TransaccionRepository transaccionRepository;
     private final PresupuestoRepository presupuestoRepository;
     private final PlantillaRecurrenteRepository plantillaRecurrenteRepository;
+    private final com.gestionfinanzas.repository.LineaAsientoRepository lineaAsientoRepository;
 
     @Transactional(readOnly = true)
     public List<CategoriaResponse> listarCategorias(Long usuarioId) {
@@ -102,7 +103,7 @@ public class CategoriaService {
         if (presupuestoRepository.existsByCategoriaId(categoriaId) || plantillaRecurrenteRepository.existsByCategoriaId(categoriaId)) {
             throw new IllegalArgumentException("Reasigna los presupuestos y movimientos recurrentes de esta categoría antes de eliminarla.");
         }
-        if (transaccionRepository.existsByCategoriaId(categoriaId)) {
+        if (transaccionRepository.existsByCategoriaId(categoriaId) || lineaAsientoRepository.existsByCategoriaId(categoriaId)) {
             throw new IllegalArgumentException("Esta categoría tiene movimientos anteriores. Todavía no se puede eliminar conservando su historial.");
         }
         categoriaRepository.delete(categoria);

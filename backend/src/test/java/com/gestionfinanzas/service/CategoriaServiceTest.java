@@ -27,8 +27,9 @@ class CategoriaServiceTest {
     private final TransaccionRepository transaccionRepository = mock(TransaccionRepository.class);
     private final PresupuestoRepository presupuestoRepository = mock(PresupuestoRepository.class);
     private final PlantillaRecurrenteRepository plantillas = mock(PlantillaRecurrenteRepository.class);
+    private final com.gestionfinanzas.repository.LineaAsientoRepository lineas = mock(com.gestionfinanzas.repository.LineaAsientoRepository.class);
     private final CategoriaService service = new CategoriaService(
-            categoriaRepository, usuarioRepository, transaccionRepository, presupuestoRepository, plantillas
+            categoriaRepository, usuarioRepository, transaccionRepository, presupuestoRepository, plantillas, lineas
     );
     @Test
     void noDuplicaCategoriaCreadaPorUnAvisoMientrasLaCreacionManualEspera() {
@@ -141,5 +142,12 @@ class CategoriaServiceTest {
         assertEquals(4L,presupuesto.getCategoria().getId());
         org.mockito.Mockito.verify(presupuestoRepository,org.mockito.Mockito.never()).saveAll(any());
         org.mockito.Mockito.verify(plantillas,org.mockito.Mockito.never()).saveAll(any());
+    }
+    @Test void noEliminaCategoriaConReferenciaEnLibroDiario() {
+        var categoria=Categoria.builder().id(4L).nombre("Prueba").build();
+        when(categoriaRepository.findByIdAndUsuarioId(4L,7L)).thenReturn(Optional.of(categoria));
+        when(lineas.existsByCategoriaId(4L)).thenReturn(true);
+        assertThrows(IllegalArgumentException.class,()->service.eliminarCategoria(7L,4L));
+        org.mockito.Mockito.verify(categoriaRepository,org.mockito.Mockito.never()).delete(any());
     }
 }
