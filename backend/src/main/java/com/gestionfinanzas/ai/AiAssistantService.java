@@ -113,13 +113,15 @@ public class AiAssistantService {
             if (!request.consentimientoDatosFinancieros()) {
                 throw new IllegalArgumentException("No encontré una regla local para ese texto. Activa el permiso para que la IA lo interprete.");
             }
-            response = chat(userId, new AiChatRequest(
-                    java.util.List.of(new AiChatRequest.Message(AiChatRequest.Role.USER, mensaje)), true));
+            var conversacion = new java.util.ArrayList<AiChatRequest.Message>();
+            if (request.historial() != null) conversacion.addAll(request.historial());
+            conversacion.add(new AiChatRequest.Message(AiChatRequest.Role.USER, mensaje));
+            response = chat(userId, new AiChatRequest(conversacion, true));
         }
-        if ((response.action() != null && !"CREATE_TRANSACTION".equals(response.action().type()))
-                || response.actions().stream().anyMatch(a -> !"CREATE_TRANSACTION".equals(a.type()))) {
-            throw new IllegalArgumentException("Este chat registra movimientos y consulta reportes. Gestiona cuentas y borrados en Configuración.");
-        }
+        var acciones = new java.util.ArrayList<AiActionService.ActionProposal>(response.actions());
+        if (response.action() != null) acciones.add(response.action());
+        if (acciones.stream().anyMatch(a -> "DEACTIVATE_CATEGORY".equals(a.type()) || "REACTIVATE_CATEGORY".equals(a.type())))
+            throw new IllegalArgumentException("Gestiona las categorías desde su catálogo; no se archivan desde el chat.");
         if (request.listaId() != null || !etiquetas.isEmpty()) {
             var propuestas = new java.util.LinkedHashMap<String, AiActionService.ActionProposal>();
             if (response.action() != null) propuestas.put(response.action().id(), response.action());

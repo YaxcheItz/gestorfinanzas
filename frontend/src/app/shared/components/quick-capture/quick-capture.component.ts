@@ -29,7 +29,7 @@ type CaptureMode = 'CAPTURE' | 'REPORT';
 /** Estado del panel de procesamiento de voz */
 type ProcessingStep = 'TRANSCRIBIENDO' | 'CATEGORIZANDO' | null;
 interface AssistantMessage extends AiChatMessage { actions?: AiActionProposal[]; evidence?: AiEvidence[]; }
-interface CaptureTurn { id: number; user: string; answer: string; actions: AiActionProposal[]; voice: boolean; report?: AiReportWidget | null; evidence?: AiEvidence[]; suggestions?: string[]; engine?: string; confirmaciones?: {id:string; estado:'SERVIDOR'|'DISPOSITIVO'}[]; }
+interface CaptureTurn { id: number; user: string; answer: string; actions: AiActionProposal[]; voice: boolean; report?: AiReportWidget | null; evidence?: AiEvidence[]; suggestions?: string[]; engine?: string; confirmaciones?: {id:string; estado:'SERVIDOR'|'DISPOSITIVO'; accion?:boolean}[]; }
 interface WeeklyCategory { name: string; amount: number; percent: number; currency: string; }
 @Component({
   selector: 'app-quick-capture',
@@ -64,12 +64,16 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
         </button>
         <p class="voice-screen__status" role="status">{{ escuchando() ? 'Grabando · ' + cronometro() : transcribiendoVoz() ? 'Convirtiendo audio a texto…' : 'Toca el micrófono para comenzar' }}</p>
         @if (escuchando()) {<div class="voice-screen__levels" aria-hidden="true">@for (nivel of nivelesAudio(); track $index) {<i [style.height.px]="4 + nivel * 24"></i>}</div>}
-        @if (permisoVoz()) {<div class="voice-permission"><p>El audio se enviará periódicamente a Groq para mostrar una transcripción y al terminar para revisarla.</p><button type="button" (click)="permitirVoz()">Permitir audio y grabar</button></div>}
+        @if (permisoVoz()) {<div class="voice-permission"><p>El audio se enviará periódicamente a Groq para mostrar una transcripción y al terminar para revisarla. Recordaremos tu permiso en este dispositivo.</p><button type="button" (click)="permitirVoz()">Permitir audio y grabar</button></div>}
+        @if (voiceConsent) {<button type="button" class="voice-screen__text" (click)="revocarVoz()">Retirar permiso para enviar audio</button>}
         @if (error()) {<p class="capture-error" role="alert">{{ error() }}</p>}
+        @if (voiceMessage()) {<p role="status">{{ voiceMessage() }}</p>}
+        @if (guardadoVozCompletado()) {<button type="button" class="voice-screen__text" (click)="revisarMovimientosVoz()">Revisar movimientos</button>}
         @if (transcripcionLista()) {
           <label for="voice-transcript">Revisa y edita tu transcripción</label>
           <textarea id="voice-transcript" class="voice-screen__transcript" [(ngModel)]="content" rows="4"></textarea>
-          <button type="button" class="voice-screen__text" [disabled]="!content.trim()" (click)="abrirEscrituraDesdeVoz()">Continuar con este texto</button>
+          <button type="button" class="voice-screen__text" [disabled]="!content.trim() || loading() || catalogoCargando() || confirming() !== null" (click)="continuarConVoz()">Continuar con este texto</button>
+          <button type="button" class="voice-screen__text" [disabled]="loading() || confirming() !== null" (click)="abrirEscrituraDesdeVoz()">Escribir en el chat</button>
         } @else {
         <div class="voice-screen__transcript" aria-label="Transcripción provisional" aria-live="polite">{{ transcripcionParcial() || (escuchando() ? 'Las palabras aparecerán aquí con unos segundos de retraso.' : 'Tu transcripción aparecerá aquí.') }}</div>
         }
@@ -136,7 +140,7 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
             @for (turn of captureTurns(); track turn.id) {
               <article class="capture-chat__user"><span>{{ turn.user | textoFinanciero }}</span></article>
               <article class="capture-chat__assistant"><span class="capture-chat__avatar" aria-hidden="true">✦</span><div class="capture-chat__reply"><p>{{ turn.answer | textoFinanciero }}</p>
-                @for (confirmacion of turn.confirmaciones ?? []; track confirmacion.id) {<p class="capture-receipt" [class.capture-receipt--local]="confirmacion.estado === 'DISPOSITIVO'">{{ confirmacion.estado === 'SERVIDOR' ? '✓ Movimiento confirmado en tus cuentas' : '✓ Guardado en este dispositivo. Revisa el estado de envío en pendientes.' }}</p>}
+                @for (confirmacion of turn.confirmaciones ?? []; track confirmacion.id) {<p class="capture-receipt" [class.capture-receipt--local]="confirmacion.estado === 'DISPOSITIVO'">{{ confirmacion.estado === 'SERVIDOR' ? (confirmacion.accion ? '✓ Acción completada' : '✓ Movimiento confirmado en tus cuentas') : '✓ Guardado en este dispositivo. Revisa el estado de envío en pendientes.' }}</p>}
                 @if (turn.report; as report) {
                   <section class="chat-local-report" aria-label="Reporte financiero"><h3>{{ report.title | textoFinanciero }}</h3>
                     @for (label of report.labels; track $index; let i = $index) {<div class="chat-local-report__row"><span>{{ label | textoFinanciero }}</span><strong>{{ report.values[i] | monto:(report.unit || 'MXN') }}</strong><div class="chat-local-report__track"><i [style.width.%]="anchoReporte(report, i)"></i></div></div>}
@@ -150,7 +154,7 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
                 }
                 @if (turn.suggestions?.length) {<div class="chat-followups">@for (suggestion of turn.suggestions; track suggestion) {<button type="button" (click)="usarSugerencia(suggestion)" [disabled]="loading() || confirming() !== null">{{ suggestion | textoFinanciero }}</button>}</div>}
                 @for (proposal of turn.actions; track proposal.id) {
-                  <button type="button" class="capture-cancel" style="min-height:44px" (click)="abrirEdicion(proposal)" [disabled]="confirming()!==null">Editar propuesta</button>
+                  @if (proposal.type === 'CREATE_TRANSACTION') {<button type="button" class="capture-cancel" style="min-height:44px" (click)="abrirEdicion(proposal)" [disabled]="confirming()!==null">Editar propuesta</button>}
                   @if (etiquetasPropuesta(proposal).length) {<p>Etiquetas: {{ etiquetasPropuesta(proposal).join(', ') }}</p>}
                   @if (necesitaCategoria(proposal)) {
                     <section class="categorization-review" aria-label="Elige una categoría">
@@ -178,6 +182,12 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
                       </div>
                       <button type="button" class="capture-save" (click)="confirm(proposal)" [disabled]="confirming() !== null">Guardar sin categoría</button>
                     </section>
+                  } @else if (proposal.type !== 'CREATE_TRANSACTION') {
+                    <article class="capture-proposal"><div><small>Revisa la acción antes de ejecutarla</small><strong>{{ proposal.summary | textoFinanciero }}</strong>
+                      @for (campo of camposAccion(proposal); track campo.key) {<p>{{ campo.key }}: {{ mostrarCampoAccion(campo.key, campo.value) | textoFinanciero }}</p>}
+                    </div><div class="capture-proposal__actions"><button type="button" class="capture-cancel" (click)="dismiss(proposal.id)">Descartar</button>
+                    @if (proposal.type.startsWith('DELETE_') && borradoPendiente() !== proposal.id) {<button type="button" class="capture-save" (click)="borradoPendiente.set(proposal.id)">Revisar eliminación</button>}
+                    @else {<button type="button" class="capture-save" (click)="confirm(proposal)" [disabled]="confirming() !== null">{{ proposal.type.startsWith('DELETE_') ? 'Confirmar eliminación' : 'Confirmar acción' }}</button>}</div></article>
                   } @else {
                     <article class="capture-proposal"><div><small>Confirma para guardar</small><strong>{{ proposal.summary | textoFinanciero }}</strong></div><div class="capture-proposal__actions"><button type="button" class="capture-cancel" (click)="dismiss(proposal.id)">Descartar</button><button type="button" class="capture-save" (click)="confirm(proposal)" [disabled]="confirming() !== null">{{ confirming() === proposal.id ? 'Guardando…' : 'Guardar movimiento' }}</button></div></article>
                   }
@@ -285,7 +295,11 @@ export class QuickCaptureComponent implements OnDestroy {
   private readonly perfil = inject(PerfilService);
   private readonly toast = inject(ToastService);
   private contexto: string | null = null;
-  private voiceConsent = false;
+  voiceConsent = false;
+  private confirmarVozAlResolver = false;
+  private guardadoVozId: string | null = null;
+  readonly borradoPendiente = signal<string | null>(null);
+  readonly guardadoVozCompletado = signal(false);
   private usuarioChat: number | null = null;
   private destruido = false;
   @ViewChild('chatScroll') private chatScroll?: ElementRef<HTMLElement>;
@@ -330,12 +344,18 @@ export class QuickCaptureComponent implements OnDestroy {
       return generation === this.chatGeneration && !this.destruido && antes === estado()
         && !this.loading() && !this.confirming() && !this.listening() && !this.stopping();
     });
-    effect(() => {
-      const usuarioId = this.auth.currentUser()?.id ?? null;
+    effect(() => { this.sincronizarUsuario(this.auth.currentUser()?.id ?? null); });
+    effect(()=>{
+      this.revisionBorrador();this.captureTurns();this.editando();
+      if(this.borradorRestaurado())this.programarBorrador();
+    });
+  }
+  private sincronizarUsuario(usuarioId: number | null): void {
       if (this.usuarioChat !== usuarioId) {
         if(this.guardadoTimer)clearTimeout(this.guardadoTimer);this.guardadoTimer=null;
         this.borradorRestaurado.set(false);this.errorBorrador.set('');
         this.chatGeneration++;
+        this.confirmarVozAlResolver = false; this.guardadoVozId = null; this.guardadoVozCompletado.set(false);
         this.operaciones.unsubscribe(); this.operaciones=new Subscription();
         this.confirming.set(null); this.reportMessages.set([]); this.weeklyTransactions.set([]);
         this.categories.set([]); this.cuentasEdicion.set([]); this.etiquetasPersonales.set([]); this.borrador={};
@@ -343,14 +363,12 @@ export class QuickCaptureComponent implements OnDestroy {
         this.reportLoading.set(false); this.reportError.set(''); this.error.set(''); this.editando.set(null);
         this.recuperando.set(false);
         this.usuarioChat = usuarioId; this.captureTurns.set([]); this.content = ''; this.contexto = null; this.consent = false; this.voiceConsent = false;
+        if (usuarioId !== null) {
+          try { this.voiceConsent = localStorage.getItem(`kaptal.voice-consent.${usuarioId}`) === '1'; } catch { /* Solicitar consentimiento si no se puede leer. */ }
+        }
         this.capturaSub?.unsubscribe(); this.transcripcionSub?.unsubscribe(); this.stopVoice(true); this.loading.set(false); this.processingStep.set(null); this.open.set(false); this.pantallaVoz.set(false);
         if (usuarioId!==null) void this.restaurarBorrador(usuarioId,this.chatGeneration);
       }
-    });
-    effect(()=>{
-      this.revisionBorrador();this.captureTurns();this.editando();
-      if(this.borradorRestaurado())this.programarBorrador();
-    });
   }
   marcarBorrador():void{this.revisionBorrador.update(n=>n+1);}
   private programarBorrador():void{
@@ -491,6 +509,7 @@ export class QuickCaptureComponent implements OnDestroy {
 
   /** Cancela la transcripción en curso y cierra el Processing Sheet */
   cancelarTranscripcion(): void {
+    this.confirmarVozAlResolver = false;
     this.transcripcionSub?.unsubscribe();
     this.transcripcionSub = null;
     this.capturaSub?.unsubscribe();
@@ -524,10 +543,21 @@ export class QuickCaptureComponent implements OnDestroy {
     this.content = text;
     requestAnimationFrame(() => document.getElementById('quick-capture-text')?.focus());
   }
-  close(): void { this.limpiarHoldTimer(); this.pointerGesture = false; this.stopVoice(true); if (this.processingStep()) this.cancelarTranscripcion(); this.open.set(false); this.pantallaVoz.set(false); this.changeDetector.detectChanges(); }
+  close(): void { this.confirmarVozAlResolver = false; this.limpiarHoldTimer(); this.pointerGesture = false; this.stopVoice(true); if (this.processingStep()) this.cancelarTranscripcion(); this.open.set(false); this.pantallaVoz.set(false); this.changeDetector.detectChanges(); }
   cerrarPantallaVoz(): void { this.permisoVoz.set(false); this.close(); this.transcripcionParcial.set(''); this.transcripcionLista.set(false); }
   usarTranscripcionParcial(): void { this.content = this.transcripcionParcial(); this.voiceCapture.set(true); this.transcripcionLista.set(true); }
-  abrirEscrituraDesdeVoz(): void { this.stopVoice(true); if (this.processingStep()) this.cancelarTranscripcion(); this.permisoVoz.set(false); this.pantallaVoz.set(false); this.open.set(true); this.mode.set('CAPTURE'); this.changeDetector.detectChanges(); requestAnimationFrame(() => document.getElementById('quick-capture-text')?.focus()); }
+  abrirEscrituraDesdeVoz(): void { this.stopVoice(true); if (this.processingStep()) this.cancelarTranscripcion(); this.voiceCapture.set(false); this.permisoVoz.set(false); this.pantallaVoz.set(false); this.open.set(true); this.mode.set('CAPTURE'); this.changeDetector.detectChanges(); requestAnimationFrame(() => document.getElementById('quick-capture-text')?.focus()); }
+  continuarConVoz(): void {
+    if (!this.content.trim() || this.loading() || this.catalogoCargando() || this.confirming() !== null || !this.offline.conexion()) {
+      if (!this.offline.conexion()) this.error.set('Conéctate para guardar la captura de voz.');
+      return;
+    }
+    this.guardadoVozCompletado.set(false); this.voiceCapture.set(true); this.confirmarVozAlResolver = true;
+    this.voiceMessage.set('Interpretando tu mensaje…');
+    this.submit();
+    if (!this.loading() && this.confirmarVozAlResolver) { this.confirmarVozAlResolver = false; this.voiceMessage.set(''); }
+  }
+  revisarMovimientosVoz(): void { this.close(); void this.router.navigate(['/transacciones']); }
   cambiarModo(mode: CaptureMode): void {
     this.stopVoice(true);
     if (this.processingStep()) this.cancelarTranscripcion();
@@ -542,13 +572,15 @@ export class QuickCaptureComponent implements OnDestroy {
     const value = this.content.trim();
     if (!value || this.loading() || this.catalogoCargando() || this.listening() || this.stopping() || this.confirming() !== null) return;
     const pendientes = this.captureTurns().flatMap(turn => turn.actions).filter(proposal => this.necesitaCategoria(proposal));
-    if (pendientes.length === 1) {
+    if (!this.confirmarVozAlResolver && pendientes.length === 1) {
       const normalizar = (texto: string) => texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
       const respuesta = normalizar(value).replace(/^(?:fue\s+)?(?:en\s+|de\s+|categoria\s+)?/, '').trim();
       const categorias = this.categoriasPara(pendientes[0]);
       let opciones = categorias.filter(categoria => normalizar(categoria.nombre) === respuesta);
       if (!opciones.length && /^(?:comida|restaurante|restaurantes)$/.test(respuesta)) {
-        opciones = categorias.filter(categoria => /^(?:comida|alimentos)(?:\b|$)/.test(normalizar(categoria.nombre)));
+        opciones = categorias.filter(categoria => /^(?:comida|alimentacion|alimentos)(?:\b|$)/.test(normalizar(categoria.nombre)));
+        const especificas = opciones.filter(categoria => /^(?:comida|alimentacion)$/.test(normalizar(categoria.nombre)));
+        if (especificas.length === 1) opciones = especificas;
       }
       if (opciones.length > 1) { this.error.set('Hay varias categorías posibles. Elige una de las opciones de la propuesta.'); return; }
       if (opciones.length === 1) {
@@ -568,8 +600,13 @@ export class QuickCaptureComponent implements OnDestroy {
     const capturedByVoice = this.voiceCapture();
     this.processingStep.set('CATEGORIZANDO');
     this.scrollCaptureToBottom();
-    this.capturaSub = this.finanzas.capturaRapidaAi(value, this.consent, this.voiceCapture(), this.esPedidoNuevo(value) ? null : this.contexto, listaId).subscribe({
+    const historial: AiChatMessage[] = this.consent ? this.captureTurns().filter(t => !!t.user.trim() && !!t.answer?.trim()).slice(-4)
+      .flatMap(t => [{role:'USER' as const, content:t.user.slice(0,1200)}, {role:'ASSISTANT' as const, content:t.answer.slice(0,1200)}]) : [];
+    const contexto = this.confirmarVozAlResolver || this.esPedidoNuevo(value) ? null : this.contexto;
+    this.capturaSub = this.finanzas.capturaRapidaAi(value, this.consent, this.voiceCapture(), contexto, listaId, historial).subscribe({
       next: response => {
+        const guardarVoz = capturedByVoice && this.confirmarVozAlResolver;
+        this.confirmarVozAlResolver = false;
         this.processingStep.set(null);
         this.loading.set(false);
         this.pendingCaptureText.set('');
@@ -582,16 +619,26 @@ export class QuickCaptureComponent implements OnDestroy {
         this.contexto = response.data.contexto ?? null;
         const proposals = response.data.actions?.length ? response.data.actions : response.data.action ? [response.data.action] : [];
         this.captureTurns.update(turns => [...turns, { id: ++this.captureTurnId, user: value, answer: response.data!.answer, actions: proposals, voice: capturedByVoice, report: response.data!.report, evidence: response.data!.evidence, suggestions: response.data!.suggestions, engine: response.data!.engine }]);
+        if (guardarVoz && response.data.engine === 'REGLAS' && proposals.length === 1 && this.puedeGuardarVoz(proposals[0], value)) {
+          this.guardadoVozId = proposals[0].id;
+          this.voiceMessage.set('Guardando movimiento…');
+          this.confirm(proposals[0]);
+        } else if (guardarVoz) {
+          this.pantallaVoz.set(false); this.open.set(true);
+          if (proposals.length) this.error.set('Revisa los datos que faltan o necesitan aclaración antes de guardar.');
+        }
         this.content = '';
         this.voiceCapture.set(false);
         this.scrollCaptureToBottom();
       },
       error: error => {
+        const eraVoz=this.confirmarVozAlResolver; this.confirmarVozAlResolver = false;
         this.processingStep.set(null);
         this.loading.set(false); this.pendingCaptureText.set('');
         // onLine puede seguir siendo true aunque Firefox no alcance el servidor.
         // Preparar una propuesta local nunca registra dinero sin confirmación.
         if (error instanceof HttpErrorResponse && error.status === 0) {
+          if (eraVoz) { this.pantallaVoz.set(false); this.open.set(true); }
           this.prepararEnDispositivo(value, listaId);return;
         }
         const message = this.errorMessage(error);
@@ -599,6 +646,28 @@ export class QuickCaptureComponent implements OnDestroy {
         else this.error.set(message);
       }
     });
+  }
+
+  private puedeGuardarVoz(propuesta: AiActionProposal, texto: string): boolean {
+    const d = propuesta.data;
+    const normalizar = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const textoNormal = normalizar(texto);
+    // Un ejemplo, una pregunta o una negacion no constituye una orden inequívoca de registro.
+    if (/[¿?]/.test(texto) || /\b(no|nunca|ni|si|quizas|ojala|ejemplo|prueba|simula|simular|simulado|supongamos|imagina|hipotetico|podria|seria|cancela|cancelar|cuanto|cuanta|cuantos|cuantas)\b/.test(textoNormal)) return false;
+    // "Compré 50 tacos" puede indicar unidades, no pesos; pedir revisión si no hay una señal monetaria.
+    if (!/\b(gaste|gasto|pague|pago|me gaste|me cobraron|recibi|ingrese|me pagaron|cobre|depositaron)\b/.test(textoNormal)
+        && !/(?:\$|\b(?:pesos?|mxn)\b|\b\d+(?:[.,]\d+)?\s+(?:en|por)\b)/.test(textoNormal)) return false;
+    if (propuesta.local || propuesta.type !== 'CREATE_TRANSACTION' || !['GASTO','INGRESO'].includes(String(d['tipo'])) ||
+        !Number.isFinite(Number(d['monto'])) || Number(d['monto']) <= 0 || !d['categoriaId'] || !d['cuentaId'] || !d['fecha']) return false;
+    if (!this.categories().some(c => c.activo && c.tipo === d['tipo'] && c.id === d['categoriaId'])) return false;
+    const activas = this.cuentasEdicion().filter(c => c.activo);
+    const cuenta = activas.find(c => c.id === d['cuentaId']);
+    if (!cuenta) return false;
+    if (activas.length === 1) return true;
+    const nombre = normalizar(cuenta.nombre);
+    const nombreLiteral=nombre.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    return new RegExp(`(?:^|[^\\p{L}\\d])${nombreLiteral}(?=$|[^\\p{L}\\d])`,'u').test(textoNormal)
+      || (/\bamex\b/.test(textoNormal) && /\bamerican express\b/.test(nombre));
   }
 
   private prepararEnDispositivo(value: string, listaId: number | null): void {
@@ -631,6 +700,14 @@ export class QuickCaptureComponent implements OnDestroy {
   etiquetasPropuesta(proposal: AiActionProposal): string[] {
     const etiquetas = proposal.data['etiquetas'];
     return Array.isArray(etiquetas) ? etiquetas.filter((value): value is string => typeof value === 'string') : [];
+  }
+  camposAccion(proposal: AiActionProposal): {key: string; value: unknown}[] {
+    return Object.entries(proposal.data).filter(([, valor]) => valor !== null && valor !== undefined)
+      .map(([key, value]) => ({key, value}));
+  }
+  mostrarCampoAccion(campo: string, valor: unknown): string {
+    if (this.privacidad.ocultarMontos() && (/^(monto|saldo|total|importe|precio|deuda|limite|disponible|ingresos|gastos|balance|patrimonio)/i.test(campo) || typeof valor === 'object')) return '•••';
+    return typeof valor === 'object' ? JSON.stringify(valor) : String(valor);
   }
   insertarEtiqueta(nombre: string): void {
     const existente = new Set((this.content.match(/(?<![\p{L}\p{N}_])#[\p{L}\p{N}][\p{L}\p{N}_-]*/gu) ?? []).map(tag => tag.slice(1).toLocaleLowerCase()));
@@ -750,18 +827,25 @@ export class QuickCaptureComponent implements OnDestroy {
         if(generation!==this.chatGeneration)return;
         this.confirming.set(null);
         if (!result.success) {
+          if (this.guardadoVozId === proposal.id) { this.guardadoVozId = null; this.voiceMessage.set('No se pudo guardar. Revisa el mensaje e inténtalo de nuevo.'); }
           const msg = result.message || 'No se guardó el movimiento.';
           this.error.set(msg);
           this.toast.error(msg, '⚠️ Error al guardar');
           return;
         }
         this.captureTurns.update(turns => turns.map(turn => turn.actions.some(action => action.id === proposal.id)
-          ? { ...turn, confirmaciones: [...(turn.confirmaciones ?? []), {id:proposal.id,estado:'SERVIDOR' as const}], actions: turn.actions.filter(action => action.id !== proposal.id) }
+          ? { ...turn, confirmaciones: [...(turn.confirmaciones ?? []), {id:proposal.id,estado:'SERVIDOR' as const,...(proposal.type !== 'CREATE_TRANSACTION' ? {accion:true} : {})}], actions: turn.actions.filter(action => action.id !== proposal.id) }
           : turn));
         window.dispatchEvent(new Event('kaptal-movimiento-guardado'));
-        this.toast.success('Movimiento guardado con éxito.', '✅ Listo');
+        if (this.guardadoVozId === proposal.id) { this.guardadoVozId = null; this.transcripcionLista.set(false); this.transcripcionParcial.set(''); this.guardadoVozCompletado.set(true); this.voiceMessage.set('Movimiento guardado.'); }
+        this.toast.success(proposal.type === 'CREATE_TRANSACTION' ? 'Movimiento guardado con éxito.' : 'Acción completada.', '✅ Listo');
       },
       error: error => {
+        if (this.guardadoVozId === proposal.id) {
+          this.guardadoVozId = null; this.transcripcionLista.set(false);
+          this.pantallaVoz.set(false); this.open.set(true);
+          this.voiceMessage.set('No se pudo confirmar el guardado. Revisa Actividad antes de volver a intentarlo.');
+        }
         if(generation!==this.chatGeneration)return;
         this.confirming.set(null);
         const msg = this.errorConfirmacion(error);
@@ -838,6 +922,8 @@ export class QuickCaptureComponent implements OnDestroy {
 
   @HostListener('window:kaptal-abrir-captura-chat', ['$event'])
   abrirCapturaDesdeAcceso(event: Event): void {
+    // Sincronizar identidad antes de abrir evita que el efecto inicial cierre el panel recién abierto.
+    this.sincronizarUsuario(this.auth.currentUser()?.id ?? null);
     this.captureLauncher.attach('chat');
     this.seguirFinal.set(true);
     this.cargarCategoriasCaptura();
@@ -847,7 +933,7 @@ export class QuickCaptureComponent implements OnDestroy {
       error:()=>{if(generacion===this.chatGeneration)this.etiquetasPersonales.set([]);}
     }));
     const detail = (event as CustomEvent<{ tipo?: string; content?: string; voz?: boolean }>).detail;
-    if (detail?.voz === true) { this.transcripcionLista.set(false); this.transcripcionParcial.set(''); }
+    if (detail?.voz === true) { this.transcripcionLista.set(false); this.transcripcionParcial.set(''); this.guardadoVozCompletado.set(false); this.voiceMessage.set(''); }
     this.pantallaVoz.set(detail?.voz === true);
     this.open.set(detail?.voz !== true);
     this.mode.set('CAPTURE');
@@ -902,10 +988,23 @@ export class QuickCaptureComponent implements OnDestroy {
   private limpiarHoldTimer(): void { if (this.holdTimer) clearTimeout(this.holdTimer); this.holdTimer = null; }
   readonly stopping = signal(false);
   readonly permisoVoz = signal(false);
-  permitirVoz(): void { this.voiceConsent = true; this.permisoVoz.set(false); void this.startVoice(); }
+  permitirVoz(): void {
+    this.voiceConsent = true;
+    if (this.usuarioChat !== null) {
+      try { localStorage.setItem(`kaptal.voice-consent.${this.usuarioChat}`, '1'); } catch { /* El permiso se mantiene durante esta sesion. */ }
+    }
+    this.permisoVoz.set(false); void this.startVoice();
+  }
+  revocarVoz(): void {
+    this.stopVoice(true); this.voiceConsent = false;
+    if (this.usuarioChat !== null) {
+      try { localStorage.removeItem(`kaptal.voice-consent.${this.usuarioChat}`); } catch { /* No hay almacenamiento disponible. */ }
+    }
+    this.permisoVoz.set(true);
+  }
   toggleVoice(): void {
     if (this.listening()) { this.stopVoice(); return; }
-    if (!this.consent && !this.voiceConsent) { this.permisoVoz.set(true); this.changeDetector.detectChanges(); return; }
+    if (!this.voiceConsent) { this.permisoVoz.set(true); this.changeDetector.detectChanges(); return; }
     void this.startVoice();
   }
   private async startVoice(): Promise<void> {
@@ -913,7 +1012,7 @@ export class QuickCaptureComponent implements OnDestroy {
     if (this.listening() || this.stopping() || this.loading() || this.transcribiendoVoz()) return;
     const generation = ++this.voiceGeneration;
     this.error.set(''); this.voiceMessage.set('');
-    if (!this.consent && !this.voiceConsent) { this.error.set('Activa el consentimiento para enviar el audio y transcribirlo.'); return; }
+    if (!this.voiceConsent) { this.error.set('Activa el consentimiento para enviar el audio y transcribirlo.'); return; }
     if (!window.isSecureContext) { this.error.set('El navegador necesita una conexión segura para usar el micrófono. En el teléfono abre Kaptal con HTTPS; en esta computadora puedes usar localhost.'); return; }
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
       this.error.set('Este navegador no permite grabar audio. Actualiza el navegador o escribe el movimiento.'); return;
@@ -997,7 +1096,7 @@ export class QuickCaptureComponent implements OnDestroy {
     const audio = new Blob(this.audioChunks, { type: mimeType });
     this.audioChunks = [];
     if (this.discardAudio || !audio.size) return;
-    if (!this.consent && !this.voiceConsent) { this.error.set('Activa el consentimiento para transcribir este audio.'); return; }
+    if (!this.voiceConsent) { this.error.set('Activa el consentimiento para transcribir este audio.'); return; }
     // Mostrar Processing Sheet — paso 1: Transcribiendo
     this.transcribiendoVoz.set(true);
     this.processingStep.set('TRANSCRIBIENDO');

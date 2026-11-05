@@ -1,5 +1,5 @@
 import { prepararCapturaOffline, validarPayloadOffline } from './captura-offline';
-import { Cuenta } from '../models/finanzas.models';
+import { Categoria, Cuenta } from '../models/finanzas.models';
 
 describe('Captura offline sin saldos ni IA', () => {
   const cuentas = [{id:1,nombre:'Efectivo',activo:true,tipo:'EFECTIVO',moneda:'MXN'},
@@ -30,5 +30,20 @@ describe('Captura offline sin saldos ni IA', () => {
     const amex=[{...cuentas[0],id:3,nombre:'American Express'}];
     expect(prepararCapturaOffline('Pague 50 en cafe con Amex',amex,[]).data['cuentaId']).toBe(3);
     expect(prepararCapturaOffline('Pague 50 en cafe con Amex',[cuentas[0]],[]).data['cuentaId']).toBeNull();
+  });
+  it('infiere categorias por vocabulario y no usa etiquetas como concepto', () => {
+    const cats=[{id:10,nombre:'Comida',tipo:'GASTO',activo:true},{id:11,nombre:'Transporte',tipo:'GASTO',activo:true}] as Categoria[];
+    expect(prepararCapturaOffline('Gaste 50 en restaurantes',cuentas,cats).data['categoriaId']).toBe(10);
+    expect(prepararCapturaOffline('Gaste 50 en restaurantes',cuentas,[cats[0],{...cats[1],esPersonalizada:true}]).data['categoriaId']).toBe(10);
+    expect(prepararCapturaOffline('Me eche 50 en una torta',cuentas,cats).data['categoriaId']).toBe(10);
+    expect(prepararCapturaOffline('Pague 50 de gasolina',cuentas,cats).data['categoriaId']).toBe(11);
+    expect(prepararCapturaOffline('Gaste 50 en regalo con etiqueta gasolina',cuentas,cats).data['categoriaId']).toBeNull();
+    expect(prepararCapturaOffline('Gaste 50 en tacos y gasolina',cuentas,cats).data['categoriaId']).toBeNull();
+  });
+  it('prefiere una categoria personal a una generica para el mismo concepto', () => {
+    const cats=[{id:10,nombre:'Comida',tipo:'GASTO',activo:true,esPersonalizada:true},{id:11,nombre:'Alimentos y Supermercado',tipo:'GASTO',activo:true,esPersonalizada:false}] as Categoria[];
+    expect(prepararCapturaOffline('Gaste 50 en restaurantes',cuentas,cats).data['categoriaId']).toBe(10);
+    const distintas=[cats[0],{id:12,nombre:'Transporte',tipo:'GASTO',activo:true,esPersonalizada:false}] as Categoria[];
+    expect(prepararCapturaOffline('Gaste 50 en tacos y gasolina',cuentas,distintas).data['categoriaId']).toBeNull();
   });
 });
