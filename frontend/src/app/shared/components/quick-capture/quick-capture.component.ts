@@ -651,6 +651,9 @@ export class QuickCaptureComponent implements OnDestroy {
     const textoNormal = normalizar(texto);
     // Un ejemplo, una pregunta o una negacion no constituye una orden inequívoca de registro.
     if (/[¿?]/.test(texto) || /\b(no|nunca|ni|si|quizas|ojala|ejemplo|prueba|simula|simular|simulado|supongamos|imagina|hipotetico|podria|seria|cancela|cancelar|cuanto|cuanta|cuantos|cuantas)\b/.test(textoNormal)) return false;
+    // "Compré 50 tacos" puede indicar unidades, no pesos; pedir revisión si no hay una señal monetaria.
+    if (!/\b(gaste|gasto|pague|pago|me gaste|me cobraron|recibi|ingrese|me pagaron|cobre|depositaron)\b/.test(textoNormal)
+        && !/(?:\$|\b(?:pesos?|mxn)\b|\b\d+(?:[.,]\d+)?\s+(?:en|por)\b)/.test(textoNormal)) return false;
     if (propuesta.local || propuesta.type !== 'CREATE_TRANSACTION' || !['GASTO','INGRESO'].includes(String(d['tipo'])) ||
         !Number.isFinite(Number(d['monto'])) || Number(d['monto']) <= 0 || !d['categoriaId'] || !d['cuentaId'] || !d['fecha']) return false;
     if (!this.categories().some(c => c.activo && c.tipo === d['tipo'] && c.id === d['categoriaId'])) return false;

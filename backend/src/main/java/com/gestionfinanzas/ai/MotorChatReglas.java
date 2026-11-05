@@ -21,10 +21,10 @@ public final class MotorChatReglas {
     private static final Pattern FECHA = Pattern.compile("\\b(\\d{4}-\\d{2}-\\d{2}|\\d{1,2}/\\d{1,2}(?:/\\d{4})?)\\b");
     private static final Pattern RANGO = Pattern.compile("\\b(?:del|desde)\\s+(\\d{4}-\\d{2}-\\d{2})\\s+(?:al|hasta)\\s+(\\d{4}-\\d{2}-\\d{2})\\b");
     private static final Map<String, Set<String>> DICCIONARIO = Map.ofEntries(
-        Map.entry("comida", Set.of("tacos","taco","comida","restaurante","restaurantes","cafe","cafeteria","pizza","hamburguesa","desayuno","almuerzo","cena","comedor","taqueria","pizzeria","panaderia","antojitos","fondita","quesadillas","tortas","tamales","chilaquiles")),
+        Map.entry("comida", Set.of("tacos","taco","comida","restaurante","restaurantes","cafe","cafeteria","pizza","hamburguesa","desayuno","almuerzo","cena","comedor","taqueria","pizzeria","panaderia","antojitos","fondita","quesadilla","quesadillas","torta","tortas","tamal","tamales","chilaquiles","lonche")),
         Map.entry("supermercado", Set.of("super","supermercado","despensa","abarrotes","walmart","soriana","chedraui")),
         Map.entry("alimentos", Set.of("super","despensa","abarrotes","tacos","comida","restaurante","restaurantes")),
-        Map.entry("transporte", Set.of("uber","didi","taxi","gasolina","metro","camion","autobus","transporte","peaje","estacionamiento","caseta","uberx","colectivo")),
+        Map.entry("transporte", Set.of("uber","didi","taxi","gasolina","metro","camion","autobus","transporte","peaje","estacionamiento","caseta","uberx","colectivo","combi")),
         Map.entry("servicios", Set.of("luz","agua","internet","telefono","gas","cfe","renta","alquiler")),
         Map.entry("hogar", Set.of("renta","hogar","muebles","alquiler")),
         Map.entry("salud", Set.of("farmacia","doctor","medicina","hospital","salud","dentista","medico")),

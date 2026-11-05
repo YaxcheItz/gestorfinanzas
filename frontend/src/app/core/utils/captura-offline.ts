@@ -6,9 +6,9 @@ import { crearIdSolicitud } from './request-id';
 const normalizar=(texto:string)=>texto.normalize('NFD').replace(/\p{M}/gu,'').toLowerCase().trim().replace(/\s+/g,' ');
 
 const categoriasPorConcepto: ReadonlyArray<{nombres: string[]; palabras: string[]}> = [
-  {nombres:['comida','alimentacion','alimentos','alimentos y supermercado'],palabras:['restaurante','restaurantes','taco','tacos','taqueria','pizza','cafeteria','cafe','comida','antojitos','fondita','quesadillas','tortas','tamales','chilaquiles']},
+  {nombres:['comida','alimentacion','alimentos','alimentos y supermercado'],palabras:['restaurante','restaurantes','taco','tacos','taqueria','pizza','cafeteria','cafe','comida','antojitos','fondita','quesadilla','quesadillas','torta','tortas','tamal','tamales','chilaquiles','lonche']},
   {nombres:['supermercado','despensa','alimentos y supermercado'],palabras:['super','supermercado','despensa','abarrotes','walmart','soriana','chedraui']},
-  {nombres:['transporte'],palabras:['uber','didi','taxi','gasolina','metro','camion','autobus','caseta']},
+  {nombres:['transporte'],palabras:['uber','didi','taxi','gasolina','metro','camion','autobus','caseta','combi','colectivo']},
   {nombres:['salud'],palabras:['farmacia','doctor','medico','dentista','medicina']},
   {nombres:['gimnasio'],palabras:['gym','gimnasio','pesas','entrenamiento']},
   {nombres:['compras'],palabras:['ropa','zapatos','audifonos','electronica']},
@@ -25,7 +25,7 @@ export function prepararCapturaOffline(texto:string,cuentas:Cuenta[],categorias:
   if(/\b(msi|meses|mensual|recurrente|cada|anual)\b/.test(limpio))throw new Error('MSI y recurrencias necesitan conexión. El texto sigue disponible.');
   const tipo=/^(?:por favor )?(?:(?:registra|anota) (?:un )?)?(transferi|transfiere|transferencia)/.test(limpio)?'TRANSFERENCIA'
     :/^(?:por favor )?(?:(?:registra|anota) (?:un )?)?(recibi|ingrese|ingreso)/.test(limpio)?'INGRESO'
-    :/^(?:por favor )?(?:(?:registra|anota) (?:un )?)?(gaste|gasto|pague|compra|compre)/.test(limpio)?'GASTO':null;
+    :/^(?:por favor )?(?:(?:registra|anota) (?:un )?)?(gaste|gasto|pague|compra|compre|me eche|me gaste|me compre|me cobraron|fui por)\b/.test(limpio)?'GASTO':null;
   if(!tipo)throw new Error('Sin conexión puedes preparar un gasto, ingreso o transferencia con monto. Reportes, IA y voz necesitan conexión.');
   if(/^pague.*\b(tarjeta|deuda|credito)\b/.test(limpio))throw new Error('Indica una transferencia con cuenta origen y destino para pagar una tarjeta.');
   const fechas=texto.match(/\b\d{4}-\d{2}-\d{2}\b/g)??[];
