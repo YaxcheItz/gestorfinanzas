@@ -88,6 +88,11 @@ html .monai-theme :is(.accounts-page, .budgets-page) :is(button, select) { min-h
 html .monai-theme :is(.accounts-page, .budgets-page) :is(input, select) { font-size: 1rem; }
 html .monai-theme .account-card { border-color: var(--kaptal-border); box-shadow: none; }
 html .monai-theme .account-card h2 { margin-top: .65rem; white-space: normal; overflow-wrap: anywhere; font-size: 1.15rem; line-height: 1.35; }
+html .monai-theme .account-card h2.account-card__name { margin-top: 0; }
+.account-card__meta { display:flex; flex-wrap:wrap; align-items:center; gap:.35rem; margin-top:.35rem; color:var(--kaptal-content-muted); font-size:.75rem; font-weight:600; }
+html .monai-theme .account-credit-summary { padding:.85rem; border-radius:.9rem; background:var(--kaptal-surface-subtle); }
+html .monai-theme .account-credit-summary > div { min-width:0; }
+html .monai-theme .account-credit-summary p { line-height:1.35; }
 .account-currency { color: var(--kaptal-content-muted); font-size: .7rem; font-weight: 650; margin-top: .25rem; }
 html .monai-theme .account-card p { overflow-wrap: anywhere; }
 html .monai-theme .account-credit-summary { grid-template-columns: repeat(auto-fit, minmax(min(100%, 7rem), 1fr)); }
