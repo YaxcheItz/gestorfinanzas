@@ -1756,3 +1756,7 @@ Se precisa que `usage_unavailable` cuenta solo eventos emitidos tras procesar el
 ### Cierre visual de eliminacion y etiquetas
 - Revision final local: build Angular correcto y dos E2E Chromium aprobados tras compactar acciones de categorias: accesibilidad con letra grande y flujo ampliado de eliminacion, reasignacion de presupuesto activo, preservacion historica y alta/baja de etiqueta sin quitarla del movimiento anterior.
 - CI de 67e21e5: backend, frontend, PostgreSQL y APK aprobados; E2E remoto pendiente al registrar. ADB sin dispositivos. Todavia no integrado, publicado ni instalado; no se genero entrega nueva.
+### Integracion de captura y catalogos; entrega Android 0.1.30
+- PR #226 integrado en develop 370f760 tras todos los checks exitosos del SHA 1f20944, incluidas dos ejecuciones E2E completas, PostgreSQL, backend, frontend y Android.
+- Nueva rama mejoras/android-030-entrega-catalogos creada desde develop actualizado. Se incrementa Android de 0.1.29/codigo30 a 0.1.30/codigo31. Generacion, firma, contenido y CI exacta de esta entrega pendientes al registrar; no instalada. Telefono desconectado voluntariamente.
+- Produccion aun pendiente. No se accedio a datos financieros reales ni se cambio la sesion del telefono. Pendientes de usuario: validacion fisica de captura y catalogos tras instalacion; no declarar carreras de sesion ni duplicacion de transferencias resueltas.
