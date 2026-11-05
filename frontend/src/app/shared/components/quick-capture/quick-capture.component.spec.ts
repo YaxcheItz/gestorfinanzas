@@ -86,6 +86,14 @@ describe('QuickCaptureComponent processing and gestures', () => {
     expect(TestBed.inject(FinanzasService).confirmAiAction).not.toHaveBeenCalled();
     expect(component.open()).toBe(true);
   });
+  it('muestra una respuesta de consulta por voz sin pedir guardar un movimiento', () => {
+    component.content='Como voy este mes'; component.pantallaVoz.set(true); component.continuarConVoz();
+    result.next({success:true,data:{answer:'Este es tu resumen',engine:'REGLAS',actions:[]}});
+    expect(component.open()).toBe(true);
+    expect(component.error()).toBe('');
+    expect(component.captureTurns()[0].answer).toBe('Este es tu resumen');
+    expect(TestBed.inject(FinanzasService).confirmAiAction).not.toHaveBeenCalled();
+  });
 
   it('no guarda voz si la cuenta elegida no fue indicada entre varias cuentas', () => {
     component.categories.set([{id:10,nombre:'Comida',tipo:'GASTO',activo:true,esPersonalizada:true}]);

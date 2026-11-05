@@ -73,6 +73,7 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
           <label for="voice-transcript">Revisa y edita tu transcripción</label>
           <textarea id="voice-transcript" class="voice-screen__transcript" [(ngModel)]="content" rows="4"></textarea>
           <button type="button" class="voice-screen__text" [disabled]="!content.trim() || loading() || confirming() !== null" (click)="continuarConVoz()">Continuar con este texto</button>
+          <button type="button" class="voice-screen__text" [disabled]="loading() || confirming() !== null" (click)="abrirEscrituraDesdeVoz()">Escribir en el chat</button>
         } @else {
         <div class="voice-screen__transcript" aria-label="Transcripción provisional" aria-live="polite">{{ transcripcionParcial() || (escuchando() ? 'Las palabras aparecerán aquí con unos segundos de retraso.' : 'Tu transcripción aparecerá aquí.') }}</div>
         }
@@ -545,7 +546,7 @@ export class QuickCaptureComponent implements OnDestroy {
   close(): void { this.confirmarVozAlResolver = false; this.limpiarHoldTimer(); this.pointerGesture = false; this.stopVoice(true); if (this.processingStep()) this.cancelarTranscripcion(); this.open.set(false); this.pantallaVoz.set(false); this.changeDetector.detectChanges(); }
   cerrarPantallaVoz(): void { this.permisoVoz.set(false); this.close(); this.transcripcionParcial.set(''); this.transcripcionLista.set(false); }
   usarTranscripcionParcial(): void { this.content = this.transcripcionParcial(); this.voiceCapture.set(true); this.transcripcionLista.set(true); }
-  abrirEscrituraDesdeVoz(): void { this.stopVoice(true); if (this.processingStep()) this.cancelarTranscripcion(); this.permisoVoz.set(false); this.pantallaVoz.set(false); this.open.set(true); this.mode.set('CAPTURE'); this.changeDetector.detectChanges(); requestAnimationFrame(() => document.getElementById('quick-capture-text')?.focus()); }
+  abrirEscrituraDesdeVoz(): void { this.stopVoice(true); if (this.processingStep()) this.cancelarTranscripcion(); this.voiceCapture.set(false); this.permisoVoz.set(false); this.pantallaVoz.set(false); this.open.set(true); this.mode.set('CAPTURE'); this.changeDetector.detectChanges(); requestAnimationFrame(() => document.getElementById('quick-capture-text')?.focus()); }
   continuarConVoz(): void {
     if (!this.content.trim() || this.loading() || this.confirming() !== null || !this.offline.conexion()) {
       if (!this.offline.conexion()) this.error.set('Conéctate para guardar la captura de voz.');
@@ -622,7 +623,7 @@ export class QuickCaptureComponent implements OnDestroy {
           this.confirm(proposals[0]);
         } else if (guardarVoz) {
           this.pantallaVoz.set(false); this.open.set(true);
-          this.error.set('Revisa los datos que faltan o necesitan aclaración antes de guardar.');
+          if (proposals.length) this.error.set('Revisa los datos que faltan o necesitan aclaración antes de guardar.');
         }
         this.content = '';
         this.voiceCapture.set(false);
