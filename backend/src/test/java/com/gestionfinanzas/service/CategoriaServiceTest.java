@@ -150,4 +150,12 @@ class CategoriaServiceTest {
         assertThrows(IllegalArgumentException.class,()->service.eliminarCategoria(7L,4L));
         org.mockito.Mockito.verify(categoriaRepository,org.mockito.Mockito.never()).delete(any());
     }
+    @Test void referenciasExigenPropiedadYDevuelvenConteos() {
+        when(categoriaRepository.findByIdAndUsuarioId(4L,7L)).thenReturn(Optional.of(Categoria.builder().id(4L).build()));
+        when(transaccionRepository.countByCategoriaId(4L)).thenReturn(3L);
+        when(lineas.countByCategoriaId(4L)).thenReturn(2L);
+        var referencias=service.referencias(7L,4L);
+        assertEquals(3L,referencias.movimientos()); assertEquals(2L,referencias.lineasLibro());
+        assertThrows(IllegalArgumentException.class,()->service.referencias(8L,4L));
+    }
 }

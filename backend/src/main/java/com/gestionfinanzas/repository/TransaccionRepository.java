@@ -45,6 +45,7 @@ public interface TransaccionRepository extends JpaRepository<Transaccion, Long>,
     boolean existsByCuentaIdOrCuentaDestinoId(Long cuentaId, Long cuentaDestinoId);
 
     boolean existsByCategoriaId(Long categoriaId);
+    long countByCategoriaId(Long categoriaId);
 
     List<Transaccion> findTop10ByUsuarioIdOrderByFechaDescIdDesc(Long usuarioId);
 

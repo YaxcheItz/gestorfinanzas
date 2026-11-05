@@ -15,6 +15,7 @@ public interface PlantillaRecurrenteRepository extends JpaRepository<PlantillaRe
     Optional<PlantillaRecurrente> findByIdAndUsuarioId(Long id, Long usuarioId);
     void deleteByCuentaId(Long cuentaId);
     boolean existsByCategoriaId(Long categoriaId);
+    long countByCategoriaId(Long categoriaId);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("DELETE FROM PlantillaRecurrente p WHERE p.usuario.id = :usuarioId")

@@ -1518,3 +1518,7 @@ Se precisa que `usage_unavailable` cuenta solo eventos emitidos tras procesar el
 ### Proteccion de referencias del libro diario
 - Rama correcciones/proteger-categoria-libro-diario desde develop adelantada con PR #223: se detecto que LineaAsiento guarda categoriaId sin clave externa; la eliminacion ahora se rechaza si existe esa referencia historica. Se anadio prueba enfocada; 11 pruebas CategoriaService pasaron.
 - La reasignacion de referencias activas se probo con H2, pero sigue pendiente el diseno e implementacion de eliminacion real conservando historia, concurrencia, CI y E2E; no se habilito borrado de categorias vinculadas ni se usaron datos reales. No generar APK antes de completar etapas; telefono desconectado por indicacion del propietario.
+
+### Referencias antes de eliminar categoria
+- Rama mejoras/historial-categorias-eliminadas desde develop adelantada con #224: vista previa de conteos de movimientos, presupuestos, recurrencias y lineas del libro, con verificacion de propiedad de categoria. Build Angular, 9 pruebas frontend y 12 pruebas backend pasaron. La vista no habilita el borrado de categorias con historia.
+- La eliminacion historica real aun requiere migracion y adaptacion de informes, respaldo, transacciones y presupuestos; se mantiene bloqueada. No estan completos los cuatro puntos, ni hay despliegue ni APK nueva. Revisar CI exacta, E2E y diseno visual antes de integrar o publicar. El usuario pidio esperar a terminar todos los cambios para instalar.

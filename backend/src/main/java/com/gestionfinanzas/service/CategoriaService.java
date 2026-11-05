@@ -109,6 +109,15 @@ public class CategoriaService {
         categoriaRepository.delete(categoria);
     }
 
+    public record Referencias(long movimientos, long presupuestos, long recurrencias, long lineasLibro) {}
+    @Transactional(readOnly = true)
+    public Referencias referencias(Long usuarioId, Long categoriaId) {
+        categoriaRepository.findByIdAndUsuarioId(categoriaId, usuarioId)
+                .orElseThrow(() -> new IllegalArgumentException("Categor\u00eda no encontrada."));
+        return new Referencias(transaccionRepository.countByCategoriaId(categoriaId), presupuestoRepository.countByCategoriaId(categoriaId),
+                plantillaRecurrenteRepository.countByCategoriaId(categoriaId), lineaAsientoRepository.countByCategoriaId(categoriaId));
+    }
+
     public record Reasignacion(int presupuestos, int recurrencias) {}
 
     @Transactional

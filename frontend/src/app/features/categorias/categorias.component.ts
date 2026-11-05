@@ -205,6 +205,7 @@ export class CategoriasComponent implements OnInit, OnDestroy {
   readonly categoriaReasignar = signal<Categoria | null>(null);
   readonly destinosReasignacion = signal<Categoria[]>([]);
   readonly errorReasignacion = signal('');
+  readonly referenciasCategoria = signal<{movimientos:number; presupuestos:number; recurrencias:number; lineasLibro:number} | null>(null);
   readonly reasignando = signal(false);
   destinoReasignar: number | null = null;
 
@@ -472,7 +473,8 @@ export class CategoriasComponent implements OnInit, OnDestroy {
   }
 
   abrirReasignacion(origen: Categoria): void {
-    this.categoriaReasignar.set(origen); this.destinoReasignar=null; this.errorReasignacion.set(''); this.destinosReasignacion.set([]);
+    this.categoriaReasignar.set(origen); this.destinoReasignar=null; this.errorReasignacion.set(''); this.destinosReasignacion.set([]); this.referenciasCategoria.set(null);
+    this.finanzasService.referenciasCategoria(origen.id).subscribe({next:r=>{if(this.categoriaReasignar()?.id===origen.id)this.referenciasCategoria.set(r.data??null);},error:e=>{if(this.categoriaReasignar()?.id===origen.id)this.errorReasignacion.set(mensajeDeError(e,'No se pudieron cargar las referencias.'));}});
     this.finanzasService.getCategorias().subscribe({next:r=>this.destinosReasignacion.set((r.data??[]).filter(c=>c.activo && c.tipo===origen.tipo && c.id!==origen.id)),
       error:e=>this.errorReasignacion.set(mensajeDeError(e,'No se pudieron cargar las categorías.'))});
   }

@@ -37,6 +37,7 @@ public interface PresupuestoRepository extends JpaRepository<Presupuesto, Long> 
 
     Optional<Presupuesto> findByIdAndUsuarioId(Long id, Long usuarioId);
     boolean existsByCategoriaId(Long categoriaId);
+    long countByCategoriaId(Long categoriaId);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("DELETE FROM Presupuesto p WHERE p.usuario.id = :usuarioId")
