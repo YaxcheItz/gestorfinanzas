@@ -130,10 +130,10 @@
               <span class="home-metric__label">Ingresos</span>
               <strong class="home-metric__value">{{ moneda.ingresosMes | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong>
             </div>
-            <div class="home-metric home-metric--balance">
+            <a class="home-metric home-metric--balance" routerLink="/cuentas" aria-label="Saldo neto. Ver cuentas y tarjetas">
               <span class="home-metric__label">Saldo neto</span>
               <strong class="home-metric__value" [class.is-negative]="moneda.balanceTotal < 0">{{ moneda.balanceTotal | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong>
-            </div>
+            </a>
           </div>
         } @else if (!error()) { <p class="dashboard-screen__amount">{{ 0 | monto:monedaResumen():'symbol-narrow':'1.2-2' }}</p> }
         

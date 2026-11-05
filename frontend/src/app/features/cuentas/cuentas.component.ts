@@ -89,11 +89,8 @@ import { fechaCivilFinanciera } from '../../core/utils/periodo-financiero';
               </a>
               <div class="flex min-h-11 items-start justify-between gap-4">
                 <div class="min-w-0">
-                  <span class="inline-flex px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-semibold uppercase tracking-wide">
-                    {{ tipoCuentaLabel(cuenta.tipo) }}
-                  </span>
-                  <h2 class="mt-3 truncate text-lg font-bold text-slate-900">{{ nombreCuentaVisible(cuenta.nombre) }}</h2>
-                  <p class="account-currency">{{ cuenta.moneda }}</p>
+                  <h2 class="account-card__name truncate text-lg font-bold text-slate-900">{{ nombreCuentaVisible(cuenta.nombre) }}</h2>
+                  <p class="account-card__meta"><span>{{ tipoCuentaLabel(cuenta.tipo) }}</span><span aria-hidden="true">·</span><span>{{ cuenta.moneda }}</span></p>
                   @if (institucionDe(cuenta.institucionFinanciera); as institucion) {
                     <p class="mt-1 text-xs font-medium text-slate-500">{{ institucion.nombre }}</p>
                   }

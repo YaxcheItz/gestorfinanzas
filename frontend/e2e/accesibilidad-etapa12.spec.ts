@@ -17,6 +17,11 @@ test('pantallas principales conservan nombres accesibles, foco y geometría con 
   await page.locator('#email').fill(email); await page.locator('#password').fill(password);
   await page.getByRole('button', { name: 'Iniciar sesión', exact: true }).click();
   await expect(page).toHaveURL(/dashboard/);
+  const saldo = page.getByRole('link', {name:'Saldo neto. Ver cuentas y tarjetas'});
+  await expect(saldo).toBeVisible();
+  await saldo.focus(); await saldo.press('Enter');
+  await expect(page).toHaveURL(/\/cuentas/);
+  await expect(page.getByRole('heading', {name:'Mis cuentas'})).toBeVisible();
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.name));
   const accessibility = await page.context().newCDPSession(page);
