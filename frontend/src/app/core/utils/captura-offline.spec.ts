@@ -34,6 +34,7 @@ describe('Captura offline sin saldos ni IA', () => {
   it('infiere categorias por vocabulario y no usa etiquetas como concepto', () => {
     const cats=[{id:10,nombre:'Comida',tipo:'GASTO',activo:true},{id:11,nombre:'Transporte',tipo:'GASTO',activo:true}] as Categoria[];
     expect(prepararCapturaOffline('Gaste 50 en restaurantes',cuentas,cats).data['categoriaId']).toBe(10);
+    expect(prepararCapturaOffline('Gaste 50 en restaurantes',cuentas,[cats[0],{...cats[1],esPersonalizada:true}]).data['categoriaId']).toBe(10);
     expect(prepararCapturaOffline('Me eche 50 en una torta',cuentas,cats).data['categoriaId']).toBe(10);
     expect(prepararCapturaOffline('Pague 50 de gasolina',cuentas,cats).data['categoriaId']).toBe(11);
     expect(prepararCapturaOffline('Gaste 50 en regalo con etiqueta gasolina',cuentas,cats).data['categoriaId']).toBeNull();

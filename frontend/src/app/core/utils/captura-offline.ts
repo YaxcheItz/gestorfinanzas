@@ -66,9 +66,11 @@ export function prepararCapturaOffline(texto:string,cuentas:Cuenta[],categorias:
     coincidencias=disponibles.filter(c=>grupos.some(g=>g.nombres.includes(normalizar(c.nombre))));
     if(coincidencias.length>1){
       const personales=coincidencias.filter(c=>c.esPersonalizada);
+      const directas=coincidencias.filter(c=>normalizar(c.nombre)!=='alimentos y supermercado');
       const pistasComunes=grupos.flatMap(g=>g.palabras.filter(p=>contiene(textoCategoria,p)))
         .filter(p=>coincidencias.every(c=>grupos.some(g=>g.nombres.includes(normalizar(c.nombre))&&g.palabras.includes(p))));
-      if(personales.length===1 && pistasComunes.length)coincidencias=personales;
+      if(pistasComunes.length && directas.length===1)coincidencias=directas;
+      else if(pistasComunes.length && directas.length===0 && personales.length===1)coincidencias=personales;
     }
   }
   const cuenta=activas.find(c=>c.id===cuentaId)?.nombre??'Cuenta por seleccionar';

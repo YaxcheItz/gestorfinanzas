@@ -346,6 +346,13 @@ describe('QuickCaptureComponent processing and gestures', () => {
     expect(component.captureTurns()[0].actions[0].data['categoriaId']).toBe(1);
     expect(TestBed.inject(FinanzasService).confirmAiAction).not.toHaveBeenCalled();
   });
+  it('prefiere comida sobre la categoria mixta al aclarar restaurantes', () => {
+    const propuesta={id:'pendiente',type:'CREATE_TRANSACTION',summary:'Gasto',data:{tipo:'GASTO',monto:25,categoriaId:null},version:0} as any;
+    component.categories.set([{id:1,nombre:'Comida',tipo:'GASTO',activo:true,esPersonalizada:true},{id:2,nombre:'Alimentos y Supermercado',tipo:'GASTO',activo:true,esPersonalizada:true}]);
+    component.captureTurns.set([{id:1,user:'Gasto 25',answer:'Elige categoria',actions:[propuesta],voice:false}]);
+    component.content='restaurantes'; component.submit();
+    expect(TestBed.inject(FinanzasService).editarPropuestaAi).toHaveBeenCalledWith('pendiente',{...propuesta.data,categoriaId:1},0);
+  });
 
   it('conserva la respuesta escrita si falla la actualizacion de categoria', () => {
     const propuesta = { id:'pendiente', type:'CREATE_TRANSACTION', summary:'Gasto', data:{tipo:'GASTO',monto:25,categoriaId:null}, version:0 } as any;
@@ -360,7 +367,7 @@ describe('QuickCaptureComponent processing and gestures', () => {
 
   it('no elige automaticamente cuando restaurantes puede referirse a dos categorias', () => {
     const propuesta = { id:'pendiente', type:'CREATE_TRANSACTION', summary:'Gasto', data:{tipo:'GASTO',monto:25,categoriaId:null}, version:0 } as any;
-    component.categories.set([{ id:1,nombre:'Comida',tipo:'GASTO',activo:true,esPersonalizada:true },{ id:2,nombre:'Alimentos y Supermercado',tipo:'GASTO',activo:true,esPersonalizada:true }]);
+    component.categories.set([{ id:1,nombre:'Comida',tipo:'GASTO',activo:true,esPersonalizada:true },{ id:2,nombre:'Alimentacion',tipo:'GASTO',activo:true,esPersonalizada:true }]);
     component.captureTurns.set([{id:1,user:'Gasto 25',answer:'Elige categoria',actions:[propuesta],voice:false}]);
     component.content='restaurantes';component.submit();
     expect(TestBed.inject(FinanzasService).editarPropuestaAi).not.toHaveBeenCalled();

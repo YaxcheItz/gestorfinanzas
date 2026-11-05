@@ -22,6 +22,7 @@ public final class MotorChatReglas {
     private static final Pattern RANGO = Pattern.compile("\\b(?:del|desde)\\s+(\\d{4}-\\d{2}-\\d{2})\\s+(?:al|hasta)\\s+(\\d{4}-\\d{2}-\\d{2})\\b");
     private static final Map<String, Set<String>> DICCIONARIO = Map.ofEntries(
         Map.entry("comida", Set.of("tacos","taco","comida","restaurante","restaurantes","cafe","cafeteria","pizza","hamburguesa","desayuno","almuerzo","cena","comedor","taqueria","pizzeria","panaderia","antojitos","fondita","quesadilla","quesadillas","torta","tortas","tamal","tamales","chilaquiles","lonche")),
+        Map.entry("alimentacion", Set.of("tacos","taco","comida","restaurante","restaurantes","cafe","cafeteria","pizza","hamburguesa","desayuno","almuerzo","cena","comedor","taqueria","pizzeria","panaderia","antojitos","fondita","quesadilla","quesadillas","torta","tortas","tamal","tamales","chilaquiles","lonche")),
         Map.entry("supermercado", Set.of("super","supermercado","despensa","abarrotes","walmart","soriana","chedraui")),
         Map.entry("alimentos", Set.of("super","despensa","abarrotes","tacos","comida","restaurante","restaurantes")),
         Map.entry("transporte", Set.of("uber","didi","taxi","gasolina","metro","camion","autobus","transporte","peaje","estacionamiento","caseta","uberx","colectivo","combi")),
@@ -227,6 +228,10 @@ public final class MotorChatReglas {
                     List<CategoriaResponse> porDiccionario=opciones.stream().filter(c -> DICCIONARIO.entrySet().stream().anyMatch(e -> normalizar(c.nombre()).contains(e.getKey()) && !Collections.disjoint(e.getValue(),palabras))).toList();
                     if(porDiccionario.size()==1) categoria=porDiccionario.getFirst();
                     else if(porDiccionario.size()>1) {
+                        var directas=porDiccionario.stream().filter(c -> {
+                            var alias=DICCIONARIO.get(normalizar(c.nombre()));
+                            return alias != null && !Collections.disjoint(alias,palabras);
+                        }).toList();
                         var personales=porDiccionario.stream().filter(CategoriaResponse::esPersonalizada).toList();
                         var palabrasComunes=new HashSet<>(palabras);
                         for(var candidata:porDiccionario) {
@@ -234,7 +239,8 @@ public final class MotorChatReglas {
                             DICCIONARIO.forEach((nombre,alias)->{if(normalizar(candidata.nombre()).contains(nombre)) pistas.addAll(alias);});
                             palabrasComunes.retainAll(pistas);
                         }
-                        if(personales.size()==1 && !palabrasComunes.isEmpty()) categoria=personales.getFirst();
+                        if(directas.size()==1 && !palabrasComunes.isEmpty()) categoria=directas.getFirst();
+                        else if(directas.isEmpty() && personales.size()==1 && !palabrasComunes.isEmpty()) categoria=personales.getFirst();
                     }
                     else if(porDiccionario.isEmpty()) {
                         var ids=recientes.stream().filter(t -> t.tipo()==tipoFinal && t.categoriaId()!=null && t.descripcion()!=null && Arrays.stream(normalizar(t.descripcion()).split("\\W+")).anyMatch(w -> w.length()>2&&palabras.contains(w))).map(TransaccionResponse::categoriaId).collect(java.util.stream.Collectors.toSet());
