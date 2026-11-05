@@ -17,7 +17,7 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
   standalone: true,
   imports: [MontoPrivadoDirective, CommonModule, FormsModule, CategoriaIconoComponent, FocusTrapDirective],
   template: `
-    <main class="finance-page max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-4 sm:space-y-6">
+    <main class="finance-page max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-5">
       <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
           <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">Mis categorías</h1>
@@ -39,13 +39,13 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
         <p class="p-12 bg-white border border-slate-200 rounded-2xl text-center text-sm text-slate-400">Cargando categorías...</p>
       } @else if (categoriasVisibles().length === 0) {
         <p class="p-12 bg-white border border-slate-200 rounded-2xl text-center text-sm text-slate-500">
-          Aun no has creado categorias personalizadas.
+          Aún no has creado categorías personalizadas.
         </p>
       } @else {
-        <section aria-label="Categorías personalizadas" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
+        <section aria-label="Categorías personalizadas" class="grid grid-cols-1 gap-2">
           @for (categoria of categoriasVisibles(); track categoria.id) {
             <article
-              class="min-w-0 bg-white p-3 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-wrap items-center gap-3 sm:gap-4"
+              class="min-w-0 bg-white p-3 rounded-2xl border border-slate-200 flex flex-wrap items-center gap-2 sm:gap-3"
               [class.opacity-70]="!categoria.activo"
               [attr.data-categoria-id]="categoria.id"
               [class.ring-2]="destinoTactil() === categoria.id"
@@ -449,13 +449,13 @@ export class CategoriasComponent implements OnInit, OnDestroy {
   }
 
   eliminarCategoria(categoria: Categoria): void {
-    if (!window.confirm(`?Eliminar la categor?a ${categoria.nombre}?`)) return;
+    if (!window.confirm(`¿Eliminar la categoría ${categoria.nombre}?`)) return;
     this.finanzasService.eliminarCategoria(categoria.id).subscribe({
       next: response => {
-        if (!response.success) { this.toastService.error(response.message || 'No se pudo eliminar la categor?a.'); return; }
-        this.toastService.success('Categor?a eliminada.'); this.cargar();
+        if (!response.success) { this.toastService.error(response.message || 'No se pudo eliminar la categoría.'); return; }
+        this.toastService.success('Categoría eliminada.'); this.cargar();
       },
-      error: err => this.toastService.error(mensajeDeError(err, 'No se pudo eliminar la categor?a.'))
+      error: err => this.toastService.error(mensajeDeError(err, 'No se pudo eliminar la categoría.'))
     });
   }
 

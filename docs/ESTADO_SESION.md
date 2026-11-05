@@ -1725,3 +1725,8 @@ Se precisa que `usage_unavailable` cuenta solo eventos emitidos tras procesar el
 ### Captura sin conexion: etiquetas y Amex
 - Rama mejoras/captura-sin-conexion-etiquetas desde develop adelantada con PR #220: extrae etiquetas expresas y hashtags antes de preparar el concepto sin conexion, reconoce Amex/American Express entre cuentas existentes y no selecciona la unica cuenta cuando se menciona explicitamente otra cuenta desconocida. No guarda sin confirmacion. Build Angular y 49 pruebas focales correctos; CI y prueba E2E pendientes.
 - PR #219 respaldo y restauracion paso 34 pruebas H2/unitarias; PR #220 paso dos pruebas E2E locales de accesibilidad/respaldo. Falta comprobacion integral exacta, categorias vinculadas sin archivo ni perdida historica, revision visual y entrega. No se ha generado ni instalado una nueva APK, segun indicacion del propietario.
+
+### Preferencia sobre categorias vinculadas y diseno
+- El propietario indica que, al eliminar una categoria con presupuesto o recurrencia activa, se le pida reasignarlos primero; los movimientos anteriores deben conservar su informacion historica. No desea Archivar. La reasignacion guiada y el borrado real conservando historia todavia no estan implementados; el servidor bloquea la eliminacion y comunica el motivo. No afirmar que ese flujo esta terminado.
+- Rama diseno/categorias-gestion-compacta desde develop adelantada con #221: filas mas compactas, texto y acentos corregidos, y mensajes diferenciados de dependencias. Build Angular, 44 pruebas frontend y 7 pruebas backend pasaron. Falta revision visual, CI y E2E.
+- No generar ni instalar APK hasta completar los cambios; telefono desconectado segun instruccion. No integrado ni publicado.

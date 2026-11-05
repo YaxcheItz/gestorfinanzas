@@ -199,7 +199,7 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
           @if (etiquetasPersonales().length) {
             <div class="capture-tags" aria-label="Etiquetas disponibles">
               @for (etiqueta of etiquetasPersonales(); track etiqueta.id) {
-                <button type="button" (click)="insertarEtiqueta(etiqueta.nombre)" [disabled]="loading()" [attr.aria-label]="'A?adir etiqueta ' + etiqueta.nombre">#{{ etiqueta.nombre }}</button>
+                <button type="button" (click)="insertarEtiqueta(etiqueta.nombre)" [disabled]="loading()" [attr.aria-label]="'Añadir etiqueta ' + etiqueta.nombre">#{{ etiqueta.nombre }}</button>
               }
             </div>
           }

@@ -101,7 +101,8 @@ class CategoriaServiceTest {
         var categoria=Categoria.builder().id(4L).nombre("Prueba").build();
         when(categoriaRepository.findByIdAndUsuarioId(4L,7L)).thenReturn(Optional.of(categoria));
         when(plantillas.existsByCategoriaId(4L)).thenReturn(true);
-        assertThrows(IllegalArgumentException.class,()->service.eliminarCategoria(7L,4L));
+        var error=assertThrows(IllegalArgumentException.class,()->service.eliminarCategoria(7L,4L));
+        org.junit.jupiter.api.Assertions.assertTrue(error.getMessage().contains("Reasigna"));
         org.mockito.Mockito.verify(categoriaRepository,org.mockito.Mockito.never()).delete(any());
     }
 }

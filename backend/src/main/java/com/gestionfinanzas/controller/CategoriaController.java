@@ -83,6 +83,6 @@ public class CategoriaController {
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> eliminarCategoria(@PathVariable Long id, @AuthenticationPrincipal CustomUserDetails usuario) {
         categoriaService.eliminarCategoria(usuario.getId(), id);
-        return ResponseEntity.ok(ApiResponse.ok("Categor?a eliminada", null));
+        return ResponseEntity.ok(ApiResponse.ok("Categoría eliminada", null));
     }
 }

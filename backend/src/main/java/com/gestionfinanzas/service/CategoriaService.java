@@ -98,11 +98,12 @@ public class CategoriaService {
     @Transactional
     public void eliminarCategoria(Long usuarioId, Long categoriaId) {
         Categoria categoria = categoriaRepository.findByIdAndUsuarioId(categoriaId, usuarioId)
-                .orElseThrow(() -> new IllegalArgumentException("Categor?a personalizada no encontrada"));
-        if (transaccionRepository.existsByCategoriaId(categoriaId)
-                || presupuestoRepository.existsByCategoriaId(categoriaId)
-                || plantillaRecurrenteRepository.existsByCategoriaId(categoriaId)) {
-            throw new IllegalArgumentException("Esta categor?a est? vinculada a movimientos, presupuestos o recurrencias y no se puede eliminar conservando esos registros.");
+                .orElseThrow(() -> new IllegalArgumentException("Categoría personalizada no encontrada"));
+        if (presupuestoRepository.existsByCategoriaId(categoriaId) || plantillaRecurrenteRepository.existsByCategoriaId(categoriaId)) {
+            throw new IllegalArgumentException("Reasigna los presupuestos y movimientos recurrentes de esta categoría antes de eliminarla.");
+        }
+        if (transaccionRepository.existsByCategoriaId(categoriaId)) {
+            throw new IllegalArgumentException("Esta categoría tiene movimientos anteriores. Todavía no se puede eliminar conservando su historial.");
         }
         categoriaRepository.delete(categoria);
     }
