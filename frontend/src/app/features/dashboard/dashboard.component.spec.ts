@@ -1,3 +1,4 @@
+import { PeriodoInicioService } from '../../core/services/periodo-inicio.service';
 import { TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -341,8 +342,8 @@ describe('DashboardComponent movement dialog accessibility', () => {
     TestBed.overrideProvider(PerfilService, { useValue: { perfil, cargando } });
     const fixture = TestBed.createComponent(DashboardComponent);
     fixture.detectChanges();
-    const selector = fixture.nativeElement.querySelector('.time-dropdown-btn') as HTMLButtonElement;
-    expect(selector.disabled).toBe(true);
+    const selector = TestBed.inject(PeriodoInicioService);
+    expect(selector.disponible()).toBe(false);
     const rangoInicial = fixture.componentInstance.fechasRango();
     fixture.componentInstance.cambiarPeriodo(-1);
     expect(fixture.componentInstance.fechasRango()).toEqual(rangoInicial);
@@ -351,8 +352,8 @@ describe('DashboardComponent movement dialog accessibility', () => {
     perfil.set({ id: 7, monedaPredeterminada: 'MXN', periodoPredeterminado: { tipo: 'CATORCENA', ancla: '2024-02-26', diaInicio: 20, diaQuincena: 16 } });
     cargando.set(false);
     fixture.detectChanges();
-    expect(selector.disabled).toBe(false);
-    selector.click(); fixture.detectChanges();
+    expect(selector.disponible()).toBe(true);
+    fixture.componentInstance.abrirPeriodoDesdeCabecera(); fixture.detectChanges();
     await fixture.whenStable(); fixture.detectChanges();
     expect((fixture.nativeElement.querySelector('input[value="CATORCENA"]') as HTMLInputElement).checked).toBe(true);
     expect((fixture.nativeElement.querySelector('input[name="anclaPeriodo"]') as HTMLInputElement).value).toBe('2024-02-26');
@@ -364,9 +365,9 @@ describe('DashboardComponent movement dialog accessibility', () => {
     TestBed.overrideProvider(PerfilService, { useValue: { perfil: signal(null), cargando } });
     const fixture = TestBed.createComponent(DashboardComponent); fixture.detectChanges();
     cargando.set(false); fixture.detectChanges();
-    const selector = fixture.nativeElement.querySelector('.time-dropdown-btn') as HTMLButtonElement;
-    expect(selector.disabled).toBe(false);
-    selector.click(); fixture.detectChanges();
+    const selector = TestBed.inject(PeriodoInicioService);
+    expect(selector.disponible()).toBe(true);
+    fixture.componentInstance.abrirPeriodoDesdeCabecera(); fixture.detectChanges();
     expect(fixture.componentInstance.modalRangoAbierto()).toBe(true);
     fixture.destroy();
   });
