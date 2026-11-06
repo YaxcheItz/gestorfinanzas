@@ -58,14 +58,13 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
       <div class="voice-dialog-backdrop" (click)="cerrarPantallaVoz()"></div>
       <section appDialogViewport class="voice-screen" role="dialog" aria-modal="true" aria-labelledby="voice-title" (keydown.escape)="cerrarPantallaVoz()" tabindex="-1" id="voice-screen">
         <header><div><small>CAPTURA POR VOZ</small><h2 id="voice-title">{{ escuchando() ? 'Te escucho' : transcribiendoVoz() ? 'Transcribiendo…' : 'Cuéntame tu movimiento' }}</h2></div><button type="button" (click)="cerrarPantallaVoz()" aria-label="Cerrar voz">×</button></header>
-        <p class="voice-screen__hint">{{ escuchando() ? 'Habla con naturalidad. Al terminar, toca detener.' : 'Habla de un gasto, ingreso o pregunta sobre tus finanzas.' }}</p>
+        <p class="voice-screen__hint">{{ escuchando() ? 'Habla con naturalidad. Toca el micrófono para detener la grabación.' : 'Habla de un gasto, ingreso o pregunta sobre tus finanzas.' }}</p>
         <button type="button" class="voice-screen__mic" (click)="toggleVoice()" [disabled]="transcribiendoVoz() || stopping()" [attr.aria-label]="escuchando() ? 'Detener grabación' : 'Iniciar grabación'">
           <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5m-4 0h8"/></svg>
         </button>
         <p class="voice-screen__status" role="status">{{ escuchando() ? 'Grabando · ' + cronometro() : transcribiendoVoz() ? 'Convirtiendo audio a texto…' : 'Toca el micrófono para comenzar' }}</p>
         @if (escuchando()) {<div class="voice-screen__levels" aria-hidden="true">@for (nivel of nivelesAudio(); track $index) {<i [style.height.px]="4 + nivel * 24"></i>}</div>}
         @if (permisoVoz()) {<div class="voice-permission"><p>El audio se enviará periódicamente a Groq para mostrar una transcripción y al terminar para revisarla. Recordaremos tu permiso en este dispositivo.</p><button type="button" (click)="permitirVoz()">Permitir audio y grabar</button></div>}
-        @if (voiceConsent) {<button type="button" class="voice-screen__text" (click)="revocarVoz()">Retirar permiso para enviar audio</button>}
         @if (error()) {<p class="capture-error" role="alert">{{ error() }}</p>}
         @if (voiceMessage()) {<p role="status">{{ voiceMessage() }}</p>}
         @if (guardadoVozCompletado()) {<button type="button" class="voice-screen__text" (click)="revisarMovimientosVoz()">Revisar movimientos</button>}
@@ -77,9 +76,7 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
         } @else {
         <div class="voice-screen__transcript" aria-label="Transcripción provisional" aria-live="polite">{{ transcripcionParcial() || (escuchando() ? 'Las palabras aparecerán aquí con unos segundos de retraso.' : 'Tu transcripción aparecerá aquí.') }}</div>
         }
-        <p class="voice-screen__note">El texto provisional puede cambiar. Al terminar, revisa la transcripción antes de continuar.</p>
         @if (error() && transcripcionParcial() && !escuchando() && !transcribiendoVoz()) {<button type="button" class="voice-screen__text" (click)="usarTranscripcionParcial()">Revisar texto parcial</button>}
-        @if (!transcripcionLista()) {<button type="button" class="voice-screen__text" (click)="abrirEscrituraDesdeVoz()">Prefiero escribir</button>}
       </section>
     }
 
@@ -837,7 +834,7 @@ export class QuickCaptureComponent implements OnDestroy {
           ? { ...turn, confirmaciones: [...(turn.confirmaciones ?? []), {id:proposal.id,estado:'SERVIDOR' as const,...(proposal.type !== 'CREATE_TRANSACTION' ? {accion:true} : {})}], actions: turn.actions.filter(action => action.id !== proposal.id) }
           : turn));
         window.dispatchEvent(new Event('kaptal-movimiento-guardado'));
-        if (this.guardadoVozId === proposal.id) { this.guardadoVozId = null; this.transcripcionLista.set(false); this.transcripcionParcial.set(''); this.guardadoVozCompletado.set(true); this.voiceMessage.set('Movimiento guardado.'); }
+        if (this.guardadoVozId === proposal.id) { this.guardadoVozId = null; this.transcripcionLista.set(false); this.transcripcionParcial.set(''); this.guardadoVozCompletado.set(true); this.voiceMessage.set('Listo, movimiento guardado.'); }
         this.toast.success(proposal.type === 'CREATE_TRANSACTION' ? 'Movimiento guardado con éxito.' : 'Acción completada.', '✅ Listo');
       },
       error: error => {

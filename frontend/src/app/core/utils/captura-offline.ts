@@ -73,6 +73,12 @@ export function prepararCapturaOffline(texto:string,cuentas:Cuenta[],categorias:
       else if(pistasComunes.length && directas.length===0 && personales.length===1)coincidencias=personales;
     }
   }
+  if(tipo==='INGRESO' && !coincidencias.length && !/\b(categoria|categorias)\b/.test(textoCategoria)) {
+    const salarios=disponibles.filter(c=>normalizar(c.nombre)==='salario');
+    const personales=salarios.filter(c=>c.esPersonalizada);
+    if(salarios.length===1) coincidencias=salarios;
+    else if(personales.length===1) coincidencias=personales;
+  }
   const cuenta=activas.find(c=>c.id===cuentaId)?.nombre??'Cuenta por seleccionar';
   const destino=tipo==='TRANSFERENCIA'?' a '+(activas.find(c=>c.id===cuentaDestinoId)?.nombre??'destino por seleccionar'):'';
   return {id:crearIdSolicitud(),local:true,version:0,type:'CREATE_TRANSACTION',summary:`${tipo} de ${monto} · ${cuenta}${destino} · ${fecha}`,

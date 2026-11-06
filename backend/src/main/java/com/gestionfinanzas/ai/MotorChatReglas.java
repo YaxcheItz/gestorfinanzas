@@ -222,6 +222,16 @@ public final class MotorChatReglas {
                 var personales=exactas.stream().filter(CategoriaResponse::esPersonalizada).toList();
                 if(personales.size()==1) categoria=personales.getFirst();
             }
+            // Un ingreso sin categoria indicada usa Salario si existe una opcion inequivoca.
+            if (tipoFinal == TipoTransaccion.INGRESO && exactas.isEmpty()
+                    && !texto.matches(".*\\b(categoria|categorias)\\b.*")) {
+                var salarios = opciones.stream().filter(c -> normalizar(c.nombre()).equals("salario")).toList();
+                if (salarios.size() == 1) categoria = salarios.getFirst();
+                else if (salarios.size() > 1) {
+                    var personales = salarios.stream().filter(CategoriaResponse::esPersonalizada).toList();
+                    if (personales.size() == 1) categoria = personales.getFirst();
+                }
+            }
             if(categoria==null && !concepto.isBlank()) {
                 Set<String> palabras=new HashSet<>(Arrays.asList(concepto.split("\\W+")));
                 if(exactas.isEmpty()) {
