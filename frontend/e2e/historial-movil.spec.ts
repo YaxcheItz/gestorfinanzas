@@ -39,6 +39,9 @@ test('historial permite buscar, filtrar y revisar movimientos sin perder control
   await taco.focus();await taco.press('Enter');
   const detail=page.getByRole('dialog',{name:'Detalle',exact:true});
   await expect(detail.locator('.ledger-detail-sheet__category')).toHaveText('Tacos de prueba');
+  const extra=detail.locator('.history-detail-more');await expect(extra).not.toHaveAttribute('open','');
+  await extra.locator('summary').click();await expect(extra.getByText('M\u00e9todo de captura')).toBeVisible();
+  await extra.locator('summary').click();
   await detail.getByRole('button',{name:'Ocultar montos',exact:true}).click();
   await expect(detail.locator('.ledger-detail-sheet__amount')).toContainText('•••');
   await page.setViewportSize({width:320,height:568});

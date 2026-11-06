@@ -747,20 +747,10 @@
           </div>
 
           <dl class="ledger-detail-sheet__meta">
-            @if(det.listaNombre){<div><dt>Lista</dt><dd>{{ det.listaNombre }}</dd></div>}
-            @if(det.autorNombre){<div><dt>Registrado por</dt><dd>{{ det.autorNombre }}</dd></div>}
             @if(det.etiquetas?.length){<div><dt>Etiquetas</dt><dd>@for(etiqueta of det.etiquetas; track etiqueta){<span class="mr-2">#{{ etiqueta }}</span>}</dd></div>}
             <div>
               <dt>Fecha del movimiento</dt>
               <dd>{{ etiquetaDiaHistorial(det.fecha) }}</dd>
-            </div>
-            <div>
-              <dt>Registrado</dt>
-              <dd>{{ fechaHoraExacta(det) }}</dd>
-            </div>
-            <div>
-              <dt>Método de captura</dt>
-              <dd>{{ etiquetaMetodoCaptura(det) }}</dd>
             </div>
             <div>
               <dt>{{ det.tipo === 'TRANSFERENCIA' ? 'Origen' : 'Cuenta' }}</dt>
@@ -784,6 +774,15 @@
             </div>
             }
           </dl>
+          <details class="history-detail-more">
+            <summary>Información adicional</summary>
+            <dl class="ledger-detail-sheet__meta">
+              @if(det.listaNombre){<div><dt>Lista</dt><dd>{{ det.listaNombre }}</dd></div>}
+              @if(det.autorNombre){<div><dt>Registrado por</dt><dd>{{ det.autorNombre }}</dd></div>}
+              <div><dt>Registrado</dt><dd>{{ fechaHoraExacta(det) }}</dd></div>
+              <div><dt>Método de captura</dt><dd>{{ etiquetaMetodoCaptura(det) }}</dd></div>
+            </dl>
+          </details>
 
           @if (det.compraMsiId) {
             <p class="text-sm text-slate-500">Cuota MSI registrada. Puedes pausar o cancelar las cuotas futuras desde Configuración → Recurrentes. Los pagos registrados se conservan.</p>
