@@ -44,6 +44,35 @@ test('la búsqueda del dock funciona en Inicio con datos ficticios y permite rei
   await expect(dialog).toHaveCount(0);
 });
 
+test('selector de periodo compacto y filtro sin superposicion', async ({page}) => {
+  const usuario={id:996,nombre:'QA',email:'qa@example.test'};
+  await page.addInitScript(user=>{localStorage.setItem('finanzas_token',`test.${btoa(JSON.stringify({exp:Math.floor(Date.now()/1000)+3600}))}.synthetic`);localStorage.setItem('finanzas_user',JSON.stringify(user));},usuario);
+  await page.route('**/api/**',async route=>{
+    if(route.request().method()!=='GET')return route.abort();
+    const path=new URL(route.request().url()).pathname;let data:unknown=[];
+    if(path==='/api/perfil')data={...usuario,tema:'CLARO',monedaPredeterminada:'MXN'};
+    if(path==='/api/dashboard/resumen')data={totalCuentas:1,resumenPorMoneda:[{moneda:'MXN',balanceTotal:10,ingresosMes:0,gastosMes:10,totalCuentas:1}],ultimosMovimientos:[]};
+    if(path==='/api/dashboard/analitica')data={gastosPorCategoria:[{categoriaId:1,categoriaNombre:'Comida',monto:10,moneda:'MXN'},{categoriaId:2,categoriaNombre:'Transporte',monto:5,moneda:'MXN'}],ultimosSeisMeses:[]};
+    if(path==='/api/categorias')data=[{id:1,nombre:'Comida',tipo:'GASTO',activo:true,icono:'utensils'},{id:2,nombre:'Transporte',tipo:'GASTO',activo:true,icono:'car'}];
+    if(path==='/api/presupuestos')data={presupuestos:[],resumenPorMoneda:[]};
+    if(path==='/api/transacciones')data={content:[],totalPages:0};
+    await route.fulfill({json:{success:true,data}});
+  });
+  await page.goto('/dashboard');
+  const calendar=page.getByRole('button',{name:/Seleccionar periodo/});await expect(calendar).toBeVisible();
+  expect((await calendar.innerText()).trim()).toBe('');await calendar.click();
+  await expect(page.getByRole('dialog',{name:'Seleccionar periodo financiero'})).toBeVisible();
+  await page.getByRole('button',{name:'Cerrar modal'}).click();
+  for(const nombre of ['Comida','Transporte']){
+    await page.getByRole('button',{name:'Filtrar movimientos de '+nombre}).click();
+    const chip=page.locator('.home-filter-chip');await expect(chip).toContainText(nombre);
+    const icon=await chip.locator('app-categoria-icono').boundingBox();
+    const label=await chip.locator('span').filter({hasText:nombre}).boundingBox();
+    expect(icon).not.toBeNull();expect(label).not.toBeNull();expect(label!.x).toBeGreaterThanOrEqual(icon!.x+icon!.width);
+    await chip.click();
+  }
+});
+
 test.describe('gestos de categorías', () => {
   test.use({ hasTouch: true, isMobile: true });
 

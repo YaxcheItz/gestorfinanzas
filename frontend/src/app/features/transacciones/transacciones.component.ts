@@ -1,3 +1,4 @@
+import { salarioPredeterminado } from '../../core/utils/salario-predeterminado';
 import { ListaContextoService } from '../../core/services/lista-contexto.service';
 import { parsearEtiquetas } from '../../core/utils/etiquetas';
 import { FeatureStylesService } from '../../core/services/feature-styles.service';
@@ -628,8 +629,8 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
           this.categorias.set(res.data);
           if (this.modalAbierto() && !this.modoEdicion() && this.formCategoriaId == null) {
             const preferida = this.categoriaPreferida.preferida(this.formTipo());
-            this.formCategoriaId = this.categoriasModal().find(item => item.id === preferida)?.id
-              ?? this.categoriasModal()[0]?.id ?? null;
+            this.formCategoriaId = salarioPredeterminado(this.formTipo(), this.categoriasModal())
+              ?? this.categoriasModal().find(item => item.id === preferida)?.id ?? this.categoriasModal()[0]?.id ?? null;
           }
         }
       }
@@ -1124,9 +1125,9 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
     // Se abre con la categoria de la ultima vez de ese tipo, si sigue existiendo;
     // si no hay memoria, o apunta a algo que ya no esta, cae a la primera.
     const preferida = this.categoriaPreferida.preferida(tipo);
-    this.formCategoriaId = cats.some(categoria => categoria.id === preferida)
+    this.formCategoriaId = salarioPredeterminado(tipo, cats) ?? (cats.some(categoria => categoria.id === preferida)
       ? preferida
-      : (cats[0]?.id ?? null);
+      : (cats[0]?.id ?? null));
     this.modalAbierto.set(true);
   }
 
@@ -1187,9 +1188,9 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
     // Cambiar de pestaña tambien cambia de tipo, asi que la memoria es la de ese tipo.
     const cats = this.categoriasModal();
     const preferida = this.categoriaPreferida.preferida(tipo);
-    this.formCategoriaId = cats.some(categoria => categoria.id === preferida)
+    this.formCategoriaId = salarioPredeterminado(tipo, cats) ?? (cats.some(categoria => categoria.id === preferida)
       ? preferida
-      : (cats[0]?.id ?? null);
+      : (cats[0]?.id ?? null));
     if (tipo === 'TRANSFERENCIA') {
       this.formCuentaDestinoId = this.cuentasDestinoDisponibles()[0]?.id ?? null;
     } else {

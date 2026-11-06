@@ -16,3 +16,12 @@
 .local-notice .actions { margin-top: .9rem; }
 .local-empty { padding: 1rem 0; }
 .local-notice a { display: inline-flex; align-items: center; min-height: 48px; color: inherit; text-decoration: underline; text-underline-offset: .2em; }
+
+.reception-status { display:flex; align-items:flex-start; gap:.75rem; padding:1rem; margin:.75rem 0; border:1px solid var(--kaptal-border); border-radius:1rem; background:var(--kaptal-surface-subtle); }
+.reception-status > div { min-width:0; }
+.reception-status strong { display:block; font-size:.875rem; line-height:1.4; }
+.reception-status .hint { margin-top:.25rem; }
+.reception-status__dot { flex:0 0 9px; width:9px; height:9px; border-radius:50%; background:var(--kaptal-content-muted); margin-top:.4rem; }
+.reception-status__dot.is-active { background:var(--kaptal-income); }
+.notice-heading { flex-wrap:wrap; }
+.status { overflow-wrap:anywhere; }

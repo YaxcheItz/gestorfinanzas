@@ -403,3 +403,11 @@ html .monai-theme .dashboard-screen__monthly { gap: 4px; padding-bottom: 0; }
 .home-search__result > div { min-width: 0; overflow-wrap: anywhere; }
 .home-search__result > strong { flex: none; font-variant-numeric: tabular-nums; }
 .home-search__result:focus-visible { outline: 2px solid var(--kaptal-focus); outline-offset: -2px; }
+
+/* Periodo compacto, con area tactil accesible y separacion real del icono. */
+.home-period.home-period--compact { align-self:flex-end; margin:0 0 -2px; }
+html .monai-theme .home-period .time-dropdown-btn { width:44px; height:44px; min-width:44px; padding:0; display:grid; place-items:center; border-radius:50%; }
+.home-period__calendar-icon { width:18px; height:18px; opacity:1; }
+.home-filter-chip { gap:10px; }
+.home-filter-chip app-categoria-icono { display:inline-grid; place-items:center; flex:0 0 28px; width:28px; min-width:28px; }
+.home-filter-chip__icon { display:inline-grid; place-items:center; width:24px; height:24px; line-height:1; }

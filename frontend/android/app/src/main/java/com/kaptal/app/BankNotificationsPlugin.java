@@ -44,6 +44,11 @@ public class BankNotificationsPlugin extends Plugin {
                             &&BankPurchaseParser.isNonExpenseNotification(original[0],original.length>1?original[1]:"")) {
                             notices.remove(i--);continue;
                         }
+                        if (notice.optBoolean("automaticUncertain")) {
+                            notice.put("automaticStatus", "review");
+                            notice.put("canRetry", false);
+                            continue;
+                        }
                         try {
                             var details=automatic==null?new org.json.JSONObject().put("automaticStatus","unavailable")
                                 :AutomaticBankStore.describe(automatic,owner,notice);
