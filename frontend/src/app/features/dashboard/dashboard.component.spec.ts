@@ -105,6 +105,9 @@ describe('DashboardComponent movement dialog accessibility', () => {
     component.resumen.set({resumenPorMoneda:[{moneda:'MXN',balanceTotal:600,dineroDisponible:1000,deudaTarjetas:400,ingresosMes:100,gastosMes:25,totalCuentas:2},{moneda:'USD',balanceTotal:200,dineroDisponible:200,deudaTarjetas:0,ingresosMes:50,gastosMes:5,totalCuentas:1}],ultimosMovimientos:[]} as any);
     component.presupuestoResumen.set({presupuestos:[{id:1,moneda:'MXN',categoriaNombre:'Comida',montoLimite:500,montoGastado:200,montoDisponible:300,porcentajeConsumido:40}],resumenPorMoneda:[{moneda:'MXN',totalDisponible:300},{moneda:'USD',totalDisponible:10}]} as any);
     component.vistaDetallada.set(true);fixture.detectChanges();const hero=fixture.nativeElement.querySelector('.dashboard-screen__monthly').textContent;
+    const acceso=fixture.nativeElement.querySelector('a.home-metric--balance') as HTMLAnchorElement;
+    expect(acceso.getAttribute('aria-label')).toContain('Ver cuentas');
+    expect(fixture.nativeElement.querySelector('.home-metric--income').tagName).toBe('DIV');
     expect(hero).toContain('Saldo neto');expect(hero).toContain('600');expect(hero).not.toContain('Deuda de tarjetas');expect(hero).not.toContain('Dinero en cuentas');
     expect(component.presupuestoMonedaSeleccionada()?.totalDisponible).toBe(300);
     component.monedaResumen.set('USD');expect(component.presupuestoMonedaSeleccionada()?.totalDisponible).toBe(10);
