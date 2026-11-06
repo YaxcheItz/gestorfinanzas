@@ -1,5 +1,11 @@
 @if (bank.available) {
   <app-automatic-bank (changed)="changed.emit()" />
+  <div class="reception-status" role="status">
+    <span class="reception-status__dot" [class.is-active]="bank.current().granted && bank.current().enabled" aria-hidden="true"></span>
+    <div><strong>{{ !bank.current().granted ? 'Acceso de Android pendiente' : bank.current().enabled ? 'Recepción local activa' : 'Recepción local pausada' }}</strong>
+      <p class="hint">{{ !bank.current().granted ? 'Concede acceso en Permisos de Android para recibir avisos.' : bank.current().enabled ? 'Las apps elegidas pueden enviar avisos nuevos a este teléfono.' : 'Activa la recepción y elige tus aplicaciones para revisar avisos nuevos.' }}</p>
+    </div>
+  </div>
   <section class="permissions" aria-label="Recepción en Android">
     <details (toggle)="closeSettings($event)">
       <summary class="permission-header">Permisos de Android <span class="permission-state">{{ bank.current().granted ? 'Concedidos' : 'Sin conceder' }}</span></summary>

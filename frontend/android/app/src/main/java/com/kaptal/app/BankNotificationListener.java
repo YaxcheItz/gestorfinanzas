@@ -83,15 +83,20 @@ public class BankNotificationListener extends NotificationListenerService {
                 boolean autoSender = autoPackage && automatic.accepts(owner,sbn.getPackageName(),title.toString());
                 if(smsPackage && !autoSender) return;
                 if(!manual && !autoSender) return;
-                CharSequence body = extras.getCharSequence(Notification.EXTRA_BIG_TEXT);
-                if (body == null) body = extras.getCharSequence(Notification.EXTRA_TEXT, "");
+                CharSequence body = NotificationTextSelector.choose(extras.getCharSequence(Notification.EXTRA_BIG_TEXT), extras.getCharSequence(Notification.EXTRA_TEXT, ""));
                 if (title.length() + body.length() > 3999) return;
                 if(sbn.getPackageName().equals(BankPurchaseParser.PACKAGES.get("SANTANDER"))
                     &&BankPurchaseParser.isNonExpenseNotification(title.toString(),body.toString()))return;
-                if(autoSender && automatic.receive(owner,sbn.getPackageName(),title.toString(),body.toString(),sbn.getKey(),sbn.getPostTime())) {
+                boolean queued = false;
+                boolean uncertain = false;
+                if (autoSender) {
+                    try { queued = automatic.receive(owner,sbn.getPackageName(),title.toString(),body.toString(),sbn.getKey(),sbn.getPostTime()); }
+                    catch (Exception ex) { uncertain = true; /* No asumir que la cola no recibio el aviso. */ }
+                }
+                if (queued) {
                     AutomaticBankWorker.schedule(this); return;
                 }
-                if(manual) store.receive(owner, sbn.getPackageName(), sbn.getKey(), title + "\n" + body, now);
+                if(manual) store.receive(owner, sbn.getPackageName(), sbn.getKey(), title + "\n" + body, now, uncertain);
             } catch (Exception ex) {
                 // Nunca registrar contenido ni extras bancarios; el estado se consulta al abrir Avisos.
             }

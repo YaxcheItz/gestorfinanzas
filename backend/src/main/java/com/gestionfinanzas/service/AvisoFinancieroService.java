@@ -24,6 +24,7 @@ public class AvisoFinancieroService {
     private final TransaccionRepository movimientos;
     private final TransaccionService transacciones;
     private final CategoriaCompraAutomaticaService categoriasAutomaticas;
+    private final CategoriaRepository categorias;
     private final ObjectMapper mapper;
     private final Validator validator;
     private final jakarta.persistence.EntityManager entityManager;
@@ -81,6 +82,16 @@ public class AvisoFinancieroService {
                 && datos!=null && datos.tipo()==TipoTransaccion.GASTO && datos.categoriaId()==null) {
             Long categoria=categoriasAutomaticas.asignar(usuario,datos.descripcion());
             datos=new TransaccionRequest(datos.cuentaId(),datos.cuentaDestinoId(),categoria,datos.tipo(),datos.monto(),
+                datos.tasaCambio(),datos.fecha(),datos.descripcion(),datos.notas(),datos.frecuenciaRecurrencia(),
+                datos.siguienteFechaRecurrencia(),datos.msi(),datos.listaId(),datos.etiquetas(),datos.modoEdicionRecurrencia(),datos.fechaFinRecurrencia());
+        }
+        if(categorizar && Set.of(Origen.NOTIFICACION,Origen.SMS).contains(body.origen()) && body.clase()==Clase.INGRESO
+                && datos!=null && datos.tipo()==TipoTransaccion.INGRESO && datos.categoriaId()==null) {
+            var salarios=categorias.findDisponiblesParaUsuario(uid).stream()
+                .filter(c -> c.getTipo()==TipoTransaccion.INGRESO && c.getNombre().strip().equalsIgnoreCase("Salario")).toList();
+            var personales=salarios.stream().filter(c -> c.getUsuario()!=null && uid.equals(c.getUsuario().getId())).toList();
+            Long categoria=personales.size()==1?personales.getFirst().getId():personales.isEmpty()&&salarios.size()==1?salarios.getFirst().getId():null;
+            if(categoria!=null) datos=new TransaccionRequest(datos.cuentaId(),datos.cuentaDestinoId(),categoria,datos.tipo(),datos.monto(),
                 datos.tasaCambio(),datos.fecha(),datos.descripcion(),datos.notas(),datos.frecuenciaRecurrencia(),
                 datos.siguienteFechaRecurrencia(),datos.msi(),datos.listaId(),datos.etiquetas(),datos.modoEdicionRecurrencia(),datos.fechaFinRecurrencia());
         }

@@ -20,6 +20,7 @@ class AvisoFinancieroIntegrationTest {
     @Autowired AvisoFinancieroRepository avisos;
     @Autowired UsuarioRepository usuarios;
     @Autowired CuentaRepository cuentas;
+    @Autowired CategoriaRepository categorias;
     @Autowired TransaccionRepository movimientos;
     @Autowired AuditoriaTransaccionRepository auditoria;
     @Autowired AsientoContableRepository asientos;
@@ -88,6 +89,16 @@ class AvisoFinancieroIntegrationTest {
     }
     @Test void codigosDeSeguridadNoSeConservan(){
         assertThrows(IllegalArgumentException.class,()->service.recibir(u.getId(),new Nuevo(Origen.GMAIL,"secreto","OTP 123456",Clase.COMPRA,"MXN",null,null)));
+    }
+    @Test void ingresoAutomaticoUsaSalarioPeroDevolucionNoSeReclasifica(){
+        var salario=categorias.saveAndFlush(Categoria.builder().usuario(u).nombre("Salario").tipo(TipoTransaccion.INGRESO).activo(true).build());
+        var ingreso=new TransaccionRequest(cuenta.getId(),null,null,TipoTransaccion.INGRESO,new BigDecimal("25.00"),null,CalendarioFinanciero.hoy(),"Ingreso QA",null,null,null,null,lista,List.of());
+        var recibido=service.recibirCompraAutomatica(u.getId(),nuevo("ingreso-sintetico",Origen.NOTIFICACION,Clase.INGRESO,ingreso));
+        assertEquals(salario.getId(),recibido.datos().categoriaId());
+        var replay=service.recibirCompraAutomatica(u.getId(),nuevo("ingreso-sintetico",Origen.NOTIFICACION,Clase.INGRESO,ingreso));
+        assertEquals(recibido.id(),replay.id());assertEquals(salario.getId(),replay.datos().categoriaId());
+        var devolucion=service.recibirCompraAutomatica(u.getId(),nuevo("devolucion-sintetica",Origen.NOTIFICACION,Clase.DEVOLUCION,ingreso));
+        assertNull(devolucion.datos().categoriaId());
     }
     @Test void devolucionEsIngresoYPagoDeTarjetaEsTransferencia(){
         var ingreso=new TransaccionRequest(cuenta.getId(),null,null,TipoTransaccion.INGRESO,new BigDecimal("25.00"),null,CalendarioFinanciero.hoy(),"Devolucion QA",null,null,null,null,lista,List.of());

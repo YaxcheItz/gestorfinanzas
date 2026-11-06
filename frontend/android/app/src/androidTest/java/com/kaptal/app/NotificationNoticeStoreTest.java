@@ -32,6 +32,12 @@ public class NotificationNoticeStoreTest {
         assertThrows(IllegalArgumentException.class,()->store.current(71,id,1,now+NotificationNoticeStore.TTL_MS));
     }
 
+    @Test public void uncertainAutomaticDeliveryStaysMarkedAcrossUpdates() throws Exception {
+        enable();store.receive(71, app, "event-qa", "Compra QA", now, true);
+        store.receive(71, app, "event-qa", "Compra QA actualizada", now + 1);
+        var notice=store.read(71,now+1,true).getJSONArray("notices").getJSONObject(0);
+        assertTrue(notice.getBoolean("automaticUncertain"));assertEquals(2,notice.getInt("revision"));
+    }
     @Test public void defaultsOffAndFiltersSessionAndPackage() throws Exception {
         assertFalse(store.accepts(71, app, now)); enable();
         assertFalse(store.accepts(0, app, now)); assertFalse(store.accepts(72, app, now));
