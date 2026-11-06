@@ -1568,3 +1568,8 @@ Se precisa que `usage_unavailable` cuenta solo eventos emitidos tras procesar el
 - Build Angular, 77 pruebas focales y E2E Chromium con backend ficticio, navegacion por teclado y letra grande pasaron. CI, integracion, publicacion y APK nueva pendientes al registrar. No se consultaron datos financieros reales. Verificar visualmente con propietario; no declarar resueltas carreras de sesion ni transferencias duplicadas.
 ### Preparacion Android 0.1.32
 - PR231 integrado en develop e964b59fb9a5f9061bd2996b97309a14aad4b5b1 con CI completa de e839998dea0dcbf1d46829e52b4d6081623ba76b. Rama mejoras/android-032-inicio desde develop actualizado incrementa version a 0.1.32 codigo33; APK, CI propia, publicacion e instalacion pendientes.
+### Voz, busqueda e Inicio (en preparacion)
+- El propietario solicito mejorar los textos y distribucion de voz, conservar el permiso y confirmar al guardar; reconocer transferencias y usar Salario por defecto para ingresos salvo otra categoria indicada. Se preparan cambios y pruebas en mejoras/voz-busqueda-inicio desde develop af0f12b. Transferencias ambiguas siguen requiriendo revision.
+- Se prepara acceso al detalle desde busqueda y espaciado de categorias en Inicio; falta revision visual en dispositivo. No se modificaron datos financieros reales.
+- Proxima etapa solicitada: revisar el diseno y corregir el registro de gastos desde notificaciones, que el propietario reporta que no funciona bien; diagnosticar con avisos ficticios y sin consultar movimientos reales.
+- Esta etapa aun no esta integrada, publicada ni instalada. Confirmar CI, contenido y firma antes de entregar nueva APK. No declarar resueltas carreras de sesion ni duplicaciones de transferencias.

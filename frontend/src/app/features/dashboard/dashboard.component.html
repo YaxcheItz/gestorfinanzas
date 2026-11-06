@@ -318,7 +318,7 @@
           @else if (resultadosBusquedaInicio().length) {
             <ul class="home-search__results">
               @for (movimiento of resultadosBusquedaInicio(); track movimiento.id) {
-                <li><div><strong>{{ (movimiento.descripcion || movimiento.categoriaNombre || 'Movimiento') | textoFinanciero }}</strong><small>{{ movimiento.fecha }} · {{ etiquetaTipo(movimiento.tipo) }} · {{ movimiento.categoriaNombre || 'Sin categoría' }}</small></div><strong>{{ movimiento.monto | monto:movimiento.moneda:'symbol-narrow':'1.2-2' }}</strong></li>
+                <li><button type="button" class="home-search__result" (click)="cerrarBusquedaInicio(); verDetalleMovimiento(movimiento.id)"><div><strong>{{ (movimiento.descripcion || movimiento.categoriaNombre || 'Movimiento') | textoFinanciero }}</strong><small>{{ movimiento.fecha }} · {{ etiquetaTipo(movimiento.tipo) }} · {{ movimiento.categoriaNombre || 'Sin categoría' }}</small></div><strong>{{ movimiento.monto | monto:movimiento.moneda:'symbol-narrow':'1.2-2' }}</strong></button></li>
               }
             </ul>
             @if (paginasBusquedaInicio() > 1) { <nav class="home-search__pages" aria-label="Páginas de resultados"><button type="button" [disabled]="paginaBusquedaInicio() === 0" (click)="buscarInicio(paginaBusquedaInicio()-1)">Anterior</button><span>{{ paginaBusquedaInicio()+1 }} / {{ paginasBusquedaInicio() }}</span><button type="button" [disabled]="paginaBusquedaInicio()+1 >= paginasBusquedaInicio()" (click)="buscarInicio(paginaBusquedaInicio()+1)">Siguiente</button></nav> }

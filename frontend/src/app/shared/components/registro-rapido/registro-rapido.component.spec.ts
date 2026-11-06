@@ -117,6 +117,11 @@ describe('Registro rapido: guardado y privacidad', () => {
     component.cambiarTipo('INGRESO');expect(component.categoriaId).toBe(20);
     component.monto='900';component.guardar();expect(crear.mock.calls[0][0]).toMatchObject({tipo:'INGRESO',categoriaId:20});
   });
+  it('elige Salario al comenzar un ingreso y permite cambiarlo',()=>{
+    component.categorias=[...component.categorias,{id:21,nombre:'Salario',tipo:'INGRESO',activo:true} as any];
+    component.cambiarTipo('INGRESO');expect(component.categoriaId).toBe(21);
+    component.seleccionarCategoria(20);expect(component.categoriaId).toBe(20);
+  });
   it('guarda transferencias sin categoria y exige cambio entre monedas',()=>{
     component.cambiarTipo('TRANSFERENCIA');expect(component.destinoId).toBe(2);
     component.monto='100';component.destinoId=3;component.guardar();expect(crear).not.toHaveBeenCalled();

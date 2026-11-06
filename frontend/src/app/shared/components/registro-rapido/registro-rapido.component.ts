@@ -212,7 +212,11 @@ export class RegistroRapidoComponent implements OnDestroy {
   }
   cambiarTipo(tipo: TipoRegistro): void {
     this.tipo = tipo;
-    this.categoriaId = this.categoriasDisponibles().find(c => c.id === this.preferida.preferida(tipo))?.id ?? this.categoriasDisponibles()[0]?.id ?? null;
+    const disponibles = this.categoriasDisponibles();
+    const salarios = tipo === 'INGRESO' ? disponibles.filter(c => c.nombre.trim().toLocaleLowerCase() === 'salario') : [];
+    const personales = salarios.filter(c => c.esPersonalizada);
+    const salario = salarios.length === 1 ? salarios[0] : personales.length === 1 ? personales[0] : null;
+    this.categoriaId = salario?.id ?? disponibles.find(c => c.id === this.preferida.preferida(tipo))?.id ?? disponibles[0]?.id ?? null;
     let anterior: number | null = null;
     try { anterior = Number(this.document.defaultView?.localStorage.getItem(`kaptal_cuenta_rapida_${this.auth.currentUser()?.id}_${tipo}`)); } catch { /* Preferencia opcional. */ }
     this.cuentaId = this.cuentasDisponibles().find(c => c.id === anterior)?.id ?? this.cuentasDisponibles()[0]?.id ?? null;

@@ -46,4 +46,10 @@ describe('Captura offline sin saldos ni IA', () => {
     const distintas=[cats[0],{id:12,nombre:'Transporte',tipo:'GASTO',activo:true,esPersonalizada:false}] as Categoria[];
     expect(prepararCapturaOffline('Gaste 50 en tacos y gasolina',cuentas,distintas).data['categoriaId']).toBeNull();
   });
+  it('propone salario para ingresos sin categoria y respeta una categoria indicada', () => {
+    const cats=[{id:20,nombre:'Salario',tipo:'INGRESO',activo:true},{id:21,nombre:'Regalo',tipo:'INGRESO',activo:true}] as Categoria[];
+    expect(prepararCapturaOffline('Ingresé 200 en efectivo',cuentas,cats).data['categoriaId']).toBe(20);
+    expect(prepararCapturaOffline('Recibí 200 de regalo en efectivo',cuentas,cats).data['categoriaId']).toBe(21);
+    expect(prepararCapturaOffline('Ingresé 200 en efectivo categoría desconocida',cuentas,cats).data['categoriaId']).toBeNull();
+  });
 });
