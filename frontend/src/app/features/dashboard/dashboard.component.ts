@@ -1,3 +1,4 @@
+import { salarioPredeterminado } from '../../core/utils/salario-predeterminado';
 import { ListaContextoService } from '../../core/services/lista-contexto.service';
 import { PeriodoConfig, TipoPeriodo, PERIODO_MENSUAL, resolverPeriodo, desplazarPeriodo, desplazarRangoLibre, validarRangoPeriodo, validarPeriodo, fechaCivilFinanciera } from '../../core/utils/periodo-financiero';
 import { parsearEtiquetas } from '../../core/utils/etiquetas';
@@ -1151,9 +1152,9 @@ export class DashboardComponent implements OnInit {
       // Se abre con la categoria de la ultima vez, si sigue existiendo. Solo si no
       // hay memoria, o la memoria apunta a algo que ya no esta, se cae a la primera.
       const preferida = this.categoriaPreferida.preferida(tipo);
-      this.formCategoriaId = cats.some(categoria => categoria.id === preferida)
+      this.formCategoriaId = salarioPredeterminado(tipo, cats) ?? (cats.some(categoria => categoria.id === preferida)
         ? preferida
-        : (cats[0]?.id ?? null);
+        : (cats[0]?.id ?? null));
     }
 
     this.modalAbierto.set(true);
@@ -1320,9 +1321,9 @@ export class DashboardComponent implements OnInit {
     // Cambiar de pestaña también cambia de tipo, así que vale la memoria de ese tipo.
     const cats = this.categoriasFiltradas();
     const preferida = this.categoriaPreferida.preferida(tipo);
-    this.formCategoriaId = cats.some(categoria => categoria.id === preferida)
+    this.formCategoriaId = salarioPredeterminado(tipo, cats) ?? (cats.some(categoria => categoria.id === preferida)
       ? preferida
-      : (cats[0]?.id ?? null);
+      : (cats[0]?.id ?? null));
   }
 
   actualizarSiguienteFecha(): void {

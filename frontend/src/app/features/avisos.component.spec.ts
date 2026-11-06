@@ -37,6 +37,14 @@ describe('Bandeja de avisos',()=>{
     expect(c.resumen).toBe('TIENDA QA');expect(api.recibir).not.toHaveBeenCalled();
     expect(api.decidir).not.toHaveBeenCalled();
   });
+  it('revisa como ingreso la notificacion reconocida y permite otra categoria',()=>{
+    fixture=TestBed.createComponent(AvisosComponent);const c=fixture.componentInstance;
+    c.categorias.set([{id:31,nombre:'Salario',tipo:'INGRESO',activo:true,esPersonalizada:true},{id:32,nombre:'Regalo',tipo:'INGRESO',activo:true}] as any);
+    c.usarNotificacion({id:'ingreso-qa',revision:1,text:'QA',packageName:'qa.bank',at:1,automaticStatus:'ready',preview:{cuentaId:11,listaId:21,categoriaId:null,monto:25,fecha:'2026-10-23',descripcion:'INGRESO QA',moneda:'MXN',tipo:'INGRESO'}});
+    expect(c.clase).toBe('INGRESO');expect(c.datos.tipo).toBe('INGRESO');expect(c.datos.categoriaId).toBe(31);
+    c.datos.categoriaId=32;expect(c.datos.categoriaId).toBe(32);expect(api.recibir).not.toHaveBeenCalled();
+    c.clase='DEVOLUCION';c.cambiarClase();expect(c.datos.tipo).toBe('INGRESO');expect(c.datos.categoriaId).toBeNull();
+  });
   it('ignora una respuesta antigua al cambiar de filtro',()=>{
     const anterior=new Subject<any>();api.listar.mockReturnValueOnce(anterior);
     fixture=TestBed.createComponent(AvisosComponent);const c=fixture.componentInstance;

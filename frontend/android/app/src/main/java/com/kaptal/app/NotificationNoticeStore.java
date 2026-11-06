@@ -83,6 +83,10 @@ final class NotificationNoticeStore {
     }
 
     void receive(long user, String packageName, String key, String text, long now) throws JSONException {
+        receive(user, packageName, key, text, now, false);
+    }
+
+    void receive(long user, String packageName, String key, String text, long now, boolean automaticUncertain) throws JSONException {
         if (!accepts(user, packageName, now)) return;
         JSONObject state = load(now);
         JSONArray entries = state.getJSONArray("entries");
@@ -99,6 +103,7 @@ final class NotificationNoticeStore {
             if (existing != null) existing.remove("text");
             state.put("omitted", Math.min(999, state.optInt("omitted") + 1));
         } else if (existing != null) {
+            if (automaticUncertain) existing.put("automaticUncertain", true);
             if (existing.has("text") && !text.strip().equals(existing.getString("text"))) {
                 existing.put("text", text.strip()).put("revision", existing.getInt("revision") + 1);
             }
@@ -108,7 +113,7 @@ final class NotificationNoticeStore {
         } else {
             entries.put(new JSONObject().put("id", UUID.randomUUID().toString()).put("key", identity)
                 .put("packageName", packageName).put("text", text.strip()).put("at", now)
-                .put("revision", 1).put("active", true));
+                .put("revision", 1).put("active", true).put("automaticUncertain", automaticUncertain));
         }
         save(state);
     }
@@ -140,6 +145,7 @@ final class NotificationNoticeStore {
                 JSObject notice = new JSObject();
                 for (String field : new String[]{"id", "text", "packageName", "revision", "at"})
                     notice.put(field, entry.get(field));
+                if (entry.optBoolean("automaticUncertain")) notice.put("automaticUncertain", true);
                 notices.put(notice);
             }
         }
