@@ -471,3 +471,29 @@ html .monai-theme .history-page .history-types button.is-active{background:var(-
 .history-summary-disclosure[open]>summary{margin-bottom:12px}
 html .monai-theme .history-page .history-summary{border:0;background:var(--kaptal-surface-subtle);border-radius:18px}
 html .monai-theme .history-page .history-actions>button{background:var(--kaptal-surface-subtle)!important;color:var(--kaptal-content)!important;border-radius:999px;flex:none;padding-inline:16px;box-shadow:none}
+
+/* Historial: jerarquia clara y controles compactos sin perder funciones. */
+html .monai-theme .history-page { width:min(100%,44rem); padding:12px 20px 120px; margin-inline:auto; }
+html .monai-theme .history-page > * + * { margin-top:0; }
+.history-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:20px; }
+html .monai-theme .history-heading h1 { font-size:clamp(25px,6.5vw,32px); line-height:1.15; font-weight:700; letter-spacing:-.04em; color:var(--kaptal-content); }
+html .monai-theme .history-page .history-tools > summary { display:grid; place-items:center; width:44px; height:44px; padding:0; color:var(--kaptal-content); }
+html .monai-theme .history-page .history-tools > summary span { font-size:24px; line-height:1; }
+html .monai-theme .history-page .ledger-toolbar { margin:0 0 14px; gap:8px; }
+html .monai-theme .history-page .ledger-search { min-height:48px; border:0; border-radius:16px; background:var(--kaptal-surface-subtle); }
+html .monai-theme .history-page .ledger-search:focus-within { outline:2px solid var(--kaptal-focus); outline-offset:2px; }
+html .monai-theme .history-page .ledger-filter-btn { height:48px; border:0; border-radius:16px; background:var(--kaptal-surface-subtle); }
+html .monai-theme .history-page .history-types { display:flex; overflow-x:auto; overscroll-behavior-inline:contain; gap:6px; padding:0 0 5px; scrollbar-width:none; }
+html .monai-theme .history-page .history-types::-webkit-scrollbar { display:none; }
+html .monai-theme .history-page .history-types button { flex:0 0 auto; padding:8px 14px; white-space:nowrap; }
+html .monai-theme .history-page .history-types button.is-active { background:var(--kaptal-content); color:var(--kaptal-canvas); box-shadow:none; }
+html .monai-theme .history-page .history-summary-disclosure { margin:8px 0 10px; border-bottom:1px solid var(--kaptal-border); }
+html .monai-theme .history-page .history-summary-disclosure > summary { min-height:44px; font-weight:600; }
+html .monai-theme .history-page .history-day { margin:0 0 18px; }
+html .monai-theme .history-page .history-day h2 { justify-content:space-between; gap:12px; margin:0 0 6px; padding:6px 2px; font-size:13px; }
+html .monai-theme .history-page .history-pagination { padding:16px 0; border-color:var(--kaptal-border); }
+@media(max-width:359px) { html .monai-theme .history-page { padding-inline:16px; } }
+
+.history-detail-more { border-top:1px solid var(--kaptal-border); }
+.history-detail-more > summary { min-height:48px; display:flex; align-items:center; color:var(--kaptal-content-muted); font-size:13px; font-weight:600; cursor:pointer; }
+.history-detail-more > summary:focus-visible { outline:2px solid var(--kaptal-focus); outline-offset:2px; border-radius:8px; }

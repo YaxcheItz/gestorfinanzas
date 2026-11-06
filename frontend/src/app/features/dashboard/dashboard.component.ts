@@ -1,3 +1,4 @@
+import { PeriodoInicioService } from '../../core/services/periodo-inicio.service';
 import { salarioPredeterminado } from '../../core/utils/salario-predeterminado';
 import { ListaContextoService } from '../../core/services/lista-contexto.service';
 import { PeriodoConfig, TipoPeriodo, PERIODO_MENSUAL, resolverPeriodo, desplazarPeriodo, desplazarRangoLibre, validarRangoPeriodo, validarPeriodo, fechaCivilFinanciera } from '../../core/utils/periodo-financiero';
@@ -753,7 +754,17 @@ export class DashboardComponent implements OnInit {
 
   @ViewChild('budgetScroller') budgetScroller?: ElementRef<HTMLDivElement>;
 
+  private readonly periodoInicio = inject(PeriodoInicioService);
+  @HostListener('window:kaptal-seleccionar-periodo')
+  abrirPeriodoDesdeCabecera(): void { this.toggleModalRango(); }
+
   constructor() {
+    effect(() => {
+      this.periodoInicio.disponible.set(!this.cargandoPeriodoInicial());
+      this.periodoInicio.abierto.set(this.modalRangoAbierto());
+      this.periodoInicio.etiqueta.set(this.etiquetaRangoSeleccionado());
+    });
+    this.destroyRef.onDestroy(() => this.periodoInicio.disponible.set(false));
     this.destroyRef.onDestroy(() => clearTimeout(this.temporizadorBusquedaInicio));
     this.destroyRef.onDestroy(() => this.observadorHero?.disconnect());
     this.destroyRef.onDestroy(() => this.cancelarPresionCategoria());

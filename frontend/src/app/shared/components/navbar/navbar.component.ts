@@ -1,3 +1,4 @@
+import { PeriodoInicioService } from '../../../core/services/periodo-inicio.service';
 import { ListasService } from '../../../core/services/listas.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ListasSheetComponent } from '../listas-sheet/listas-sheet.component';
@@ -16,7 +17,10 @@ import { PrivacyToggleComponent } from '../privacy-toggle/privacy-toggle.compone
         <button type="button" class="workspace-selector" (click)="listas.abierta.set(true)" aria-label="Cambiar lista" aria-haspopup="dialog" [attr.aria-expanded]="listas.abierta()"><span aria-hidden="true">{{ listas.contexto.activa()?.emoji }}</span><span class="workspace-selector__name">{{ listas.contexto.activa()?.nombre || 'Mis movimientos' }}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 10 4 4 4-4"/></svg></button>
       </div>
       <nav class="workspace-shortcuts" aria-label="Accesos principales">
-        @if (esInicio()) { <app-privacy-toggle/> }
+        @if (esInicio()) {
+          <app-privacy-toggle/>
+          <button type="button" class="utility-button time-dropdown-btn" (click)="periodo()" [disabled]="!periodoInicio.disponible()" [attr.aria-label]="'Seleccionar periodo. Actual: ' + periodoInicio.etiqueta()" aria-haspopup="dialog" [attr.aria-expanded]="periodoInicio.abierto()"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 10h18"/></svg></button>
+        }
         <a routerLink="/configuracion" class="glass-icon" aria-label="Configuración"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 3-1 3-3 1-3 3v4l3 3 3 1 1 3h4l1-3 3-1 3-3v-4l-3-3-3-1-1-3z"/><circle cx="12" cy="12" r="3"/></svg></a>
       </nav>
     </header>
@@ -32,10 +36,12 @@ import { PrivacyToggleComponent } from '../privacy-toggle/privacy-toggle.compone
 })
 export class NavbarComponent {
   readonly listas = inject(ListasService);
+  readonly periodoInicio = inject(PeriodoInicioService);
   private readonly toast = inject(ToastService);
   private readonly document = inject(DOCUMENT);
   private readonly router = inject(Router);
 
+  periodo(): void { this.document.defaultView?.dispatchEvent(new Event('kaptal-seleccionar-periodo')); }
   esInicio(): boolean { return this.router.url.split(/[?#]/)[0] === '/dashboard'; }
   voz(): void { if (!this.listas.contexto.puedeEscribir()) { this.toast.error('Elige una lista activa con permiso de editor para registrar.'); return; } this.document.defaultView?.dispatchEvent(new CustomEvent('kaptal-abrir-captura-chat', {detail:{voz:true}})); }
   anadir(): void { if (!this.listas.contexto.puedeEscribir()) { this.toast.error('Elige una lista activa con permiso de editor para registrar.'); return; } this.document.defaultView?.dispatchEvent(new CustomEvent('kaptal-abrir-captura-chat')); }

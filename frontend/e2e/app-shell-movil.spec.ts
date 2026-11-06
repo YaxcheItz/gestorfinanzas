@@ -60,6 +60,10 @@ test('selector de periodo compacto y filtro sin superposicion', async ({page}) =
   });
   await page.goto('/dashboard');
   const calendar=page.getByRole('button',{name:/Seleccionar periodo/});await expect(calendar).toBeVisible();
+  const eye=await page.getByRole('button',{name:'Ocultar montos'}).boundingBox();
+  const calendarBox=await calendar.boundingBox();const settings=await page.getByRole('link',{name:'Configuraci\u00f3n'}).boundingBox();
+  expect(eye!.x+eye!.width).toBeLessThanOrEqual(calendarBox!.x);
+  expect(calendarBox!.x+calendarBox!.width).toBeLessThanOrEqual(settings!.x);
   expect((await calendar.innerText()).trim()).toBe('');await calendar.click();
   await expect(page.getByRole('dialog',{name:'Seleccionar periodo financiero'})).toBeVisible();
   await page.getByRole('button',{name:'Cerrar modal'}).click();
@@ -141,6 +145,8 @@ test.describe('gestos de categorías', () => {
       await route.fulfill({json:{success:true,data}});
     });
     await page.goto('/dashboard');
+    // Asegura contenido desplazable en el escenario sintetico, aun con la cabecera mas compacta.
+    await page.evaluate(() => { document.body.style.minHeight = '1400px'; });
     const categoria = page.getByRole('button', {name:'Filtrar movimientos de Categoría 1'});
     await categoria.scrollIntoViewIfNeeded();
     const cdp = await context.newCDPSession(page);
