@@ -113,11 +113,6 @@
       }
 
       <section #homeHero class="dashboard-screen__monthly" (touchstart)="onHeroTouchStart($event)" (touchmove)="onHeroTouchMove($event)" (touchend)="onHeroTouchEnd($event)" [style.transform]="heroSwipeTransform()" aria-labelledby="dashboard-balance-title">
-        <div class="home-period home-period--compact">
-          <button type="button" class="time-dropdown-btn" (click)="toggleModalRango()" [disabled]="cargandoPeriodoInicial()" [attr.aria-busy]="cargandoPeriodoInicial()" [attr.aria-label]="'Seleccionar periodo. Actual: ' + etiquetaRangoSeleccionado()" aria-haspopup="dialog" [attr.aria-expanded]="modalRangoAbierto()">
-            <svg class="home-period__calendar-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 10h18"/></svg>
-          </button>
-        </div>
         <p id="dashboard-balance-title" class="home-total-label">Gastos del periodo</p>
         @if (loading() || contextoLista.cargando()) { <div class="home-amount-loading" role="status" aria-label="Cargando gastos"></div> }
         @else if (resumenMonedaSeleccionada(); as moneda) {
