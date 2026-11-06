@@ -131,6 +131,18 @@ describe('DashboardComponent movement dialog accessibility', () => {
     expect(component.resultadosBusquedaInicio()).toEqual([]);
     fixture.destroy();
   });
+  it('abre el detalle del resultado de busqueda seleccionado', () => {
+    const fixture = TestBed.createComponent(DashboardComponent); fixture.detectChanges();
+    const component = fixture.componentInstance;
+    component.busquedaAbierta.set(true);
+    component.resultadosBusquedaInicio.set([{id:42,descripcion:'Ejemplo',tipo:'GASTO',fecha:'2026-01-01',monto:50,moneda:'MXN'}] as any);
+    fixture.detectChanges();
+    const boton = fixture.nativeElement.querySelector('.home-search__result') as HTMLButtonElement;
+    expect(boton).toBeTruthy(); boton.click();
+    expect(component.busquedaAbierta()).toBe(false);
+    expect(TestBed.inject(Router).navigate).toHaveBeenCalledWith(['/transacciones'],{queryParams:{detalle:42}});
+    fixture.destroy();
+  });
   it('permite reintentar una busqueda fallida', () => {
     const consulta = vi.spyOn(TestBed.inject(FinanzasService), 'getTransaccionesPaginadas').mockReturnValueOnce(throwError(() => new Error('offline'))).mockReturnValueOnce(of({success:true,data:{content:[],totalPages:0}} as any));
     const fixture = TestBed.createComponent(DashboardComponent); fixture.detectChanges();

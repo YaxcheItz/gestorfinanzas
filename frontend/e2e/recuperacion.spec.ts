@@ -66,7 +66,6 @@ test('descartar propuesta no registra gasto ni modifica saldo', async ({ page })
   await abrirChat(page);
   await page.locator('#quick-capture-text').fill('Recibí 50 en Banco E2E');
   await page.getByRole('button', { name: 'Enviar movimiento' }).click();
-  await page.getByRole('button', { name: 'Salario', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Descartar', exact: true }).first()).toBeVisible();
   await page.getByRole('button', { name: 'Descartar', exact: true }).first().click();
   await expect.poll(async () => (await (await page.request.get('/api/asistente/acciones', { headers })).json()).data.length).toBe(0);

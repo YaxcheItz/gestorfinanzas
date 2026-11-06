@@ -49,4 +49,11 @@ class MotorChatReglasTest {
  @Test void aliasAmexReconoceSoloLaCuentaCorrespondiente(){var cs=List.of(cuenta(5,"American Express","MXN"),cuenta(6,"BBVA","MXN"));var r=motor.interpretar("Pague 50 en tacos con Amex",cs,categorias,List.of(),hoy,true);assertEquals(5L,r.datos().get("cuentaId"));assertEquals("tacos",r.datos().get("descripcion"));}
  @Test void aliasAmexAmbiguoPideElegirCuenta(){var cs=List.of(cuenta(5,"American Express Oro","MXN"),cuenta(6,"American Express Azul","MXN"));var r=motor.interpretar("Pague 50 en tacos con Amex",cs,categorias,List.of(),hoy,true);assertNull(r.datos());assertTrue(r.respuesta().contains("varias cuentas"));}
  @Test void reconoceTaqueriaComoComida(){assertEquals(8L,interpretar("Pague 50 en taqueria").datos().get("categoriaId"));}
+ @Test void ingresoPorDefectoEsSalarioYRespetaOtraCategoria(){
+  var cats=List.of(new CategoriaResponse(10L,"Salario",TipoTransaccion.INGRESO,null,null,true,true),new CategoriaResponse(11L,"Regalo",TipoTransaccion.INGRESO,null,null,true,true));
+  var efectivo=List.of(cuenta(4,"Efectivo","MXN"));
+  assertEquals(10L,motor.interpretar("Ingresé 200 en efectivo",efectivo,cats,List.of(),hoy,true).datos().get("categoriaId"));
+  assertEquals(11L,motor.interpretar("Recibí 200 de regalo en efectivo",efectivo,cats,List.of(),hoy,true).datos().get("categoriaId"));
+  assertNull(motor.interpretar("Ingresé 200 en efectivo categoría desconocida",efectivo,cats,List.of(),hoy,true));
+ }
 }
