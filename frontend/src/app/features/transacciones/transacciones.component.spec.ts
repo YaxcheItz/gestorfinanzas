@@ -74,6 +74,7 @@ describe('TransaccionesComponent history filters', () => {
     const compra={id:7,cuentaId:1,cuentaNombre:'Tarjeta ficticia',tipo:'GASTO',monto:30,moneda:'MXN',fecha:'2026-11-13',descripcion:'Ficticia',compraMsiId:'test',fechaCreacion:'2026-11-07T12:00:00'} as any;
     c.abrirModalEditar(compra,{cuentaId:1,tipo:'GASTO',monto:90,fecha:'2026-11-13',msi:3} as any,true);
     expect(c.modalAbierto()).toBe(true);expect(c.formMonto).toBe(90);expect(c.formFecha).toBe('');
+    c.guardarMovimiento();expect(c.modalError()).toBe('Indica la fecha original de la compra.');expect(finanzasService.actualizarTransaccion).not.toHaveBeenCalled();
   });
 
   it('muestra compra y cuota sin sumar dos veces el gasto',()=>{
