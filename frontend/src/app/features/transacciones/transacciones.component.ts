@@ -529,6 +529,8 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
     if (Number.isSafeInteger(categoriaId) && categoriaId > 0) {
       this.filtroCategoriaId.set(categoriaId);
     }
+    const tipoRuta = this.route.snapshot.queryParamMap.get('tipo');
+    if (tipoRuta === 'INGRESO' || tipoRuta === 'GASTO' || tipoRuta === 'TRANSFERENCIA') this.filtroTipo.set(tipoRuta);
     const fechaInicio = this.route.snapshot.queryParamMap.get('fechaInicio');
     const fechaFin = this.route.snapshot.queryParamMap.get('fechaFin');
     if (fechaInicio && /^\d{4}-\d{2}-\d{2}$/.test(fechaInicio)) {
@@ -550,6 +552,13 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
     this.rutaSub = this.route.queryParamMap?.pipe(skip(1)).subscribe(params => {
       if (this.aplicarEvidencia(params)) this.cargarTransacciones();
     });
+    const editarPlan=Number(this.route.snapshot.queryParamMap.get('editarPlan'));
+    if (Number.isSafeInteger(editarPlan) && editarPlan>0) {
+      this.finanzasService.getCompraDelPlan(editarPlan).subscribe({
+        next:r=>{if(r.data)this.abrirModalEditar(r.data);},
+        error:e=>this.toastService.error(mensajeDeError(e,'No se pudo cargar el plan MSI.'))
+      });
+    }
     const editar = this.route.snapshot.queryParamMap.get('editar');
     const transaccionId = Number(editar ?? this.route.snapshot.queryParamMap.get('detalle'));
     if (Number.isSafeInteger(transaccionId) && transaccionId > 0) {

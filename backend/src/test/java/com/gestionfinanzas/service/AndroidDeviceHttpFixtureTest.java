@@ -50,7 +50,7 @@ class AndroidDeviceHttpFixtureTest {
             while(!Files.exists(done)&&Instant.now().isBefore(deadline)) Thread.sleep(200);
             assertTrue(Files.exists(done),"Phone fixture timed out");
             assertEquals(new BigDecimal("-25.10"),cuentas.findById(cuenta.getId()).orElseThrow().getSaldoActual());
-            assertEquals(1,movimientos.findByUsuarioIdOrderByFechaDesc(usuario.getId(),org.springframework.data.domain.PageRequest.of(0,10)).getTotalElements());
+            assertEquals(1,movimientos.findByUsuarioIdAndImpactoPendienteFalseOrderByFechaDesc(usuario.getId(),org.springframework.data.domain.PageRequest.of(0,10)).getTotalElements());
         } finally { Files.deleteIfExists(fixture); Files.deleteIfExists(done); }
     }
 }

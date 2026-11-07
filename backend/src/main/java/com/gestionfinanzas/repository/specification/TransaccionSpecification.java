@@ -20,6 +20,7 @@ public class TransaccionSpecification {
     public static Specification<Transaccion> conFiltros(Long usuarioId, TransaccionFiltroRequest filtro) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
+            predicates.add(cb.isFalse(root.get("impactoPendiente")));
 
             // 1. Aislamiento estricto de usuario (Seguridad Multi-inquilino)
             if (filtro != null && filtro.listaId() != null) {
