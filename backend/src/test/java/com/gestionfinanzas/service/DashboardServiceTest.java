@@ -33,7 +33,7 @@ class DashboardServiceTest {
         dashboardService.obtenerResumen(7L, 1, 2026, desde, hasta);
         dashboardService.obtenerAnalitica(7L, 1, 2026, desde, hasta);
         verify(transaccionRepository).findTotalesMensualesPorMoneda(7L, desde, hasta);
-        verify(transaccionRepository).findTop10ByUsuarioIdAndFechaBetweenOrderByFechaDescIdDesc(7L, desde, hasta);
+        verify(transaccionRepository).findTop10ByUsuarioIdAndImpactoPendienteFalseAndFechaBetweenOrderByFechaDescIdDesc(7L, desde, hasta);
         verify(transaccionRepository).findGastosPorCategoria(7L, TipoTransaccion.GASTO, desde, hasta);
     }
 

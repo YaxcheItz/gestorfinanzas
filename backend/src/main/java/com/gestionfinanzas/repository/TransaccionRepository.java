@@ -58,7 +58,7 @@ public interface TransaccionRepository extends JpaRepository<Transaccion, Long>,
 
     List<Transaccion> findTop10ByUsuarioIdAndImpactoPendienteFalseOrderByFechaDescIdDesc(Long usuarioId);
 
-    List<Transaccion> findTop10ByUsuarioIdAndFechaBetweenOrderByFechaDescIdDesc(
+    List<Transaccion> findTop10ByUsuarioIdAndImpactoPendienteFalseAndFechaBetweenOrderByFechaDescIdDesc(
             Long usuarioId, LocalDate desde, LocalDate hasta
     );
 
@@ -325,7 +325,7 @@ public interface TransaccionRepository extends JpaRepository<Transaccion, Long>,
             @Param("fin") LocalDate fin
     );
 
-    List<Transaccion> findTop10ByListaIdAndFechaBetweenOrderByFechaDescIdDesc(Long listaId, LocalDate desde, LocalDate hasta);
+    List<Transaccion> findTop10ByListaIdAndImpactoPendienteFalseAndFechaBetweenOrderByFechaDescIdDesc(Long listaId, LocalDate desde, LocalDate hasta);
     List<Transaccion> findTop10ByListaIdAndImpactoPendienteFalseOrderByFechaDescIdDesc(Long listaId);
     @Query("select distinct e from Transaccion t join t.etiquetas e where t.lista.id = :listaId order by e")
     List<String> etiquetasDeLista(@Param("listaId") Long listaId);

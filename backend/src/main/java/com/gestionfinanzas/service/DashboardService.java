@@ -112,8 +112,8 @@ public class DashboardService {
                 ));
 
         List<TransaccionResponse> ultimosMovimientos = (listaId == null
-                ? transaccionRepository.findTop10ByUsuarioIdAndFechaBetweenOrderByFechaDescIdDesc(usuarioId, inicioPeriodo, finPeriodo)
-                : transaccionRepository.findTop10ByListaIdAndFechaBetweenOrderByFechaDescIdDesc(listaId, inicioPeriodo, finPeriodo))
+                ? transaccionRepository.findTop10ByUsuarioIdAndImpactoPendienteFalseAndFechaBetweenOrderByFechaDescIdDesc(usuarioId, inicioPeriodo, finPeriodo)
+                : transaccionRepository.findTop10ByListaIdAndImpactoPendienteFalseAndFechaBetweenOrderByFechaDescIdDesc(listaId, inicioPeriodo, finPeriodo))
                 .stream()
                 .map(TransaccionResponse::fromEntity)
                 .toList();

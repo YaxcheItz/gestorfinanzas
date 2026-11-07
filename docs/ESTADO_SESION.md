@@ -1,3 +1,11 @@
+## Historial MSI: compra total y cargos mensuales - 7 noviembre 2026
+
+Nueva solicitud del propietario: mostrar desde la compra el importe TOTAL negativo en historial de la tarjeta y en Inicio, como compra/credito comprometido SIN impacto en saldo neto. Al corte, conservar compra original y agregar cuota mensual que SI afecta saldo neto. No sumar la compra informativa y las cuotas como gastos duplicados.
+
+Rama correcciones/msi-historial-compra-total en .local/worktrees/msi-historial-total, creada desde origin/develop1ba60d9 comprobado. Se encontro fuga en Inicio: DashboardService usa findTop10PorPeriodo distinto del historial; no excluia impactoPendiente. Se corrigieron consultas propias/compartidas de Inicio y sus callers y se agrego regresion con compra ficticia a90/3MSI que exige no listar la cuota futura y saldo0/retencion90. Pruebas en .local/worktrees/msi-historial-pruebas.log.
+
+Falta implementar registro durable de compra informativa total, con fecha de compra real, vinculo al plan y cuotas, exclusion de saldo neto/gastos/cashback/libro diario, render coherente en tarjeta/Inicio y soporte de editar/eliminar/restaurar sin duplicaciones. No simular ese total cambiando el monto contable de la cuota ni calcularlo solamente mientras este pendiente: debe conservarse despues del corte. No alterar historia real automaticamente ni consultar compra real. No publicar/instalar como tarea completa antes de implementar y probar esa parte. La version instalada sigue0.1.37 segun evidencia anterior, sin nueva verificacion del dispositivo en esta parte.
+
 ## Cargo MSI diferido e historial de ingresos - 7 noviembre 2026
 
 Rama correcciones/msi-cargo-al-corte desde develop21fc08c. Se retiene el total MSI antes del primer corte, sin deuda/cashback/libro diario hasta aplicar la cuota pendiente. Proceso automatico cada minuto mientras el servidor esta activo y al reiniciar, con bloqueo e idempotencia. Consultas de gastos e historial excluyen cuotas pendientes; desde Configuracion/Recurrentes se puede abrir la compra para editar el plan antes del corte. Edicion y borrado consideran la retencion pendiente sin crear devoluciones; respaldo conserva impactoPendiente y valida su cobertura. No se migra automaticamente el historial financiero anterior: los planes antiguos mantienen sus datos hasta edicion expresa.

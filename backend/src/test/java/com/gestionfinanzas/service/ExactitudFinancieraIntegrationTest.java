@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @Transactional
 class ExactitudFinancieraIntegrationTest {
     @Autowired TransaccionService movimientos;
+    @Autowired DashboardService dashboard;
     @Autowired LibroDiarioService libro;
     @Autowired UsuarioService usuarioService;
     @Autowired org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
@@ -92,6 +93,14 @@ class ExactitudFinancieraIntegrationTest {
         assertTrue(cuota.isImpactoPendiente());
         assertEquals(0,cuota.getCuenta().getSaldoActual().compareTo(BigDecimal.ZERO));
         assertEquals(new BigDecimal("90.00"),cuota.getCuenta().getLimiteRetenido());
+    }
+    @Test void inicioNoMuestraLaPrimeraCuotaAntesDelCorte() {
+        var hoy=CalendarioFinanciero.hoy();
+        var fecha=hoy.plusMonths(1).withDayOfMonth(1);
+        var t=movimientos.crearTransaccion(usuarioId,new TransaccionRequest(cuentaId,null,null,TipoTransaccion.GASTO,new BigDecimal("90.00"),null,fecha,"Ficticia",null,null,null,3));
+        var resumen=dashboard.obtenerResumen(usuarioId,fecha.getMonthValue(),fecha.getYear());
+        assertTrue(resumen.ultimosMovimientos().stream().noneMatch(x->x.id().equals(t.id())));
+        comprobarCuenta("0.00","90.00");
     }
     @Test void compraAntesDelCorteRegistraPrimeraCuotaEnCorteYConservaRetencion() {
         var primera = movimientos.crearTransaccion(usuarioId, new TransaccionRequest(cuentaId,null,null,
