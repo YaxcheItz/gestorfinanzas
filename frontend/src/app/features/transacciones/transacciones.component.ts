@@ -192,6 +192,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
   private movimientoPendiente: TransaccionPayload | null = null;
   readonly formTipo = signal<TipoTransaccion>('GASTO');
   readonly modoEdicion = signal(false);
+  fechaOriginalRequerida = false;
   readonly transaccionEditando = signal<Transaccion | null>(null);
   readonly submitting = signal<boolean>(false);
   readonly modalError = signal<string | null>(null);
@@ -556,7 +557,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
     const editarPlan=Number(this.route.snapshot.queryParamMap.get('editarPlan'));
     if (Number.isSafeInteger(editarPlan) && editarPlan>0) {
       this.finanzasService.getCompraDelPlan(editarPlan).subscribe({
-        next:r=>{if(r.data)this.abrirModalEditar(r.data);},
+        next:r=>{if(r.data)this.abrirModalEditar(r.data,undefined,this.route.snapshot.queryParamMap.get('fechaOriginal') === 'requerida');},
         error:e=>this.toastService.error(mensajeDeError(e,'No se pudo cargar el plan MSI.'))
       });
     }
@@ -1046,6 +1047,10 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
     return Math.min((this.paginaActual() + 1) * this.tamanioPagina(), this.pageData()!.totalElements);
   }
 
+  editarCompraAnterior(id: number): void {
+    this.finanzasService.getCompraDelPlan(id).subscribe({next:r=>{if(r.data)this.abrirModalEditar(r.data,undefined,true);},error:e=>this.toastService.error(mensajeDeError(e,'No se pudo cargar el plan MSI.'))});
+  }
+
   async eliminarMovimiento(id: number): Promise<void> {
     const confirmed = await this.confirmDialogService.confirm({
       title: 'Eliminar movimiento o plan MSI completo',
@@ -1107,6 +1112,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
     this.claveMovimiento = crearIdSolicitud();
     this.movimientoPendiente = null;
     this.modoEdicion.set(false);
+    this.fechaOriginalRequerida = false;
     this.transaccionEditando.set(null);
     this.formTipo.set(tipo);
     this.formMonto = null;
@@ -1141,10 +1147,10 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
     this.modalAbierto.set(true);
   }
 
-  abrirModalEditar(transaccion: Transaccion, plan?: TransaccionPayload): void {
+  abrirModalEditar(transaccion: Transaccion, plan?: TransaccionPayload, requiereFechaOriginal = false): void {
     if (transaccion.compraMsiId && !plan) {
       this.finanzasService.getPlanMsi(transaccion.id).subscribe({
-        next: r => { if(r.data) this.abrirModalEditar(transaccion,r.data); },
+        next: r => { if(r.data) this.abrirModalEditar(transaccion,r.data,requiereFechaOriginal); },
         error: e => this.toastService.error(mensajeDeError(e,'No se pudo cargar el plan MSI.'))
       });
       return;
@@ -1169,7 +1175,8 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
     this.formCuentaDestinoId = transaccion.cuentaDestinoId ?? null;
     this.formTasaCambio = transaccion.tasaCambio ?? null;
     this.formCategoriaId = transaccion.categoriaId ?? null;
-    this.formFecha = plan?.fecha ?? transaccion.fecha;
+    this.fechaOriginalRequerida = requiereFechaOriginal;
+    this.formFecha = requiereFechaOriginal ? '' : (plan?.fecha ?? transaccion.fecha);
     this.formNotas = transaccion.notas ?? '';
     this.formListaId = transaccion.listaId ?? this.contextoLista.activaId(); this.formEtiquetas = (transaccion.etiquetas ?? []).map(e => '#' + e).join(' ');
     this.formDescripcion = transaccion.descripcion ?? '';
@@ -1184,11 +1191,12 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
     this.modalAbierto.set(false);
     this.modalError.set(null);
     this.modoEdicion.set(false);
+    this.fechaOriginalRequerida = false;
     this.transaccionEditando.set(null);
-    if (this.route.snapshot.queryParamMap.has('editar')) {
+    if (this.route.snapshot.queryParamMap.has('editar') || this.route.snapshot.queryParamMap.has('editarPlan')) {
       this.router.navigate([], {
         relativeTo: this.route,
-        queryParams: { editar: null },
+        queryParams: { editar: null, editarPlan: null, fechaOriginal: null },
         queryParamsHandling: 'merge',
         replaceUrl: true
       });
@@ -1245,6 +1253,10 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
 
   guardarMovimiento(): void {
     if (this.submitting()) return;
+    if (!this.formFecha) {
+      this.modalError.set(this.fechaOriginalRequerida ? 'Indica la fecha original de la compra.' : 'Selecciona una fecha.');
+      return;
+    }
     if (!this.formMonto || this.formMonto <= 0) {
       this.modalError.set('Ingresa un monto válido mayor a 0');
       return;
