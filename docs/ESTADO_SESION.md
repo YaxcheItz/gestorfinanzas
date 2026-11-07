@@ -1844,3 +1844,7 @@ Se precisa que `usage_unavailable` cuenta solo eventos emitidos tras procesar el
 - Rama entrega/android-036-msi creada desde origin/develop comprobado, incorporando correcciones/chat-msi-edicion como dependencia pendiente del PR243. Version incrementada desde 0.1.35/codigo36 a 0.1.36/codigo37. Incluye correccion para que la aclaracion Compras conserve el contexto MSI y sincroniza tipos de auditoria del frontend.
 - Prueba integral ampliada local aprobada: chat MSI idempotente, primera cuota al corte, gesto que revela Editar sin abrirlo, edicion del total/plazo, eliminacion completa, saldos/retencion a cero, auditoria y asientos cuadrados. CI del PR243 tiene backend/frontend/PostgreSQL/Android aprobados; E2E completa aun en curso. La entrega requiere CI de su commit exacto, firma/contenido/hash y despliegue antes de instalar.
 - Se comprobo por ADB APK instalada 0.1.35/codigo36, certificado habitual y hash 7d59af5212130dc6c5d47034cc80986f47fdc2d0c7a97b4a034e74431634ccb8; primera instalacion 2026-10-22 00:26:31. Solo lectura de metadatos y binario del paquete, sin abrir la app ni finanzas.
+
+## Android 0.1.37 en preparacion - 7 noviembre 2026
+
+Rama entrega/android-037-msi-corte creada desde develop comprobado e incorporando PR246 como dependencia. Repositorio previo0.1.36/codigo37; nueva entrega0.1.37/codigo38. Incluye cargo MSI pendiente al corte e Ingresos enlazado al historial completo. No instalar ni publicar hasta CI exacta, verificacion del APK y despliegue. ADB sin dispositivo al verificar esta etapa.
