@@ -31,6 +31,14 @@ describe('ConfiguracionComponent data safety', () => {
     limpiar: ReturnType<typeof vi.fn>;
   };
 
+  it('muestra el primer corte pendiente y el total sin confundirlo con la cuota siguiente', () => {
+    const c=fixture.componentInstance;
+    c.plantillas.set([{id:99,cuentaId:1,cuentaNombre:'Tarjeta ficticia',tipo:'GASTO',categoriaNombre:'Ficticia',monto:30,moneda:'MXN',frecuencia:'MENSUAL',siguienteFecha:'2026-12-13',proximoCargo:'2026-11-13',montoTotal:90,activa:true,compraMsiId:'ficticia',cuotasTotales:2,cuotasPagadas:0}] as any);
+    c.cargandoPlantillas.set(false);fixture.detectChanges();
+    const text=fixture.nativeElement.textContent;
+    expect(text).toContain('2026-11-13');expect(text).toContain('Cuota siguiente: 2026-12-13');expect(text).toContain('Compra total:');
+  });
+
   beforeEach(async () => {
     push = { isEnabled: true, subscription: of(null), requestSubscription: vi.fn() };
     finanzas = {

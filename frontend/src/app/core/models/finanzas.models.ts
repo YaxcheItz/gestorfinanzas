@@ -194,6 +194,8 @@ export interface TransaccionPayload {
 }
 
 export interface PlantillaRecurrente {
+  proximoCargo?: string | null;
+  montoTotal?: number | null;
   listaId?: number | null;
   etiquetas?: string[];
   id: number;
@@ -219,6 +221,7 @@ export interface PlantillaRecurrente {
 }
 
 export interface DashboardResumen {
+  comprasMsiAnteriores?: Transaccion[];
   balanceTotal: number;
   ingresosMes: number;
   gastosMes: number;
@@ -375,6 +378,7 @@ export interface TransaccionFiltro {
 }
 
 export interface PageResponse<T> {
+  comprasMsiAnteriores?: Transaccion[];
   content: T[];
   totalElements: number;
   totalPages: number;

@@ -633,6 +633,8 @@ export class DashboardComponent implements OnInit {
     this.heroSwipeActive.set(false);
   }
 
+  readonly comprasMsiAnteriores = computed(() => (this.resumen()?.comprasMsiAnteriores ?? []).filter(m => m.moneda === this.monedaResumen() && (!this.categoriaFiltroSeleccionada() || m.categoriaId === this.categoriaFiltroSeleccionada()?.categoriaId)));
+
   readonly ultimosMovimientosLimitados = computed(() =>
     (this.resumen()?.ultimosMovimientos ?? []).filter(m => m.moneda === this.monedaResumen()).slice(0, this.vistaDetallada() ? 8 : 3)
   );

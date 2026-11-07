@@ -311,10 +311,12 @@ import {
                       @if (msiCompletada(plantilla)) {
                         Plan de pagos completado
                       } @else {
-                        {{ plantilla.siguienteFecha <= hoy && plantilla.activa ? 'Pendiente de confirmar' : 'Siguiente fecha' }}: {{ plantilla.siguienteFecha }}
+                        {{ plantilla.compraMsiId ? 'Próximo cargo al corte' : (plantilla.siguienteFecha <= hoy && plantilla.activa ? 'Pendiente de confirmar' : 'Siguiente fecha') }}: {{ plantilla.proximoCargo ?? plantilla.siguienteFecha }}
                       }
                     </p>
                     @if (plantilla.cuotasTotales != null) {
+                      @if (plantilla.montoTotal != null) {<p class="mt-1 text-xs font-semibold">Compra total: {{ plantilla.montoTotal | monto:plantilla.moneda:'symbol':'1.2-2' }}</p>}
+                      @if (plantilla.proximoCargo && plantilla.proximoCargo !== plantilla.siguienteFecha) {<p class="mt-1 text-xs text-slate-500">Cuota siguiente: {{ plantilla.siguienteFecha }}. La primera cuota espera su corte.</p>}
                       <p class="mt-1 text-xs text-slate-500">MSI · {{ (plantilla.cuotasPagadas ?? 0) + 1 }} de {{ plantilla.cuotasTotales + 1 }} cuotas registradas</p>
                       <p class="mt-1 text-xs text-slate-500">Pendiente: {{ (plantilla.montoPendiente ?? plantilla.monto * (plantilla.cuotasTotales - (plantilla.cuotasPagadas ?? 0))) | monto:plantilla.moneda:'symbol':'1.2-2' }}. La última cuota ajusta los centavos.</p>
                     }

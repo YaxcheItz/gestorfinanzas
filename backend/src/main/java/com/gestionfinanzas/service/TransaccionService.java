@@ -742,8 +742,9 @@ public class TransaccionService {
         validarFiltros(usuarioId, filtro);
         if (pageable.getPageSize() > 100) throw new IllegalArgumentException("La página admite hasta 100 movimientos.");
         Specification<Transaccion> spec = TransaccionSpecification.conFiltros(usuarioId, filtro);
-        return transaccionRepository.findAll(spec, pageable)
-                .map(TransaccionResponse::fromEntity);
+        return new com.gestionfinanzas.dto.response.HistorialTransaccionesResponse(
+                transaccionRepository.findAll(spec, pageable).map(TransaccionResponse::fromEntity),
+                pageable.getPageNumber()==0 ? ComprasMsiAnteriores.listar(transaccionRepository,usuarioId,filtro) : java.util.List.of());
     }
 
     @Transactional(readOnly = true)
