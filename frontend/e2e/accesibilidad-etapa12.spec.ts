@@ -66,10 +66,10 @@ test('pantallas principales conservan nombres accesibles, foco y geometría con 
   }
   await page.goto('/cuentas');
   await expect(page.locator('.account-card').filter({ hasText: 'Cuenta de ensayo' })).toContainText(/12[,.]?345[,.]67/);
-  await page.goto('/configuracion#appearance');
+  await page.goto('/dashboard');
   const saved = page.waitForResponse(response => new URL(response.url()).pathname === '/api/perfil' && response.request().method() === 'PUT');
-  await page.locator('#ocultar-montos').check(); await saved;
-  await expect(page.locator('#ocultar-montos')).toBeChecked();
+  await page.getByRole('button',{name:'Ocultar montos'}).click(); await saved;
+  await expect(page.getByRole('button',{name:'Mostrar montos'})).toBeVisible();
   await page.goto('/cuentas');
   await expect(page.locator('.account-card').filter({ hasText: 'Cuenta de ensayo' })).toBeVisible();
   const hidden = await accessibility.send('Accessibility.getFullAXTree');
