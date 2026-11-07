@@ -57,6 +57,34 @@ class ExactitudFinancieraIntegrationTest {
         assertEquals(new BigDecimal(saldo), cuenta.getSaldoActual());
         assertEquals(new BigDecimal(retenido), cuenta.getLimiteRetenido());
     }
+    @Test void compraAnteriorSeMuestraSinEscriturasYProximoCargoEsPrimeraCuota() {
+        var fecha=CalendarioFinanciero.hoy().plusMonths(1).withDayOfMonth(1);
+        var t=movimientos.crearTransaccion(usuarioId,new TransaccionRequest(cuentaId,null,null,TipoTransaccion.GASTO,new BigDecimal("90.01"),null,fecha,"Ficticia antigua",null,null,null,3));
+        // Representa una compra creada antes de V18, sin el nuevo recibo informativo.
+        transacciones.findAllByUsuarioIdOrderByFechaAscIdAsc(usuarioId).stream().filter(Transaccion::isCompraMsiInformativa).forEach(transacciones::delete);
+        em.flush();em.clear();
+        var cantidad=transacciones.count();
+        var filtro=new com.gestionfinanzas.dto.request.TransaccionFiltroRequest(TipoTransaccion.GASTO,cuentaId,null,null,null,null,"Ficticia",null,new BigDecimal("90"),new BigDecimal("91"));
+        var pagina=(com.gestionfinanzas.dto.response.HistorialTransaccionesResponse)movimientos.listarConFiltros(usuarioId,filtro,org.springframework.data.domain.PageRequest.of(0,20));
+        assertTrue(pagina.getContent().isEmpty());assertEquals(1,pagina.getComprasMsiAnteriores().size());
+        var compra=pagina.getComprasMsiAnteriores().getFirst();
+        assertEquals(new BigDecimal("90.01"),compra.monto());assertTrue(compra.compraMsiInformativa());
+        assertTrue(compra.notas().contains("Fecha de registro"));assertEquals(t.id(),compra.id());
+        assertEquals(1,new com.fasterxml.jackson.databind.ObjectMapper().findAndRegisterModules().valueToTree(pagina).get("comprasMsiAnteriores").size());
+        var resumen=dashboard.obtenerResumen(usuarioId,compra.fecha().getMonthValue(),compra.fecha().getYear());
+        assertEquals(1,resumen.comprasMsiAnteriores().size());assertEquals(0,resumen.gastosMes().signum());
+        var p=recurrentes.listar(usuarioId).getFirst();assertEquals(t.fecha(),p.proximoCargo());assertEquals(t.fecha().plusMonths(1),p.siguienteFecha());assertEquals(new BigDecimal("90.01"),p.montoTotal());
+        assertEquals(cantidad,transacciones.count());comprobarCuenta("0.00","90.01");
+        movimientos.aplicarCuotaAlCorte(usuarioId,t.id(),t.fecha());
+        assertEquals(1,((com.gestionfinanzas.dto.response.HistorialTransaccionesResponse)movimientos.listarConFiltros(usuarioId,null,org.springframework.data.domain.PageRequest.of(0,20))).getComprasMsiAnteriores().size());
+        assertEquals(1,movimientos.listarConFiltros(usuarioId,null,org.springframework.data.domain.PageRequest.of(0,20)).getContent().size());
+        assertEquals(cantidad,transacciones.count());comprobarCuenta("-30.00","60.01");
+    }
+    @Test void comprasNuevasNoGeneranProyeccionAnteriorNiSeFiltranAOtroUsuario() {
+        movimientos.crearTransaccion(usuarioId,compra("90.00",3));
+        assertTrue(ComprasMsiAnteriores.listar(transacciones,usuarioId,null).isEmpty());
+        assertTrue(ComprasMsiAnteriores.listar(transacciones,Long.MAX_VALUE,null).isEmpty());
+    }
     @Test void compraMsiFuturaRetieneTotalSinAfectarSaldoAntesDelCorte() {
         var fecha = CalendarioFinanciero.hoy().plusMonths(1).withDayOfMonth(1);
         movimientos.crearTransaccion(usuarioId, new TransaccionRequest(cuentaId,null,null,

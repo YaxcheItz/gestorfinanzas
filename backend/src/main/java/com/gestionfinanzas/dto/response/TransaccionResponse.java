@@ -42,6 +42,13 @@ public record TransaccionResponse(
     boolean impactoPendiente,
     boolean compraMsiInformativa
 ) {
+    public static TransaccionResponse compraAnterior(Transaccion first, BigDecimal total) {
+        var t=fromEntity(first);
+        return new TransaccionResponse(t.id(),t.cuentaId(),t.cuentaNombre(),null,null,t.categoriaId(),t.categoriaNombre(),t.categoriaIcono(),t.categoriaColor(),t.tipo(),total,null,null,t.moneda(),null,
+                first.getFechaCreacion().toLocalDate(),t.descripcion().replaceAll(" \\(Cuota \\d+/\\d+\\)$", ""),
+                "Fecha de registro; la fecha original de compra no se conservo.",false,t.fechaCreacion(),t.metodoCaptura(),t.compraMsiId(),t.listaId(),t.listaNombre(),t.etiquetas(),t.autorId(),t.autorNombre(),t.plantillaId(),null,null,false,true);
+    }
+
     public TransaccionResponse(Long id,
     Long cuentaId,
     String cuentaNombre,

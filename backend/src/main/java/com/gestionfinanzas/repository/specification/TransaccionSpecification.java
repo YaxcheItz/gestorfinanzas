@@ -18,9 +18,27 @@ public class TransaccionSpecification {
     }
 
     public static Specification<Transaccion> conFiltros(Long usuarioId, TransaccionFiltroRequest filtro) {
+        return conFiltros(usuarioId, filtro, false);
+    }
+
+    public static Specification<Transaccion> conFiltros(Long usuarioId, TransaccionFiltroRequest filtro, boolean compraAnterior) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
-            predicates.add(cb.isFalse(root.get("impactoPendiente")));
+            jakarta.persistence.criteria.Expression<java.math.BigDecimal> monto = root.get("monto");
+            if (compraAnterior) {
+                predicates.add(cb.isNotNull(root.get("plantillaRecurrente")));
+                predicates.add(cb.isNotNull(root.get("compraMsiId")));
+                var otro = query.subquery(Long.class); var t = otro.from(Transaccion.class);
+                otro.select(t.get("id")).where(cb.equal(t.get("compraMsiId"), root.get("compraMsiId")),
+                        cb.or(cb.isTrue(t.get("compraMsiInformativa")), cb.lessThan(t.get("id"),root.get("id"))));
+                predicates.add(cb.not(cb.exists(otro)));
+                var suma=query.subquery(java.math.BigDecimal.class); var cuota=suma.from(Transaccion.class);
+                suma.select(cb.sum(cuota.<java.math.BigDecimal>get("monto"))).where(cb.equal(cuota.get("compraMsiId"),root.get("compraMsiId")));
+                var plan=root.join("plantillaRecurrente");
+                var restante=cb.coalesce(plan.<java.math.BigDecimal>get("montoPendiente"),
+                        cb.prod(plan.<java.math.BigDecimal>get("monto"),cb.diff(plan.<Integer>get("cuotasTotales"),plan.<Integer>get("cuotasPagadas")).as(java.math.BigDecimal.class)));
+                monto=cb.sum(suma,restante);
+            } else predicates.add(cb.isFalse(root.get("impactoPendiente")));
 
             // 1. Aislamiento estricto de usuario (Seguridad Multi-inquilino)
             if (filtro != null && filtro.listaId() != null) {
@@ -71,18 +89,20 @@ public class TransaccionSpecification {
 
             // 5. Rango de Fechas
             if (filtro.fechaInicio() != null) {
-                predicates.add(cb.greaterThanOrEqualTo(root.get("fecha"), filtro.fechaInicio()));
+                if(compraAnterior) predicates.add(cb.greaterThanOrEqualTo(root.get("fechaCreacion"),filtro.fechaInicio().atStartOfDay()));
+                else predicates.add(cb.greaterThanOrEqualTo(root.get("fecha"), filtro.fechaInicio()));
             }
             if (filtro.fechaFin() != null) {
-                predicates.add(cb.lessThanOrEqualTo(root.get("fecha"), filtro.fechaFin()));
+                if(compraAnterior) predicates.add(cb.lessThan(root.get("fechaCreacion"),filtro.fechaFin().plusDays(1).atStartOfDay()));
+                else predicates.add(cb.lessThanOrEqualTo(root.get("fecha"), filtro.fechaFin()));
             }
 
             // 6. Rango de monto
             if (filtro.montoMin() != null) {
-                predicates.add(cb.greaterThanOrEqualTo(root.get("monto"), filtro.montoMin()));
+                predicates.add(cb.greaterThanOrEqualTo(monto, filtro.montoMin()));
             }
             if (filtro.montoMax() != null) {
-                predicates.add(cb.lessThanOrEqualTo(root.get("monto"), filtro.montoMax()));
+                predicates.add(cb.lessThanOrEqualTo(monto, filtro.montoMax()));
             }
 
             if (filtro.autorId() != null) predicates.add(cb.equal(root.get("usuario").get("id"), filtro.autorId()));
@@ -102,7 +122,7 @@ public class TransaccionSpecification {
                     for (var campo : List.of(root.<String>get("descripcion"), root.<String>get("notas"), categoria.<String>get("nombre"), root.join("categoriaHistorica", JoinType.LEFT).<String>get("nombre"), cuenta.<String>get("nombre"), root.<String>get("cuentaNombreHistorico"), root.get("usuario").<String>get("nombre"))) {
                         partes.add(cb.like(cb.lower(campo), pattern, '\\'));
                     }
-                    if (termino.matches("[0-9]+([.,][0-9]{1,2})?")) partes.add(cb.equal(root.get("monto"), new java.math.BigDecimal(termino.replace(',', '.'))));
+                    if (termino.matches("[0-9]+([.,][0-9]{1,2})?")) partes.add(cb.equal(monto, new java.math.BigDecimal(termino.replace(',', '.'))));
                     predicates.add(cb.or(partes.toArray(new Predicate[0])));
                 }
             }

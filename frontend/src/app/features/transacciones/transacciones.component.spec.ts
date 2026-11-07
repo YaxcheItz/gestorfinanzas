@@ -53,6 +53,15 @@ describe('TransaccionesComponent history filters', () => {
   };
   let confirm: ReturnType<typeof vi.fn>;
 
+  it('muestra total MSI anterior aunque no haya cargos y no lo agrega al balance', () => {
+    const c=fixture.componentInstance;
+    c.pageData.set({content:[],comprasMsiAnteriores:[{id:1,cuentaNombre:'Ficticia',tipo:'GASTO',moneda:'MXN',monto:90,fecha:'2026-11-07',descripcion:'Compra ficticia',compraMsiInformativa:true}],totalElements:0,totalPages:0,first:true,last:true} as any);
+    c.loading.set(false);fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Compras MSI anteriores');
+    expect(fixture.nativeElement.textContent).not.toContain('Tu historial empieza');
+    expect(c.resumenPaginaPorMoneda()).toEqual([]);
+  });
+
   it('muestra compra y cuota sin sumar dos veces el gasto',()=>{
     const component=fixture.componentInstance;
     const movimientos=[{tipo:'GASTO',moneda:'MXN',monto:90,compraMsiInformativa:true},{tipo:'GASTO',moneda:'MXN',monto:30}] as Transaccion[];
