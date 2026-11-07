@@ -1,3 +1,17 @@
+## Android 0.1.40 preparada - 7 noviembre 2026
+
+Entrega acciones MSI anteriores y tema inmediato, version0.1.40/codigo41 superior a0.1.39/codigo40. CI, despliegues y APK firmada se verifican por separado antes de instalar sin borrar datos. No se alteran compras reales para pruebas.
+
+## Acciones MSI y tema: correccion preparada - 7 noviembre 2026
+
+Rama correcciones/msi-acciones-tema desde develop eb8f4cd. Compra MSI anterior permite revelar Editar y Eliminar en Inicio e historial, usa plan completo real y confirmacion; no se accedio ni cambio finanzas reales. Como no se conserva fecha original de esas compras, el editor solicita introducirla en lugar de inventarla. Se quitaron textos MSI informativos de Inicio, historial y detalle. Apariencia queda en Cambiar tema, aplicado al tocar, con guardado inmediato, bloqueo de pulsaciones concurrentes y reversion ante fallo; se conservan las demas preferencias almacenadas sin controles adicionales en esa seccion.
+
+532 pruebas frontend aprobadas antes del ultimo texto de ayuda; prueba E2E con fixture ficticio y proyeccion simulada paso gesto de editar, fecha requerida y eliminar con liberacion de retencion. Falta CI exacta, publicacion y APK superior a0.1.39. No afirmar instalado hasta verificar archivo extraido.
+
+## Trabajo local pendiente: acciones MSI y tema - 7 noviembre 2026
+
+Rama correcciones/msi-acciones-tema, worktree .local/worktrees/msi-acciones-tema desde develop eb8f4cd. Cambios locales sin commit: habilitar gestos de editar/eliminar para proyeccion MSI anterior, quitar textos informativos, reducir apariencia a tema y aplicar al seleccionar. Build y 530 pruebas frontend existentes pasan. Falta verificar especificamente edicion/borrado de plan con fixtures, errores y cambios rapidos de tema (posible carrera de respuestas), integracion, CI, publicacion y APK superior a0.1.39. No se probaron ni modificaron compras reales. No afirmar entregado ni instalado. Continuar con pruebas, corregir carreras, completar entrega autorizada y actualizar documentacion.
+
 ## Android 0.1.39 preparada - 7 noviembre 2026
 
 Entrega de PR252 en version0.1.39/codigo40, superior a0.1.38/codigo39 instalada. Incluye total MSI anterior como proyeccion de solo lectura y primer cargo al corte distinguido de cuota siguiente. CI exacta, firma/contenido/hash, despliegues e instalacion se verifican por separado. No modifica datos financieros al consultar. No declarar instalada/publicada mientras esas puertas sigan pendientes.
