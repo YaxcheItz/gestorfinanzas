@@ -53,6 +53,14 @@ describe('TransaccionesComponent history filters', () => {
   };
   let confirm: ReturnType<typeof vi.fn>;
 
+  it('muestra compra y cuota sin sumar dos veces el gasto',()=>{
+    const component=fixture.componentInstance;
+    const movimientos=[{tipo:'GASTO',moneda:'MXN',monto:90,compraMsiInformativa:true},{tipo:'GASTO',moneda:'MXN',monto:30}] as Transaccion[];
+    component.pageData.set({content:movimientos} as any);
+    expect(component.totalesGrupo(movimientos)).toEqual([{moneda:'MXN',monto:-30}]);
+    expect(component.resumenPaginaPorMoneda()).toEqual([{moneda:'MXN',ingresos:0,gastos:30,balance:-30}]);
+  });
+
   it('separa el total diario por moneda y excluye transferencias y saldos iniciales', () => {
     const movimientos = [
       { tipo: 'GASTO', moneda: 'MXN', monto: 200 },
