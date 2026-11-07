@@ -32,6 +32,10 @@ public class Transaccion {
     @Builder.Default
     private boolean impactoPendiente = false;
 
+    @Column(name="compra_msi_informativa",nullable=false)
+    @Builder.Default
+    private boolean compraMsiInformativa = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "lista_id")
     private ListaFinanciera lista;

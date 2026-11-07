@@ -95,14 +95,14 @@ public class LibroDiarioService {
      */
     @Transactional
     public BackfillLibroDiarioResponse ejecutarBackfill(Long usuarioId) {
-        List<Transaccion> movimientos = transaccionRepository.findAllByUsuarioIdOrderByFechaAscIdAsc(usuarioId).stream().filter(t -> !t.isImpactoPendiente()).toList();
+        List<Transaccion> movimientos = transaccionRepository.findAllByUsuarioIdOrderByFechaAscIdAsc(usuarioId).stream().filter(t -> !t.isImpactoPendiente() && !t.isCompraMsiInformativa()).toList();
         int procesados = 0;
         for (Transaccion movimiento : movimientos) {
             if (procesados >= MAXIMO_BACKFILL_POR_LOTE) break;
             Transaccion bloqueado = transaccionRepository.findByIdAndUsuarioIdForUpdate(
                     movimiento.getId(), usuarioId
             ).orElse(null);
-            if (bloqueado == null || bloqueado.isImpactoPendiente() || asientoRepository.existsByUsuarioIdAndTransaccionOrigenId(
+            if (bloqueado == null || bloqueado.isImpactoPendiente() || bloqueado.isCompraMsiInformativa() || asientoRepository.existsByUsuarioIdAndTransaccionOrigenId(
                     usuarioId, bloqueado.getId())) {
                 continue;
             }
@@ -157,7 +157,7 @@ public class LibroDiarioService {
     }
 
     private BackfillLibroDiarioResponse resumirBackfill(Long usuarioId, int procesados) {
-        List<Transaccion> movimientos = transaccionRepository.findAllByUsuarioIdOrderByFechaAscIdAsc(usuarioId).stream().filter(t -> !t.isImpactoPendiente()).toList();
+        List<Transaccion> movimientos = transaccionRepository.findAllByUsuarioIdOrderByFechaAscIdAsc(usuarioId).stream().filter(t -> !t.isImpactoPendiente() && !t.isCompraMsiInformativa()).toList();
         java.util.Set<Long> contabilizadas = asientoRepository.findTransaccionesContabilizadas(usuarioId);
         int yaContabilizados = 0;
         int pendientes = 0;

@@ -790,6 +790,7 @@
             </dl>
           </details>
 
+          @if (det.compraMsiInformativa) {<p>Compra total informativa. Solo las cuotas contabilizadas afectan al saldo neto.</p>}
           @if (det.compraMsiId) {
             <p class="text-sm text-slate-500">Compra MSI: Editar y Eliminar afectan el plan completo. Puedes pausar o cancelar solo las cuotas futuras desde Configuración → Recurrentes. Los pagos registrados se conservan.</p>
           }

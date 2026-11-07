@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @Transactional
 class ExactitudFinancieraIntegrationTest {
     @Autowired TransaccionService movimientos;
+    @Autowired DashboardService dashboard;
     @Autowired LibroDiarioService libro;
     @Autowired UsuarioService usuarioService;
     @Autowired org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
@@ -88,10 +89,33 @@ class ExactitudFinancieraIntegrationTest {
         var respaldo=respaldos.generar(usuarioId);
         var destino=usuarios.save(Usuario.builder().nombre("Restaurado ficticio").email(UUID.randomUUID()+"@example.test").passwordHash("prueba").rol(RolUsuario.ROLE_USER).activo(true).build());
         restauracion.restaurar(destino.getId(),respaldo);
-        var cuota=transacciones.findAllByUsuarioIdOrderByFechaAscIdAsc(destino.getId()).getFirst();
+        var cuota=transacciones.findAllByUsuarioIdOrderByFechaAscIdAsc(destino.getId()).stream().filter(t -> !t.isCompraMsiInformativa()).findFirst().orElseThrow();
         assertTrue(cuota.isImpactoPendiente());
         assertEquals(0,cuota.getCuenta().getSaldoActual().compareTo(BigDecimal.ZERO));
         assertEquals(new BigDecimal("90.00"),cuota.getCuenta().getLimiteRetenido());
+    }
+    @Test void inicioNoMuestraLaPrimeraCuotaAntesDelCorte() {
+        var hoy=CalendarioFinanciero.hoy();
+        var fecha=hoy.plusMonths(1).withDayOfMonth(1);
+        var t=movimientos.crearTransaccion(usuarioId,new TransaccionRequest(cuentaId,null,null,TipoTransaccion.GASTO,new BigDecimal("90.00"),null,fecha,"Ficticia",null,null,null,3));
+        var resumen=dashboard.obtenerResumen(usuarioId,fecha.getMonthValue(),fecha.getYear());
+        assertTrue(resumen.ultimosMovimientos().stream().noneMatch(x->x.id().equals(t.id())));
+        comprobarCuenta("0.00","90.00");
+    }
+    @Test void compraTotalPersisteYLaCuotaSoloCuentaAlCorte() {
+        var fecha=CalendarioFinanciero.hoy().plusMonths(1).withDayOfMonth(1);
+        var t=movimientos.crearTransaccion(usuarioId,new TransaccionRequest(cuentaId,null,null,TipoTransaccion.GASTO,new BigDecimal("90.00"),null,fecha,"Compra ficticia total",null,null,null,3));
+        var compra=transacciones.bloquearCompraMsi(usuarioId,t.compraMsiId()).stream().filter(Transaccion::isCompraMsiInformativa).findFirst().orElseThrow();
+        assertEquals(new BigDecimal("90.00"),compra.getMonto());assertEquals(fecha,compra.getFecha());
+        assertTrue(dashboard.obtenerResumen(usuarioId,fecha.getMonthValue(),fecha.getYear()).ultimosMovimientos().stream().anyMatch(x->x.compraMsiInformativa() && x.monto().compareTo(new BigDecimal("90"))==0));
+        comprobarCuenta("0.00","90.00");
+        movimientos.aplicarCuotaAlCorte(usuarioId,t.id(),t.fecha());
+        comprobarCuenta("-30.00","60.00");
+        assertTrue(transacciones.findById(compra.getId()).isPresent());
+        assertEquals(0,new BigDecimal("30.00").compareTo(transacciones.sumMontoPorUsuarioYTipoYPeriodo(usuarioId,TipoTransaccion.GASTO,fecha.withDayOfMonth(1),fecha.plusMonths(2))));
+        movimientos.eliminarTransaccion(usuarioId,t.id(),true);
+        assertTrue(transacciones.bloquearCompraMsi(usuarioId,t.compraMsiId()).isEmpty());
+        comprobarCuenta("0.00","0.00");
     }
     @Test void compraAntesDelCorteRegistraPrimeraCuotaEnCorteYConservaRetencion() {
         var primera = movimientos.crearTransaccion(usuarioId, new TransaccionRequest(cuentaId,null,null,
@@ -133,7 +157,7 @@ class ExactitudFinancieraIntegrationTest {
         comprobarCuenta("-100.00","0.00");
         assertFalse(plan().isActiva());
         assertEquals(3, transacciones.findAll().stream()
-                .filter(t -> inicial.compraMsiId().equals(t.getCompraMsiId())).count());
+                .filter(t -> inicial.compraMsiId().equals(t.getCompraMsiId()) && !t.isCompraMsiInformativa()).count());
         assertThrows(IllegalArgumentException.class, () -> recurrentes.cambiarEstado(usuarioId,id,true));
     }
     @Test void cancelarLiberaSoloPendienteYConservaPagos() {
