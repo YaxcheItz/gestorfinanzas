@@ -643,7 +643,7 @@ public class RestauracionRespaldoService {
                         throw new IllegalArgumentException("El respaldo repite una compra MSI.");
                     }
                     var cuotas = respaldo.transacciones().stream()
-                            .filter(t -> recurrencia.compraMsiId().equals(t.compraMsiId())).toList();
+                            .filter(t -> recurrencia.compraMsiId().equals(t.compraMsiId()) && !t.compraMsiInformativa()).toList();
                     if (cuotas.size() != (recurrencia.cuotasPagadas() == null ? 0 : recurrencia.cuotasPagadas()) + 1
                             || cuotas.stream().anyMatch(t -> t.tipo() != TipoTransaccion.GASTO
                             || !recurrencia.cuentaId().equals(t.cuentaId()))) {
@@ -656,6 +656,8 @@ public class RestauracionRespaldoService {
             }
         }
         for (var movimiento : respaldo.transacciones()) {
+            if (movimiento.compraMsiInformativa() && (movimiento.compraMsiId()==null || movimiento.impactoPendiente() || movimiento.tipo()!=TipoTransaccion.GASTO || movimiento.cashbackAutomatico()))
+                throw new IllegalArgumentException("El respaldo contiene una compra MSI informativa incompatible.");
             if (movimiento.impactoPendiente()) {
                 if (movimiento.cuentaId()==null || movimiento.compraMsiId()==null || movimiento.tipo()!=TipoTransaccion.GASTO || movimiento.cashbackAutomatico())
                     throw new IllegalArgumentException("El respaldo contiene un cargo pendiente incompatible.");
@@ -833,7 +835,7 @@ public class RestauracionRespaldoService {
                     .descripcion(origen.descripcion())
                     .notas(origen.notas())
                     .compraMsiId(origen.compraMsiId())
-                    .impactoPendiente(origen.impactoPendiente())
+                    .impactoPendiente(origen.impactoPendiente()).compraMsiInformativa(origen.compraMsiInformativa())
                     .metodoCaptura(origen.metodoCaptura())
                     .build());
             mapa.put(origen.id(), guardada.getId());

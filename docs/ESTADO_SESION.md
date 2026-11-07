@@ -1,3 +1,19 @@
+## Compra MSI total informativa implementada localmente - 7 noviembre 2026
+
+En correcciones/msi-historial-compra-total: nuevas compras MSI crean un registro durable del importe TOTAL con fecha de compra, vinculado al mismo plan. Es informativo: no aplica saldo neto, gasto agregado, cashback ni libro diario. Se muestra como importe total en Inicio y en el historial de la tarjeta; la cuota pendiente permanece oculta y al corte aparece como cargo separado. No se duplica el gasto al conservar ambos registros.
+
+Edicion actualiza la compra informativa existente; eliminar plan borra todas las cuotas y la compra informativa sin devolucion ficticia; cancelar pendientes conserva el registro historico de compra. Backfill y CSV financiero excluyen la compra informativa, respaldo conserva su bandera y valida que sea MSI. MigracionV18 agrega bandera defaultfalse sin inventar compras de historiales anteriores. No se reconstruye automaticamente fecha/total de compras reales antiguas.
+
+Suite backend690 contabilizadas,0 fallos/errores,9 omitidas antes de ultimos ajustes menores;33 pruebas focales aprobaron compra total persistente despues del corte y cuota como unico gasto. Build Angular aprobado antes de ultimos textos. Falta CI exacta, E2E final, integracion/publicacion y APK superior a0.1.37. No declarar entregado aun. Sin acceso ni modificaciones a datos financieros reales.
+
+## Historial MSI: compra total y cargos mensuales - 7 noviembre 2026
+
+Nueva solicitud del propietario: mostrar desde la compra el importe TOTAL negativo en historial de la tarjeta y en Inicio, como compra/credito comprometido SIN impacto en saldo neto. Al corte, conservar compra original y agregar cuota mensual que SI afecta saldo neto. No sumar la compra informativa y las cuotas como gastos duplicados.
+
+Rama correcciones/msi-historial-compra-total en .local/worktrees/msi-historial-total, creada desde origin/develop1ba60d9 comprobado. Se encontro fuga en Inicio: DashboardService usa findTop10PorPeriodo distinto del historial; no excluia impactoPendiente. Se corrigieron consultas propias/compartidas de Inicio y sus callers y se agrego regresion con compra ficticia a90/3MSI que exige no listar la cuota futura y saldo0/retencion90. Pruebas en .local/worktrees/msi-historial-pruebas.log.
+
+Falta implementar registro durable de compra informativa total, con fecha de compra real, vinculo al plan y cuotas, exclusion de saldo neto/gastos/cashback/libro diario, render coherente en tarjeta/Inicio y soporte de editar/eliminar/restaurar sin duplicaciones. No simular ese total cambiando el monto contable de la cuota ni calcularlo solamente mientras este pendiente: debe conservarse despues del corte. No alterar historia real automaticamente ni consultar compra real. No publicar/instalar como tarea completa antes de implementar y probar esa parte. La version instalada sigue0.1.37 segun evidencia anterior, sin nueva verificacion del dispositivo en esta parte.
+
 ## Cargo MSI diferido e historial de ingresos - 7 noviembre 2026
 
 Rama correcciones/msi-cargo-al-corte desde develop21fc08c. Se retiene el total MSI antes del primer corte, sin deuda/cashback/libro diario hasta aplicar la cuota pendiente. Proceso automatico cada minuto mientras el servidor esta activo y al reiniciar, con bloqueo e idempotencia. Consultas de gastos e historial excluyen cuotas pendientes; desde Configuracion/Recurrentes se puede abrir la compra para editar el plan antes del corte. Edicion y borrado consideran la retencion pendiente sin crear devoluciones; respaldo conserva impactoPendiente y valida su cobertura. No se migra automaticamente el historial financiero anterior: los planes antiguos mantienen sus datos hasta edicion expresa.
@@ -1848,3 +1864,7 @@ Se precisa que `usage_unavailable` cuenta solo eventos emitidos tras procesar el
 ## Android 0.1.37 en preparacion - 7 noviembre 2026
 
 Rama entrega/android-037-msi-corte creada desde develop comprobado e incorporando PR246 como dependencia. Repositorio previo0.1.36/codigo37; nueva entrega0.1.37/codigo38. Incluye cargo MSI pendiente al corte e Ingresos enlazado al historial completo. No instalar ni publicar hasta CI exacta, verificacion del APK y despliegue. ADB sin dispositivo al verificar esta etapa.
+
+## Android 0.1.38 en preparacion - 7 noviembre 2026
+
+Rama entrega/android-038-msi-total creada desde develop comprobado con PR249 como dependencia. Version incrementada0.1.37/codigo38 a0.1.38/codigo39. Compra total informativa durable en ambos historiales y cargos separados al corte, sin sumar dos veces. Pruebas locales backend690 y E2E focales aprobadas antes de ultimos ajustes; CI exacta, APK firmada y despliegue pendientes. Sin dispositivo ADB al comprobar; no usar finanzas reales.

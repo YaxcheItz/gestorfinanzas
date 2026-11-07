@@ -98,6 +98,7 @@ export interface Transaccion {
   cashbackAutomatico?: boolean;
   compraMsiId?: string | null;
   impactoPendiente?: boolean;
+  compraMsiInformativa?: boolean;
   plantillaId?: number | null;
   metodoCaptura?: 'TEXTO' | 'VOZ' | 'WHATSAPP' | null;
   fechaCreacion: string;
@@ -213,6 +214,7 @@ export interface PlantillaRecurrente {
   montoPendiente?: number | null;
   compraMsiId?: string | null;
   impactoPendiente?: boolean;
+  compraMsiInformativa?: boolean;
   fechaFin?: string | null;
 }
 

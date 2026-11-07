@@ -217,6 +217,13 @@ public class TransaccionService {
                     .build());
             guardada.setPlantillaRecurrente(plantillaMsi);
             guardada = transaccionRepository.save(guardada);
+            var compra=transaccionRepository.save(Transaccion.builder().usuario(datos.usuario()).cuenta(datos.cuentaOrigen())
+                    .cuentaNombreHistorico(datos.cuentaOrigen().getNombre()).cuentaMonedaHistorica(datos.cuentaOrigen().getMoneda())
+                    .tipo(TipoTransaccion.GASTO).categoria(datos.categoria()).monto(request.monto()).fecha(request.fecha())
+                    .descripcion(descripcionMovimiento(datos,request.descripcion())).notas(normalizarNotas(request.notas())).metodoCaptura(metodoCaptura)
+                    .lista(guardada.getLista()).etiquetas(new java.util.LinkedHashSet<>(guardada.getEtiquetas()))
+                    .compraMsiId(compraMsiId).plantillaRecurrente(plantillaMsi).compraMsiInformativa(true).build());
+            auditoriaService.registrar(usuarioId,compra.getId(),"CREAR",null,TransaccionResponse.fromEntity(compra));
         } else if (request.frecuenciaRecurrencia() != null) {
             PlantillaRecurrente plantillaRec = plantillaRepository.save(PlantillaRecurrente.builder()
                     .lista(guardada.getLista())
@@ -581,7 +588,7 @@ public class TransaccionService {
         List<Transaccion> gastos = transaccionRepository.findByCuentaIdAndTipoAndFechaBetweenOrderByFechaAscIdAsc(
                 cuenta.getId(), TipoTransaccion.GASTO, mes.atDay(1), mes.atEndOfMonth()
         );
-        gastos = gastos.stream().filter(t -> !t.isImpactoPendiente()).toList();
+        gastos = gastos.stream().filter(t -> !t.isImpactoPendiente() && !t.isCompraMsiInformativa()).toList();
         List<Transaccion> cashbackExistente =
                 transaccionRepository.findByCuentaIdAndCashbackOrigenIsNotNullAndFechaBetweenOrderByFechaAscIdAsc(
                         cuenta.getId(), mes.atDay(1), mes.atEndOfMonth()
@@ -756,6 +763,7 @@ public class TransaccionService {
                 .append("Cuenta destino,Moneda destino,Monto destino,Tasa de cambio,Notas,Lista,Etiquetas,Autor,Fuente de cambio,Fecha de cambio aplicada\r\n");
 
         for (Transaccion transaccion : transacciones) {
+            if(transaccion.isCompraMsiInformativa()) continue;
             List<String> campos = new ArrayList<>(13);
             campos.add(transaccion.getId().toString());
             campos.add(transaccion.getFecha().toString());
@@ -859,7 +867,7 @@ public class TransaccionService {
     }
 
     private List<Transaccion> cuotasPlan(Long uid, Transaccion origen) {
-        var cuotas = transaccionRepository.bloquearCompraMsi(uid, origen.getCompraMsiId());
+        var cuotas = transaccionRepository.bloquearCompraMsi(uid, origen.getCompraMsiId()).stream().filter(t -> !t.isCompraMsiInformativa()).toList();
         if (cuotas.isEmpty()) throw new IllegalArgumentException("Plan MSI no encontrado.");
         for (var t : cuotas) {
             if (t.getCuenta() == null || t.getTipo() != TipoTransaccion.GASTO)
@@ -901,9 +909,10 @@ public class TransaccionService {
         var cuotas = cuotasPlan(uid,t);
         var plan = t.getPlantillaRecurrente();
         if (plan == null) throw new IllegalArgumentException("El plan fue cancelado. Puedes eliminar la compra completa; sus cuotas no se reprograman.");
+        var compra=transaccionRepository.bloquearCompraMsi(uid,t.getCompraMsiId()).stream().filter(Transaccion::isCompraMsiInformativa).findFirst().orElse(null);
         BigDecimal total = cuotas.stream().map(Transaccion::getMonto).reduce(BigDecimal.ZERO,BigDecimal::add).add(pendientePlan(plan));
         return new TransaccionRequest(t.getCuenta().getId(),null,t.getCategoria()==null?null:t.getCategoria().getId(),TipoTransaccion.GASTO,
-                total,null,cuotas.getFirst().getFecha(),cuotas.getFirst().getDescripcion(),t.getNotas(),null,null,plan.getCuotasTotales()+1,
+                total,null,compra==null?cuotas.getFirst().getFecha():compra.getFecha(),compra==null?cuotas.getFirst().getDescripcion():compra.getDescripcion(),t.getNotas(),null,null,plan.getCuotasTotales()+1,
                 t.getLista()==null?null:t.getLista().getId(),new java.util.ArrayList<>(t.getEtiquetas()));
     }
 
@@ -948,6 +957,15 @@ public class TransaccionService {
         if (pendiente.signum()==0) plan.setActiva(false);
         else if (completado) plan.setActiva(true);
         plantillaRepository.save(plan);
+        for(var compra:transaccionRepository.bloquearCompraMsi(uid,origen.getCompraMsiId())) {
+            if(!compra.isCompraMsiInformativa()) continue;
+            var antesCompra=TransaccionResponse.fromEntity(compra);
+            compra.setCuenta(datos.cuentaOrigen());compra.setCuentaNombreHistorico(datos.cuentaOrigen().getNombre());compra.setCuentaMonedaHistorica(datos.cuentaOrigen().getMoneda());compra.setCategoria(datos.categoria());compra.setMonto(request.monto());
+            compra.setFecha(request.fecha());compra.setDescripcion(descripcionMovimiento(datos,request.descripcion()));compra.setNotas(normalizarNotas(request.notas()));
+            compra.setLista(plan.getLista());compra.setEtiquetas(new java.util.LinkedHashSet<>(plan.getEtiquetas()));
+            transaccionRepository.save(compra);
+            auditoriaService.registrar(uid,compra.getId(),"ACTUALIZAR",antesCompra,TransaccionResponse.fromEntity(compra));
+        }
         auditoriaService.registrar(uid,origen.getId(),"EDITAR_MSI",antesPlan,resumenPlanMsi(cuotas,plan));
         return TransaccionResponse.fromEntity(origen);
     }
@@ -964,11 +982,18 @@ public class TransaccionService {
         if (transaccion.getLista() != null) listaService.escribir(usuarioId, transaccion.getLista().getId());
         if (transaccion.getCompraMsiId() != null) {
             if (!planCompleto) throw new IllegalArgumentException("Confirma explicitamente la eliminacion del plan MSI completo.");
+            if(transaccion.isCompraMsiInformativa() && transaccion.getPlantillaRecurrente()==null
+                    && transaccionRepository.bloquearCompraMsi(usuarioId,transaccion.getCompraMsiId()).stream().allMatch(Transaccion::isCompraMsiInformativa)) {
+                eliminarIndividual(usuarioId,transaccion);
+                return;
+            }
             var cuotas = cuotasPlan(usuarioId, transaccion);
             var plan = transaccion.getPlantillaRecurrente();
             var antesPlan = resumenPlanMsi(cuotas,plan);
             if (plan != null) liberarPendiente(plan);
             for (var cuota : cuotas) eliminarIndividual(usuarioId, cuota);
+            for(var compra:transaccionRepository.bloquearCompraMsi(usuarioId,transaccion.getCompraMsiId()))
+                if(compra.isCompraMsiInformativa()) eliminarIndividual(usuarioId,compra);
             if (plan != null) plantillaRepository.delete(plan);
             auditoriaService.registrar(usuarioId,transaccionId,"BORRAR_MSI",antesPlan,null);
             return;
@@ -993,6 +1018,11 @@ public class TransaccionService {
 
     private void eliminarIndividual(Long usuarioId, Transaccion transaccion) {
         TransaccionResponse antes = TransaccionResponse.fromEntity(transaccion);
+        if (transaccion.isCompraMsiInformativa()) {
+            auditoriaService.registrar(usuarioId,transaccion.getId(),"ELIMINAR",antes,null);
+            transaccionRepository.delete(transaccion);
+            return;
+        }
         if (transaccion.isImpactoPendiente()) {
             liberarCuotaPendiente(transaccion);
             auditoriaService.registrar(usuarioId,transaccion.getId(),"ELIMINAR",antes,null);

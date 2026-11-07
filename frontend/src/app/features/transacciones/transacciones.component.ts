@@ -147,7 +147,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
   });
   totalesGrupo(movimientos: Transaccion[]): {moneda: string; monto: number}[] {
     const totales = new Map<string, number>();
-    for (const movimiento of movimientos) {
+    for (const movimiento of movimientos.filter(m => !m.compraMsiInformativa)) {
       if (!['GASTO', 'INGRESO'].includes(movimiento.tipo)) continue;
       totales.set(movimiento.moneda, (totales.get(movimiento.moneda) ?? 0) + (movimiento.tipo === 'GASTO' ? -movimiento.monto : movimiento.monto));
     }
@@ -282,6 +282,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
   readonly resumenPaginaPorMoneda = computed(() => {
     const resumen = new Map<string, { ingresos: number; gastos: number }>();
     for (const transaccion of this.pageData()?.content || []) {
+      if (transaccion.compraMsiInformativa) continue;
       if (transaccion.tipo !== 'INGRESO' && transaccion.tipo !== 'GASTO') continue;
       const totales = resumen.get(transaccion.moneda) ?? { ingresos: 0, gastos: 0 };
       if (transaccion.tipo === 'INGRESO') totales.ingresos += Number(transaccion.monto);
