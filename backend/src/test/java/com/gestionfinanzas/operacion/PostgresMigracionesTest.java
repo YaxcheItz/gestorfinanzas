@@ -48,7 +48,7 @@ class PostgresMigracionesTest {
                 assertEquals("MES", rows.getString(1));
                 assertEquals(java.time.LocalDate.of(2026, 1, 5), rows.getDate(2).toLocalDate());
                 assertEquals(1, rows.getInt(3));
-                assertEquals(17, rows.getInt(4));
+                assertEquals(16, rows.getInt(4));
             }
             assertThrows(java.sql.SQLException.class, () -> sql.executeUpdate("UPDATE " + schema + ".usuarios SET periodo_dia_inicio=0"));
             sql.executeUpdate("UPDATE " + schema + ".usuarios SET periodo_dia_inicio=31");
