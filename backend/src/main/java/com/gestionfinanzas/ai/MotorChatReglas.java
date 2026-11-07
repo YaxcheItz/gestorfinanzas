@@ -74,6 +74,15 @@ public final class MotorChatReglas {
                                   List<CategoriaResponse> categorias, List<TransaccionResponse> recientes, LocalDate hoy,
                                   boolean exigirCuenta, List<ListaResponse> listas) {
         String texto=normalizar(mensaje);
+        Matcher plazo = Pattern.compile("\\b(\\d+)\\s*(?:msi|meses(?: sin intereses)?)\\b").matcher(texto);
+        Integer msi = null;
+        if (plazo.find()) {
+            try { msi = Integer.valueOf(plazo.group(1)); } catch (NumberFormatException ex) { return pregunta(mensaje,"El plazo MSI debe estar entre 2 y 60 meses.",List.of()); }
+            if (msi < 2 || msi > 60 || plazo.find()) return pregunta(mensaje,"Indica un solo plazo MSI entre 2 y 60 meses.",List.of());
+        } else if (palabra(texto,"msi") || texto.contains("meses sin intereses")) {
+            return pregunta(mensaje,"?A cu?ntos meses sin intereses? Indica entre 2 y 60 meses.",List.of());
+        }
+        String textoSinPlazo = texto.replaceAll("\\b\\d+\\s*(?:msi|meses(?: sin intereses)?)\\b", " ");
         if (texto.isBlank()) return pregunta(mensaje,"Escribe un movimiento o pide un reporte.",List.of("Gasté 80 en tacos","Reporte de este mes"));
         if (Set.of("hola","ayuda","que puedes hacer","buenas").contains(texto)) return new Resultado(null,"Escribe un gasto, ingreso o transferencia, o pide un resumen, saldo, categor\u00edas o presupuestos. La fecha predeterminada es hoy.",List.of("Gast\u00e9 80 en tacos","Recib\u00ed 900 de sueldo","Reporte de este mes"),null,null,null,null,null);
         Periodo periodo;
@@ -88,7 +97,7 @@ public final class MotorChatReglas {
                 && !MONTO.matcher(FECHA.matcher(texto).replaceAll(" ")).find();
         boolean consulta=texto.matches(".*\\b(reporte|reportes|resumen|grafico|grafica|categorias|categoria|presupuesto|presupuestos|saldo|balance|cuanto|cuanta|cuantos|cuantas|como voy|en que|top|alertas|gastos fijos|gastos|ingresos|compara|comparame|comparar)\\b.*")
                 || consultaRecurrente;
-        if (consulta) {
+        if (consulta && msi == null) {
             long cantidadFechas=FECHA.matcher(texto).results().count();
             boolean rangoExplicito=RANGO.matcher(texto).find()&&cantidadFechas==2;
             if ((cantidadFechas>1 && !rangoExplicito)
@@ -149,7 +158,7 @@ public final class MotorChatReglas {
         boolean gasto=texto.matches(".*\\b(gasto|gaste|pague|pago|compre|compra|gastos)\\b.*");
         TipoTransaccion tipo=transfer ? TipoTransaccion.TRANSFERENCIA : ingreso ? TipoTransaccion.INGRESO : gasto ? TipoTransaccion.GASTO : null;
         List<CuentaResponse> cuentas=cuentasEntrada.stream().filter(CuentaResponse::activo).toList();
-        String sinFechas=FECHA.matcher(periodo.texto()).replaceAll(" ");
+        String sinFechas=FECHA.matcher(textoSinPlazo).replaceAll(" ");
         for (CuentaResponse cuenta:cuentas) sinFechas=sinFechas.replaceAll("(?<![\\p{L}\\d])"+Pattern.quote(normalizar(cuenta.nombre()))+"(?![\\p{L}\\d])"," ");
         if (cuentas.stream().anyMatch(c -> esAmericanExpress(normalizar(c.nombre())))) {
             sinFechas=sinFechas.replaceAll("\\b(?:amex|american express)\\b", " ");
@@ -202,6 +211,8 @@ public final class MotorChatReglas {
             }
         }
         if (origen==null || moneda!=null&&!origen.moneda().equals(moneda)) return pregunta(mensaje,"Elige una cuenta de la moneda indicada.",List.of());
+        if (msi != null && (tipo != TipoTransaccion.GASTO || origen.tipo() != TipoCuenta.CREDITO))
+            return pregunta(mensaje,"Los MSI requieren un gasto y una tarjeta de cr?dito. Indica la tarjeta.",List.of());
         BigDecimal tasa=null;
         if (transfer && !origen.moneda().equals(destino.moneda())) {
             Matcher cambio=Pattern.compile("(?:tasa|cambio)(?: de| a)?\\s+([0-9][0-9.,]*)").matcher(texto);
@@ -263,9 +274,10 @@ public final class MotorChatReglas {
         Map<String,Object> datos=new LinkedHashMap<>();
         datos.put("tipo",tipo.name());datos.put("monto",monto);datos.put("cuentaId",origen.id());datos.put("categoriaId",categoria==null?null:categoria.id());
         datos.put("fecha",periodo.hasta().toString());datos.put("descripcion",concepto.isBlank()?tipo.name():concepto.substring(0,Math.min(200,concepto.length())));
+        if(msi != null) datos.put("msi",msi);
         if(transfer) {datos.put("cuentaDestinoId",destino.id());if(tasa!=null)datos.put("tasaCambio",tasa);}
         String resumen=(transfer?"Transferencia":tipo==TipoTransaccion.GASTO?"Gasto":"Ingreso")+" de "+monto.toPlainString()+" "+origen.moneda()+" \u00b7 "+origen.nombre()+(destino==null?"":" \u2192 "+destino.nombre())+" \u00b7 "+periodo.hasta()+(categoria==null?"":" \u00b7 "+categoria.nombre());
-        return new Resultado(datos,resumen,List.of(),null,null,null,null,null);
+        return new Resultado(datos,resumen+(msi==null?"":" - "+msi+" MSI"),List.of(),null,null,null,null,null);
     }
     private static List<CuentaResponse> cuentasMencionadas(String texto,List<CuentaResponse> cuentas,boolean exigirCuenta) {
         if(exigirCuenta) {
