@@ -13,6 +13,18 @@ public final class CalendarioFinanciero {
     public static LocalDate hoy() { return hoy(Clock.system(ZONA)); }
     public static LocalDate hoy(Clock clock) { return LocalDate.now(clock.withZone(ZONA)); }
 
+    public static LocalDate corteMsi(LocalDate compra, Integer diaCorte) {
+        if (diaCorte == null || diaCorte < 1 || diaCorte > 31)
+            throw new IllegalArgumentException("Configura el dia de corte de la tarjeta antes de registrar MSI.");
+        LocalDate mes = compra.withDayOfMonth(1);
+        LocalDate corte = mes.withDayOfMonth(Math.min(diaCorte, mes.lengthOfMonth()));
+        if (corte.isBefore(compra)) {
+            mes = mes.plusMonths(1);
+            corte = mes.withDayOfMonth(Math.min(diaCorte, mes.lengthOfMonth()));
+        }
+        return corte;
+    }
+
     public static LocalDate siguiente(LocalDate actual, FrecuenciaRecurrencia frecuencia, LocalDate ancla) {
         LocalDate origen = ancla == null ? actual : ancla;
         return switch (frecuencia) {

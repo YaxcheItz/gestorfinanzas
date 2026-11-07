@@ -38,7 +38,7 @@ class ExactitudFinancieraIntegrationTest {
                 .rol(RolUsuario.ROLE_USER).activo(true).build());
         usuarioId = usuario.getId();
         cuentaId = cuentas.save(Cuenta.builder().usuario(usuario).nombre("Tarjeta")
-                .tipo(TipoCuenta.CREDITO).limiteCredito(new BigDecimal("1000.00")).build()).getId();
+                .tipo(TipoCuenta.CREDITO).diaCorte(30).limiteCredito(new BigDecimal("1000.00")).build()).getId();
     }
     TransaccionRequest compra(String monto, int cuotas) {
         return new TransaccionRequest(cuentaId, null, null, TipoTransaccion.GASTO,
@@ -52,6 +52,32 @@ class ExactitudFinancieraIntegrationTest {
         Cuenta cuenta = cuentas.findById(cuentaId).orElseThrow();
         assertEquals(new BigDecimal(saldo), cuenta.getSaldoActual());
         assertEquals(new BigDecimal(retenido), cuenta.getLimiteRetenido());
+    }
+    @Test void compraAntesDelCorteRegistraPrimeraCuotaEnCorteYConservaRetencion() {
+        var primera = movimientos.crearTransaccion(usuarioId, new TransaccionRequest(cuentaId,null,null,
+                TipoTransaccion.GASTO,new BigDecimal("100.00"),null,LocalDate.of(2025,1,10),
+                "Compra ficticia",null,null,null,3));
+        assertEquals(LocalDate.of(2025,1,30), primera.fecha());
+        assertEquals(LocalDate.of(2025,2,28), plan().getSiguienteFecha());
+        comprobarCuenta("-33.33","66.67");
+    }
+    @Test void compraDespuesDelCortePasaAlSiguienteMes() {
+        var primera = movimientos.crearTransaccion(usuarioId, new TransaccionRequest(cuentaId,null,null,
+                TipoTransaccion.GASTO,new BigDecimal("100.00"),null,LocalDate.of(2025,1,31),
+                "Compra ficticia",null,null,null,3));
+        assertEquals(LocalDate.of(2025,2,28), primera.fecha());
+        assertEquals(LocalDate.of(2025,3,30), plan().getSiguienteFecha());
+    }
+    @Test void sinCorteNoSeCreaPlanNiSeRetieneCredito() {
+        cuentas.findById(cuentaId).orElseThrow().setDiaCorte(null);
+        assertThrows(IllegalArgumentException.class, () -> movimientos.crearTransaccion(usuarioId,compra("100.00",3)));
+        assertEquals(0,planCount()); comprobarCuenta("0.00","0.00");
+    }
+    @Test void cambiarCorteDeTarjetaNoReprogramaPlanExistente() {
+        movimientos.crearTransaccion(usuarioId,compra("100.00",3));
+        cuentas.findById(cuentaId).orElseThrow().setDiaCorte(15);
+        recurrentes.registrarSiguiente(usuarioId,plan().getId());
+        assertEquals(LocalDate.of(2025,3,30),plan().getSiguienteFecha());
     }
     @Test void tresCuotasSumanTotalExactoYNoDejanRetencion() {
         var inicial = movimientos.crearTransaccion(usuarioId, compra("100.00",3));
@@ -121,11 +147,11 @@ class ExactitudFinancieraIntegrationTest {
         Clock utc = Clock.fixed(Instant.parse("2026-10-07T02:00:00Z"),ZoneOffset.UTC);
         assertEquals(LocalDate.of(2026,10,6),CalendarioFinanciero.hoy(utc));
     }
-    @Test void primeraFechaMsiDeFinDeFebreroEsFinDeMarzo() {
+    @Test void corteTreintaRecuperaDiaTrasFebrero() {
         movimientos.crearTransaccion(usuarioId, new TransaccionRequest(cuentaId,null,null,
                 TipoTransaccion.GASTO,new BigDecimal("100.00"),null,LocalDate.of(2025,2,28),
                 "Compra",null,null,null,3));
-        assertEquals(LocalDate.of(2025,3,31),plan().getSiguienteFecha());
+        assertEquals(LocalDate.of(2025,3,30),plan().getSiguienteFecha());
     }
     @Test void pausaConservaRetencionYNoPermiteRegistrar() {
         movimientos.crearTransaccion(usuarioId,compra("100.00",3));

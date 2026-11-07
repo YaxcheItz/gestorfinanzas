@@ -1811,3 +1811,12 @@ Se precisa que `usage_unavailable` cuenta solo eventos emitidos tras procesar el
 - Nuevas regresiones sinteticas de monto/plazo/categoria/fecha y rechazo de plazo invalido o cuenta no crediticia. Pasaron 76 pruebas backend: MotorChatReglas 39, AiActionService 9, AiAssistantService 12 y PropuestasChatIntegration 16; H2 aislado. La integracion existente no demuestra aun el recorrido MSI completo.
 - Se preservaron las correcciones locales de solicitud nueva y gesto. Pasaron 54 pruebas de quick-capture y una nueva regresion de tarjeta: onSwipeEdit no emite editar ni cierra la bandeja con el valor por defecto. Prueba tactil integral y fisica pendientes.
 - El ciclo contable MSI (primera cuota al corte, editar/eliminar plan completo, retencion, historial/libro diario, compatibilidad y respaldo) sigue SIN implementar en esta correccion. No integrado ni publicado; sin APK nueva. No se consultaron ni modificaron finanzas reales.
+
+## Primera cuota MSI al corte - 6 noviembre 2026
+
+- Nuevas compras MSI usan el corte correspondiente: compra antes o en el corte usa ese corte; compra posterior pasa al siguiente mes. Sin dia de corte valido se rechaza antes de aplicar saldo o retencion. La cuota conserva el comportamiento contable actual de los movimientos futuros: el impacto se aplica al registrar; no se ha implementado contabilizacion diferida al vencimiento.
+- El ancla guarda el dia nominal de corte para recuperar el 30 tras febrero; la programacion de planes anteriores no se modifica ni se relee el corte cambiante de la tarjeta. Respaldos conservan el ancla existente.
+- Pruebas focales anteriores aprobadas: 25 TransaccionService y 19 ExactitudFinancieraIntegration; se agrego despues una regresion de cambio de corte sin reprogramar plan. Suite completa backend en comprobacion. Solo H2 y cuentas ficticias; ADB sin dispositivos.
+- Falta editar/eliminar plan completo y sus pruebas de atomicidad, saldo, retencion, cashback y libro diario; prueba integral chat MSI y GUI; CI exacta, integracion, produccion y APK superior. No afirmar completo ni instalar una entrega parcial.
+
+- Comprobacion final de esta parte: Maven BUILD SUCCESS y salida 0, 677 pruebas contabilizadas, 0 fallos, 0 errores, 9 omitidas. ExactitudFinancieraIntegration incluye 20 casos. Registro privado: .local/worktrees/chat-msi-backend-confirmado.log. Edicion/eliminacion del plan completo y entrega continuan pendientes.

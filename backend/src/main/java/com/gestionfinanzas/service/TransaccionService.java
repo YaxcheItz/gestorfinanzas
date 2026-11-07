@@ -132,11 +132,13 @@ public class TransaccionService {
         validarLimiteCredito(datos.cuentaOrigen(), datos.tipo(), request.monto(), null);
 
         BigDecimal montoGuardar = request.monto();
+        LocalDate fechaPrimeraCuota = request.fecha();
         boolean isMsi = request.msi() != null && request.msi() > 1;
         if (isMsi) {
             if (datos.tipo() != TipoTransaccion.GASTO || datos.cuentaOrigen().getTipo() != TipoCuenta.CREDITO) {
                 throw new IllegalArgumentException("Los MSI solo aplican a gastos con tarjeta de crédito");
             }
+            fechaPrimeraCuota = CalendarioFinanciero.corteMsi(request.fecha(), datos.cuentaOrigen().getDiaCorte());
             montoGuardar = request.monto().divide(BigDecimal.valueOf(request.msi()), 2, RoundingMode.DOWN);
             if (montoGuardar.signum() <= 0) throw new IllegalArgumentException("El monto no alcanza para cuotas de un centavo");
             BigDecimal montoRetenido = request.monto().subtract(montoGuardar);
@@ -176,7 +178,7 @@ public class TransaccionService {
                 .tasaCambio(datos.tasaCambio())
                 .fuenteCambio(datos.cuentaDestino() != null && !datos.cuentaOrigen().getMoneda().equals(datos.cuentaDestino().getMoneda()) ? "MANUAL" : null)
                 .fechaCambio(datos.cuentaDestino() != null && !datos.cuentaOrigen().getMoneda().equals(datos.cuentaDestino().getMoneda()) ? request.fecha() : null)
-                .fecha(request.fecha())
+                .fecha(fechaPrimeraCuota)
                 .descripcion(descripcion)
                 .notas(normalizarNotas(request.notas()))
                 .metodoCaptura(metodoCaptura)
@@ -203,8 +205,9 @@ public class TransaccionService {
                     .monto(montoGuardar)
                     .notas(normalizarNotas(request.notas()))
                     .frecuencia(FrecuenciaRecurrencia.MENSUAL)
-                    .siguienteFecha(CalendarioFinanciero.siguiente(request.fecha(), FrecuenciaRecurrencia.MENSUAL, request.fecha()))
-                    .fechaAncla(request.fecha())
+                    .siguienteFecha(CalendarioFinanciero.corteMsi(fechaPrimeraCuota.plusDays(1), datos.cuentaOrigen().getDiaCorte()))
+                    // Enero conserva el dia nominal incluso si la primera cuota cae en febrero.
+                    .fechaAncla(LocalDate.of(fechaPrimeraCuota.getYear(), 1, datos.cuentaOrigen().getDiaCorte()))
                     .montoPendiente(request.monto().subtract(montoGuardar))
                     .compraMsiId(compraMsiId)
                     .cuotasTotales(request.msi() - 1)
