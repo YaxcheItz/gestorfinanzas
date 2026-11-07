@@ -20,7 +20,12 @@ test('configuración organiza opciones y conserva enlaces directos en móvil', a
   await expect(page.getByLabel('Contraseña actual')).toBeVisible();
   await expect(page.locator('#profile')).not.toHaveAttribute('open', '');
   await page.goto('/configuracion#appearance');
-  await expect(page.getByRole('button', { name: 'Guardar preferencias' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Guardar preferencias' })).toHaveCount(0);
+  await expect(page.getByText('Moneda predeterminada del dashboard')).toHaveCount(0);
+  const guardado=page.waitForResponse(r=>new URL(r.url()).pathname==='/api/perfil' && r.request().method()==='PUT');
+  await page.getByRole('button',{name:'Oscuro',exact:true}).click();
+  expect((await guardado).ok()).toBe(true);
+  await expect(page.getByRole('button',{name:'Oscuro',exact:true})).toHaveAttribute('aria-pressed','true');
   await page.goto('/configuracion#backup');
   await expect(page.getByRole('button', { name: 'Descargar respaldo' })).toBeVisible();
   await page.goto('/configuracion#recurring');
