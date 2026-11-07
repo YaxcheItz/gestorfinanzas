@@ -540,7 +540,7 @@ export class SwipeActionsDirective {
 export class MovimientoMobileCardComponent {
   readonly nombreCuentaVisible = nombreCuentaVisible;
   @Input({ required: true }) movimiento!: Transaccion;
-  @Input() autoAccionAlSoltar = true;
+  @Input() autoAccionAlSoltar = false;
   private readonly listas = inject(ListaContextoService);
   @Input() soloLectura = false;
   @Output() editar   = new EventEmitter<Transaccion>();
@@ -553,8 +553,7 @@ export class MovimientoMobileCardComponent {
       && (this.listas.usuarioId() == null || this.movimiento.autorId == null || this.movimiento.autorId === this.listas.usuarioId())
       && this.movimiento.cuentaId !== null
       && (this.movimiento.tipo !== 'TRANSFERENCIA' || this.movimiento.cuentaDestinoId != null)
-      && !this.movimiento.cashbackAutomatico
-      && !this.movimiento.compraMsiId;
+      && !this.movimiento.cashbackAutomatico;
   }
 
   get puedeEditarse(): boolean {

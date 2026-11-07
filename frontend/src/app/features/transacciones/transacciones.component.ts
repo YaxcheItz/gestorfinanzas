@@ -1038,8 +1038,8 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
 
   async eliminarMovimiento(id: number): Promise<void> {
     const confirmed = await this.confirmDialogService.confirm({
-      title: '\u00bfEliminar permanentemente?',
-      message: '\u00bfEliminar permanentemente? Esta acci\u00f3n no se puede deshacer. Los saldos se recalcular\u00e1n autom\u00e1ticamente.',
+      title: 'Eliminar movimiento o plan MSI completo',
+      message: 'Si es MSI se eliminara la compra completa: todas sus cuotas, futuras y registradas. Se revertiran saldos y cashback y se liberara el credito retenido. El libro diario conserva el registro de la eliminacion. Esta accion no se puede deshacer.',
       type: 'danger'
     });
 
@@ -1131,7 +1131,14 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
     this.modalAbierto.set(true);
   }
 
-  abrirModalEditar(transaccion: Transaccion): void {
+  abrirModalEditar(transaccion: Transaccion, plan?: TransaccionPayload): void {
+    if (transaccion.compraMsiId && !plan) {
+      this.finanzasService.getPlanMsi(transaccion.id).subscribe({
+        next: r => { if(r.data) this.abrirModalEditar(transaccion,r.data); },
+        error: e => this.toastService.error(mensajeDeError(e,'No se pudo cargar el plan MSI.'))
+      });
+      return;
+    }
     if (!this.puedeModificar(transaccion)) { this.toastService.error('Cada persona edita sus propios movimientos.'); return; }
     if (this.submitting() || this.movimientoIncierto()) return;
     if (transaccion.cuentaId == null
@@ -1144,15 +1151,15 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
     this.modoEdicion.set(true);
     this.transaccionEditando.set(transaccion);
     this.formTipo.set(transaccion.tipo);
-    this.formMonto = transaccion.monto;
+    this.formMonto = plan?.monto ?? transaccion.monto;
     this.movimientoRecurrente = false;
-    this.esCompraMsi = false;
-    this.formMsi = null;
+    this.esCompraMsi = !!plan;
+    this.formMsi = plan?.msi ?? null;
     this.formCuentaId = transaccion.cuentaId;
     this.formCuentaDestinoId = transaccion.cuentaDestinoId ?? null;
     this.formTasaCambio = transaccion.tasaCambio ?? null;
     this.formCategoriaId = transaccion.categoriaId ?? null;
-    this.formFecha = transaccion.fecha;
+    this.formFecha = plan?.fecha ?? transaccion.fecha;
     this.formNotas = transaccion.notas ?? '';
     this.formListaId = transaccion.listaId ?? this.contextoLista.activaId(); this.formEtiquetas = (transaccion.etiquetas ?? []).map(e => '#' + e).join(' ');
     this.formDescripcion = transaccion.descripcion ?? '';
@@ -1264,7 +1271,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
     let etiquetas: string[];
     try { etiquetas = parsearEtiquetas(this.formEtiquetas); } catch (error) { this.modalError.set((error as Error).message); return; }
     const transaccionEditar = this.transaccionEditando();
-    const esRecurrenteEnEdicion = this.modoEdicion() && transaccionEditar?.plantillaId != null;
+    const esRecurrenteEnEdicion = this.modoEdicion() && transaccionEditar?.plantillaId != null && !transaccionEditar?.compraMsiId;
     const payload: TransaccionPayload = this.movimientoPendiente ?? {
       ...(this.formListaId == null ? {} : { listaId: this.formListaId }),
       etiquetas,

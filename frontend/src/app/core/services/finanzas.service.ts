@@ -259,12 +259,16 @@ export class FinanzasService {
     return this.http.get<ApiResponse<Transaccion>>(`${this.baseUrl}/transacciones/${id}`);
   }
 
+  getPlanMsi(id: number): Observable<ApiResponse<TransaccionPayload>> {
+    return this.http.get<ApiResponse<TransaccionPayload>>(`${this.baseUrl}/transacciones/${id}/plan-msi`);
+  }
+
   actualizarTransaccion(id: number, payload: TransaccionPayload): Observable<ApiResponse<Transaccion>> {
     return this.http.put<ApiResponse<Transaccion>>(`${this.baseUrl}/transacciones/${id}`, payload);
   }
 
   eliminarTransaccion(id: number): Observable<ApiResponse<void>> {
-    return this.http.delete<ApiResponse<void>>(`${this.baseUrl}/transacciones/${id}`);
+    return this.http.delete<ApiResponse<void>>(`${this.baseUrl}/transacciones/${id}?planMsi=true`);
   }
 
   // --- Dashboard Consolidado ---

@@ -145,6 +145,14 @@ describe('QuickCaptureComponent processing and gestures', () => {
     expect(TestBed.inject(FinanzasService).editarPropuestaAi).not.toHaveBeenCalled();
   });
 
+  it('no mezcla una compra nueva con la aclaracion de un ingreso anterior', () => {
+    (component as any).contexto='Ingreso anterior pendiente';
+    component.content='Compre 90 con tarjeta a 3 meses';
+    const captura=vi.spyOn(TestBed.inject(FinanzasService),'capturaRapidaAi');
+    component.submit();
+    expect(captura.mock.calls.at(-1)?.[3]).toBeNull();
+  });
+
   it('recuerda y permite retirar el consentimiento de voz por usuario', () => {
     usuario.set({id:98765}); fixture.detectChanges();
     vi.spyOn(component as any,'startVoice').mockResolvedValue(undefined);
