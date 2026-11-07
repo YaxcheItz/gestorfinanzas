@@ -74,7 +74,7 @@ class DashboardServiceTest {
         )).thenReturn(List.of(
                 new DashboardMonedaTotales("MXN", BigDecimal.ZERO, BigDecimal.ZERO)
         ));
-        when(transaccionRepository.findTop10ByUsuarioIdOrderByFechaDescIdDesc(7L)).thenReturn(List.of());
+        when(transaccionRepository.findTop10ByUsuarioIdAndImpactoPendienteFalseOrderByFechaDescIdDesc(7L)).thenReturn(List.of());
 
         var resumen = dashboardService.obtenerResumen(7L, null, null);
 

@@ -56,7 +56,7 @@ public interface TransaccionRepository extends JpaRepository<Transaccion, Long>,
     List<Transaccion> findAllByCategoriaId(Long categoriaId);
     long countByCategoriaId(Long categoriaId);
 
-    List<Transaccion> findTop10ByUsuarioIdOrderByFechaDescIdDesc(Long usuarioId);
+    List<Transaccion> findTop10ByUsuarioIdAndImpactoPendienteFalseOrderByFechaDescIdDesc(Long usuarioId);
 
     List<Transaccion> findTop10ByUsuarioIdAndFechaBetweenOrderByFechaDescIdDesc(
             Long usuarioId, LocalDate desde, LocalDate hasta
@@ -85,9 +85,9 @@ public interface TransaccionRepository extends JpaRepository<Transaccion, Long>,
     @Query("DELETE FROM Transaccion t WHERE t.usuario.id = :usuarioId")
     void deleteByUsuarioId(@Param("usuarioId") Long usuarioId);
 
-    Page<Transaccion> findByUsuarioIdOrderByFechaDesc(Long usuarioId, Pageable pageable);
+    Page<Transaccion> findByUsuarioIdAndImpactoPendienteFalseOrderByFechaDesc(Long usuarioId, Pageable pageable);
 
-    List<Transaccion> findByUsuarioIdAndFechaBetweenOrderByFechaDesc(
+    List<Transaccion> findByUsuarioIdAndImpactoPendienteFalseAndFechaBetweenOrderByFechaDesc(
             Long usuarioId, LocalDate fechaInicio, LocalDate fechaFin
     );
 
@@ -326,7 +326,7 @@ public interface TransaccionRepository extends JpaRepository<Transaccion, Long>,
     );
 
     List<Transaccion> findTop10ByListaIdAndFechaBetweenOrderByFechaDescIdDesc(Long listaId, LocalDate desde, LocalDate hasta);
-    List<Transaccion> findTop10ByListaIdOrderByFechaDescIdDesc(Long listaId);
+    List<Transaccion> findTop10ByListaIdAndImpactoPendienteFalseOrderByFechaDescIdDesc(Long listaId);
     @Query("select distinct e from Transaccion t join t.etiquetas e where t.lista.id = :listaId order by e")
     List<String> etiquetasDeLista(@Param("listaId") Long listaId);
 }

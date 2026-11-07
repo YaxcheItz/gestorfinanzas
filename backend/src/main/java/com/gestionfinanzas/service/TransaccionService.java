@@ -711,7 +711,7 @@ public class TransaccionService {
 
     @Transactional(readOnly = true)
     public List<TransaccionResponse> listarRecientes(Long usuarioId) {
-        return transaccionRepository.findTop10ByUsuarioIdOrderByFechaDescIdDesc(usuarioId)
+        return transaccionRepository.findTop10ByUsuarioIdAndImpactoPendienteFalseOrderByFechaDescIdDesc(usuarioId)
                 .stream()
                 .filter(t -> !t.isImpactoPendiente())
                 .map(TransaccionResponse::fromEntity)
@@ -722,7 +722,7 @@ public class TransaccionService {
     public List<TransaccionResponse> listarRecientes(Long usuarioId, Long listaId) {
         if (listaId == null) return listarRecientes(usuarioId);
         listaService.leer(usuarioId, listaId);
-        return transaccionRepository.findTop10ByListaIdOrderByFechaDescIdDesc(listaId).stream().filter(t -> !t.isImpactoPendiente()).map(TransaccionResponse::fromEntity).toList();
+        return transaccionRepository.findTop10ByListaIdAndImpactoPendienteFalseOrderByFechaDescIdDesc(listaId).stream().filter(t -> !t.isImpactoPendiente()).map(TransaccionResponse::fromEntity).toList();
     }
 
     @Transactional(readOnly = true)
