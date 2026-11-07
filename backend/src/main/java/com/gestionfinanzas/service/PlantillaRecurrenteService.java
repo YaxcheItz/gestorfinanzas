@@ -20,6 +20,10 @@ public class PlantillaRecurrenteService {
     private final TransaccionService transaccionService;
     private final com.gestionfinanzas.repository.TransaccionRepository transaccionRepository;
 
+    private PlantillaRecurrenteResponse respuesta(PlantillaRecurrente p) {
+        return PlantillaRecurrenteResponse.fromEntity(p,p.getCompraMsiId()==null ? java.util.List.of() : transaccionRepository.findAllByPlantillaRecurrenteIdOrderByFechaAsc(p.getId()));
+    }
+
     @Transactional(readOnly = true)
     public com.gestionfinanzas.dto.response.TransaccionResponse movimientoDelPlan(Long uid,Long id) {
         var plan=buscar(uid,id);
@@ -32,7 +36,7 @@ public class PlantillaRecurrenteService {
     @Transactional(readOnly = true)
     public List<PlantillaRecurrenteResponse> listar(Long usuarioId) {
         return plantillaRepository.findAllByUsuarioIdOrderBySiguienteFechaAsc(usuarioId).stream()
-                .map(PlantillaRecurrenteResponse::fromEntity)
+                .map(this::respuesta)
                 .toList();
     }
 
@@ -48,7 +52,7 @@ public class PlantillaRecurrenteService {
         }
         if (activa) validarFechaSiguiente(plantilla);
         plantilla.setActiva(activa);
-        return PlantillaRecurrenteResponse.fromEntity(plantillaRepository.save(plantilla));
+        return respuesta(plantillaRepository.save(plantilla));
     }
 
     @Transactional
@@ -143,7 +147,7 @@ public class PlantillaRecurrenteService {
         if (fechaFin != null && plantilla.getSiguienteFecha().isAfter(fechaFin)) {
             plantilla.setActiva(false);
         }
-        return PlantillaRecurrenteResponse.fromEntity(plantillaRepository.save(plantilla));
+        return respuesta(plantillaRepository.save(plantilla));
     }
 
     private void validarFechaSiguiente(PlantillaRecurrente plantilla) {

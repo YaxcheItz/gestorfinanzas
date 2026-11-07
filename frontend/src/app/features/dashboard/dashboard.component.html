@@ -265,6 +265,15 @@
             <a routerLink="/transacciones" class="dashboard-screen__text-link" (click)="$event.preventDefault(); irATransacciones()" aria-label="Movimientos">Ver todos <span aria-hidden="true">&#8594;</span></a>
           }
         </div>
+        @if (!loading() && !error() && comprasMsiAnteriores().length > 0) {
+          <div class="dashboard-screen__recent-list" aria-label="Compras MSI anteriores">
+            <h3>Compras MSI anteriores</h3><p class="dashboard-screen__muted">Total informativo. Se muestra la fecha de registro, no una nueva cuota.</p>
+            @for (compra of comprasMsiAnteriores(); track compra.id) {
+              <p class="dashboard-screen__muted">Registrada: {{ compra.fecha | date:'dd/MM/yyyy' }}</p>
+              <app-movimiento-mobile-card [movimiento]="compra" [soloLectura]="true" />
+            }
+          </div>
+        }
         @if (loading() || cargandoMovimientosCategoria()) {
           <div class="dashboard-loading-movements" role="status" aria-label="Cargando movimientos">
             <span class="sr-only">Cargando movimientos…</span>
@@ -276,12 +285,12 @@
           <p class="dashboard-screen__muted">No pudimos consultar tus movimientos recientes. Usa Reintentar para volver a cargarlos.</p>
         } @else if (errorMovimientosCategoria()) {
           <p role="alert">No pudimos consultar los movimientos de esta categoría. <button type="button" (click)="seleccionarFiltroCategoria(categoriaFiltroSeleccionada()!)">Reintentar</button></p>
-        } @else if (categoriaFiltroSeleccionada() && movimientosCategoria().length === 0) {
+        } @else if (categoriaFiltroSeleccionada() && movimientosCategoria().length === 0 && comprasMsiAnteriores().length === 0) {
           <div class="dashboard-screen__inline-empty">
             <p>No hay gastos registrados en {{ categoriaFiltroSeleccionada()?.categoriaNombre }} durante este periodo.</p>
             <button type="button" (click)="registrarCategoria(categoriaFiltroSeleccionada()!)">Añadir gasto en {{ categoriaFiltroSeleccionada()?.categoriaNombre }}</button>
           </div>
-        } @else if (!categoriaFiltroSeleccionada() && (ultimosMovimientosLimitados().length === 0)) {
+        } @else if (!categoriaFiltroSeleccionada() && (ultimosMovimientosLimitados().length === 0 && comprasMsiAnteriores().length === 0)) {
           <div class="dashboard-screen__inline-empty">
             <p>No hay movimientos en este período. Puedes añadir uno o consultar el historial.</p>
             @if((resumen()?.totalCuentas??0) === 0) {<button type="button" (click)="irACuentas()">Crear cuenta</button>} @else {<button type="button" (click)="abrirChatRegistro()">Añadir movimiento</button>}

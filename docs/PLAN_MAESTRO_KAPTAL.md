@@ -1,3 +1,15 @@
+## Android 0.1.39 preparada - 7 noviembre 2026
+
+Entrega de PR252 en version0.1.39/codigo40, superior a0.1.38/codigo39 instalada. Incluye total MSI anterior como proyeccion de solo lectura y primer cargo al corte distinguido de cuota siguiente. CI exacta, firma/contenido/hash, despliegues e instalacion se verifican por separado. No modifica datos financieros al consultar. No declarar instalada/publicada mientras esas puertas sigan pendientes.
+
+## Compatibilidad MSI anteriores y proximo corte implementados - 7 noviembre 2026
+
+Rama correcciones/msi-anteriores-proximo-corte desde origin/develop b26b0a8. Se reproduce omision: compra anterior sin recibo informativo queda oculta aunque retiene credito; siguienteFecha corresponde a cuota posterior y no muestra primera pendiente. Nueva proyeccion de solo lectura para planes anteriores vinculados, visible en Inicio y tarjeta, suma cuotas registradas + pendiente sin crear transacciones ni modificar datos financieros. Usa fecha de registro expresamente rotulada, no inventa fecha original. Compras nuevas con recibo no se duplican. Respeta filtros/propiedad/lista; proyeccion separada del contenido contable y sus totales. Cancelados antiguos sin plan no se reconstruyen porque no conservan total fiable.
+
+API de recurrencias agrega proximoCargo (primera cuota pendiente antes de siguienteFecha) y montoTotal. UI distingue proximo cargo al corte y cuota siguiente. No se reprograma ni aplica ningun cargo al consultar. Edicion de plan sigue en Configuracion; tarjetas informativas de compatibilidad son solo lectura.
+
+35 pruebas de exactitud financiera y530 frontend aprobadas; build Angular y2 E2E MSI locales aprobados. CI exacta/publicacion/APK superior a0.1.38 pendientes. No afirmar correccion instalada. No se modificaron compras reales ni saldos; revision visual previa autorizada por propietario limitada a su tarjeta, sin copias de datos reales en documentos.
+
 ## Compra MSI total informativa implementada localmente - 7 noviembre 2026
 
 En correcciones/msi-historial-compra-total: nuevas compras MSI crean un registro durable del importe TOTAL con fecha de compra, vinculado al mismo plan. Es informativo: no aplica saldo neto, gasto agregado, cashback ni libro diario. Se muestra como importe total en Inicio y en el historial de la tarjeta; la cuota pendiente permanece oculta y al corte aparece como cargo separado. No se duplica el gasto al conservar ambos registros.

@@ -17,6 +17,9 @@ test('MSI antes del corte retiene credito sin cargo ni gasto en el historial',as
  expect(inicio.ultimosMovimientos.some((x:any)=>x.compraMsiInformativa && x.monto===90)).toBe(true);
  expect(inicio.ultimosMovimientos.some((x:any)=>x.id===t.id)).toBe(false);
 
+ const planes=(await (await request.get('/api/recurrencias',{headers})).json()).data;
+ const plan=planes.find((p:any)=>p.compraMsiId===t.compraMsiId);
+ expect(plan.proximoCargo).toBe(t.fecha);expect(plan.siguienteFecha>plan.proximoCargo).toBe(true);expect(plan.montoTotal).toBe(90);
  const editar=await request.put(`/api/transacciones/${t.id}`,{headers,data:{...datos,monto:120,msi:4}});expect(editar.ok(),await editar.text()).toBeTruthy();expect((await estado()).saldoActual).toBe(0);expect((await estado()).limiteRetenido).toBe(120);
  const borrar=await request.delete(`/api/transacciones/${t.id}?planMsi=true`,{headers});expect(borrar.ok()).toBeTruthy();expect((await estado()).saldoActual).toBe(0);expect((await estado()).limiteRetenido).toBe(0);
  const libro=(await (await request.get('/api/libro-diario?size=100',{headers})).json()).data.content;expect(libro).toHaveLength(0);

@@ -13,5 +13,10 @@ public record DashboardResumenResponse(
     int mes,
     int anio,
     List<TransaccionResponse> ultimosMovimientos,
-    List<DashboardMonedaResumenResponse> resumenPorMoneda
-) {}
+    List<DashboardMonedaResumenResponse> resumenPorMoneda,
+    List<TransaccionResponse> comprasMsiAnteriores
+) {
+    public DashboardResumenResponse(BigDecimal balanceTotal,BigDecimal ingresosMes,BigDecimal gastosMes,BigDecimal balanceMes,BigDecimal tasaAhorro,int totalCuentas,int mes,int anio,List<TransaccionResponse> ultimosMovimientos,List<DashboardMonedaResumenResponse> resumenPorMoneda) {
+        this(balanceTotal,ingresosMes,gastosMes,balanceMes,tasaAhorro,totalCuentas,mes,anio,ultimosMovimientos,resumenPorMoneda,List.of());
+    }
+}

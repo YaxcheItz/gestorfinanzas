@@ -128,7 +128,9 @@ public class DashboardService {
                 mesConsulta,
                 anioConsulta,
                 ultimosMovimientos,
-                resumenPorMoneda
+                resumenPorMoneda,
+                ComprasMsiAnteriores.listar(transaccionRepository,usuarioId,
+                        new com.gestionfinanzas.dto.request.TransaccionFiltroRequest(null,null,null,null,inicioPeriodo,finPeriodo,null,null,null,null,listaId,null,null,null,false))
         );
     }
 
