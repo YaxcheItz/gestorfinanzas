@@ -14,7 +14,7 @@ test('chat MSI, edicion del plan y eliminacion conservan credito y auditoria',as
   expect(captura.ok(),await captura.text()).toBeTruthy();const result=(await captura.json()).data;
   const propuesta=result.action??result.actions[0];expect(propuesta.data.msi).toBe(3);
   for(let n=0;n<2;n++)expect((await page.request.post(`/api/asistente/acciones/${propuesta.id}/confirmar`,{headers,data:{version:propuesta.version??0}})).ok()).toBeTruthy();
-  let rows=(await (await page.request.get('/api/transacciones?size=100',{headers})).json()).data.content.filter((t:any)=>t.compraMsiId);
+  let rows=(await (await page.request.get('/api/transacciones?size=100',{headers})).json()).data.content.filter((t:any)=>t.compraMsiId && !t.compraMsiInformativa);
   expect(rows).toHaveLength(1);const id=rows[0].id;expect(rows[0].fecha).toBe('2025-01-20');expect(rows[0].monto).toBe(300);expect(rows[0].etiquetas).toContain('ensayo');
   await page.goto('/login');await page.locator('#email').fill(email);await page.locator('#password').fill(password);await page.getByRole('button',{name:'Iniciar sesi\u00f3n',exact:true}).click();await expect(page).toHaveURL(/dashboard/);
   await page.goto('/transacciones?fechaInicio=2025-01-01&fechaFin=2025-01-31');
@@ -37,7 +37,7 @@ test('chat MSI, edicion del plan y eliminacion conservan credito y auditoria',as
   await page.goto(`/transacciones?detalle=${id}`);const detalle=page.locator('.ledger-detail-sheet');await expect(detalle).toBeVisible();await detalle.getByRole('button',{name:'Eliminar',exact:true}).click();
   const confirmar=page.locator('app-confirm-dialog [role="dialog"]');await expect(confirmar).toContainText('compra completa');await confirmar.locator('button').last().click();
   await expect(confirmar).toBeHidden();await expect.poll(async()=>{const c=(await (await page.request.get('/api/cuentas',{headers})).json()).data.find((c:any)=>c.id===cid);return [c.saldoActual,c.limiteRetenido];}).toEqual([0,0]);
-  rows=(await (await page.request.get('/api/transacciones?size=100',{headers})).json()).data.content.filter((t:any)=>t.compraMsiId);expect(rows).toHaveLength(0);
+  rows=(await (await page.request.get('/api/transacciones?size=100',{headers})).json()).data.content.filter((t:any)=>t.compraMsiId && !t.compraMsiInformativa);expect(rows).toHaveLength(0);
   const ledger=(await (await page.request.get('/api/libro-diario?size=100',{headers})).json()).data.content.filter((a:any)=>a.transaccionOrigenId===id);
   expect(ledger.map((a:any)=>a.tipoEvento)).toEqual(expect.arrayContaining(['CREACION','ACTUALIZACION','ELIMINACION']));
   for(const asiento of ledger){

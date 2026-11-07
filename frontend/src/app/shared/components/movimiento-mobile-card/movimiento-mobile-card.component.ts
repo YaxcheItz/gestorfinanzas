@@ -314,7 +314,7 @@ export class SwipeActionsDirective {
         </div>
 
         <div class="tx-item__body">
-          <h3 class="tx-item__title">{{ (etiquetaMovimiento) | textoFinanciero }}</h3>
+          <h3 class="tx-item__title">{{ (etiquetaMovimiento) | textoFinanciero }}</h3>@if(movimiento.compraMsiInformativa){<small>Compra MSI ? importe total</small>}
           <p class="tx-item__account">@if(movimiento.categoriaNombre) {<span>{{ movimiento.categoriaNombre }} · </span>}{{ nombreCuentaVisible(movimiento.cuentaNombre) }}@if(movimiento.tipo === 'TRANSFERENCIA') { → {{ nombreCuentaVisible(movimiento.cuentaDestinoNombre) }}}</p>
           @if(movimiento.tipo === 'TRANSFERENCIA' && movimiento.monedaDestino && movimiento.monedaDestino !== movimiento.moneda) {
             <small>{{movimiento.fuenteCambio === 'MANUAL' ? 'Cambio manual aplicado el ' + movimiento.fechaCambio : 'Cambio histórico · fuente no registrada'}}</small>

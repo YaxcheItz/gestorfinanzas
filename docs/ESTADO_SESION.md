@@ -1,3 +1,11 @@
+## Compra MSI total informativa implementada localmente - 7 noviembre 2026
+
+En correcciones/msi-historial-compra-total: nuevas compras MSI crean un registro durable del importe TOTAL con fecha de compra, vinculado al mismo plan. Es informativo: no aplica saldo neto, gasto agregado, cashback ni libro diario. Se muestra como importe total en Inicio y en el historial de la tarjeta; la cuota pendiente permanece oculta y al corte aparece como cargo separado. No se duplica el gasto al conservar ambos registros.
+
+Edicion actualiza la compra informativa existente; eliminar plan borra todas las cuotas y la compra informativa sin devolucion ficticia; cancelar pendientes conserva el registro historico de compra. Backfill y CSV financiero excluyen la compra informativa, respaldo conserva su bandera y valida que sea MSI. MigracionV18 agrega bandera defaultfalse sin inventar compras de historiales anteriores. No se reconstruye automaticamente fecha/total de compras reales antiguas.
+
+Suite backend690 contabilizadas,0 fallos/errores,9 omitidas antes de ultimos ajustes menores;33 pruebas focales aprobaron compra total persistente despues del corte y cuota como unico gasto. Build Angular aprobado antes de ultimos textos. Falta CI exacta, E2E final, integracion/publicacion y APK superior a0.1.37. No declarar entregado aun. Sin acceso ni modificaciones a datos financieros reales.
+
 ## Historial MSI: compra total y cargos mensuales - 7 noviembre 2026
 
 Nueva solicitud del propietario: mostrar desde la compra el importe TOTAL negativo en historial de la tarjeta y en Inicio, como compra/credito comprometido SIN impacto en saldo neto. Al corte, conservar compra original y agregar cuota mensual que SI afecta saldo neto. No sumar la compra informativa y las cuotas como gastos duplicados.

@@ -147,7 +147,7 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
   });
   totalesGrupo(movimientos: Transaccion[]): {moneda: string; monto: number}[] {
     const totales = new Map<string, number>();
-    for (const movimiento of movimientos) {
+    for (const movimiento of movimientos.filter(m => !m.compraMsiInformativa)) {
       if (!['GASTO', 'INGRESO'].includes(movimiento.tipo)) continue;
       totales.set(movimiento.moneda, (totales.get(movimiento.moneda) ?? 0) + (movimiento.tipo === 'GASTO' ? -movimiento.monto : movimiento.monto));
     }
