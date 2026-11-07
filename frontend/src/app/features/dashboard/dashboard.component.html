@@ -266,7 +266,7 @@
           }
         </div>
         @if (!loading() && !error() && comprasMsiAnteriores().length > 0) {
-          <div class="dashboard-screen__recent-list" aria-label="Compras MSI anteriores">
+          <div class="dashboard-screen__recent-list" aria-label="Movimientos">
 
             @for (compra of comprasMsiAnteriores(); track compra.id) {
 

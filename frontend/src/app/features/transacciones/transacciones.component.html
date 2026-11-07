@@ -293,7 +293,7 @@
       <div class="history-results bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden" [attr.aria-busy]="loading()">
 
         @if (!loading() && !error() && (pageData()?.comprasMsiAnteriores?.length ?? 0) > 0) {
-          <section class="history-transaction-list" aria-label="Compras MSI anteriores">
+          <section class="history-transaction-list" aria-label="Movimientos">
 
             @for (compra of pageData()!.comprasMsiAnteriores!; track compra.id) {
 
