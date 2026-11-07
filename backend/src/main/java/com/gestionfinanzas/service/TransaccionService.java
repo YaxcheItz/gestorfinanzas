@@ -845,6 +845,7 @@ public class TransaccionService {
     public void aplicarCuotaAlCorte(Long usuarioId, Long id, LocalDate hoy) {
         var cuota = transaccionRepository.findByIdAndUsuarioIdForUpdate(id,usuarioId).orElseThrow();
         if (!cuota.isImpactoPendiente() || cuota.getFecha().isAfter(hoy)) return;
+        var antes=TransaccionResponse.fromEntity(cuota);
         var cuenta=cuota.getCuenta();
         if (cuenta.getLimiteRetenido()==null || cuenta.getLimiteRetenido().compareTo(cuota.getMonto())<0)
             throw new IllegalArgumentException("La retencion no cubre la cuota MSI pendiente.");
@@ -853,6 +854,7 @@ public class TransaccionService {
         cuota.setImpactoPendiente(false);
         transaccionRepository.save(cuota);
         libroDiarioService.registrarCreacion(usuarioId,TransaccionResponse.fromEntity(cuota));
+        auditoriaService.registrar(usuarioId,id,"ACTUALIZAR",antes,TransaccionResponse.fromEntity(cuota));
         recalcularCashbackMes(cuenta,cuota.getFecha());
     }
 

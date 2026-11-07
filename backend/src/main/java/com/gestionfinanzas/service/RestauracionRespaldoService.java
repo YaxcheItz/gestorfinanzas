@@ -657,7 +657,7 @@ public class RestauracionRespaldoService {
         }
         for (var movimiento : respaldo.transacciones()) {
             if (movimiento.impactoPendiente()) {
-                if (movimiento.compraMsiId()==null || movimiento.tipo()!=TipoTransaccion.GASTO || movimiento.cashbackAutomatico())
+                if (movimiento.cuentaId()==null || movimiento.compraMsiId()==null || movimiento.tipo()!=TipoTransaccion.GASTO || movimiento.cashbackAutomatico())
                     throw new IllegalArgumentException("El respaldo contiene un cargo pendiente incompatible.");
                 pendientesMsi.merge(movimiento.cuentaId(),movimiento.monto(),BigDecimal::add);
             }
