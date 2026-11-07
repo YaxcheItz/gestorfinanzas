@@ -1864,3 +1864,7 @@ Se precisa que `usage_unavailable` cuenta solo eventos emitidos tras procesar el
 ## Android 0.1.37 en preparacion - 7 noviembre 2026
 
 Rama entrega/android-037-msi-corte creada desde develop comprobado e incorporando PR246 como dependencia. Repositorio previo0.1.36/codigo37; nueva entrega0.1.37/codigo38. Incluye cargo MSI pendiente al corte e Ingresos enlazado al historial completo. No instalar ni publicar hasta CI exacta, verificacion del APK y despliegue. ADB sin dispositivo al verificar esta etapa.
+
+## Android 0.1.38 en preparacion - 7 noviembre 2026
+
+Rama entrega/android-038-msi-total creada desde develop comprobado con PR249 como dependencia. Version incrementada0.1.37/codigo38 a0.1.38/codigo39. Compra total informativa durable en ambos historiales y cargos separados al corte, sin sumar dos veces. Pruebas locales backend690 y E2E focales aprobadas antes de ultimos ajustes; CI exacta, APK firmada y despliegue pendientes. Sin dispositivo ADB al comprobar; no usar finanzas reales.
