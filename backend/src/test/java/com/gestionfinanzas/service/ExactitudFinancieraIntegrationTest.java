@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @Transactional
 class ExactitudFinancieraIntegrationTest {
     @Autowired TransaccionService movimientos;
+    @Autowired LibroDiarioService libro;
     @Autowired UsuarioService usuarioService;
     @Autowired org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
     @Autowired PlantillaRecurrenteService recurrentes;
@@ -59,6 +60,8 @@ class ExactitudFinancieraIntegrationTest {
         var fecha = CalendarioFinanciero.hoy().plusMonths(1).withDayOfMonth(1);
         movimientos.crearTransaccion(usuarioId, new TransaccionRequest(cuentaId,null,null,
                 TipoTransaccion.GASTO,new BigDecimal("90.00"),null,fecha,"Compra ficticia",null,null,null,3));
+        libro.ejecutarBackfill(usuarioId);
+        assertTrue(libro.listarParaRespaldo(usuarioId).isEmpty());
         comprobarCuenta("0.00","90.00");
     }
     @Test void cuotaPendienteSoloSeAplicaAlCorteYUnaSolaVez() {
