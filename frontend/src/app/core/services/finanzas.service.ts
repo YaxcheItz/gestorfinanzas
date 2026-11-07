@@ -259,6 +259,10 @@ export class FinanzasService {
     return this.http.get<ApiResponse<Transaccion>>(`${this.baseUrl}/transacciones/${id}`);
   }
 
+  getCompraDelPlan(id:number):Observable<ApiResponse<Transaccion>> {
+    return this.http.get<ApiResponse<Transaccion>>(`${this.baseUrl}/recurrencias/${id}/compra`);
+  }
+
   getPlanMsi(id: number): Observable<ApiResponse<TransaccionPayload>> {
     return this.http.get<ApiResponse<TransaccionPayload>>(`${this.baseUrl}/transacciones/${id}/plan-msi`);
   }

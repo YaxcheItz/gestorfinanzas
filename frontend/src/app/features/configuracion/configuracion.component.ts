@@ -296,6 +296,8 @@ import {
               <article class="rounded-xl border border-slate-200 p-3 sm:p-4">
                 <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div class="min-w-0">
+                    @if (plantilla.compraMsiId) {<a routerLink="/transacciones" [queryParams]="{editarPlan:plantilla.id}">Editar compra MSI</a>}
+
                     <div class="flex flex-wrap items-center gap-2">
                       <h3 class="font-semibold text-slate-900">{{ plantilla.categoriaNombre || (plantilla.tipo === 'INGRESO' ? 'Ingreso' : 'Gasto') }}</h3>
                       <span [class]="plantilla.activa ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'" class="rounded-full px-2 py-0.5 text-[10px] font-semibold">

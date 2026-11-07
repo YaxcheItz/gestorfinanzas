@@ -655,6 +655,13 @@ public class RestauracionRespaldoService {
                 throw new IllegalArgumentException("El respaldo contiene una recurrencia con notas demasiado largas.");
             }
         }
+        for (var movimiento : respaldo.transacciones()) {
+            if (movimiento.impactoPendiente()) {
+                if (movimiento.compraMsiId()==null || movimiento.tipo()!=TipoTransaccion.GASTO || movimiento.cashbackAutomatico())
+                    throw new IllegalArgumentException("El respaldo contiene un cargo pendiente incompatible.");
+                pendientesMsi.merge(movimiento.cuentaId(),movimiento.monto(),BigDecimal::add);
+            }
+        }
         for (CuentaResponse cuenta : respaldo.cuentas()) {
             if (pendientesMsi.getOrDefault(cuenta.id(), BigDecimal.ZERO)
                     .compareTo(cuenta.limiteRetenido() == null ? BigDecimal.ZERO : cuenta.limiteRetenido()) > 0) {
@@ -826,6 +833,7 @@ public class RestauracionRespaldoService {
                     .descripcion(origen.descripcion())
                     .notas(origen.notas())
                     .compraMsiId(origen.compraMsiId())
+                    .impactoPendiente(origen.impactoPendiente())
                     .metodoCaptura(origen.metodoCaptura())
                     .build());
             mapa.put(origen.id(), guardada.getId());

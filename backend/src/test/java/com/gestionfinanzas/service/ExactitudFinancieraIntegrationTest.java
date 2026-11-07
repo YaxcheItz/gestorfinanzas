@@ -55,6 +55,41 @@ class ExactitudFinancieraIntegrationTest {
         assertEquals(new BigDecimal(saldo), cuenta.getSaldoActual());
         assertEquals(new BigDecimal(retenido), cuenta.getLimiteRetenido());
     }
+    @Test void compraMsiFuturaRetieneTotalSinAfectarSaldoAntesDelCorte() {
+        var fecha = CalendarioFinanciero.hoy().plusMonths(1).withDayOfMonth(1);
+        movimientos.crearTransaccion(usuarioId, new TransaccionRequest(cuentaId,null,null,
+                TipoTransaccion.GASTO,new BigDecimal("90.00"),null,fecha,"Compra ficticia",null,null,null,3));
+        comprobarCuenta("0.00","90.00");
+    }
+    @Test void cuotaPendienteSoloSeAplicaAlCorteYUnaSolaVez() {
+        var fecha=CalendarioFinanciero.hoy().plusMonths(1).withDayOfMonth(1);
+        var t=movimientos.crearTransaccion(usuarioId,new TransaccionRequest(cuentaId,null,null,
+                TipoTransaccion.GASTO,new BigDecimal("90.00"),null,fecha,"Compra ficticia",null,null,null,3));
+        movimientos.aplicarCuotaAlCorte(usuarioId,t.id(),t.fecha().minusDays(1));
+        comprobarCuenta("0.00","90.00");
+        movimientos.aplicarCuotaAlCorte(usuarioId,t.id(),t.fecha());
+        movimientos.aplicarCuotaAlCorte(usuarioId,t.id(),t.fecha());
+        comprobarCuenta("-30.00","60.00");
+    }
+    @Test void editarYBorrarAntesDelCorteNoCreaDeudaNiDevolucion() {
+        var fecha=CalendarioFinanciero.hoy().plusMonths(1).withDayOfMonth(1);
+        var t=movimientos.crearTransaccion(usuarioId,new TransaccionRequest(cuentaId,null,null,TipoTransaccion.GASTO,new BigDecimal("90.00"),null,fecha,"Ficticia",null,null,null,3));
+        movimientos.actualizarTransaccion(usuarioId,t.id(),new TransaccionRequest(cuentaId,null,null,TipoTransaccion.GASTO,new BigDecimal("120.00"),null,fecha,"Ficticia",null,null,null,4));
+        comprobarCuenta("0.00","120.00");
+        movimientos.eliminarTransaccion(usuarioId,t.id(),true);
+        comprobarCuenta("0.00","0.00");
+    }
+    @Test void respaldoConservaCuotaPendienteSinAnticiparCargo() {
+        var fecha=CalendarioFinanciero.hoy().plusMonths(1).withDayOfMonth(1);
+        movimientos.crearTransaccion(usuarioId,new TransaccionRequest(cuentaId,null,null,TipoTransaccion.GASTO,new BigDecimal("90.00"),null,fecha,"Ficticia",null,null,null,3));
+        var respaldo=respaldos.generar(usuarioId);
+        var destino=usuarios.save(Usuario.builder().nombre("Restaurado ficticio").email(UUID.randomUUID()+"@example.test").passwordHash("prueba").rol(RolUsuario.ROLE_USER).activo(true).build());
+        restauracion.restaurar(destino.getId(),respaldo);
+        var cuota=transacciones.findAllByUsuarioIdOrderByFechaAscIdAsc(destino.getId()).getFirst();
+        assertTrue(cuota.isImpactoPendiente());
+        assertEquals(0,cuota.getCuenta().getSaldoActual().compareTo(BigDecimal.ZERO));
+        assertEquals(new BigDecimal("90.00"),cuota.getCuenta().getLimiteRetenido());
+    }
     @Test void compraAntesDelCorteRegistraPrimeraCuotaEnCorteYConservaRetencion() {
         var primera = movimientos.crearTransaccion(usuarioId, new TransaccionRequest(cuentaId,null,null,
                 TipoTransaccion.GASTO,new BigDecimal("100.00"),null,LocalDate.of(2025,1,10),
@@ -241,7 +276,7 @@ class ExactitudFinancieraIntegrationTest {
                 "Compra",null,null,null,3));
         Long id = plan().getId();
         assertThrows(IllegalArgumentException.class, () -> recurrentes.registrarSiguiente(usuarioId,id));
-        comprobarCuenta("-33.33","66.67");
+        comprobarCuenta("0.00","100.00");
     }
     @Test void variasComprasSeCancelanSinLiberarCreditoAjeno() {
         movimientos.crearTransaccion(usuarioId,compra("100.00",3));

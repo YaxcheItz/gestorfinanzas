@@ -26,6 +26,11 @@ public class PlantillaRecurrenteController {
                 plantillaService.listar(userDetails.getId())));
     }
 
+    @GetMapping("/{id}/compra")
+    public ResponseEntity<ApiResponse<com.gestionfinanzas.dto.response.TransaccionResponse>> compra(@PathVariable Long id,@AuthenticationPrincipal CustomUserDetails user) {
+        return ResponseEntity.ok(ApiResponse.ok("Compra MSI",plantillaService.movimientoDelPlan(user.getId(),id)));
+    }
+
     @PostMapping("/{id}/registrar")
     public ResponseEntity<ApiResponse<Void>> registrarSiguiente(
             @PathVariable Long id,

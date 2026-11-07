@@ -28,6 +28,10 @@ public class Transaccion {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "impacto_pendiente", nullable = false)
+    @Builder.Default
+    private boolean impactoPendiente = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "lista_id")
     private ListaFinanciera lista;

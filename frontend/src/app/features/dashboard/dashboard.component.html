@@ -119,10 +119,10 @@
           <p class="dashboard-screen__amount" aria-live="polite">{{ moneda.gastosMes | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</p>
           <label class="home-currency"><span class="sr-only">Moneda del balance</span><select [ngModel]="monedaResumen()" (ngModelChange)="cambiarMoneda($event)" aria-label="Moneda del balance">@for (codigo of monedasResumen(); track codigo) {<option [value]="codigo">{{ codigo }}</option>}</select></label>
           <div class="home-metrics" role="region" aria-label="Resumen de ingresos y balance">
-            <div class="home-metric home-metric--income">
+            <a class="home-metric home-metric--income" routerLink="/transacciones" [queryParams]="{tipo: 'INGRESO'}" aria-label="Ingresos. Ver historial de ingresos">
               <span class="home-metric__label">Ingresos</span>
               <strong class="home-metric__value">{{ moneda.ingresosMes | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong>
-            </div>
+            </a>
             <a class="home-metric home-metric--balance" routerLink="/cuentas" aria-label="Saldo neto. Ver cuentas y tarjetas">
               <span class="home-metric__label">Saldo neto</span>
               <strong class="home-metric__value" [class.is-negative]="moneda.balanceTotal < 0">{{ moneda.balanceTotal | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</strong>

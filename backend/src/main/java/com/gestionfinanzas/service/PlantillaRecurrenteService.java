@@ -21,6 +21,15 @@ public class PlantillaRecurrenteService {
     private final com.gestionfinanzas.repository.TransaccionRepository transaccionRepository;
 
     @Transactional(readOnly = true)
+    public com.gestionfinanzas.dto.response.TransaccionResponse movimientoDelPlan(Long uid,Long id) {
+        var plan=buscar(uid,id);
+        if (plan.getCompraMsiId()==null) throw new IllegalArgumentException("La plantilla no es MSI.");
+        var cuotas=transaccionRepository.findAllByPlantillaRecurrenteIdOrderByFechaAsc(id);
+        if (cuotas.isEmpty()) throw new IllegalArgumentException("El plan no tiene una compra vinculada.");
+        return com.gestionfinanzas.dto.response.TransaccionResponse.fromEntity(cuotas.getFirst());
+    }
+
+    @Transactional(readOnly = true)
     public List<PlantillaRecurrenteResponse> listar(Long usuarioId) {
         return plantillaRepository.findAllByUsuarioIdOrderBySiguienteFechaAsc(usuarioId).stream()
                 .map(PlantillaRecurrenteResponse::fromEntity)
@@ -58,7 +67,8 @@ public class PlantillaRecurrenteService {
         List<com.gestionfinanzas.model.entity.Transaccion> vinculadas =
                 transaccionRepository.findAllByPlantillaRecurrenteIdOrderByFechaAsc(plantillaId);
         for (var t : vinculadas) {
-            t.setPlantillaRecurrente(null);
+            if(t.isImpactoPendiente()) transaccionService.cancelarCuotaPendiente(usuarioId,t.getId());
+            else t.setPlantillaRecurrente(null);
         }
         plantillaRepository.delete(plantilla);
     }
