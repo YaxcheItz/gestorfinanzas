@@ -56,7 +56,7 @@ class AndroidConfigurationFixtureTest {
             while (!Files.exists(done) && Instant.now().isBefore(deadline)) Thread.sleep(250);
             assertTrue(Files.exists(done), "Interactive fixture timed out");
             assertEquals(0, conexiones.countByUsuarioId(user.getId()));
-            assertEquals(0, movimientos.findByUsuarioIdOrderByFechaDesc(user.getId(), org.springframework.data.domain.PageRequest.of(0, 10)).getTotalElements());
+            assertEquals(0, movimientos.findByUsuarioIdAndImpactoPendienteFalseOrderByFechaDesc(user.getId(), org.springframework.data.domain.PageRequest.of(0, 10)).getTotalElements());
         } finally { Files.deleteIfExists(fixture); Files.deleteIfExists(done); }
     }
 }

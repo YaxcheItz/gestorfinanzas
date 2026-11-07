@@ -39,7 +39,7 @@ class AvisoFinancieroIntegrationTest {
     Nuevo nuevo(String identificador,Origen origen,Clase clase,TransaccionRequest d){return new Nuevo(origen,identificador,"Aviso seleccionado",clase,"MXN",d,null);}
     AvisoFinancieroService.Vista recibir(){return service.recibir(u.getId(),nuevo("evento",Origen.GMAIL,Clase.COMPRA,datos()));}
     @Test void recibirYCorregirNoMueveDinero(){
-        var a=recibir();assertEquals("PENDIENTE",a.estado());assertTrue(movimientos.findByUsuarioIdOrderByFechaDesc(u.getId(),org.springframework.data.domain.PageRequest.of(0,10)).isEmpty());
+        var a=recibir();assertEquals("PENDIENTE",a.estado());assertTrue(movimientos.findByUsuarioIdAndImpactoPendienteFalseOrderByFechaDesc(u.getId(),org.springframework.data.domain.PageRequest.of(0,10)).isEmpty());
         var b=service.editar(u.getId(),a.id(),new Edicion(a.version(),Clase.AUTORIZACION,"MXN",datos()));assertTrue(b.version()>a.version());
         assertEquals(new BigDecimal("1000.00"),cuentas.findById(cuenta.getId()).orElseThrow().getSaldoActual());
     }

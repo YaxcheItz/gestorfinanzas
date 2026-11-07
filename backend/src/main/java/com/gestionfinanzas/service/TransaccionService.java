@@ -141,14 +141,15 @@ public class TransaccionService {
             fechaPrimeraCuota = CalendarioFinanciero.corteMsi(request.fecha(), datos.cuentaOrigen().getDiaCorte());
             montoGuardar = request.monto().divide(BigDecimal.valueOf(request.msi()), 2, RoundingMode.DOWN);
             if (montoGuardar.signum() <= 0) throw new IllegalArgumentException("El monto no alcanza para cuotas de un centavo");
-            BigDecimal montoRetenido = request.monto().subtract(montoGuardar);
+            BigDecimal montoRetenido = fechaPrimeraCuota.isAfter(CalendarioFinanciero.hoy()) ? request.monto() : request.monto().subtract(montoGuardar);
             datos.cuentaOrigen().setLimiteRetenido(
                     (datos.cuentaOrigen().getLimiteRetenido() != null ? datos.cuentaOrigen().getLimiteRetenido() : BigDecimal.ZERO).add(montoRetenido)
             );
             cuentaRepository.save(datos.cuentaOrigen());
         }
 
-        aplicarImpacto(datos.tipo(), datos.cuentaOrigen(), datos.cuentaDestino(),
+        boolean impactoPendiente = isMsi && fechaPrimeraCuota.isAfter(CalendarioFinanciero.hoy());
+        if (!impactoPendiente) aplicarImpacto(datos.tipo(), datos.cuentaOrigen(), datos.cuentaDestino(),
                 montoGuardar, datos.montoDestino(), 1);
 
         PlantillaRecurrente plantillaOrigen = plantillaOrigenId != null
@@ -160,6 +161,7 @@ public class TransaccionService {
         // La referencia de cuota no debe truncar el texto ni exceder la columna de 200 caracteres.
         if (descripcion.length() + sufijoCuota.length() <= 200) descripcion += sufijoCuota;
         Transaccion transaccion = Transaccion.builder()
+                .impactoPendiente(impactoPendiente)
                 .compraMsiId(compraMsiId)
                 .plantillaRecurrente(plantillaOrigen)
                 .lista(lista)
@@ -187,10 +189,10 @@ public class TransaccionService {
                 .build();
 
         Transaccion guardada = transaccionRepository.save(transaccion);
-        libroDiarioService.registrarCreacion(usuarioId, TransaccionResponse.fromEntity(guardada));
+        if (!impactoPendiente) libroDiarioService.registrarCreacion(usuarioId, TransaccionResponse.fromEntity(guardada));
         auditoriaService.registrar(usuarioId, guardada.getId(), "CREAR", null,
                 TransaccionResponse.fromEntity(guardada));
-        if (guardada.getTipo() == TipoTransaccion.GASTO) {
+        if (!impactoPendiente && guardada.getTipo() == TipoTransaccion.GASTO) {
             recalcularCashbackMes(guardada.getCuenta(), guardada.getFecha());
         }
         
@@ -276,10 +278,17 @@ public class TransaccionService {
         if (tipoAnterior == TipoTransaccion.GASTO) {
             eliminarCashbackGenerado(transaccion);
         }
-        aplicarImpacto(transaccion.getTipo(), transaccion.getCuenta(), transaccion.getCuentaDestino(),
+        boolean pendienteAntes=transaccion.isImpactoPendiente();
+        boolean pendienteDespues=cuotaPlan && request.fecha().isAfter(CalendarioFinanciero.hoy());
+        if (pendienteAntes) liberarCuotaPendiente(transaccion);
+        else aplicarImpacto(transaccion.getTipo(), transaccion.getCuenta(), transaccion.getCuentaDestino(),
                 transaccion.getMonto(), transaccion.getMontoDestino(), -1);
-        aplicarImpacto(datos.tipo(), datos.cuentaOrigen(), datos.cuentaDestino(),
-                request.monto(), datos.montoDestino(), 1);
+        if (pendienteDespues) {
+            var cuenta=datos.cuentaOrigen();
+            cuenta.setLimiteRetenido((cuenta.getLimiteRetenido()==null?BigDecimal.ZERO:cuenta.getLimiteRetenido()).add(request.monto()));
+            cuentaRepository.save(cuenta);
+        } else aplicarImpacto(datos.tipo(), datos.cuentaOrigen(), datos.cuentaDestino(),request.monto(),datos.montoDestino(),1);
+        transaccion.setImpactoPendiente(pendienteDespues);
         validarSaldosMetas(transaccion.getCuenta(), transaccion.getCuentaDestino());
 
         transaccion.setCuenta(datos.cuentaOrigen());
@@ -358,9 +367,9 @@ public class TransaccionService {
         }
 
         Transaccion actualizada = transaccionRepository.save(transaccion);
-        libroDiarioService.registrarActualizacion(
-                usuarioId, antes, TransaccionResponse.fromEntity(actualizada)
-        );
+        if (!pendienteAntes && !pendienteDespues) libroDiarioService.registrarActualizacion(usuarioId,antes,TransaccionResponse.fromEntity(actualizada));
+        else if (pendienteAntes && !pendienteDespues) libroDiarioService.registrarCreacion(usuarioId,TransaccionResponse.fromEntity(actualizada));
+        else if (!pendienteAntes) libroDiarioService.registrarEliminacion(usuarioId,antes);
         auditoriaService.registrar(usuarioId, actualizada.getId(), "ACTUALIZAR", antes,
                 TransaccionResponse.fromEntity(actualizada));
         if (tipoAnterior == TipoTransaccion.GASTO) {
@@ -572,6 +581,7 @@ public class TransaccionService {
         List<Transaccion> gastos = transaccionRepository.findByCuentaIdAndTipoAndFechaBetweenOrderByFechaAscIdAsc(
                 cuenta.getId(), TipoTransaccion.GASTO, mes.atDay(1), mes.atEndOfMonth()
         );
+        gastos = gastos.stream().filter(t -> !t.isImpactoPendiente()).toList();
         List<Transaccion> cashbackExistente =
                 transaccionRepository.findByCuentaIdAndCashbackOrigenIsNotNullAndFechaBetweenOrderByFechaAscIdAsc(
                         cuenta.getId(), mes.atDay(1), mes.atEndOfMonth()
@@ -701,8 +711,9 @@ public class TransaccionService {
 
     @Transactional(readOnly = true)
     public List<TransaccionResponse> listarRecientes(Long usuarioId) {
-        return transaccionRepository.findTop10ByUsuarioIdOrderByFechaDescIdDesc(usuarioId)
+        return transaccionRepository.findTop10ByUsuarioIdAndImpactoPendienteFalseOrderByFechaDescIdDesc(usuarioId)
                 .stream()
+                .filter(t -> !t.isImpactoPendiente())
                 .map(TransaccionResponse::fromEntity)
                 .toList();
     }
@@ -711,7 +722,7 @@ public class TransaccionService {
     public List<TransaccionResponse> listarRecientes(Long usuarioId, Long listaId) {
         if (listaId == null) return listarRecientes(usuarioId);
         listaService.leer(usuarioId, listaId);
-        return transaccionRepository.findTop10ByListaIdOrderByFechaDescIdDesc(listaId).stream().map(TransaccionResponse::fromEntity).toList();
+        return transaccionRepository.findTop10ByListaIdAndImpactoPendienteFalseOrderByFechaDescIdDesc(listaId).stream().filter(t -> !t.isImpactoPendiente()).map(TransaccionResponse::fromEntity).toList();
     }
 
     @Transactional(readOnly = true)
@@ -828,6 +839,23 @@ public class TransaccionService {
             listaService.leer(usuarioId, transaccion.getLista().getId());
         }
         return TransaccionResponse.fromEntity(transaccion);
+    }
+
+    @Transactional
+    public void aplicarCuotaAlCorte(Long usuarioId, Long id, LocalDate hoy) {
+        var cuota = transaccionRepository.findByIdAndUsuarioIdForUpdate(id,usuarioId).orElseThrow();
+        if (!cuota.isImpactoPendiente() || cuota.getFecha().isAfter(hoy)) return;
+        var antes=TransaccionResponse.fromEntity(cuota);
+        var cuenta=cuota.getCuenta();
+        if (cuenta.getLimiteRetenido()==null || cuenta.getLimiteRetenido().compareTo(cuota.getMonto())<0)
+            throw new IllegalArgumentException("La retencion no cubre la cuota MSI pendiente.");
+        cuenta.setLimiteRetenido(cuenta.getLimiteRetenido().subtract(cuota.getMonto()));
+        aplicarImpacto(cuota.getTipo(),cuenta,null,cuota.getMonto(),null,1);
+        cuota.setImpactoPendiente(false);
+        transaccionRepository.save(cuota);
+        libroDiarioService.registrarCreacion(usuarioId,TransaccionResponse.fromEntity(cuota));
+        auditoriaService.registrar(usuarioId,id,"ACTUALIZAR",antes,TransaccionResponse.fromEntity(cuota));
+        recalcularCashbackMes(cuenta,cuota.getFecha());
     }
 
     private List<Transaccion> cuotasPlan(Long uid, Transaccion origen) {
@@ -948,8 +976,29 @@ public class TransaccionService {
         eliminarIndividual(usuarioId, transaccion);
     }
 
+    private void liberarCuotaPendiente(Transaccion t) {
+        var cuenta=t.getCuenta();
+        if (cuenta.getLimiteRetenido()==null || cuenta.getLimiteRetenido().compareTo(t.getMonto())<0)
+            throw new IllegalArgumentException("La retencion no coincide con la cuota pendiente.");
+        cuenta.setLimiteRetenido(cuenta.getLimiteRetenido().subtract(t.getMonto()));
+        cuentaRepository.save(cuenta);
+    }
+
+    @Transactional
+    public void cancelarCuotaPendiente(Long usuarioId,Long id) {
+        var t=transaccionRepository.findByIdAndUsuarioIdForUpdate(id,usuarioId).orElseThrow();
+        if (!t.isImpactoPendiente()) throw new IllegalArgumentException("La cuota ya se contabilizo.");
+        eliminarIndividual(usuarioId,t);
+    }
+
     private void eliminarIndividual(Long usuarioId, Transaccion transaccion) {
         TransaccionResponse antes = TransaccionResponse.fromEntity(transaccion);
+        if (transaccion.isImpactoPendiente()) {
+            liberarCuotaPendiente(transaccion);
+            auditoriaService.registrar(usuarioId,transaccion.getId(),"ELIMINAR",antes,null);
+            transaccionRepository.delete(transaccion);
+            return;
+        }
         if (transaccion.getCashbackOrigen() != null) {
             throw new IllegalArgumentException("El cashback automático se elimina junto con el gasto que lo generó");
         }

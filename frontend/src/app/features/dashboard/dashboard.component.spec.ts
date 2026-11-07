@@ -108,7 +108,8 @@ describe('DashboardComponent movement dialog accessibility', () => {
     component.vistaDetallada.set(true);fixture.detectChanges();const hero=fixture.nativeElement.querySelector('.dashboard-screen__monthly').textContent;
     const acceso=fixture.nativeElement.querySelector('a.home-metric--balance') as HTMLAnchorElement;
     expect(acceso.getAttribute('aria-label')).toContain('Ver cuentas');
-    expect(fixture.nativeElement.querySelector('.home-metric--income').tagName).toBe('DIV');
+    expect(fixture.nativeElement.querySelector('.home-metric--income').tagName).toBe('A');
+    expect(fixture.nativeElement.querySelector('.home-metric--income').getAttribute('aria-label')).toContain('Ver historial de ingresos');
     expect(hero).toContain('Saldo neto');expect(hero).toContain('600');expect(hero).not.toContain('Deuda de tarjetas');expect(hero).not.toContain('Dinero en cuentas');
     expect(component.presupuestoMonedaSeleccionada()?.totalDisponible).toBe(300);
     component.monedaResumen.set('USD');expect(component.presupuestoMonedaSeleccionada()?.totalDisponible).toBe(10);
