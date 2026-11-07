@@ -291,13 +291,13 @@
       <!-- Tabla de Transacciones -->
       @if(loading() && pageData()){<p role="status" class="text-sm text-slate-500">Actualizando resultados?</p>}
       <div class="history-results bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden" [attr.aria-busy]="loading()">
-        
+
         @if (!loading() && !error() && (pageData()?.comprasMsiAnteriores?.length ?? 0) > 0) {
-          <section class="history-transaction-list" aria-label="Compras MSI anteriores">
-            <h2>Compras MSI anteriores</h2><p class="text-xs text-slate-500">Importe total informativo. Fecha de registro; solo las cuotas contabilizadas afectan al saldo neto.</p>
+          <section class="history-transaction-list" aria-label="Movimientos">
+
             @for (compra of pageData()!.comprasMsiAnteriores!; track compra.id) {
-              <p class="text-xs text-slate-500">Registrada: {{ compra.fecha | date:'dd/MM/yyyy' }}</p>
-              <app-movimiento-mobile-card [movimiento]="compra" [soloLectura]="true" />
+
+              <app-movimiento-mobile-card [movimiento]="compra" (editar)="editarCompraAnterior(compra.plantillaId!)" (eliminar)="eliminarMovimiento($event)" />
             }
           </section>
         }
@@ -321,7 +321,7 @@
               </p>
             </div>
             @if (tieneFiltrosActivos()) {
-              <button 
+              <button
                 type="button"
                 (click)="limpiarFiltros()"
                 class="inline-flex items-center px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-colors cursor-pointer">
@@ -354,8 +354,8 @@
           @if ((pageData()?.totalPages ?? 0) > 1) {
           <div class="history-pagination p-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
             <div>
-              Mostrando <span class="font-semibold text-slate-700">{{ (paginaActual() * tamanioPagina()) + 1 }}</span> a 
-              <span class="font-semibold text-slate-700">{{ calcularLimiteSuperior() }}</span> de 
+              Mostrando <span class="font-semibold text-slate-700">{{ (paginaActual() * tamanioPagina()) + 1 }}</span> a
+              <span class="font-semibold text-slate-700">{{ calcularLimiteSuperior() }}</span> de
               <span class="font-semibold text-slate-700">{{ pageData()!.totalElements }}</span> movimientos
             </div>
 
@@ -391,15 +391,15 @@
     <!-- Modal Interactivo 'Nuevo Movimiento' -->
     @if (modalAbierto()) {
       <div appDialogViewport class="transaction-entry-backdrop fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-slate-900/60 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] backdrop-blur-xs sm:items-center sm:p-4">
-        
+
         <div appFocusTrap (focusTrapEscape)="cerrarModal()" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="transacciones-modal-titulo" class="transaction-entry-sheet flex h-[calc(100dvh_-_env(safe-area-inset-top)_-_env(safe-area-inset-bottom))] max-h-[calc(100dvh_-_env(safe-area-inset-top)_-_env(safe-area-inset-bottom))] min-h-0 w-full max-w-lg flex-col overflow-hidden rounded-t-3xl border border-slate-200 bg-white shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-200 dark:border-slate-700 dark:bg-slate-900 sm:h-[min(90dvh,48rem)] sm:max-h-[min(90dvh,48rem)] sm:rounded-3xl">
-          
+
           <div class="shrink-0 border-b border-slate-100 p-4 dark:border-slate-700 sm:p-6">
             <div class="flex items-center justify-between gap-3 pb-3 sm:pb-4">
               <h2 id="transacciones-modal-titulo" class="text-base font-bold text-slate-900 dark:text-white sm:text-lg">{{ modoEdicion() ? 'Editar movimiento' : 'Nuevo movimiento' }}</h2>
-              <button 
+              <button
                 type="button"
-                (click)="cerrarModal()" 
+                (click)="cerrarModal()"
                 [disabled]="submitting()"
                 aria-label="Cerrar formulario de movimiento"
                 class="inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-lg p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2">
@@ -411,7 +411,7 @@
 
             <!-- Tabs de Tipo -->
             <div role="group" aria-label="Tipo de movimiento" class="grid grid-cols-3 gap-1.5 rounded-xl bg-slate-100 p-1 text-[11px] font-semibold dark:bg-slate-800 sm:gap-2 sm:text-xs">
-              <button 
+              <button
                 type="button"
                 (click)="cambiarTipoModal('GASTO')"
                 [attr.aria-pressed]="formTipo() === 'GASTO'"
@@ -419,7 +419,7 @@
                 class="min-h-11 cursor-pointer rounded-lg px-1 py-2 text-center transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2">
                 Gasto
               </button>
-              <button 
+              <button
                 type="button"
                 (click)="cambiarTipoModal('INGRESO')"
                 [attr.aria-pressed]="formTipo() === 'INGRESO'"
@@ -427,7 +427,7 @@
                 class="min-h-11 cursor-pointer rounded-lg px-1 py-2 text-center transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2">
                 Ingreso
               </button>
-              <button 
+              <button
                 type="button"
                 (click)="cambiarTipoModal('TRANSFERENCIA')"
                 [attr.aria-pressed]="formTipo() === 'TRANSFERENCIA'"
@@ -440,7 +440,7 @@
 
           <!-- Formulario -->
           <form (ngSubmit)="guardarMovimiento()" class="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain rounded-b-2xl p-4 pb-[max(2rem,env(safe-area-inset-bottom))] sm:space-y-4 sm:p-6 sm:pb-8">
-            
+
             @if (modalError()) {
               <div class="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs">
                 {{ modalError() }}
@@ -548,6 +548,7 @@
               <div class="min-w-0">
                 <label for="fecha" class="sr-only">Fecha del movimiento</label>
                 <app-fecha-picker id="fecha" label="Fecha del movimiento" [value]="formFecha" (valueChange)="formFecha = $event; actualizarSiguienteFecha()" />
+                @if (fechaOriginalRequerida) {<p class="text-xs text-slate-500">Indica la fecha original de la compra.</p>}
               </div>
 
               @if (formTipo() === 'TRANSFERENCIA') {
@@ -707,14 +708,14 @@
             </fieldset>
             <!-- Botones de Acción -->
             <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 pt-4 border-t border-slate-100">
-              <button 
+              <button
                 type="button"
                 (click)="cerrarModal()"
                 class="px-4 py-2.5 border border-slate-300 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
                 Cancelar
               </button>
-              
-              <button 
+
+              <button
                 type="submit"
                 [disabled]="submitting()"
                 class="inline-flex items-center justify-center px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-50 text-white rounded-xl text-xs font-semibold shadow-md shadow-emerald-600/20 transition-all cursor-pointer">
@@ -799,7 +800,7 @@
             </dl>
           </details>
 
-          @if (det.compraMsiInformativa) {<p>Compra total informativa. Solo las cuotas contabilizadas afectan al saldo neto.</p>}
+
           @if (det.compraMsiId) {
             <p class="text-sm text-slate-500">Compra MSI: Editar y Eliminar afectan el plan completo. Puedes pausar o cancelar solo las cuotas futuras desde Configuración → Recurrentes. Los pagos registrados se conservan.</p>
           }
