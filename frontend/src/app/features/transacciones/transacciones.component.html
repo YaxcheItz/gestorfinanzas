@@ -668,7 +668,13 @@
               }
             }
 
-            @if (modoEdicion() && transaccionEditando()?.plantillaId != null) {
+            @if (transaccionEditando()?.compraMsiId) {
+              <label>Total de meses del plan<input type="number" name="mesesPlanMsi" min="2" max="60" [(ngModel)]="formMsi" required /></label>
+            }
+            @if (transaccionEditando()?.compraMsiId) {
+              <p role="note">Editando el plan MSI completo. El importe es el total de la compra; la fecha determina el primer corte. Se recalculan todas las cuotas registradas y pendientes, conservando su auditoria.</p>
+            }
+            @if (modoEdicion() && transaccionEditando()?.plantillaId != null && !transaccionEditando()?.compraMsiId) {
               <div class="rounded-xl border border-amber-200 bg-amber-50 p-3 dark:border-amber-900 dark:bg-amber-950/40">
                 <p class="text-[11px] font-bold text-amber-800 dark:text-amber-200 mb-2">
                   ⟳ Este movimiento pertenece a una serie recurrente. ¿Qué quieres modificar?
@@ -785,16 +791,16 @@
           </details>
 
           @if (det.compraMsiId) {
-            <p class="text-sm text-slate-500">Cuota MSI registrada. Puedes pausar o cancelar las cuotas futuras desde Configuración → Recurrentes. Los pagos registrados se conservan.</p>
+            <p class="text-sm text-slate-500">Compra MSI: Editar y Eliminar afectan el plan completo. Puedes pausar o cancelar solo las cuotas futuras desde Configuración → Recurrentes. Los pagos registrados se conservan.</p>
           }
           <div class="ledger-detail-sheet__actions">
             @if (puedeRepetirse(det)) {
               <button type="button" class="history-repeat-button" (click)="repetirMovimiento(det)">Repetir movimiento</button>
             }
-            @if (puedeModificar(det) && det.cuentaId !== null && (det.tipo !== 'TRANSFERENCIA' || det.cuentaDestinoId != null) && det.tipo !== 'SALDO_INICIAL' && !det.cashbackAutomatico && !det.compraMsiId) {
+            @if (puedeModificar(det) && det.cuentaId !== null && (det.tipo !== 'TRANSFERENCIA' || det.cuentaDestinoId != null) && det.tipo !== 'SALDO_INICIAL' && !det.cashbackAutomatico) {
               <button type="button" class="ledger-detail-sheet__edit" (click)="cerrarDetalleMovimiento(); abrirModalEditar(det)">Editar</button>
             }
-            @if (puedeModificar(det) && det.cuentaId !== null && (det.tipo !== 'TRANSFERENCIA' || det.cuentaDestinoId != null) && !det.cashbackAutomatico && !det.compraMsiId) {
+            @if (puedeModificar(det) && det.cuentaId !== null && (det.tipo !== 'TRANSFERENCIA' || det.cuentaDestinoId != null) && !det.cashbackAutomatico) {
               <button type="button" class="ledger-detail-sheet__delete" (click)="cerrarDetalleMovimiento(); eliminarMovimiento(det.id)">Eliminar</button>
             }
           </div>

@@ -55,6 +55,11 @@ public class TransaccionController {
         return ResponseEntity.ok(ApiResponse.ok("Movimiento actualizado exitosamente", transaccion));
     }
 
+    @GetMapping("/{id}/plan-msi")
+    public ResponseEntity<ApiResponse<TransaccionRequest>> datosPlanMsi(@PathVariable Long id, @AuthenticationPrincipal CustomUserDetails user) {
+        return ResponseEntity.ok(ApiResponse.ok("Plan MSI",transaccionService.datosPlanMsi(user.getId(),id)));
+    }
+
     @GetMapping("/recientes")
     public ResponseEntity<ApiResponse<List<TransaccionResponse>>> listarRecientes(
             @RequestParam(required = false) Long listaId,
@@ -136,9 +141,10 @@ public class TransaccionController {
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> eliminarTransaccion(
             @PathVariable Long id,
+            @RequestParam(defaultValue = "false") boolean planMsi,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        transaccionService.eliminarTransaccion(userDetails.getId(), id);
+        transaccionService.eliminarTransaccion(userDetails.getId(), id, planMsi);
         return ResponseEntity.ok(ApiResponse.ok("Transacción eliminada y saldos recalculados correctamente", null));
     }
 }

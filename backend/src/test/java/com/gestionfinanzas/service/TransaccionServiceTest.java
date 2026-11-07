@@ -54,6 +54,11 @@ class TransaccionServiceTest {
             auditoriaService, libroDiarioService, mock(ListaService.class)
     );
 
+    {
+        when(transaccionRepository.findByIdAndUsuarioIdForUpdate(any(),any()))
+                .thenAnswer(i -> transaccionRepository.findByIdAndUsuarioId(i.getArgument(0),i.getArgument(1)));
+    }
+
     @Test
     void transferenciaEntreMonedasAplicaTasaYAlmacenaMontoDestino() {
         Usuario usuario = Usuario.builder().id(7L).build();

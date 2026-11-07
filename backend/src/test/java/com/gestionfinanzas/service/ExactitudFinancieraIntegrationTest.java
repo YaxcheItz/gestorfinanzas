@@ -21,6 +21,8 @@ import static org.junit.jupiter.api.Assertions.*;
 @Transactional
 class ExactitudFinancieraIntegrationTest {
     @Autowired TransaccionService movimientos;
+    @Autowired UsuarioService usuarioService;
+    @Autowired org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
     @Autowired PlantillaRecurrenteService recurrentes;
     @Autowired UsuarioRepository usuarios;
     @Autowired CuentaRepository cuentas;
@@ -104,11 +106,77 @@ class ExactitudFinancieraIntegrationTest {
         comprobarCuenta("-66.66","0.00");
         assertTrue(transacciones.findById(inicial.id()).isPresent());
     }
-    @Test void cuotasNoSePuedenAlterarIndividualmente() {
-        var inicial = movimientos.crearTransaccion(usuarioId, compra("100.00",3));
-        assertThrows(IllegalArgumentException.class, () -> movimientos.actualizarTransaccion(usuarioId,inicial.id(),compra("50.00",3)));
-        assertThrows(IllegalArgumentException.class, () -> movimientos.eliminarTransaccion(usuarioId,inicial.id()));
+    @Test void noEliminaPlanSinConfirmacionExplicita() {
+        var inicial=movimientos.crearTransaccion(usuarioId,compra("100.00",3));
+        assertThrows(IllegalArgumentException.class,()->movimientos.eliminarTransaccion(usuarioId,inicial.id()));
+        comprobarCuenta("-33.33","66.67");assertEquals(1,planCount());
+    }
+    @Test
+    @org.springframework.transaction.annotation.Transactional(propagation=org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED)
+    void errorDeCreditoRevierteTodasLasCuotasYLaRetencion() {
+        var usuario=usuarios.findById(usuarioId).orElseThrow();
+        usuario.setPasswordHash(passwordEncoder.encode("Password123"));usuarios.saveAndFlush(usuario);
+        try {
+        var inicial=movimientos.crearTransaccion(usuarioId,compra("100.00",3));
+        assertThrows(IllegalArgumentException.class,()->movimientos.actualizarTransaccion(usuarioId,inicial.id(),compra("2000.00",3)));
+        var cuenta = cuentas.findById(cuentaId).orElseThrow();
+        assertEquals(new BigDecimal("-33.33"),cuenta.getSaldoActual());
+        assertEquals(new BigDecimal("66.67"),cuenta.getLimiteRetenido());
+        assertEquals(new BigDecimal("100.00"),movimientos.datosPlanMsi(usuarioId,inicial.id()).monto());
+        movimientos.eliminarTransaccion(usuarioId,inicial.id(),true);
+        } finally {
+            usuarioService.eliminarCuenta(usuarioId,new com.gestionfinanzas.dto.request.EliminarUsuarioRequest("Password123"));
+        }
+    }
+    @Test void otroUsuarioNoEditaNiEliminaPlanCompleto() {
+        var inicial=movimientos.crearTransaccion(usuarioId,compra("100.00",3));
+        assertThrows(IllegalArgumentException.class,()->movimientos.actualizarTransaccion(-1L,inicial.id(),compra("200.00",3)));
+        assertThrows(IllegalArgumentException.class,()->movimientos.eliminarTransaccion(-1L,inicial.id(),true));
         comprobarCuenta("-33.33","66.67");
+    }
+    @Test void editarPlanActualizaTodasLasCuotasYRetencion() {
+        var inicial=movimientos.crearTransaccion(usuarioId,compra("100.00",3));
+        recurrentes.registrarSiguiente(usuarioId,plan().getId());
+        movimientos.actualizarTransaccion(usuarioId,inicial.id(),compra("200.00",4));
+        comprobarCuenta("-100.00","100.00");
+        assertEquals(3,plan().getCuotasTotales());assertEquals(1,plan().getCuotasPagadas());
+        assertEquals(new BigDecimal("200.00"),movimientos.datosPlanMsi(usuarioId,inicial.id()).monto());
+        recurrentes.registrarSiguiente(usuarioId,plan().getId());
+        recurrentes.registrarSiguiente(usuarioId,plan().getId());
+        comprobarCuenta("-200.00","0.00");
+    }
+    @Test void editarYEliminarPlanRecalculaCashbackSinDejarSaldoResidual() {
+        cuentas.findById(cuentaId).orElseThrow().setCashbackPorcentaje(new BigDecimal("5.00"));
+        var inicial=movimientos.crearTransaccion(usuarioId,compra("100.00",3));
+        movimientos.actualizarTransaccion(usuarioId,inicial.id(),compra("200.00",4));
+        comprobarCuenta("-47.50","150.00");
+        movimientos.eliminarTransaccion(usuarioId,inicial.id(),true);
+        comprobarCuenta("0.00","0.00");
+    }
+    @Test void respaldoDePlanEditadoConservaCuotasYRetencion() {
+        var inicial=movimientos.crearTransaccion(usuarioId,compra("100.00",3));
+        recurrentes.registrarSiguiente(usuarioId,plan().getId());
+        movimientos.actualizarTransaccion(usuarioId,inicial.id(),compra("200.00",4));
+        var respaldo=respaldos.generar(usuarioId);
+        var destino=usuarios.save(Usuario.builder().nombre("Restaurado ficticio").email(UUID.randomUUID()+"@example.test").passwordHash("prueba").rol(RolUsuario.ROLE_USER).activo(true).build());
+        restauracion.restaurar(destino.getId(),respaldo);
+        var nuevo=plantillas.findAllByUsuarioIdOrderBySiguienteFechaAsc(destino.getId()).getFirst();
+        assertEquals(new BigDecimal("100.00"),nuevo.getMontoPendiente());
+        assertEquals(3,nuevo.getCuotasTotales());assertEquals(1,nuevo.getCuotasPagadas());
+        assertEquals(new BigDecimal("100.00"),nuevo.getCuenta().getLimiteRetenido());
+    }
+    @Test void eliminarPlanRevierteCuotasYLiberaRetencion() {
+        var inicial=movimientos.crearTransaccion(usuarioId,compra("100.00",3));
+        recurrentes.registrarSiguiente(usuarioId,plan().getId());
+        movimientos.eliminarTransaccion(usuarioId,inicial.id(),true);
+        comprobarCuenta("0.00","0.00");assertEquals(0,planCount());
+        assertTrue(transacciones.findById(inicial.id()).isEmpty());
+    }
+    @Test void eliminarPlanCanceladoRevierteSoloLasCuotasRegistradas() {
+        var inicial=movimientos.crearTransaccion(usuarioId,compra("100.00",3));
+        recurrentes.eliminar(usuarioId,plan().getId());
+        movimientos.eliminarTransaccion(usuarioId,inicial.id(),true);
+        comprobarCuenta("0.00","0.00");
     }
     @Test void cuotasMenoresAUnCentavoSeRechazanSinEfecto() {
         assertThrows(IllegalArgumentException.class, () -> movimientos.crearTransaccion(usuarioId,compra("0.01",3)));

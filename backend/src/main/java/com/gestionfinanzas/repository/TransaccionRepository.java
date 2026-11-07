@@ -30,6 +30,10 @@ public interface TransaccionRepository extends JpaRepository<Transaccion, Long>,
 
     Optional<Transaccion> findByIdAndUsuarioId(Long id, Long usuarioId);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select t from Transaccion t where t.usuario.id=:uid and t.compraMsiId=:compra order by t.fecha,t.id")
+    List<Transaccion> bloquearCompraMsi(@Param("uid") Long uid, @Param("compra") UUID compra);
+
     Optional<Transaccion> findByClientRequestId(UUID clientRequestId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)

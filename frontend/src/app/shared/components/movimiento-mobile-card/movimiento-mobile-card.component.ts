@@ -553,8 +553,7 @@ export class MovimientoMobileCardComponent {
       && (this.listas.usuarioId() == null || this.movimiento.autorId == null || this.movimiento.autorId === this.listas.usuarioId())
       && this.movimiento.cuentaId !== null
       && (this.movimiento.tipo !== 'TRANSFERENCIA' || this.movimiento.cuentaDestinoId != null)
-      && !this.movimiento.cashbackAutomatico
-      && !this.movimiento.compraMsiId;
+      && !this.movimiento.cashbackAutomatico;
   }
 
   get puedeEditarse(): boolean {
