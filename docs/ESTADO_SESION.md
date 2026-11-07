@@ -1,3 +1,7 @@
+## Android 0.1.39 preparada - 7 noviembre 2026
+
+Entrega de PR252 en version0.1.39/codigo40, superior a0.1.38/codigo39 instalada. Incluye total MSI anterior como proyeccion de solo lectura y primer cargo al corte distinguido de cuota siguiente. CI exacta, firma/contenido/hash, despliegues e instalacion se verifican por separado. No modifica datos financieros al consultar. No declarar instalada/publicada mientras esas puertas sigan pendientes.
+
 ## Compatibilidad MSI anteriores y proximo corte implementados - 7 noviembre 2026
 
 Rama correcciones/msi-anteriores-proximo-corte desde origin/develop b26b0a8. Se reproduce omision: compra anterior sin recibo informativo queda oculta aunque retiene credito; siguienteFecha corresponde a cuota posterior y no muestra primera pendiente. Nueva proyeccion de solo lectura para planes anteriores vinculados, visible en Inicio y tarjeta, suma cuotas registradas + pendiente sin crear transacciones ni modificar datos financieros. Usa fecha de registro expresamente rotulada, no inventa fecha original. Compras nuevas con recibo no se duplican. Respeta filtros/propiedad/lista; proyeccion separada del contenido contable y sus totales. Cancelados antiguos sin plan no se reconstruyen porque no conservan total fiable.
