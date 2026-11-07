@@ -1253,6 +1253,10 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
 
   guardarMovimiento(): void {
     if (this.submitting()) return;
+    if (!this.formFecha) {
+      this.modalError.set(this.fechaOriginalRequerida ? 'Indica la fecha original de la compra.' : 'Selecciona una fecha.');
+      return;
+    }
     if (!this.formMonto || this.formMonto <= 0) {
       this.modalError.set('Ingresa un monto válido mayor a 0');
       return;
