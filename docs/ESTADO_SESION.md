@@ -1,3 +1,7 @@
+## Android 0.1.40 preparada - 7 noviembre 2026
+
+Entrega acciones MSI anteriores y tema inmediato, version0.1.40/codigo41 superior a0.1.39/codigo40. CI, despliegues y APK firmada se verifican por separado antes de instalar sin borrar datos. No se alteran compras reales para pruebas.
+
 ## Acciones MSI y tema: correccion preparada - 7 noviembre 2026
 
 Rama correcciones/msi-acciones-tema desde develop eb8f4cd. Compra MSI anterior permite revelar Editar y Eliminar en Inicio e historial, usa plan completo real y confirmacion; no se accedio ni cambio finanzas reales. Como no se conserva fecha original de esas compras, el editor solicita introducirla en lugar de inventarla. Se quitaron textos MSI informativos de Inicio, historial y detalle. Apariencia queda en Cambiar tema, aplicado al tocar, con guardado inmediato, bloqueo de pulsaciones concurrentes y reversion ante fallo; se conservan las demas preferencias almacenadas sin controles adicionales en esa seccion.
