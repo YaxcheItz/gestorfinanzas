@@ -240,7 +240,7 @@ describe('TransaccionesComponent history filters', () => {
     await component.eliminarMovimiento(17);
 
     expect(confirm).toHaveBeenCalledWith(expect.objectContaining({
-      message: expect.stringContaining('¿Eliminar permanentemente?')
+      message: expect.stringContaining('compra completa')
     }));
     expect(finanzasService.eliminarTransaccion).not.toHaveBeenCalled();
   });

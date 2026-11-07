@@ -54,6 +54,11 @@ class TransaccionServiceTest {
             auditoriaService, libroDiarioService, mock(ListaService.class)
     );
 
+    {
+        when(transaccionRepository.findByIdAndUsuarioIdForUpdate(any(),any()))
+                .thenAnswer(i -> transaccionRepository.findByIdAndUsuarioId(i.getArgument(0),i.getArgument(1)));
+    }
+
     @Test
     void transferenciaEntreMonedasAplicaTasaYAlmacenaMontoDestino() {
         Usuario usuario = Usuario.builder().id(7L).build();
@@ -493,7 +498,7 @@ class TransaccionServiceTest {
     @Test
     void descripcionDe200CaracteresEnMsiNoSeTruncaNiDesbordaLaColumna() {
         Usuario usuario=Usuario.builder().id(7L).build();
-        Cuenta tarjeta=cuenta(1L,usuario,"MXN","0.00");tarjeta.setTipo(TipoCuenta.CREDITO);tarjeta.setLimiteCredito(new BigDecimal("1000.00"));
+        Cuenta tarjeta=cuenta(1L,usuario,"MXN","0.00");tarjeta.setTipo(TipoCuenta.CREDITO);tarjeta.setDiaCorte(30);tarjeta.setLimiteCredito(new BigDecimal("1000.00"));
         when(usuarioRepository.findById(7L)).thenReturn(Optional.of(usuario));
         when(cuentaRepository.findByIdAndUsuarioId(1L,7L)).thenReturn(Optional.of(tarjeta));
         when(transaccionRepository.save(any(Transaccion.class))).thenAnswer(i->i.getArgument(0));

@@ -132,11 +132,13 @@ public class TransaccionService {
         validarLimiteCredito(datos.cuentaOrigen(), datos.tipo(), request.monto(), null);
 
         BigDecimal montoGuardar = request.monto();
+        LocalDate fechaPrimeraCuota = request.fecha();
         boolean isMsi = request.msi() != null && request.msi() > 1;
         if (isMsi) {
             if (datos.tipo() != TipoTransaccion.GASTO || datos.cuentaOrigen().getTipo() != TipoCuenta.CREDITO) {
                 throw new IllegalArgumentException("Los MSI solo aplican a gastos con tarjeta de crédito");
             }
+            fechaPrimeraCuota = CalendarioFinanciero.corteMsi(request.fecha(), datos.cuentaOrigen().getDiaCorte());
             montoGuardar = request.monto().divide(BigDecimal.valueOf(request.msi()), 2, RoundingMode.DOWN);
             if (montoGuardar.signum() <= 0) throw new IllegalArgumentException("El monto no alcanza para cuotas de un centavo");
             BigDecimal montoRetenido = request.monto().subtract(montoGuardar);
@@ -176,7 +178,7 @@ public class TransaccionService {
                 .tasaCambio(datos.tasaCambio())
                 .fuenteCambio(datos.cuentaDestino() != null && !datos.cuentaOrigen().getMoneda().equals(datos.cuentaDestino().getMoneda()) ? "MANUAL" : null)
                 .fechaCambio(datos.cuentaDestino() != null && !datos.cuentaOrigen().getMoneda().equals(datos.cuentaDestino().getMoneda()) ? request.fecha() : null)
-                .fecha(request.fecha())
+                .fecha(fechaPrimeraCuota)
                 .descripcion(descripcion)
                 .notas(normalizarNotas(request.notas()))
                 .metodoCaptura(metodoCaptura)
@@ -203,8 +205,9 @@ public class TransaccionService {
                     .monto(montoGuardar)
                     .notas(normalizarNotas(request.notas()))
                     .frecuencia(FrecuenciaRecurrencia.MENSUAL)
-                    .siguienteFecha(CalendarioFinanciero.siguiente(request.fecha(), FrecuenciaRecurrencia.MENSUAL, request.fecha()))
-                    .fechaAncla(request.fecha())
+                    .siguienteFecha(CalendarioFinanciero.corteMsi(fechaPrimeraCuota.plusDays(1), datos.cuentaOrigen().getDiaCorte()))
+                    // Enero conserva el dia nominal incluso si la primera cuota cae en febrero.
+                    .fechaAncla(LocalDate.of(fechaPrimeraCuota.getYear(), 1, datos.cuentaOrigen().getDiaCorte()))
                     .montoPendiente(request.monto().subtract(montoGuardar))
                     .compraMsiId(compraMsiId)
                     .cuotasTotales(request.msi() - 1)
@@ -236,12 +239,14 @@ public class TransaccionService {
 
     @Transactional
     public TransaccionResponse actualizarTransaccion(Long usuarioId, Long transaccionId, TransaccionRequest request) {
-        Transaccion transaccion = transaccionRepository.findByIdAndUsuarioId(transaccionId, usuarioId)
+        return actualizarInterna(usuarioId, transaccionId, request, false);
+    }
+
+    private TransaccionResponse actualizarInterna(Long usuarioId, Long transaccionId, TransaccionRequest request, boolean cuotaPlan) {
+        Transaccion transaccion = (cuotaPlan ? transaccionRepository.findByIdAndUsuarioId(transaccionId, usuarioId) : transaccionRepository.findByIdAndUsuarioIdForUpdate(transaccionId, usuarioId))
                 .orElseThrow(() -> new IllegalArgumentException("Transacción no encontrada o no autorizada"));
         if (transaccion.getLista() != null) listaService.escribir(usuarioId, transaccion.getLista().getId());
-        if (transaccion.getCompraMsiId() != null) {
-            throw new IllegalArgumentException("Las cuotas MSI no se editan individualmente; cancela las cuotas pendientes desde Recurrentes");
-        }
+        if (transaccion.getCompraMsiId() != null && !cuotaPlan) return actualizarPlanMsi(usuarioId, transaccion, request);
         if (transaccion.getTipo() == TipoTransaccion.SALDO_INICIAL) {
             throw new IllegalArgumentException("El saldo inicial no se puede editar");
         }
@@ -300,7 +305,7 @@ public class TransaccionService {
         transaccion.setNotas(normalizarNotas(request.notas()));
 
         PlantillaRecurrente plantillaAsociada = transaccion.getPlantillaRecurrente();
-        if (plantillaAsociada != null) {
+        if (plantillaAsociada != null && !cuotaPlan) {
             com.gestionfinanzas.model.enums.ModoEdicionRecurrencia modo = request.modoEdicionRecurrencia() != null
                     ? request.modoEdicionRecurrencia() : com.gestionfinanzas.model.enums.ModoEdicionRecurrencia.SOLO_ESTA;
             if (modo == com.gestionfinanzas.model.enums.ModoEdicionRecurrencia.SOLO_ESTA) {
@@ -825,14 +830,125 @@ public class TransaccionService {
         return TransaccionResponse.fromEntity(transaccion);
     }
 
+    private List<Transaccion> cuotasPlan(Long uid, Transaccion origen) {
+        var cuotas = transaccionRepository.bloquearCompraMsi(uid, origen.getCompraMsiId());
+        if (cuotas.isEmpty()) throw new IllegalArgumentException("Plan MSI no encontrado.");
+        for (var t : cuotas) {
+            if (t.getCuenta() == null || t.getTipo() != TipoTransaccion.GASTO)
+                throw new IllegalArgumentException("El plan contiene historial de una cuenta eliminada o datos incompatibles.");
+            if (t.getLista() != null) listaService.escribir(uid, t.getLista().getId());
+            if (!java.util.Objects.equals(t.getPlantillaRecurrente(), origen.getPlantillaRecurrente()))
+                throw new IllegalArgumentException("Los vinculos del plan MSI no coinciden.");
+        }
+        return cuotas;
+    }
+
+    private TransaccionResponse resumenPlanMsi(List<Transaccion> cuotas, PlantillaRecurrente plan) {
+        var t = TransaccionResponse.fromEntity(cuotas.getFirst());
+        var total = cuotas.stream().map(Transaccion::getMonto).reduce(BigDecimal.ZERO,BigDecimal::add)
+                .add(plan==null ? BigDecimal.ZERO : pendientePlan(plan));
+        return new TransaccionResponse(t.id(),t.cuentaId(),t.cuentaNombre(),null,null,t.categoriaId(),t.categoriaNombre(),
+                t.categoriaIcono(),t.categoriaColor(),TipoTransaccion.GASTO,total,null,null,t.moneda(),null,t.fecha(),
+                "Plan MSI: "+(plan==null?cuotas.size():plan.getCuotasTotales()+1)+" cuotas; "+cuotas.size()+" registradas",t.notas(),false,t.fechaCreacion());
+    }
+
+    private BigDecimal pendientePlan(PlantillaRecurrente plan) {
+        return plan.getMontoPendiente() != null ? plan.getMontoPendiente()
+                : plan.getMonto().multiply(BigDecimal.valueOf(plan.getCuotasTotales()-plan.getCuotasPagadas()));
+    }
+
+    private void liberarPendiente(PlantillaRecurrente plan) {
+        BigDecimal retenido = plan.getCuenta().getLimiteRetenido() == null ? BigDecimal.ZERO : plan.getCuenta().getLimiteRetenido();
+        BigDecimal pendiente = pendientePlan(plan);
+        if (pendiente.signum() < 0 || retenido.compareTo(pendiente) < 0)
+            throw new IllegalArgumentException("La retencion MSI no coincide con el plan. No se realizaron cambios.");
+        plan.getCuenta().setLimiteRetenido(retenido.subtract(pendiente));
+        cuentaRepository.save(plan.getCuenta());
+    }
+
+    @Transactional
+    public TransaccionRequest datosPlanMsi(Long uid, Long id) {
+        var t = transaccionRepository.findByIdAndUsuarioIdForUpdate(id,uid).orElseThrow(() -> new IllegalArgumentException("Movimiento no encontrado."));
+        if (t.getCompraMsiId() == null) throw new IllegalArgumentException("El movimiento no es MSI.");
+        var cuotas = cuotasPlan(uid,t);
+        var plan = t.getPlantillaRecurrente();
+        if (plan == null) throw new IllegalArgumentException("El plan fue cancelado. Puedes eliminar la compra completa; sus cuotas no se reprograman.");
+        BigDecimal total = cuotas.stream().map(Transaccion::getMonto).reduce(BigDecimal.ZERO,BigDecimal::add).add(pendientePlan(plan));
+        return new TransaccionRequest(t.getCuenta().getId(),null,t.getCategoria()==null?null:t.getCategoria().getId(),TipoTransaccion.GASTO,
+                total,null,cuotas.getFirst().getFecha(),cuotas.getFirst().getDescripcion(),t.getNotas(),null,null,plan.getCuotasTotales()+1,
+                t.getLista()==null?null:t.getLista().getId(),new java.util.ArrayList<>(t.getEtiquetas()));
+    }
+
+    private TransaccionResponse actualizarPlanMsi(Long uid, Transaccion origen, TransaccionRequest request) {
+        var cuotas = cuotasPlan(uid,origen);
+        var plan = origen.getPlantillaRecurrente();
+        if (plan == null) throw new IllegalArgumentException("El plan fue cancelado y conserva sus cuotas. Puedes eliminar la compra completa.");
+        if (request.tipo()!=TipoTransaccion.GASTO || request.msi()==null || request.msi()<Math.max(2,cuotas.size()) || request.msi()>60
+                || request.frecuenciaRecurrencia()!=null || request.fechaFinRecurrencia()!=null)
+            throw new IllegalArgumentException("Edita el plan completo con un plazo entre las cuotas ya registradas y 60 meses.");
+        if (cuotas.size()!=plan.getCuotasPagadas()+1) throw new IllegalArgumentException("Las cuotas registradas no coinciden con el plan.");
+        var datos = prepararTransaccion(uid,request);
+        if (datos.cuentaOrigen().getTipo()!=TipoCuenta.CREDITO || !datos.cuentaOrigen().getMoneda().equals(origen.getCuenta().getMoneda()))
+            throw new IllegalArgumentException("Elige una tarjeta de credito de la misma moneda.");
+        var fecha = CalendarioFinanciero.corteMsi(request.fecha(),datos.cuentaOrigen().getDiaCorte());
+        var ancla = LocalDate.of(fecha.getYear(),1,datos.cuentaOrigen().getDiaCorte());
+        var mensual = request.monto().divide(BigDecimal.valueOf(request.msi()),2,RoundingMode.DOWN);
+        if (mensual.signum()<=0) throw new IllegalArgumentException("El monto no alcanza para cuotas de un centavo.");
+        var antesPlan = resumenPlanMsi(cuotas,plan);
+        boolean completado = plan.getCuotasPagadas() >= plan.getCuotasTotales();
+        liberarPendiente(plan);
+        BigDecimal emitido = BigDecimal.ZERO;
+        for (int n=0;n<cuotas.size();n++) {
+            var cuota = cuotas.get(n);
+            var monto = n+1==request.msi() ? request.monto().subtract(emitido) : mensual;
+            String descripcion = request.descripcion()==null ? "Compra MSI" : request.descripcion().replaceAll(" \\(Cuota \\d+/\\d+\\)$", "");
+            String sufijo = " (Cuota "+(n+1)+"/"+request.msi()+")";
+            if (descripcion.length()+sufijo.length()<=200) descripcion+=sufijo;
+            actualizarInterna(uid,cuota.getId(),new TransaccionRequest(request.cuentaId(),null,request.categoriaId(),TipoTransaccion.GASTO,
+                    monto,null,fecha,descripcion,request.notas(),null,null,null,request.listaId(),request.etiquetas()),true);
+            emitido=emitido.add(monto);
+            fecha=CalendarioFinanciero.siguiente(fecha,FrecuenciaRecurrencia.MENSUAL,ancla);
+        }
+        var pendiente = request.monto().subtract(emitido);
+        validarLimiteCredito(datos.cuentaOrigen(),TipoTransaccion.GASTO,pendiente,null);
+        datos.cuentaOrigen().setLimiteRetenido((datos.cuentaOrigen().getLimiteRetenido()==null?BigDecimal.ZERO:datos.cuentaOrigen().getLimiteRetenido()).add(pendiente));
+        cuentaRepository.save(datos.cuentaOrigen());
+        plan.setCuenta(datos.cuentaOrigen());plan.setCategoria(datos.categoria());plan.setMonto(mensual);plan.setMontoPendiente(pendiente);
+        plan.setCuotasTotales(request.msi()-1);plan.setCuotasPagadas(cuotas.size()-1);plan.setFechaAncla(ancla);plan.setSiguienteFecha(fecha);
+        plan.setNotas(normalizarNotas(request.notas()));plan.setLista(cuotas.getFirst().getLista());
+        plan.setEtiquetas(new java.util.LinkedHashSet<>(cuotas.getFirst().getEtiquetas()));
+        if (pendiente.signum()==0) plan.setActiva(false);
+        else if (completado) plan.setActiva(true);
+        plantillaRepository.save(plan);
+        auditoriaService.registrar(uid,origen.getId(),"EDITAR_MSI",antesPlan,resumenPlanMsi(cuotas,plan));
+        return TransaccionResponse.fromEntity(origen);
+    }
+
     @Transactional
     public void eliminarTransaccion(Long usuarioId, Long transaccionId) {
-        Transaccion transaccion = transaccionRepository.findByIdAndUsuarioId(transaccionId, usuarioId)
+        eliminarTransaccion(usuarioId, transaccionId, false);
+    }
+
+    @Transactional
+    public void eliminarTransaccion(Long usuarioId, Long transaccionId, boolean planCompleto) {
+        Transaccion transaccion = transaccionRepository.findByIdAndUsuarioIdForUpdate(transaccionId, usuarioId)
                 .orElseThrow(() -> new IllegalArgumentException("Transacción no encontrada o no autorizada"));
         if (transaccion.getLista() != null) listaService.escribir(usuarioId, transaccion.getLista().getId());
         if (transaccion.getCompraMsiId() != null) {
-            throw new IllegalArgumentException("Las cuotas MSI registradas conservan su historial; cancela las pendientes desde Recurrentes");
+            if (!planCompleto) throw new IllegalArgumentException("Confirma explicitamente la eliminacion del plan MSI completo.");
+            var cuotas = cuotasPlan(usuarioId, transaccion);
+            var plan = transaccion.getPlantillaRecurrente();
+            var antesPlan = resumenPlanMsi(cuotas,plan);
+            if (plan != null) liberarPendiente(plan);
+            for (var cuota : cuotas) eliminarIndividual(usuarioId, cuota);
+            if (plan != null) plantillaRepository.delete(plan);
+            auditoriaService.registrar(usuarioId,transaccionId,"BORRAR_MSI",antesPlan,null);
+            return;
         }
+        eliminarIndividual(usuarioId, transaccion);
+    }
+
+    private void eliminarIndividual(Long usuarioId, Transaccion transaccion) {
         TransaccionResponse antes = TransaccionResponse.fromEntity(transaccion);
         if (transaccion.getCashbackOrigen() != null) {
             throw new IllegalArgumentException("El cashback automático se elimina junto con el gasto que lo generó");

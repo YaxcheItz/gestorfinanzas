@@ -105,7 +105,7 @@ export interface Transaccion {
 export interface AuditoriaTransaccion {
   id: number;
   transaccionId: number;
-  accion: 'CREAR' | 'ACTUALIZAR' | 'ELIMINAR';
+  accion: 'CREAR' | 'ACTUALIZAR' | 'ELIMINAR' | 'EDITAR_MSI' | 'BORRAR_MSI';
   antes: Transaccion | null;
   despues: Transaccion | null;
   fechaEvento: string;

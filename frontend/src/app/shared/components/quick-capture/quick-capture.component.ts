@@ -410,7 +410,7 @@ export class QuickCaptureComponent implements OnDestroy {
   private persistirCatalogo():void{
     const uid=this.usuarioChat;if(uid!==null)void this.offline.guardarCatalogo(uid,this.cuentasEdicion(),this.categories()).catch(()=>{});
   }
-  private esPedidoNuevo(texto: string): boolean { return /^(?:por favor\s+)?(?:gast[eé]|gasto|pagu[eé]|recib[ií]|ingreso|transfer|reporte|resumen|saldo|top|alertas)/i.test(texto); }
+  private esPedidoNuevo(texto: string): boolean { return /^(?:por favor\s+)?(?:gast[eé]|gasto|pagu[eé]|compr[eé]|compra\b|recib[ií]|ingres[eé]|ingreso|transfer|reporte|resumen|saldo|top|alertas)/i.test(texto); }
   usarSugerencia(texto: string): void { this.contexto = null; this.content = texto; this.voiceCapture.set(false); this.submit(); }
   limpiarChat(): void { if (this.loading() || this.confirming() || this.listening()) return; this.captureTurns.set([]); this.contexto = null; this.content = ''; this.error.set(''); this.aiConsentRequired.set(false); }
   anchoReporte(report: AiReportWidget, index: number): number { if (this.privacidad.ocultarMontos()) return 0; const max=Math.max(0,...report.values); return max>0?Math.max(0,Math.min(100,report.values[index]/max*100)):0; }

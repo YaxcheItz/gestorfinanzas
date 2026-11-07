@@ -7,6 +7,16 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 class MotorChatReglasTest {
+ @Test void compraMsiConservaMontoPlazoCategoriaYFecha(){
+  var tarjeta=new CuentaResponse(7L,"Tarjeta ficticia",TipoCuenta.CREDITO,null,null,null,null,null,null,BigDecimal.ZERO,"MXN",null,true,null);
+  var r=motor.interpretar("Compre 900 con Tarjeta ficticia a 3 meses sin intereses categoria Comida 2026-10-02",List.of(tarjeta),categorias,List.of(),hoy);
+  assertNotNull(r.datos()); assertEquals(new BigDecimal("900.00"),r.datos().get("monto"));assertEquals(3,r.datos().get("msi"));assertEquals(8L,r.datos().get("categoriaId"));assertEquals("2026-10-02",r.datos().get("fecha"));
+ }
+ @Test void msiInvalidoONoCreditoNoProduceGastoOrdinario(){
+  assertNull(interpretar("Compre 900 con BBVA a 3 MSI").datos());
+  assertNull(interpretar("Compre 900 a 61 meses sin intereses").datos());
+  assertNull(interpretar("Compre 900 a meses sin intereses").datos());
+ }
  @Test void comparacionMensualUsaConsultaSinPropuestaNiImporte(){var r=interpretar("Compárame este mes con el anterior en MXN");assertEquals("COMPARACION_MENSUAL",r.reporte());assertEquals(LocalDate.of(2026,10,1),r.desde());assertEquals(hoy,r.hasta());assertEquals("MXN",r.moneda());assertNull(r.datos());}
  @Test void comparacionConListaOCategoriaNoPierdeElFiltro(){var r=interpretar("Compara este mes con el anterior en comida");assertEquals("COMPARACION_MENSUAL",r.reporte());assertEquals(8L,r.categoriaId());var lista=interpretar("Compara este mes con el anterior en la lista vacaciones");assertNotNull(lista);assertNull(lista.reporte());}
  @Test void consultaReconoceCategoriaCuentaYRangoExplicito(){var r=interpretar("Gastos de comida desde BBVA del 2026-10-01 al 2026-10-04");assertNotNull(r);assertEquals("RESUMEN",r.reporte());assertEquals(LocalDate.of(2026,10,1),r.desde());assertEquals(LocalDate.of(2026,10,4),r.hasta());assertEquals(1L,r.cuentaId());assertEquals(8L,r.categoriaId());}

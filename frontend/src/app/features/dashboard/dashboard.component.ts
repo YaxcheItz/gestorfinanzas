@@ -1565,7 +1565,7 @@ export class DashboardComponent implements OnInit {
   eliminarMovimiento(id: number): void {
     this.confirmDialog.confirm({
       title: 'Eliminar movimiento',
-      message: 'Esta acción eliminará el movimiento y recalculará automáticamente los saldos de las cuentas involucradas. ¿Deseas continuar?',
+      message: 'Si es MSI se eliminara la compra completa, incluidas todas sus cuotas. Se revertiran saldos y cashback y se liberara el credito retenido. El libro diario conserva el registro. Deseas continuar?',
       confirmText: 'Sí, eliminar',
       cancelText: 'Cancelar',
       type: 'danger'
