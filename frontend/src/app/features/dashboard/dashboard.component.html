@@ -129,7 +129,7 @@
             </a>
           </div>
         } @else if (!error()) { <p class="dashboard-screen__amount">{{ 0 | monto:monedaResumen():'symbol-narrow':'1.2-2' }}</p> }
-        
+
       </section>
 
       <section class="home-categories" aria-labelledby="home-categories-title">
@@ -267,10 +267,10 @@
         </div>
         @if (!loading() && !error() && comprasMsiAnteriores().length > 0) {
           <div class="dashboard-screen__recent-list" aria-label="Compras MSI anteriores">
-            <h3>Compras MSI anteriores</h3><p class="dashboard-screen__muted">Total informativo. Se muestra la fecha de registro, no una nueva cuota.</p>
+
             @for (compra of comprasMsiAnteriores(); track compra.id) {
-              <p class="dashboard-screen__muted">Registrada: {{ compra.fecha | date:'dd/MM/yyyy' }}</p>
-              <app-movimiento-mobile-card [movimiento]="compra" [soloLectura]="true" />
+
+              <app-movimiento-mobile-card [movimiento]="compra" (editar)="editarPlanAnterior(compra.plantillaId!)" (eliminar)="eliminarMovimiento($event)" />
             }
           </div>
         }
@@ -727,4 +727,4 @@
         </div>
       </div>
     }
-  
+

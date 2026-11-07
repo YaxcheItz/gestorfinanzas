@@ -1,3 +1,5 @@
+import { By } from '@angular/platform-browser';
+import { MovimientoMobileCardComponent } from '../../shared/components/movimiento-mobile-card/movimiento-mobile-card.component';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of, Subject } from 'rxjs';
@@ -55,11 +57,23 @@ describe('TransaccionesComponent history filters', () => {
 
   it('muestra total MSI anterior aunque no haya cargos y no lo agrega al balance', () => {
     const c=fixture.componentInstance;
-    c.pageData.set({content:[],comprasMsiAnteriores:[{id:1,cuentaNombre:'Ficticia',tipo:'GASTO',moneda:'MXN',monto:90,fecha:'2026-11-07',descripcion:'Compra ficticia',compraMsiInformativa:true}],totalElements:0,totalPages:0,first:true,last:true} as any);
+    c.pageData.set({content:[],comprasMsiAnteriores:[{id:1,cuentaNombre:'Ficticia',tipo:'GASTO',moneda:'MXN',monto:90,fecha:'2026-11-07',descripcion:'Compra ficticia',compraMsiInformativa:true,plantillaId:42}],totalElements:0,totalPages:0,first:true,last:true} as any);
     c.loading.set(false);fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('Compras MSI anteriores');
+    expect(fixture.nativeElement.textContent).toContain('Compra ficticia');
+    expect(fixture.nativeElement.textContent).not.toContain('Compras MSI anteriores');
+    const editar=vi.spyOn(c,'editarCompraAnterior').mockImplementation(() => {}); const eliminar=vi.spyOn(c,'eliminarMovimiento').mockResolvedValue();
+    const card=fixture.debugElement.query(By.directive(MovimientoMobileCardComponent)).componentInstance as MovimientoMobileCardComponent;
+    expect(card.soloLectura).toBe(false);card.editar.emit(card.movimiento);card.eliminar.emit(1);
+    expect(editar).toHaveBeenCalledWith(42);expect(eliminar).toHaveBeenCalledWith(1);
     expect(fixture.nativeElement.textContent).not.toContain('Tu historial empieza');
     expect(c.resumenPaginaPorMoneda()).toEqual([]);
+  });
+
+  it('exige fecha original al editar MSI anterior', () => {
+    const c=fixture.componentInstance;
+    const compra={id:7,cuentaId:1,cuentaNombre:'Tarjeta ficticia',tipo:'GASTO',monto:30,moneda:'MXN',fecha:'2026-11-13',descripcion:'Ficticia',compraMsiId:'test',fechaCreacion:'2026-11-07T12:00:00'} as any;
+    c.abrirModalEditar(compra,{cuentaId:1,tipo:'GASTO',monto:90,fecha:'2026-11-13',msi:3} as any,true);
+    expect(c.modalAbierto()).toBe(true);expect(c.formMonto).toBe(90);expect(c.formFecha).toBe('');
   });
 
   it('muestra compra y cuota sin sumar dos veces el gasto',()=>{

@@ -94,7 +94,7 @@ import {
               </label>
             </div>
             <div class="flex md:col-span-2 md:justify-end">
-              <button type="submit" [disabled]="guardandoPerfil() || !perfilService.perfil()" class="min-h-11 w-full rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50 md:w-auto">
+              <button type="submit" [disabled]="guardandoPerfil() || guardandoTema() || !perfilService.perfil()" class="min-h-11 w-full rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50 md:w-auto">
                 {{ guardandoPerfil() ? 'Guardando...' : 'Guardar perfil' }}
               </button>
             </div>
@@ -145,17 +145,12 @@ import {
       <details id="appearance" class="settings-disclosure scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6" [open]="seccionAbierta() === 'appearance'" (toggle)="alternarSeccion('appearance', $event)">
         <summary><strong>Apariencia y visualización</strong><span>Tema, moneda y visibilidad de montos</span></summary>
         <div class="settings-disclosure__content">
-        <div class="mb-5">
-          <h2 class="text-base font-bold text-slate-900">Apariencia y visualización</h2>
-          <p class="mt-1 text-xs text-slate-500">Los temas claro y oscuro y la moneda se sincronizan; Automático sigue el sistema en este dispositivo.</p>
-        </div>
-        <form (ngSubmit)="guardarPerfil()" class="space-y-4">
           <fieldset>
             <legend class="mb-2 text-xs font-semibold text-slate-700">Tema</legend>
             <div class="settings-theme-choices">
               <button
                 type="button"
-                (click)="tema = 'CLARO'"
+                (click)="cambiarTema('CLARO')" [disabled]="guardandoTema()"
                 [attr.aria-pressed]="tema === 'CLARO'"
                 [class]="tema === 'CLARO' ? 'border-emerald-500 bg-emerald-50 text-emerald-800 ring-1 ring-emerald-500' : 'border-slate-200 bg-white text-slate-700'"
                 class="min-h-12 rounded-xl border px-3 text-sm font-semibold">
@@ -163,7 +158,7 @@ import {
               </button>
               <button
                 type="button"
-                (click)="tema = 'OSCURO'"
+                (click)="cambiarTema('OSCURO')" [disabled]="guardandoTema()"
                 [attr.aria-pressed]="tema === 'OSCURO'"
                 [class]="tema === 'OSCURO' ? 'theme-button--selected-dark' : 'border-slate-200 bg-white text-slate-700'"
                 class="min-h-12 rounded-xl border px-3 text-sm font-semibold">
@@ -171,7 +166,7 @@ import {
               </button>
               <button
                 type="button"
-                (click)="tema = 'AUTO'"
+                (click)="cambiarTema('AUTO')" [disabled]="guardandoTema()"
                 [attr.aria-pressed]="tema === 'AUTO'"
                 [class]="tema === 'AUTO' ? 'border-emerald-500 bg-emerald-50 text-emerald-800 ring-1 ring-emerald-500' : 'border-slate-200 bg-white text-slate-700'"
                 class="min-h-12 rounded-xl border px-2 text-sm font-semibold">
@@ -183,34 +178,6 @@ import {
             }
           </fieldset>
 
-          <label class="block text-xs font-semibold text-slate-700">
-            Moneda predeterminada del dashboard
-            <select
-              name="monedaPredeterminada"
-              [(ngModel)]="monedaPredeterminada"
-              class="mt-1.5 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm font-normal text-slate-900">
-              @for (moneda of monedas; track moneda.codigo) {
-                <option [value]="moneda.codigo">{{ moneda.codigo }} · {{ moneda.nombre }}</option>
-              }
-            </select>
-          </label>
-
-          <div class="flex items-center gap-3">
-            <input id="ocultar-montos" type="checkbox" name="ocultarMontos" [ngModel]="privacidad.ocultarMontos()" (ngModelChange)="perfilService.alternarOcultarMontos()" class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" />
-            <label for="ocultar-montos" class="cursor-pointer text-xs font-semibold text-slate-700">
-              Ocultar montos en toda la aplicaci&oacute;n
-              <span class="mt-0.5 block font-normal text-slate-500">
-                Sustituye las cifras por puntos suspensivos. &Uacute;til para mostrar la pantalla en p&uacute;blico. Los porcentajes de las gr&aacute;ficas siguen visibles.
-              </span>
-            </label>
-          </div>
-
-          <div class="flex justify-end border-t border-slate-100 pt-4">
-            <button type="submit" [disabled]="guardandoPerfil() || !perfilService.perfil()" class="min-h-11 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">
-              {{ guardandoPerfil() ? 'Guardando...' : 'Guardar preferencias' }}
-            </button>
-          </div>
-        </form>
       </div></details>
 
       <details id="notifications" class="settings-disclosure scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6 dark:border-slate-700 dark:bg-slate-900" [open]="seccionAbierta() === 'notifications'" (toggle)="alternarSeccion('notifications', $event)">
@@ -545,6 +512,7 @@ export class ConfiguracionComponent implements OnInit {
   readonly nombreCuentaVisible = nombreCuentaVisible;
   readonly monedas = MONEDAS_DISPONIBLES;
   readonly guardandoPerfil = signal(false);
+  readonly guardandoTema = signal(false);
   readonly guardandoPassword = signal(false);
   readonly descargandoRespaldo = signal(false);
   readonly exportandoCsv = signal(false);
@@ -693,7 +661,27 @@ export class ConfiguracionComponent implements OnInit {
     if (usuarioId) this.perfilService.cargar(usuarioId);
   }
 
+  cambiarTema(tema: 'CLARO' | 'OSCURO' | 'AUTO'): void {
+    const perfil = this.perfilService.perfil();
+    if (!perfil || this.guardandoTema() || this.guardandoPerfil()) return;
+    const anterior = this.tema;
+    this.guardandoTema.set(true);
+    this.tema = tema;
+    this.perfilService.configurarTema(perfil.id, tema);
+    const fallar = (mensaje: string) => {
+      this.tema = anterior;
+      this.perfilService.configurarTema(perfil.id, anterior);
+      this.guardandoTema.set(false);
+      this.toastService.error(mensaje);
+    };
+    this.perfilService.actualizar({nombre:perfil.nombre,email:perfil.email,tema:tema === 'AUTO' ? this.perfilService.temaSistema() : tema,monedaPredeterminada:perfil.monedaPredeterminada,telefono:perfil.telefono,notificacionesWhatsapp:perfil.notificacionesWhatsapp,ocultarMontos:perfil.ocultarMontos}).subscribe({
+      next:r=>{if (!r.success) fallar(r.message || 'No se pudo guardar el tema.'); else this.guardandoTema.set(false);},
+      error:e=>fallar(e.error?.message || 'No se pudo guardar el tema.')
+    });
+  }
+
   guardarPerfil(): void {
+    if (this.guardandoTema()) return;
     this.guardandoPerfil.set(true);
     const usuarioId = this.perfilService.perfil()?.id;
     if (usuarioId) this.perfilService.configurarTema(usuarioId, this.tema);

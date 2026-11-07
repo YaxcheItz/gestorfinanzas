@@ -1584,6 +1584,10 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  editarPlanAnterior(id: number): void {
+    void this.router.navigate(['/transacciones'], { queryParams: { editarPlan: id, fechaOriginal: 'requerida' } });
+  }
+
   editarMovimiento(id: number): void {
     this.router.navigate(['/transacciones'], { queryParams: { editar: id } });
   }

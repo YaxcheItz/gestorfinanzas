@@ -2,7 +2,7 @@ import { WhatsappConnectionService } from '../../core/services/whatsapp-connecti
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { SwPush } from '@angular/service-worker';
-import { Observable, of } from 'rxjs';
+import { Observable, of, Subject, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FinanzasService } from '../../core/services/finanzas.service';
 import { PerfilService } from '../../core/services/perfil.service';
@@ -79,6 +79,14 @@ describe('ConfiguracionComponent data safety', () => {
 
   afterEach(() => {
     if (fixture) fixture.destroy();
+  });
+
+  it('aplica el tema al tocar, evita carreras y revierte si falla', () => {
+    const c=fixture.componentInstance;
+    const respuesta=new Subject<any>();perfil.actualizar.mockReturnValueOnce(respuesta);
+    c.cambiarTema('OSCURO');expect(perfil.configurarTema).toHaveBeenCalledWith(7,'OSCURO');
+    c.cambiarTema('CLARO');expect(perfil.actualizar).toHaveBeenCalledTimes(1);
+    respuesta.error({});expect(c.tema).toBe('CLARO');expect(perfil.configurarTema).toHaveBeenLastCalledWith(7,'CLARO');
   });
 
   it('no solicita permisos al abrir configuración ni si faltan claves del servidor', async () => {
