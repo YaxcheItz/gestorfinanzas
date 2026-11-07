@@ -11,6 +11,12 @@ test('MSI antes del corte retiene credito sin cargo ni gasto en el historial',as
  expect((await estado()).saldoActual).toBe(0);expect((await estado()).limiteRetenido).toBe(90);
  const historia=(await (await request.get('/api/transacciones?size=100',{headers})).json()).data.content;expect(historia.some((x:any)=>x.id===t.id)).toBe(false);
  expect(historia.filter((x:any)=>x.compraMsiInformativa)).toHaveLength(1);expect(historia.find((x:any)=>x.compraMsiInformativa).monto).toBe(90);
+ const tarjeta=(await (await request.get(`/api/transacciones?cuentaId=${cid}&size=100`,{headers})).json()).data.content;
+ expect(tarjeta.some((x:any)=>x.compraMsiInformativa && x.monto===90)).toBe(true);
+ const inicio=(await (await request.get(`/api/dashboard/resumen?mes=${fecha.getUTCMonth()+1}&anio=${fecha.getUTCFullYear()}`,{headers})).json()).data;
+ expect(inicio.ultimosMovimientos.some((x:any)=>x.compraMsiInformativa && x.monto===90)).toBe(true);
+ expect(inicio.ultimosMovimientos.some((x:any)=>x.id===t.id)).toBe(false);
+
  const editar=await request.put(`/api/transacciones/${t.id}`,{headers,data:{...datos,monto:120,msi:4}});expect(editar.ok(),await editar.text()).toBeTruthy();expect((await estado()).saldoActual).toBe(0);expect((await estado()).limiteRetenido).toBe(120);
  const borrar=await request.delete(`/api/transacciones/${t.id}?planMsi=true`,{headers});expect(borrar.ok()).toBeTruthy();expect((await estado()).saldoActual).toBe(0);expect((await estado()).limiteRetenido).toBe(0);
  const libro=(await (await request.get('/api/libro-diario?size=100',{headers})).json()).data.content;expect(libro).toHaveLength(0);
