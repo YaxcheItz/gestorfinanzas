@@ -114,7 +114,7 @@
 
       <section #homeHero class="dashboard-screen__monthly" (touchstart)="onHeroTouchStart($event)" (touchmove)="onHeroTouchMove($event)" (touchend)="onHeroTouchEnd($event)" [style.transform]="heroSwipeTransform()" aria-labelledby="dashboard-balance-title">
         <p id="dashboard-balance-title" class="home-total-label">Gastos del periodo</p>
-        @if (loading() || contextoLista.cargando()) { <div class="loading-placeholder loading-placeholder--amount" role="status" aria-label="Cargando gastos"></div> }
+        @if (loading() || contextoLista.cargando()) { <div class="home-amount-loading" role="status" aria-label="Cargando gastos"></div> }
         @else if (resumenMonedaSeleccionada(); as moneda) {
           <p class="dashboard-screen__amount" aria-live="polite">{{ moneda.gastosMes | monto:moneda.moneda:'symbol-narrow':'1.2-2' }}</p>
           <label class="home-currency"><span class="sr-only">Moneda del balance</span><select [ngModel]="monedaResumen()" (ngModelChange)="cambiarMoneda($event)" aria-label="Moneda del balance">@for (codigo of monedasResumen(); track codigo) {<option [value]="codigo">{{ codigo }}</option>}</select></label>
@@ -134,7 +134,7 @@
 
       <section class="home-categories" aria-labelledby="home-categories-title">
         <h2 id="home-categories-title" class="sr-only">Gastos por categoría</h2>
-        @if (graficoLoading() || contextoLista.cargando()) {<div class="finance-loading-card" role="status" aria-label="Cargando categorías"><span class="loading-placeholder" aria-hidden="true"></span><span class="loading-placeholder loading-placeholder--amount" aria-hidden="true"></span></div>}
+        @if (graficoLoading() || contextoLista.cargando()) {<div class="home-chart-loading" role="status" aria-label="Cargando categorías"><span></span><span></span><span></span><span></span></div>}
         @else if (graficoError()) {<p class="home-inline-state" role="alert">No pudimos cargar las categorías. <button type="button" (click)="cargarDashboard()">Reintentar</button></p>}
         @else if (categoriasInicio().length > 0) {
           @if (categoriaGestoActiva()) {
