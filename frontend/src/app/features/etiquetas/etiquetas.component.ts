@@ -13,21 +13,21 @@ import { mensajeDeError } from '../../core/utils/mensaje-error';
   </form>
   @if (error()) {<p role="alert" class="text-rose-700">{{error()}}</p>}
   <p class="text-sm text-slate-500">Eliminar una etiqueta de esta lista no cambia los movimientos anteriores.</p>
-  @if (cargando()) {<p>Cargando etiquetas…</p>} @else if (!etiquetas().length) {<p class="rounded-2xl border p-5 text-slate-500">Aún no tienes etiquetas en tu lista.</p>}
-  <ul class="space-y-2">@for (etiqueta of etiquetas(); track etiqueta.id) {
+  @if (cargando()) {<div class="finance-loading-card" role="status" aria-label="Cargando etiquetas"><span class="loading-placeholder" aria-hidden="true"></span></div>} @else if (!errorCarga() && !etiquetas().length) {<p class="rounded-2xl border p-5 text-slate-500">Aún no tienes etiquetas en tu lista.</p>}
+  @if (!cargando() && !errorCarga()) {<ul class="space-y-2">@for (etiqueta of etiquetas(); track etiqueta.id) {
     <li class="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-2">
       <span class="font-semibold break-all">#{{etiqueta.nombre}}</span>
       <button type="button" (click)="eliminar(etiqueta)" [disabled]="ocupado()" [attr.aria-label]="'Eliminar etiqueta ' + etiqueta.nombre" class="min-h-11 px-3 text-rose-700 font-semibold">Eliminar</button>
     </li>
-  }</ul>
+  }</ul>}
 </main>`})
 export class EtiquetasComponent {
   private readonly api=inject(FinanzasService);
   readonly etiquetas=signal<{id:number; nombre:string}[]>([]);
-  readonly error=signal(''); readonly cargando=signal(true); readonly ocupado=signal(false);
-  nombre='';
+  readonly error=signal(''); readonly errorCarga=signal(false); readonly cargando=signal(true); readonly ocupado=signal(false);
+  nombre=''; private versionCarga=0;
   constructor() { this.cargar(); }
-  cargar(): void { this.cargando.set(true); this.api.getEtiquetasPersonales().subscribe({next:r=>{this.etiquetas.set(r.data??[]);this.cargando.set(false);},error:e=>{this.error.set(mensajeDeError(e,'No se pudieron cargar las etiquetas.'));this.cargando.set(false);}}); }
+  cargar(): void { const version=++this.versionCarga;this.cargando.set(true);this.errorCarga.set(false);this.error.set('');this.api.getEtiquetasPersonales().subscribe({next:r=>{if(version!==this.versionCarga)return;if(!r.success){this.errorCarga.set(true);this.error.set(r.message || 'No se pudieron cargar las etiquetas.');}else this.etiquetas.set(r.data??[]);this.cargando.set(false);},error:e=>{if(version!==this.versionCarga)return;this.errorCarga.set(true);this.error.set(mensajeDeError(e,'No se pudieron cargar las etiquetas.'));this.cargando.set(false);}}); }
   crear(): void {
     const nombre=this.nombre.trim(); if(!nombre) {this.error.set('Escribe una etiqueta.');return;}
     this.error.set('');this.ocupado.set(true);

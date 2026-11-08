@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { Categoria, PresupuestoResumen } from '../../core/models/finanzas.models';
 import { CategoriaOrdenService } from '../../core/services/categoria-orden.service';
 import { FinanzasService } from '../../core/services/finanzas.service';
@@ -62,6 +62,20 @@ describe('CategoriasComponent category management', () => {
   });
 
   afterEach(() => fixture.destroy());
+
+  it('distingue carga, error y lista vacia de categorias', () => {
+    const pendiente = new Subject<any>();
+    finanzas.getMisCategorias.mockReturnValueOnce(pendiente);
+    fixture.componentInstance.cargar(); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[aria-label="Cargando categorías"]')).not.toBeNull();
+    expect(fixture.nativeElement.textContent).not.toContain('Aún no has creado');
+    pendiente.error({status:503}); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[role="alert"]')).not.toBeNull();
+    expect(fixture.nativeElement.textContent).not.toContain('Aún no has creado');
+    finanzas.getMisCategorias.mockReturnValueOnce(of({success:true,data:[]}));
+    fixture.componentInstance.cargar(); fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Aún no has creado');
+  });
 
   it('solo reasigna al elegir destino y confirmar', () => {
     const component=fixture.componentInstance; component.abrirReasignacion(category);

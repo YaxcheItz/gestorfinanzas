@@ -37,7 +37,9 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
       }
 
       @if (loading()) {
-        <p class="p-12 bg-white border border-slate-200 rounded-2xl text-center text-sm text-slate-400">Cargando categorías...</p>
+        <div class="finance-loading-list" role="status" aria-label="Cargando categorías">@for (fila of [0,1,2]; track fila) {<div class="finance-loading-card" aria-hidden="true"><span class="loading-placeholder"></span></div>}</div>
+      } @else if (error()) {
+        <p class="finance-state-note">No se pueden consultar tus categorías ahora.</p>
       } @else if (categoriasVisibles().length === 0) {
         <p class="p-12 bg-white border border-slate-200 rounded-2xl text-center text-sm text-slate-500">
           Aún no has creado categorías personalizadas.

@@ -19,7 +19,7 @@
     }
     <router-outlet #contenido="outlet" />
     @if (!contenido.isActivated && authService.isAuthenticated()) {
-      <p role="status" class="mx-4 my-3">Preparando tu sesión…</p>
+      <div class="session-skeleton mx-4 my-3" role="status" aria-label="Cargando"></div>
     }
   </main>
   @if (authService.isAuthenticated()) {

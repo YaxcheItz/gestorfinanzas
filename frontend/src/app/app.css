@@ -28,3 +28,6 @@
   outline: 2px solid var(--kaptal-focus);
   outline-offset: 3px;
 }
+
+.session-skeleton { width: min(18rem, 70%); height: 2rem; border-radius: .75rem; background: #e2e8f0; }
+:host-context(.dark) .session-skeleton { background: #334155; }
