@@ -55,6 +55,24 @@ describe('TransaccionesComponent history filters', () => {
   };
   let confirm: ReturnType<typeof vi.fn>;
 
+  it('oculta resultados anteriores al cargar y distingue error de historial vacio', () => {
+    const c = fixture.componentInstance;
+    c.pageData.set({content: [{id: 123, tipo: 'GASTO', monto: 10, moneda: 'MXN', fecha: '2026-01-01', descripcion: 'Dato ficticio anterior'}], totalPages: 1} as any);
+    const pendiente = new Subject<any>();
+    finanzasService.getTransaccionesPaginadas.mockReturnValueOnce(pendiente);
+    c.cargarTransacciones(); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[aria-label="Cargando movimientos"]')).not.toBeNull();
+    expect(fixture.nativeElement.textContent).not.toContain('Dato ficticio anterior');
+    expect(fixture.nativeElement.querySelector('.history-summary-disclosure')).toBeNull();
+    pendiente.error({status: 503}); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.history-results [role="alert"]')).not.toBeNull();
+    expect(fixture.nativeElement.textContent).not.toContain('Tu historial empieza');
+    expect(fixture.nativeElement.textContent).not.toContain('Dato ficticio anterior');
+    finanzasService.getTransaccionesPaginadas.mockReturnValueOnce(of({success:true,data:{content:[],totalPages:0}}));
+    c.cargarTransacciones(); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.history-empty')).not.toBeNull();
+  });
+
   it('muestra total MSI anterior aunque no haya cargos y no lo agrega al balance', () => {
     const c=fixture.componentInstance;
     c.pageData.set({content:[],comprasMsiAnteriores:[{id:1,cuentaNombre:'Ficticia',tipo:'GASTO',moneda:'MXN',monto:90,fecha:'2026-11-07',descripcion:'Compra ficticia',compraMsiInformativa:true,plantillaId:42}],totalElements:0,totalPages:0,first:true,last:true} as any);
