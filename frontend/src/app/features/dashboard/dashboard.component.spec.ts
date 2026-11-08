@@ -63,6 +63,22 @@ describe('DashboardComponent movement dialog accessibility', () => {
     await TestBed.compileComponents();
   });
 
+  it('oculta presupuestos desconocidos y distingue vacio y error', () => {
+    const pendientes = new Subject<any>();
+    vi.spyOn(TestBed.inject(FinanzasService), 'getPresupuestos').mockReturnValue(pendientes);
+    const fixture = TestBed.createComponent(DashboardComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    component.cargarPresupuestos(); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.dashboard-screen__budgets')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[role="status"][aria-label="Cargando"]')).not.toBeNull();
+    pendientes.next({success: true, data: {presupuestos: [], resumenPorMoneda: []}}); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.dashboard-screen__budgets')).toBeNull();
+    component.presupuestoError.set('Fallo sintetico'); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.dashboard-screen__budgets [role="alert"]').textContent).toContain('Fallo sintetico');
+    fixture.destroy();
+  });
+
   it('espera las listas iniciales sin cache y carga una sola vez el contexto seleccionado', () => {
     const contexto = TestBed.inject(ListaContextoService);
     const resumen = vi.spyOn(TestBed.inject(FinanzasService), 'getDashboardResumen');

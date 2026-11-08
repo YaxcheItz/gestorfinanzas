@@ -675,6 +675,8 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
         this.loading.set(false);
         if (res.success && res.data) {
           this.pageData.set(res.data);
+        } else {
+          this.error.set('No se pudieron consultar los movimientos.');
         }
       },
       error: (err) => {

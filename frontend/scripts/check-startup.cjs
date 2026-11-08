@@ -64,7 +64,7 @@ async function run() {
         await page.goto(`${origin}/dashboard`, {waitUntil: 'domcontentloaded'});
         await page.locator('.app-shell').waitFor({state: 'visible', timeout: 5000});
         const shellMs = Math.round(performance.now() - start);
-        await page.getByRole('status').filter({hasText: 'Preparando tu sesión'}).waitFor();
+        await page.getByRole('status', {name: 'Cargando', exact: true}).waitFor();
         assert.equal(await page.locator('app-dashboard').count(), 0, 'La ruta protegida espera');
         assert.equal(protectedBeforeRefresh, 0);
         assert.equal(refreshes, 1);

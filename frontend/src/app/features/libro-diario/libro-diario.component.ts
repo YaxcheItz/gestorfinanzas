@@ -163,10 +163,8 @@ import { nombreCuentaVisible } from '../../core/utils/cuenta-financiera';
           <span>{{ error() }}</span>
           <button type="button" (click)="cargar()" class="self-start font-semibold underline sm:self-auto">Reintentar</button>
         </div>
-      } @else if (cargando() && !pagina()) {
-        <p role="status" class="rounded-xl border border-slate-200 bg-white p-5 text-sm text-slate-600">
-          Cargando asientos contables...
-        </p>
+      } @else if (cargando()) {
+        <div class="finance-loading-card" role="status" aria-label="Cargando asientos"><span class="loading-placeholder" aria-hidden="true"></span><span class="loading-placeholder loading-placeholder--amount" aria-hidden="true"></span></div>
       } @else if (pagina()?.empty) {
         <section class="rounded-2xl border border-slate-200 bg-white p-6 text-center sm:p-10">
           <h2 class="text-lg font-semibold text-slate-900">Aún no hay asientos contables</h2>

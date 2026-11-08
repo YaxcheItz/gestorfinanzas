@@ -179,7 +179,9 @@
         } @else if (!loading() && !error()) {<div class="home-empty"><span aria-hidden="true">&#127793;</span><h2>Sin gastos todavía</h2><p>Cuéntanos qué gastaste, hablando o escribiendo.</p><button type="button" (click)="abrirChatRegistro()">Prefiero registrarlo a mano</button></div>}
       </section>
 
-      @if (presupuestosDashboard().length > 0 || presupuestoLoading() || presupuestoError()) {
+      @if (presupuestoLoading()) {
+        <div class="loading-placeholder loading-placeholder--amount" role="status" aria-label="Cargando"></div>
+      } @else if (presupuestosDashboard().length > 0 || presupuestoError()) {
         <section class="dashboard-screen__budgets" aria-labelledby="dashboard-budgets-title">
           <div class="dashboard-screen__section-heading">
             <div>
@@ -188,8 +190,7 @@
             </div>
             <button type="button" class="dashboard-screen__text-link" (click)="irAPresupuestos()">Ver todos</button>
           </div>
-          @if (presupuestoLoading()) {<p class="home-inline-state">Cargando presupuestos…</p>}
-          @else if (presupuestoError()) {<p class="home-inline-state" role="alert">{{ presupuestoError() }} <button type="button" (click)="cargarPresupuestos()">Reintentar</button></p>}
+          @if (presupuestoError()) {<p class="home-inline-state" role="alert">{{ presupuestoError() }} <button type="button" (click)="cargarPresupuestos()">Reintentar</button></p>}
           @else {
             @for(presupuesto of presupuestosDashboard(); track presupuesto.id){
               <div class="home-budget-row"

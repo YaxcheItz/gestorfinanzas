@@ -1,3 +1,9 @@
+## Carga y rendimiento: etapa en curso - 7 noviembre 2026
+
+Rama rendimiento/arranque-estados-carga desde origin/develop e02c3b9. Inicio y espera de sesion muestran skeletons sin presumir presupuestos; Movimientos oculta resultados anteriores mientras carga y distingue error con reintento de historial vacio. No se altero coordinacion de sesion ni logica financiera. Build y 534 pruebas frontend aprobados; dos E2E locales de historial/presupuestos aprobados con datos ficticios. check-startup sintetico paso estados 200/401/503 sin solicitudes con token vencido; 503 tuvo tres renovaciones a investigar.
+
+JWT configurado 15 min; guard espera refresh vencido. Workflow keep-warm programado cada 10 min tiene ejecuciones publicas recientes separadas por horas, sin demostrar inactividad total del servidor. Tres consultas publicas de salud recientes 0.44-0.54 s no reprodujeron lentitud. No se midio sesion o API reales tras horas de inactividad en el telefono. ADB verifico 0.1.40 y arranques nativos WARM, no arranque frio. Pendientes revision completa de pantallas, medicion posterior a inactividad, CI exacta y comparacion, publicacion y APK nueva. No afirmar mejora de velocidad.
+
 ## Android 0.1.40 preparada - 7 noviembre 2026
 
 Entrega acciones MSI anteriores y tema inmediato, version0.1.40/codigo41 superior a0.1.39/codigo40. CI, despliegues y APK firmada se verifican por separado antes de instalar sin borrar datos. No se alteran compras reales para pruebas.

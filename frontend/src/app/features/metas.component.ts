@@ -23,6 +23,8 @@ import { fechaCivilFinanciera } from '../core/utils/periodo-financiero';
       <label>Moneda<select name="monedaMeta" [(ngModel)]="moneda">@for(m of monedas;track m.codigo){<option [value]="m.codigo">{{m.codigo}}</option>}</select></label>
       <button [disabled]="ocupada()" type="submit">Crear meta</button>
     </form>
+    @if(cargando()){<div class="finance-loading-card" role="status" aria-label="Cargando metas"><span class="loading-placeholder" aria-hidden="true"></span></div>}
+    @else if(!errorCarga()){
     @for(meta of metas();track meta.id){
       <article class="space-y-3 rounded-2xl border p-4">
         <h2 class="text-xl font-semibold">{{meta.nombre}}</h2>
@@ -42,6 +44,7 @@ import { fechaCivilFinanciera } from '../core/utils/periodo-financiero';
         }
       </article>
     } @empty {<p>Aún no tienes metas. Crea una y aporta desde una cuenta de la misma moneda.</p>}
+    }
     <p>Los movimientos aparecen en tu historial como transferencias. Cancelar no devuelve fondos automáticamente; puedes retirarlos cuando lo decidas.</p>
   </section>`,
   styles:`label{display:grid;gap:6px}input,select,button{min-height:44px;padding:10px;border:1px solid var(--kaptal-border);border-radius:12px;background:var(--kaptal-surface);color:var(--kaptal-content);font-size:16px}input,select{width:100%;min-width:0}button{margin-right:8px}button:disabled{opacity:.5}article{overflow-wrap:anywhere}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--kaptal-focus);outline-offset:2px}`
@@ -49,7 +52,8 @@ import { fechaCivilFinanciera } from '../core/utils/periodo-financiero';
 export class MetasComponent implements OnInit {
   private readonly http=inject(HttpClient);
   private readonly finanzas=inject(FinanzasService);
-  readonly cuentas=signal<Cuenta[]>([]);readonly ocupada=signal(false);readonly error=signal('');
+  readonly cuentas=signal<Cuenta[]>([]);readonly ocupada=signal(false);readonly error=signal('');readonly cargando=signal(true);readonly errorCarga=signal(false);
+  private versionCarga=0;
   readonly metas=computed(()=>this.cuentas().filter(c=>c.metaObjetivo!=null));
   readonly elegida=signal<Cuenta|null>(null);
   readonly disponibles=computed(()=>this.cuentas().filter(c=>c.activo && c.tipo!=='CREDITO' && c.id!==this.elegida()?.id && c.moneda===this.elegida()?.moneda));
@@ -57,7 +61,7 @@ export class MetasComponent implements OnInit {
   nombre='';objetivo:number|null=null;moneda='MXN';direccion:'aporte'|'retiro'='aporte';cuentaId:number|null=null;importe:number|null=null;
   private intento:{huella:string;clave:string}|null=null;
   ngOnInit(){void this.cargar();}
-  async cargar(){try{const r=await firstValueFrom(this.finanzas.getCuentas(true));if(!r.success)throw new Error(r.message);this.cuentas.set(r.data);this.error.set('');}catch{this.error.set('No se pudieron cargar las metas. Revisa la conexión.');}}
+  async cargar(){const version=++this.versionCarga;this.cargando.set(true);this.errorCarga.set(false);try{const r=await firstValueFrom(this.finanzas.getCuentas(true));if(version!==this.versionCarga)return;if(!r.success)throw new Error(r.message);this.cuentas.set(r.data);this.error.set('');}catch{if(version===this.versionCarga){this.errorCarga.set(true);this.error.set('No se pudieron cargar las metas. Revisa la conexión.');}}finally{if(version===this.versionCarga)this.cargando.set(false);}}
   abrir(meta:Cuenta,direccion:'aporte'|'retiro'){this.elegida.set(meta);this.direccion=direccion;this.cuentaId=null;this.importe=null;this.error.set('');}
   async crear(){await this.ejecutar(async()=>{const r=await firstValueFrom(this.http.post<ApiResponse<Cuenta>>(`${getApiBaseUrl()}/metas`,{nombre:this.nombre,objetivo:this.objetivo,moneda:this.moneda}));if(!r.success)throw new Error(r.message);this.nombre='';this.objetivo=null;});}
   async cancelar(meta:Cuenta){await this.ejecutar(async()=>{const r=await firstValueFrom(this.http.patch<ApiResponse<Cuenta>>(`${getApiBaseUrl()}/metas/${meta.id}/estado`,{cancelada:!meta.metaCancelada}));if(!r.success)throw new Error(r.message);this.elegida.set(null);});}
