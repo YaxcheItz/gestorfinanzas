@@ -14,9 +14,10 @@
   <nav aria-label="Estado de avisos" class="filters">@for(f of filtros;track f.valor){<button class="pill" [attr.aria-pressed]="estado()===f.valor" (click)="filtrar(f.valor)">{{f.texto}}</button>}</nav>
   @if(error()){<div role="alert" class="notice">{{error()}} <button (click)="cargar()">Recargar bandeja</button></div>}
   @if(mensaje()){<p role="status">{{mensaje()}}</p>}
-  @if(cargando()){<p role="status" class="muted">Cargando avisos…</p>}
+  @if(cargando()){<div class="finance-loading-list" role="status" aria-label="Cargando avisos">@for(fila of [0,1,2];track fila){<div class="finance-loading-card" aria-hidden="true"><span class="loading-placeholder"></span><span class="loading-placeholder loading-placeholder--amount"></span></div>}</div>}
   @else if(!avisos().length && !error()){<section class="empty"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 5h16v14H4zM4 6l8 7 8-7" /></svg><h2>{{estado()==='PENDIENTE'?'No hay revisiones pendientes':'Sin revisiones en esta vista'}}</h2><p class="muted">Aquí aparecen tus avisos enviados para revisión. Las compras registradas automáticamente están en Movimientos.</p></section>}
-  <div [attr.aria-busy]="cargando()">@for(a of avisos();track a.id){<article class="row">
+  @if(!cargando() && !error()){
+  <div>@for(a of avisos();track a.id){<article class="row">
     <div class="row-top"><span class="notice-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5h16v14H4zM4 6l8 7 8-7" /></svg></span><div class="copy"><h2>{{(a.datos?.descripcion || a.resumen) | textoFinanciero}}</h2><p class="muted">{{etiquetaOrigen(a.origen)}} · {{etiquetaClase(a.clase)}} · {{etiquetaEstado(a.estado)}}</p></div>@if(a.datos?.monto!=null){<strong>{{a.datos!.monto! | monto:a.moneda:'symbol':'1.2-2'}}</strong>}</div>
     @if(a.coincidencias.length){<p class="notice">Hay {{a.coincidencias.length}} movimiento(s) parecido(s). Podría ser otra compra: revísalo antes de guardar.</p><a routerLink="/transacciones" [queryParams]="{detalle:a.coincidencias[0]}">Revisar movimiento parecido</a>}
     <div class="actions">@if(a.estado==='PENDIENTE'){
@@ -24,6 +25,7 @@
     }@else if(a.transaccionId){<a routerLink="/transacciones" [queryParams]="{detalle:a.transaccionId}">Ver movimiento</a>}</div>
   </article>}</div>
   @if(paginas()>1){<nav aria-label="Páginas de avisos" class="actions"><button class="pill" (click)="pagina.set(pagina()-1);cargar()" [disabled]="pagina()===0||cargando()">Anterior</button><span>{{pagina()+1}} / {{paginas()}}</span><button class="pill" (click)="pagina.set(pagina()+1);cargar()" [disabled]="pagina()+1>=paginas()||cargando()">Siguiente</button></nav>}
+  }
 </section>
 @if(formulario()){
 <div class="backdrop"><section class="sheet" role="dialog" aria-modal="true" aria-labelledby="aviso-title" appFocusTrap tabindex="-1" (focusTrapEscape)="cerrar()">
