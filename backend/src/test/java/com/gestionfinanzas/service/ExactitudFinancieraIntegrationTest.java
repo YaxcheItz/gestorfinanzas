@@ -92,7 +92,7 @@ class ExactitudFinancieraIntegrationTest {
         transacciones.findAllByUsuarioIdOrderByFechaAscIdAsc(usuarioId).stream()
                 .filter(Transaccion::isCompraMsiInformativa).forEach(transacciones::delete);
         em.flush();
-        em.createNativeQuery("update transacciones set fecha_creacion = :fecha where id = :id")
+        em.createNativeQuery("update {h-schema}transacciones set fecha_creacion = :fecha where id = :id")
                 .setParameter("fecha", hoy.minusDays(5).atStartOfDay()).setParameter("id", cuota.id()).executeUpdate();
         em.clear();
         for (int dias : new int[]{-1, -2, -4}) {

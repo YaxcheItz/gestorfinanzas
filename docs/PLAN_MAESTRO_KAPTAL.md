@@ -1,3 +1,7 @@
+## Ajuste de prueba para PostgreSQL - 10 noviembre 2026
+
+CI del commit 793f1b9 detecto que una prueba de MSI usaba SQL nativo sin esquema y fallo con PostgreSQL 42P01. Se usa el marcador de esquema de Hibernate; la prueba focal paso localmente en H2. La verificacion PostgreSQL real depende de la nueva ejecucion de CI. No se modificaron datos financieros reales.
+
 ## Captura y conexiones: rama en revision - 10 noviembre 2026
 
 Esta rama contiene reglas locales ampliadas, clasificacion Groq acotada y guardado automatico cuando el movimiento es inequivoco; manejo de respuestas lentas y presupuesto de IA; orden de compras MSI anteriores; mejoras de avisos y busqueda de aplicaciones; y proteccion frente a renovaciones bancarias concurrentes y limpieza condicional de credenciales. No se han modificado movimientos reales. Las pruebas locales incluyen 560 frontend, 716 backend con 9 omitidas, build Angular y E2E sinteticas; deben repetirse en CI para el commit exacto. La interfaz de limpieza requiere que el backend compatible este desplegado primero. La integracion con Groq real, dispositivo fisico y causa de desconexion siguen pendientes; no afirmar solucion ni publicar sin completar comprobaciones.
