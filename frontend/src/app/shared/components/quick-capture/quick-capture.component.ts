@@ -217,7 +217,7 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
             <button type="submit" class="capture-chat__send" [disabled]="loading() || catalogoCargando() || escuchando() || stopping() || !content.trim()" aria-label="Enviar movimiento"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 14-7-5 14-3-6-6-1Z"/><path d="m11 13 4-4"/></svg></button>
           </form>
           @if (voiceMessage()) { <p class="voice-transcribed" role="status">{{ voiceMessage() }}</p> }
-          <details class="capture-options"><summary>IA opcional · {{ consent ? 'permitida' : 'sin permiso' }}</summary><label class="capture-consent capture-chat__consent"><input type="checkbox" [(ngModel)]="consent" name="captureConsent"><span>Permitir IA con mi contexto financiero para consultas complejas</span></label><p>El registro habitual usa reglas. Tú decides cuándo permitir IA.</p></details>
+          <details class="capture-options"><summary>Opciones de inteligencia artificial</summary><p>Si no se reconoce la categoría, se envían a Groq el concepto y tus categorías compatibles para clasificarlo.</p><label class="capture-consent capture-chat__consent"><input type="checkbox" [(ngModel)]="consent" name="captureConsent"><span>Permitir IA con mi contexto financiero para consultas complejas</span></label></details>
           }
         } @else {
           <div class="report-thread" aria-live="polite" aria-relevant="additions text" [attr.aria-busy]="reportLoading()">
@@ -410,7 +410,7 @@ export class QuickCaptureComponent implements OnDestroy {
   private persistirCatalogo():void{
     const uid=this.usuarioChat;if(uid!==null)void this.offline.guardarCatalogo(uid,this.cuentasEdicion(),this.categories()).catch(()=>{});
   }
-  private esPedidoNuevo(texto: string): boolean { return /^(?:por favor\s+)?(?:gast[eé]|gasto|pagu[eé]|compr[eé]|compra\b|recib[ií]|ingres[eé]|ingreso|transfer|reporte|resumen|saldo|top|alertas)/i.test(texto); }
+  private esPedidoNuevo(texto: string): boolean { return /^(?:por favor\s+)?(?:gast[eé]|gasto|pagu[eé]|compr[eé]|compra\b|me gast[eé]|me cost[oó]|me costaron|me cobraron|desembols[eé]|se me fueron|recib[ií]|ingres[eé]|ingreso|transfer|reporte|resumen|saldo|top|alertas)/i.test(texto); }
   usarSugerencia(texto: string): void { this.contexto = null; this.content = texto; this.voiceCapture.set(false); this.submit(); }
   limpiarChat(): void { if (this.loading() || this.confirming() || this.listening()) return; this.captureTurns.set([]); this.contexto = null; this.content = ''; this.error.set(''); this.aiConsentRequired.set(false); }
   anchoReporte(report: AiReportWidget, index: number): number { if (this.privacidad.ocultarMontos()) return 0; const max=Math.max(0,...report.values); return max>0?Math.max(0,Math.min(100,report.values[index]/max*100)):0; }
@@ -616,9 +616,10 @@ export class QuickCaptureComponent implements OnDestroy {
         this.contexto = response.data.contexto ?? null;
         const proposals = response.data.actions?.length ? response.data.actions : response.data.action ? [response.data.action] : [];
         this.captureTurns.update(turns => [...turns, { id: ++this.captureTurnId, user: value, answer: response.data!.answer, actions: proposals, voice: capturedByVoice, report: response.data!.report, evidence: response.data!.evidence, suggestions: response.data!.suggestions, engine: response.data!.engine }]);
-        if (guardarVoz && response.data.engine === 'REGLAS' && proposals.length === 1 && this.puedeGuardarVoz(proposals[0], value)) {
-          this.guardadoVozId = proposals[0].id;
-          this.voiceMessage.set('Guardando movimiento…');
+        const guardarClasificado = response.data.engine === 'GROQ_CATEGORIA' && proposals.length === 1
+          && !proposals[0].data['msi'] && this.puedeGuardarVoz(proposals[0], `${contexto ?? ''} ${value}`);
+        if ((guardarVoz && response.data.engine === 'REGLAS' && proposals.length === 1 && this.puedeGuardarVoz(proposals[0], value)) || guardarClasificado) {
+          if (guardarVoz) { this.guardadoVozId = proposals[0].id; this.voiceMessage.set('Guardando movimiento…'); }
           this.confirm(proposals[0]);
         } else if (guardarVoz) {
           this.pantallaVoz.set(false); this.open.set(true);

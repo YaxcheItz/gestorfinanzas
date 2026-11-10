@@ -10,4 +10,10 @@ public class AiHttpClient {
         factory.setConnectTimeout(10000);factory.setReadTimeout(30000);
         return builder.clone().requestFactory(factory);
     }
+    public RestClient.Builder configurarCaptura(RestClient.Builder builder) {
+        var factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(2000);
+        factory.setReadTimeout(5000);
+        return builder.clone().requestFactory(factory);
+    }
 }

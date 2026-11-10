@@ -22,6 +22,8 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest @ActiveProfiles("test") @org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 class PropuestasChatIntegrationTest {
     @Autowired AiActionService acciones;
+    @Autowired AiAssistantService asistente;
+    @org.springframework.test.context.bean.override.mockito.MockitoBean GroqAiProvider groq;
     @Autowired PropuestaChatService almacen;
     @Autowired PropuestaChatRepository propuestas;
     @Autowired UsuarioRepository usuarios;
@@ -122,6 +124,75 @@ class PropuestasChatIntegrationTest {
         assertEquals(categoria.id(),guardadas.getFirst().categoriaId());
         assertEquals(new BigDecimal("25.00"),guardadas.getFirst().monto());
         assertEquals(datos.descripcion(),guardadas.getFirst().descripcion());
+    }
+    @Test void categoriaClasificadaYConfirmacionesConcurrentesGuardanUnaSolaVez() throws Exception {
+        var categoria = categorias.crearCategoria(a.getId(), new CategoriaRequest("Comida ficticia", TipoTransaccion.GASTO, null, null));
+        var original = propuesta();
+        var clasificada = acciones.asignarCategoriaCaptura(a.getId(), original, categoria.id());
+        assertThrows(IllegalArgumentException.class, () -> acciones.asignarCategoriaCaptura(b.getId(), original, categoria.id()));
+        assertThrows(IllegalArgumentException.class, () -> acciones.confirm(a.getId(), original.id(), original.version()));
+        var executor = Executors.newFixedThreadPool(2); var inicio = new CountDownLatch(1);
+        try {
+            var uno = executor.submit(() -> { inicio.await(); return acciones.confirm(a.getId(), clasificada.id(), clasificada.version()); });
+            var dos = executor.submit(() -> { inicio.await(); return acciones.confirm(a.getId(), clasificada.id(), clasificada.version()); });
+            inicio.countDown();
+            assertEquals(uno.get(20, TimeUnit.SECONDS), dos.get(20, TimeUnit.SECONDS));
+            assertEquals(1, transacciones.listarRecientes(a.getId()).size());
+            assertEquals(categoria.id(), transacciones.listarRecientes(a.getId()).getFirst().categoriaId());
+            assertEquals(new BigDecimal("75.00"), cuentas.findById(cuenta.getId()).orElseThrow().getSaldoActual());
+        } finally { executor.shutdownNow(); assertTrue(executor.awaitTermination(10, TimeUnit.SECONDS)); }
+    }
+    @Test void capturaClasificadaConGroqSimuladoConservaEtiquetasYEsIdempotente() {
+        var categoria = categorias.crearCategoria(a.getId(), new CategoriaRequest("Comida ficticia", TipoTransaccion.GASTO, null, null));
+        org.mockito.Mockito.when(groq.isConfigured()).thenReturn(true);
+        org.mockito.Mockito.when(groq.generateCaptura(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyInt()))
+                .thenReturn("{\"categoriaId\":" + categoria.id() + ",\"etiquetas\":[\"almuerzo\"]}");
+        var respuesta = asistente.quickCapture(a.getId(), new AiQuickCaptureRequest("Gaste 25 en empanadas desde Efectivo prueba", false, false));
+        assertEquals("GROQ_CATEGORIA", respuesta.engine());
+        org.mockito.Mockito.verify(groq).generateCaptura(org.mockito.ArgumentMatchers.argThat(prompt -> !prompt.contains("efectivo prueba") && prompt.contains("empanadas")), org.mockito.ArgumentMatchers.anyInt());
+        var p = respuesta.action();
+        assertEquals(categoria.id(), p.data().path("categoriaId").longValue());
+        assertEquals("almuerzo", p.data().path("etiquetas").get(0).asText());
+        assertTrue(transacciones.listarRecientes(a.getId()).isEmpty());
+        acciones.confirm(a.getId(), p.id(), p.version());
+        acciones.confirm(a.getId(), p.id(), p.version());
+        assertEquals(1, transacciones.listarRecientes(a.getId()).size());
+        assertEquals(new BigDecimal("75.00"), cuentas.findById(cuenta.getId()).orElseThrow().getSaldoActual());
+    }
+    @Test void frasesCotidianasConsultanGroqParaElConceptoDesconocido() {
+        var categoria = categorias.crearCategoria(a.getId(), new CategoriaRequest("Comida ficticia", TipoTransaccion.GASTO, null, null));
+        org.mockito.Mockito.when(groq.isConfigured()).thenReturn(true);
+        org.mockito.Mockito.when(groq.generateCaptura(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyInt()))
+                .thenReturn("{\"categoriaId\":" + categoria.id() + ",\"etiquetas\":[\"almuerzo\"]}");
+        for (String texto : List.of("Me costaron 25 en empanadas", "Desembolsé 25 en empanadas", "Se me fueron 25 en empanadas")) {
+            var respuesta = asistente.quickCapture(a.getId(), new AiQuickCaptureRequest(texto, false, false));
+            assertEquals("GROQ_CATEGORIA", respuesta.engine());
+            assertEquals(categoria.id(), respuesta.action().data().path("categoriaId").longValue());
+            assertEquals(0, respuesta.action().data().path("monto").decimalValue().compareTo(new BigDecimal("25")));
+            assertEquals(cuenta.getId().longValue(), respuesta.action().data().path("cuentaId").longValue());
+        }
+        assertTrue(transacciones.listarRecientes(a.getId()).isEmpty());
+        org.mockito.Mockito.verify(groq, org.mockito.Mockito.times(3)).generateCaptura(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyInt());
+    }
+    @Test void noAsignaCategoriaDeOtroTipoNiDeOtroUsuario() {
+        var otraCategoria = categorias.crearCategoria(b.getId(), new CategoriaRequest("Privada ficticia", TipoTransaccion.GASTO, null, null));
+        var ingreso = categorias.crearCategoria(a.getId(), new CategoriaRequest("Ingreso ficticio", TipoTransaccion.INGRESO, null, null));
+        var p = propuesta();
+        assertThrows(IllegalArgumentException.class, () -> acciones.asignarCategoriaCaptura(a.getId(), p, otraCategoria.id()));
+        assertThrows(IllegalArgumentException.class, () -> acciones.asignarCategoriaCaptura(a.getId(), p, ingreso.id()));
+        assertTrue(transacciones.listarRecientes(a.getId()).isEmpty());
+    }
+    @Test void proveedorNoDisponibleConservaLaPropuestaSinGuardarMovimiento() {
+        categorias.crearCategoria(a.getId(), new CategoriaRequest("Comida ficticia", TipoTransaccion.GASTO, null, null));
+        org.mockito.Mockito.when(groq.isConfigured()).thenReturn(true);
+        org.mockito.Mockito.when(groq.generateCaptura(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyInt()))
+                .thenThrow(new AiProviderException("Tiempo de espera simulado"));
+        var respuesta = asistente.quickCapture(a.getId(), new AiQuickCaptureRequest("Gaste 25 en empanadas desde Efectivo prueba", false, false));
+        assertEquals("REGLAS", respuesta.engine());
+        assertTrue(respuesta.action().data().path("categoriaId").isNull());
+        assertEquals(1, acciones.pendientes(a.getId()).size());
+        assertTrue(transacciones.listarRecientes(a.getId()).isEmpty());
+        assertEquals(new BigDecimal("100.00"), cuentas.findById(cuenta.getId()).orElseThrow().getSaldoActual());
     }
     @Test void descartarPersisteYNoBorraTransacciones() {
         var p=propuesta(); acciones.descartar(a.getId(),p.id());acciones.descartar(a.getId(),p.id());

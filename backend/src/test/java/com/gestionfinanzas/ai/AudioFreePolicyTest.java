@@ -57,4 +57,10 @@ class AudioFreePolicyTest {
         var service=new GroqAiProvider(builder,properties(),policy(0));
         assertThrows(AiUsagePolicy.Denied.class,()->service.generate("synthetic",20));server.verify();
     }
+    @Test void zeroBudgetAlsoPreventsQuickCaptureRequests() {
+        var builder=RestClient.builder();var server=MockRestServiceServer.bindTo(builder).build();
+        var service=new GroqAiProvider(builder,properties(),policy(0));
+        assertThrows(AiUsagePolicy.Denied.class,()->service.generateCaptura("concepto ficticio",20));
+        server.verify();
+    }
 }

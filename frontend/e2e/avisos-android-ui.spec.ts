@@ -39,7 +39,7 @@ async function syntheticAndroid(page: Page, baseURL: string, dark = false, priva
         }
         if(plugin==='BankNotifications'){
           if(method==='retryAutomatic'){notices[0].automaticStatus='queued';notices[0].canRetry=false;return {};}
-          if(method==='apps')return {apps:[{packageName:'com.google.android.apps.messaging',label:'Mensajes QA'}]};
+          if(method==='apps')return {apps:[{packageName:'com.google.android.apps.messaging',label:'Mensajes QA'}, {packageName:'test.banco.arbol',label:'Banco Árbol QA'}]};
           return {granted:true,enabled:true,packages:['mx.bancosantander.supermovil','com.google.android.apps.messaging'],notices,omitted:0};
         }
         return {};
@@ -77,6 +77,23 @@ test('una compra pendiente usa el original nativo y no el guardado manual', asyn
   expect(writes).toEqual([]);
 });
 
+test('busca otra aplicación y conserva la selección al filtrar', async ({page,baseURL})=>{
+  const writes=await syntheticAndroid(page,baseURL!);
+  await page.getByText('Más bancos y permisos de Android',{exact:false}).click();
+  await page.getByRole('checkbox',{name:'Entiendo el acceso y quiero configurar esta recepción.'}).check();
+  await page.getByRole('button',{name:'Elegir aplicaciones'}).click();
+  const search=page.getByRole('searchbox',{name:'Buscar aplicación'});
+  await search.fill('arbol');
+  await page.getByRole('checkbox',{name:'Banco Árbol QA'}).check();
+  await search.fill('mensajes');
+  await expect(page.getByRole('checkbox',{name:'Banco Árbol QA'})).toHaveCount(0);
+  await expect(page.getByText('3 de 10 aplicaciones seleccionadas')).toBeVisible();
+  await search.fill('');
+  await expect(page.getByRole('checkbox',{name:'Banco Árbol QA'})).toBeChecked();
+  await expect(page.getByText(/El registro automático depende de los bancos/)).toBeVisible();
+  expect(writes).toEqual([]);
+});
+
 test('ocultar montos protege los envíos para revisión también en el lector de pantalla', async ({page,baseURL})=>{
   const writes=await syntheticAndroid(page,baseURL!,false,true);
   const summary=page.getByRole('region',{name:'Registro automático'});
@@ -91,7 +108,10 @@ for(const dark of [false,true]) {
     await page.setViewportSize({width:390,height:844});
     const writes=await syntheticAndroid(page,baseURL!,dark);
     await page.screenshot({path:testInfo.outputPath('avisos-sinteticos.png'),fullPage:true});
-    await page.getByText('Administrar bancos',{exact:true}).click();
+    await page.getByText('Administrar bancos y cuentas',{exact:true}).click();
+    for (const name of ['Santander', 'Revolut', 'American Express', 'Sears Visa']) {
+      await page.locator('details.profile > summary').filter({hasText:name}).click();
+    }
     await expect(page.getByLabel('Cuenta de destino · Sears Visa',{exact:true})).toHaveValue(/12$/);
     await expect(page.getByLabel('Últimos cuatro dígitos (opcionales) · Santander',{exact:true})).toBeVisible();
     await expect(page.getByLabel('Terminaciones Sears (obligatorias)')).toHaveValue('1234, 5678');

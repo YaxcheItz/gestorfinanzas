@@ -293,15 +293,6 @@
       <!-- Tabla de Transacciones -->
       <div class="history-results bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden" [attr.aria-busy]="loading()">
 
-        @if (!loading() && !error() && (pageData()?.comprasMsiAnteriores?.length ?? 0) > 0) {
-          <section class="history-transaction-list" aria-label="Movimientos">
-
-            @for (compra of pageData()!.comprasMsiAnteriores!; track compra.id) {
-
-              <app-movimiento-mobile-card [movimiento]="compra" (editar)="editarCompraAnterior(compra.plantillaId!)" (eliminar)="eliminarMovimiento($event)" />
-            }
-          </section>
-        }
         @if (loading()) {
           <div class="finance-loading-list p-4" role="status" aria-label="Cargando movimientos">
             @for (fila of [0,1,2]; track fila) {<div class="finance-loading-card" aria-hidden="true"><span class="loading-placeholder"></span><span class="loading-placeholder loading-placeholder--amount"></span></div>}
@@ -340,13 +331,15 @@
             @for (grupo of gruposHistorial(); track grupo.fecha) {
               <section class="history-day" [attr.aria-label]="etiquetaDiaHistorial(grupo.fecha)">
                 <h2>{{ etiquetaDiaHistorial(grupo.fecha) }} <span class="history-day-totals" aria-label="Balance de movimientos cargados del día">@for(total of totalesGrupo(grupo.movimientos); track total.moneda){<span>{{ total.monto | monto:total.moneda:'symbol-narrow':'1.2-2' }} {{ total.moneda }}</span>}</span></h2>
-              @for (m of grupo.movimientos; track m.id) {
-              <app-movimiento-mobile-card
-                [movimiento]="m"
-                [soloLectura]="!puedeModificar(m)"
-                (editar)="abrirModalEditar($event)"
-                (eliminar)="eliminarMovimiento($event)"
-                (detalle)="abrirDetalleMovimiento($event)" />
+              @for (m of grupo.movimientos; track (esCompraMsiAnterior(m) ? 'msi-' : 'tx-') + m.id) {
+              @if (esCompraMsiAnterior(m)) {
+                <app-movimiento-mobile-card [movimiento]="m" [soloLectura]="!puedeModificar(m)"
+                  (editar)="editarCompraAnterior(m.plantillaId!)" (eliminar)="eliminarMovimiento($event)" />
+              } @else {
+                <app-movimiento-mobile-card [movimiento]="m" [soloLectura]="!puedeModificar(m)"
+                  (editar)="abrirModalEditar($event)" (eliminar)="eliminarMovimiento($event)"
+                  (detalle)="abrirDetalleMovimiento($event)" />
+              }
             }
               </section>
             }
