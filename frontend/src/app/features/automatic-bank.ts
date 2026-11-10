@@ -84,6 +84,14 @@ export class AutomaticBankComponent {
   reason(): string {
     const s=this.state();
     if (!s) return this.summaryError() || 'Comprobando conexión…';
+    if (s.reason === 'reconnect') {
+      const detalle: Record<string,string> = {
+        http_401: 'El servidor rechazó la credencial (401). Tus envíos siguen guardados.',
+        http_403: 'El servidor rechazó el acceso (403). Tus envíos siguen guardados.',
+        http_404: 'El servidor no encontró el servicio (404). Tus envíos siguen guardados.'
+      };
+      if (detalle[s.error]) return detalle[s.error];
+    }
     return ({permission:'Concede acceso a las notificaciones en Android.',reconnect:'La conexión necesita restablecerse. Tus envíos siguen guardados.',
       expired:'La conexión venció. Restablécela para enviar las compras guardadas.',not_configured:'Asocia un banco para comenzar.',
       network:'Sin conexión. Las compras siguen guardadas y se reintentarán.',server:'El servidor no respondió correctamente. Puedes reintentar.',

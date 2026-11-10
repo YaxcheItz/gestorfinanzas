@@ -22,7 +22,41 @@ class AiAssistantServiceTest {
 
     private final AiProvider provider = mock(AiProvider.class);
     private final AiActionService actionService = mock(AiActionService.class);
-    private final AiAssistantService service = new AiAssistantService(provider, actionService);
+    private final ClasificadorCapturaGroq clasificador = mock(ClasificadorCapturaGroq.class);
+    private final AiAssistantService service = new AiAssistantService(provider, actionService, clasificador);
+
+    @Test void clasificaSoloCategoriaFaltanteSinEnviarHistorialAlProveedorGeneral() {
+        var mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+        var datos = mapper.createObjectNode().put("tipo", "GASTO").put("descripcion", "empanadas").putNull("categoriaId");
+        var original = new AiActionService.ActionProposal("p1", "CREATE_TRANSACTION", "Gasto", datos, 0L);
+        var actualizado = new AiActionService.ActionProposal("p1", "CREATE_TRANSACTION", "Gasto", datos.deepCopy().put("categoriaId", 1), 1L);
+        when(actionService.interpretarCapturaRapida(7L, "Gaste 50 en empanadas"))
+                .thenReturn(new AiActionService.AiActionResult("Preparado", original));
+        when(actionService.categoriasCaptura(7L)).thenReturn(List.of());
+        when(actionService.permitirClasificacionCaptura(7L)).thenReturn(true);
+        when(actionService.conceptoParaClasificar(7L, "empanadas")).thenReturn("empanadas");
+        when(clasificador.clasificar(eq("empanadas"), eq(com.gestionfinanzas.model.enums.TipoTransaccion.GASTO), eq(List.of())))
+                .thenReturn(java.util.Optional.of(new ClasificadorCapturaGroq.Clasificacion(1, java.util.Set.of())));
+        when(actionService.asignarCategoriaCaptura(7L, original, 1)).thenReturn(actualizado);
+        var respuesta = service.quickCapture(7L, new AiQuickCaptureRequest("Gaste 50 en empanadas", false, false));
+        assertEquals("GROQ_CATEGORIA", respuesta.engine());
+        assertEquals(1, respuesta.action().data().path("categoriaId").asInt());
+        verify(provider, never()).generate(anyString(), anyInt());
+    }
+
+    @Test void limiteDeIaConservaLaPropuestaLocalSinConsultarGroq() {
+        var datos = new com.fasterxml.jackson.databind.ObjectMapper().createObjectNode()
+                .put("tipo", "GASTO").put("descripcion", "empanadas").putNull("categoriaId");
+        var propuesta = new AiActionService.ActionProposal("p2", "CREATE_TRANSACTION", "Gasto", datos, 0L);
+        when(actionService.interpretarCapturaRapida(7L, "Gaste 50 en empanadas"))
+                .thenReturn(new AiActionService.AiActionResult("Preparado", propuesta));
+        when(actionService.permitirClasificacionCaptura(7L)).thenReturn(false);
+        var respuesta = service.quickCapture(7L, new AiQuickCaptureRequest("Gaste 50 en empanadas", false, false));
+        assertEquals("REGLAS", respuesta.engine());
+        assertEquals(propuesta, respuesta.action());
+        verify(clasificador, never()).clasificar(anyString(), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyList());
+        verify(actionService, never()).asignarCategoriaCaptura(org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyLong());
+    }
 
     @Test
     void statusExponeSoloProveedorModeloYConfiguracion() {

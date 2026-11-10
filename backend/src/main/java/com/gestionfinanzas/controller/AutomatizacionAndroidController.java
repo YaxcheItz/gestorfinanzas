@@ -39,6 +39,13 @@ public class AutomatizacionAndroidController {
         return ApiResponse.ok("Dispositivo desconectado",null);
     }
 
+    @PostMapping("/api/automatizacion/android/{dispositivo}/revocar-si-coincide")
+    public ApiResponse<Void> revocarSiCoincide(@AuthenticationPrincipal CustomUserDetails user,
+            @PathVariable UUID dispositivo, @Valid @RequestBody RevocacionCondicional body) {
+        service.desconectarSiCoincide(user.getId(), dispositivo, body.clave());
+        return ApiResponse.ok("Limpieza completada", null);
+    }
+
     @PostMapping("/api/canales/android/evento")
     public ApiResponse<AvisoFinancieroService.Vista> recibir(
             @RequestHeader(value="X-Kaptal-Android",required=false) String clave,

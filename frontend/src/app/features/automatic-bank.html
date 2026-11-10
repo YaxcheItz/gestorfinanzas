@@ -1,7 +1,7 @@
 @if (automatic.available) {
   <section class="automation" aria-labelledby="automation-title">
     <div class="automation-header">
-      <div><h2 id="automation-title">Registro automático</h2><p class="hint">Compras reconocidas e ingresos Revolut autorizados, sin confirmación por movimiento.</p></div>
+      <div><p class="automation-eyebrow">Conexiones bancarias</p><h2 id="automation-title">Registro automático</h2><p class="hint">Compras reconocidas e ingresos Revolut autorizados, sin confirmación por movimiento.</p></div>
       <span class="scope" [class.active]="state()?.active">{{ state() ? state()!.active ? 'Registro activo' : 'Desactivado' : 'Comprobando' }}</span>
     </div>
     @if (reason()) { <p class="connection-reason" role="status">{{ reason() }}</p> }
@@ -62,7 +62,7 @@
     @if (error()) { <p role="alert" class="feedback">{{ error() }}</p> }
 
     <details (toggle)="opened($event)">
-      <summary>Administrar bancos</summary>
+      <summary>Administrar bancos y cuentas</summary>
       <div class="setup-intro">
         <p class="hint">Elige la cuenta de cada banco y la lista donde guardar sus movimientos.</p>
         <a routerLink="/cuentas">Crear o administrar cuentas</a>
@@ -72,8 +72,8 @@
         <fieldset [disabled]="busy()">
           <legend>Asociaciones bancarias</legend>
           @for (profile of profiles; track profile.provider) {
-            <details class="profile" [open]="!!profile.account">
-              <summary>{{ profile.name }}</summary>
+            <details class="profile">
+              <summary><span>{{ profile.name }}</span><span class="profile-state">{{ profile.account ? 'Asociado' : 'Sin asociar' }}</span></summary>
               <div class="profile-fields">
               <label>Cuenta de destino
                 <select [(ngModel)]="profile.account" [attr.aria-label]="'Cuenta de destino · ' + profile.name">

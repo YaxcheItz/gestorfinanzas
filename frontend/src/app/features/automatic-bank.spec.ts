@@ -10,6 +10,13 @@ import { FinanzasService } from '../core/services/finanzas.service';
 import { AuthService } from '../core/services/auth.service';
 
 describe('Configuración bancaria guardada', () => {
+  it('distingue el codigo de rechazo sin mostrar datos del aviso', () => {
+    for (const code of ['401','403','404']) {
+      c.state.set({active:false,reason:'reconnect',error:`http_${code}`,queued:1,rules:[]} as any);
+      expect(c.reason()).toContain(code);
+      expect(c.reason()).toContain('envíos siguen guardados');
+    }
+  });
   it('admite ahorro MXN de Revolut sin ampliar tipos de otros bancos ni cambiar la cuenta', () => {
     const revolut=c.profiles.find(p=>p.provider==='REVOLUT')!;
     const saved={id:13,nombre:'Revolut QA',tipo:'AHORRO',moneda:'MXN'} as any;

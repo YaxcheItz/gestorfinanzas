@@ -73,6 +73,16 @@ describe('TransaccionesComponent history filters', () => {
     expect(fixture.nativeElement.querySelector('.history-empty')).not.toBeNull();
   });
 
+  it('intercala la proyeccion MSI por fecha sin sumar el total ni confundir la cuota con igual id', () => {
+    const c=fixture.componentInstance;
+    const normal=(id:number,fecha:string,monto:number)=>({id,fecha,monto,moneda:'MXN',tipo:'GASTO'});
+    const cuota=normal(2,'2026-11-01',30); const anterior={...cuota,fecha:'2026-11-02',monto:90,plantillaId:42,compraMsiInformativa:true};
+    c.pageData.set({content:[normal(4,'2026-11-04',5),cuota],comprasMsiAnteriores:[anterior],totalPages:1} as any);
+    expect(c.gruposHistorial().map(g=>g.fecha)).toEqual(['2026-11-04','2026-11-02','2026-11-01']);
+    expect(c.esCompraMsiAnterior(anterior as any)).toBe(true);expect(c.esCompraMsiAnterior(cuota as any)).toBe(false);
+    expect(c.totalesGrupo([anterior,cuota] as any)).toEqual([{moneda:'MXN',monto:-30}]);
+  });
+
   it('muestra total MSI anterior aunque no haya cargos y no lo agrega al balance', () => {
     const c=fixture.componentInstance;
     c.pageData.set({content:[],comprasMsiAnteriores:[{id:1,cuentaNombre:'Ficticia',tipo:'GASTO',moneda:'MXN',monto:90,fecha:'2026-11-07',descripcion:'Compra ficticia',compraMsiInformativa:true,plantillaId:42}],totalElements:0,totalPages:0,first:true,last:true} as any);

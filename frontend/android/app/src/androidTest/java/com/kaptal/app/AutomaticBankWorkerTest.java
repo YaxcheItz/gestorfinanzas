@@ -63,7 +63,15 @@ public class AutomaticBankWorkerTest {
     @Test public void unauthorizedPausesWithoutDiscardingPendingPayload() throws Exception {
         SyntheticWorker.code=401; assertEquals(ListenableWorker.Result.success(),run());
         assertTrue(store.read().getBoolean("paused")); assertEquals("queued",status());
+        assertEquals("http_401",store.read().getString("error"));
         run(); assertEquals(1,SyntheticWorker.sent.size());
+    }
+    @Test public void forbiddenAndMissingServicePreserveTheirStatusWithoutDiscarding() throws Exception {
+        for (int code : new int[]{403,404}) {
+            prepare(); SyntheticWorker.code=code; run();
+            assertTrue(store.read().getBoolean("paused")); assertEquals("queued",status());
+            assertEquals("http_"+code,store.read().getString("error"));
+        }
     }
     @Test public void ambiguousAndInvalidPayloadNeedReviewWithoutRetryLoop() throws Exception {
         SyntheticWorker.code=201; run(); assertEquals("review",status());

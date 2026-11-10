@@ -22,7 +22,7 @@ export interface AiChatRequest {
 
 export interface AiChatResponse {
   answer: string;
-  engine?: 'REGLAS' | 'IA';
+  engine?: 'REGLAS' | 'IA' | 'GROQ_CATEGORIA';
   suggestions?: string[];
   contexto?: string | null;
   action: AiActionProposal | null;

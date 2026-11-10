@@ -78,6 +78,61 @@ describe('QuickCaptureComponent processing and gestures', () => {
     expect(component.pantallaVoz()).toBe(true);
     expect(component.voiceMessage()).toContain('guardado');
   });
+  it('guarda una captura escrita clasificada por Groq cuando cuenta y monto son inequivocos', () => {
+    component.categories.set([{id:10,nombre:'Comida',tipo:'GASTO',activo:true,esPersonalizada:true}]);
+    component.cuentasEdicion.set([{id:1,nombre:'Efectivo',activo:true}] as any);
+    component.content='Gaste 50 en empanadas'; component.submit();
+    const propuesta={id:'groq-1',type:'CREATE_TRANSACTION',version:2,summary:'Gasto',data:{tipo:'GASTO',monto:50,cuentaId:1,categoriaId:10,fecha:'2026-11-05'}};
+    result.next({success:true,data:{answer:'Preparado',engine:'GROQ_CATEGORIA',actions:[propuesta]}});
+    expect(TestBed.inject(FinanzasService).confirmAiAction).toHaveBeenCalledOnce();
+    expect(TestBed.inject(FinanzasService).confirmAiAction).toHaveBeenCalledWith('groq-1',2);
+  });
+  it('no guarda automaticamente si Groq clasifica con cuenta ambigua', () => {
+    component.categories.set([{id:10,nombre:'Comida',tipo:'GASTO',activo:true,esPersonalizada:true}]);
+    component.cuentasEdicion.set([{id:1,nombre:'Efectivo',activo:true},{id:2,nombre:'Banco',activo:true}] as any);
+    component.content='Gaste 50 en empanadas'; component.submit();
+    result.next({success:true,data:{answer:'Preparado',engine:'GROQ_CATEGORIA',actions:[{id:'groq-2',type:'CREATE_TRANSACTION',version:0,summary:'Gasto',data:{tipo:'GASTO',monto:50,cuentaId:1,categoriaId:10,fecha:'2026-11-05'}}]}});
+    expect(TestBed.inject(FinanzasService).confirmAiAction).not.toHaveBeenCalled();
+  });
+  it.each(['No gaste 50 en empanadas', 'Por ejemplo gaste 50 en empanadas', '¿Gaste 50 en empanadas?', 'Compre 50 empanadas', 'Me costo 50 empanadas'])
+    ('no guarda automaticamente con Groq un texto ambiguo: %s', texto => {
+      component.categories.set([{id:10,nombre:'Comida',tipo:'GASTO',activo:true,esPersonalizada:true}]);
+      component.cuentasEdicion.set([{id:1,nombre:'Efectivo',activo:true}] as any);
+      component.content=texto; component.submit();
+      result.next({success:true,data:{answer:'Preparado',engine:'GROQ_CATEGORIA',actions:[{id:'groq-ambiguo',type:'CREATE_TRANSACTION',version:0,summary:'Gasto',data:{tipo:'GASTO',monto:50,cuentaId:1,categoriaId:10,fecha:'2026-11-05'}}]}});
+      expect(TestBed.inject(FinanzasService).confirmAiAction).not.toHaveBeenCalled();
+    });
+  it('no guarda automaticamente una compra a meses clasificada por Groq', () => {
+    component.categories.set([{id:10,nombre:'Comida',tipo:'GASTO',activo:true,esPersonalizada:true}]);
+    component.cuentasEdicion.set([{id:1,nombre:'Tarjeta',activo:true}] as any);
+    component.content='Gaste 50 en empanadas a 3 meses'; component.submit();
+    result.next({success:true,data:{answer:'Preparado',engine:'GROQ_CATEGORIA',actions:[{id:'groq-msi',type:'CREATE_TRANSACTION',version:0,summary:'Gasto',data:{tipo:'GASTO',monto:50,cuentaId:1,categoriaId:10,fecha:'2026-11-05',msi:3}}]}});
+    expect(TestBed.inject(FinanzasService).confirmAiAction).not.toHaveBeenCalled();
+  });
+  it('admite un costo claro al guardar una captura clasificada', () => {
+    component.categories.set([{id:10,nombre:'Comida',tipo:'GASTO',activo:true,esPersonalizada:true}]);
+    component.cuentasEdicion.set([{id:1,nombre:'Efectivo',activo:true}] as any);
+    component.content='Me costo 50 en empanadas'; component.submit();
+    result.next({success:true,data:{answer:'Preparado',engine:'GROQ_CATEGORIA',actions:[{id:'groq-costo',type:'CREATE_TRANSACTION',version:0,summary:'Gasto',data:{tipo:'GASTO',monto:50,cuentaId:1,categoriaId:10,fecha:'2026-11-05'}}]}});
+    expect(TestBed.inject(FinanzasService).confirmAiAction).toHaveBeenCalledOnce();
+  });
+  it.each(['Me costo 50 en empanadas','Me gasté 50 en empanadas','Me costaron 50 en empanadas','Desembolsé 50 en empanadas','Se me fueron 50 en empanadas'])('trata %s como movimiento nuevo sin contexto anterior', texto => {
+    const captura=vi.spyOn(TestBed.inject(FinanzasService),'capturaRapidaAi');
+    component.content='Gasto en tacos';component.submit();
+    result.next({success:true,data:{answer:'Monto?',actions:[],contexto:'Gasto en tacos'}});
+    component.content=texto;component.submit();
+    expect(captura).toHaveBeenLastCalledWith(texto,false,false,null,null,[]);
+  });
+  it('conserva la propuesta si se pierde la respuesta del guardado automatico', () => {
+    component.categories.set([{id:10,nombre:'Comida',tipo:'GASTO',activo:true,esPersonalizada:true}]);
+    component.cuentasEdicion.set([{id:1,nombre:'Efectivo',activo:true}] as any);
+    vi.spyOn(TestBed.inject(FinanzasService),'confirmAiAction').mockReturnValueOnce(new Observable(sub=>sub.error(new HttpErrorResponse({status:0}))));
+    component.content='Gaste 50 en empanadas'; component.submit();
+    result.next({success:true,data:{answer:'Preparado',engine:'GROQ_CATEGORIA',actions:[{id:'groq-perdida',type:'CREATE_TRANSACTION',version:2,summary:'Gasto',data:{tipo:'GASTO',monto:50,cuentaId:1,categoriaId:10,fecha:'2026-11-05'}}]}});
+    expect(component.captureTurns()[0].actions[0].id).toBe('groq-perdida');
+    expect(component.captureTurns()[0].confirmaciones).toBeUndefined();
+    expect(TestBed.inject(FinanzasService).confirmAiAction).toHaveBeenCalledOnce();
+  });
   it('espera el catalogo antes de interpretar la transcripcion', () => {
     const captura=vi.spyOn(TestBed.inject(FinanzasService),'capturaRapidaAi');
     component.catalogoCargando.set(true); component.content='Gaste 50 en tacos'; component.continuarConVoz();

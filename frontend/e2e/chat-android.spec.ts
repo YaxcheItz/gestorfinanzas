@@ -3,6 +3,41 @@ import {registrarPrueba} from './registro-helper';
 
 test.use({viewport:{width:390,height:844},hasTouch:true,serviceWorkers:'block'});
 
+test('captura clasificada confirma una sola vez con respuestas ficticias',async({page})=>{
+  const password='Password123',email=`groq-ui-${crypto.randomUUID()}@example.test`;
+  const registration=await registrarPrueba(page.request,{nombre:'QA captura',email,password});
+  expect(registration.ok()).toBeTruthy();
+  const auth=(await registration.json()).data;
+  const headers={Authorization:`Bearer ${auth.token}`};
+  const cuentaRespuesta=await page.request.post('/api/cuentas',{headers,data:{nombre:'Banco QA',tipo:'DEBITO',moneda:'MXN',saldoInicial:0}});
+  expect(cuentaRespuesta.ok()).toBeTruthy();
+  const cuenta=(await cuentaRespuesta.json()).data;
+  const categorias=await page.request.get('/api/categorias',{headers});
+  const categoria=(await categorias.json()).data.find((c:{tipo:string;activo:boolean})=>c.tipo==='GASTO'&&c.activo);
+  expect(categoria).toBeTruthy();
+  let confirmaciones=0;
+  await page.route('**/api/asistente/captura-rapida',route=>route.fulfill({json:{success:true,data:{answer:'Clasificado',engine:'GROQ_CATEGORIA',actions:[{
+    id:'propuesta-qa',type:'CREATE_TRANSACTION',version:2,summary:'Gasto ficticio',
+    data:{tipo:'GASTO',monto:25,cuentaId:cuenta.id,categoriaId:categoria.id,fecha:'2026-11-10'}
+  }]}}}));
+  await page.route('**/api/asistente/acciones/propuesta-qa/confirmar',async route=>{
+    confirmaciones++;
+    expect(route.request().postDataJSON()).toEqual({version:2});
+    await route.fulfill({json:{success:true,data:{completed:true}}});
+  });
+  await page.goto('/login');await page.locator('#email').fill(email);await page.locator('#password').fill(password);
+  await page.getByRole('button',{name:'Iniciar sesión',exact:true}).click();await expect(page).toHaveURL(/dashboard/);
+  await page.locator('.dashboard-screen__inline-empty').getByRole('button',{name:'Añadir movimiento',exact:true}).click();
+  await page.getByRole('dialog',{name:'Añadir movimiento'}).getByRole('button',{name:'Escribir o dictar'}).click();
+  const panel=page.locator('#quick-capture-panel');
+  await page.locator('#quick-capture-text').fill('Gasté 25 en empanadas desde Banco QA');
+  await panel.getByRole('button',{name:'Enviar movimiento'}).click();
+  await expect(panel.getByText('Movimiento confirmado en tus cuentas',{exact:false})).toBeVisible();
+  expect(confirmaciones).toBe(1);
+  const movimientos=await page.request.get('/api/transacciones?size=100',{headers});
+  expect((await movimientos.json()).data.content).toHaveLength(0);
+});
+
 test('una categoria escrita completa la propuesta y solo guardar crea el movimiento',async({page})=>{
   const password='Password123', email=`categoria-chat-${crypto.randomUUID()}@example.test`;
   const registration=await registrarPrueba(page.request,{nombre:'QA captura',email,password});

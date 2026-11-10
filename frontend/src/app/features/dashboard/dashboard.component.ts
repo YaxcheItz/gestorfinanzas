@@ -639,6 +639,18 @@ export class DashboardComponent implements OnInit {
     (this.resumen()?.ultimosMovimientos ?? []).filter(m => m.moneda === this.monedaResumen()).slice(0, this.vistaDetallada() ? 8 : 3)
   );
 
+  readonly movimientosInicio = computed(() => {
+    const normales = this.categoriaFiltroSeleccionada() ? this.movimientosCategoria() : this.ultimosMovimientosLimitados();
+    const movimientos = [...normales, ...this.comprasMsiAnteriores()];
+    movimientos.sort((a, b) => b.fecha.localeCompare(a.fecha)
+      || (b.fechaCreacion ?? '').localeCompare(a.fechaCreacion ?? '') || b.id - a.id);
+    return this.categoriaFiltroSeleccionada() ? movimientos : movimientos.slice(0, this.vistaDetallada() ? 8 : 3);
+  });
+
+  esCompraMsiAnterior(movimiento: Transaccion): boolean {
+    return this.comprasMsiAnteriores().some(compra => compra === movimiento);
+  }
+
   cuentas = signal<Cuenta[]>([]);
   categorias = signal<Categoria[]>([]);
 

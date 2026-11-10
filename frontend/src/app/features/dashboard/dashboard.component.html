@@ -266,15 +266,6 @@
             <a routerLink="/transacciones" class="dashboard-screen__text-link" (click)="$event.preventDefault(); irATransacciones()" aria-label="Movimientos">Ver todos <span aria-hidden="true">&#8594;</span></a>
           }
         </div>
-        @if (!loading() && !error() && comprasMsiAnteriores().length > 0) {
-          <div class="dashboard-screen__recent-list" aria-label="Movimientos">
-
-            @for (compra of comprasMsiAnteriores(); track compra.id) {
-
-              <app-movimiento-mobile-card [movimiento]="compra" (editar)="editarPlanAnterior(compra.plantillaId!)" (eliminar)="eliminarMovimiento($event)" />
-            }
-          </div>
-        }
         @if (loading() || cargandoMovimientosCategoria()) {
           <div class="dashboard-loading-movements" role="status" aria-label="Cargando movimientos">
             <span class="sr-only">Cargando movimientos…</span>
@@ -298,8 +289,12 @@
           </div>
         } @else {
           <div class="dashboard-screen__recent-list">
-            @for (movimiento of (categoriaFiltroSeleccionada() ? movimientosCategoria() : ultimosMovimientosLimitados()); track movimiento.id) {
-              <app-movimiento-mobile-card [movimiento]="movimiento" (detalle)="verDetalleMovimiento($event.id)" (editar)="editarMovimiento($event.id)" (eliminar)="eliminarMovimiento($event)" />
+            @for (movimiento of movimientosInicio(); track (esCompraMsiAnterior(movimiento) ? 'msi-' : 'tx-') + movimiento.id) {
+              @if (esCompraMsiAnterior(movimiento)) {
+                <app-movimiento-mobile-card [movimiento]="movimiento" (editar)="editarPlanAnterior(movimiento.plantillaId!)" (eliminar)="eliminarMovimiento($event)" />
+              } @else {
+                <app-movimiento-mobile-card [movimiento]="movimiento" (detalle)="verDetalleMovimiento($event.id)" (editar)="editarMovimiento($event.id)" (eliminar)="eliminarMovimiento($event)" />
+              }
             }
           </div>
         }

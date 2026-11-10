@@ -85,6 +85,35 @@ class ExactitudFinancieraIntegrationTest {
         assertTrue(ComprasMsiAnteriores.listar(transacciones,usuarioId,null).isEmpty());
         assertTrue(ComprasMsiAnteriores.listar(transacciones,Long.MAX_VALUE,null).isEmpty());
     }
+    @Test void compraAnteriorSeDistribuyeEnPaginasSinAlterarTotalesNiSaldos() {
+        var hoy = CalendarioFinanciero.hoy();
+        var cuota = movimientos.crearTransaccion(usuarioId, new TransaccionRequest(cuentaId, null, null, TipoTransaccion.GASTO,
+                new BigDecimal("90.00"), null, hoy.plusMonths(1), "Compra antigua ficticia", null, null, null, 3));
+        transacciones.findAllByUsuarioIdOrderByFechaAscIdAsc(usuarioId).stream()
+                .filter(Transaccion::isCompraMsiInformativa).forEach(transacciones::delete);
+        em.flush();
+        em.createNativeQuery("update {h-schema}transacciones set fecha_creacion = :fecha where id = :id")
+                .setParameter("fecha", hoy.minusDays(5).atStartOfDay()).setParameter("id", cuota.id()).executeUpdate();
+        em.clear();
+        for (int dias : new int[]{-1, -2, -4}) {
+            movimientos.crearTransaccion(usuarioId, new TransaccionRequest(cuentaId, null, null, TipoTransaccion.GASTO,
+                    new BigDecimal("10.00"), null, hoy.plusDays(dias), "Movimiento ficticio", null, null, null, null));
+        }
+        em.flush(); em.clear();
+        var antes = transacciones.count();
+        var saldoAntes = cuentas.findById(cuentaId).orElseThrow().getSaldoActual();
+        var retenidoAntes = cuentas.findById(cuentaId).orElseThrow().getLimiteRetenido();
+        var orden = org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "fecha", "id");
+        var primera = (com.gestionfinanzas.dto.response.HistorialTransaccionesResponse) movimientos.listarConFiltros(usuarioId, null, org.springframework.data.domain.PageRequest.of(0, 2, orden));
+        var segunda = (com.gestionfinanzas.dto.response.HistorialTransaccionesResponse) movimientos.listarConFiltros(usuarioId, null, org.springframework.data.domain.PageRequest.of(1, 2, orden));
+        assertEquals(0, primera.getComprasMsiAnteriores().size(), () -> "pagina1=" + primera.getContent().stream().map(x -> x.fecha()+"/"+x.id()).toList() + " pagina2=" + segunda.getContent().stream().map(x -> x.fecha()+"/"+x.id()).toList() + " compra=" + primera.getComprasMsiAnteriores().stream().map(x -> x.fecha()+"/"+x.id()).toList());
+        assertEquals(1, segunda.getComprasMsiAnteriores().size());
+        assertEquals(primera.getTotalElements(), segunda.getTotalElements());
+        assertEquals(antes, transacciones.count());
+        em.clear();
+        assertEquals(saldoAntes, cuentas.findById(cuentaId).orElseThrow().getSaldoActual());
+        assertEquals(retenidoAntes, cuentas.findById(cuentaId).orElseThrow().getLimiteRetenido());
+    }
     @Test void compraMsiFuturaRetieneTotalSinAfectarSaldoAntesDelCorte() {
         var fecha = CalendarioFinanciero.hoy().plusMonths(1).withDayOfMonth(1);
         movimientos.crearTransaccion(usuarioId, new TransaccionRequest(cuentaId,null,null,

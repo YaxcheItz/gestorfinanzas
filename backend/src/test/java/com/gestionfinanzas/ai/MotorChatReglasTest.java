@@ -31,6 +31,7 @@ class MotorChatReglasTest {
  private final List<CategoriaResponse> categorias=List.of(new CategoriaResponse(8L,"Comida",TipoTransaccion.GASTO,null,null,true,true));
  private MotorChatReglas.Resultado interpretar(String texto){return motor.interpretar(texto,cuentas,categorias,List.of(),hoy);}
  @Test void gastoUsaHoyYMontoExacto(){var r=interpretar("Gast\u00e9 80.50 en tacos");assertEquals("GASTO",r.datos().get("tipo"));assertEquals(new BigDecimal("80.50"),r.datos().get("monto"));assertEquals("2026-10-04",r.datos().get("fecha"));assertEquals(8L,r.datos().get("categoriaId"));}
+ @Test void reconoceCostoYCobroComoGasto(){for(var texto:List.of("Me costo 80 en tacos","Me cobraron 80 en tacos","Me gasté 80 en tacos","Me costaron 80 en tacos","Desembolsé 80 en tacos","Se me fueron 80 en tacos")){var r=interpretar(texto);assertEquals("GASTO",r.datos().get("tipo"));assertEquals(new BigDecimal("80.00"),r.datos().get("monto"));assertEquals(8L,r.datos().get("categoriaId"));assertEquals("tacos",r.datos().get("descripcion"));}}
  @Test void restaurantesEnPluralSeAsociaAComida(){assertEquals(8L,interpretar("Gaste 80 en restaurantes").datos().get("categoriaId"));}
  @Test void categoriasAmbiguasNoSeEligenSegunOrden(){var opciones=List.of(new CategoriaResponse(8L,"Comida",TipoTransaccion.GASTO,null,null,true,true),new CategoriaResponse(9L,"Alimentacion",TipoTransaccion.GASTO,null,null,true,true));assertNull(motor.interpretar("Gaste 80 en restaurantes",cuentas,opciones,List.of(),hoy).datos().get("categoriaId"));}
  @Test void prefiereComidaPrecisamenteAunqueLaCategoriaMixtaSeaPersonal(){var opciones=List.of(new CategoriaResponse(9L,"Alimentos y Supermercado",TipoTransaccion.GASTO,null,null,true,true),new CategoriaResponse(8L,"Comida",TipoTransaccion.GASTO,null,null,true,true));assertEquals(8L,motor.interpretar("Gaste 80 en restaurantes",cuentas,opciones,List.of(),hoy).datos().get("categoriaId"));}
@@ -39,6 +40,12 @@ class MotorChatReglasTest {
  @Test void nombreDuplicadoPrefiereCategoriaPersonal(){var opciones=List.of(new CategoriaResponse(9L,"Comida",TipoTransaccion.GASTO,null,null,false,true),new CategoriaResponse(8L,"Comida",TipoTransaccion.GASTO,null,null,true,true));assertEquals(8L,motor.interpretar("Gaste 80 en comida",cuentas,opciones,List.of(),hoy).datos().get("categoriaId"));}
  @Test void conceptosDistintosNoSeResuelvenPorSerPersonalizadaUnaCategoria(){var opciones=List.of(new CategoriaResponse(8L,"Comida",TipoTransaccion.GASTO,null,null,true,true),new CategoriaResponse(9L,"Transporte",TipoTransaccion.GASTO,null,null,false,true));assertNull(motor.interpretar("Gaste 80 en tacos y gasolina",cuentas,opciones,List.of(),hoy).datos().get("categoriaId"));}
  @Test void identificaModismosEnCategoriasPersonales(){var opciones=List.of(new CategoriaResponse(8L,"Comida",TipoTransaccion.GASTO,null,null,true,true),new CategoriaResponse(9L,"Gimnasio",TipoTransaccion.GASTO,null,null,true,true));assertEquals(8L,motor.interpretar("Pague 80 en la fondita",cuentas,opciones,List.of(),hoy).datos().get("categoriaId"));assertEquals(9L,motor.interpretar("Pague 80 en el gym",cuentas,opciones,List.of(),hoy).datos().get("categoriaId"));}
+ @Test void alimentosHabitualesResuelvenComidaSinEscribirFinanzas(){
+  for(var palabra:List.of("burritos","birria","pozole","ramen","esquites","carnitas","helado","enchiladas","gorditas","sopes","tostadas","tlacoyos","molletes")) {
+   var resultado=interpretar("Gaste 80 en "+palabra);
+   assertNotNull(resultado.datos(),palabra);assertEquals(8L,resultado.datos().get("categoriaId"),palabra);
+  }
+ }
  @Test void reconoceModismoEnTorta(){assertEquals(8L,interpretar("Me eche 50 en una torta").datos().get("categoriaId"));}
  @Test void restaurantesSeAsociaACategoriaPredeterminadaDeAlimentos(){var categoriasPorDefecto=List.of(new CategoriaResponse(9L,"Alimentos y Supermercado",TipoTransaccion.GASTO,null,null,true,true));assertEquals(9L,motor.interpretar("Gaste 80 en restaurantes",cuentas,categoriasPorDefecto,List.of(),hoy).datos().get("categoriaId"));}
  @Test void ingresoReconoceAcentosYAyer(){var r=interpretar("Recib\u00ed 900 de sueldo ayer");assertEquals("INGRESO",r.datos().get("tipo"));assertEquals("2026-10-03",r.datos().get("fecha"));}
@@ -49,6 +56,7 @@ class MotorChatReglasTest {
  @Test void monedaDiferenteExigeTasa(){assertNull(interpretar("transferi 200 de BBVA a Dolares").datos());var r=interpretar("transferi 200 de BBVA a Dolares tasa 0.05");assertEquals(new BigDecimal("0.05"),r.datos().get("tasaCambio"));}
  @Test void montoNegativoNoSeConvierteEnPositivo(){assertNull(interpretar("Gasto -50 en tacos").datos());assertNull(interpretar("Gasto 0 en tacos").datos());}
  @Test void variosImportesNoSeSuman(){assertNull(interpretar("Gaste 50 en tacos y 20 en cafe"));}
+ @Test void ingresoYGastoEnUnaFraseNoSeConviertenEnUnSoloMovimiento(){var r=interpretar("Recibí 50 y pagué en tacos");assertNull(r.datos());assertTrue(r.respuesta().contains("separado"));}
  @Test void reporteEsLocalConPeriodo(){var r=interpretar("Reporte de hoy");assertEquals("RESUMEN",r.reporte());assertEquals(hoy,r.desde());assertEquals(hoy,r.hasta());}
  @Test void categoriasYMonedaSeReconocen(){var r=interpretar("Top categor\u00edas de este mes USD");assertEquals("CATEGORIAS",r.reporte());assertEquals("USD",r.moneda());assertEquals(hoy.withDayOfMonth(1),r.desde());}
  @Test void reconoceConsultasDeGastosEIngresosRecurrentes(){assertEquals("RECURRENTES_GASTO",interpretar("Muéstrame mi gasto fijo").reporte());assertEquals("RECURRENTES_GASTO",interpretar("Muéstrame mis gastos fijos").reporte());assertEquals("RECURRENTES_INGRESO",interpretar("Ingresos recurrentes").reporte());assertEquals("RECURRENTES",interpretar("Muéstrame mis movimientos recurrentes").reporte());assertEquals("GASTO",interpretar("Gasté 80 en pizza recurrente").datos().get("tipo"));}
@@ -63,6 +71,7 @@ class MotorChatReglasTest {
   var cats=List.of(new CategoriaResponse(10L,"Salario",TipoTransaccion.INGRESO,null,null,true,true),new CategoriaResponse(11L,"Regalo",TipoTransaccion.INGRESO,null,null,true,true));
   var efectivo=List.of(cuenta(4,"Efectivo","MXN"));
   assertEquals(10L,motor.interpretar("Ingresé 200 en efectivo",efectivo,cats,List.of(),hoy,true).datos().get("categoriaId"));
+  assertNull(motor.interpretar("Ingresé 200 por venta en efectivo",efectivo,cats,List.of(),hoy,true).datos().get("categoriaId"));
   assertEquals(11L,motor.interpretar("Recibí 200 de regalo en efectivo",efectivo,cats,List.of(),hoy,true).datos().get("categoriaId"));
   assertNull(motor.interpretar("Ingresé 200 en efectivo categoría desconocida",efectivo,cats,List.of(),hoy,true));
  }

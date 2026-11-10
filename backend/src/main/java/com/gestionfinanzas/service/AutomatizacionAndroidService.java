@@ -110,6 +110,17 @@ public class AutomatizacionAndroidService {
         conexiones.findByUsuarioIdAndDispositivoId(uid,dispositivo.toString()).ifPresent(conexiones::delete);
     }
 
+    /** Solo revoca la clave emitida por el intento fallido; una rotación posterior se conserva. */
+    @Transactional
+    public void desconectarSiCoincide(Long uid, UUID dispositivo, String clave) {
+        propietario(uid);
+        if (clave == null || !clave.matches("[A-Za-z0-9_-]{43}")) throw new IllegalArgumentException("Credencial no válida.");
+        conexiones.findByUsuarioIdAndDispositivoId(uid, dispositivo.toString()).ifPresent(conexion -> {
+            if (MessageDigest.isEqual(conexion.getTokenHash().getBytes(StandardCharsets.US_ASCII),
+                    hash(clave).getBytes(StandardCharsets.US_ASCII))) conexiones.delete(conexion);
+        });
+    }
+
     @Transactional
     public AvisoFinancieroService.Vista recibir(String clave,Evento evento) {
         if(clave==null||!clave.matches("[A-Za-z0-9_-]{43}"))throw new SesionInvalidaException();

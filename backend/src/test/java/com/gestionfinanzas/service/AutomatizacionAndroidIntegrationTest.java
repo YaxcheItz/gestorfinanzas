@@ -75,6 +75,7 @@ class AutomatizacionAndroidIntegrationTest {
     @Autowired ConexionAndroidRepository conexiones;
     @Autowired ListaService listas;
     @Autowired org.springframework.test.web.servlet.MockMvc mvc;
+    @Autowired com.gestionfinanzas.security.JwtUtil jwt;
     @Autowired com.fasterxml.jackson.databind.ObjectMapper mapper;
     Usuario usuario; Cuenta cuenta; Long lista;
     UUID dispositivo=UUID.randomUUID(), reglaId=UUID.randomUUID();
@@ -136,6 +137,37 @@ class AutomatizacionAndroidIntegrationTest {
         assertThrows(SesionInvalidaException.class,()->service.recibir(tercera.clave(),evento("a".repeat(64))));
         assertEquals(new BigDecimal("1000.00"),saldo());
     }
+    @Test void limpiezaDeIntentoAntiguoNoRevocaUnaConexionMasReciente() {
+        var anterior = conectar();
+        var actual = conectar();
+        var otro = usuarios.saveAndFlush(Usuario.builder().nombre("Otro ficticio")
+                .email(UUID.randomUUID()+"@example.test").passwordHash("synthetic").build());
+        service.desconectarSiCoincide(otro.getId(), dispositivo, actual.clave());
+        assertTrue(service.estado(usuario.getId(), dispositivo).activa());
+        service.desconectarSiCoincide(usuario.getId(), dispositivo, anterior.clave());
+        assertTrue(service.estado(usuario.getId(), dispositivo).activa());
+        assertThrows(IllegalArgumentException.class, () -> service.desconectarSiCoincide(usuario.getId(), dispositivo, "no-valida"));
+        assertTrue(service.estado(usuario.getId(), dispositivo).activa());
+        service.desconectarSiCoincide(usuario.getId(), dispositivo, actual.clave());
+        assertFalse(service.estado(usuario.getId(), dispositivo).activa());
+        service.desconectarSiCoincide(usuario.getId(), dispositivo, actual.clave());
+        assertEquals(new BigDecimal("1000.00"), saldo());
+    }
+    @Test void limpiezaCondicionalPorHttpExigeSesionYNoRevocaClaveNueva() throws Exception {
+        var anterior=conectar(); var actual=conectar();
+        var token=jwt.generarToken(usuario.getEmail(),usuario.getId(),usuario.getTokenVersion());
+        var url="/api/automatizacion/android/"+dispositivo+"/revocar-si-coincide";
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(url)
+                .header("Authorization","Bearer "+token).contentType("application/json")
+                .content(mapper.writeValueAsString(new RevocacionCondicional(anterior.clave()))))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk());
+        assertTrue(service.estado(usuario.getId(),dispositivo).activa());
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(url)
+                .header("Authorization","Bearer "+token).contentType("application/json")
+                .content(mapper.writeValueAsString(new RevocacionCondicional(actual.clave()))))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk());
+        assertFalse(service.estado(usuario.getId(),dispositivo).activa());
+    }
     @Test void rechazaCuentaAjenaYOrigenFalso() {
         var otro=usuarios.saveAndFlush(Usuario.builder().nombre("Otro QA")
             .email(UUID.randomUUID()+"@example.test").passwordHash("synthetic").build());
@@ -190,6 +222,10 @@ class AutomatizacionAndroidIntegrationTest {
             .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.data.estado").value("REGISTRADO"));
         mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/automatizacion/android/"+dispositivo)
             .header("X-Kaptal-Android",credencial.clave()))
+            .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isUnauthorized());
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/automatizacion/android/"+dispositivo+"/revocar-si-coincide")
+            .header("X-Kaptal-Android",credencial.clave()).contentType("application/json")
+            .content(mapper.writeValueAsString(new com.gestionfinanzas.dto.request.AutomatizacionAndroidRequest.RevocacionCondicional(credencial.clave()))))
             .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isUnauthorized());
         mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/canales/android/evento")
             .header("X-Kaptal-Android",credencial.clave()))

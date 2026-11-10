@@ -21,10 +21,10 @@ public final class MotorChatReglas {
     private static final Pattern FECHA = Pattern.compile("\\b(\\d{4}-\\d{2}-\\d{2}|\\d{1,2}/\\d{1,2}(?:/\\d{4})?)\\b");
     private static final Pattern RANGO = Pattern.compile("\\b(?:del|desde)\\s+(\\d{4}-\\d{2}-\\d{2})\\s+(?:al|hasta)\\s+(\\d{4}-\\d{2}-\\d{2})\\b");
     private static final Map<String, Set<String>> DICCIONARIO = Map.ofEntries(
-        Map.entry("comida", Set.of("tacos","taco","comida","restaurante","restaurantes","cafe","cafeteria","pizza","hamburguesa","desayuno","almuerzo","cena","comedor","taqueria","pizzeria","panaderia","antojitos","fondita","quesadilla","quesadillas","torta","tortas","tamal","tamales","chilaquiles","lonche")),
-        Map.entry("alimentacion", Set.of("tacos","taco","comida","restaurante","restaurantes","cafe","cafeteria","pizza","hamburguesa","desayuno","almuerzo","cena","comedor","taqueria","pizzeria","panaderia","antojitos","fondita","quesadilla","quesadillas","torta","tortas","tamal","tamales","chilaquiles","lonche")),
+        Map.entry("comida", Set.of("tacos","taco","comida","restaurante","restaurantes","cafe","cafeteria","pizza","hamburguesa","desayuno","almuerzo","cena","comedor","taqueria","pizzeria","panaderia","antojitos","fondita","quesadilla","quesadillas","torta","tortas","tamal","tamales","chilaquiles","lonche","burrito","burritos","birria","pozole","ramen","elote","elotes","esquites","carnitas","barbacoa","helado","helados","enchiladas","gorditas","sope","sopes","tostada","tostadas","tlacoyo","tlacoyos","mollete","molletes")),
+        Map.entry("alimentacion", Set.of("tacos","taco","comida","restaurante","restaurantes","cafe","cafeteria","pizza","hamburguesa","desayuno","almuerzo","cena","comedor","taqueria","pizzeria","panaderia","antojitos","fondita","quesadilla","quesadillas","torta","tortas","tamal","tamales","chilaquiles","lonche","burrito","burritos","birria","pozole","ramen","elote","elotes","esquites","carnitas","barbacoa","helado","helados","enchiladas","gorditas","sope","sopes","tostada","tostadas","tlacoyo","tlacoyos","mollete","molletes")),
         Map.entry("supermercado", Set.of("super","supermercado","despensa","abarrotes","walmart","soriana","chedraui")),
-        Map.entry("alimentos", Set.of("super","despensa","abarrotes","tacos","comida","restaurante","restaurantes")),
+        Map.entry("alimentos", Set.of("super","despensa","abarrotes","tacos","comida","restaurante","restaurantes","burrito","burritos","birria","pozole","ramen","elote","elotes","esquites","carnitas","barbacoa","helado","helados","enchiladas","gorditas","sope","sopes","tostada","tostadas","tlacoyo","tlacoyos","mollete","molletes")),
         Map.entry("transporte", Set.of("uber","didi","taxi","gasolina","metro","camion","autobus","transporte","peaje","estacionamiento","caseta","uberx","colectivo","combi")),
         Map.entry("servicios", Set.of("luz","agua","internet","telefono","gas","cfe","renta","alquiler")),
         Map.entry("hogar", Set.of("renta","hogar","muebles","alquiler")),
@@ -155,7 +155,9 @@ public final class MotorChatReglas {
         if (FECHA.matcher(texto).results().count()>1 || texto.matches(".*\\b(semana|mes)\\b.*")) return pregunta(mensaje,"Indica un día exacto para registrar el movimiento; por ejemplo hoy, ayer o 2026-10-04.",List.of());
         boolean transfer=texto.matches(".*\\b(transferencia|transferi|transferir|transfiero|traspase|traspaso|movi|mover)\\b.*");
         boolean ingreso=texto.matches(".*\\b(ingreso|ingrese|recibi|cobre|cobro|depositaron|me pagaron|nomina|sueldo|salario)\\b.*");
-        boolean gasto=texto.matches(".*\\b(gasto|gaste|pague|pago|compre|compra|gastos)\\b.*");
+        boolean gasto=texto.matches(".*\\b(gasto|gaste|pague|pago|compre|compra|gastos|me cobraron|me costo|me costaron|desembolse|se me fueron)\\b.*");
+        if (!transfer && ingreso && gasto)
+            return pregunta(mensaje,"¿Quieres registrar un gasto o un ingreso? Escríbelos por separado.",List.of());
         TipoTransaccion tipo=transfer ? TipoTransaccion.TRANSFERENCIA : ingreso ? TipoTransaccion.INGRESO : gasto ? TipoTransaccion.GASTO : null;
         List<CuentaResponse> cuentas=cuentasEntrada.stream().filter(CuentaResponse::activo).toList();
         String sinFechas=FECHA.matcher(textoSinPlazo).replaceAll(" ");
@@ -222,7 +224,7 @@ public final class MotorChatReglas {
         }
         if (MONTO.matcher(sinMonto.replaceAll("(?:tasa|cambio)(?: de| a)?\\s+[0-9][0-9.,]*", " ")).find()) return null; // Varias operaciones: no combinar importes.
         final TipoTransaccion tipoFinal=tipo;
-        String concepto=sinMonto.replaceAll("\\b(por favor|registra|registrar|anota|captura|un|una|gaste|gasto|pague|pago|compre|compra|ingreso|ingrese|recibi|cobre|cobro|depositaron|me pagaron|transferencia|transferi|transferir|transfiero|traspase|traspaso|movi|desde|usando|con|cuenta|tarjeta|pesos|peso|mxn|usd|eur|cad|gbp|de|en|a|hoy|ayer|anteayer)\\b"," ").replaceAll("\\s+"," ").strip();
+        String concepto=sinMonto.replaceAll("\\b(por favor|registra|registrar|anota|captura|un|una|me gaste|gaste|gasto|pague|pago|compre|compra|me cobraron|me costaron|me costo|desembolse|se me fueron|ingreso|ingrese|recibi|cobre|cobro|depositaron|me pagaron|transferencia|transferi|transferir|transfiero|traspase|traspaso|movi|desde|usando|con|cuenta|tarjeta|pesos|peso|mxn|usd|eur|cad|gbp|de|en|a|hoy|ayer|anteayer)\\b"," ").replaceAll("\\s+"," ").strip();
         CategoriaResponse categoria=null;
         if (!transfer) {
             List<CategoriaResponse> opciones=categorias.stream().filter(c -> c.activo()&&c.tipo()==tipoFinal).toList();
@@ -233,9 +235,13 @@ public final class MotorChatReglas {
                 var personales=exactas.stream().filter(CategoriaResponse::esPersonalizada).toList();
                 if(personales.size()==1) categoria=personales.getFirst();
             }
-            // Un ingreso sin categoria indicada usa Salario si existe una opcion inequivoca.
+            // Salario solo es predeterminado si no se describio otro origen de ingreso.
+            String detalleIngreso = concepto;
+            for (CuentaResponse cuenta : cuentas) detalleIngreso = detalleIngreso.replaceAll(
+                    "(?<![\\p{L}\\d])" + Pattern.quote(normalizar(cuenta.nombre())) + "(?![\\p{L}\\d])", " ");
+            boolean ingresoSinConcepto = detalleIngreso.replaceAll("\\b(efectivo|mi|mis|por|de|en|a)\\b", " ").isBlank();
             if (tipoFinal == TipoTransaccion.INGRESO && exactas.isEmpty()
-                    && !texto.matches(".*\\b(categoria|categorias)\\b.*")) {
+                    && ingresoSinConcepto && !texto.matches(".*\\b(categoria|categorias)\\b.*")) {
                 var salarios = opciones.stream().filter(c -> normalizar(c.nombre()).equals("salario")).toList();
                 if (salarios.size() == 1) categoria = salarios.getFirst();
                 else if (salarios.size() > 1) {

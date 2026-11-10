@@ -139,12 +139,18 @@ export class TransaccionesComponent implements OnInit, OnDestroy {
   ];
   readonly gruposHistorial = computed(() => {
     const grupos = new Map<string, Transaccion[]>();
-    for (const movimiento of this.pageData()?.content ?? []) {
+    const datos = this.pageData();
+    const movimientos = [...(datos?.content ?? []), ...(datos?.comprasMsiAnteriores ?? [])]
+      .sort((a, b) => b.fecha.localeCompare(a.fecha) || b.id - a.id);
+    for (const movimiento of movimientos) {
       const grupo = grupos.get(movimiento.fecha) ?? [];
       grupo.push(movimiento); grupos.set(movimiento.fecha, grupo);
     }
     return Array.from(grupos, ([fecha, movimientos]) => ({fecha, movimientos}));
   });
+  esCompraMsiAnterior(movimiento: Transaccion): boolean {
+    return (this.pageData()?.comprasMsiAnteriores ?? []).some(compra => compra === movimiento);
+  }
   totalesGrupo(movimientos: Transaccion[]): {moneda: string; monto: number}[] {
     const totales = new Map<string, number>();
     for (const movimiento of movimientos.filter(m => !m.compraMsiInformativa)) {
