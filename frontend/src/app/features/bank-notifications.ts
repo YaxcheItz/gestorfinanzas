@@ -1,4 +1,4 @@
-import { Component, inject, output, signal } from '@angular/core';
+import { Component, computed, inject, output, signal } from '@angular/core';
 import { BankNotice, BankNotificationsService, NoticeApp } from '../core/services/bank-notifications';
 import { AutomaticBankComponent } from './automatic-bank';
 import { RouterLink } from '@angular/router';
@@ -14,6 +14,12 @@ export class BankNotificationsComponent {
   readonly review = output<BankNotice>();
   readonly changed = output<void>();
   readonly apps = signal<NoticeApp[]>([]);
+  readonly busquedaApp = signal('');
+  readonly appsVisibles = computed(() => {
+    const normalizar = (valor: string) => valor.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const busqueda = normalizar(this.busquedaApp().trim());
+    return this.apps().filter(app => normalizar(app.label).includes(busqueda));
+  });
   readonly appsLoaded = signal(false);
   readonly selected = signal<string[]>([]);
   readonly consent = signal(false);
@@ -49,7 +55,7 @@ export class BankNotificationsComponent {
   }
   readonly message = signal('');
   closeSettings(event: Event): void {
-    if (!(event.target as HTMLDetailsElement).open) { this.apps.set([]); this.appsLoaded.set(false); this.consent.set(false); }
+    if (!(event.target as HTMLDetailsElement).open) { this.apps.set([]); this.appsLoaded.set(false); this.busquedaApp.set(''); this.consent.set(false); }
   }
   toggle(name: string, checked: boolean): void {
     this.selected.update(values => checked ? [...new Set([...values, name])] : values.filter(v => v !== name));

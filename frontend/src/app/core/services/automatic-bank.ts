@@ -37,24 +37,35 @@ export class AutomaticBankService {
   private readonly http = inject(HttpClient);
   readonly available = !!this.native;
   private readonly url = `${getApiBaseUrl()}/automatizacion/android`;
+  private cambiandoConexion = false;
+  private async exclusivo<T>(operacion: () => Promise<T>): Promise<T> {
+    if (this.cambiandoConexion) throw new Error('Ya se está actualizando la conexión. Espera un momento.');
+    this.cambiandoConexion = true;
+    try { return await operacion(); }
+    finally { this.cambiandoConexion = false; }
+  }
   async read(): Promise<AutomaticState | null> {
     const userId = this.auth.currentUser()?.id ?? 0;
     const state = await this.native?.read({ userId });
     return userId === (this.auth.currentUser()?.id ?? 0) ? state ?? null : null;
   }
   async configure(rules: AutomaticRule[], consent: boolean): Promise<void> {
-    if (!this.native || !consent) throw new Error('Acepta el registro automático.');
-    const userId = this.auth.currentUser()?.id ?? 0;
-    const state = await this.read();
-    if (!state || !userId || state.queued > 0) throw new Error('Espera a que terminen los envíos pendientes.');
-    await this.save(state, rules, consent, userId);
+    return this.exclusivo(async () => {
+      if (!this.native || !consent) throw new Error('Acepta el registro automático.');
+      const userId = this.auth.currentUser()?.id ?? 0;
+      const state = await this.read();
+      if (!state || !userId || state.queued > 0) throw new Error('Espera a que terminen los envíos pendientes.');
+      await this.save(state, rules, consent, userId);
+    });
   }
   async reconnect(consent: boolean): Promise<void> {
-    const userId = this.auth.currentUser()?.id ?? 0;
-    const state = await this.read();
-    if (!this.native || !consent || !userId || !state?.rules?.length)
-      throw new Error('Acepta restablecer las asociaciones guardadas.');
-    await this.save(state, state.rules, consent, userId);
+    return this.exclusivo(async () => {
+      const userId = this.auth.currentUser()?.id ?? 0;
+      const state = await this.read();
+      if (!this.native || !consent || !userId || !state?.rules?.length)
+        throw new Error('Acepta restablecer las asociaciones guardadas.');
+      await this.save(state, state.rules, consent, userId);
+    });
   }
   async retry(): Promise<void> {
     if (!this.native) return;
@@ -75,15 +86,17 @@ export class AutomaticBankService {
     catch (error) {
       // Setup failed: revoke the newly issued capability instead of leaving an unseen connection.
       if (userId === (this.auth.currentUser()?.id ?? 0))
-        await firstValueFrom(this.http.delete(`${this.url}/${state.deviceId}`)).catch(() => undefined);
+        await firstValueFrom(this.http.post(`${this.url}/${state.deviceId}/revocar-si-coincide`, { clave: response.data.clave })).catch(() => undefined);
       throw error;
     }
   }
   async disconnect(): Promise<void> {
-    const userId = this.auth.currentUser()?.id ?? 0;
-    const state = await this.read();
-    if (!state || !this.native) return;
-    await firstValueFrom(this.http.delete(`${this.url}/${state.deviceId}`));
-    if (userId === (this.auth.currentUser()?.id ?? 0)) await this.native.clear({ userId });
+    return this.exclusivo(async () => {
+      const userId = this.auth.currentUser()?.id ?? 0;
+      const state = await this.read();
+      if (!state || !this.native) return;
+      await firstValueFrom(this.http.delete(`${this.url}/${state.deviceId}`));
+      if (userId === (this.auth.currentUser()?.id ?? 0)) await this.native.clear({ userId });
+    });
   }
 }

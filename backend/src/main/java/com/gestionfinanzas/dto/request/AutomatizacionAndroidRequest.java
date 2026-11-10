@@ -25,6 +25,8 @@ public final class AutomatizacionAndroidRequest {
     public record Configuracion(@NotNull UUID dispositivoId, boolean consentimiento,
                                 @NotEmpty @Size(max=10) List<@NotNull @Valid Regla> reglas) {}
 
+    public record RevocacionCondicional(@NotBlank @Pattern(regexp="[A-Za-z0-9_-]{43}") String clave) {}
+
     public record Evento(@NotNull UUID reglaId, @NotBlank @Pattern(regexp="[a-f0-9]{64}") String eventoId,
                          @NotNull Clase clase, @NotBlank @Pattern(regexp="[A-Z]{3}") String moneda,
                          @NotNull @DecimalMin("0.01") @Digits(integer=13,fraction=2) BigDecimal monto,

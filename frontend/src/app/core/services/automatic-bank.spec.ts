@@ -47,8 +47,10 @@ describe('Registro bancario automático', () => {
     const assertion = expect(pending).rejects.toThrow('Storage unavailable');
     const request = await vi.waitFor(() => http.expectOne('/api/automatizacion/android'));
     request.flush({ success: true, data: credential });
-    const revoke = await vi.waitFor(() => http.expectOne('/api/automatizacion/android/' + state.deviceId));
-    expect(revoke.request.method).toBe('DELETE'); revoke.flush({ success: true }); await assertion;
+    const revoke = await vi.waitFor(() => http.expectOne('/api/automatizacion/android/' + state.deviceId + '/revocar-si-coincide'));
+    expect(revoke.request.method).toBe('POST');
+    expect(revoke.request.body).toEqual({clave:credential.clave});
+    revoke.flush({ success: true }); await assertion;
   });
   it('restablece una conexión pausada con compras pendientes sin cambiar reglas ni identificadores', async () => {
     native.read.mockResolvedValue({ ...state, queued: 1, rules: [rule], error: 'reconnect' });
@@ -58,6 +60,43 @@ describe('Registro bancario automático', () => {
     request.flush({ success: true, data: credential }); await pending;
     expect(native.configure).toHaveBeenCalledWith({ userId: 71, consent: true, credential });
     expect(native.clear).not.toHaveBeenCalled();
+  });
+  it('impide renovaciones y desconexiones simultáneas para no invalidar la clave nueva', async () => {
+    const service=TestBed.inject(AutomaticBankService);
+    native.read.mockResolvedValue({ ...state, queued: 1, rules: [rule], error: 'reconnect' });
+    const primera=service.reconnect(true);
+    await expect(service.reconnect(true)).rejects.toThrow('Ya se está actualizando');
+    await expect(service.disconnect()).rejects.toThrow('Ya se está actualizando');
+    const request=await vi.waitFor(()=>http.expectOne('/api/automatizacion/android'));
+    request.flush({success:true,data:credential});
+    await primera;
+    expect(native.configure).toHaveBeenCalledOnce();
+    http.expectNone('/api/automatizacion/android/'+state.deviceId);
+    const siguiente=service.reconnect(true);
+    const segunda=await vi.waitFor(()=>http.expectOne('/api/automatizacion/android'));
+    segunda.flush({success:true,data:credential});await siguiente;
+    expect(native.configure).toHaveBeenCalledTimes(2);
+  });
+  it('libera la coordinación si falla la validación para permitir reintentar', async () => {
+    const service=TestBed.inject(AutomaticBankService);
+    native.validate.mockRejectedValueOnce(new Error('No disponible'));
+    await expect(service.configure([rule],true)).rejects.toThrow('No disponible');
+    const siguiente=service.configure([rule],true);
+    const request=await vi.waitFor(()=>http.expectOne('/api/automatizacion/android'));
+    request.flush({success:true,data:credential});await siguiente;
+    expect(native.configure).toHaveBeenCalledOnce();
+  });
+  it('mantiene la coordinación hasta terminar de guardar la clave en Android', async () => {
+    const service=TestBed.inject(AutomaticBankService);
+    let terminar!: () => void;
+    native.configure.mockImplementationOnce(()=>new Promise<void>(resolve=>{terminar=resolve;}));
+    const primera=service.configure([rule],true);
+    const request=await vi.waitFor(()=>http.expectOne('/api/automatizacion/android'));
+    request.flush({success:true,data:credential});
+    await vi.waitFor(()=>expect(native.configure).toHaveBeenCalledOnce());
+    await expect(service.configure([rule],true)).rejects.toThrow('Ya se está actualizando');
+    terminar();await primera;
+    http.expectNone('/api/automatizacion/android');
   });
   it('no renueva conexiones sin consentimiento o sin asociaciones guardadas', async () => {
     const service = TestBed.inject(AutomaticBankService);

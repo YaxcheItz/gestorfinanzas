@@ -13,6 +13,7 @@ public class AiAssistantService {
 
     private final AiProvider provider;
     private final AiActionService actionService;
+    private final ClasificadorCapturaGroq clasificador;
 
     public AiConnectionStatus status() {
         return new AiConnectionStatus(provider.id(), provider.model(), provider.isConfigured());
@@ -109,6 +110,25 @@ public class AiAssistantService {
         AiChatResponse response;
         if (local != null) {
             response = respuestaLocal(local);
+            var propuesta = response.action();
+            if (propuesta != null && "CREATE_TRANSACTION".equals(propuesta.type()) && propuesta.data() != null
+                    && propuesta.data().path("categoriaId").isNull()
+                    && java.util.Set.of("GASTO", "INGRESO").contains(propuesta.data().path("tipo").asText())
+                    && actionService.permitirClasificacionCaptura(userId)) {
+                var tipo = com.gestionfinanzas.model.enums.TipoTransaccion.valueOf(propuesta.data().path("tipo").asText());
+                var concepto = actionService.conceptoParaClasificar(userId, propuesta.data().path("descripcion").asText());
+                var clasificacion = clasificador.clasificar(concepto, tipo,
+                        actionService.categoriasCaptura(userId));
+                if (clasificacion.isPresent()) {
+                    var asignada = actionService.asignarCategoriaCaptura(userId, propuesta, clasificacion.get().categoriaId());
+                    var combinadas = new java.util.LinkedHashSet<>(etiquetas);
+                    combinadas.addAll(clasificacion.get().etiquetas());
+                    if (combinadas.size() <= 8) etiquetas.addAll(clasificacion.get().etiquetas());
+                    response = new AiChatResponse("Clasifiqué la categoría con Groq.", asignada,
+                            response.actions().stream().map(a -> a.id().equals(asignada.id()) ? asignada : a).toList(),
+                            response.report(), "GROQ_CATEGORIA", response.suggestions(), response.contexto(), response.evidence());
+                }
+            }
         } else {
             if (!request.consentimientoDatosFinancieros()) {
                 throw new IllegalArgumentException("No encontré una regla local para ese texto. Activa el permiso para que la IA lo interprete.");

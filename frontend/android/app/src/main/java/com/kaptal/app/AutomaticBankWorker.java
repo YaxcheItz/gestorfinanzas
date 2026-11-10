@@ -90,7 +90,7 @@ public class AutomaticBankWorker extends Worker {
                     var store=store(); var state=store.read();
                     if(!generation.equals(state.optString("generation"))) return Result.success();
                     if(code==401 || code==403 || code==404) {
-                        state.put("paused",true); state.put("error","reconnect"); store.write(state); return Result.success();
+                        state.put("paused",true); state.put("error","http_" + code); store.write(state); return Result.success();
                     }
                     var entries=state.getJSONArray("entries");
                     state.put("error","");

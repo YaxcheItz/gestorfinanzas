@@ -402,6 +402,50 @@ public class AiActionService {
         transaccionService.validarListaCaptura(userId, listaId);
     }
 
+    public List<CategoriaResponse> categoriasCaptura(Long userId) {
+        return categoriaService.listarCategorias(userId);
+    }
+
+    public String conceptoParaClasificar(Long userId, String descripcion) {
+        String concepto = normalizar(descripcion);
+        var cuentas = cuentaService.listarCuentas(userId, true);
+        for (var cuenta : cuentas) {
+            String nombre = normalizar(cuenta.nombre());
+            if (!nombre.isBlank()) concepto = concepto.replaceAll("(?<![\\p{L}\\d])" + Pattern.quote(nombre) + "(?![\\p{L}\\d])", " ");
+        }
+        if (cuentas.stream().anyMatch(c -> normalizar(c.nombre()).contains("american express")))
+            concepto = concepto.replaceAll("\\bamex\\b", " ");
+        return concepto.replaceAll("\\s+", " ").strip();
+    }
+
+    public boolean permitirClasificacionCaptura(Long userId) {
+        try {
+            limiteAbuso.comprobar("ia:" + userId, 10, java.time.Duration.ofMinutes(1));
+            return true;
+        } catch (com.gestionfinanzas.exception.TooManyRequestsException
+                | com.gestionfinanzas.exception.LimiteNoDisponibleException ex) {
+            return false;
+        }
+    }
+
+    @Transactional
+    public ActionProposal asignarCategoriaCaptura(Long userId, ActionProposal proposal, long categoriaId) {
+        var pendiente = propuestas.bloquear(userId, proposal.id());
+        propuestas.exigirPendiente(pendiente);
+        comprobarVersion(pendiente, proposal.version());
+        if (!"CREATE_TRANSACTION".equals(pendiente.getTipo())) throw new IllegalArgumentException("Propuesta no valida.");
+        ObjectNode data = (ObjectNode) propuestas.datos(pendiente);
+        String tipo = data.path("tipo").asText();
+        if (!data.path("categoriaId").isMissingNode() && !data.path("categoriaId").isNull())
+            throw new IllegalArgumentException("La propuesta ya tiene categoria.");
+        if (categoriaService.listarCategorias(userId).stream().noneMatch(c -> c.id().equals(categoriaId)
+                && c.activo() && !c.historica() && c.tipo().name().equals(tipo)))
+            throw new IllegalArgumentException("La categoria ya no esta disponible.");
+        data.put("categoriaId", categoriaId);
+        pendiente.setDatos(data.toString());
+        return propuestas.guardar(pendiente);
+    }
+
     @Transactional
     public void marcarContextoCaptura(Long userId, ActionProposal proposal, Long listaId, java.util.Set<String> etiquetas) {
         if (proposal == null || !"CREATE_TRANSACTION".equals(proposal.type())) return;

@@ -1,3 +1,7 @@
+## Captura y conexiones: rama en revision - 10 noviembre 2026
+
+Esta rama contiene reglas locales ampliadas, clasificacion Groq acotada y guardado automatico cuando el movimiento es inequivoco; manejo de respuestas lentas y presupuesto de IA; orden de compras MSI anteriores; mejoras de avisos y busqueda de aplicaciones; y proteccion frente a renovaciones bancarias concurrentes y limpieza condicional de credenciales. No se han modificado movimientos reales. Las pruebas locales incluyen 560 frontend, 716 backend con 9 omitidas, build Angular y E2E sinteticas; deben repetirse en CI para el commit exacto. La interfaz de limpieza requiere que el backend compatible este desplegado primero. La integracion con Groq real, dispositivo fisico y causa de desconexion siguen pendientes; no afirmar solucion ni publicar sin completar comprobaciones.
+
 ## Carga y rendimiento: etapa en curso - 7 noviembre 2026
 
 Rama rendimiento/arranque-estados-carga desde origin/develop e02c3b9. Inicio y espera de sesion muestran skeletons sin presumir presupuestos; Movimientos oculta resultados anteriores mientras carga y distingue error con reintento de historial vacio. No se altero coordinacion de sesion ni logica financiera. Build y 534 pruebas frontend aprobados; dos E2E locales de historial/presupuestos aprobados con datos ficticios. check-startup sintetico paso estados 200/401/503 sin solicitudes con token vencido; 503 tuvo tres renovaciones a investigar.

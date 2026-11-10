@@ -16,21 +16,27 @@ import java.util.Map;
 public class GroqAiProvider implements AiProvider {
     @org.springframework.beans.factory.annotation.Autowired
     public GroqAiProvider(RestClient.Builder builder,AiProperties properties,AiHttpClient cliente,AiUsagePolicy policy) {
-        this(cliente.configurar(builder),properties,policy);
+        this(cliente.configurar(builder),cliente.configurarCaptura(builder),properties,policy);
     }
     private static final String DEFAULT_MODEL = "openai/gpt-oss-20b";
 
     private final AiProperties.Groq properties;
     private final RestClient restClient;
+    private final RestClient capturaClient;
     private final AiUsagePolicy policy;
     private final String endpoint;
 
     public GroqAiProvider(RestClient.Builder builder, AiProperties properties,AiUsagePolicy policy) {
+        this(builder, builder.clone(), properties, policy);
+    }
+
+    private GroqAiProvider(RestClient.Builder builder, RestClient.Builder capturaBuilder, AiProperties properties,AiUsagePolicy policy) {
         this.properties = properties.groq();
         this.policy=policy;
         String baseUrl = this.properties == null || this.properties.baseUrl() == null
                 || this.properties.baseUrl().isBlank() ? "https://api.groq.com/openai/v1" : this.properties.baseUrl();
         this.restClient = builder.baseUrl(baseUrl).build();
+        this.capturaClient = capturaBuilder.baseUrl(baseUrl).build();
         this.endpoint=baseUrl;
     }
 
@@ -52,6 +58,14 @@ public class GroqAiProvider implements AiProvider {
 
     @Override
     public String generate(String prompt, int maxOutputTokens) {
+        return generateWith(restClient, prompt, maxOutputTokens);
+    }
+
+    public String generateCaptura(String prompt, int maxOutputTokens) {
+        return generateWith(capturaClient, prompt, maxOutputTokens);
+    }
+
+    private String generateWith(RestClient client, String prompt, int maxOutputTokens) {
         if (!isConfigured()) {
             throw new AiConfigurationException("Configura GROQ_API_KEY en el entorno del backend para conectar Groq.");
         }
@@ -71,7 +85,7 @@ public class GroqAiProvider implements AiProvider {
                 payload.put("max_tokens", maxOutputTokens);
             }
 
-            JsonNode response = restClient.post()
+            JsonNode response = client.post()
                     .uri("/chat/completions")
                     .header("Authorization", "Bearer " + properties.apiKey())
                     .contentType(MediaType.APPLICATION_JSON)

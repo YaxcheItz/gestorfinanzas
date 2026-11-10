@@ -8,8 +8,9 @@
   </div>
   <section class="permissions" aria-label="Recepción en Android">
     <details (toggle)="closeSettings($event)">
-      <summary class="permission-header">Permisos de Android <span class="permission-state">{{ bank.current().granted ? 'Concedidos' : 'Sin conceder' }}</span></summary>
+      <summary class="permission-header">Más bancos y permisos de Android <span class="permission-state">{{ bank.current().granted ? 'Acceso concedido' : 'Acceso pendiente' }}</span></summary>
       <div class="permission-settings">
+        <p class="hint">Elige otras aplicaciones instaladas para recibir sus avisos y revisarlos. El registro automático depende de los bancos y formatos compatibles de la sección anterior.</p>
         <p class="hint">Android concede acceso amplio a las notificaciones. Kaptal filtra en el teléfono las apps que elijas y conserva hasta 20 avisos durante 24 horas. No recupera notificaciones anteriores ni garantiza detectar todas las compras.</p>
         <p class="hint">Al pausar, revocar el acceso o cerrar sesión se borran la selección y las colas locales, incluido el automático.</p>
         <label class="consent"><input type="checkbox" [checked]="consent()" (change)="consent.set($any($event.target).checked)" /> Entiendo el acceso y quiero configurar esta recepción.</label>
@@ -19,10 +20,12 @@
           <button type="button" (click)="bank.refresh()" [disabled]="busy()">Actualizar estado</button>
         </div>
         @if (appsLoaded()) {
+          <label class="app-search">Buscar aplicación <input type="search" [value]="busquedaApp()" (input)="busquedaApp.set($any($event.target).value)" placeholder="Nombre de tu banco" /></label>
+          <p class="hint">{{ selected().length }} de 10 aplicaciones seleccionadas</p>
           <fieldset class="apps" [disabled]="busy()"><legend>Tus aplicaciones bancarias · máximo 10</legend>
-            @for (app of apps(); track app.packageName) {
+            @for (app of appsVisibles(); track app.packageName) {
               <label><input type="checkbox" [checked]="selected().includes(app.packageName)" (change)="toggle(app.packageName, $any($event.target).checked)" /> {{ app.label }}</label>
-            }
+            } @empty { <p class="hint">No hay aplicaciones que coincidan con la búsqueda.</p> }
           </fieldset>
           <button class="primary" type="button" (click)="run('enable')" [disabled]="busy() || !consent() || !bank.current().granted || selected().length === 0 || selected().length > 10">Activar con estas apps</button>
         }

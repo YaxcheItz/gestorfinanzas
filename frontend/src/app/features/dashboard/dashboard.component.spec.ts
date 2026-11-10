@@ -63,6 +63,20 @@ describe('DashboardComponent movement dialog accessibility', () => {
     await TestBed.compileComponents();
   });
 
+  it('ordena una compra MSI anterior entre movimientos y respeta el limite de Inicio', () => {
+    const fixture = TestBed.createComponent(DashboardComponent); fixture.detectChanges();
+    const c = fixture.componentInstance;
+    const normal = (id: number, fecha: string) => ({id, fecha, moneda:'MXN', fechaCreacion:fecha+'T12:00:00'});
+    const anterior = {...normal(2,'2026-11-02'), plantillaId:42, compraMsiInformativa:true};
+    c.resumen.set({resumenPorMoneda:[], ultimosMovimientos:[normal(4,'2026-11-04'),normal(3,'2026-11-03'),normal(1,'2026-11-01')], comprasMsiAnteriores:[anterior]} as any);
+    c.monedaResumen.set('MXN');
+    expect(c.movimientosInicio().map(m=>m.id)).toEqual([4,3,2]);
+    expect(c.esCompraMsiAnterior(anterior as any)).toBe(true);
+    c.resumen.set({resumenPorMoneda:[], ultimosMovimientos:[normal(5,'2026-11-05'),normal(4,'2026-11-04'),normal(3,'2026-11-03')], comprasMsiAnteriores:[anterior]} as any);
+    expect(c.movimientosInicio().map(m=>m.id)).toEqual([5,4,3]);
+    fixture.destroy();
+  });
+
   it('oculta presupuestos desconocidos y distingue vacio y error', () => {
     const pendientes = new Subject<any>();
     vi.spyOn(TestBed.inject(FinanzasService), 'getPresupuestos').mockReturnValue(pendientes);

@@ -59,12 +59,20 @@ class AiActionServiceTest {
     private final TransaccionService transaccionService = mock(TransaccionService.class);
     private final PlantillaRecurrenteService plantillaService = mock(PlantillaRecurrenteService.class);
     private final PresupuestoResumenResponse budgetSummary = mock(PresupuestoResumenResponse.class);
+    private final com.gestionfinanzas.security.LimiteAbuso limite = mock(com.gestionfinanzas.security.LimiteAbuso.class);
     private final AiActionService service = new AiActionService(
             provider, contextService, cuentaService, categoriaService, presupuestoService,
             transaccionService, plantillaService, new ObjectMapper().findAndRegisterModules(),
             Validation.buildDefaultValidatorFactory().getValidator(), almacen,
-            new com.gestionfinanzas.security.LimiteAbuso()
+            limite
     );
+
+    @Test void siElLimiteCompartidoNoRespondeSeConservaLaCapturaLocal() {
+        org.mockito.Mockito.doThrow(new com.gestionfinanzas.exception.LimiteNoDisponibleException())
+                .when(limite).comprobar(eq("ia:7"), eq(10), org.mockito.ArgumentMatchers.any());
+        org.junit.jupiter.api.Assertions.assertFalse(service.permitirClasificacionCaptura(7L));
+        verify(provider, never()).generate(org.mockito.ArgumentMatchers.anyString(), anyInt());
+    }
 
     @BeforeEach
     void configureContext() {
