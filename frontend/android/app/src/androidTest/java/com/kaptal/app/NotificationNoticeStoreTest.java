@@ -23,6 +23,25 @@ public class NotificationNoticeStoreTest {
     }
     private void enable() throws Exception { store.configure(71, true, Set.of(app), now); }
     private int count() throws Exception { return store.read(71, now, true).getJSONArray("notices").length(); }
+    @Test public void addingAutomaticAppPreservesManualAppsAndTheirNotices() throws Exception {
+        enable();store.receive(71,app,"qa","Aviso ficticio",now);
+        var combined=store.withAdditionalPackages(71,Set.of("test.automatic"),now);
+        assertEquals(Set.of(app,"test.automatic"),combined);
+        store.configure(71,true,combined,now);
+        assertTrue(store.accepts(71,app,now));
+        assertTrue(store.accepts(71,"test.automatic",now));
+        assertEquals(1,count());
+        assertEquals(Set.of("test.automatic"),store.withAdditionalPackages(72,Set.of("test.automatic"),now));
+    }
+    @Test public void exceedingAppLimitDoesNotRemoveExistingNoticesOrSelection() throws Exception {
+        var existing=new java.util.HashSet<String>();
+        for(int i=0;i<10;i++)existing.add("test.app"+i);
+        store.configure(71,true,existing,now);
+        store.receive(71,"test.app0","qa","Aviso ficticio",now);
+        assertThrows(IllegalArgumentException.class,()->store.withAdditionalPackages(71,Set.of("test.extra"),now));
+        assertTrue(store.accepts(71,"test.app0",now));
+        assertEquals(1,count());
+    }
     @Test public void retryLookupRequiresOwnerRevisionAndUnexpiredOriginal() throws Exception {
         enable();store.receive(71,app,"qa","Compra QA",now);
         var first=store.read(71,now,true).getJSONArray("notices").getJSONObject(0);String id=first.getString("id");

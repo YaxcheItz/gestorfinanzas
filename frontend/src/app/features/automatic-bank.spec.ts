@@ -10,6 +10,67 @@ import { FinanzasService } from '../core/services/finanzas.service';
 import { AuthService } from '../core/services/auth.service';
 
 describe('Configuración bancaria guardada', () => {
+  it('edita una asociación y conserva las demás con sus identificadores y categorías', async () => {
+    const rules=[
+      {id:'one',proveedor:'SANTANDER',paquete:'mx.bancosantander.supermovil',remitente:null,terminacion:'1234',cuentaId:11,listaId:21,categoriaId:31},
+      {id:'two',proveedor:'BBVA',paquete:'com.bancomer.mbanking',remitente:null,terminacion:'5678',cuentaId:12,listaId:21,categoriaId:32}
+    ];
+    const state={active:true,queued:0,rules};
+    c.state.set(state as any);automatic.read.mockResolvedValue(state);
+    c.accounts.set([{id:11,nombre:'Banco QA',tipo:'DEBITO',moneda:'MXN',activo:true},
+      {id:13,nombre:'Otra QA',tipo:'DEBITO',moneda:'MXN',activo:true}] as any);
+    c.lists.set([{id:21,nombre:'Lista QA',rol:'PROPIETARIO',moneda:'MXN',archivada:false}] as any);
+    c.editAssociation(rules[0]);c.editingRule()!.cuentaId=13;c.ruleConsent=true;
+    await c.saveAssociation();
+    expect(automatic.configure).toHaveBeenCalledOnce();
+    const sent=automatic.configure.mock.calls[0][0];
+    expect(sent[0]).toEqual({...rules[0],cuentaId:13,ingresosMxn:false});
+    expect(sent[1]).toEqual(rules[1]);
+  });
+  it('rechaza el guardado si la lista cambió mientras se editaba', async () => {
+    const rule={id:'one',proveedor:'SANTANDER',paquete:'mx.bancosantander.supermovil',remitente:null,terminacion:'1234',cuentaId:11,listaId:21,categoriaId:null};
+    c.state.set({active:true,queued:0,rules:[rule]} as any);
+    automatic.read.mockResolvedValue({active:true,queued:0,rules:[{...rule,cuentaId:12}]});
+    c.accounts.set([{id:11,nombre:'QA',tipo:'DEBITO',moneda:'MXN',activo:true}] as any);
+    c.lists.set([{id:21,nombre:'QA',rol:'PROPIETARIO',moneda:'MXN',archivada:false}] as any);
+    c.editAssociation(rule);c.ruleConsent=true;await c.saveAssociation();
+    expect(automatic.configure).not.toHaveBeenCalled();
+    expect(c.error()).toContain('cambiaron');
+  });
+  it('no sobrescribe cambios actualizados en la pantalla durante la edición', async () => {
+    const rule={id:'one',proveedor:'SANTANDER',paquete:'mx.bancosantander.supermovil',remitente:null,terminacion:'1234',cuentaId:11,listaId:21,categoriaId:null};
+    c.state.set({active:true,queued:0,rules:[rule]} as any);
+    c.accounts.set([{id:11,nombre:'QA',tipo:'DEBITO',moneda:'MXN',activo:true}] as any);
+    c.lists.set([{id:21,nombre:'QA',rol:'PROPIETARIO',moneda:'MXN',archivada:false}] as any);
+    c.editAssociation(rule);c.ruleConsent=true;
+    c.state.set({active:true,queued:0,rules:[{...rule,cuentaId:12}]} as any);
+    await c.saveAssociation();
+    expect(automatic.configure).not.toHaveBeenCalled();
+    expect(c.error()).toContain('cambiaron');
+  });
+  it('impide la configuración agrupada si hay varias asociaciones de un banco', async () => {
+    c.state.set({active:true,queued:0,rules:[
+      {id:'one',proveedor:'BBVA',listaId:21},{id:'two',proveedor:'BBVA',listaId:21}
+    ]} as any);
+    c.consent=true;await c.connect();
+    expect(automatic.configure).not.toHaveBeenCalled();
+    expect(c.error()).toContain('una por una');
+  });
+  it('añade una tarjeta conservando la asociación anterior y rechaza una regla solapada', async () => {
+    const previous={id:'one',proveedor:'SANTANDER',paquete:'mx.bancosantander.supermovil',remitente:null,terminacion:'1234',cuentaId:11,listaId:21,categoriaId:null};
+    const state={active:true,queued:0,rules:[previous]};
+    c.state.set(state as any);automatic.read.mockResolvedValue(state);
+    c.accounts.set([{id:11,nombre:'QA',tipo:'DEBITO',moneda:'MXN',activo:true}] as any);
+    c.lists.set([{id:21,nombre:'QA',rol:'PROPIETARIO',moneda:'MXN',archivada:false}] as any);
+    c.listId=21;c.addAssociation();c.editingRule()!.cuentaId=11;c.ruleConsent=true;
+    await c.saveAssociation();
+    expect(automatic.configure).not.toHaveBeenCalled();
+    expect(c.error()).toContain('mismo aviso');
+    c.editingRule()!.terminacion='5678';await c.saveAssociation();
+    expect(automatic.configure).toHaveBeenCalledOnce();
+    expect(automatic.configure.mock.calls[0][0][0]).toEqual(previous);
+    expect(automatic.configure.mock.calls[0][0][1].terminacion).toBe('5678');
+  });
   it('distingue el codigo de rechazo sin mostrar datos del aviso', () => {
     for (const code of ['401','403','404']) {
       c.state.set({active:false,reason:'reconnect',error:`http_${code}`,queued:1,rules:[]} as any);

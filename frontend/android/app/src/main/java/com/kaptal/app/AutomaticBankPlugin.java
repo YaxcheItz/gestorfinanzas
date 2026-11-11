@@ -60,7 +60,13 @@ public class AutomaticBankPlugin extends Plugin {
         if(!Boolean.TRUE.equals(call.getBoolean("consent"))||!BankNotificationListener.granted(getContext()))throw new IllegalArgumentException();
         if(rules==null||rules.length()<1||rules.length()>10)throw new IllegalArgumentException();
         AutomaticBankStore.checkPending(new AutomaticBankStore(getContext()).read(),uid,rules);
-        for(int i=0;i<rules.length();i++)getContext().getPackageManager().getApplicationInfo(rules.getJSONObject(i).getString("paquete"),0);
+        java.util.Set<String> packages=new java.util.HashSet<>();
+        for(int i=0;i<rules.length();i++) {
+            String pkg=rules.getJSONObject(i).getString("paquete");
+            getContext().getPackageManager().getApplicationInfo(pkg,0);
+            packages.add(pkg);
+        }
+        BankNotificationListener.store(getContext()).withAdditionalPackages(uid,packages,System.currentTimeMillis());
         return uid;
     }
     @PluginMethod public void validate(PluginCall call) {
@@ -94,8 +100,11 @@ public class AutomaticBankPlugin extends Plugin {
                     getContext().getPackageManager().getApplicationInfo(pkg,0);
                     packages.add(pkg);
                 }
+                var notices=BankNotificationListener.store(getContext());
+                long now=System.currentTimeMillis();
+                var combined=notices.withAdditionalPackages(uid,packages,now);
                 store.write(state);
-                BankNotificationListener.store(getContext()).configure(uid,true,packages,System.currentTimeMillis());
+                notices.configure(uid,true,combined,now);
                 android.service.notification.NotificationListenerService.requestRebind(
                     new android.content.ComponentName(getContext(),BankNotificationListener.class));
                 AutomaticBankWorker.retry(getContext());

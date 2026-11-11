@@ -1,10 +1,10 @@
 import { expect, test, Page } from '@playwright/test';
 import { readPageGeometry } from './geometry-helper';
 
-async function syntheticAndroid(page: Page, baseURL: string, dark = false, privacy = false, recovery = false) {
+async function syntheticAndroid(page: Page, baseURL: string, dark = false, privacy = false, recovery = false, noPending = false) {
   expect(new URL(baseURL).hostname).toBe('localhost');
   const writes: string[] = [];
-  await page.addInitScript(({ dark, privacy, recovery }) => {
+  await page.addInitScript(({ dark, privacy, recovery, noPending }) => {
     const w = window as any;
     localStorage.setItem('finanzas_token', `qa.${btoa(JSON.stringify({exp:Math.floor(Date.now()/1000)+3600}))}.synthetic`);
     localStorage.setItem('finanzas_user', JSON.stringify({id:995,nombre:'Prueba de interfaz',email:'ui@example.test'}));
@@ -19,7 +19,7 @@ async function syntheticAndroid(page: Page, baseURL: string, dark = false, priva
     const notices = [{id:'qa-1',revision:1,at:Date.now(),text:'Aviso sintético',packageName:'mx.bancosantander.supermovil',automaticStatus:'ready',automaticVersion:'qa-v1',canRetry:true},
       {id:'qa-2',revision:1,at:Date.now(),text:'Aviso sintético',packageName:'com.google.android.apps.messaging',automaticStatus:'card_mismatch',automaticVersion:'qa-v1',canRetry:false}];
     w.__nativeCalls=[];
-    let active=!recovery,queued=1,registered=2;
+    let active=!recovery,queued=noPending?0:1,registered=2;
     w.CapacitorCustomPlatform={name:'android'};
     w.Capacitor={
       PluginHeaders:['NativeSession','AutomaticBank','BankNotifications','AppLock','ScreenPrivacy','SharedNotice','CaptureAction','App'].map(name=>({name,methods:[...methods.map(name=>({name,rtype:'promise'})),{name:'addListener',rtype:'callback'}]})),
@@ -31,7 +31,7 @@ async function syntheticAndroid(page: Page, baseURL: string, dark = false, priva
         if(plugin==='ScreenPrivacy')return {enabled:false,supported:true};
         if(plugin==='AutomaticBank'){
           if(method==='validate')return {};
-          if(method==='configure'){active=true;return {};}
+          if(method==='configure'){active=true;rules.splice(0,rules.length,...options.credential.reglas);return {};}
           if(method==='retry'){queued=0;registered++;return {};}
           return {deviceId:'synthetic-device',active,queued,registered,review:privacy?1:0,rules,reason:active?'':'reconnect',
             entries:recovery?[{id:'qa-queued',proveedor:'SANTANDER',cuentaId:11,status:queued?'queued':'registered',descripcion:'Compra QA 27',monto:25.1,moneda:'MXN',fecha:'2026-10-26'}]:[],
@@ -45,7 +45,7 @@ async function syntheticAndroid(page: Page, baseURL: string, dark = false, priva
         return {};
       },
     };
-  }, { dark, privacy, recovery });
+  }, { dark, privacy, recovery, noPending });
   await page.route('**/*', async route => {
     const request=route.request(), url=new URL(request.url());
     if(!url.pathname.startsWith('/api/'))return url.origin===new URL(baseURL).origin ? route.continue() : route.abort();
@@ -61,13 +61,35 @@ async function syntheticAndroid(page: Page, baseURL: string, dark = false, priva
   await page.goto('/avisos');
   await page.evaluate(()=>document.fonts.ready.then(()=>undefined));
   await page.evaluate(dark=>document.documentElement.classList.toggle('dark',dark),dark);
+  await page.getByRole('button',{name:'Bancos y cuentas',exact:true}).click();
   await expect(page.getByText(recovery?'Desactivado':'Registro activo',{exact:true})).toBeVisible();
+  await page.getByRole('button',{name:'Avisos',exact:true}).click();
   return writes;
 }
 
+test('editar una asociación conserva las demás con datos ficticios', async ({page,baseURL})=>{
+  const writes=await syntheticAndroid(page,baseURL!,false,false,false,true);
+  await page.getByRole('button',{name:'Bancos y cuentas',exact:true}).click();
+  await page.getByText('Administrar bancos y cuentas',{exact:true}).click();
+  await page.getByRole('button',{name:/Editar asociación de Santander con Crédito QA/}).click();
+  const editor=page.getByRole('group',{name:'Editar asociación'});
+  await editor.getByRole('combobox',{name:'Cuenta',exact:true}).selectOption({label:'Débito QA'});
+  await editor.getByRole('checkbox',{name:/Autorizo esta asociación/}).check();
+  await editor.getByRole('button',{name:'Guardar asociación'}).click();
+  await expect(page.getByText('Asociación guardada. Las demás asociaciones se conservaron.')).toBeVisible();
+  const calls=await page.evaluate(()=>(window as any).__nativeCalls.filter((c:any)=>c.plugin==='AutomaticBank'&&c.method==='configure'));
+  const rules=calls[0].options.credential.reglas;
+  expect(rules).toHaveLength(5);
+  expect(rules.find((r:any)=>r.id==='qa-rule-santander').cuentaId).toBe(13);
+  expect(rules.find((r:any)=>r.id==='qa-rule-amex').cuentaId).toBe(14);
+  expect(writes).toEqual(['/api/automatizacion/android']);
+});
+
 test('una compra pendiente usa el original nativo y no el guardado manual', async ({page,baseURL})=>{
   const writes=await syntheticAndroid(page,baseURL!);
+  await page.getByRole('button',{name:'Bancos y cuentas',exact:true}).click();
   await expect(page.getByText('Sears Visa · 2 tarjetas',{exact:true})).toBeVisible();
+  await page.getByRole('button',{name:'Avisos',exact:true}).click();
   await expect(page.getByRole('heading',{name:'No hay revisiones pendientes'})).toBeVisible();
   await page.getByRole('button',{name:'Registrar con la cuenta asociada',exact:true}).click();
   await expect(page.getByText('Enviando',{exact:true})).toBeVisible();
@@ -79,6 +101,7 @@ test('una compra pendiente usa el original nativo y no el guardado manual', asyn
 
 test('busca otra aplicación y conserva la selección al filtrar', async ({page,baseURL})=>{
   const writes=await syntheticAndroid(page,baseURL!);
+  await page.getByRole('button',{name:'Bancos y cuentas',exact:true}).click();
   await page.getByText('Más bancos y permisos de Android',{exact:false}).click();
   await page.getByRole('checkbox',{name:'Entiendo el acceso y quiero configurar esta recepción.'}).check();
   await page.getByRole('button',{name:'Elegir aplicaciones'}).click();
@@ -96,6 +119,7 @@ test('busca otra aplicación y conserva la selección al filtrar', async ({page,
 
 test('ocultar montos protege los envíos para revisión también en el lector de pantalla', async ({page,baseURL})=>{
   const writes=await syntheticAndroid(page,baseURL!,false,true);
+  await page.getByRole('button',{name:'Bancos y cuentas',exact:true}).click();
   const summary=page.getByRole('region',{name:'Registro automático'});
   await expect(summary).not.toContainText('25.1');
   await expect(summary).toContainText('Compra QA •••');
@@ -107,8 +131,16 @@ for(const dark of [false,true]) {
   test(`avisos y asociaciones se leen sin desbordes, tema ${dark?'oscuro':'claro'}`,async({page,baseURL},testInfo)=>{
     await page.setViewportSize({width:390,height:844});
     const writes=await syntheticAndroid(page,baseURL!,dark);
+    await page.getByRole('button',{name:'Bancos y cuentas',exact:true}).click();
     await page.screenshot({path:testInfo.outputPath('avisos-sinteticos.png'),fullPage:true});
     await page.getByText('Administrar bancos y cuentas',{exact:true}).click();
+    await expect(page.getByRole('heading',{name:'Tus asociaciones'})).toBeVisible();
+    await expect(page.locator('.association-card')).toHaveCount(5);
+    await page.getByRole('button',{name:/Editar asociación de Santander/}).click();
+    await expect(page.getByRole('group',{name:'Editar asociación'})).toBeVisible();
+    await expect(page.getByText('Espera a que terminen los envíos pendientes antes de editar.')).toBeVisible();
+    await page.getByRole('button',{name:'Cancelar',exact:true}).click();
+    await page.getByText('Configuración agrupada',{exact:true}).click();
     for (const name of ['Santander', 'Revolut', 'American Express', 'Sears Visa']) {
       await page.locator('details.profile > summary').filter({hasText:name}).click();
     }
@@ -133,6 +165,7 @@ for(const dark of [false,true]) {
 
 test('un envío pausado se ve y se recupera sin cambiar cuenta ni usar registro manual',async({page,baseURL},testInfo)=>{
   const writes=await syntheticAndroid(page,baseURL!,false,true,true);
+  await page.getByRole('button',{name:'Bancos y cuentas',exact:true}).click();
   await page.getByRole('button',{name:'Ver envíos',exact:true}).click();
   const entries=page.locator('#automatic-entries');
   await expect(entries).toContainText('Pendiente de envío');

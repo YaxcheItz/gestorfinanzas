@@ -69,6 +69,66 @@
       </div>
       <button type="button" (click)="load()" [disabled]="busy()">{{ busy() ? 'Cargando configuración…' : 'Actualizar configuración' }}</button>
       @if (loaded()) {
+        <section class="association-list" aria-labelledby="associations-title">
+          <div class="association-list__heading">
+            <div><h3 id="associations-title">Tus asociaciones</h3><p class="hint">Cada aviso reconocido usa la cuenta y la lista elegidas aquí.</p></div>
+            <button type="button" (click)="addAssociation()" [disabled]="busy()">Añadir asociación</button>
+          </div>
+          @for (rule of state()?.rules ?? []; track rule.id) {
+            <article class="association-card">
+              <div><strong>{{ bankName(rule.proveedor) }}</strong>
+                <p class="hint">{{ accountName(rule.cuentaId) | textoFinanciero }} · {{ listName(rule.listaId) | textoFinanciero }}</p>
+                <p class="hint">{{ (rule.terminacion ? 'Terminación ···· ' + rule.terminacion : 'Sin terminación configurada') | textoFinanciero }}</p>
+              </div>
+              <button type="button" (click)="editAssociation(rule)" [disabled]="busy()" [attr.aria-label]="'Editar asociación de ' + bankName(rule.proveedor) + ' con ' + (accountName(rule.cuentaId) | textoFinanciero)">Editar</button>
+            </article>
+          } @empty { <p class="hint">Aún no hay asociaciones guardadas.</p> }
+          @if (editingRule(); as draft) {
+            <div class="association-editor" role="group" [attr.aria-label]="addingRule() ? 'Nueva asociación' : 'Editar asociación'">
+              <h4>{{ addingRule() ? 'Nueva asociación' : 'Editar asociación' }}</h4>
+              <label>Banco
+                <select [ngModel]="draft.proveedor" (ngModelChange)="setAssociationProvider($event)" [disabled]="!addingRule() || busy()">
+                  @for (profile of profiles; track profile.provider) { <option [value]="profile.provider">{{ profile.name }}</option> }
+                </select>
+              </label>
+              <label>Cuenta
+                <select [(ngModel)]="draft.cuentaId" [disabled]="busy()"><option [ngValue]="null">Elige una cuenta</option>
+                  @for (account of accounts(); track account.id) {
+                    @for (profile of profiles; track profile.provider) {
+                      @if (profile.provider === draft.proveedor && canUseAccount(profile, account)) { <option [ngValue]="account.id">{{ account.nombre }}</option> }
+                    }
+                  }
+                </select>
+              </label>
+              <label>Lista
+                <select [(ngModel)]="draft.listaId" [disabled]="busy()"><option [ngValue]="null">Elige una lista</option>
+                  @for (list of lists(); track list.id) { <option [ngValue]="list.id">{{ list.nombre }}</option> }
+                </select>
+              </label>
+              <label>{{ draft.proveedor === 'SEARS' ? 'Últimos cuatro dígitos' : 'Últimos cuatro dígitos (opcional)' }}
+                <input type="text" inputmode="numeric" maxlength="4" autocomplete="off" [(ngModel)]="draft.terminacion" [disabled]="busy()" />
+              </label>
+              @if (draft.proveedor === 'SEARS') {
+                <label>Aplicación de mensajes<select [(ngModel)]="draft.paquete" [disabled]="busy()"><option value="">Elige una aplicación</option>
+                  @for (app of smsApps(); track app.packageName) { <option [value]="app.packageName">{{ app.label }}</option> }
+                </select></label>
+                <label>Remitente<input type="text" maxlength="40" autocomplete="off" [(ngModel)]="draft.remitente" [disabled]="busy()" /></label>
+              }
+              @if (draft.proveedor === 'REVOLUT') {
+                <label class="consent"><input type="checkbox" [(ngModel)]="draft.ingresosMxn" [disabled]="busy()" /> Registrar también los pagos recibidos reconocidos de Revolut. Confirmo que los avisos con $ son MXN.</label>
+              }
+              <p class="hint">Solo se registran automáticamente formatos compatibles; otros avisos quedan para revisión.</p>
+              <label class="consent"><input type="checkbox" [(ngModel)]="ruleConsent" [disabled]="busy()" /> Autorizo esta asociación para registrar avisos reconocidos.</label>
+              @if (error()) { <p role="alert" class="feedback">{{ error() }}</p> }
+              <div class="association-editor__actions">
+                <button type="button" (click)="editingRule.set(null)" [disabled]="busy()">Cancelar</button>
+                <button class="primary" type="button" (click)="saveAssociation()" [disabled]="busy() || !ruleConsent || !bank.current().granted || !!state()?.queued">Guardar asociación</button>
+              </div>
+              @if (state()?.queued) { <p class="hint">Espera a que terminen los envíos pendientes antes de editar.</p> }
+            </div>
+          }
+        </section>
+        <details class="legacy-setup"><summary>Configuración agrupada</summary>
         <fieldset [disabled]="busy()">
           <legend>Asociaciones bancarias</legend>
           @for (profile of profiles; track profile.provider) {
@@ -117,6 +177,7 @@
           @if (state()?.queued) { <p class="hint">Resuelve primero los envíos desde «Ver envíos». Puedes restablecer la conexión sin cambiar sus cuentas.</p> }
           @if (!bank.current().granted) { <p class="hint">Primero concede acceso a las notificaciones en los permisos de Android, debajo de esta sección.</p> }
         </fieldset>
+        </details>
       }
       <details class="support"><summary>Más información</summary>
         <p class="hint">El resumen muestra envíos recientes de este teléfono. El historial completo está en Movimientos. Sin internet se conservan cifrados; los formatos ambiguos y posibles coincidencias necesitan revisión.</p>
