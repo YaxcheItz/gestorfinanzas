@@ -182,7 +182,7 @@ jobs:
 
   e2e:
     name: E2E Chromium + API + PostgreSQL
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # La instalación de Chromium puede consumir 12 min; reservar tiempo para flujos y PWA.
     timeout-minutes: 25
     services:
