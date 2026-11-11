@@ -37,6 +37,10 @@ export class AutomaticBankComponent {
   readonly message = signal('');
   readonly summaryError = signal('');
   readonly showEntries = signal(false);
+  readonly editingRule = signal<AutomaticRule | null>(null);
+  readonly addingRule = signal(false);
+  ruleConsent = false;
+  private rulesAtEdit = '';
   reconnectConsent = false;
   accountName(id: number): string { return this.accounts().find(a=>a.id===id)?.nombre ?? 'Cuenta asociada'; }
   async toggleEntries(): Promise<void> {
@@ -56,6 +60,7 @@ export class AutomaticBankComponent {
       const user = this.auth.currentUser()?.id;
       if (this.summaryOwner !== user) {
         this.summaryOwner = user; this.state.set(null); this.loaded.set(false); this.consent = false;
+        this.editingRule.set(null); this.ruleConsent = false; this.rulesAtEdit = '';
         this.reconnectConsent = false;this.showEntries.set(false);
         this.sender = ''; this.smsPackage = ''; this.listId = null; this.revolutIncomeMxn = false;
         this.accounts.set([]); this.lists.set([]);
@@ -80,6 +85,91 @@ export class AutomaticBankComponent {
   }
   ruleCount(provider: string): number { return this.state()?.rules?.filter(r => r.proveedor === provider).length ?? 0; }
   bankName(provider: string): string { return this.profiles.find(p => p.provider === provider)?.name ?? 'Compra bancaria'; }
+  listName(id: number): string { return this.lists().find(l => l.id === id)?.nombre ?? 'Lista asociada'; }
+  editAssociation(rule: AutomaticRule): void {
+    this.error.set(''); this.message.set(''); this.ruleConsent = false; this.addingRule.set(false);
+    this.rulesAtEdit=JSON.stringify(this.state()?.rules ?? []);
+    this.editingRule.set({...rule});
+  }
+  addAssociation(): void {
+    this.error.set(''); this.message.set(''); this.ruleConsent = false; this.addingRule.set(true);
+    this.rulesAtEdit=JSON.stringify(this.state()?.rules ?? []);
+    this.editingRule.set({id:crypto.randomUUID(),proveedor:'SANTANDER',paquete:'mx.bancosantander.supermovil',
+      remitente:null,terminacion:null,cuentaId:null as unknown as number,listaId:this.listId as number,
+      categoriaId:null,ingresosMxn:false});
+  }
+  setAssociationProvider(provider: string): void {
+    const current=this.editingRule(), profile=this.profiles.find(p=>p.provider===provider);
+    if (!current || !profile || !this.addingRule()) return;
+    this.editingRule.set({...current,proveedor:provider,paquete:provider==='SEARS'?'':profile.pkg,
+      remitente:null,terminacion:null,cuentaId:null as unknown as number,categoriaId:null,ingresosMxn:false});
+  }
+  async saveAssociation(): Promise<void> {
+    const draft=this.editingRule(), state=this.state(), owner=this.auth.currentUser()?.id;
+    if (this.busy() || !draft || !state || !owner || !this.ruleConsent) return;
+    const profile=this.profiles.find(p=>p.provider===draft.proveedor);
+    const account=this.accounts().find(a=>a.id===draft.cuentaId);
+    const lista=this.lists().find(l=>l.id===draft.listaId);
+    const suffix=(draft.terminacion ?? '').trim();
+    const sender=(draft.remitente ?? '').trim();
+    const sears=draft.proveedor==='SEARS';
+    if (!profile || !account || !this.canUseAccount(profile,account) || !lista
+        || (suffix!=='' && !/^[0-9]{4}$/.test(suffix))
+        || (sears && (!suffix || !sender || !this.smsApps().some(a=>a.packageName===draft.paquete)))) {
+      this.error.set('Revisa el banco, la cuenta, la lista y los datos del aviso.'); return;
+    }
+    if (state.queued) { this.error.set('Espera a que terminen los envíos pendientes antes de cambiar asociaciones.'); return; }
+    const updated:AutomaticRule={...draft,paquete:sears?draft.paquete:profile.pkg,
+      remitente:sears?sender:null,terminacion:suffix||null,ingresosMxn:draft.proveedor==='REVOLUT' && !!draft.ingresosMxn};
+    const existing=state.rules ?? [];
+    if (JSON.stringify(existing)!==this.rulesAtEdit) {
+      this.error.set('Las asociaciones cambiaron. Actualiza la lista antes de guardar.'); return;
+    }
+    if (!this.addingRule() && !existing.some(r=>r.id===draft.id)) {
+      this.error.set('La asociación cambió. Actualiza la lista e inténtalo de nuevo.'); return;
+    }
+    const others=existing.filter(r=>r.id!==draft.id);
+    if (others.some(r=>r.paquete===updated.paquete && (r.remitente??'')===(updated.remitente??'')
+        && (!(r.terminacion??'') || !updated.terminacion || r.terminacion===updated.terminacion))) {
+      this.error.set('Esa aplicación ya tiene una asociación que podría coincidir con el mismo aviso.'); return;
+    }
+    const rules=this.addingRule()?[...existing,updated]:existing.map(r=>r.id===updated.id?updated:r);
+    if (rules.length>10) { this.error.set('Configura como máximo diez asociaciones.'); return; }
+    const previous=existing.find(r=>r.id===updated.id);
+    const unchanged=!!(!this.addingRule() && previous
+        && previous.proveedor===updated.proveedor && previous.paquete===updated.paquete
+        && (previous.remitente??null)===(updated.remitente??null)
+        && (previous.terminacion??null)===(updated.terminacion??null)
+        && previous.cuentaId===updated.cuentaId && previous.listaId===updated.listaId
+        && (previous.categoriaId??null)===(updated.categoriaId??null)
+        && !!previous.ingresosMxn===!!updated.ingresosMxn);
+    const manual=this.bank.current();
+    const packages=new Set([...(manual.enabled ? manual.packages ?? [] : []),...rules.map(r=>r.paquete)]);
+    if (packages.size>10) {
+      this.error.set('Ya hay diez aplicaciones de avisos. Revisa la selección antes de añadir otra.'); return;
+    }
+    this.busy.set(true);this.error.set('');this.message.set('');
+    try {
+      const latest=await this.automatic.read();
+      if(owner!==this.auth.currentUser()?.id)return;
+      if(!latest || latest.queued || JSON.stringify(latest.rules ?? [])!==JSON.stringify(existing)) {
+        this.error.set('Las asociaciones o los envíos cambiaron. Actualiza la lista antes de guardar.');
+        return;
+      }
+      if(unchanged) {
+        this.editingRule.set(null);this.ruleConsent=false;this.message.set('La asociación no tenía cambios.');return;
+      }
+      await this.automatic.configure(rules,true);
+      if(owner!==this.auth.currentUser()?.id)return;
+      const saved=await this.automatic.read();
+      if(owner!==this.auth.currentUser()?.id)return;
+      this.state.set(saved);
+      this.editingRule.set(null);this.ruleConsent=false;
+      this.message.set('Asociación guardada. Las demás asociaciones se conservaron.');
+    } catch {
+      if(owner===this.auth.currentUser()?.id)this.error.set('No se pudo guardar. Comprueba la conexión y los envíos pendientes.');
+    } finally { this.busy.set(false); }
+  }
   statusLabel(status: string): string { return ({queued:'Pendiente de envío',registered:'Registrado',review:'Revisar en Movimientos'} as Record<string,string>)[status] ?? 'Revisar'; }
   reason(): string {
     const s=this.state();
@@ -129,7 +219,7 @@ export class AutomaticBankComponent {
   smsPackage = ''; sender = ''; listId: number | null = null; consent = false; revolutIncomeMxn = false;
   opened(event: Event): void {
     if ((event.target as HTMLDetailsElement).open) void this.load();
-    else { this.consent = false; this.revolutIncomeMxn = false; this.loaded.set(false); this.sender = ''; for (const p of this.profiles) { p.suffix = ''; p.account = null; } }
+    else { this.consent = false; this.ruleConsent=false; this.editingRule.set(null); this.revolutIncomeMxn = false; this.loaded.set(false); this.sender = ''; for (const p of this.profiles) { p.suffix = ''; p.account = null; } }
   }
   async load(): Promise<void> {
     if (this.busy()) return;
@@ -151,9 +241,6 @@ export class AutomaticBankComponent {
       const rules = state.rules ?? [];
       this.revolutIncomeMxn = rules.find(r => r.proveedor === 'REVOLUT')?.ingresosMxn === true;
       const searsRules=rules.filter(r=>r.proveedor==='SEARS');
-      const firstSears=searsRules[0];
-      if(firstSears&&searsRules.some(r=>r.cuentaId!==firstSears.cuentaId||r.listaId!==firstSears.listaId
-        ||r.paquete!==firstSears.paquete||r.remitente!==firstSears.remitente))throw new Error('Las tarjetas Sears usan distintas asociaciones.');
       for (const profile of this.profiles) {
         const rule = rules.find(r => r.proveedor === profile.provider);
         profile.account = rule?.cuentaId ?? null;
@@ -169,6 +256,18 @@ export class AutomaticBankComponent {
   }
   async connect(): Promise<void> {
     this.error.set(''); this.message.set('');
+    const existing=this.state()?.rules ?? [];
+    const distinctLists=new Set(existing.map(r=>r.listaId));
+    const unsupported=existing.some(r=>!this.profiles.some(p=>p.provider===r.proveedor));
+    const repeated=existing.some((r,i)=>r.proveedor!=='SEARS'
+      && existing.findIndex(other=>other.proveedor===r.proveedor)!==i);
+    const sears=existing.filter(r=>r.proveedor==='SEARS'), first=sears[0];
+    const variedSears=!!first && sears.some(r=>r.cuentaId!==first.cuentaId || r.listaId!==first.listaId
+      || r.paquete!==first.paquete || r.remitente!==first.remitente);
+    if (distinctLists.size>1 || unsupported || repeated || variedSears) {
+      this.error.set('Esta configuración tiene varias asociaciones. Edítalas una por una para conservarlas.');
+      return;
+    }
     const selected = this.profiles.filter(p => p.account);
     if (!this.consent || !this.listId || !selected.length || selected.some(p => {
       if(p.provider!=='SEARS')return !!p.suffix&&!/^[0-9]{4}$/.test(p.suffix);
