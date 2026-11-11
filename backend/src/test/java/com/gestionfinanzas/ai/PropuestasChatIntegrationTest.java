@@ -95,11 +95,12 @@ class PropuestasChatIntegrationTest {
         assertEquals(new BigDecimal("75.00"),cuentas.findById(cuenta.getId()).orElseThrow().getSaldoActual());
     }
     @Test void limiteDeCreacionSigueAcotadoYEsIndependientePorCuenta() {
-        var datos=mapper.createObjectNode();
-        for (int i=0;i<500;i++) almacen.crear(a.getId(),"CREATE_TRANSACTION","Ejemplo",datos);
+        for (int i=0;i<500;i++) assertNotNull(propuesta());
         assertThrows(com.gestionfinanzas.exception.TooManyRequestsException.class,
-            ()->almacen.crear(a.getId(),"CREATE_TRANSACTION","Ejemplo",datos));
-        assertNotNull(almacen.crear(b.getId(),"CREATE_TRANSACTION","Ejemplo",datos).getId());
+            ()->propuesta());
+        cuentas.save(Cuenta.builder().usuario(b).nombre("Efectivo prueba").tipo(TipoCuenta.EFECTIVO)
+            .saldoActual(new BigDecimal("100.00")).build());
+        assertNotNull(acciones.interpretarCapturaRapida(b.getId(),"Gasté 25 en Efectivo prueba").action());
         assertEquals(new BigDecimal("100.00"),cuentas.findById(cuenta.getId()).orElseThrow().getSaldoActual());
     }
     @Test void confirmacionesSimultaneasCompartenResultado() throws Exception {

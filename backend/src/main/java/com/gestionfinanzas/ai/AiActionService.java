@@ -142,6 +142,7 @@ public class AiActionService {
                     }
                     batch.add(new PendingBatchAction(type, summary, data));
                 }
+                for (var item : batch) limitarCreacionPropuesta(userId);
                 List<ActionProposal> proposals = propuestas.crearLote(userId,batch.stream()
                         .map(item -> new PropuestaChatService.NuevaPropuesta(item.type(),item.summary(),item.data())).toList());
                 return new AiActionResult(answer, null, proposals, report);
@@ -394,8 +395,14 @@ public class AiActionService {
 
     private AiActionResult crearPropuesta(Long userId, String type, String summary, JsonNode data, String answer, AiReportWidget report) {
         JsonNode actionData = data.deepCopy();
+        limitarCreacionPropuesta(userId);
         var propuesta=propuestas.crear(userId,type,summary,actionData);
         return new AiActionResult(answer, propuestas.dto(propuesta), List.of(), report);
+    }
+
+    private void limitarCreacionPropuesta(Long userId) {
+        // No invalida propuestas activas ni abre otra conexion dentro de su transaccion.
+        limiteAbuso.comprobar("propuestas-chat:"+userId,500,java.time.Duration.ofDays(1));
     }
 
     public void validarListaCaptura(Long userId, Long listaId) {

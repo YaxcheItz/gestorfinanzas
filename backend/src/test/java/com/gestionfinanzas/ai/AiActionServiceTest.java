@@ -42,7 +42,7 @@ class AiActionServiceTest {
     private final java.util.Map<String,com.gestionfinanzas.model.entity.PropuestaChat> filas=new java.util.HashMap<>();
     private final com.gestionfinanzas.repository.PropuestaChatRepository propuestas=mock(com.gestionfinanzas.repository.PropuestaChatRepository.class);
     private final com.gestionfinanzas.repository.UsuarioRepository usuarios=mock(com.gestionfinanzas.repository.UsuarioRepository.class);
-    private final PropuestaChatService almacen=new PropuestaChatService(propuestas,usuarios,new ObjectMapper().findAndRegisterModules(),mock(jakarta.persistence.EntityManager.class),new com.gestionfinanzas.security.LimiteAbuso());
+    private final PropuestaChatService almacen=new PropuestaChatService(propuestas,usuarios,new ObjectMapper().findAndRegisterModules(),mock(jakarta.persistence.EntityManager.class));
     @Test
     void confirmacionDeVozPersisteOrigenSinSobrescribirNotas() {
         var proposal = service.interpret(7L, "Registra un gasto de 25 pesos");

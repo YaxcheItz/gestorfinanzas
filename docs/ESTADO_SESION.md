@@ -1,3 +1,7 @@
+## Limite sin conexion anidada - 11 noviembre 2026
+
+Revision: la primera version e1460f6 invocaba el limite compartido dentro de una transaccion, con posible presion del pool. No integrar ese commit solo. Se mueve el limite a las rutas de creacion individual y por lote de AiActionService, antes de entrar a la transaccion; el servicio interno ya no cuenta pendientes. Pruebas locales H2: 23 integracion y 10 unitarias, todas correctas; incluyen 51 propuestas previas, confirmacion idempotente, 500 creaciones y rechazo de la 501, aislamiento de otra cuenta. Falta CI/PostgreSQL del commit final y publicacion. No se probaron cuentas reales.
+
 ## Ajuste del limite de propuestas del chat - 11 noviembre 2026
 
 El servidor necesita propuestas tecnicas para confirmar con idempotencia; aun persisten y no se borraron registros reales. Ya no se recuperan en la interfaz al reiniciar. Detectado que el limite anterior de 50 propuestas pendientes en 24 horas podia bloquear el chat sin permitir descartar las ya no mostradas. En rama correcciones/limite-propuestas-chat se sustituye por un limite existente de abuso: 500 creaciones por cuenta por ventana de 24 horas. No se descartan propuestas activas de otras ventanas ni confirmaciones offline; al llegar al limite se rechazan solicitudes hasta vencer la ventana. El almacenamiento compartido de limite depende de la configuracion existente.
