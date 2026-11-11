@@ -1,3 +1,6 @@
+## Candidata Android 0.1.43 - 11 noviembre 2026
+
+Se prepara versionName 0.1.43, codigo 44, en rama mejoras/android-043-avisos desde develop 3974df3d0633e530d34a3b5fffa2f74738ebbd4e. Incluye captura compacta, diagnostico y comparacion AMEX, bandeja separada, edicion de asociaciones y conservacion de apps/avisos. CI de la rama funcional 42942763040 y Android 42942763025 exitosos; suite y pruebas sinteticas locales e instrumentadas documentadas en bloques inferiores. El cambio experimental de sondeo se lleva por PR #268 aparte. No hay APK verificada ni instalacion de esta version al registrar; el telefono se desconecto. CI de la entrega, firma, contenido, hash, despliegues y actualizacion por adb pendientes. No afirmar solucion general de lentitud o de todos los bancos; borrador automatico y aceptacion visual siguen pendientes.
 ## Proteccion ante edicion sin cambios - 11 noviembre 2026
 
 Al guardar una asociacion sin modificaciones, el editor comprueba que la configuracion siga vigente y no rota credenciales; pruebas focales de cambios concurrentes y sin cambios pasaron, junto con build y E2E de edicion ficticia. El flujo conserva mecanismos de exclusion de conexion existentes. CI del conjunto e integracion/publicacion aun pendientes.
