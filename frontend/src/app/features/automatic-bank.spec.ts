@@ -37,6 +37,16 @@ describe('Configuración bancaria guardada', () => {
     expect(automatic.configure).not.toHaveBeenCalled();
     expect(c.error()).toContain('cambiaron');
   });
+  it('no renueva la conexión cuando no se cambió la asociación', async () => {
+    const rule={id:'one',proveedor:'SANTANDER',paquete:'mx.bancosantander.supermovil',remitente:null,terminacion:'1234',cuentaId:11,listaId:21,categoriaId:null};
+    const state={active:true,queued:0,rules:[rule]};
+    c.state.set(state as any);automatic.read.mockResolvedValue(state);
+    c.accounts.set([{id:11,nombre:'QA',tipo:'DEBITO',moneda:'MXN',activo:true}] as any);
+    c.lists.set([{id:21,nombre:'QA',rol:'PROPIETARIO',moneda:'MXN',archivada:false}] as any);
+    c.editAssociation(rule);c.ruleConsent=true;await c.saveAssociation();
+    expect(automatic.configure).not.toHaveBeenCalled();
+    expect(c.message()).toContain('no tenía cambios');
+  });
   it('no sobrescribe cambios actualizados en la pantalla durante la edición', async () => {
     const rule={id:'one',proveedor:'SANTANDER',paquete:'mx.bancosantander.supermovil',remitente:null,terminacion:'1234',cuentaId:11,listaId:21,categoriaId:null};
     c.state.set({active:true,queued:0,rules:[rule]} as any);

@@ -135,6 +135,14 @@ export class AutomaticBankComponent {
     }
     const rules=this.addingRule()?[...existing,updated]:existing.map(r=>r.id===updated.id?updated:r);
     if (rules.length>10) { this.error.set('Configura como máximo diez asociaciones.'); return; }
+    const previous=existing.find(r=>r.id===updated.id);
+    const unchanged=!!(!this.addingRule() && previous
+        && previous.proveedor===updated.proveedor && previous.paquete===updated.paquete
+        && (previous.remitente??null)===(updated.remitente??null)
+        && (previous.terminacion??null)===(updated.terminacion??null)
+        && previous.cuentaId===updated.cuentaId && previous.listaId===updated.listaId
+        && (previous.categoriaId??null)===(updated.categoriaId??null)
+        && !!previous.ingresosMxn===!!updated.ingresosMxn);
     const manual=this.bank.current();
     const packages=new Set([...(manual.enabled ? manual.packages ?? [] : []),...rules.map(r=>r.paquete)]);
     if (packages.size>10) {
@@ -147,6 +155,9 @@ export class AutomaticBankComponent {
       if(!latest || latest.queued || JSON.stringify(latest.rules ?? [])!==JSON.stringify(existing)) {
         this.error.set('Las asociaciones o los envíos cambiaron. Actualiza la lista antes de guardar.');
         return;
+      }
+      if(unchanged) {
+        this.editingRule.set(null);this.ruleConsent=false;this.message.set('La asociación no tenía cambios.');return;
       }
       await this.automatic.configure(rules,true);
       if(owner!==this.auth.currentUser()?.id)return;

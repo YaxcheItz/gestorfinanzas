@@ -1,3 +1,6 @@
+## Proteccion ante edicion sin cambios - 11 noviembre 2026
+
+Al guardar una asociacion sin modificaciones, el editor comprueba que la configuracion siga vigente y no rota credenciales; pruebas focales de cambios concurrentes y sin cambios pasaron, junto con build y E2E de edicion ficticia. El flujo conserva mecanismos de exclusion de conexion existentes. CI del conjunto e integracion/publicacion aun pendientes.
 ## Bandeja separada y asociaciones verificadas - 11 noviembre 2026
 
 Por solicitud del usuario se separo la interfaz en Avisos y Bancos y cuentas sin desmontar estado. La segunda seccion lista asociaciones por banco, cuenta, lista y terminacion, permite añadir y editar individualmente con consentimiento, conserva el resto de reglas y rechaza solapamientos, cambios detectados durante la edicion y envios pendientes. Configuracion agrupada no permite guardar si no puede representar asociaciones multiples. Soporta automaticamente solo proveedores/formatos existentes; elegir otra app no crea un parser universal.
