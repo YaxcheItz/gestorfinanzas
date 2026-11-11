@@ -573,6 +573,20 @@ html .monai-theme #quick-capture-panel .voice-waveform__bars i{width:3px;border-
 html .monai-theme #quick-capture-panel .capture-panel__head strong{color:var(--kaptal-content)}
 .chat-evidence{display:grid;gap:6px;margin-top:12px}
 .chat-evidence button{min-height:44px;text-align:left;padding:8px 0;border:0;border-top:1px solid currentColor;background:transparent;color:inherit;font:inherit;cursor:pointer}
+
+/* Mantener la captura accesible sin ocupar casi toda la pantalla. */
+@media (max-width: 639px) {
+  html .monai-theme #quick-capture-panel {
+    height: min(30rem, calc(var(--dialog-visible-height, 100dvh) - .5rem));
+    top: calc(var(--dialog-visible-top, 0px) + var(--dialog-visible-height, 100dvh) - min(30rem, var(--dialog-visible-height, 100dvh) - .5rem));
+  }
+  html .monai-theme #quick-capture-panel.capture-panel--compact {
+    height: min(24rem, calc(var(--dialog-visible-height, 100dvh) - .5rem));
+    top: calc(var(--dialog-visible-top, 0px) + var(--dialog-visible-height, 100dvh) - min(24rem, var(--dialog-visible-height, 100dvh) - .5rem));
+  }
+}
+html .monai-theme #quick-capture-panel .capture-chat__intro { padding: 12px 0; }
+html .monai-theme #quick-capture-panel .capture-chat__intro strong { font-size: 18px; }
 .chat-evidence small{display:block;font-size:12px;opacity:.75}
 
 textarea.voice-screen__transcript { display: block; box-sizing: border-box; width: 100%; resize: vertical; font: inherit; }

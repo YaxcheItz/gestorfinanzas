@@ -12,6 +12,16 @@ import { MovimientosOfflineService } from '../../../core/services/movimientos-of
 import { ActualizacionPwaService } from '../../../core/services/actualizacion-pwa.service';
 
 describe('QuickCaptureComponent processing and gestures', () => {
+  it('conserva propuestas pendientes y muestra la conversación completa solo al consultar el historial', () => {
+    component.captureTurns.set([
+      {id:1,user:'Anterior',answer:'Listo',actions:[],voice:false},
+      {id:2,user:'Pendiente',answer:'Revisar',actions:[{id:'p1',type:'CREATE_TRANSACTION',summary:'Pendiente',data:{}}],voice:false},
+      {id:3,user:'Actual',answer:'Listo',actions:[],voice:false}
+    ]);
+    expect(component.turnosVisibles().map(t=>t.id)).toEqual([2,3]);
+    component.mostrarHistorial.set(true);
+    expect(component.turnosVisibles().map(t=>t.id)).toEqual([1,2,3]);
+  });
   it('abre el historial con los filtros de evidencia calculados por el servidor', () => {
     component.verEvidencia({label:'Gastos actual',desde:'2026-10-01',hasta:'2026-10-20',moneda:'MXN',tipo:'GASTO',operaciones:2,total:40.25});
     expect(navigate).toHaveBeenCalledWith(['/transacciones'],{queryParams:{alcance:'propio',fechaInicio:'2026-10-01',fechaFin:'2026-10-20',moneda:'MXN',tipo:'GASTO'}});

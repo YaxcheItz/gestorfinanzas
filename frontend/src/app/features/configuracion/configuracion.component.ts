@@ -142,6 +142,13 @@ import {
 
       <div class="settings-group" aria-labelledby="settings-preferences">
         <h2 id="settings-preferences">Preferencias y avisos</h2>
+      <details class="settings-disclosure rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6">
+        <summary><strong>Chat</strong><span>Conversación de esta sesión</span></summary>
+        <div class="settings-disclosure__content">
+          <p class="text-sm text-slate-600">Consulta los mensajes disponibles en esta sesión.</p>
+          <button type="button" class="mt-3 min-h-11 rounded-xl border border-slate-300 px-4 text-sm font-semibold" (click)="abrirHistorialChat()">Ver historial del chat</button>
+        </div>
+      </details>
       <details id="appearance" class="settings-disclosure scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6" [open]="seccionAbierta() === 'appearance'" (toggle)="alternarSeccion('appearance', $event)">
         <summary><strong>Apariencia y visualización</strong><span>Tema, moneda y visibilidad de montos</span></summary>
         <div class="settings-disclosure__content">
@@ -574,6 +581,9 @@ export class ConfiguracionComponent implements OnInit {
     else if (this.seccionAbierta() === id) this.seccionAbierta.set(null);
   }
   private readonly document = inject(DOCUMENT);
+  abrirHistorialChat(): void {
+    this.document.defaultView?.dispatchEvent(new CustomEvent('kaptal-abrir-captura-chat', {detail:{historial:true}}));
+  }
   readonly perfilService = inject(PerfilService);
   private readonly finanzasService = inject(FinanzasService);
   private readonly toastService = inject(ToastService);

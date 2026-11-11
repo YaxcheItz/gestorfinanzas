@@ -6,6 +6,17 @@ import java.time.LocalDate;
 import static org.junit.Assert.*;
 
 public class BankPurchaseParserTest {
+    @Test public void amexFiveDigitNoticeMatchesConfiguredLastFourOnly() {
+        String body="Gastaste MX$41.27 en tu Tarjeta American Express terminación 67890 en PAPELERIA QA";
+        var matching=BankPurchaseParser.parseNotification("AMEX",BankPurchaseParser.PACKAGES.get("AMEX"),"7890",
+            "event-qa","Amex QA",body,date);
+        assertNotNull(matching);
+        assertEquals(new BigDecimal("41.27"),matching.amount());
+        assertNull(BankPurchaseParser.parseNotification("AMEX",BankPurchaseParser.PACKAGES.get("AMEX"),"7891",
+            "event-qa","Amex QA",body,date));
+        assertNull(BankPurchaseParser.parseNotification("AMEX",BankPurchaseParser.PACKAGES.get("AMEX"),"789",
+            "event-qa","Amex QA",body,date));
+    }
     @Test public void summaryUsesIndividualExpenseAndMxnDefaultForBothProviders() {
         for(String provider:new String[]{"AMEX","REVOLUT"}) {
             var parsed=BankPurchaseParser.parseNotification(provider,BankPurchaseParser.PACKAGES.get(provider),null,
