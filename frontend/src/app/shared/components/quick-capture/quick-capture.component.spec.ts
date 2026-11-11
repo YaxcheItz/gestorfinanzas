@@ -40,8 +40,8 @@ describe('QuickCaptureComponent processing and gestures', () => {
     usuario.set(null);
     conexion.set(true);
     offline = {conexion,pendientes:signal([]),sincronizando:signal(false),
-      leerBorrador:vi.fn(async()=>null),leerCatalogo:vi.fn(async()=>null),guardarCatalogo:vi.fn(async()=>{}),
-      guardarBorrador:vi.fn(async()=>{}),guardarPendiente:vi.fn(async()=>{}),guardarConfirmacion:vi.fn(async()=>{}),sincronizar:vi.fn(async()=>0)};
+      leerCatalogo:vi.fn(async()=>null),guardarCatalogo:vi.fn(async()=>{}),
+      guardarPendiente:vi.fn(async()=>{}),guardarConfirmacion:vi.fn(async()=>{}),sincronizar:vi.fn(async()=>0)};
     teardown = vi.fn(() => {});
     result = new Subject();
     TestBed.configureTestingModule({
@@ -309,7 +309,7 @@ describe('QuickCaptureComponent processing and gestures', () => {
 
   it('waits for the account catalogue before accepting a capture', async () => {
     usuario.set({id:1});fixture.detectChanges();
-    await vi.waitFor(()=>expect((component as any).borradorRestaurado()).toBe(true));
+    await vi.waitFor(()=>expect(offline.leerCatalogo).toHaveBeenCalled());
     const accounts=new Subject<any>(), categories=new Subject<any>();
     vi.spyOn(TestBed.inject(FinanzasService),'getCuentas').mockReturnValue(accounts);
     vi.spyOn(TestBed.inject(FinanzasService),'getCategorias').mockReturnValue(categories);
@@ -373,18 +373,25 @@ describe('QuickCaptureComponent processing and gestures', () => {
     const proposal={id:'local-edit',local:true,type:'CREATE_TRANSACTION',summary:'Gasto',data:{tipo:'GASTO',monto:25,cuentaId:1,categoriaId:2}} as any;
     component.categories.set([{id:3,nombre:'Nómina',tipo:'INGRESO',activo:true} as any]);
     component.captureTurns.set([{id:1,user:'Gasto',answer:'Revisa',actions:[proposal],voice:false}]);
-    component.abrirEdicion(proposal);component.borrador['tipo']='INGRESO';component.borrador['categoriaId']=3;
+    component.abrirEdicion(proposal);component.edicionPropuesta['tipo']='INGRESO';component.edicionPropuesta['categoriaId']=3;
     component.guardarEdicion();
     expect(component.captureTurns()[0].actions[0].data['categoriaId']).toBe(3);
     expect(TestBed.inject(FinanzasService).editarPropuestaAi).not.toHaveBeenCalled();
   });
-  it('blocks update when text changes during the draft commit', async () => {
-    (component as any).usuarioChat=1;(component as any).borradorRestaurado.set(true);
-    let resolver:any;offline.guardarBorrador.mockImplementation(()=>new Promise(r=>resolver=r));
-    component.content='Texto inicial';const protegido=protegerActualizacion();
-    await Promise.resolve();await Promise.resolve();
-    component.content='Texto más reciente';resolver();
-    expect(await protegido).toBe(false);
+  it('mantiene texto y conversación al cerrar y reabrir la ventana', () => {
+    const frame=vi.spyOn(window,'requestAnimationFrame').mockReturnValue(0);
+    component.content='Texto ficticio';
+    component.captureTurns.set([{id:1,user:'Pregunta',answer:'Respuesta',actions:[],voice:false}]);
+    component.open.set(true);component.close();
+    component.abrirCapturaDesdeAcceso(new CustomEvent('kaptal-abrir-captura-chat'));
+    expect(component.content).toBe('Texto ficticio');expect(component.captureTurns()[0].answer).toBe('Respuesta');
+    frame.mockRestore();
+  });
+  it('no restaura texto ni consulta propuestas al iniciar otra sesión de chat', async () => {
+    usuario.set({id:1});fixture.detectChanges();
+    await vi.waitFor(()=>expect(offline.leerCatalogo).toHaveBeenCalledWith(1));
+    expect(component.content).toBe('');expect(component.captureTurns()).toEqual([]);
+    expect(TestBed.inject(FinanzasService).getPropuestasAi).not.toHaveBeenCalled();
   });
 
   it('cancels categorization and ignores a late proposal without saving', () => {
@@ -618,13 +625,6 @@ describe('QuickCaptureComponent processing and gestures', () => {
     expect(component.captureTurns()).toHaveLength(1);component.limpiarChat();expect(component.captureTurns()).toEqual([]);
   });
   const propuesta={id:'persistida',type:'CREATE_TRANSACTION',summary:'Gasto 25',version:2,data:{tipo:'GASTO',monto:25}};
-  it('recupera propuestas por ID sin volver a interpretar ni guardar',()=>{
-    vi.spyOn(TestBed.inject(FinanzasService),'getPropuestasAi').mockReturnValue(of({success:true,data:[propuesta],message:''}));
-    component.recuperarPropuestas();component.recuperarPropuestas();
-    expect(component.captureTurns()).toHaveLength(1);
-    expect(component.captureTurns()[0].actions).toEqual([propuesta]);
-    expect(TestBed.inject(FinanzasService).confirmAiAction).not.toHaveBeenCalled();
-  });
   it('descartar solo retira la propuesta cuando el servidor confirma',()=>{
     const respuesta=new Subject<any>();
     vi.spyOn(TestBed.inject(FinanzasService),'descartarPropuestaAi').mockReturnValue(respuesta);
@@ -644,7 +644,7 @@ describe('QuickCaptureComponent processing and gestures', () => {
   });
   it('actualizar prepara la propuesta y requiere una confirmacion separada',()=>{
     component.captureTurns.set([{id:1,user:'Gasto',answer:'Revisa',actions:[propuesta],voice:false}]);
-    component.abrirEdicion(propuesta);component.borrador['monto']=30;component.guardarEdicion();
+    component.abrirEdicion(propuesta);component.edicionPropuesta['monto']=30;component.guardarEdicion();
     const actual=component.captureTurns()[0].actions[0];expect(actual.id).toBe(propuesta.id);expect(actual.version).toBe(3);
     expect(TestBed.inject(FinanzasService).confirmAiAction).not.toHaveBeenCalled();
     component.confirm(actual);expect(TestBed.inject(FinanzasService).confirmAiAction).toHaveBeenCalledWith(propuesta.id,3);

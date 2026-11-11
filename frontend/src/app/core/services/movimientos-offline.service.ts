@@ -5,18 +5,12 @@ import { AiActionProposal } from '../models/ai.models';
 import { Categoria, Cuenta, TransaccionPayload } from '../models/finanzas.models';
 import { AuthService } from './auth.service';
 import { FinanzasService } from './finanzas.service';
-import { crearIdSolicitud } from '../utils/request-id';
 
 export interface MovimientoPendiente {
   id:string; usuarioId:number; payload:TransaccionPayload; creadoEn:string; error?:string;
   propuestaId?:string; versionPropuesta?:number; estado?:'PENDIENTE'|'REVISAR';
 }
 export interface CatalogoOffline { usuarioId:number;cuentas:Cuenta[];categorias:Categoria[];actualizadoEn:string; }
-export interface BorradorChat {
-  revision?:string;
-  usuarioId:number;texto:string;acciones:AiActionProposal[];contexto?:string|null;
-  editandoId?:string|null;edicion?:Record<string,unknown>;actualizadoEn:string;
-}
 @Injectable({providedIn:'root'})
 export class MovimientosOfflineService {
   private readonly document=inject(DOCUMENT);
@@ -26,7 +20,6 @@ export class MovimientosOfflineService {
   private dbPromise?:Promise<IDBDatabase>;
   private sincronizacionEnCurso=false;
   private usuarioVisible:number|null=null;
-  private readonly revisiones=new Map<number,string|undefined>();
   private readonly cambioCuenta=new Subject<void>();
   readonly conexion=signal(this.document.defaultView?.navigator.onLine??true);
   readonly pendientes=signal<MovimientoPendiente[]>([]);
@@ -61,37 +54,23 @@ export class MovimientosOfflineService {
   }
   private async encolar(e:MovimientoPendiente):Promise<void>{
     this.exigirUsuario(e.usuarioId);
-    const revision=await this.transaccion<string|undefined>(['movimientos','borradores'],'readwrite',(s,done,fail,tx)=>{
+    await this.transaccion<void>('movimientos','readwrite',(s,done,fail)=>{
       const r=s.get(e.id);r.onsuccess=()=>{
         const anterior=r.result as MovimientoPendiente|undefined;
         if(anterior&&(anterior.usuarioId!==e.usuarioId||!this.iguales(anterior.payload,e.payload)||anterior.propuestaId!==e.propuestaId||anterior.versionPropuesta!==e.versionPropuesta)){
           fail(new Error('Esta solicitud ya tiene datos confirmados. Reinténtala sin cambiarlos.'));return;
-        }s.put(anterior??structuredClone(e));
-        const borradores=tx.objectStore('borradores'),b=borradores.get(e.usuarioId);
-        b.onsuccess=()=>{const previo=b.result as BorradorChat|undefined;
-          if(previo){const ids=new Set([e.id,e.propuestaId]);previo.acciones=previo.acciones.filter(p=>!ids.has(p.id));
-            if(previo.editandoId&&ids.has(previo.editandoId)){previo.editandoId=null;previo.edicion=undefined;}
-            previo.revision=crearIdSolicitud();borradores.put(previo);
-          }done(previo?.revision);
-        };
+        }
+        s.put(anterior??structuredClone(e));done();
       };
-    });if(revision)this.revisiones.set(e.usuarioId,revision);this.exigirUsuario(e.usuarioId);await this.cargarPendientes(e.usuarioId);
+    });this.exigirUsuario(e.usuarioId);await this.cargarPendientes(e.usuarioId);
   }
+
   async guardarCatalogo(usuarioId:number,cuentas:Cuenta[],categorias:Categoria[]):Promise<void>{
     this.exigirUsuario(usuarioId);
     const c:CatalogoOffline={usuarioId,categorias,actualizadoEn:new Date().toISOString(),cuentas:cuentas.map(c=>({id:c.id,nombre:c.nombre,tipo:c.tipo,saldoActual:0,moneda:c.moneda,activo:c.activo,fechaCreacion:c.fechaCreacion,saldoLocalDesactualizado:true}))};
     await this.transaccion<void>('catalogos','readwrite',(s,done)=>{s.put(c);done();});
   }
   async leerCatalogo(usuarioId:number):Promise<CatalogoOffline|null>{this.exigirUsuario(usuarioId);const c=await this.leer<CatalogoOffline>('catalogos',usuarioId);this.exigirUsuario(usuarioId);return c;}
-  async guardarBorrador(b:BorradorChat):Promise<void>{
-    this.exigirUsuario(b.usuarioId);if(b.texto.length>1200||b.acciones.length>50||JSON.stringify(b).length>200000)throw new Error('El borrador es demasiado grande.');
-    const revision=crearIdSolicitud(),base=this.revisiones.get(b.usuarioId);
-    await this.transaccion<void>('borradores','readwrite',(s,done,fail)=>{const r=s.get(b.usuarioId);r.onsuccess=()=>{
-      if(r.result&&r.result.revision!==base){fail(new Error('Otro chat cambió el borrador guardado. Conserva este texto antes de recargar.'));return;}
-      s.put({...structuredClone(b),revision});done();
-    };});this.revisiones.set(b.usuarioId,revision);
-  }
-  async leerBorrador(usuarioId:number):Promise<BorradorChat|null>{this.exigirUsuario(usuarioId);const b=await this.leer<BorradorChat>('borradores',usuarioId);this.exigirUsuario(usuarioId);this.revisiones.set(usuarioId,b?.revision);return b;}
   private leer<T>(nombre:string,key:IDBValidKey):Promise<T|null>{return this.transaccion<T|null>(nombre,'readonly',(s,done)=>{const r=s.get(key);r.onsuccess=()=>done((r.result as T|undefined)??null);});}
   async descartar(id:string):Promise<void>{
     const uid=this.auth.currentUser()?.id;if(uid==null)return;if(this.sincronizacionEnCurso)throw new Error('Espera a que termine la sincronización.');
@@ -159,11 +138,11 @@ export class MovimientosOfflineService {
   private abrirBase():Promise<IDBDatabase>{
     if(this.dbPromise)return this.dbPromise;const api=this.document.defaultView?.indexedDB;if(!api)return Promise.reject(new Error('Este navegador no ofrece almacenamiento local.'));
     const apertura=new Promise<IDBDatabase>((resolve,reject)=>{
-      const r=api.open('kaptal-movimientos-offline',3);let rechazada=false;
+      const r=api.open('kaptal-movimientos-offline',4);let rechazada=false;
       r.onupgradeneeded=()=>{const db=r.result;
         if(!db.objectStoreNames.contains('movimientos'))db.createObjectStore('movimientos',{keyPath:'id'}).createIndex('usuarioId','usuarioId');
         if(!db.objectStoreNames.contains('catalogos'))db.createObjectStore('catalogos',{keyPath:'usuarioId'});
-        if(!db.objectStoreNames.contains('borradores'))db.createObjectStore('borradores',{keyPath:'usuarioId'});
+        if(db.objectStoreNames.contains('borradores'))db.deleteObjectStore('borradores');
       };
       r.onblocked=()=>{rechazada=true;reject(new Error('Cierra otras pestañas antiguas para actualizar el almacenamiento.'));};
       r.onsuccess=()=>{if(rechazada){r.result.close();return;}r.result.onversionchange=()=>{r.result.close();this.dbPromise=undefined;};resolve(r.result);};

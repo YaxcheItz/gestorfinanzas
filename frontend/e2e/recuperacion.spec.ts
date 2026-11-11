@@ -29,35 +29,18 @@ async function abrirChat(page: Page) {
   await expect(page.locator('#quick-capture-text')).toBeVisible();
 }
 
-test('recupera propuesta tras recarga, confirma una vez y conserva saldo', async ({ page }) => {
-  const errores: string[] = [];
-  page.on('pageerror', error => errores.push(error.message));
+test('el chat conserva texto al cerrar, pero no lo restaura al recargar', async ({ page }) => {
   const { headers, cuenta } = await iniciar(page);
   await abrirChat(page);
-  await page.locator('#quick-capture-text').fill('Gasté 25 en Banco E2E');
-  await page.getByRole('button', { name: 'Enviar movimiento' }).click();
-  await expect(page.getByRole('button', { name: /Guardar (sin categoría|movimiento)/ }).first()).toBeVisible();
-  const pendientes = (await (await page.request.get('/api/asistente/acciones', { headers })).json()).data;
-  expect(pendientes).toHaveLength(1);
-  const antes = (await (await page.request.get('/api/cuentas', { headers })).json()).data;
-  expect(antes.find((c: { id: number }) => c.id === cuenta.id).saldoActual).toBe(1000);
-  await page.reload();
+  const text=page.locator('#quick-capture-text');
+  await text.fill('Texto ficticio sin enviar');
+  await page.locator('#quick-capture-panel').getByRole('button',{name:'Cerrar',exact:true}).click();
   await abrirChat(page);
-  await expect(page.getByRole('button', { name: /Guardar (sin categoría|movimiento)/ }).first()).toBeVisible();
-  await page.getByRole('button', { name: /Guardar (sin categoría|movimiento)/ }).first().click();
-  await expect.poll(async () => {
-    const cuentas = (await (await page.request.get('/api/cuentas', { headers })).json()).data;
-    return cuentas.find((c: { id: number }) => c.id === cuenta.id).saldoActual;
-  }).toBe(975);
-  const reintento = await page.request.post(`/api/asistente/acciones/${pendientes[0].id}/confirmar`, {
-    headers, data: { version: pendientes[0].version }
-  });
-  expect(reintento.ok()).toBeTruthy();
-  const despues = (await (await page.request.get('/api/cuentas', { headers })).json()).data;
-  expect(despues.find((c: { id: number }) => c.id === cuenta.id).saldoActual).toBe(975);
-  const movimientos = (await (await page.request.get('/api/transacciones?size=100', { headers })).json()).data;
-  expect(movimientos.content.filter((t: { tipo: string }) => t.tipo === 'GASTO')).toHaveLength(1);
-  expect(errores).toEqual([]);
+  await expect(text).toHaveValue('Texto ficticio sin enviar');
+  await page.reload();await abrirChat(page);
+  await expect(text).toHaveValue('');
+  const cuentas=(await (await page.request.get('/api/cuentas',{headers})).json()).data;
+  expect(cuentas.find((c:{id:number})=>c.id===cuenta.id).saldoActual).toBe(1000);
 });
 
 test('descartar propuesta no registra gasto ni modifica saldo', async ({ page }) => {

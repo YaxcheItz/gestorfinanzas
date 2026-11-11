@@ -20,7 +20,7 @@ export class ActualizacionPwaService {
       if(event.type==='VERSION_READY')this.disponible.set(true);
       if(event.type==='VERSION_INSTALLATION_FAILED')this.error.set('No se pudo descargar la actualización. Tu versión actual sigue disponible.');
     });
-    this.sw.unrecoverable.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(()=>{this.disponible.set(true);this.error.set('La versión necesita recargarse. Guarda el borrador antes de actualizar.');});
+    this.sw.unrecoverable.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(()=>{this.disponible.set(true);this.error.set('La versión necesita recargarse.');});
   }
   proteger(guardar:()=>Promise<boolean>):()=>void {this.protectores.add(guardar);return()=>this.protectores.delete(guardar);}
   async actualizar():Promise<boolean>{
@@ -33,7 +33,7 @@ export class ActualizacionPwaService {
       for(const guardar of this.protectores)if(!await guardar())throw new Error('Espera a que termine el guardado o la grabación.');
       if(this.offline.sincronizando())throw new Error('Espera a que termine la sincronización.');
       this.recargar();return true;
-    }catch(error){this.error.set(error instanceof Error?error.message:'No se guardó el borrador. No se actualizará todavía.');return false;}
+    }catch(error){this.error.set(error instanceof Error?error.message:'No se pudo actualizar todavía.');return false;}
     finally{this.aplicando.set(false);}
   }
   /** Una recarga evita mezclar chunks de dos versiones. No activar una versión sobre la página antigua. */

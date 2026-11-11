@@ -19,7 +19,7 @@ import { MontoPipe } from '../../../core/pipes/monto.pipe';
 import { TextoFinancieroPipe } from '../../../core/pipes/texto-financiero.pipe';
 import { CategoriaIconoComponent } from '../categoria-icono/categoria-icono.component';
 import { MontoPrivadoDirective } from '../../directives/monto-privado.directive';
-import { MovimientosOfflineService, BorradorChat } from '../../../core/services/movimientos-offline.service';
+import { MovimientosOfflineService } from '../../../core/services/movimientos-offline.service';
 import { ActualizacionPwaService } from '../../../core/services/actualizacion-pwa.service';
 import { prepararCapturaOffline, validarPayloadOffline } from '../../../core/utils/captura-offline';
 import { DialogViewportDirective } from '../../directives/dialog-viewport.directive';
@@ -100,26 +100,25 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
 
 
         @if(!offline.conexion()){<p role="status">Sin conexión. Revisa y confirma para guardar en este dispositivo; se enviará al volver la conexión.</p>}
-        @if(errorBorrador()){<p class="capture-error" role="alert">{{ errorBorrador() }}</p>}
         @if(offline.pendientes().length){<p role="status">{{ offline.pendientes().length }} movimiento(s) guardados en este dispositivo, pendientes del servidor.</p>}
 
         @if (mode() === 'CAPTURE') {
           @if (editando()) {
-            <form class="capture-editor" (ngSubmit)="guardarEdicion()" (input)="marcarBorrador()" (change)="marcarBorrador()" aria-label="Editar propuesta">
+            <form class="capture-editor" (ngSubmit)="guardarEdicion()" aria-label="Editar propuesta">
               <strong>Editar antes de guardar</strong>
-              <label>Tipo<select name="editTipo" [(ngModel)]="borrador['tipo']"><option value="GASTO">Gasto</option><option value="INGRESO">Ingreso</option><option value="TRANSFERENCIA">Transferencia</option></select></label>
-              <label>Monto<input appMontoPrivado name="editMonto" type="number" min="0.01" step="0.01" inputmode="decimal" [(ngModel)]="borrador['monto']" required></label>
-              <label>Fecha<input name="editFecha" type="date" [(ngModel)]="borrador['fecha']" required></label>
-              <label>Cuenta<select name="editCuenta" [(ngModel)]="borrador['cuentaId']" required>@for(cuenta of cuentasEdicion();track cuenta.id){<option [ngValue]="cuenta.id">{{ cuenta.nombre }} · {{ cuenta.moneda }}</option>}</select></label>
-              @if(borrador['tipo']==='TRANSFERENCIA'){
-                <label>Cuenta destino<select name="editDestino" [(ngModel)]="borrador['cuentaDestinoId']" required>@for(cuenta of cuentasEdicion();track cuenta.id){<option [ngValue]="cuenta.id">{{ cuenta.nombre }} · {{ cuenta.moneda }}</option>}</select></label>
-                <label>Tasa de cambio<input name="editTasa" type="number" step="0.00000001" min="0.00000001" [(ngModel)]="borrador['tasaCambio']"></label>
+              <label>Tipo<select name="editTipo" [(ngModel)]="edicionPropuesta['tipo']"><option value="GASTO">Gasto</option><option value="INGRESO">Ingreso</option><option value="TRANSFERENCIA">Transferencia</option></select></label>
+              <label>Monto<input appMontoPrivado name="editMonto" type="number" min="0.01" step="0.01" inputmode="decimal" [(ngModel)]="edicionPropuesta['monto']" required></label>
+              <label>Fecha<input name="editFecha" type="date" [(ngModel)]="edicionPropuesta['fecha']" required></label>
+              <label>Cuenta<select name="editCuenta" [(ngModel)]="edicionPropuesta['cuentaId']" required>@for(cuenta of cuentasEdicion();track cuenta.id){<option [ngValue]="cuenta.id">{{ cuenta.nombre }} · {{ cuenta.moneda }}</option>}</select></label>
+              @if(edicionPropuesta['tipo']==='TRANSFERENCIA'){
+                <label>Cuenta destino<select name="editDestino" [(ngModel)]="edicionPropuesta['cuentaDestinoId']" required>@for(cuenta of cuentasEdicion();track cuenta.id){<option [ngValue]="cuenta.id">{{ cuenta.nombre }} · {{ cuenta.moneda }}</option>}</select></label>
+                <label>Tasa de cambio<input name="editTasa" type="number" step="0.00000001" min="0.00000001" [(ngModel)]="edicionPropuesta['tasaCambio']"></label>
               }
-              @if(borrador['tipo']!=='TRANSFERENCIA'){
-                <label>Categoría<select name="editCategoria" [(ngModel)]="borrador['categoriaId']"><option [ngValue]="null">Sin categoría</option>@for(categoria of categories();track categoria.id){@if(categoria.activo && categoria.tipo===borrador['tipo']){<option [ngValue]="categoria.id">{{ categoria.nombre }}</option>}}</select></label>
+              @if(edicionPropuesta['tipo']!=='TRANSFERENCIA'){
+                <label>Categoría<select name="editCategoria" [(ngModel)]="edicionPropuesta['categoriaId']"><option [ngValue]="null">Sin categoría</option>@for(categoria of categories();track categoria.id){@if(categoria.activo && categoria.tipo===edicionPropuesta['tipo']){<option [ngValue]="categoria.id">{{ categoria.nombre }}</option>}}</select></label>
               }
-              <label>Descripción<input name="editDescripcion" maxlength="200" [(ngModel)]="borrador['descripcion']"></label>
-              <label>Notas<input name="editNotas" maxlength="500" [(ngModel)]="borrador['notas']"></label>
+              <label>Descripción<input name="editDescripcion" maxlength="200" [(ngModel)]="edicionPropuesta['descripcion']"></label>
+              <label>Notas<input name="editNotas" maxlength="500" [(ngModel)]="edicionPropuesta['notas']"></label>
               <div class="capture-proposal__actions"><button type="button" class="capture-cancel" (click)="editando.set(null)">Cancelar edición</button><button type="submit" class="capture-save" [disabled]="confirming()!==null">Actualizar propuesta</button></div>
               <p>Actualizar prepara la propuesta. Confirma después para registrar el movimiento.</p>
             </form>
@@ -268,18 +267,12 @@ export class QuickCaptureComponent implements OnDestroy {
   readonly offline=inject(MovimientosOfflineService);
   readonly listas = inject(ListaContextoService);
   private readonly actualizacion=inject(ActualizacionPwaService);
-  readonly errorBorrador=signal('');
-  private readonly borradorRestaurado=signal(false);
-  private readonly revisionBorrador=signal(0);
-  private guardadoBorrador:Promise<void>=Promise.resolve();
-  private guardadoTimer:ReturnType<typeof setTimeout>|null=null;
   private quitarProtector:()=>void=()=>{};
   private operaciones = new Subscription();
   private chatGeneration = 0;
-  readonly recuperando = signal(false);
   readonly editando = signal<AiActionProposal | null>(null);
   readonly cuentasEdicion = signal<Cuenta[]>([]);
-  borrador: Record<string, unknown> = {};
+  edicionPropuesta: Record<string, unknown> = {};
   private readonly finanzas = inject(FinanzasService);
   private readonly auth = inject(AuthService);
   readonly privacidad = inject(PrivacidadService);
@@ -326,71 +319,34 @@ export class QuickCaptureComponent implements OnDestroy {
         onCleanup(() => observer.disconnect());
       }
     });
-    this.quitarProtector=this.actualizacion.proteger(async()=>{
-      const generation = this.chatGeneration;
-      const estado = () => JSON.stringify({texto:this.content,acciones:this.captureTurns().flatMap(t=>t.actions),contexto:this.contexto,editando:this.editando()?.id,edicion:this.borrador});
-      const antes = estado();
-      if(this.loading()||this.confirming()||this.listening()||this.stopping())return false;
-      await this.guardarBorradorAhora();
-      return generation === this.chatGeneration && !this.destruido && antes === estado()
-        && !this.loading() && !this.confirming() && !this.listening() && !this.stopping();
-    });
+    this.quitarProtector=this.actualizacion.proteger(async()=>
+      !this.loading() && !this.confirming() && !this.listening() && !this.stopping());
     effect(() => { this.sincronizarUsuario(this.auth.currentUser()?.id ?? null); });
-    effect(()=>{
-      this.revisionBorrador();this.captureTurns();this.editando();
-      if(this.borradorRestaurado())this.programarBorrador();
-    });
   }
   private sincronizarUsuario(usuarioId: number | null): void {
       if (this.usuarioChat !== usuarioId) {
-        if(this.guardadoTimer)clearTimeout(this.guardadoTimer);this.guardadoTimer=null;
-        this.borradorRestaurado.set(false);this.errorBorrador.set('');
         this.chatGeneration++;
         this.confirmarVozAlResolver = false; this.guardadoVozId = null; this.guardadoVozCompletado.set(false);
         this.operaciones.unsubscribe(); this.operaciones=new Subscription();
         this.confirming.set(null); this.reportMessages.set([]); this.weeklyTransactions.set([]);
-        this.categories.set([]); this.cuentasEdicion.set([]); this.etiquetasPersonales.set([]); this.borrador={};
+        this.categories.set([]); this.cuentasEdicion.set([]); this.etiquetasPersonales.set([]); this.edicionPropuesta={};
         this.pendingCaptureText.set(''); this.sourceInput.set(''); this.voiceMessage.set(''); this.transcripcionParcial.set(''); this.aiConsentRequired.set(false);
         this.reportLoading.set(false); this.reportError.set(''); this.error.set(''); this.editando.set(null);
-        this.recuperando.set(false);
         this.usuarioChat = usuarioId; this.captureTurns.set([]); this.content = ''; this.contexto = null; this.consent = false; this.voiceConsent = false;
         if (usuarioId !== null) {
           try { this.voiceConsent = localStorage.getItem(`kaptal.voice-consent.${usuarioId}`) === '1'; } catch { /* Solicitar consentimiento si no se puede leer. */ }
         }
         this.capturaSub?.unsubscribe(); this.transcripcionSub?.unsubscribe(); this.stopVoice(true); this.loading.set(false); this.processingStep.set(null); this.open.set(false); this.pantallaVoz.set(false);
-        if (usuarioId!==null) void this.restaurarBorrador(usuarioId,this.chatGeneration);
+        if (usuarioId!==null) void this.cargarCatalogoInicial(usuarioId,this.chatGeneration);
       }
   }
-  marcarBorrador():void{this.revisionBorrador.update(n=>n+1);}
-  private programarBorrador():void{
-    if(this.guardadoTimer)clearTimeout(this.guardadoTimer);
-    this.guardadoTimer=setTimeout(()=>{this.guardadoTimer=null;void this.guardarBorradorAhora().catch(()=>{});},120);
-  }
-  private async guardarBorradorAhora():Promise<void>{
-    if(this.guardadoTimer)clearTimeout(this.guardadoTimer);this.guardadoTimer=null;
-    const usuarioId=this.usuarioChat,generation=this.chatGeneration;
-    if(usuarioId===null||!this.borradorRestaurado())return;
-    const snapshot:BorradorChat={usuarioId,texto:this.content,acciones:this.captureTurns().flatMap(t=>t.actions),contexto:this.contexto,
-      editandoId:this.editando()?.id??null,edicion:this.editando()?structuredClone(this.borrador):undefined,actualizadoEn:new Date().toISOString()};
-    const guardado=this.guardadoBorrador.catch(()=>{}).then(async()=>{
-      if(generation!==this.chatGeneration)return;
-      await this.offline.guardarBorrador(snapshot);
-      if(generation===this.chatGeneration)this.errorBorrador.set('');
-    });
-    this.guardadoBorrador=guardado;
-    try{await guardado;}catch(error){if(generation===this.chatGeneration)this.errorBorrador.set(error instanceof Error?error.message:'No se pudo guardar el borrador. Conserva el texto antes de cerrar.');throw error;}
-  }
-  private async restaurarBorrador(usuarioId:number,generation:number):Promise<void>{
-    try{
-      const b=await this.offline.leerBorrador(usuarioId),catalogo=await this.offline.leerCatalogo(usuarioId);
+  private async cargarCatalogoInicial(usuarioId:number,generation:number):Promise<void>{
+    try {
+      const catalogo=await this.offline.leerCatalogo(usuarioId);
       if(generation!==this.chatGeneration || this.destruido)return;
       if(catalogo){this.cuentasEdicion.set(catalogo.cuentas);this.categories.set(catalogo.categorias);}
-      if(b){this.content=b.texto;this.contexto=b.contexto??null;
-        if(b.acciones.length)this.captureTurns.set([{id:++this.captureTurnId,user:'Borrador recuperado',answer:'Revisa antes de confirmar. No se ha registrado todavía.',actions:b.acciones,voice:false}]);
-        const editando=b.acciones.find(p=>p.id===b.editandoId);if(editando){this.borrador=b.edicion??{...editando.data};this.editando.set(editando);}
-      }
-    }catch{if(generation===this.chatGeneration)this.errorBorrador.set('No se pudo recuperar el borrador local.');}
-    finally{if(generation===this.chatGeneration && !this.destruido){this.borradorRestaurado.set(true);if(this.offline.conexion()){this.recuperarPropuestas();this.cargarCatalogoChat();}}}
+    } catch { if(generation===this.chatGeneration)this.error.set('No se pudo leer el catálogo local.'); }
+    finally { if(generation===this.chatGeneration && !this.destruido && this.offline.conexion())this.cargarCatalogoChat(); }
   }
   private cargarCatalogoChat():void{
     const generation=this.chatGeneration,uid=this.usuarioChat;if(uid===null)return;
@@ -494,8 +450,7 @@ export class QuickCaptureComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     this.destruido = true;
-    if(this.guardadoTimer)clearTimeout(this.guardadoTimer);this.quitarProtector();
-    void this.guardarBorradorAhora().catch(()=>{});
+    this.quitarProtector();
     this.operaciones.unsubscribe();
     this.transcripcionSub?.unsubscribe();
     this.transcripcionParcialSub?.unsubscribe();
@@ -529,7 +484,7 @@ export class QuickCaptureComponent implements OnDestroy {
     else if (!event.shiftKey && document.activeElement === ultimo) { event.preventDefault(); primero?.focus(); }
   }
   toggle(): void { this.open.update(value => !value); }
-  alCambiarTexto(): void { this.voiceCapture.set(false); this.error.set(''); this.aiConsentRequired.set(false);this.marcarBorrador(); }
+  alCambiarTexto(): void { this.voiceCapture.set(false); this.error.set(''); this.aiConsentRequired.set(false); }
   enviarConEnter(inputEvent: Event): void {
     const event = inputEvent as KeyboardEvent;
     if (event.shiftKey || event.isComposing) return;
@@ -583,7 +538,7 @@ export class QuickCaptureComponent implements OnDestroy {
       if (opciones.length === 1) {
         this.actualizarPropuesta(pendientes[0], {...pendientes[0].data, categoriaId: opciones[0].id}, () => {
           if (this.content.trim() === value) this.content = '';
-          this.marcarBorrador();
+
         });
         return;
       }
@@ -677,7 +632,7 @@ export class QuickCaptureComponent implements OnDestroy {
       this.captureTurns.update(turns => [...turns, {id:++this.captureTurnId,user:value,
         answer:'Preparado en este dispositivo. Revisa la cuenta y la categoría; confirma para guardarlo y enviarlo al recuperar conexión.',
         actions:[proposal],voice:false,engine:'REGLAS'}]);
-      this.content='';this.error.set('');this.marcarBorrador();this.scrollCaptureToBottom();
+      this.content='';this.error.set('');this.scrollCaptureToBottom();
     } catch (error) {
       this.error.set(error instanceof Error ? error.message : 'No se pudo preparar el movimiento.');
     }
@@ -752,7 +707,7 @@ export class QuickCaptureComponent implements OnDestroy {
   dismiss(id: string): void {
     if (this.confirming()) return;
     const propuesta=this.captureTurns().flatMap(t=>t.actions).find(p=>p.id===id);
-    if(propuesta?.local){this.captureTurns.update(turns=>turns.map(t=>({...t,actions:t.actions.filter(p=>p.id!==id)})));this.marcarBorrador();return;}
+    if(propuesta?.local){this.captureTurns.update(turns=>turns.map(t=>({...t,actions:t.actions.filter(p=>p.id!==id)})));return;}
     if(!this.offline.conexion()){this.error.set('Descartar una propuesta del servidor necesita conexión.');return;}
     this.confirming.set(id);
     const generation=this.chatGeneration;
@@ -764,31 +719,16 @@ export class QuickCaptureComponent implements OnDestroy {
     }));
   }
 
-  recuperarPropuestas(): void {
-    if(!this.offline.conexion())return;
-    if (this.recuperando() || this.confirming() || this.loading()) return;
-    this.recuperando.set(true); const generation=this.chatGeneration;
-    this.operaciones.add(this.finanzas.getPropuestasAi().subscribe({
-      next: response => { if (generation!==this.chatGeneration) return; this.recuperando.set(false);
-        if (!response.success || !response.data) { this.error.set(response.message||'No pude recuperar propuestas. Reintenta.'); return; }
-        const pendientes=response.data.filter(p=>p.type==='CREATE_TRANSACTION'); const ids=new Set(pendientes.map(p => p.id));
-        this.captureTurns.update(turns => turns.map(turn => ({...turn, actions:turn.actions.filter(p => p.local||ids.has(p.id)).map(p => p.local?p:pendientes.find(n => n.id===p.id)!)})));
-        const visibles=new Set(this.captureTurns().flatMap(t => t.actions.map(p => p.id)));
-        const nuevas=pendientes.filter(p => !visibles.has(p.id));
-        if (nuevas.length) this.captureTurns.update(turns => [...turns,{id:++this.captureTurnId,user:'Propuestas recuperadas',answer:'Revisa antes de guardar. Prepararlas no modifica tus cuentas.',actions:nuevas,voice:false}]);
-      }, error: error => { if (generation!==this.chatGeneration) return; this.recuperando.set(false); this.error.set(this.errorMessage(error)); }
-    }));
-  }
   abrirEdicion(proposal: AiActionProposal): void {
     if (this.confirming()) return;
-    this.borrador={...proposal.data}; this.editando.set(proposal);
+    this.edicionPropuesta={...proposal.data}; this.editando.set(proposal);
     if(!this.offline.conexion())return;
     const generation=this.chatGeneration;
     this.operaciones.add(this.finanzas.getCuentas().subscribe({next:r => { if (generation===this.chatGeneration) this.cuentasEdicion.set(r.data??[]); },error:e => { if(generation===this.chatGeneration) this.error.set(this.errorMessage(e)); }}));
   }
   guardarEdicion(): void {
     const p=this.editando(); if (!p) return;
-    const datos={...this.borrador};
+    const datos={...this.edicionPropuesta};
     if(datos['tipo']==='TRANSFERENCIA')datos['categoriaId']=null;
     else { datos['cuentaDestinoId']=null; datos['tasaCambio']=null;
       if(datos['tipo']!==p.data['tipo'] && !this.categories().some(c=>c.activo && c.tipo===datos['tipo'] && c.id===datos['categoriaId']))datos['categoriaId']=null;
@@ -802,7 +742,7 @@ export class QuickCaptureComponent implements OnDestroy {
       const destino=datos['tipo']==='TRANSFERENCIA'?' a '+(this.cuentasEdicion().find(c=>c.id===datos['cuentaDestinoId'])?.nombre??'destino por seleccionar'):'';
       const p={...proposal,data:{...datos},version:(proposal.version??0)+1,summary:`${datos['tipo']} de ${datos['monto']} · ${cuenta}${destino} · ${datos['fecha']}`};
       this.captureTurns.update(turns=>turns.map(t=>({...t,actions:t.actions.map(previo=>previo.id===p.id?p:previo)})));
-      this.editando.set(null);this.marcarBorrador();alActualizar?.();return;
+      this.editando.set(null);alActualizar?.();return;
     }
     if(!this.offline.conexion()){this.error.set('Editar una propuesta del servidor requiere conexión.');return;}
     this.confirming.set(proposal.id); const generation=this.chatGeneration;
@@ -1206,14 +1146,13 @@ export class QuickCaptureComponent implements OnDestroy {
     this.confirming.set(proposal.id);this.error.set('');
     try{
       const payload=validarPayloadOffline(proposal.data,this.cuentasEdicion(),this.categories());
-      await this.guardarBorradorAhora();
       if(generation!==this.chatGeneration)return;
       if(proposal.local)await this.offline.guardarPendiente(uid,proposal.id,payload);
       else await this.offline.guardarConfirmacion(uid,proposal,payload);
       if(generation!==this.chatGeneration)return;
       this.captureTurns.update(turns=>turns.map(t=>t.actions.some(p=>p.id===proposal.id)?({...t,confirmaciones:[...(t.confirmaciones??[]),{id:proposal.id,estado:'DISPOSITIVO' as const}],actions:t.actions.filter(p=>p.id!==proposal.id)}):t));
       this.toast.info('Guardado en este dispositivo. Falta confirmación del servidor.');
-      this.marcarBorrador();if(this.offline.conexion())void this.offline.sincronizar();
+      if(this.offline.conexion())void this.offline.sincronizar();
     }catch(error){if(generation===this.chatGeneration)this.error.set(error instanceof Error?error.message:'No se pudo guardar localmente. La propuesta sigue disponible.');}
     finally{if(generation===this.chatGeneration)this.confirming.set(null);}
   }
