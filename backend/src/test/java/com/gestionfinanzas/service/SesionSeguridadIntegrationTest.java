@@ -210,6 +210,24 @@ class SesionSeguridadIntegrationTest {
         assertNotEquals(sesionAnterior.refreshToken(), sesionNueva.refreshToken());
     }
 
+    @Test
+    void documentaQueLogoutTardioPuedeRevocarCookieDeOtraCuenta() throws Exception {
+        Long otraCuenta = transaccion.execute(status -> usuarios.saveAndFlush(Usuario.builder()
+                .nombre("Otra cuenta ficticia").email("otra-" + UUID.randomUUID() + "@example.test")
+                .passwordHash("hash-solo-para-prueba").rol(RolUsuario.ROLE_USER).activo(true).build()).getId());
+        try {
+            var sesionAnterior = emitir();
+            var sesionNueva = sesiones.emitir(usuarios.findById(otraCuenta).orElseThrow());
+            mvc.perform(post("/api/auth/logout").header("X-Gestion-Sesion", "1")
+                            .cookie(new Cookie("finanzas_refresh", sesionNueva.refreshToken())))
+                    .andExpect(status().isOk());
+            assertThrows(SesionInvalidaException.class, () -> sesiones.refrescar(sesionNueva.refreshToken()));
+            assertNotNull(sesiones.refrescar(sesionAnterior.refreshToken()));
+        } finally {
+            transaccion.executeWithoutResult(status -> { tokens.deleteByUsuarioId(otraCuenta); usuarios.deleteById(otraCuenta); });
+        }
+    }
+
     private SesionService.SesionEmitida emitir() {
         return sesiones.emitir(usuarios.findById(usuarioId).orElseThrow());
     }

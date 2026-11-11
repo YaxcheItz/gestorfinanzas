@@ -1,3 +1,7 @@
+## Prueba backend con dos cuentas ficticias - 11 noviembre 2026
+
+En correcciones/identidad-logout, SesionSeguridadIntegrationTest ejecuta logout MockMvc con cookie de una segunda cuenta creada en H2: pasa 1/1, la segunda sesion queda revocada y la primera puede renovarse. Esto demuestra el comportamiento del servidor cuando recibe esa cookie; no prueba que haya ocurrido en cuentas reales ni une aun navegador, backend y Android. El script Chromium local prueba separadamente el envio/cabecera tardia con cookies ficticias. No se modifico codigo productivo ni sesion real. Se requiere corregir coordinacion de identidad, retencion y estado nativo, y pruebas integradas antes de liberar PR #271.
+
 ## Evidencia backend de logout con H2 - 11 noviembre 2026
 
 En rama correcciones/identidad-logout se anadio una prueba observacional en SesionSeguridadIntegrationTest: dos sesiones del mismo usuario ficticio, POST MockMvc de logout con cookie de la sesion nueva, comprobacion de Set-Cookie Max-Age=0 y rechazo posterior del refresh de esa cookie. Paso 1/1 en perfil test con H2 en memoria; no representa orden de navegador completo, cookies reales en Android ni usuarios reales. El script local Chromium reproduce por separado Set-Cookie tardio y envio de cookie nueva. Juntas describen mecanismos; aun falta prueba integrada y solucion compatible. No se modifico codigo productivo ni sesion real. CI PR #271 completa y Android correctas, pero permanece borrador por riesgo de retencion e identidad; no se ha integrado ni publicado.
