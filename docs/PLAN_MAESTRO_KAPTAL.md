@@ -1,3 +1,9 @@
+## Ajuste del limite de propuestas del chat - 11 noviembre 2026
+
+El servidor necesita propuestas tecnicas para confirmar con idempotencia; aun persisten y no se borraron registros reales. Ya no se recuperan en la interfaz al reiniciar. Detectado que el limite anterior de 50 propuestas pendientes en 24 horas podia bloquear el chat sin permitir descartar las ya no mostradas. En rama correcciones/limite-propuestas-chat se sustituye por un limite existente de abuso: 500 creaciones por cuenta por ventana de 24 horas. No se descartan propuestas activas de otras ventanas ni confirmaciones offline; al llegar al limite se rechazan solicitudes hasta vencer la ventana. El almacenamiento compartido de limite depende de la configuracion existente.
+
+Pruebas locales H2 con datos ficticios: 51 pendientes no bloquean y confirmar dos veces una propuesta anterior produce un unico movimiento; dos usuarios aislados y limite 500/501 probados. Pruebas anteriores de servicio y concurrencia: 32 exitosas. Falta CI del commit, integracion y despliegue. develop 7431c1d prepara Android 0.1.44 codigo 45; CI Android correcta. main aun a381859 y telefono ausente. No se ha firmado ni instalado APK nueva. PR #271 obsoleto: no integrar.
+
 ## Integracion develop y candidata Android - 11 noviembre 2026
 
 CI 43087378527 de eded8aa15f2c0476122fceba28808bc273cc3cde termino exitosamente en sus seis trabajos, incluidos flujos E2E y PWA. Se integro directamente por fast-forward a origin/develop despues de verificar el SHA base; conector GitHub ausente y gh sin sesion, no se creo PR. PR anterior #271 es obsoleto y NO integrar. CI y Android de develop se deben verificar antes de promover main.

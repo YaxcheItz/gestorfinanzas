@@ -3,11 +3,13 @@ package com.gestionfinanzas.ai;
 import com.fasterxml.jackson.databind.*;
 import com.gestionfinanzas.model.entity.PropuestaChat;
 import com.gestionfinanzas.repository.*;
+import com.gestionfinanzas.security.LimiteAbuso;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
+import java.time.Duration;
 import java.util.*;
 
 /** El estado y la operación confirmada participan en la misma transacción. */
@@ -17,14 +19,16 @@ public class PropuestaChatService {
     private final UsuarioRepository usuarios;
     private final ObjectMapper mapper;
     private final EntityManager entityManager;
+    private final LimiteAbuso limiteAbuso;
 
     @Transactional
     public PropuestaChat crear(Long usuarioId,String tipo,String resumen,JsonNode datos) {
         var usuario=usuarios.findByIdForUpdate(usuarioId).orElseThrow(() -> new IllegalArgumentException("Cuenta no disponible."));
         entityManager.refresh(usuario);
         if (!usuario.isActivo()) throw new IllegalArgumentException("Cuenta no disponible.");
-        if (pendientes(usuarioId).size()>=50) throw new IllegalArgumentException("Tienes demasiadas propuestas pendientes. Guarda o descarta alguna.");
         if (resumen.length()>500 || datos.toString().length()>20000) throw new IllegalArgumentException("La propuesta es demasiado larga.");
+        // Una ventana acotada no invalida propuestas activas en otras sesiones.
+        limiteAbuso.comprobar("propuestas-chat:"+usuarioId,500,Duration.ofDays(1));
         return propuestas.save(PropuestaChat.builder().id(UUID.randomUUID().toString()).usuario(usuario).tipo(tipo)
             .resumen(resumen).datos(datos.toString()).vence(Instant.now().plusSeconds(86400)).build());
     }

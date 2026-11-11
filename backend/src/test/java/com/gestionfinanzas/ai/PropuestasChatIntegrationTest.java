@@ -84,6 +84,24 @@ class PropuestasChatIntegrationTest {
         assertEquals(1,transacciones.listarRecientes(a.getId()).size());
         assertEquals(new BigDecimal("75.00"),cuentas.findById(cuenta.getId()).orElseThrow().getSaldoActual());
     }
+    @Test void propuestasAbandonadasNoBloqueanNiInvalidanOtraVentana() {
+        var primera=propuesta();
+        for (int i=0;i<50;i++) almacen.crear(a.getId(),"CREATE_TRANSACTION","Ejemplo",mapper.createObjectNode());
+        assertEquals(51,almacen.pendientes(a.getId()).size());
+        assertTrue(almacen.pendientes(b.getId()).isEmpty());
+        String resultado=acciones.confirm(a.getId(),primera.id(),primera.version());
+        assertEquals(resultado,acciones.confirm(a.getId(),primera.id(),primera.version()));
+        assertEquals(1,transacciones.listarRecientes(a.getId()).size());
+        assertEquals(new BigDecimal("75.00"),cuentas.findById(cuenta.getId()).orElseThrow().getSaldoActual());
+    }
+    @Test void limiteDeCreacionSigueAcotadoYEsIndependientePorCuenta() {
+        var datos=mapper.createObjectNode();
+        for (int i=0;i<500;i++) almacen.crear(a.getId(),"CREATE_TRANSACTION","Ejemplo",datos);
+        assertThrows(com.gestionfinanzas.exception.TooManyRequestsException.class,
+            ()->almacen.crear(a.getId(),"CREATE_TRANSACTION","Ejemplo",datos));
+        assertNotNull(almacen.crear(b.getId(),"CREATE_TRANSACTION","Ejemplo",datos).getId());
+        assertEquals(new BigDecimal("100.00"),cuentas.findById(cuenta.getId()).orElseThrow().getSaldoActual());
+    }
     @Test void confirmacionesSimultaneasCompartenResultado() throws Exception {
         var p=propuesta(); var executor=Executors.newFixedThreadPool(2); var inicio=new CountDownLatch(1);
         try {
