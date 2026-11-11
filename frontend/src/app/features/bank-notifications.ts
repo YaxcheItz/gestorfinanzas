@@ -1,4 +1,4 @@
-import { Component, computed, inject, output, signal } from '@angular/core';
+import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { BankNotice, BankNotificationsService, NoticeApp } from '../core/services/bank-notifications';
 import { AutomaticBankComponent } from './automatic-bank';
 import { RouterLink } from '@angular/router';
@@ -10,6 +10,7 @@ import { RouterLink } from '@angular/router';
   styleUrls: ['./bank-notice-controls.css', './bank-notifications.css'],
 })
 export class BankNotificationsComponent {
+  readonly section = input<'avisos' | 'conexiones'>('avisos');
   readonly bank = inject(BankNotificationsService);
   readonly review = output<BankNotice>();
   readonly changed = output<void>();

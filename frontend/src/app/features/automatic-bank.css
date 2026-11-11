@@ -55,3 +55,14 @@ details { border-top: 1px solid var(--kaptal-border); margin-top: .8rem; }
 .scope { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
 .metrics div { min-width: 0; }
 .profile > summary { flex-wrap: wrap; min-width: 0; }
+.association-list { display: grid; gap: .75rem; margin: 1rem 0; }
+.association-list__heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .75rem; }
+.association-list__heading h3, .association-editor h4 { margin: 0; font-size: 1rem; font-weight: 700; }
+.association-list__heading .hint { margin: .25rem 0 0; }
+.association-card { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; padding: .9rem; border: 1px solid var(--kaptal-border); border-radius: 1rem; background: var(--kaptal-surface-subtle); }
+.association-card > div { min-width: 0; overflow-wrap: anywhere; }
+.association-card p { margin: .25rem 0 0; }
+.association-editor { display: grid; gap: .8rem; padding: 1rem; border: 1px solid var(--kaptal-border); border-radius: 1rem; background: var(--kaptal-surface); }
+.association-editor__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .5rem; }
+.legacy-setup { margin-top: 1.25rem; }
+.legacy-setup > summary { min-height: 48px; display: flex; align-items: center; font-weight: 650; cursor: pointer; }
