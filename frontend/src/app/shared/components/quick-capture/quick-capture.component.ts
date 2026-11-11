@@ -65,6 +65,7 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
         @if (escuchando()) {<div class="voice-screen__levels" aria-hidden="true">@for (nivel of nivelesAudio(); track $index) {<i [style.height.px]="4 + nivel * 24"></i>}</div>}
         @if (permisoVoz()) {<div class="voice-permission"><p>El audio se enviará periódicamente a Groq para mostrar una transcripción y al terminar para revisarla. Recordaremos tu permiso en este dispositivo.</p><button type="button" (click)="permitirVoz()">Permitir audio y grabar</button></div>}
         @if (error()) {<p class="capture-error" role="alert">{{ error() }}</p>}
+        @if (errorBorrador()) {<p class="capture-error" role="alert">{{ errorBorrador() }}</p>}
         @if (voiceMessage()) {<p role="status">{{ voiceMessage() }}</p>}
         @if (guardadoVozCompletado()) {<button type="button" class="voice-screen__text" (click)="revisarMovimientosVoz()">Revisar movimientos</button>}
         @if (transcripcionLista()) {
@@ -89,6 +90,7 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
         </header>
         <div class="capture-panel__tools">
           <button type="button" class="capture-manual" (click)="abrirConTeclado()" [disabled]="loading() || confirming() !== null || escuchando()">Introducir datos manualmente</button>
+          <button type="button" class="capture-manual" (click)="revisarPropuestasPendientes()" [disabled]="!borradorRestaurado() || recuperando() || loading() || confirming() !== null">Revisar propuestas pendientes</button>
         </div>
 
     @if (escuchando()) {
@@ -269,7 +271,9 @@ export class QuickCaptureComponent implements OnDestroy {
   readonly listas = inject(ListaContextoService);
   private readonly actualizacion=inject(ActualizacionPwaService);
   readonly errorBorrador=signal('');
-  private readonly borradorRestaurado=signal(false);
+  readonly borradorRestaurado=signal(false);
+  private propuestasReservadas:AiActionProposal[]=[];
+  private preservarBorradorAnterior=false;
   private readonly revisionBorrador=signal(0);
   private guardadoBorrador:Promise<void>=Promise.resolve();
   private guardadoTimer:ReturnType<typeof setTimeout>|null=null;
@@ -293,6 +297,8 @@ export class QuickCaptureComponent implements OnDestroy {
   readonly guardadoVozCompletado = signal(false);
   private usuarioChat: number | null = null;
   private destruido = false;
+  private cerrandoChat = false;
+  private generacionSuperficie = 0;
   @ViewChild('chatScroll') private chatScroll?: ElementRef<HTMLElement>;
   readonly seguirFinal = signal(true);
 
@@ -345,6 +351,7 @@ export class QuickCaptureComponent implements OnDestroy {
       if (this.usuarioChat !== usuarioId) {
         if(this.guardadoTimer)clearTimeout(this.guardadoTimer);this.guardadoTimer=null;
         this.borradorRestaurado.set(false);this.errorBorrador.set('');
+        this.propuestasReservadas=[];this.preservarBorradorAnterior=true;
         this.chatGeneration++;
         this.confirmarVozAlResolver = false; this.guardadoVozId = null; this.guardadoVozCompletado.set(false);
         this.operaciones.unsubscribe(); this.operaciones=new Subscription();
@@ -369,12 +376,15 @@ export class QuickCaptureComponent implements OnDestroy {
   private async guardarBorradorAhora():Promise<void>{
     if(this.guardadoTimer)clearTimeout(this.guardadoTimer);this.guardadoTimer=null;
     const usuarioId=this.usuarioChat,generation=this.chatGeneration;
-    if(usuarioId===null||!this.borradorRestaurado())return;
-    const snapshot:BorradorChat={usuarioId,texto:this.content,acciones:this.captureTurns().flatMap(t=>t.actions),contexto:this.contexto,
+    if(usuarioId===null)return;
+    if(!this.borradorRestaurado())throw new Error('No se pudo preparar el almacenamiento del chat. Conserva el texto antes de cerrar.');
+    const acciones=new Map([...this.propuestasReservadas,...this.captureTurns().flatMap(t=>t.actions)].map(p=>[p.id,p]));
+    const snapshot:BorradorChat={usuarioId,texto:this.content,acciones:[...acciones.values()],contexto:this.contexto,
       editandoId:this.editando()?.id??null,edicion:this.editando()?structuredClone(this.borrador):undefined,actualizadoEn:new Date().toISOString()};
     const guardado=this.guardadoBorrador.catch(()=>{}).then(async()=>{
       if(generation!==this.chatGeneration)return;
-      await this.offline.guardarBorrador(snapshot);
+      await this.offline.guardarBorrador(snapshot,this.preservarBorradorAnterior);
+      if(generation===this.chatGeneration)this.preservarBorradorAnterior=false;
       if(generation===this.chatGeneration)this.errorBorrador.set('');
     });
     this.guardadoBorrador=guardado;
@@ -385,12 +395,10 @@ export class QuickCaptureComponent implements OnDestroy {
       const b=await this.offline.leerBorrador(usuarioId),catalogo=await this.offline.leerCatalogo(usuarioId);
       if(generation!==this.chatGeneration || this.destruido)return;
       if(catalogo){this.cuentasEdicion.set(catalogo.cuentas);this.categories.set(catalogo.categorias);}
-      if(b){this.content=b.texto;this.contexto=b.contexto??null;
-        if(b.acciones.length)this.captureTurns.set([{id:++this.captureTurnId,user:'Borrador recuperado',answer:'Revisa antes de confirmar. No se ha registrado todavía.',actions:b.acciones,voice:false}]);
-        const editando=b.acciones.find(p=>p.id===b.editandoId);if(editando){this.borrador=b.edicion??{...editando.data};this.editando.set(editando);}
-      }
-    }catch{if(generation===this.chatGeneration)this.errorBorrador.set('No se pudo recuperar el borrador local.');}
-    finally{if(generation===this.chatGeneration && !this.destruido){this.borradorRestaurado.set(true);if(this.offline.conexion()){this.recuperarPropuestas();this.cargarCatalogoChat();}}}
+      if(b)this.propuestasReservadas=b.acciones;
+      this.borradorRestaurado.set(true);
+      if(this.offline.conexion())this.cargarCatalogoChat();
+    }catch{if(generation===this.chatGeneration)this.errorBorrador.set('No se pudo leer el almacenamiento local. Conserva el texto antes de cerrar.');}
   }
   private cargarCatalogoChat():void{
     const generation=this.chatGeneration,uid=this.usuarioChat;if(uid===null)return;
@@ -528,7 +536,6 @@ export class QuickCaptureComponent implements OnDestroy {
     if (event.shiftKey && (document.activeElement === primero || document.activeElement === event.currentTarget)) { event.preventDefault(); ultimo?.focus(); }
     else if (!event.shiftKey && document.activeElement === ultimo) { event.preventDefault(); primero?.focus(); }
   }
-  toggle(): void { this.open.update(value => !value); }
   alCambiarTexto(): void { this.voiceCapture.set(false); this.error.set(''); this.aiConsentRequired.set(false);this.marcarBorrador(); }
   enviarConEnter(inputEvent: Event): void {
     const event = inputEvent as KeyboardEvent;
@@ -540,10 +547,29 @@ export class QuickCaptureComponent implements OnDestroy {
     this.content = text;
     requestAnimationFrame(() => document.getElementById('quick-capture-text')?.focus());
   }
-  close(): void { this.confirmarVozAlResolver = false; this.limpiarHoldTimer(); this.pointerGesture = false; this.stopVoice(true); if (this.processingStep()) this.cancelarTranscripcion(); this.open.set(false); this.pantallaVoz.set(false); this.changeDetector.detectChanges(); }
-  cerrarPantallaVoz(): void { this.permisoVoz.set(false); this.close(); this.transcripcionParcial.set(''); this.transcripcionLista.set(false); }
+  async close(): Promise<boolean> {
+    if(this.cerrandoChat)return false;
+    this.confirmarVozAlResolver = false; this.limpiarHoldTimer(); this.pointerGesture = false; this.stopVoice(true); if (this.processingStep()) this.cancelarTranscripcion();
+    if(this.usuarioChat!==null && (this.content || this.contexto || this.editando())){
+      this.cerrandoChat=true;
+      const generation=this.chatGeneration, superficie=this.generacionSuperficie, texto=this.content, contexto=this.contexto, editando=this.editando();
+      const edicion=JSON.stringify(this.borrador);
+      try{
+        await this.guardarBorradorAhora();
+        if(generation!==this.chatGeneration || superficie!==this.generacionSuperficie || texto!==this.content || contexto!==this.contexto || editando!==this.editando() || edicion!==JSON.stringify(this.borrador))return false;
+        this.preservarBorradorAnterior=true;
+        this.content='';this.contexto=null;this.editando.set(null);
+        try{await this.guardarBorradorAhora();}
+        catch(error){if(generation===this.chatGeneration && !this.content && !this.contexto && !this.editando()){this.content=texto;this.contexto=contexto;this.editando.set(editando);}throw error;}
+        if(generation!==this.chatGeneration || superficie!==this.generacionSuperficie || this.content || this.contexto || this.editando())return false;
+      }catch(error){if(generation===this.chatGeneration)this.errorBorrador.set(error instanceof Error?error.message:'No se pudo guardar el borrador. Conserva el texto antes de cerrar.');return false;}finally{this.cerrandoChat=false;}
+    }
+    this.open.set(false);this.pantallaVoz.set(false);this.changeDetector.detectChanges();
+    return true;
+  }
+  async cerrarPantallaVoz(): Promise<void> { const superficie=this.generacionSuperficie;this.permisoVoz.set(false);if(await this.close() && superficie===this.generacionSuperficie){this.transcripcionParcial.set('');this.transcripcionLista.set(false);} }
   usarTranscripcionParcial(): void { this.content = this.transcripcionParcial(); this.voiceCapture.set(true); this.transcripcionLista.set(true); }
-  abrirEscrituraDesdeVoz(): void { this.stopVoice(true); if (this.processingStep()) this.cancelarTranscripcion(); this.voiceCapture.set(false); this.permisoVoz.set(false); this.pantallaVoz.set(false); this.open.set(true); this.mode.set('CAPTURE'); this.changeDetector.detectChanges(); requestAnimationFrame(() => document.getElementById('quick-capture-text')?.focus()); }
+  abrirEscrituraDesdeVoz(): void { this.generacionSuperficie++; this.stopVoice(true); if (this.processingStep()) this.cancelarTranscripcion(); this.voiceCapture.set(false); this.permisoVoz.set(false); this.pantallaVoz.set(false); this.open.set(true); this.mode.set('CAPTURE'); this.changeDetector.detectChanges(); requestAnimationFrame(() => document.getElementById('quick-capture-text')?.focus()); }
   continuarConVoz(): void {
     if (!this.content.trim() || this.loading() || this.catalogoCargando() || this.confirming() !== null || !this.offline.conexion()) {
       if (!this.offline.conexion()) this.error.set('Conéctate para guardar la captura de voz.');
@@ -554,7 +580,7 @@ export class QuickCaptureComponent implements OnDestroy {
     this.submit();
     if (!this.loading() && this.confirmarVozAlResolver) { this.confirmarVozAlResolver = false; this.voiceMessage.set(''); }
   }
-  revisarMovimientosVoz(): void { this.close(); void this.router.navigate(['/transacciones']); }
+  async revisarMovimientosVoz(): Promise<void> { const generation=this.chatGeneration,superficie=this.generacionSuperficie;if(await this.close() && generation===this.chatGeneration && superficie===this.generacionSuperficie)void this.router.navigate(['/transacciones']); }
   cambiarModo(mode: CaptureMode): void {
     this.stopVoice(true);
     if (this.processingStep()) this.cancelarTranscripcion();
@@ -764,12 +790,21 @@ export class QuickCaptureComponent implements OnDestroy {
     }));
   }
 
+  revisarPropuestasPendientes():void {
+    const visibles=new Set(this.captureTurns().flatMap(t=>t.actions.map(p=>p.id)));
+    const pendientes=this.propuestasReservadas.filter(p=>!visibles.has(p.id));
+    this.propuestasReservadas=[];
+    if(pendientes.length)this.captureTurns.update(turns=>[...turns,{id:++this.captureTurnId,user:'Propuestas pendientes',answer:'Revisa antes de guardar. Prepararlas no modifica tus cuentas.',actions:pendientes,voice:false}]);
+    if(this.offline.conexion())this.recuperarPropuestas();
+  }
   recuperarPropuestas(): void {
     if(!this.offline.conexion())return;
     if (this.recuperando() || this.confirming() || this.loading()) return;
     this.recuperando.set(true); const generation=this.chatGeneration;
+    const accionesIniciales=JSON.stringify(this.captureTurns().flatMap(t=>t.actions));
     this.operaciones.add(this.finanzas.getPropuestasAi().subscribe({
       next: response => { if (generation!==this.chatGeneration) return; this.recuperando.set(false);
+        if(this.confirming() || this.loading() || this.editando() || accionesIniciales!==JSON.stringify(this.captureTurns().flatMap(t=>t.actions)))return;
         if (!response.success || !response.data) { this.error.set(response.message||'No pude recuperar propuestas. Reintenta.'); return; }
         const pendientes=response.data.filter(p=>p.type==='CREATE_TRANSACTION'); const ids=new Set(pendientes.map(p => p.id));
         this.captureTurns.update(turns => turns.map(turn => ({...turn, actions:turn.actions.filter(p => p.local||ids.has(p.id)).map(p => p.local?p:pendientes.find(n => n.id===p.id)!)})));
@@ -853,8 +888,8 @@ export class QuickCaptureComponent implements OnDestroy {
     }));
   }
 
-  verEvidencia(item: AiEvidence): void {
-    this.close();
+  async verEvidencia(item: AiEvidence): Promise<void> {
+    const generation=this.chatGeneration,superficie=this.generacionSuperficie;if(!await this.close() || generation!==this.chatGeneration || superficie!==this.generacionSuperficie)return;
     void this.router.navigate(['/transacciones'], { queryParams: {
       alcance: 'propio', fechaInicio: item.desde, fechaFin: item.hasta,
       moneda: item.moneda, tipo: item.tipo
@@ -920,6 +955,7 @@ export class QuickCaptureComponent implements OnDestroy {
 
   @HostListener('window:kaptal-abrir-captura-chat', ['$event'])
   abrirCapturaDesdeAcceso(event: Event): void {
+    this.generacionSuperficie++;
     // Sincronizar identidad antes de abrir evita que el efecto inicial cierre el panel recién abierto.
     this.sincronizarUsuario(this.auth.currentUser()?.id ?? null);
     this.captureLauncher.attach('chat');
@@ -960,6 +996,7 @@ export class QuickCaptureComponent implements OnDestroy {
     (event.currentTarget as HTMLButtonElement).setPointerCapture?.(event.pointerId);
     this.holdTimer = setTimeout(() => {
       if (!this.pointerGesture) return;
+      this.generacionSuperficie++;
       this.holdStarted = true;
       this.suppressNextClick = true;
       this.open.set(true);
@@ -979,9 +1016,9 @@ export class QuickCaptureComponent implements OnDestroy {
     if (this.holdStarted) this.stopVoice(true);
     this.suppressNextClick = false;
   }
-  abrirConTeclado(): void {
+  async abrirConTeclado(): Promise<void> {
     if (this.suppressNextClick) { this.suppressNextClick = false; return; }
-    this.close();
+    const generation=this.chatGeneration,superficie=this.generacionSuperficie;if(!await this.close() || generation!==this.chatGeneration || superficie!==this.generacionSuperficie)return;
     window.dispatchEvent(new CustomEvent('kaptal-abrir-registro-rapido', {detail:{preservar:true}}));
   }
   private limpiarHoldTimer(): void { if (this.holdTimer) clearTimeout(this.holdTimer); this.holdTimer = null; }
@@ -1222,5 +1259,5 @@ export class QuickCaptureComponent implements OnDestroy {
       return 'No pude comprobar el resultado. Reintenta esta misma propuesta; si ya se guardó, no se duplicará.';
     return this.errorMessage(error);
   }
-  @HostListener('document:keydown.escape') closeOnEscape(): void { this.close(); }
+  @HostListener('document:keydown.escape') closeOnEscape(): void { if(this.open() || this.pantallaVoz())void this.close(); }
 }

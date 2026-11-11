@@ -17,6 +17,7 @@ export interface BorradorChat {
   usuarioId:number;texto:string;acciones:AiActionProposal[];contexto?:string|null;
   editandoId?:string|null;edicion?:Record<string,unknown>;actualizadoEn:string;
 }
+export interface CopiaBorradorChat { clave:string; borrador:BorradorChat; }
 @Injectable({providedIn:'root'})
 export class MovimientosOfflineService {
   private readonly document=inject(DOCUMENT);
@@ -83,15 +84,36 @@ export class MovimientosOfflineService {
     await this.transaccion<void>('catalogos','readwrite',(s,done)=>{s.put(c);done();});
   }
   async leerCatalogo(usuarioId:number):Promise<CatalogoOffline|null>{this.exigirUsuario(usuarioId);const c=await this.leer<CatalogoOffline>('catalogos',usuarioId);this.exigirUsuario(usuarioId);return c;}
-  async guardarBorrador(b:BorradorChat):Promise<void>{
+  async guardarBorrador(b:BorradorChat,preservarAnterior=false):Promise<void>{
     this.exigirUsuario(b.usuarioId);if(b.texto.length>1200||b.acciones.length>50||JSON.stringify(b).length>200000)throw new Error('El borrador es demasiado grande.');
     const revision=crearIdSolicitud(),base=this.revisiones.get(b.usuarioId);
     await this.transaccion<void>('borradores','readwrite',(s,done,fail)=>{const r=s.get(b.usuarioId);r.onsuccess=()=>{
       if(r.result&&r.result.revision!==base){fail(new Error('Otro chat cambió el borrador guardado. Conserva este texto antes de recargar.'));return;}
+      if(preservarAnterior && r.result && (r.result.texto || r.result.contexto || r.result.edicion)){
+        s.put({usuarioId:`archivo:${b.usuarioId}:${crearIdSolicitud()}`,borrador:structuredClone(r.result)});
+      }
       s.put({...structuredClone(b),revision});done();
     };});this.revisiones.set(b.usuarioId,revision);
   }
   async leerBorrador(usuarioId:number):Promise<BorradorChat|null>{this.exigirUsuario(usuarioId);const b=await this.leer<BorradorChat>('borradores',usuarioId);this.exigirUsuario(usuarioId);this.revisiones.set(usuarioId,b?.revision);return b;}
+  async listarCopiasBorrador(usuarioId:number):Promise<CopiaBorradorChat[]>{
+    this.exigirUsuario(usuarioId);const prefijo=`archivo:${usuarioId}:`;
+    const copias=await this.transaccion<CopiaBorradorChat[]>('borradores','readonly',(s,done)=>{
+      const resultado:CopiaBorradorChat[]=[];
+      const r=s.openCursor(IDBKeyRange.bound(prefijo,prefijo+'\uffff'));
+      r.onsuccess=()=>{const cursor=r.result;if(!cursor){done(resultado);return;}
+        const copia=cursor.value as {usuarioId:string;borrador:BorradorChat};
+        if(copia.borrador?.usuarioId===usuarioId)resultado.push({clave:copia.usuarioId,borrador:copia.borrador});
+        cursor.continue();};
+    });this.exigirUsuario(usuarioId);return copias;
+  }
+  async eliminarCopiaBorrador(usuarioId:number,clave:string):Promise<void>{
+    this.exigirUsuario(usuarioId);if(!clave.startsWith(`archivo:${usuarioId}:`))throw new Error('La copia no pertenece a esta cuenta.');
+    await this.transaccion<void>('borradores','readwrite',(s,done,fail)=>{const r=s.get(clave);r.onsuccess=()=>{
+      if(!this.actual(usuarioId)||r.result?.borrador?.usuarioId!==usuarioId){fail(new Error('La cuenta o la copia cambiaron.'));return;}
+      s.delete(clave);done();
+    };});this.exigirUsuario(usuarioId);
+  }
   private leer<T>(nombre:string,key:IDBValidKey):Promise<T|null>{return this.transaccion<T|null>(nombre,'readonly',(s,done)=>{const r=s.get(key);r.onsuccess=()=>done((r.result as T|undefined)??null);});}
   async descartar(id:string):Promise<void>{
     const uid=this.auth.currentUser()?.id;if(uid==null)return;if(this.sincronizacionEnCurso)throw new Error('Espera a que termine la sincronización.');

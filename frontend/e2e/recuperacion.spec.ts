@@ -43,6 +43,8 @@ test('recupera propuesta tras recarga, confirma una vez y conserva saldo', async
   expect(antes.find((c: { id: number }) => c.id === cuenta.id).saldoActual).toBe(1000);
   await page.reload();
   await abrirChat(page);
+  await expect(page.getByRole('button', { name: /Guardar (sin categoría|movimiento)/ })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Revisar propuestas pendientes' }).click();
   await expect(page.getByRole('button', { name: /Guardar (sin categoría|movimiento)/ }).first()).toBeVisible();
   await page.getByRole('button', { name: /Guardar (sin categoría|movimiento)/ }).first().click();
   await expect.poll(async () => {
