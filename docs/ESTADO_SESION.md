@@ -1,3 +1,9 @@
+## Integracion develop y candidata Android - 11 noviembre 2026
+
+CI 43087378527 de eded8aa15f2c0476122fceba28808bc273cc3cde termino exitosamente en sus seis trabajos, incluidos flujos E2E y PWA. Se integro directamente por fast-forward a origin/develop despues de verificar el SHA base; conector GitHub ausente y gh sin sesion, no se creo PR. PR anterior #271 es obsoleto y NO integrar. CI y Android de develop se deben verificar antes de promover main.
+
+Rama entrega/android-044-sin-borradores creada desde develop eded8aa; candidata versionName 0.1.44 y versionCode 45, superior a 0.1.43/codigo44. Al instalarse, la migracion elimina definitivamente los borradores anteriores segun autorizacion explicita; conserva la cola de movimientos confirmados. No existe aun APK firmada ni verificacion de hash/contenido; ADB no mostraba telefono y variables de firma no estaban disponibles. Nada publicado en main ni instalado. El texto se conserva solo al cerrar/reabrir ventanita en la misma sesion.
+
 ## Decision final y cambio de chat sin borradores - 11 noviembre 2026
 
 Usuario aclara: no necesita conservar propuestas de borradores ni guardar nada para continuar despues; al cerrar y reabrir la ventanita durante la misma sesion quiere conservar texto y conversacion como ahora. El PR #271 de copias queda descartado y NO debe integrarse. Rama nueva correcciones/quitar-borradores-chat desde develop e4eb3f9.
