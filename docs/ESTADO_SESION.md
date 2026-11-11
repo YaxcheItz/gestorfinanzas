@@ -1,3 +1,13 @@
+## Evidencia backend de logout con H2 - 11 noviembre 2026
+
+En rama correcciones/identidad-logout se anadio una prueba observacional en SesionSeguridadIntegrationTest: dos sesiones del mismo usuario ficticio, POST MockMvc de logout con cookie de la sesion nueva, comprobacion de Set-Cookie Max-Age=0 y rechazo posterior del refresh de esa cookie. Paso 1/1 en perfil test con H2 en memoria; no representa orden de navegador completo, cookies reales en Android ni usuarios reales. El script local Chromium reproduce por separado Set-Cookie tardio y envio de cookie nueva. Juntas describen mecanismos; aun falta prueba integrada y solucion compatible. No se modifico codigo productivo ni sesion real. CI PR #271 completa y Android correctas, pero permanece borrador por riesgo de retencion e identidad; no se ha integrado ni publicado.
+
+## Reproduccion aislada de cookies - 11 noviembre 2026
+
+CI PR #271 43076680307 en fec83cf paso sus seis trabajos incluido E2E; Android 43076680344 paso. Pese a CI verde, no integrar por retencion de copias y carreras de identidad sin resolver. Telefono no aparecia en ADB al comprobar.
+
+Nuevo script frontend/scripts/repro-cookie-logout-local.cjs en rama correcciones/identidad-logout: servidor local efimero y Chromium aislado con cookies HttpOnly ficticias reproducen que Set-Cookie de logout anterior elimina cookie de login nuevo y que una peticion de logout enviada despues del login adjunta la cookie nueva. Prueba paso con esos comportamientos esperados para demostrar riesgo. No accede a Kaptal real ni credenciales; no demuestra comportamiento del backend real, Android, ni dispositivos distintos. Continuan necesarias pruebas de integracion, una solucion compatible de cookie/rotacion y CAS nativo, y limpieza segura de copias.
+
 ## Diagnostico de identidad, sin cambio productivo - 11 noviembre 2026
 
 Rama correcciones/identidad-logout desde develop e4eb3f9. Revision de cierre, login, refresh, cookie y puente Android confirma que una guarda JavaScript aislada no protege Set-Cookie tardio, revocacion de otra sesion o limpieza nativa de avisos. Eliminar la cookie de borrado sin revisar el reuso de refresh tambien puede invalidar otras sesiones. No se modifica produccion: el diagnostico y pruebas necesarias estan en docs/DIAGNOSTICO_CARRERA_LOGOUT.md; la reproduccion roja A-B y A-B-A permanece en pruebas/carrera-logout ab2b8fc. Pendientes contrato backend, compatibilidad con clientes anteriores, CAS nativo y pruebas de cookies reales. No se accedio a credenciales, telefono ni datos financieros.

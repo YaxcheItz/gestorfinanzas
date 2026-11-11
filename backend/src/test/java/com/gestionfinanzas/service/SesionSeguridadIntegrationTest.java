@@ -195,6 +195,21 @@ class SesionSeguridadIntegrationTest {
                 .andExpect(status().isUnauthorized());
     }
 
+    @Test
+    void documentaQueLogoutRevocaLaCookieQueRecibeYEmiteBorrado() throws Exception {
+        // Ambas sesiones pertenecen a un usuario de H2 creado por preparar().
+        var sesionAnterior = emitir();
+        var sesionNueva = emitir();
+        var respuesta = mvc.perform(post("/api/auth/logout").header("X-Gestion-Sesion", "1")
+                        .cookie(new Cookie("finanzas_refresh", sesionNueva.refreshToken())))
+                .andExpect(status().isOk()).andReturn().getResponse();
+
+        assertTrue(respuesta.getHeader("Set-Cookie").contains("Max-Age=0"));
+        // El servidor solo puede revocar la cookie recibida, no el motivo del cliente.
+        assertThrows(SesionInvalidaException.class, () -> sesiones.refrescar(sesionNueva.refreshToken()));
+        assertNotEquals(sesionAnterior.refreshToken(), sesionNueva.refreshToken());
+    }
+
     private SesionService.SesionEmitida emitir() {
         return sesiones.emitir(usuarios.findById(usuarioId).orElseThrow());
     }
