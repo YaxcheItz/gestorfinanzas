@@ -77,6 +77,69 @@ describe('QuickCaptureComponent processing and gestures', () => {
 
   afterEach(() => { fixture.destroy(); vi.useRealTimers(); vi.unstubAllGlobals(); });
 
+  it('no restaura texto ni edición y conserva propuestas locales hasta revisión explícita sin conexión', async () => {
+    conexion.set(false); usuario.set({id:1});
+    const propuesta={id:'local-1',type:'CREATE_TRANSACTION',summary:'Pendiente',data:{},local:true};
+    offline.leerBorrador.mockResolvedValue({usuarioId:1,texto:'texto anterior',contexto:'contexto anterior',acciones:[propuesta],editandoId:'local-1',edicion:{monto:5}});
+    (component as any).sincronizarUsuario(1);
+    await vi.waitFor(()=>expect(component.borradorRestaurado()).toBe(true));
+    expect(component.content).toBe('');expect(component.captureTurns()).toEqual([]);expect(component.editando()).toBeNull();
+    await (component as any).guardarBorradorAhora();
+    expect(offline.guardarBorrador).toHaveBeenCalledWith(expect.objectContaining({texto:'',acciones:[propuesta]}),true);
+    component.revisarPropuestasPendientes();
+    expect(component.captureTurns()[0].actions).toEqual([propuesta]);
+    expect(TestBed.inject(FinanzasService).getPropuestasAi).not.toHaveBeenCalled();
+  });
+
+  it('ignora la lectura tardía de otra cuenta y no sobrescribe texto nuevo', async () => {
+    conexion.set(false); usuario.set({id:1});let resolver:any;
+    offline.leerBorrador.mockImplementation((id:number)=>id===1?new Promise(r=>resolver=r):Promise.resolve(null));
+    (component as any).sincronizarUsuario(1);
+    usuario.set({id:2});(component as any).sincronizarUsuario(2);
+    component.content='texto nuevo';
+    resolver({usuarioId:1,texto:'texto ajeno',acciones:[{id:'ajena'}]});
+    await vi.waitFor(()=>expect(component.borradorRestaurado()).toBe(true));
+    expect(component.content).toBe('texto nuevo');expect(component.captureTurns()).toEqual([]);
+    component.revisarPropuestasPendientes();expect(component.captureTurns()).toEqual([]);
+  });
+
+  it('no sustituye datos guardados si falla la lectura inicial', async () => {
+    usuario.set({id:1});offline.leerBorrador.mockRejectedValue(new Error('almacenamiento'));
+    (component as any).sincronizarUsuario(1);
+    await vi.waitFor(()=>expect(component.errorBorrador()).toContain('No se pudo leer'));
+    await expect((component as any).guardarBorradorAhora()).rejects.toThrow('almacenamiento');
+    expect(offline.guardarBorrador).not.toHaveBeenCalled();
+  });
+
+  it('al cerrar conserva el texto y abre el chat vacío sin borrar propuestas', async () => {
+    usuario.set({id:1});(component as any).usuarioChat=1;component.borradorRestaurado.set(true);
+    const propuesta={id:'local-1',type:'CREATE_TRANSACTION',summary:'Pendiente',data:{},local:true} as any;
+    component.captureTurns.set([{id:1,user:'Prueba',answer:'Revisar',actions:[propuesta],voice:false}]);
+    component.open.set(true);component.content='texto ficticio';
+    await component.close();
+    expect(offline.guardarBorrador).toHaveBeenNthCalledWith(1,expect.objectContaining({texto:'texto ficticio'}),false);
+    expect(offline.guardarBorrador).toHaveBeenNthCalledWith(2,expect.objectContaining({texto:'',acciones:[propuesta]}),true);
+    expect(component.content).toBe('');expect(component.open()).toBe(false);
+    expect(component.captureTurns()[0].actions).toEqual([propuesta]);
+  });
+
+  it('no cierra ni pierde el texto si no pudo conservarlo', async () => {
+    usuario.set({id:1});(component as any).usuarioChat=1;component.borradorRestaurado.set(true);
+    component.open.set(true);component.content='texto ficticio';offline.guardarBorrador.mockRejectedValue(new Error('fallo'));
+    await component.close();
+    expect(component.open()).toBe(true);expect(component.content).toBe('texto ficticio');
+  });
+
+  it('una escritura tardía no cambia el chat de la cuenta siguiente', async () => {
+    conexion.set(false);usuario.set({id:1});(component as any).usuarioChat=1;component.borradorRestaurado.set(true);
+    let terminar:any;offline.guardarBorrador.mockImplementationOnce(()=>new Promise(r=>terminar=r));
+    component.content='texto de la primera cuenta';
+    const guardado=(component as any).guardarBorradorAhora();await vi.waitFor(()=>expect(terminar).toBeDefined());
+    usuario.set({id:2});(component as any).sincronizarUsuario(2);component.content='texto de la segunda cuenta';
+    terminar();await guardado;
+    expect(component.content).toBe('texto de la segunda cuenta');expect(component.captureTurns()).toEqual([]);
+  });
+
   it('guarda voz una sola vez cuando cuenta y categoria son claras', () => {
     component.categories.set([{id: 10, nombre:'Comida', tipo:'GASTO', activo:true, esPersonalizada:true}]);
     component.cuentasEdicion.set([{id: 1, nombre:'Efectivo', tipo:'EFECTIVO', moneda:'MXN', activo:true} as any]);
