@@ -1,3 +1,9 @@
+## Publicacion del chat sin borradores - 11 noviembre 2026
+
+El codigo funcional de develop 9e7a70ecc42f29c93b66f3878e9300fa031abab9 paso los seis trabajos de CI 43091982543 y fue integrado a main b91fed190dd901c87bf52efaf2db0f1bc976ed7e con arbol identico. Despliegues Vercel Production 7720518355 y Render main-kaptal-api 7720496965 success para b91fed1. La pagina publica respondio HTTP 200 en 0.350 s y health backend HTTP 200 en 0.310 s desde PC; no mide API autenticada ni determina causa de lentitud prolongada. CI Android de main 43093942714 success; CI general 43093942757 aun en curso al registrar. PR #271 obsoleto: no integrar.
+
+Al cerrar y reabrir la ventanita se conserva texto y conversacion en memoria. Al reiniciar no se restauran; la migracion borra definitivamente los borradores locales antiguos y conserva la cola de movimientos ya confirmados. Existen registros tecnicos de propuestas en el servidor, no consultados ni modificados como datos reales. Limite de seguridad de creacion 500 por 24 horas, sin invalidar otras ventanas, con casos sinteticos de 51, 500/501, idempotencia y lote parcial probados. Version de fuente Android 0.1.44 codigo 45; APK release firmada y verificacion de contenido/hash pendientes, no instalada. ADB sin dispositivo. Pendientes: medir lentitud real equivalente tras horas, validar aviso bancario normal, y tratar la carrera preexistente de logout con pruebas ficticias. No tocar MSI ni finanzas reales.
+
 ## Limite de lote comprobado - 11 noviembre 2026
 
 Prueba unitaria ficticia adicional: si el limite rechaza la segunda accion de un lote no se guarda ninguna propuesta parcial. Suite AiActionServiceTest 11/11 exitosa; integracion H2 23/23 del codigo funcional anterior. Cambio solo de prueba; sigue pendiente CI del ultimo commit y PostgreSQL.
