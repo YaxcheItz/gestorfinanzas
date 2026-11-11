@@ -201,6 +201,18 @@ public class AutomaticBankStoreTest {
         assertEquals("app_not_linked",AutomaticBankStore.describe(state,71,notice).getString("automaticStatus"));
         assertFalse(store.read().has("entries"));
     }
+    @Test public void cardlessSummaryCannotVerifyConfiguredCardAndDoesNotQueue() throws Exception {
+        String bank=BankPurchaseParser.PACKAGES.get("AMEX");
+        var rule=new JSONObject().put("id","qa-cardless").put("proveedor","AMEX")
+            .put("paquete",bank).put("terminacion","12345").put("cuentaId",11).put("listaId",21);
+        var state=store.read().put("rules",new JSONArray().put(rule));
+        var notice=new JSONObject().put("id","qa-cardless-notice").put("at",100)
+            .put("packageName",bank).put("text","COMERCIO QA\nGastaste $25.10 Gastos de hoy: $80.20");
+        var result=AutomaticBankStore.describe(state,71,notice);
+        assertEquals("card_mismatch",result.getString("automaticStatus"));
+        assertFalse(result.optBoolean("canRetry"));
+        assertFalse(state.has("entries"));
+    }
     @Test public void acceptsBothSearsCardsForSameAccountWithoutAmbiguity() throws Exception {
         var state=store.read();var rules=state.getJSONArray("rules");
         rules.put(new JSONObject(rules.getJSONObject(0).toString()).put("id","00000000-0000-4000-8000-000000000002").put("terminacion","5678"));
