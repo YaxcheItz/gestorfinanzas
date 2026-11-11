@@ -1,3 +1,11 @@
+## Gestion local de copias y correccion de CI - 11 noviembre 2026
+
+CI anterior del PR #271 fallo en recuperacion.spec.ts: esperaba ver la propuesta automaticamente tras recargar. La prueba ahora exige que no se muestre y solicita su revision antes de confirmar. Android CI anterior paso; aun no hay nuevo CI del cambio.
+
+En la rama del PR se agrega gestion voluntaria por cuenta en Configuracion: consultar copias, mostrar texto solo al abrir una copia, descargar su contenido en JSON y eliminar individualmente tras confirmacion. No restaura automaticamente ni borra propuestas. La lectura limita claves a la cuenta y descarta respuestas tardias de otra identidad; la eliminacion verifica cuenta y copia. Las copias siguen en el dispositivo hasta decision expresa del usuario; se pueden acumular si no se revisan. La descarga contiene informacion financiera y debe guardarse en lugar seguro.
+
+Build Angular correcto, suite frontend 577 pruebas correctas y prueba Chromium con IndexedDB real paso: apertura explicita, datos y propuestas ficticias, descarga, eliminacion selectiva, aislamiento de otra cuenta, desconexion y conflicto entre dos pestanas. Hubo un fallo de la prueba al desconectar antes de terminar de cargar Configuracion; se corrigio el orden y paso. La prueba E2E de recuperacion adaptada aun debe ejecutarse en CI; no se probo en telefono ni contra datos reales. Pendiente commit, CI exacto, revision y publicacion.
+
 ## Seguimiento local de chat, rendimiento y avisos ? 11 noviembre 2026 (en curso)
 
 Ramas remotas verificadas: develop e4eb3f922c7466693fa739e1d2069ac9d1c7fa01 y main a381859a8dd9481aef5f116c795b0571db323dc2. CI 42970614242 (seis trabajos) y Android 42970614211 pasaron; estado Vercel success. Health p?blico respondi? 200 en 355 ms desde PC, despu?s de la apertura, sin demostrar causa de demora. ADB sin dispositivos. El checkout principal conserva sus cambios previos. gh no tiene sesi?n, pero el conector GitHub permite leer estados.

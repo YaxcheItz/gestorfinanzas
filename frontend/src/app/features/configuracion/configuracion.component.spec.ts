@@ -10,8 +10,11 @@ import { ToastService } from '../../core/services/toast.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ConfiguracionComponent } from './configuracion.component';
+import { MovimientosOfflineService } from '../../core/services/movimientos-offline.service';
 
 describe('ConfiguracionComponent data safety', () => {
+  const usuario=signal<any>({id:7});
+  const offline={listarCopiasBorrador:vi.fn(),eliminarCopiaBorrador:vi.fn()};
   it('abre el historial de la sesión desde configuración', () => {
     const recibir = vi.fn();
     window.addEventListener('kaptal-abrir-captura-chat', recibir);
@@ -51,6 +54,7 @@ describe('ConfiguracionComponent data safety', () => {
   });
 
   beforeEach(async () => {
+    usuario.set({id:7});offline.listarCopiasBorrador.mockReset();offline.eliminarCopiaBorrador.mockReset();
     push = { isEnabled: true, subscription: of(null), requestSubscription: vi.fn() };
     finanzas = {
       getPlantillasRecurrentes: vi.fn(() => of({ success: true, message: '', data: [] })),
@@ -80,7 +84,8 @@ describe('ConfiguracionComponent data safety', () => {
         { provide: PerfilService, useValue: perfil },
         { provide: ToastService, useValue: { success: vi.fn(), error: vi.fn(), info: vi.fn() } },
         { provide: ConfirmDialogService, useValue: { confirm: vi.fn() } },
-        { provide: AuthService, useValue: { currentUser: () => ({ id: 7 }), logout: vi.fn(), actualizarUsuario: vi.fn() } },
+        { provide: AuthService, useValue: { currentUser: usuario, logout: vi.fn(), actualizarUsuario: vi.fn() } },
+        { provide: MovimientosOfflineService, useValue: offline },
         { provide: SwPush, useValue: push }
       ]
     }).compileComponents();
@@ -90,6 +95,23 @@ describe('ConfiguracionComponent data safety', () => {
 
   afterEach(() => {
     if (fixture) fixture.destroy();
+  });
+
+  it('consulta copias solo a petición y descarta una respuesta de otra cuenta',async()=>{
+    let resolver:any;offline.listarCopiasBorrador.mockReturnValue(new Promise(r=>resolver=r));
+    expect(offline.listarCopiasBorrador).not.toHaveBeenCalled();
+    const carga=fixture.componentInstance.consultarCopiasChat();usuario.set({id:8});
+    resolver([{clave:'archivo:7:qa',borrador:{usuarioId:7,texto:'ficticio'}}]);await carga;fixture.detectChanges();
+    expect(fixture.componentInstance.copiasChat()).toEqual([]);
+    expect(fixture.componentInstance.copiasChatConsultadas()).toBe(false);
+  });
+
+  it('no elimina una copia si cambia la cuenta durante la confirmación',async()=>{
+    const copia={clave:'archivo:7:qa',borrador:{usuarioId:7,texto:'ficticio',acciones:[],actualizadoEn:'2026-01-01'}};
+    offline.listarCopiasBorrador.mockResolvedValue([copia]);await fixture.componentInstance.consultarCopiasChat();
+    let resolver:any;vi.mocked(TestBed.inject(ConfirmDialogService).confirm).mockReturnValue(new Promise(r=>resolver=r));
+    const borrar=fixture.componentInstance.eliminarCopiaChat(copia);usuario.set({id:8});resolver(true);await borrar;
+    expect(offline.eliminarCopiaBorrador).not.toHaveBeenCalled();
   });
 
   it('aplica el tema al tocar, evita carreras y revierte si falla', () => {

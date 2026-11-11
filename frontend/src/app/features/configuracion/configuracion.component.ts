@@ -18,6 +18,8 @@ import { ScreenPrivacyComponent } from '../../shared/components/screen-privacy/s
 import { AppLockComponent } from '../../shared/components/app-lock/app-lock.component';
 import { ToastService } from '../../core/services/toast.service';
 import { MontoPipe } from '../../core/pipes/monto.pipe';
+import { TextoFinancieroPipe } from '../../core/pipes/texto-financiero.pipe';
+import { CopiaBorradorChat, MovimientosOfflineService } from '../../core/services/movimientos-offline.service';
 import { RestauracionRespaldoPreview } from '../../core/models/auth.models';
 import { nombreCuentaVisible } from '../../core/utils/cuenta-financiera';
 import { mensajeDeError } from '../../core/utils/mensaje-error';
@@ -29,7 +31,7 @@ import {
 @Component({
   selector: 'app-configuracion',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, MontoPipe, GoogleSignInComponent, WhatsappConnectionComponent, ScreenPrivacyComponent, AppLockComponent],
+  imports: [CommonModule, FormsModule, RouterLink, MontoPipe, TextoFinancieroPipe, GoogleSignInComponent, WhatsappConnectionComponent, ScreenPrivacyComponent, AppLockComponent],
   template: `
     <main class="finance-page settings-page mx-auto max-w-4xl space-y-5 px-3 py-5 sm:space-y-7 sm:px-6 sm:py-8">
       <header class="flex min-w-0 items-center gap-3 sm:gap-4">
@@ -147,6 +149,21 @@ import {
         <div class="settings-disclosure__content">
           <p class="text-sm text-slate-600">Consulta los mensajes disponibles en esta sesión.</p>
           <button type="button" class="mt-3 min-h-11 rounded-xl border border-slate-300 px-4 text-sm font-semibold" (click)="abrirHistorialChat()">Ver historial del chat</button>
+          <p class="mt-3 text-sm text-slate-600">Las copias de borradores permanecen en este dispositivo. Puedes consultarlas, descargarlas o eliminarlas.</p>
+          <button type="button" class="mt-2 min-h-11 rounded-xl border border-slate-300 px-4 text-sm font-semibold" (click)="consultarCopiasChat()" [disabled]="cargandoCopiasChat()">Consultar copias guardadas</button>
+          @if (copiasChatConsultadas()) {
+            @if (!copiasChat().length) {<p class="mt-2 text-sm">No hay copias guardadas para esta cuenta.</p>}
+            @for (copia of copiasChat(); track copia.clave) {
+              <div class="mt-3 rounded-xl border border-slate-200 p-3">
+                <details><summary>Copia del {{ copia.borrador.actualizadoEn | date:'short' }}</summary>
+                  <p class="mt-2 whitespace-pre-wrap text-sm">{{ (copia.borrador.texto || 'Sin texto escrito') | textoFinanciero }}</p>
+                  <p class="text-sm">La descarga incluye también el contexto, las propuestas y la edición conservados en esta copia.</p>
+                </details>
+                <button type="button" class="mr-2 min-h-11 text-sm font-semibold" (click)="descargarCopiaChat(copia)">Descargar copia</button>
+                <button type="button" class="min-h-11 text-sm font-semibold text-rose-700" (click)="eliminarCopiaChat(copia)">Eliminar esta copia</button>
+              </div>
+            }
+          }
         </div>
       </details>
       <details id="appearance" class="settings-disclosure scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6" [open]="seccionAbierta() === 'appearance'" (toggle)="alternarSeccion('appearance', $event)">
@@ -581,6 +598,11 @@ export class ConfiguracionComponent implements OnInit {
     else if (this.seccionAbierta() === id) this.seccionAbierta.set(null);
   }
   private readonly document = inject(DOCUMENT);
+  private readonly movimientosOffline = inject(MovimientosOfflineService);
+  readonly copiasChat = signal<CopiaBorradorChat[]>([]);
+  readonly copiasChatConsultadas = signal(false);
+  readonly cargandoCopiasChat = signal(false);
+  private usuarioCopiasChat:number|null=null;
   abrirHistorialChat(): void {
     this.document.defaultView?.dispatchEvent(new CustomEvent('kaptal-abrir-captura-chat', {detail:{historial:true}}));
   }
@@ -590,7 +612,32 @@ export class ConfiguracionComponent implements OnInit {
   private readonly confirmDialog = inject(ConfirmDialogService);
   readonly swPush = inject(SwPush);
 
+  async consultarCopiasChat():Promise<void> {
+    const uid=this.authService.currentUser()?.id;if(uid==null||this.cargandoCopiasChat())return;
+    this.cargandoCopiasChat.set(true);
+    try{const copias=await this.movimientosOffline.listarCopiasBorrador(uid);
+      if(this.authService.currentUser()?.id!==uid)return;
+      this.usuarioCopiasChat=uid;this.copiasChat.set(copias);this.copiasChatConsultadas.set(true);
+    }catch{if(this.authService.currentUser()?.id===uid)this.toastService.error('No se pudieron consultar las copias locales.');}
+    finally{this.cargandoCopiasChat.set(false);}
+  }
+  descargarCopiaChat(copia:CopiaBorradorChat):void {
+    if(this.authService.currentUser()?.id!==this.usuarioCopiasChat||!this.copiasChat().includes(copia))return;
+    const url=URL.createObjectURL(new Blob([JSON.stringify(copia.borrador,null,2)],{type:'application/json'}));
+    const enlace=this.document.createElement('a');enlace.href=url;enlace.download='kaptal-copia-chat.json';enlace.hidden=true;
+    this.document.body.appendChild(enlace);enlace.click();enlace.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
+  async eliminarCopiaChat(copia:CopiaBorradorChat):Promise<void> {
+    const uid=this.usuarioCopiasChat;if(uid==null||this.authService.currentUser()?.id!==uid||!this.copiasChat().includes(copia))return;
+    if(!await this.confirmDialog.confirm({title:'Eliminar copia local',message:'Se eliminará esta copia de este dispositivo. Las propuestas pendientes no se eliminan.',confirmText:'Eliminar copia',type:'danger'}))return;
+    if(this.authService.currentUser()?.id!==uid)return;
+    try{await this.movimientosOffline.eliminarCopiaBorrador(uid,copia.clave);
+      if(this.authService.currentUser()?.id===uid)this.copiasChat.update(copias=>copias.filter(c=>c.clave!==copia.clave));
+    }catch{if(this.authService.currentUser()?.id===uid)this.toastService.error('No se pudo eliminar la copia local.');}
+  }
+
   constructor() {
+    effect(()=>{const uid=this.authService.currentUser()?.id??null;if(uid!==this.usuarioCopiasChat){this.usuarioCopiasChat=null;this.copiasChat.set([]);this.copiasChatConsultadas.set(false);}});
     effect(() => {
       const perfil = this.perfilService.perfil();
       if (!perfil || this.perfilInicializado.has(perfil.id)) return;
