@@ -1,3 +1,9 @@
+## Mitigacion experimental de CI y telefono - 11 noviembre 2026
+
+ADB detecto el telefono y dumpsys package confirmo com.kaptal.app version 0.1.43 codigo 44, ultima actualizacion 07:11:50 y primera instalacion conservada. No se abrio la app ni se cambio la sesion. El segundo intento de CI 43045479543 tambien fallo antes de E2E por fallo temporal DNS de repositorios Ubuntu; Android y los otros cinco trabajos pasaron.
+
+Nueva rama correcciones/ci-e2e-runner-24 desde develop e4eb3f9: fijar solo el job E2E a ubuntu-24.04 sin quitar instalacion de dependencias ni pruebas. GitHub documenta migracion de ubuntu-latest a 26.04 y sugiere fijar 24.04 para mitigar problemas durante el cambio: https://github.com/actions/runner-images/issues/14748. Es una hipotesis verificable, no prueba que la version de Ubuntu causara el fallo DNS. Pendiente CI de la rama y, si pasa, integrarla y volver a comprobar el PR de chat. No se ha publicado ni instalado ninguna version nueva.
+
 ## Ajuste experimental del chequeo de disponibilidad - 11 noviembre 2026
 
 Ante intervalos de horas entre ejecuciones visibles del keep-warm programado cada 10 min, se preparo rama correcciones/monitoreo-arranque desde develop a274976. El cron se desplaza a los minutos 3,13,23,33,43,53 para evitar el inicio de cada hora, segun recomendaciones de GitHub sobre retrasos por carga: https://docs.github.com/en/actions/how-tos/troubleshoot-workflows. El paso registra HTTP y duracion sin credenciales. Sintaxis Bash verificada y comprobacion local HTTP 200 en 0.447 s. Es un experimento, no garantiza ejecuciones ni demuestra mejora de arranque; hay que observar frecuencia real y compararla tras publicar. No se migro alojamiento. Cambio aun sin CI, integracion ni publicacion.
