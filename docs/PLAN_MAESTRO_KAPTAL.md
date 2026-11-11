@@ -1,3 +1,7 @@
+## Cookie con ruta equivalente a Kaptal - 11 noviembre 2026
+
+El reproductor local Chromium usa ahora HttpOnly SameSite=Lax y Path=/api/auth, como la cookie de Kaptal, con valores ficticios y servidor local. Paso al comprobar borrado por respuesta atrasada y envio de cookie nueva en logout tardio. La prueba no modela HTTPS/Secure, backend real ni Android. Dos pruebas MockMvc/H2 separadas pasaron: logout emite borrado y revoca cookie recibida, incluso si corresponde a otra cuenta ficticia. Es evidencia de mecanismos, no una solucion ni demostracion de un incidente real. Ninguna modificacion de produccion o sesion del usuario.
+
 ## Prueba backend con dos cuentas ficticias - 11 noviembre 2026
 
 En correcciones/identidad-logout, SesionSeguridadIntegrationTest ejecuta logout MockMvc con cookie de una segunda cuenta creada en H2: pasa 1/1, la segunda sesion queda revocada y la primera puede renovarse. Esto demuestra el comportamiento del servidor cuando recibe esa cookie; no prueba que haya ocurrido en cuentas reales ni une aun navegador, backend y Android. El script Chromium local prueba separadamente el envio/cabecera tardia con cookies ficticias. No se modifico codigo productivo ni sesion real. Se requiere corregir coordinacion de identidad, retencion y estado nativo, y pruebas integradas antes de liberar PR #271.
