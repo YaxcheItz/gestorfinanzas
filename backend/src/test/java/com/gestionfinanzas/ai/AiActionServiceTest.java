@@ -74,6 +74,18 @@ class AiActionServiceTest {
         verify(provider, never()).generate(org.mockito.ArgumentMatchers.anyString(), anyInt());
     }
 
+    @Test void limiteDuranteLoteNoGuardaPropuestasParciales() {
+        when(provider.generate(org.mockito.ArgumentMatchers.anyString(), anyInt())).thenReturn("""
+                {"answer":"Preparado","actions":[
+                  {"type":"CREATE_TRANSACTION","summary":"Uno","data":{}},
+                  {"type":"CREATE_TRANSACTION","summary":"Dos","data":{}}]}
+                """);
+        org.mockito.Mockito.doNothing().doThrow(new com.gestionfinanzas.exception.TooManyRequestsException("Limite",60))
+                .when(limite).comprobar(eq("propuestas-chat:7"),eq(500),eq(java.time.Duration.ofDays(1)));
+        assertThrows(com.gestionfinanzas.exception.TooManyRequestsException.class,()->service.interpret(7L,"Prepara la lista"));
+        verify(propuestas,never()).save(org.mockito.ArgumentMatchers.any());
+    }
+
     @BeforeEach
     void configureContext() {
         when(usuarios.findByIdForUpdate(anyLong())).thenAnswer(inv -> java.util.Optional.of(com.gestionfinanzas.model.entity.Usuario.builder().id(inv.getArgument(0)).activo(true).build()));

@@ -1,3 +1,7 @@
+## Limite de lote comprobado - 11 noviembre 2026
+
+Prueba unitaria ficticia adicional: si el limite rechaza la segunda accion de un lote no se guarda ninguna propuesta parcial. Suite AiActionServiceTest 11/11 exitosa; integracion H2 23/23 del codigo funcional anterior. Cambio solo de prueba; sigue pendiente CI del ultimo commit y PostgreSQL.
+
 ## Limite sin conexion anidada - 11 noviembre 2026
 
 Revision: la primera version e1460f6 invocaba el limite compartido dentro de una transaccion, con posible presion del pool. No integrar ese commit solo. Se mueve el limite a las rutas de creacion individual y por lote de AiActionService, antes de entrar a la transaccion; el servicio interno ya no cuenta pendientes. Pruebas locales H2: 23 integracion y 10 unitarias, todas correctas; incluyen 51 propuestas previas, confirmacion idempotente, 500 creaciones y rechazo de la 501, aislamiento de otra cuenta. Falta CI/PostgreSQL del commit final y publicacion. No se probaron cuentas reales.
