@@ -3,7 +3,6 @@ import { extraerEtiquetasCaptura } from '../../../core/utils/etiquetas';
 import { FeatureStylesService } from '../../../core/services/feature-styles.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { PrivacidadService } from '../../../core/services/privacidad.service';
-import { PrivacyToggleComponent } from '../privacy-toggle/privacy-toggle.component';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, DestroyRef, ElementRef, HostListener, OnDestroy, ViewChild, afterNextRender, afterRenderEffect, computed, effect, inject, signal, untracked } from '@angular/core';
 import { CaptureLauncherService } from '../../../core/services/capture-launcher.service';
@@ -34,7 +33,7 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
 @Component({
   selector: 'app-quick-capture',
   standalone: true,
-  imports: [PrivacyToggleComponent, CommonModule, FormsModule, MontoPipe, TextoFinancieroPipe, CategoriaIconoComponent, MontoPrivadoDirective, DialogViewportDirective],
+  imports: [CommonModule, FormsModule, MontoPipe, TextoFinancieroPipe, CategoriaIconoComponent, MontoPrivadoDirective, DialogViewportDirective],
   template: `
     <!-- Processing Sheet: aparece al soltar el FAB de voz, muestra el progreso y permite cancelar -->
     @if (processingStep()) {
@@ -83,18 +82,13 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
     <!-- Voice Waveform: solo durante grabación activa -->
     @if (open()) {
       <div class="voice-dialog-backdrop" (click)="close()"></div>
-      <section appDialogViewport role="dialog" aria-modal="true" tabindex="-1" (keydown)="tecladoPanel($event)" id="quick-capture-panel" class="capture-panel" aria-label="Kaptal, captura y reportes">
+      <section appDialogViewport role="dialog" aria-modal="true" tabindex="-1" (keydown)="tecladoPanel($event)" id="quick-capture-panel" class="capture-panel" [class.capture-panel--compact]="!captureTurns().length && !pendingCaptureText() && !loading() && !editando()" aria-label="Kaptal, captura y reportes">
         <header class="capture-panel__head">
           <div><strong>{{ escuchando() ? 'Te escucho' : transcribiendoVoz() ? 'Transcribiendo' : loading() ? 'Organizando' : 'Añadir movimiento' }}</strong></div>
-          <button type="button" class="capture-clear" (click)="limpiarChat()" [disabled]="loading() || confirming() !== null || escuchando()" aria-label="Limpiar historial del chat" title="Limpiar chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14M10 11v6m4-6v6"/></svg></button><app-privacy-toggle/><button type="button" (click)="close()" aria-label="Cerrar">×</button>
+          <button type="button" (click)="close()" aria-label="Cerrar">×</button>
         </header>
         <div class="capture-panel__tools">
           <button type="button" class="capture-manual" (click)="abrirConTeclado()" [disabled]="loading() || confirming() !== null || escuchando()">Introducir datos manualmente</button>
-          @if (mode() === 'CAPTURE') {
-            <button type="button" class="capture-recover" (click)="recuperarPropuestas()" [disabled]="recuperando() || loading() || confirming() !== null" aria-label="Recuperar propuestas pendientes" title="Recuperar propuestas pendientes" [attr.aria-busy]="recuperando()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11a9 9 0 1 1 2.8 7M3 4v7h7M12 7v5l3 2"/></svg>
-            </button>
-          }
         </div>
 
     @if (escuchando()) {
@@ -132,9 +126,9 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
           } @else {
           <div #chatScroll id="capture-chat-thread" class="capture-chat" (scroll)="actualizarSeguimiento($event)" aria-live="polite" aria-relevant="additions text" [attr.aria-busy]="loading()">
             @if (captureTurns().length === 0 && !pendingCaptureText()) {
-              <div class="capture-chat__intro"><span class="capture-chat__avatar" aria-hidden="true">✦</span><div><strong>Escribe un movimiento o pregunta</strong><p>Cuéntame qué registraste o pide un informe. Podrás revisar antes de guardar.</p><div class="capture-chat__suggestions"><button type="button" (click)="usarEjemplo('Gasté 180 en comida')">Gasté $180 en comida</button><button type="button" (click)="usarEjemplo('Reporte de este mes')">Reporte de este mes</button></div></div></div>
+              <div class="capture-chat__intro"><div><strong>Cuéntame tu movimiento</strong><p>Escribe un gasto, ingreso o pregunta.</p></div></div>
             }
-            @for (turn of captureTurns(); track turn.id) {
+            @for (turn of turnosVisibles(); track turn.id) {
               <article class="capture-chat__user"><span>{{ turn.user | textoFinanciero }}</span></article>
               <article class="capture-chat__assistant"><span class="capture-chat__avatar" aria-hidden="true">✦</span><div class="capture-chat__reply"><p>{{ turn.answer | textoFinanciero }}</p>
                 @for (confirmacion of turn.confirmaciones ?? []; track confirmacion.id) {<p class="capture-receipt" [class.capture-receipt--local]="confirmacion.estado === 'DISPOSITIVO'">{{ confirmacion.estado === 'SERVIDOR' ? (confirmacion.accion ? '✓ Acción completada' : '✓ Movimiento confirmado en tus cuentas') : '✓ Guardado en este dispositivo. Revisa el estado de envío en pendientes.' }}</p>}
@@ -443,6 +437,12 @@ export class QuickCaptureComponent implements OnDestroy {
   readonly error = signal('');
   readonly reportError = signal('');
   readonly captureTurns = signal<CaptureTurn[]>([]);
+  readonly mostrarHistorial = signal(false);
+  readonly turnosVisibles = computed(() => {
+    const turnos = this.captureTurns();
+    if (this.mostrarHistorial()) return turnos;
+    return turnos.filter((turno, indice) => indice === turnos.length - 1 || turno.actions.length > 0);
+  });
   readonly pendingCaptureText = signal('');
   readonly categories = signal<Categoria[]>([]);
   readonly reportMessages = signal<AssistantMessage[]>([]);
@@ -930,7 +930,8 @@ export class QuickCaptureComponent implements OnDestroy {
       next:r=>{if(generacion===this.chatGeneration)this.etiquetasPersonales.set(r.data??[]);},
       error:()=>{if(generacion===this.chatGeneration)this.etiquetasPersonales.set([]);}
     }));
-    const detail = (event as CustomEvent<{ tipo?: string; content?: string; voz?: boolean }>).detail;
+    const detail = (event as CustomEvent<{ tipo?: string; content?: string; voz?: boolean; historial?: boolean }>).detail;
+    this.mostrarHistorial.set(detail?.historial === true);
     if (detail?.voz === true) { this.transcripcionLista.set(false); this.transcripcionParcial.set(''); this.guardadoVozCompletado.set(false); this.voiceMessage.set(''); }
     this.pantallaVoz.set(detail?.voz === true);
     this.open.set(detail?.voz !== true);

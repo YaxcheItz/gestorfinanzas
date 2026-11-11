@@ -60,6 +60,17 @@ final class NotificationNoticeStore {
         save(state);
     }
 
+    /** Preserve independently selected apps when automatic associations are changed. */
+    Set<String> withAdditionalPackages(long user, Set<String> added, long now) throws JSONException {
+        if (user <= 0) throw new IllegalArgumentException("Sesión requerida.");
+        JSONObject state=load(now);
+        Set<String> combined=new HashSet<>(added);
+        if (state.optLong("user")==user && state.optBoolean("enabled")) combined.addAll(packages(state));
+        if (combined.isEmpty() || combined.size()>10)
+            throw new IllegalArgumentException("Elige entre una y diez aplicaciones.");
+        return combined;
+    }
+
     boolean accepts(long user, String packageName, long now) throws JSONException {
         JSONObject state = load(now);
         return user > 0 && state.optLong("user") == user && state.optBoolean("enabled")

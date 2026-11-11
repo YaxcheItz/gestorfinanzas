@@ -22,7 +22,7 @@ name: Keep warm
 
 on:
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "3,13,23,33,43,53 * * * *"
   workflow_dispatch:
 
 permissions:
@@ -42,7 +42,12 @@ jobs:
         env:
           API_URL: https://kaptal-api-0xbn.onrender.com/api/health
         run: |
-          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 90 "$API_URL")
+          result=$(curl -sS -o /dev/null -w '%{http_code} %{time_total}' --max-time 90 "$API_URL") || {
+            echo "::error::No se pudo comprobar la API."
+            exit 1
+          }
+          read -r code seconds <<< "$result"
+          echo "Comprobación: HTTP $code, duración $seconds segundos."
           if [ "$code" != "200" ]; then
             echo "::error::La API respondio $code. Puede ser un arranque en frio o una caida real."
             exit 1

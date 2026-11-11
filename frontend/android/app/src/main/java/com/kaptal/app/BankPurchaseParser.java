@@ -81,7 +81,8 @@ final class BankPurchaseParser {
         if("AMEX".equals(provider)) {
             var amex=AMEX_MXN.matcher(normalized);
             if(amex.matches()) {
-                if(suffix!=null&&!suffix.isEmpty()&&!suffix.equals(amex.group(3)))return null;
+                if(suffix!=null&&!suffix.isEmpty()&&!suffix.equals(amex.group(3))
+                    && !(suffix.matches("[0-9]{4}")&&amex.group(3).endsWith(suffix)))return null;
                 return purchase(new BigDecimal(amex.group(1).replace(",","")+"."+amex.group(2)),date,
                     amex.group(4).trim(),provider+"|"+key);
             }

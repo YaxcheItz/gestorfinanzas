@@ -12,6 +12,17 @@ import { AuthService } from '../../core/services/auth.service';
 import { ConfiguracionComponent } from './configuracion.component';
 
 describe('ConfiguracionComponent data safety', () => {
+  it('abre el historial de la sesión desde configuración', () => {
+    const recibir = vi.fn();
+    window.addEventListener('kaptal-abrir-captura-chat', recibir);
+    try {
+      fixture.componentInstance.abrirHistorialChat();
+      expect(recibir).toHaveBeenCalledOnce();
+      expect((recibir.mock.calls[0][0] as CustomEvent).detail).toEqual({historial:true});
+    } finally {
+      window.removeEventListener('kaptal-abrir-captura-chat', recibir);
+    }
+  });
   let fixture!: ReturnType<typeof TestBed.createComponent<ConfiguracionComponent>>;
   let push: { isEnabled: boolean; subscription: Observable<PushSubscription | null>; requestSubscription: ReturnType<typeof vi.fn> };
   let finanzas: {

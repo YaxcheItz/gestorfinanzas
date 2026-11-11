@@ -18,6 +18,7 @@ import { BankNotificationsComponent } from './bank-notifications';
 
 @Component({selector:'app-avisos',imports:[BankNotificationsComponent,FormsModule,RouterLink,MontoPipe,TextoFinancieroPipe,FocusTrapDirective],templateUrl:'./avisos.component.html',styleUrl:'./avisos.component.css'})
 export class AvisosComponent {
+  readonly seccion=signal<'avisos' | 'conexiones'>('avisos');
   readonly shared=inject(SharedNoticeService);
   readonly bank=inject(BankNotificationsService);
   readonly notificacion=signal<BankNotice|null>(null);

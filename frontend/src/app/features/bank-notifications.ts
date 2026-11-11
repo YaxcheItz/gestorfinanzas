@@ -1,4 +1,4 @@
-import { Component, computed, inject, output, signal } from '@angular/core';
+import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { BankNotice, BankNotificationsService, NoticeApp } from '../core/services/bank-notifications';
 import { AutomaticBankComponent } from './automatic-bank';
 import { RouterLink } from '@angular/router';
@@ -10,6 +10,7 @@ import { RouterLink } from '@angular/router';
   styleUrls: ['./bank-notice-controls.css', './bank-notifications.css'],
 })
 export class BankNotificationsComponent {
+  readonly section = input<'avisos' | 'conexiones'>('avisos');
   readonly bank = inject(BankNotificationsService);
   readonly review = output<BankNotice>();
   readonly changed = output<void>();
@@ -43,7 +44,7 @@ export class BankNotificationsComponent {
       app_not_linked: 'La aplicación que envió este aviso no está asociada al registro automático.',
       sender_mismatch: 'El remitente del aviso no coincide con el configurado para Sears.',
       format_or_card: 'El formato, la tarjeta, la moneda o la fecha no coinciden con una compra reconocida.',
-      card_mismatch: 'La terminación del aviso no coincide con la tarjeta configurada. Revisa la cuenta y su terminación.',
+      card_mismatch: 'No se pudo comprobar la tarjeta: la terminación puede ser distinta o no aparecer en el aviso. Revisa la cuenta y su terminación.',
       unsupported_format: 'El formato, importe, moneda o fecha del aviso necesita revisión.',
       ambiguous: 'Más de una cuenta coincide; revisa la cuenta antes de registrar.',
       queued: 'Esta compra ya está en la cola automática. No la guardes de nuevo.',

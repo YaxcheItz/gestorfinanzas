@@ -30,12 +30,30 @@ test('captura clasificada confirma una sola vez con respuestas ficticias',async(
   await page.locator('.dashboard-screen__inline-empty').getByRole('button',{name:'Añadir movimiento',exact:true}).click();
   await page.getByRole('dialog',{name:'Añadir movimiento'}).getByRole('button',{name:'Escribir o dictar'}).click();
   const panel=page.locator('#quick-capture-panel');
+  await expect(panel.getByRole('button',{name:'Cerrar',exact:true})).toBeVisible();
+  await expect(panel.getByRole('button',{name:'Limpiar historial del chat'})).toHaveCount(0);
+  await expect(panel.getByRole('button',{name:'Recuperar propuestas pendientes'})).toHaveCount(0);
+  expect(await panel.evaluate(el=>el.getBoundingClientRect().height)).toBeLessThan(600);
+  for (const viewport of [{width:320,height:568},{width:568,height:320}]) {
+    await page.setViewportSize(viewport);
+    await expect.poll(()=>panel.evaluate(el=>{
+      const r=el.getBoundingClientRect();
+      return r.top>=0 && r.bottom<=innerHeight && r.left>=0 && r.right<=innerWidth;
+    })).toBe(true);
+    await expect(panel.locator('#quick-capture-text')).toBeInViewport();
+  }
+  await page.setViewportSize({width:390,height:844});
   await page.locator('#quick-capture-text').fill('Gasté 25 en empanadas desde Banco QA');
   await panel.getByRole('button',{name:'Enviar movimiento'}).click();
   await expect(panel.getByText('Movimiento confirmado en tus cuentas',{exact:false})).toBeVisible();
   expect(confirmaciones).toBe(1);
   const movimientos=await page.request.get('/api/transacciones?size=100',{headers});
   expect((await movimientos.json()).data.content).toHaveLength(0);
+  await panel.getByRole('button',{name:'Cerrar',exact:true}).click();
+  await page.getByRole('link',{name:'Configuración',exact:true}).click();
+  await page.getByText('Conversación de esta sesión',{exact:true}).click();
+  await page.getByRole('button',{name:'Ver historial del chat'}).click();
+  await expect(panel.getByText('Gasté 25 en empanadas desde Banco QA')).toBeVisible();
 });
 
 test('una categoria escrita completa la propuesta y solo guardar crea el movimiento',async({page})=>{
@@ -80,26 +98,26 @@ test('chat mantiene escritura visible y guarda categoría offline sin duplicados
   await page.keyboard.press('Shift+Tab');
   await expect(opcionesIa).toBeFocused();
   await page.keyboard.press('Tab');
-  await expect(panel.getByRole('button',{name:'Limpiar historial del chat'})).toBeFocused();
+  await expect(panel.getByRole('button',{name:'Cerrar',exact:true})).toBeFocused();
   await opcionesIa.click();
   await expect(panel.getByRole('checkbox')).toBeVisible();
-  await panel.getByRole('button',{name:'Limpiar historial del chat'}).focus();
+  await panel.getByRole('button',{name:'Cerrar',exact:true}).focus();
   await page.keyboard.press('Shift+Tab');
   await expect(panel.getByRole('checkbox')).toBeFocused();
   await page.keyboard.press('Tab');
-  await expect(panel.getByRole('button',{name:'Limpiar historial del chat'})).toBeFocused();
+  await expect(panel.getByRole('button',{name:'Cerrar',exact:true})).toBeFocused();
   await opcionesIa.click();
   await expect(panel.getByRole('checkbox')).not.toBeVisible();
   await expect(panel.getByRole('button',{name:'Introducir datos manualmente',exact:true})).toBeVisible();
   await expect(panel.getByRole('button',{name:'Dictar movimiento'})).toBeVisible();
-  expect(await panel.locator('.capture-chat').evaluate(e=>e.clientHeight)).toBeGreaterThan(250);
+  expect(await panel.locator('.capture-chat').evaluate(e=>e.clientHeight)).toBeGreaterThan(80);
   await text.fill('Quiero revisar estos movimientos antes de guardarlos. '.repeat(15));
   for(const viewport of [{width:320,height:568},{width:568,height:320}]) {
     await page.setViewportSize(viewport);
     await expect.poll(()=>panel.evaluate(e=>{
       const r=e.getBoundingClientRect();return r.top>=0 && r.bottom<=innerHeight && r.left>=0 && r.right<=innerWidth;
     })).toBe(true);
-    await expect(panel.getByRole('button',{name:'Recuperar propuestas pendientes'})).toBeInViewport();
+    await expect(panel.getByRole('button',{name:'Cerrar',exact:true})).toBeInViewport();
     await expect(panel.getByRole('button',{name:'Enviar movimiento'})).toBeInViewport();
     await expect.poll(()=>text.evaluate(e=>e.scrollTop+e.clientHeight>=e.scrollHeight-2)).toBe(true);
   }
@@ -112,7 +130,7 @@ test('chat mantiene escritura visible y guarda categoría offline sin duplicados
   await page.setViewportSize({width:390,height:360});await text.focus();
   await expect.poll(()=>panel.getAttribute('data-compact-viewport')).toBe('');
   await expect(text).toBeInViewport();await expect(page.getByRole('button',{name:'Enviar movimiento'})).toBeInViewport();
-  await expect(panel.getByRole('button',{name:'Recuperar propuestas pendientes'})).toBeInViewport();
+  await expect(panel.getByRole('button',{name:'Cerrar',exact:true})).toBeInViewport();
   for(const selector of ['.capture-panel__head','.capture-chat__composer','.capture-options > summary']){
     await expect(panel.locator(selector)).toBeVisible();
     await expect.poll(()=>panel.locator(selector).evaluate(element=>{
