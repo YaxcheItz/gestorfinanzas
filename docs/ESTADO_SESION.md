@@ -1,3 +1,7 @@
+## Suite de seguridad de sesion - 11 noviembre 2026
+
+SesionSeguridadIntegrationTest completo en perfil test/H2: 10 pruebas, 0 fallos, incluidas las dos pruebas observacionales nuevas y las de rotacion/reutilizacion. El script Chromium aislado con Path=/api/auth tambien paso y el commit de evidencia 7dfb172 se subio a correcciones/identidad-logout. Son pruebas del comportamiento actual, no una correccion ni validacion de cookies Android. PR #271 sigue borrador pese a CI/Android exitosos: pendiente correccion integral de identidad, limpieza de copias y verificacion Android; no se publico ni instalo cambio.
+
 ## Cookie con ruta equivalente a Kaptal - 11 noviembre 2026
 
 El reproductor local Chromium usa ahora HttpOnly SameSite=Lax y Path=/api/auth, como la cookie de Kaptal, con valores ficticios y servidor local. Paso al comprobar borrado por respuesta atrasada y envio de cookie nueva en logout tardio. La prueba no modela HTTPS/Secure, backend real ni Android. Dos pruebas MockMvc/H2 separadas pasaron: logout emite borrado y revoca cookie recibida, incluso si corresponde a otra cuenta ficticia. Es evidencia de mecanismos, no una solucion ni demostracion de un incidente real. Ninguna modificacion de produccion o sesion del usuario.
