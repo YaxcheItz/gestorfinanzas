@@ -1,3 +1,7 @@
+## Diagnostico de identidad, sin cambio productivo - 11 noviembre 2026
+
+Rama correcciones/identidad-logout desde develop e4eb3f9. Revision de cierre, login, refresh, cookie y puente Android confirma que una guarda JavaScript aislada no protege Set-Cookie tardio, revocacion de otra sesion o limpieza nativa de avisos. Eliminar la cookie de borrado sin revisar el reuso de refresh tambien puede invalidar otras sesiones. No se modifica produccion: el diagnostico y pruebas necesarias estan en docs/DIAGNOSTICO_CARRERA_LOGOUT.md; la reproduccion roja A-B y A-B-A permanece en pruebas/carrera-logout ab2b8fc. Pendientes contrato backend, compatibilidad con clientes anteriores, CAS nativo y pruebas de cookies reales. No se accedio a credenciales, telefono ni datos financieros.
+
 ## Ajuste experimental del chequeo de disponibilidad - 11 noviembre 2026
 
 Ante intervalos de horas entre ejecuciones visibles del keep-warm programado cada 10 min, se preparo rama correcciones/monitoreo-arranque desde develop a274976. El cron se desplaza a los minutos 3,13,23,33,43,53 para evitar el inicio de cada hora, segun recomendaciones de GitHub sobre retrasos por carga: https://docs.github.com/en/actions/how-tos/troubleshoot-workflows. El paso registra HTTP y duracion sin credenciales. Sintaxis Bash verificada y comprobacion local HTTP 200 en 0.447 s. Es un experimento, no garantiza ejecuciones ni demuestra mejora de arranque; hay que observar frecuencia real y compararla tras publicar. No se migro alojamiento. Cambio aun sin CI, integracion ni publicacion.
