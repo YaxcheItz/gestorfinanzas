@@ -44,7 +44,7 @@ export class BankNotificationsComponent {
       app_not_linked: 'La aplicación que envió este aviso no está asociada al registro automático.',
       sender_mismatch: 'El remitente del aviso no coincide con el configurado para Sears.',
       format_or_card: 'El formato, la tarjeta, la moneda o la fecha no coinciden con una compra reconocida.',
-      card_mismatch: 'La terminación del aviso no coincide con la tarjeta configurada. Revisa la cuenta y su terminación.',
+      card_mismatch: 'No se pudo comprobar la tarjeta: la terminación puede ser distinta o no aparecer en el aviso. Revisa la cuenta y su terminación.',
       unsupported_format: 'El formato, importe, moneda o fecha del aviso necesita revisión.',
       ambiguous: 'Más de una cuenta coincide; revisa la cuenta antes de registrar.',
       queued: 'Esta compra ya está en la cola automática. No la guardes de nuevo.',
