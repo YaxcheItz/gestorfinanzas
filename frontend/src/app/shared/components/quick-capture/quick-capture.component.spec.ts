@@ -22,8 +22,8 @@ describe('QuickCaptureComponent processing and gestures', () => {
     component.mostrarHistorial.set(true);
     expect(component.turnosVisibles().map(t=>t.id)).toEqual([1,2,3]);
   });
-  it('abre el historial con los filtros de evidencia calculados por el servidor', () => {
-    component.verEvidencia({label:'Gastos actual',desde:'2026-10-01',hasta:'2026-10-20',moneda:'MXN',tipo:'GASTO',operaciones:2,total:40.25});
+  it('abre el historial con los filtros de evidencia calculados por el servidor', async () => {
+    await component.verEvidencia({label:'Gastos actual',desde:'2026-10-01',hasta:'2026-10-20',moneda:'MXN',tipo:'GASTO',operaciones:2,total:40.25});
     expect(navigate).toHaveBeenCalledWith(['/transacciones'],{queryParams:{alcance:'propio',fechaInicio:'2026-10-01',fechaFin:'2026-10-20',moneda:'MXN',tipo:'GASTO'}});
   });
   let component: QuickCaptureComponent;
@@ -128,6 +128,41 @@ describe('QuickCaptureComponent processing and gestures', () => {
     component.open.set(true);component.content='texto ficticio';offline.guardarBorrador.mockRejectedValue(new Error('fallo'));
     await component.close();
     expect(component.open()).toBe(true);expect(component.content).toBe('texto ficticio');
+  });
+
+  it('mantiene la transcripcion accesible y muestra el error si falla el cierre de voz',async()=>{
+    usuario.set({id:1});(component as any).usuarioChat=1;component.borradorRestaurado.set(true);
+    component.pantallaVoz.set(true);component.transcripcionLista.set(true);component.content='voz ficticia';
+    offline.guardarBorrador.mockRejectedValue(new Error('No se pudo guardar'));
+    await component.cerrarPantallaVoz();fixture.detectChanges();
+    expect(component.pantallaVoz()).toBe(true);expect(component.transcripcionLista()).toBe(true);
+    expect(fixture.nativeElement.querySelector('#voice-transcript').value).toBe('voz ficticia');
+    expect(fixture.nativeElement.textContent).toContain('No se pudo guardar');
+  });
+
+  it('no abre registro manual ni navega si no se pudo conservar el texto',async()=>{
+    usuario.set({id:1});(component as any).usuarioChat=1;component.borradorRestaurado.set(true);
+    component.open.set(true);component.content='texto ficticio';offline.guardarBorrador.mockRejectedValue(new Error('fallo'));
+    const abierto=vi.fn();window.addEventListener('kaptal-abrir-registro-rapido',abierto);
+    try{await component.abrirConTeclado();await component.verEvidencia({label:'Ficticio',desde:'2026-01-01',hasta:'2026-01-02',moneda:'MXN',tipo:'GASTO',operaciones:1,total:1});
+      expect(abierto).not.toHaveBeenCalled();expect(navigate).not.toHaveBeenCalled();expect(component.content).toBe('texto ficticio');
+    }finally{window.removeEventListener('kaptal-abrir-registro-rapido',abierto);}
+  });
+  it('no cierra una nueva apertura mientras termina el guardado anterior',async()=>{
+    usuario.set({id:1});(component as any).usuarioChat=1;component.borradorRestaurado.set(true);
+    component.open.set(true);component.content='texto ficticio';let terminar:any;
+    offline.guardarBorrador.mockImplementationOnce(()=>new Promise(r=>terminar=r));
+    const cierre=component.close();await vi.waitFor(()=>expect(terminar).toBeDefined());
+    component.abrirCapturaDesdeAcceso(new CustomEvent('kaptal-abrir-captura-chat',{detail:{voz:true}}));
+    terminar();expect(await cierre).toBe(false);
+    expect(component.pantallaVoz()).toBe(true);expect(component.content).toBe('texto ficticio');
+  });
+  it('no abre otro formulario si se abre voz justo despues del cierre',async()=>{
+    component.open.set(true);const abierto=vi.fn();window.addEventListener('kaptal-abrir-registro-rapido',abierto);
+    try{const transicion=component.abrirConTeclado();
+      component.abrirCapturaDesdeAcceso(new CustomEvent('kaptal-abrir-captura-chat',{detail:{voz:true}}));
+      await transicion;expect(abierto).not.toHaveBeenCalled();expect(component.pantallaVoz()).toBe(true);
+    }finally{window.removeEventListener('kaptal-abrir-registro-rapido',abierto);}
   });
 
   it('una escritura tardía no cambia el chat de la cuenta siguiente', async () => {
@@ -618,7 +653,7 @@ describe('QuickCaptureComponent processing and gestures', () => {
     }
   });
 
-  it('muestra una transcripcion provisional sin solapar solicitudes ni aceptar respuestas tras cancelar', () => {
+  it('muestra una transcripcion provisional sin solapar solicitudes ni aceptar respuestas tras cancelar', async () => {
     const respuesta = new Subject<any>();
     const transcribir = vi.spyOn(TestBed.inject(FinanzasService), 'transcribirAudio').mockReturnValue(respuesta);
     component.pantallaVoz.set(true); component.listening.set(true);
@@ -629,7 +664,7 @@ describe('QuickCaptureComponent processing and gestures', () => {
     expect(transcribir).toHaveBeenCalledOnce();
     respuesta.next({success:true,data:'Texto provisional'});
     expect(component.transcripcionParcial()).toBe('Texto provisional');
-    component.cerrarPantallaVoz();
+    await component.cerrarPantallaVoz();
     respuesta.next({success:true,data:'Respuesta tardía'});
     expect(component.transcripcionParcial()).toBe('');
     expect(TestBed.inject(FinanzasService).confirmAiAction).not.toHaveBeenCalled();
@@ -687,6 +722,21 @@ describe('QuickCaptureComponent processing and gestures', () => {
     expect(component.captureTurns()).toHaveLength(1);
     expect(component.captureTurns()[0].actions).toEqual([propuesta]);
     expect(TestBed.inject(FinanzasService).confirmAiAction).not.toHaveBeenCalled();
+  });
+  it('ignora una lista atrasada despues de descartar una propuesta',()=>{
+    const consulta=new Subject<any>();vi.spyOn(TestBed.inject(FinanzasService),'getPropuestasAi').mockReturnValue(consulta);
+    component.captureTurns.set([{id:1,user:'Ficticio',answer:'Revisa',actions:[propuesta],voice:false}]);
+    component.recuperarPropuestas();component.dismiss(propuesta.id);
+    expect(component.captureTurns()[0].actions).toEqual([]);
+    consulta.next({success:true,data:[propuesta]});
+    expect(component.captureTurns().flatMap(t=>t.actions)).toEqual([]);expect(component.recuperando()).toBe(false);
+  });
+  it('una lista atrasada no oculta una propuesta creada durante la consulta',()=>{
+    const consulta=new Subject<any>();vi.spyOn(TestBed.inject(FinanzasService),'getPropuestasAi').mockReturnValue(consulta);
+    component.recuperarPropuestas();
+    component.captureTurns.set([{id:1,user:'Ficticio',answer:'Revisa',actions:[propuesta],voice:false}]);
+    consulta.next({success:true,data:[]});
+    expect(component.captureTurns()[0].actions).toEqual([propuesta]);expect(component.recuperando()).toBe(false);
   });
   it('descartar solo retira la propuesta cuando el servidor confirma',()=>{
     const respuesta=new Subject<any>();

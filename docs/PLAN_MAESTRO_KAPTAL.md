@@ -1,3 +1,17 @@
+## Cierres y propuestas concurrentes; privacidad aun bloqueada - 11 noviembre 2026
+
+En PR #271 se prepararon correcciones para impedir que al fallar IndexedDB se oculten transcripciones o se abra otro formulario/navegue; se muestra el error en voz. El cierre espera guardado y detecta reaperturas y cambio de identidad. Una respuesta tardia de propuestas se descarta si cambiaron las acciones o hay una operacion de confirmacion, edicion o captura en curso. Build Angular, 83 pruebas focales y E2E Chromium aislado de copias, desconexion y dos cuentas pasaron; suite completa 582 paso antes de la ultima prueba focal adicional. No se tocaron datos reales. Pendiente CI del commit final y validacion de descarga en WebView Android.
+
+PR #271 NO listo para integrar: archivos de copias pueden persistir despues de eliminar cuenta. Revision de identidad detecto que logout asincrono puede alcanzar una nueva identidad: NativeSessionPlugin.update(closed=true) limpia configuracion/avisos y /auth/logout puede borrar cookie. Un simple chequeo de identidad tras await no basta. Disenar limpieza y coordinacion segura login/logout/refresh; no borrar cuenta real ni alterar sesion para pruebas. Alternativa CI con imagen Playwright preconfigurada no se probo: Docker Engine local no disponible y registro MCR no respondio; no usar digest no verificado ni relajar los controles. #272 fallo DNS igual en Ubuntu 24 y no debe integrarse por ahora. ADB detecto APK 0.1.43 codigo44 con hash coincidente; no se instalo nada nuevo.
+
+## Revision adicional del chat y bloqueo de privacidad - 11 noviembre 2026
+
+CI #272 Ubuntu 24 fallo antes de E2E con el mismo problema DNS de repositorios; cinco trabajos pasaron. No integrar #272. Alternativa oficial con imagen Playwright preconfigurada sigue sin verificar: Docker Engine local no disponible y registro MCR no respondio; no se han debilitado las pruebas.
+
+Revision independiente detecto cierres asincronos de voz, formulario manual y navegacion que podian perder acceso a un texto si fallaba el guardado; tambien respuestas tardias de propuestas y reapertura simultanea. En rama del chat se preparan correcciones con pruebas ficticias; no publicadas ni instaladas. Build y primeras pruebas focales pasaron antes del ultimo ajuste; repetir verificaciones sobre el commit final.
+
+Bloqueo adicional para integrar: al borrar una cuenta en servidor, las nuevas copias IndexedDB podrian permanecer sin gestion desde esa cuenta. La limpieza debe coordinarse con el cierre asincrono y cambios de identidad para no afectar otra sesion ni borrar datos de otra persona; no se ha borrado ninguna cuenta real. La descarga se probo en Chromium de escritorio, no en WebView Android. No integrar ni publicar hasta resolver y probar las carreras y la retencion, y completar CI.
+
 ## Gestion local de copias y correccion de CI - 11 noviembre 2026
 
 CI anterior del PR #271 fallo en recuperacion.spec.ts: esperaba ver la propuesta automaticamente tras recargar. La prueba ahora exige que no se muestre y solicita su revision antes de confirmar. Android CI anterior paso; aun no hay nuevo CI del cambio.
