@@ -213,6 +213,18 @@ public class AutomaticBankStoreTest {
         assertFalse(result.optBoolean("canRetry"));
         assertFalse(state.has("entries"));
     }
+    @Test public void amexNoticeUsesConfiguredFourDigitsWithoutQueueing() throws Exception {
+        String bank=BankPurchaseParser.PACKAGES.get("AMEX");
+        var rule=new JSONObject().put("id","qa-amex").put("proveedor","AMEX")
+            .put("paquete",bank).put("terminacion","7890").put("cuentaId",11).put("listaId",21);
+        var state=store.read().put("rules",new JSONArray().put(rule));
+        var notice=new JSONObject().put("id","qa-amex-notice").put("at",100).put("packageName",bank)
+            .put("text","AMEX QA\nGastaste MX$41.27 en tu Tarjeta American Express terminación 67890 en PAPELERIA QA");
+        assertEquals("ready",AutomaticBankStore.describe(state,71,notice).getString("automaticStatus"));
+        rule.put("terminacion","7891");
+        assertEquals("card_mismatch",AutomaticBankStore.describe(state,71,notice).getString("automaticStatus"));
+        assertFalse(state.has("entries"));
+    }
     @Test public void acceptsBothSearsCardsForSameAccountWithoutAmbiguity() throws Exception {
         var state=store.read();var rules=state.getJSONArray("rules");
         rules.put(new JSONObject(rules.getJSONObject(0).toString()).put("id","00000000-0000-4000-8000-000000000002").put("terminacion","5678"));

@@ -26,7 +26,7 @@ test('accesos separan voz y escritura y llevan herramientas a ajustes', async ({
   await voice.getByRole('button', { name: 'Cerrar voz' }).click();
   await pencil.click();
   await expect(page.locator('#quick-capture-panel')).toBeVisible();
-  await expect(page.getByText('Escribe un movimiento o pregunta')).toBeVisible();
+  await expect(page.getByText('Cuéntame tu movimiento')).toBeVisible();
   await page.locator('#quick-capture-panel').getByRole('button', { name: 'Cerrar', exact: true }).click();
   await page.getByRole('button', { name: 'Cambiar lista' }).click();
   await expect(page.getByRole('button', { name: /^Herramientas/ })).toHaveCount(0);
