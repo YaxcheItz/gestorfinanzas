@@ -1,3 +1,11 @@
+## Pruebas sinteticas de logout tardio - 11 noviembre 2026
+
+Rama pruebas/carrera-logout desde origin/develop e4eb3f922c7466693fa739e1d2069ac9d1c7fa01. Solo se anadieron pruebas a frontend/src/app/core/services/auth.service.spec.ts; no se modifico codigo de produccion ni datos o sesion reales. npm test -- --watch=false --include=src/app/core/services/auth.service.spec.ts ejecuto 24 pruebas: 22 correctas y dos fallidas intencionalmente como regresiones pendientes.
+
+En A a B, la respuesta del logout de A llega despues de un login sintetico exitoso de B: currentUser().id pasa a undefined en vez de 2. En A a B a A, el logout de la primera sesion A deja currentUser().id undefined en vez de 1 de la nueva sesion A. La falla evidencia que el estado de AuthService y localStorage del entorno de prueba puede perder la sesion nueva por una respuesta vieja.
+
+HttpTestingController no aplica Set-Cookie ni usa cookies HttpOnly reales; estas pruebas no demuestran la carrera de cookie en navegador ni el comportamiento nativo de Android. Pendiente diseno y pruebas independientes de cookie, plugin nativo, concurrencia entre pestanas y cleanup de datos locales; no integrar esta rama con pruebas rojas ni alterar coordinacion de refresh o sesion sin verificar.
+
 ## Ajuste experimental del chequeo de disponibilidad - 11 noviembre 2026
 
 Ante intervalos de horas entre ejecuciones visibles del keep-warm programado cada 10 min, se preparo rama correcciones/monitoreo-arranque desde develop a274976. El cron se desplaza a los minutos 3,13,23,33,43,53 para evitar el inicio de cada hora, segun recomendaciones de GitHub sobre retrasos por carga: https://docs.github.com/en/actions/how-tos/troubleshoot-workflows. El paso registra HTTP y duracion sin credenciales. Sintaxis Bash verificada y comprobacion local HTTP 200 en 0.447 s. Es un experimento, no garantiza ejecuciones ni demuestra mejora de arranque; hay que observar frecuencia real y compararla tras publicar. No se migro alojamiento. Cambio aun sin CI, integracion ni publicacion.

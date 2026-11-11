@@ -129,6 +129,35 @@ describe('sesiones con los interceptores de la aplicación', () => {
     backend.expectNone('/api/auth/logout');expect(auth.isAuthenticated()).toBe(true);
   });
 
+  it('un logout anterior no cierra la nueva sesion al cambiar de A a B', async () => {
+    vi.spyOn(Capacitor,'getPlatform').mockReturnValue('web');
+    auth.logout();
+    const salidaAnterior=backend.expectOne('/api/auth/logout');
+    const entrada=firstValueFrom(auth.login({email:'b@example.test',password:'password-sintetico'}));
+    backend.expectOne('/api/auth/login').flush({success:true,message:'ok',data:{id:2,nombre:'B ficticia',email:'b@example.test',token:'token-b-ficticio',tokenType:'Bearer'}});
+    await entrada;expect(auth.currentUser()?.id).toBe(2);
+    salidaAnterior.flush({success:true});
+    expect(auth.currentUser()?.id).toBe(2);
+    expect(auth.isAuthenticated()).toBe(true);
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('un logout anterior no cierra una nueva sesion al cambiar de A a B y volver a A', async () => {
+    vi.spyOn(Capacitor,'getPlatform').mockReturnValue('web');
+    auth.logout();
+    const salidaAnterior=backend.expectOne('/api/auth/logout');
+    for(const id of [2,1]){
+      const entrada=firstValueFrom(auth.login({email:`usuario${id}@example.test`,password:'password-sintetico'}));
+      backend.expectOne('/api/auth/login').flush({success:true,message:'ok',data:{id,nombre:`Usuario ${id} ficticio`,email:`usuario${id}@example.test`,token:`token-${id}-ficticio`,tokenType:'Bearer'}});
+      await entrada;
+    }
+    expect(auth.currentUser()?.id).toBe(1);
+    salidaAnterior.flush({success:true});
+    expect(auth.currentUser()?.id).toBe(1);
+    expect(auth.isAuthenticated()).toBe(true);
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
   it('conserva la identidad mientras renueva y no navega al login por el primer 401', () => {
     http.get('/api/cuentas').subscribe();
     backend.expectOne('/api/cuentas').flush({}, { status: 401, statusText: 'Unauthorized' });
