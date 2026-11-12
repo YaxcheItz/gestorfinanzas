@@ -2455,3 +2455,6 @@ Rama mejoras/avisos-compartidos-visual desde develop74a85bb con dependencia fdcb
 
 
 Verificación remota: mejoras/avisos-compartidos-visual fb07f9efd29853c148c6f050d0b621b990ba7760 coincide con ls-remote. Código y documentación subidos; CI remota/integración/despliegue no comprobados.
+
+## Revisión acumulada y listas - 12 noviembre 2026 UTC
+Rama mejoras/revision-integral-listas desde develop74a85bb con dependencia fb07f9e. Revisados diffs y seis ramas remotas/worktrees limpios. Build y569 pruebas frontend aprobados;7 E2E acumulados y7 de Avisos aprobados. Listas: participante deja de fragmentarse letra a letra a320/200%, fuentes relativas, permisos con explicación fuera del selector y foco explícito. Invitación/error/lector/Escape comprobados con API ficticia; último cambio solo build/E2E listas repetidos. Ver docs/REVISION_ACUMULADA_LISTAS_2026-11-12.md. Sin datos reales, instalación/integración/despliegue ni CI remota comprobada. Siguiente: dock flotante de Inicio/Movimientos; después contraste/foco y Android aislado. Preservar calendario, historial aplazado, no borradores ni PR271.
