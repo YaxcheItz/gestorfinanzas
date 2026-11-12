@@ -8,6 +8,10 @@ html .monai-theme :is(input:not([type="checkbox"]):not([type="radio"]),select,te
 html .monai-theme :is(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),select,textarea):not(:disabled){border-color:var(--kaptal-control-border) !important}
 html .monai-theme :is(.settings-theme-choices button,.ledger-filter-sheet .ledger-chip)[aria-pressed="true"]{border:2px solid var(--kaptal-brand) !important;background:var(--kaptal-surface-subtle) !important;color:var(--kaptal-content) !important;box-shadow:none}
 html .monai-theme :is(button,[role="button"],summary){touch-action:manipulation}
+.category-icon-option{position:relative}
+.category-icon-option--selected{border:2px solid var(--kaptal-focus) !important}
+.category-choice-check{display:grid;place-items:center;flex:none;width:1.25rem;height:1.25rem;border-radius:50%;background:var(--kaptal-surface);color:var(--kaptal-content);font-size:.875rem;font-weight:700;line-height:1}
+.category-choice-check--corner{position:absolute;top:-.25rem;right:-.25rem}
 html .monai-theme :is(.utility-button,.privacy-toggle){min-height:48px;min-width:48px}
 
 /* Contextual shell: a dominant Home, with tools in a sheet rather than a tab bar. */

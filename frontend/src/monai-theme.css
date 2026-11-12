@@ -16,6 +16,7 @@
   --kaptal-voice: #FF746B;
   --kaptal-income: #287D48;
   --kaptal-expense: #AD3847;
+  --kaptal-warning: #925600;
   --kaptal-float-shadow: 0 6px 28px rgb(37 37 34 / 8%);
 }
 
@@ -34,6 +35,7 @@ html.dark {
   --kaptal-focus: #FF8A80;
   --kaptal-income: #86D49D;
   --kaptal-expense: #FF8A80;
+  --kaptal-warning: #FBBF24;
   --kaptal-float-shadow: 0 6px 28px rgb(0 0 0 / 20%);
 }
 

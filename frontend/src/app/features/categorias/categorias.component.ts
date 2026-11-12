@@ -154,6 +154,7 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
                     [class.category-icon-option--selected]="icono === opcion.codigo"
                     class="category-icon-option flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border">
                     <app-categoria-icono [icono]="opcion.codigo" [clase]="'h-5 w-5'" />
+                    @if (icono === opcion.codigo) {<span class="category-choice-check category-choice-check--corner" aria-hidden="true">✓</span>}
                   </button>
                 }
               </div>
@@ -174,7 +175,8 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
               <legend class="mb-2 text-xs font-semibold text-slate-700">Color</legend>
               <div class="flex flex-wrap gap-2">
                 @for (opcion of coloresDisponibles; track opcion) {
-                  <button type="button" (click)="color = opcion" [style.backgroundColor]="opcion" [attr.aria-label]="'Color ' + opcion" [attr.aria-pressed]="color === opcion" class="h-9 w-9 rounded-full border border-slate-300 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2">
+                  <button type="button" (click)="color = opcion" [style.backgroundColor]="opcion" [attr.aria-label]="'Color ' + opcion" [attr.aria-pressed]="color === opcion" class="flex h-11 w-11 items-center justify-center rounded-full border border-slate-300 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2">
+                    @if (color === opcion) {<span class="category-choice-check" aria-hidden="true">✓</span>}
                   </button>
                 }
               </div>

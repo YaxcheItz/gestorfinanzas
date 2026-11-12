@@ -34,7 +34,7 @@ html .monai-theme .home-period .time-dropdown-btn{display:flex;align-items:cente
 .home-category__bar-button{display:flex;flex-direction:column;align-items:center;width:100%;min-height:44px;gap:6px;color:var(--kaptal-content);text-decoration:none;border:0;background:transparent;border-radius:24px;transition:transform 100ms ease}
 .home-category__bar-button:active{transform:scale(0.96)}
 .home-category__track{position:relative;display:flex;align-items:flex-end;justify-content:center;height:144px;width:52px;isolation:isolate}
-.home-category__bar{position:absolute;bottom:0;width:100%;border-radius:26px;background:var(--category-tone);min-height:8px}
+.home-category__bar{position:absolute;bottom:0;width:100%;border-radius:26px;background:var(--category-tone);min-height:8px;outline:1px solid var(--kaptal-content);outline-offset:-1px}
 .home-category__emoji{position:relative;z-index:1;display:grid;place-items:center;width:48px;min-height:48px;padding-bottom:4px}
 .home-category__bar-button strong{font-size:12px;font-weight:650;line-height:1.2;max-width:100%;overflow-wrap:anywhere;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
 .home-category__name{font-size:10px;color:var(--kaptal-content-muted);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -107,9 +107,9 @@ html.dark .home-budget-pill--danger{background:rgba(239,68,68,.22);color:#f87171
 .home-budget-percent{font-weight:600;margin-left:4px;color:var(--kaptal-content-muted)}
 .home-budget-progress{position:relative;height:8px;border-radius:999px;background:var(--kaptal-surface-subtle);overflow:visible;margin-top:8px;box-sizing:border-box}
 .home-budget-progress__track{position:relative;width:100%;height:100%;border-radius:inherit;overflow:hidden;background:inherit}
-.home-budget-progress__fill{display:block;height:100%;border-radius:inherit;background:#10b981;transition:width 350ms cubic-bezier(.34,1.3,.64,1),background-color 250ms ease}
-.home-budget-progress--warning .home-budget-progress__fill{background:#f59e0b}
-.home-budget-progress--over .home-budget-progress__fill{background:#ef4444}
+.home-budget-progress__fill{display:block;height:100%;border-radius:inherit;background:var(--kaptal-income);transition:width 350ms cubic-bezier(.34,1.3,.64,1),background-color 250ms ease}
+.home-budget-progress--warning .home-budget-progress__fill{background:var(--kaptal-warning)}
+.home-budget-progress--over .home-budget-progress__fill{background:var(--kaptal-expense)}
 .home-budget-progress--warning::after,.home-budget-progress--over::after{content:'';position:absolute;inset:-3px;border-radius:999px;border:1.5px dashed #f59e0b;pointer-events:none;animation:monai-dash-pulse 2s cubic-bezier(.4,0,.6,1) infinite}
 .home-budget-progress--over::after{border-color:#ef4444;border-width:2px;animation:monai-dash-pulse 1.3s cubic-bezier(.4,0,.6,1) infinite}
 @keyframes monai-dash-pulse{0%,100%{opacity:.9;transform:scale(1)}50%{opacity:.35;transform:scale(1.02)}}

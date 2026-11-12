@@ -864,9 +864,9 @@ export class PresupuestosComponent implements OnInit {
   }
 
   obtenerColorBarra(porcentaje: number): string {
-    if (porcentaje >= 100) return 'bg-rose-500';
-    if (porcentaje >= 80) return 'bg-amber-500';
-    return 'bg-emerald-500';
+    if (porcentaje >= 100) return 'bg-[var(--kaptal-expense)]';
+    if (porcentaje >= 80) return 'bg-[var(--kaptal-warning)]';
+    return 'bg-[var(--kaptal-income)]';
   }
 
   obtenerBadgeEstadoClass(estado: string): string {
