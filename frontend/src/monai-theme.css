@@ -48,7 +48,7 @@ html.dark .monai-theme :is([class~="bg-slate-100"], [class~="bg-gray-100"], [cla
 html.dark .monai-theme :is([class~="border-slate-100"], [class~="border-slate-200"], [class~="border-gray-100"], [class~="border-gray-200"]) { border-color: var(--kaptal-border) !important; }
 html .monai-theme :where(button, a) { touch-action: manipulation; }
 html .monai-theme :is(button, a):is([class~="bg-emerald-600"], [class~="bg-emerald-700"], [class~="bg-emerald-800"]) { background-color: var(--kaptal-brand) !important; color: var(--kaptal-on-brand) !important; }
-html .monai-theme :where(button, a, input, select, textarea):focus-visible { outline: 2px solid var(--kaptal-focus); outline-offset: 3px; }
+html .monai-theme :where(button, a, input, select, textarea, summary):focus-visible { outline: 2px solid var(--kaptal-focus); outline-offset: 3px; }
 html .monai-theme .app-content-with-bottom-nav { padding-bottom: calc(6.5rem + env(safe-area-inset-bottom)); }
 html .monai-theme .hero-swipe-indicator { display: none; }
 html .monai-theme .tx-item { border: 0; background: var(--kaptal-surface); padding: .9rem; border-radius: 1.2rem; }

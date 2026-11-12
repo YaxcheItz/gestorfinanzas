@@ -266,15 +266,15 @@ import {
         
         <div appFocusTrap (focusTrapEscape)="cerrarModal()" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="presupuesto-modal-titulo" class="budget-entry-sheet max-h-[calc(100dvh_-_env(safe-area-inset-top)_-_env(safe-area-inset-bottom))] w-full max-w-md overflow-y-auto rounded-t-3xl border border-slate-200 bg-white shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-200 dark:border-slate-700 dark:bg-slate-900 sm:rounded-3xl">
           
-          <div class="flex items-center justify-between border-b border-slate-100 p-4 dark:border-slate-700 sm:p-6">
-            <h2 id="presupuesto-modal-titulo" class="text-lg font-bold text-slate-900 dark:text-white">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 p-4 dark:border-slate-700 sm:p-6">
+            <h2 id="presupuesto-modal-titulo" class="min-w-0 flex-[1_1_10rem] [overflow-wrap:anywhere] text-lg font-bold text-slate-900 dark:text-white">
               {{ modoEdicion() ? 'Editar Presupuesto' : 'Fijar Presupuesto' }}
             </h2>
             <button 
               type="button"
               (click)="cerrarModal()" 
               aria-label="Cerrar formulario de presupuesto"
-              class="inline-flex min-h-11 min-w-11 items-center justify-center text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600">
+              class="ml-auto inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -378,7 +378,7 @@ import {
             </div>
 
             <!-- Período informativo -->
-            <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 flex items-center justify-between">
+            <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 flex flex-wrap items-center justify-between gap-2">
               <span>Período de aplicación:</span>
               <span class="font-bold text-slate-800 dark:text-white">{{ nombreMes(mesSeleccionado()) }} {{ anioSeleccionado() }}</span>
             </div>
