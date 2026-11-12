@@ -48,3 +48,5 @@ Preservar calendario aprobado, historial aplazado, chat temporal sin borradores 
 Para continuar: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/CONTRASTE_TECLADO_2026-11-12.md, junto con los planes/prompts locales. Crea rama nueva desde develop remoto comprobado e incorpora la dependencia de esta etapa. Continúa estados de carga/error/sin conexión y contenidos poblados pendientes con datos ficticios; después valida accesibilidad Android aislada cuando esté autorizado y disponible».
 
 Referencias: [W3C, contraste de texto](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html), [foco visible](https://www.w3.org/WAI/WCAG22/Understanding/focus-visible.html), [patrón de diálogo modal](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/) y [Web Interface Guidelines](https://raw.githubusercontent.com/vercel-labs/web-interface-guidelines/main/command.md).
+
+Codigo de esta etapa: 3c94832528c48a70c70b045413cf4b324c9a1ace subido y comprobado con ls-remote en mejoras/contraste-teclado-secciones. Seguimiento documental posterior en la misma rama. Sin integracion, despliegue, instalacion ni CI remota comprobada.
