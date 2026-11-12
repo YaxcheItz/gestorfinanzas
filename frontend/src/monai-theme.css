@@ -195,3 +195,19 @@ html .monai-theme .account-card h2.account-card__name { overflow: visible; text-
   .account-entry-sheet .credit-card-dates { grid-template-columns: minmax(0, 1fr); }
   .account-entry-sheet .credit-card-dates input { min-width: 0; width: 100%; }
 }
+
+/* Detalle de presupuesto: conservar importes y descripciones al ampliar texto. */
+.budget-detail-sheet .budget-detail-totals { grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr)); }
+.budget-detail-totals > div { min-width: 0; padding: 8px; }
+.budget-detail-totals p { overflow-wrap: anywhere; }
+.budget-detail-movement { gap: .75rem; }
+.budget-detail-description { overflow-wrap: anywhere; }
+.budget-detail-actions { flex-wrap: wrap; }
+.budget-detail-actions button { min-height: 44px; }
+@media (max-width: 28rem) {
+  .budget-detail-movement { flex-direction: column; align-items: flex-start; }
+  .budget-detail-movement > div { width: 100%; padding-right: 0; }
+  .budget-detail-movement > span { max-width: 100%; overflow-wrap: anywhere; }
+  .budget-detail-actions button { flex: 1 1 7rem; }
+}
+.budget-detail-totals > div:last-child { grid-column: 1 / -1; }

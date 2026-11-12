@@ -414,7 +414,7 @@ import {
     <!-- Modal Detalle del Presupuesto y Movimientos -->
     @if (modalDetalleAbierto()) {
       <div class="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-slate-900/60 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] backdrop-blur-xs sm:items-center sm:p-4">
-        <div appFocusTrap (focusTrapEscape)="cerrarDetalle()" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="detalle-modal-titulo" class="budget-entry-sheet max-h-[calc(100dvh_-_env(safe-area-inset-top)_-_env(safe-area-inset-bottom))] w-full max-w-lg overflow-y-auto rounded-t-3xl border border-slate-200 bg-white shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-200 dark:border-slate-700 dark:bg-slate-900 sm:rounded-3xl">
+        <div appFocusTrap (focusTrapEscape)="cerrarDetalle()" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="detalle-modal-titulo" class="budget-detail-sheet budget-entry-sheet max-h-[calc(100dvh_-_env(safe-area-inset-top)_-_env(safe-area-inset-bottom))] w-full max-w-lg overflow-y-auto rounded-t-3xl border border-slate-200 bg-white shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-200 dark:border-slate-700 dark:bg-slate-900 sm:rounded-3xl">
           
           <div class="flex items-center justify-between border-b border-slate-100 p-4 dark:border-slate-700 sm:p-6">
             <div>
@@ -448,12 +448,12 @@ import {
                 Cargando movimientos del presupuesto...
               </div>
             } @else if (errorDetalle()) {
-              <div class="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs">
+              <div role="alert" class="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs">
                 {{ errorDetalle() }}
               </div>
             } @else if (detallePresupuesto(); as det) {
               <!-- Resumen de montos -->
-              <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div class="budget-detail-totals grid grid-cols-2 sm:grid-cols-3 gap-3">
                 <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700">
                   <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Límite mensual</p>
                   <p class="text-base font-bold text-slate-800 dark:text-white tabular-nums mt-0.5">
@@ -509,9 +509,9 @@ import {
                 } @else {
                   <div class="divide-y divide-slate-100 dark:divide-slate-800 max-h-60 overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30">
                     @for (m of det.movimientos; track m.id) {
-                      <div class="p-3 flex items-center justify-between text-xs hover:bg-white dark:hover:bg-slate-800/80 transition-colors">
+                      <div class="budget-detail-movement p-3 flex items-center justify-between text-xs hover:bg-white dark:hover:bg-slate-800/80 transition-colors">
                         <div class="min-w-0 pr-3">
-                          <p class="font-semibold text-slate-800 dark:text-white truncate">
+                          <p class="budget-detail-description font-semibold text-slate-800 dark:text-white">
                             {{ m.descripcion || det.presupuesto.categoriaNombre }}
                           </p>
                           <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-1.5 flex-wrap">
@@ -532,7 +532,7 @@ import {
               </div>
 
               <!-- Acciones del detalle -->
-              <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+              <div class="budget-detail-actions flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
                 <button 
                   type="button"
                   (click)="editarDesdeDetalle(det.presupuesto)"
