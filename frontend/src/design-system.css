@@ -43,3 +43,7 @@ html .monai-theme .finance-page h1{font-size:30px;line-height:1.2}
 
 app-navbar{display:contents}
 .workspace-tools{position:sticky;top:0;background:var(--kaptal-canvas)}
+
+/* Las herramientas secundarias tienen su propia fila, sin cubrir el contenido. */
+.capture-dock.capture-dock--inline { position: static; width: min(100%, 48rem); margin: 0 auto; padding: 8px 20px 16px; box-sizing: border-box; }
+html:has(.capture-dock--inline) .monai-theme .app-content-with-bottom-nav { padding-bottom: max(2rem, env(safe-area-inset-bottom)); }
