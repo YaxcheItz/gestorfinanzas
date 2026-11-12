@@ -497,3 +497,15 @@ html .monai-theme .history-page .history-pagination { padding:16px 0; border-col
 .history-detail-more { border-top:1px solid var(--kaptal-border); }
 .history-detail-more > summary { min-height:48px; display:flex; align-items:center; color:var(--kaptal-content-muted); font-size:13px; font-weight:600; cursor:pointer; }
 .history-detail-more > summary:focus-visible { outline:2px solid var(--kaptal-focus); outline-offset:2px; border-radius:8px; }
+/* Paginación legible cuando el texto ampliado deja poco ancho disponible. */
+@media (max-width: 28rem) {
+  html .monai-theme .history-page .history-pagination > div:last-child {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 7rem), 1fr));
+    gap: .5rem;
+  }
+  html .monai-theme .history-page .history-pagination > div:last-child > * { margin-left: 0; min-width: 0; }
+  html .monai-theme .history-page .history-pagination > div:last-child > span { grid-column: 1 / -1; grid-row: 1; text-align: center; }
+  html .monai-theme .history-page .history-pagination button { min-height: 44px; overflow-wrap: normal; }
+}
