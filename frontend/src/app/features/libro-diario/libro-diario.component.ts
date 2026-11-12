@@ -35,10 +35,10 @@ import { nombreCuentaVisible } from '../../core/utils/cuenta-financiera';
         </div>
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
           <label class="block text-xs font-semibold text-slate-700 dark:text-slate-200">Desde
-            <input type="date" name="desde" [ngModel]="filtroDesde()" (ngModelChange)="filtroDesde.set($event)" class="mt-1 block min-h-11 min-w-0 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-normal text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
+            <input type="date" name="desde" aria-describedby="ledger-date-range" [ngModel]="filtroDesde()" (ngModelChange)="filtroDesde.set($event)" class="mt-1 block min-h-11 min-w-0 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-normal text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
           </label>
           <label class="block text-xs font-semibold text-slate-700 dark:text-slate-200">Hasta
-            <input type="date" name="hasta" [ngModel]="filtroHasta()" (ngModelChange)="filtroHasta.set($event)" class="mt-1 block min-h-11 min-w-0 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-normal text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
+            <input type="date" name="hasta" aria-describedby="ledger-date-range" [ngModel]="filtroHasta()" (ngModelChange)="filtroHasta.set($event)" class="mt-1 block min-h-11 min-w-0 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-normal text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
           </label>
           <label class="block text-xs font-semibold text-slate-700 dark:text-slate-200">Movimiento
             <select name="tipoMovimiento" [ngModel]="filtroTipoMovimiento()" (ngModelChange)="filtroTipoMovimiento.set($event)" class="mt-1 block min-h-11 min-w-0 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-normal text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
@@ -57,6 +57,7 @@ import { nombreCuentaVisible } from '../../core/utils/cuenta-financiera';
             </select>
           </label>
         </div>
+        <p id="ledger-date-range" class="mt-3 break-words text-xs text-slate-500">Fechas (año-mes-día): desde {{ filtroDesde() || 'sin límite' }} hasta {{ filtroHasta() || 'sin límite' }}.</p>
         <div class="mt-3 flex flex-wrap justify-end gap-2">
           @if (tieneFiltros()) { <button type="button" (click)="limpiarFiltros()" class="min-h-11 rounded-lg px-4 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800">Limpiar</button> }
           <button type="submit" [disabled]="cargando()" class="min-h-11 rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-50">{{ cargando() ? 'Buscando…' : 'Aplicar filtros' }}</button>

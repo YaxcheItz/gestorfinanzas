@@ -9,6 +9,7 @@
   --kaptal-content: #111111;
   --kaptal-content-muted: #737373;
   --kaptal-border: #EBEBEB;
+  --kaptal-control-border: #808080;
   --kaptal-brand: #B83E36;
   --kaptal-on-brand: #ffffff;
   --kaptal-focus: #B83E36;
@@ -27,6 +28,7 @@ html.dark {
   --kaptal-content: #FFFFFF;
   --kaptal-content-muted: #A1A1A6;
   --kaptal-border: #38383A;
+  --kaptal-control-border: #94949A;
   --kaptal-brand: #FF8A80;
   --kaptal-on-brand: #111111;
   --kaptal-focus: #FF8A80;

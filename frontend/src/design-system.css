@@ -4,6 +4,9 @@
 html .monai-theme .finance-page :is(h1,h2){letter-spacing:-.035em}
 html .monai-theme :is(input,select,textarea){font-variant-numeric:tabular-nums}
 html .monai-theme :is(input:not([type="checkbox"]):not([type="radio"]),select,textarea){background-color:var(--kaptal-surface-subtle);color:var(--kaptal-content);border-color:var(--kaptal-border)}
+/* Los límites de los campos necesitan más contraste que los separadores decorativos. */
+html .monai-theme :is(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),select,textarea):not(:disabled){border-color:var(--kaptal-control-border) !important}
+html .monai-theme :is(.settings-theme-choices button,.ledger-filter-sheet .ledger-chip)[aria-pressed="true"]{border:2px solid var(--kaptal-brand) !important;background:var(--kaptal-surface-subtle) !important;color:var(--kaptal-content) !important;box-shadow:none}
 html .monai-theme :is(button,[role="button"],summary){touch-action:manipulation}
 html .monai-theme :is(.utility-button,.privacy-toggle){min-height:48px;min-width:48px}
 
