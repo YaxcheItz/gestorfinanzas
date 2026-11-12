@@ -1776,3 +1776,14 @@ Rama entrega/android-037-msi-corte creada desde develop comprobado e incorporand
 ## Android 0.1.38 en preparacion - 7 noviembre 2026
 
 Rama entrega/android-038-msi-total creada desde develop comprobado con PR249 como dependencia. Version incrementada0.1.37/codigo38 a0.1.38/codigo39. Compra total informativa durable en ambos historiales y cargos separados al corte, sin sumar dos veces. Pruebas locales backend690 y E2E focales aprobadas antes de ultimos ajustes; CI exacta, APK firmada y despliegue pendientes. Sin dispositivo ADB al comprobar; no usar finanzas reales.
+
+## Auditoría visual inicial - 11 noviembre 2026
+Revisión parcial documentada en docs/REVISION_VISUAL_2026-11-11.md; evidencias sintéticas en .local/visual-1111. Rama auditoria/visual-1111 desde develop remoto 74a85bb; main mismo árbol. ADB confirma 0.1.44/código45. Sin rediseño, instalación ni publicación. Hallazgos: superposición de controles flotantes, entrada voz/texto poco clara y fallback Gemini sin proveedor confirmado. Pendientes: contratos correctos de fixtures, propuestas/edición del chat, estados, accesibilidad y Android físico aislado. Conservar calendario, aplazar historial, no borradores persistentes ni PR271. Siguiente: completar evidencia del chat y decidir sección por sección.
+
+
+## Ampliación de diseño y funcionalidad - 11 noviembre 2026
+Ver docs/REVISION_DISENO_AMPLIADA_2026-11-11.md y .local/visual-deep-1111. Se corrigió el hallazgo voz/texto: aria-label no visible, no fallo visual. Pruebas sintéticas de propuesta/editor/error chat, fuente raíz200% a320px, Inicio/Reportes y catálogos. Hallazgos: error de chat fuera de vista, Desc ar tar fragmentado, editor estrecho, nombres/mes cortados y controles flotantes superpuestos. Referencias documentales MonAi/Wallet/Spendee; propuestas mantener/simplificar/añadir, sin implementación. Pendientes explícitos en informe; no auditoría integral terminada. Siguiente decisión: chat, después controles globales y accesibilidad. Conservar calendario, historial aplazado, no borradores ni PR271.
+
+
+## Primera sección: chat, propuesta revisable
+Ver docs/PROPUESTA_CHAT_REVISION_2026-11-11.md y .local/chat-review-final. Error503 visible al desplazar al fondo, pero no automáticamente; editor llega a acciones con scroll interno. No son bloqueos totales. Desc ar tar continúa fragmentado. Texto conserva sesión y desaparece al recargar, comprobado con fixture. Propuesta: expandir ante propuesta/edición, error junto al compositor, botones sin palabras rotas, más espacio al editor. Sin implementación. Después: controles flotantes y texto ampliado. Conservadas protecciones y decisiones anteriores.
