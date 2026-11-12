@@ -52,3 +52,5 @@ No es una auditoría integral de accesibilidad. A raíz200% los importes grandes
 Conservar calendario aprobado, historial aplazado, chat temporal sin borradores persistentes, exclusión de PR271 y aplazamiento de lentitud/logout.
 
 Para continuar: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md, docs/ESTADOS_CARGA_ERROR_OFFLINE_2026-11-12.md y planes/prompts locales. Crea rama nueva desde develop remoto comprobado e incorpora la dependencia de esta etapa. Sigue con lectura, errores y teclado de los apartados de Configuración usando datos ficticios; después contraste de bordes/iconos y accesibilidad Android aislada cuando corresponda».
+
+Codigo de esta etapa: 1f214efb142036eddd8c53fb6d1f6c065ecdf399 subido y comprobado con ls-remote en mejoras/estados-carga-error-offline. Seguimiento documental posterior en la misma rama. Sin integracion, despliegue, instalacion ni CI remota comprobada.
