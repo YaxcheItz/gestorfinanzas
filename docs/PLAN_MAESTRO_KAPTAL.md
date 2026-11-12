@@ -1782,3 +1782,5 @@ Rama mejoras/chat-visual-espacio-error desde origin/develop74a85bb, worktree .lo
 
 ## Controles y texto ampliado - 11 noviembre 2026
 Rama mejoras/controles-texto-accesible desde develop74a85bb con chat0fd3f6a como dependencia (cherry-pick86c5ea5). Fila de accesos en pantallas secundarias; Inicio/Movimientos conservan dock flotante y su solapamiento al desplazar queda pendiente. Nombres de cuentas con ancho completo, mes/año apilados, botones sin ruptura arbitraria y métricas de Inicio relativas/adaptativas. Build final,569 pruebas frontend y1 E2E sintético aprobados. Ver docs/CONTROLES_TEXTO_2026-11-11.md. Auditoría b29ea7f y chat0fd3f6a ya subidos y verificados en remoto; subir esta etapa por separado. Sin instalación/despliegue/integración. Pendientes: aceptación visual, Android físico, contraste y formularios de Cuentas/Presupuestos. Preservar cambios anteriores.
+
+Verificación remota: cambios de esta etapa subidos en mejoras/controles-texto-accesible, commit37168d6868c1c1f2e1a1c394240ac9f3823d3868; ls-remote coincide. Auditoría/chat también remotos. Sin integración, CI remota ni despliegue comprobados.
