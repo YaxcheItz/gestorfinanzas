@@ -87,7 +87,7 @@ import { fechaCivilFinanciera } from '../../core/utils/periodo-financiero';
               <a [routerLink]="['/transacciones']" [queryParams]="{ cuentaId: cuenta.id }" [attr.aria-label]="'Ver transacciones de ' + nombreCuentaVisible(cuenta.nombre)" class="absolute inset-0 z-10 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600">
                 <span class="sr-only">Ver todas las transacciones de {{ nombreCuentaVisible(cuenta.nombre) }}</span>
               </a>
-              <div class="flex min-h-11 items-start justify-between gap-4">
+              <div class="account-card__heading flex min-h-11 items-start justify-between gap-4">
                 <div class="min-w-0">
                   <h2 class="account-card__name truncate text-lg font-bold text-slate-900">{{ nombreCuentaVisible(cuenta.nombre) }}</h2>
                   <p class="account-card__meta"><span>{{ tipoCuentaLabel(cuenta.tipo) }}</span><span aria-hidden="true">·</span><span>{{ cuenta.moneda }}</span></p>

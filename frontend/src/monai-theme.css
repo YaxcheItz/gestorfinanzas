@@ -174,3 +174,18 @@ html .monai-theme .history-page .ledger-filter-btn{border:0;border-radius:999px}
 html .monai-theme .history-page .history-day>h2{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 0 4px;font-size:13px;color:var(--kaptal-content-muted)}
 html .monai-theme :is(.ledger-detail-sheet,.ledger-filter-sheet,.quick-entry,#quick-capture-panel){border:0;border-radius:30px 30px 0 0}
 @media(prefers-reduced-transparency:reduce){html .monai-theme{--kaptal-glass:var(--kaptal-surface-subtle)}.workspace-selector,.glass-icon,.capture-dock__manual{backdrop-filter:none}}
+
+/* Reservar el ancho para los nombres al ampliar texto en tarjetas estrechas. */
+html .monai-theme .account-card { container-type: inline-size; }
+html .monai-theme .account-card h2.account-card__name { overflow: visible; text-overflow: clip; overflow-wrap: break-word; }
+@container (max-width: 18rem) {
+  .account-card__heading { flex-direction: column-reverse; align-items: flex-start; }
+  .account-card__heading > div { width: 100%; min-width: 0; }
+}
+@media (max-width: 28rem) {
+  .budget-period-controls { display: grid; grid-template-columns: minmax(0, 1fr); width: 100%; }
+  .budget-period-controls > span { display: none; }
+  .budget-period-controls > select { width: 100%; }
+  .budgets-page button { overflow-wrap: normal; word-break: normal; }
+  .budgets-page button svg { flex-shrink: 0; }
+}
