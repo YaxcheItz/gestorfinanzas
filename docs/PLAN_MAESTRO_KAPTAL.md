@@ -2438,3 +2438,6 @@ Rama mejoras/controles-texto-accesible desde develop74a85bb con chat0fd3f6a como
 
 Verificación remota: etapa controles/texto subida en mejoras/controles-texto-accesible, código37168d6, hash confirmado por ls-remote; auditoría b29ea7f y chat0fd3f6a también remotos. Sin integración ni despliegue.
 
+
+## Formularios y cierre documental Git - 12 noviembre 2026
+Contador2034 líneas:1017 agregadas a cada documento en checkout antiguo; contenido íntegro confirmado/subido en respaldo/documentos-checkout-20261111, f6fc908. Solo AGENTS modificado, guía OpenCode eliminada y error.log permanecen preexistentes aparte. Rama nueva mejoras/formularios-cuentas-presupuestos desde develop con dependencias de chat/controles: corte/pago apilados en móvil y error de presupuesto anunciado con role alert. Build,569 pruebas frontend y1 E2E ficticio aprobados; sin datos reales ni instalación/publicación. Ver docs/FORMULARIOS_Y_ESTADO_GIT_2026-11-12.md. Siguiente: navegación/detalle con datos ficticios poblados; teclado/TalkBack/aceptación pendientes.
