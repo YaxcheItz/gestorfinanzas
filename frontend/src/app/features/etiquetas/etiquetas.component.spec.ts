@@ -12,8 +12,13 @@ describe('EtiquetasComponent', () => {
   pendiente.error({status:503});fixture.detectChanges();
   expect(fixture.nativeElement.querySelector('[role="alert"]')).not.toBeNull();
   expect(fixture.nativeElement.textContent).not.toContain('Aún no tienes etiquetas');
-  fixture.componentInstance.cargar();fixture.detectChanges();
-  expect(fixture.nativeElement.textContent).toContain('Aún no tienes etiquetas');fixture.destroy();
+  fixture.componentInstance.nombre='Borrador ficticio';
+  fixture.nativeElement.querySelector('[role="alert"] button').click();fixture.detectChanges();
+  expect(fixture.componentInstance.nombre).toBe('Borrador ficticio');
+  expect(fixture.nativeElement.textContent).toContain('Aún no tienes etiquetas');
+  fixture.componentInstance.nombre='';fixture.componentInstance.crear();fixture.detectChanges();
+  expect(fixture.nativeElement.querySelector('[role="alert"] button')).toBeNull();
+  fixture.destroy();
  });
  it('crea y elimina etiquetas del catalogo con confirmacion', async () => {
   const api={getEtiquetasPersonales:vi.fn(()=>of({success:true,data:[{id:4,nombre:'viaje'}]})), crearEtiquetaPersonal:vi.fn(()=>of({success:true,data:{id:5,nombre:'trabajo'}})), eliminarEtiquetaPersonal:vi.fn(()=>of({success:true,data:null}))};

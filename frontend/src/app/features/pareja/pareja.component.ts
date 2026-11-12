@@ -81,9 +81,10 @@ type FormularioAbierto = 'aporte' | 'gasto' | 'pago' | null;
       }
 
       @if (cargando()) {
-        <p class="rounded-xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900">
-          Cargando tus gastos en pareja…
-        </p>
+        <div class="finance-loading-list" role="status" aria-label="Cargando gastos en pareja">
+          <span class="sr-only">Cargando tus gastos en pareja…</span>
+          @for (fila of [0,1,2]; track fila) {<div class="finance-loading-card" aria-hidden="true"><span class="loading-placeholder"></span><span class="loading-placeholder loading-placeholder--amount"></span></div>}
+        </div>
       } @else if (error()) {
         <div role="alert" class="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950 dark:text-rose-200">
           {{ error() }}

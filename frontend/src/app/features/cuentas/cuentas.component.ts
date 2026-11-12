@@ -55,7 +55,7 @@ import { fechaCivilFinanciera } from '../../core/utils/periodo-financiero';
       </div>
 
       @if (error()) {
-        <div role="alert" class="p-4 bg-rose-50 border border-rose-200 rounded-xl text-sm text-rose-700 flex items-center justify-between gap-3">
+        <div role="alert" class="p-4 bg-rose-50 border border-rose-200 rounded-xl text-sm text-rose-700 flex flex-wrap items-center justify-between gap-3">
           <span>{{ error() }}</span>
           <button type="button" (click)="cargarCuentas()" class="font-semibold underline cursor-pointer">Reintentar</button>
         </div>

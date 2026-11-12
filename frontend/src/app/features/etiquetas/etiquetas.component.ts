@@ -11,7 +11,7 @@ import { mensajeDeError } from '../../core/utils/mensaje-error';
     <input id="etiqueta-nueva" name="nombre" [(ngModel)]="nombre" maxlength="32" placeholder="Nueva etiqueta" class="min-h-11 flex-1 min-w-0 rounded-xl border border-slate-300 px-3" />
     <button type="submit" [disabled]="ocupado()" class="min-h-11 rounded-xl bg-emerald-700 px-4 font-semibold text-white">Añadir</button>
   </form>
-  @if (error()) {<p role="alert" class="text-rose-700">{{error()}}</p>}
+  @if (error()) {<div role="alert" class="flex flex-wrap items-center gap-3 text-rose-700"><span>{{error()}}</span>@if (errorCarga()) {<button type="button" (click)="cargar()" [disabled]="cargando()" class="min-h-11 font-semibold underline">Reintentar</button>}</div>}
   <p class="text-sm text-slate-500">Eliminar una etiqueta de esta lista no cambia los movimientos anteriores.</p>
   @if (cargando()) {<div class="finance-loading-card" role="status" aria-label="Cargando etiquetas"><span class="loading-placeholder" aria-hidden="true"></span></div>} @else if (!errorCarga() && !etiquetas().length) {<p class="rounded-2xl border p-5 text-slate-500">Aún no tienes etiquetas en tu lista.</p>}
   @if (!cargando() && !errorCarga()) {<ul class="space-y-2">@for (etiqueta of etiquetas(); track etiqueta.id) {

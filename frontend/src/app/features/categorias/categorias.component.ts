@@ -30,7 +30,7 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
       </header>
 
       @if (error()) {
-        <div role="alert" class="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-sm flex justify-between gap-3">
+        <div role="alert" class="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-sm flex flex-wrap justify-between gap-3">
           <span>{{ error() }}</span>
           <button type="button" (click)="cargar()" class="underline font-semibold cursor-pointer">Reintentar</button>
         </div>

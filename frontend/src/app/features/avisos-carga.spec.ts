@@ -13,7 +13,7 @@ import { BankNotificationsService } from '../core/services/bank-notifications';
 describe('Avisos estados visibles', () => {
   it('oculta avisos previos durante la carga y al fallar un filtro', async () => {
     const pendiente = new Subject<any>();
-    const api = {listar: vi.fn().mockReturnValueOnce(of({data:{content:[{id:'1',resumen:'Aviso ficticio',origen:'MANUAL',clase:'COMPRA',estado:'PENDIENTE',moneda:'MXN',coincidencias:[]}],totalPages:1}})).mockReturnValueOnce(pendiente)};
+    const api = {listar: vi.fn().mockReturnValueOnce(of({success:true,data:{content:[{id:'1',resumen:'Aviso ficticio',origen:'MANUAL',clase:'COMPRA',estado:'PENDIENTE',moneda:'MXN',coincidencias:[]}],totalPages:1}})).mockReturnValueOnce(pendiente).mockReturnValueOnce(of({success:false,message:'Fallo lógico ficticio',data:null})).mockReturnValueOnce(of({success:true,data:{content:[],totalPages:0}}))};
     TestBed.configureTestingModule({imports:[AvisosComponent],providers:[provideRouter([]),
       {provide:AvisosService,useValue:api},
       {provide:SharedNoticeService,useValue:{pending:signal(null),error:signal('')}},
@@ -30,6 +30,13 @@ describe('Avisos estados visibles', () => {
     expect(fixture.nativeElement.querySelector('[role="alert"]')).not.toBeNull();
     expect(fixture.nativeElement.textContent).not.toContain('Aviso ficticio');
     expect(fixture.nativeElement.textContent).not.toContain('Sin revisiones en esta vista');
+    fixture.componentInstance.cargar();await fixture.whenStable();
+    expect(fixture.nativeElement.textContent).toContain('Fallo lógico ficticio');
+    expect(fixture.nativeElement.textContent).not.toContain('Sin revisiones en esta vista');
+    expect(fixture.nativeElement.textContent).not.toContain('Aviso ficticio');
+    fixture.componentInstance.cargar();await fixture.whenStable();
+    expect(fixture.nativeElement.querySelector('[role="alert"]')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Sin revisiones en esta vista');
     fixture.destroy();
   });
 });

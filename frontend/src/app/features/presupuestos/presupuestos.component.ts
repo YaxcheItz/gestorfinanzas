@@ -78,8 +78,8 @@ import {
 
       <!-- Alertas o Mensaje de Error -->
       @if (error()) {
-        <div role="alert" class="bg-rose-50 border border-rose-200 text-rose-700 text-sm px-4 py-3 rounded-2xl flex items-center justify-between">
-          <div class="flex items-center space-x-2">
+        <div role="alert" class="bg-rose-50 border border-rose-200 text-rose-700 text-sm px-4 py-3 rounded-2xl flex flex-wrap items-center justify-between">
+          <div class="flex flex-wrap items-center space-x-2">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-rose-500 shrink-0" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
             </svg>
@@ -180,7 +180,7 @@ import {
                   </div>
 
                   <!-- Botones de Acción -->
-                  <div class="flex items-center space-x-1">
+                  <div class="flex flex-wrap items-center justify-end gap-1">
                     <button 
                       type="button"
                       (click)="abrirDetalle(p)"
@@ -222,7 +222,7 @@ import {
                 <!-- Barra de Progreso y Montos -->
                 <div class="budget-remaining" [class.is-over]="p.montoDisponible < 0"><span>{{ p.montoDisponible >= 0 ? 'Te queda' : 'Te excediste' }} · {{ p.moneda }}</span><strong>{{ (p.montoDisponible >= 0 ? p.montoDisponible : -p.montoDisponible) | monto:p.moneda:'symbol':'1.2-2' }}</strong></div>
                 <div class="space-y-2">
-                  <div class="flex items-center justify-between text-xs">
+                  <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
                     <span class="font-medium text-slate-500 dark:text-slate-400">Gastado: {{ p.montoGastado | monto:p.moneda:'symbol':'1.2-2' }}</span>
                     <span class="font-bold text-slate-800 dark:text-slate-100">Meta: {{ p.montoLimite | monto:p.moneda:'symbol':'1.2-2' }}</span>
                   </div>

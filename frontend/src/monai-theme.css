@@ -103,10 +103,10 @@ html .monai-theme .account-manage { border-color: var(--kaptal-border); cursor: 
 .account-manage summary:focus-visible { outline: 2px solid var(--kaptal-focus); outline-offset: 2px; border-radius: .5rem; }
 .account-manage[open] summary { color: var(--kaptal-content); }
 .account-manage__actions { display: flex; flex-wrap: wrap; gap: .25rem; padding-top: .35rem; }
-html .monai-theme .budget-category-card { border-color: var(--kaptal-border); box-shadow: none; display: grid; gap: 1.25rem; }
-.budget-category-head { gap: .75rem; }
+html .monai-theme .budget-category-card { border-color: var(--kaptal-border); box-shadow: none; display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.25rem; }
+.budget-category-head { min-width: 0; gap: .75rem; }
 .budget-category-head h3 { overflow-wrap: anywhere; line-height: 1.4; }
-.budget-category-head > div:last-child { flex-shrink: 0; }
+.budget-category-head > div:last-child { flex-shrink: 0; flex-wrap: wrap; max-width: 100%; }
 .budget-remaining { display: grid; gap: .2rem; }
 .budget-remaining span { color: var(--kaptal-content-muted); font-size: .75rem; }
 .budget-remaining strong { color: var(--kaptal-content); font-size: 1.75rem; letter-spacing: -.035em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
