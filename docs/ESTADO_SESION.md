@@ -2669,3 +2669,9 @@ Principal: preferencias y eliminación guía confirmadas/subidas5b44208; error.l
 
 
 Verificación de subida: mejoras/navegacion-detalles fdcb20ad859bf3a85f59eab342f72e4fd3c0b6e1 coincide con ls-remote. Etapa y seguimientos anteriores subidos. No se verificó CI remota ni se integró/desplegó.
+
+## Avisos y pareja: disposición accesible - 12 noviembre 2026
+Rama mejoras/avisos-compartidos-visual desde develop74a85bb con dependencia fdcb20a por fast-forward. Contadores adaptativos de registro automático; tarjetas de pareja sin overflow horizontal a320/raíz200%; formulario con scroll, acciones apiladas y Escape. Build aprobado,569 pruebas frontend,7 E2E previos de Avisos y2 nuevos sintéticos aprobados; último estilo solo build/2 E2E repetidos. Presupuesto CSS automatic-bank5.01kB vs4kB (previo4.99), Avisos4.49kB; no eliminado aviso. Importes grandes aún pueden saltar de línea. Sin operación real, instalación/despliegue/integración. Ver docs/AVISOS_COMPARTIDOS_2026-11-12.md. Siguiente: listas/invitaciones y contraste/foco/Android físico. Subir/verificar rama y conservar principal limpio.
+
+
+Verificación remota: mejoras/avisos-compartidos-visual fb07f9efd29853c148c6f050d0b621b990ba7760 coincide con ls-remote. Código y documentación subidos; CI remota/integración/despliegue no comprobados.
