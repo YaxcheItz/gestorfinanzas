@@ -108,7 +108,7 @@ test('chat mantiene escritura visible y guarda categoría offline sin duplicados
   await expect(panel.getByRole('button',{name:'Cerrar',exact:true})).toBeFocused();
   await opcionesIa.click();
   await expect(panel.getByRole('checkbox')).not.toBeVisible();
-  await expect(panel.getByRole('button',{name:'Introducir datos manualmente',exact:true})).toBeVisible();
+  await expect(panel.getByRole('button',{name:'Registro manual',exact:true})).toBeVisible();
   await expect(panel.getByRole('button',{name:'Dictar movimiento'})).toBeVisible();
   expect(await panel.locator('.capture-chat').evaluate(e=>e.clientHeight)).toBeGreaterThan(80);
   await text.fill('Quiero revisar estos movimientos antes de guardarlos. '.repeat(15));
@@ -148,7 +148,7 @@ test('chat mantiene escritura visible y guarda categoría offline sin duplicados
     const movimientos=(await r.json()).data.content;
     return movimientos.filter((m:{monto:number;categoriaId:number|null})=>m.monto===25&&m.categoriaId!==null).length;
   },{timeout:30000}).toBe(1);
-  await page.setViewportSize({width:390,height:844});await panel.getByRole('button',{name:'Introducir datos manualmente',exact:true}).click();
+  await page.setViewportSize({width:390,height:844});await panel.getByRole('button',{name:'Registro manual',exact:true}).click();
   await expect(page.getByRole('dialog',{name:'Añadir movimiento'})).toBeVisible();
   await expect(page).toHaveURL(/dashboard/);
 });
