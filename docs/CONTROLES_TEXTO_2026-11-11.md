@@ -20,3 +20,5 @@ Auditoría subida en auditoria/visual-1111, b29ea7f; chat subido en mejoras/chat
 Siguiente: aceptación por sección de la fila superior de accesos y revisión de navegación/formularios de Cuentas y Presupuestos; medir contraste y completar listas pobladas/MSI/compartidos con fixtures. No añadir Próximos/favoritos ni unificar asistentes sin propuesta concreta. Mantener historial aplazado, calendario, reglas/Groq e idempotencia, texto solo de sesión y PR271 obsoleto.
 
 Continuación: lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/CONTROLES_TEXTO_2026-11-11.md. Usa .local/worktrees/controles-texto, rama mejoras/controles-texto-accesible. Código comprobado localmente y por subir/verificar según el estado real del remoto; no instalar/publicar automáticamente. Siguiente sección: navegación y formularios de Cuentas/Presupuestos, con aceptación visual pendiente.
+
+Verificación remota: cambios de esta etapa subidos en mejoras/controles-texto-accesible, commit37168d6868c1c1f2e1a1c394240ac9f3823d3868; ls-remote coincide. Auditoría/chat también remotos. Sin integración, CI remota ni despliegue comprobados.
