@@ -33,6 +33,10 @@ export class Reportes {
   private usuarioId = this.auth.currentUser()?.id ?? null;
   readonly privacidad = inject(PrivacidadService);
   readonly periodo = signal(this.mesActual());
+  readonly periodoLegible = computed(() => {
+    return new Intl.DateTimeFormat('es-MX', { month: 'long', year: 'numeric', timeZone: 'UTC' })
+      .format(new Date(`${this.periodo()}-01T00:00:00Z`));
+  });
   readonly moneda = signal('MXN');
   readonly loading = signal(false);
   readonly error = signal('');

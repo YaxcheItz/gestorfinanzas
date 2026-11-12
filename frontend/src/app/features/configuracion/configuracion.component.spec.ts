@@ -162,6 +162,23 @@ describe('ConfiguracionComponent data safety', () => {
     expect(fixture.nativeElement.textContent).not.toContain('Obtener PIN');
   });
 
+  it('distingue consulta push, fallo lógico, error y ausencia confirmada sin solicitar permisos', async () => {
+    await fixture.whenStable();
+    const c=fixture.componentInstance, pending=new Subject<any>();
+    finanzas.getConfiguracionPush.mockReturnValueOnce(pending);
+    const request=c.cargarEstadoPush();
+    expect(c.cargandoEstadoPush()).toBe(true);
+    expect(c.errorEstadoPush()).toBeNull();
+    pending.next({success:false,message:'Consulta ficticia fallida',data:null});pending.complete();await request;
+    expect(c.cargandoEstadoPush()).toBe(false);
+    expect(c.errorEstadoPush()).toBe('Consulta ficticia fallida');
+    finanzas.getConfiguracionPush.mockReturnValueOnce(throwError(()=>new Error('ficticio')));
+    await c.cargarEstadoPush();expect(c.errorEstadoPush()).toBeTruthy();
+    finanzas.getConfiguracionPush.mockReturnValueOnce(of({success:true,data:{configurado:false}}));
+    await c.cargarEstadoPush();expect(c.errorEstadoPush()).toBeNull();expect(c.pushConfigurado()).toBe(false);
+    expect(push.requestSubscription).not.toHaveBeenCalled();
+  });
+
   it('organiza las secciones por tema y mantiene cerradas las opciones al entrar', () => {
     const page = fixture.nativeElement as HTMLElement;
     expect(Array.from(page.querySelectorAll('.settings-group > h2')).map(h => h.textContent?.trim())).toEqual([

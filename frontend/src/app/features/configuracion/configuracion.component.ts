@@ -195,7 +195,11 @@ import {
           <h2 class="text-base font-bold text-slate-900 dark:text-white">Avisos en tu dispositivo</h2>
           <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">Recibe recordatorios de corte, pago estimado y movimientos programados aunque Kaptal no esté abierto.</p>
         </div>
-        @if (!pushConfigurado()) {
+        @if (cargandoEstadoPush()) {
+          <div class="finance-loading-card" role="status" aria-label="Consultando avisos"><span class="sr-only">Consultando disponibilidad de avisos…</span><span class="loading-placeholder" aria-hidden="true"></span></div>
+        } @else if (errorEstadoPush()) {
+          <div role="alert" class="flex flex-wrap items-center gap-3 rounded-xl bg-rose-50 p-3 text-sm text-rose-700"><span>{{ errorEstadoPush() }}</span><button type="button" (click)="cargarEstadoPush()" class="min-h-11 font-semibold underline">Reintentar consulta de avisos</button></div>
+        } @else if (!pushConfigurado()) {
           <p class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:text-amber-200" role="status">
             El servidor todavía no tiene claves Web Push. El administrador debe configurarlas para activar esta opción.
           </p>
@@ -248,7 +252,7 @@ import {
       <details id="recurring" class="settings-disclosure scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6" [open]="seccionAbierta() === 'recurring'" (toggle)="alternarSeccion('recurring', $event)">
         <summary><strong>Movimientos recurrentes</strong><span>Revisa tus registros programados</span></summary>
         <div class="settings-disclosure__content">
-        <div class="mb-4 flex items-start justify-between gap-3">
+        <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2 class="text-base font-bold text-slate-900">Movimientos recurrentes</h2>
             <p class="mt-1 text-xs text-slate-500">Kaptal no crea cargos automáticamente. Confirma cada movimiento cuando llegue su fecha.</p>
@@ -257,12 +261,12 @@ import {
         </div>
 
         @if (errorPlantillas()) {
-          <div role="alert" class="flex justify-between gap-3 rounded-xl bg-rose-50 p-3 text-sm text-rose-700">
+          <div role="alert" class="flex flex-wrap justify-between gap-3 rounded-xl bg-rose-50 p-3 text-sm text-rose-700">
             <span>{{ errorPlantillas() }}</span>
             <button type="button" (click)="cargarPlantillas()" class="font-semibold underline">Reintentar</button>
           </div>
         } @else if (cargandoPlantillas()) {
-          <p class="py-6 text-center text-sm text-slate-400">Cargando plantillas...</p>
+          <div class="finance-loading-card" role="status" aria-label="Cargando movimientos recurrentes"><span class="sr-only">Cargando plantillas…</span><span class="loading-placeholder" aria-hidden="true"></span></div>
         } @else if (plantillas().length === 0) {
           <p class="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">Aún no hay movimientos recurrentes. Puedes crear uno al registrar un gasto o ingreso.</p>
         } @else {
@@ -540,6 +544,8 @@ export class ConfiguracionComponent implements OnInit {
   readonly errorBorrado = signal<string | null>(null);
   get hoy(): string { return fechaFinanciera(); }
   readonly pushConfigurado = signal(false);
+  readonly cargandoEstadoPush = signal(false);
+  readonly errorEstadoPush = signal<string | null>(null);
   readonly pushActivo = signal(false);
   readonly guardandoPush = signal(false);
   readonly probandoWhatsApp = signal(false);
@@ -617,18 +623,28 @@ export class ConfiguracionComponent implements OnInit {
     void this.cargarEstadoPush();
   }
 
-  private async cargarEstadoPush(): Promise<void> {
+  async cargarEstadoPush(): Promise<void> {
+    if (this.cargandoEstadoPush()) return;
+    this.cargandoEstadoPush.set(true);
+    this.errorEstadoPush.set(null);
     try {
       const response = await firstValueFrom(this.finanzasService.getConfiguracionPush());
-      this.pushConfigurado.set(response.success && response.data?.configurado === true);
+      if (!response.success || !response.data) {
+        this.errorEstadoPush.set(response.message || 'No se pudo consultar la disponibilidad de avisos.');
+        return;
+      }
+      this.pushConfigurado.set(response.data.configurado === true);
       if (!this.pushConfigurado() || !this.swPush.isEnabled) return;
       const subscription = await firstValueFrom(this.swPush.subscription);
       this.pushActivo.set(subscription !== null);
       if (subscription) {
         await firstValueFrom(this.finanzasService.guardarSuscripcionPush(subscription.toJSON()));
       }
-    } catch {
+    } catch (error: unknown) {
       this.pushActivo.set(false);
+      this.errorEstadoPush.set(mensajeDeError(error, 'No se pudo consultar la disponibilidad de avisos.'));
+    } finally {
+      this.cargandoEstadoPush.set(false);
     }
   }
 
