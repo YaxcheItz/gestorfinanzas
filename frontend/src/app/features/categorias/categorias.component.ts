@@ -138,8 +138,9 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
               <legend class="mb-2 block text-xs font-semibold text-slate-700">Icono</legend>
               <div class="mb-3 flex flex-wrap gap-2" aria-label="Emojis nativos">
                 @for (emoji of emojisDisponibles; track emoji) {
-                  <button type="button" (click)="seleccionarEmoji(emoji)" [attr.aria-label]="'Usar emoji ' + emoji" [attr.aria-pressed]="emojiPersonalizado === emoji" class="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-xl hover:bg-emerald-50">
+                  <button type="button" (click)="seleccionarEmoji(emoji)" [attr.aria-label]="'Usar emoji ' + emoji" [attr.aria-pressed]="emojiPersonalizado === emoji" [class.category-icon-option--selected]="emojiPersonalizado === emoji" class="category-icon-option flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-xl hover:bg-emerald-50">
                     {{ emoji }}
+                    @if (emojiPersonalizado === emoji) {<span class="category-choice-check category-choice-check--corner" aria-hidden="true">✓</span>}
                   </button>
                 }
               </div>

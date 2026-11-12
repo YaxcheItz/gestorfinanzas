@@ -63,6 +63,10 @@ for(const dark of [false,true]){
       await focus(colors.nth(2));await expect(target.locator('.category-choice-check')).toBeVisible();
       const icon=dialog.getByRole('button',{name:/^Icono /}).nth(1);await focus(icon);await p.keyboard.press('Space');await expect(icon).toHaveAttribute('aria-pressed','true');await expect(icon.locator('.category-choice-check')).toBeVisible();
       await p.screenshot({path:info.outputPath('icon-selected.png'),fullPage:true});expect(writes).toEqual([]);
+      const emoji=dialog.getByRole('button',{name:/^Usar emoji /}).first();await focus(emoji);await p.keyboard.press('Space');
+      await expect(emoji).toHaveAttribute('aria-pressed','true');await expect(emoji.locator('.category-choice-check')).toBeVisible();
+      await expect(icon).toHaveAttribute('aria-pressed','false');await expect(icon.locator('.category-choice-check')).toHaveCount(0);
+      await p.screenshot({path:info.outputPath('emoji-selected.png'),fullPage:true});expect(writes).toEqual([]);
     }finally{await c.close();}
   });
 
