@@ -35,7 +35,7 @@ test(`PWA: captura con acceso vencido offline y ${cookieValida?'renovación':'re
   await page.locator('#email').fill(email);await page.locator('#password').fill(password);
   await page.getByRole('button',{name:'Iniciar sesión',exact:true}).click();
   await page.getByRole('button',{name:'Añadir movimiento',exact:true}).click();
-  await page.locator('#quick-capture-panel').getByRole('button',{name:'Introducir datos manualmente'}).click();
+  await page.locator('#quick-capture-panel').getByRole('button',{name:'Registro manual'}).click();
   const inicial=page.getByRole('dialog',{name:'Añadir movimiento',exact:true});
   await expect(inicial.locator('select[name="cuenta"]')).toContainText('Banco acceso vencido');
   await inicial.getByRole('button',{name:'Cerrar registro',exact:true}).click();

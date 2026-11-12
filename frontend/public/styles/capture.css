@@ -577,8 +577,8 @@ html .monai-theme #quick-capture-panel .capture-panel__head strong{color:var(--k
 /* Mantener la captura accesible sin ocupar casi toda la pantalla. */
 @media (max-width: 639px) {
   html .monai-theme #quick-capture-panel {
-    height: min(30rem, calc(var(--dialog-visible-height, 100dvh) - .5rem));
-    top: calc(var(--dialog-visible-top, 0px) + var(--dialog-visible-height, 100dvh) - min(30rem, var(--dialog-visible-height, 100dvh) - .5rem));
+    height: min(44rem, calc(var(--dialog-visible-height, 100dvh) - .5rem));
+    top: calc(var(--dialog-visible-top, 0px) + var(--dialog-visible-height, 100dvh) - min(44rem, var(--dialog-visible-height, 100dvh) - .5rem));
   }
   html .monai-theme #quick-capture-panel.capture-panel--compact {
     height: min(24rem, calc(var(--dialog-visible-height, 100dvh) - .5rem));
@@ -600,3 +600,13 @@ textarea.voice-screen__transcript { display: block; box-sizing: border-box; widt
 .voice-screen__hint, .voice-screen__status, .voice-screen [role="status"], .voice-screen label { overflow-wrap: anywhere; line-height: 1.5; }
 .voice-screen__text { max-width: 100%; margin: .3rem; padding: .6rem 1rem; white-space: normal; line-height: 1.4; }
 textarea.voice-screen__transcript { font-size: 1rem; }
+
+/* Revisión del chat: conversación amplia, error visible y editor con un solo scroll. */
+html .monai-theme #quick-capture-panel.capture-panel--editing .capture-panel__tools { display: none; }
+html .monai-theme #quick-capture-panel .capture-editor { display: flex; flex-direction: column; flex: 1; min-height: 0; max-height: none; overflow: hidden; }
+html .monai-theme #quick-capture-panel .capture-editor__fields { display: grid; gap: 12px; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 2px; }
+html .monai-theme #quick-capture-panel .capture-editor > :not(.capture-editor__fields) { flex-shrink: 0; }
+html .monai-theme #quick-capture-panel .capture-editor > p { margin: 0; font-size: .75rem; line-height: 1.4; }
+html .monai-theme #quick-capture-panel .capture-proposal__actions { flex-wrap: wrap; }
+html .monai-theme #quick-capture-panel .capture-proposal__actions button { flex: 1 0 8rem; min-height: 44px; padding: .6rem .75rem; overflow-wrap: normal; word-break: normal; }
+html .monai-theme #quick-capture-panel .capture-chat__error { flex-shrink: 0; margin: .35rem 0; max-height: 5rem; overflow-y: auto; overscroll-behavior: contain; }
