@@ -41,7 +41,7 @@ import {
 
         <div class="flex w-full sm:w-auto flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
           <!-- Selector de Mes y Año -->
-          <div class="flex items-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-1 shadow-2xs">
+          <div class="budget-period-controls flex items-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-1 shadow-2xs">
             <select
               [ngModel]="mesSeleccionado()"
               (ngModelChange)="cambiarMes($event)"
@@ -145,7 +145,7 @@ import {
               <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
               </svg>
-              <span class="min-w-0 [overflow-wrap:anywhere]">Crear primer presupuesto</span>
+              <span class="min-w-0">Crear primer presupuesto</span>
             </button>
           </div>
         } @else {
