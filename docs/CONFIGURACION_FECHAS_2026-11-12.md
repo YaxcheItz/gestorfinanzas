@@ -32,3 +32,5 @@ Las pruebas son de lectura y navegación. No acreditan envío de perfiles/contra
 Conservar calendario aprobado, historial aplazado, chat temporal sin borradores persistentes y exclusión de PR271. Lentitud/logout siguen aplazados.
 
 Para continuar: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md, docs/CONFIGURACION_FECHAS_2026-11-12.md y docs/VERIFICACION_CODEX_2026-11-12.md. Crea rama nueva desde develop remoto comprobado e incorpora esta dependencia. Sigue con contraste de bordes/iconos/selecciones y los campos nativos restantes usando datos ficticios; Android aislado y aceptación visual permanecen pendientes».
+
+Codigo de esta etapa: 937307720780b7b5f8449d1b60335e72508808bb subido y comprobado con ls-remote en mejoras/configuracion-fechas-accesibles. Seguimiento documental posterior en la misma rama. Sin integracion, despliegue, instalacion ni CI remota comprobada.
