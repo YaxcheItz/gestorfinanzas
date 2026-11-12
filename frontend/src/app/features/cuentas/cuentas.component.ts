@@ -215,7 +215,7 @@ import { fechaCivilFinanciera } from '../../core/utils/periodo-financiero';
           role="dialog"
           aria-modal="true"
           aria-labelledby="cuenta-modal-titulo"
-          class="bg-white rounded-2xl max-w-lg w-full max-h-[calc(100dvh-1rem)] overflow-y-auto border border-slate-200 shadow-2xl">
+          class="account-entry-sheet bg-white rounded-2xl max-w-lg w-full max-h-[calc(100dvh-1rem)] overflow-y-auto border border-slate-200 shadow-2xl">
           <header class="p-4 sm:p-6 border-b border-slate-100 flex items-center justify-between">
             <div>
               <h2 id="cuenta-modal-titulo" class="text-lg font-bold text-slate-900">
@@ -343,7 +343,7 @@ import { fechaCivilFinanciera } from '../../core/utils/periodo-financiero';
                     class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
                     placeholder="Ej. 25000" />
                 </div>
-                <div class="grid grid-cols-2 gap-3">
+                <div class="credit-card-dates grid grid-cols-2 gap-3">
                   <div>
                     <label for="cuenta-dia-corte" class="block text-xs font-semibold text-slate-700 mb-1.5">Día de corte <span class="text-rose-600">*</span></label>
                     <input

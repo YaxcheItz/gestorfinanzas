@@ -284,7 +284,7 @@ import {
           <form (ngSubmit)="guardarPresupuesto()" class="p-4 sm:p-6 space-y-4">
             
             @if (modalError()) {
-              <div class="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs">
+              <div role="alert" class="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs">
                 {{ modalError() }}
               </div>
             }

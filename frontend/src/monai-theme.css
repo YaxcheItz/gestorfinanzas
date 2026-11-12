@@ -189,3 +189,9 @@ html .monai-theme .account-card h2.account-card__name { overflow: visible; text-
   .budgets-page button { overflow-wrap: normal; word-break: normal; }
   .budgets-page button svg { flex-shrink: 0; }
 }
+
+/* Los días de la tarjeta necesitan una columna propia con texto ampliado. */
+@media (max-width: 28rem) {
+  .account-entry-sheet .credit-card-dates { grid-template-columns: minmax(0, 1fr); }
+  .account-entry-sheet .credit-card-dates input { min-width: 0; width: 100%; }
+}
