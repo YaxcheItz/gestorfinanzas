@@ -1,3 +1,817 @@
+## Validacion del propietario tras Android 0.1.44 - 11 noviembre 2026
+
+El propietario confirma que el punto de comportamiento del chat funciona como queria y que un aviso normal reciente de Amex funciono. Es validacion real reportada por el usuario, sin inspeccion del aviso ni acceso a movimientos. No demuestra soporte de todos los bancos o formatos. No se confirmo nueva medicion de apertura tras horas de inactividad. La carrera preexistente de logout sigue como riesgo reproducido con datos ficticios, sin evidencia de incidente real del propietario; aclarar alcance antes de afirmar solucion.
+
+## Android 0.1.44 instalada y verificada - 11 noviembre 2026
+
+Se recupero el mecanismo de compilacion anterior mediante helper local, con configuracion de firma consumida solo por el subproceso y sin mostrar credenciales. El bloqueo anterior se debia a ejecutar Gradle sin ese mecanismo; las variables globales no eran necesarias. APK .local/releases/Kaptal-0.1.44.apk version0.1.44/codigo45 SHA256 24c3db3481abd325956be9c6d071e5fb41e4820431bb46191026eb00668efa4b; certificado SHA256 b5f360604095a50f3208299767dcedca2f3acfc5087df8be1fde9cc075c120c3 coincide con release previa. 87 archivos web identicos al build, sin servidor de desarrollo y sin debuggable habilitado. Frontend del worktree coincide con origin/main; CI Android b91fed1 success.
+
+ADB install -r Success en Samsung SM-A546E. Paquete instalado version0.1.44/codigo45, ultima actualizacion 2026-11-11 17:54:29 y primera instalacion conservada 2026-10-22 00:26:31. SHA256 de base.apk instalada coincide exactamente con candidata. No se abrio la aplicacion, leyeron datos de sesion ni probaron finanzas reales; conservacion de fecha y update no prueban comportamiento funcional ni estado interno de datos. Pendiente comprobar cierre/reapertura del chat en uso normal, apertura tras horas y aviso bancario normal. Helper .local/build-release-044.py mantiene secretos fuera de salida. No integrar PR #271.
+
+## Reintento solicitado de firma Android - 11 noviembre 2026
+
+Telefono conectado por ADB, Samsung SM-A546E. Ultima comprobacion de paquete: Kaptal 0.1.43 codigo44, SHA256 49d8f862a6794897d65fd3da54caceeb1350777e87f3cc96ebfc7d44b8a8c273. Se restauro la configuracion original de firma en el worktree entrega/android-044-preparacion-sin-firma y se reintento assembleRelease a peticion del usuario. Fallo en packageRelease: SigningConfig release is missing required property storeFile. Variables KAPTAL_KEYSTORE y KAPTAL_KEY_PASSWORD ausentes (solo presencia comprobada). No se leyeron credenciales ni se instalo APK, ni se altero sesion o finanzas. El consejo previo de configurar variables en otra ventana PowerShell no las transmite a este proceso; la compilacion debe ejecutarse desde el proceso donde esten disponibles. Pendiente habilitar mecanismo original de firma, verificar certificado/contenido/hash e instalar como actualizacion. Existe APK sin firmar de preparacion, no es una entrega instalable.
+
+## Despliegues del estado documentado - 11 noviembre 2026
+
+Vercel Production 7720726934 y Render main-kaptal-api 7720722097 reportan success para origin/main 3a7e34c5f79e725cb86bc4ef6121f617e8d408b5; pagina y health publico HTTP 200. Su unico cambio respecto al codigo CI 43091982543 exitoso es documentacion. CI main 43095890430 continua en cola mientras la ejecucion anterior 43093942757 permanece en carga de evidencia; no se afirma CI final aprobada para el commit documental. Android 43093942714 del mismo codigo paso, pero no hay release firmada 0.1.44 ni telefono conectado. Continuar verificando CI y preparar instalacion sin cambiar sesion ni datos cuando exista firma y dispositivo.
+
+## Documentacion integrada - 11 noviembre 2026
+
+La documentacion se integro a origin/develop 74a85bb60a7301e38198fa7245d817d57d85f82b y origin/main 3a7e34c5f79e725cb86bc4ef6121f617e8d408b5. Frente al main b91fed1 publicado solo cambian docs/ESTADO_SESION.md y docs/PLAN_MAESTRO_KAPTAL.md; codigo funcional igual al que paso CI completa 43091982543 y despliegues b91fed1. CI main 43095890430 y posible nuevo despliegue del commit de documentacion en curso; verificar antes de afirmar resultados. CI Android b91fed1 43093942714 paso; aun sin APK release firmada ni instalacion, ADB sin dispositivo. No integrar #271. Pendientes: comprobacion real tras inactividad, aviso normal, carrera de logout y entrega firmada Android con hash y actualizacion conservando datos.
+
+## Publicacion del chat sin borradores - 11 noviembre 2026
+
+El codigo funcional de develop 9e7a70ecc42f29c93b66f3878e9300fa031abab9 paso los seis trabajos de CI 43091982543 y fue integrado a main b91fed190dd901c87bf52efaf2db0f1bc976ed7e con arbol identico. Despliegues Vercel Production 7720518355 y Render main-kaptal-api 7720496965 success para b91fed1. La pagina publica respondio HTTP 200 en 0.350 s y health backend HTTP 200 en 0.310 s desde PC; no mide API autenticada ni determina causa de lentitud prolongada. CI Android de main 43093942714 success; CI general 43093942757 aun en curso al registrar. PR #271 obsoleto: no integrar.
+
+Al cerrar y reabrir la ventanita se conserva texto y conversacion en memoria. Al reiniciar no se restauran; la migracion borra definitivamente los borradores locales antiguos y conserva la cola de movimientos ya confirmados. Existen registros tecnicos de propuestas en el servidor, no consultados ni modificados como datos reales. Limite de seguridad de creacion 500 por 24 horas, sin invalidar otras ventanas, con casos sinteticos de 51, 500/501, idempotencia y lote parcial probados. Version de fuente Android 0.1.44 codigo 45; APK release firmada y verificacion de contenido/hash pendientes, no instalada. ADB sin dispositivo. Pendientes: medir lentitud real equivalente tras horas, validar aviso bancario normal, y tratar la carrera preexistente de logout con pruebas ficticias. No tocar MSI ni finanzas reales.
+
+## Integracion de chat y limite - 11 noviembre 2026
+
+CI de rama 43091982543 del commit 9e7a70ecc42f29c93b66f3878e9300fa031abab9 completo exitoso en seis trabajos, PostgreSQL y E2E/PWA incluidos. Integrado por fast-forward a origin/develop 9e7a70e. Rama correcciones/promocion-chat-final desde develop incorpora main sin modificar el arbol; origin/main b91fed190dd901c87bf52efaf2db0f1bc976ed7e tiene exactamente el contenido probado. CI, Android y despliegues de main en curso; no asumir exito hasta verificar. Sin PR por conector ausente y gh sin autenticacion. PR #271 y promocion vieja db33a67 no integrar. ADB no mostro dispositivo; no hay APK release 0.1.44 firmada ni instalacion. El servidor conserva propuestas tecnicas; no se restauran en la UI. Health publico respondio 200 en 0.472 s desde PC, no mide la API autenticada ni el arranque tras inactividad. Aviso bancario real normal sigue pendiente. No se usaron datos financieros reales en pruebas.
+
+## Limite de lote comprobado - 11 noviembre 2026
+
+Prueba unitaria ficticia adicional: si el limite rechaza la segunda accion de un lote no se guarda ninguna propuesta parcial. Suite AiActionServiceTest 11/11 exitosa; integracion H2 23/23 del codigo funcional anterior. Cambio solo de prueba; sigue pendiente CI del ultimo commit y PostgreSQL.
+
+## Limite sin conexion anidada - 11 noviembre 2026
+
+Revision: la primera version e1460f6 invocaba el limite compartido dentro de una transaccion, con posible presion del pool. No integrar ese commit solo. Se mueve el limite a las rutas de creacion individual y por lote de AiActionService, antes de entrar a la transaccion; el servicio interno ya no cuenta pendientes. Pruebas locales H2: 23 integracion y 10 unitarias, todas correctas; incluyen 51 propuestas previas, confirmacion idempotente, 500 creaciones y rechazo de la 501, aislamiento de otra cuenta. Falta CI/PostgreSQL del commit final y publicacion. No se probaron cuentas reales.
+
+## Ajuste del limite de propuestas del chat - 11 noviembre 2026
+
+El servidor necesita propuestas tecnicas para confirmar con idempotencia; aun persisten y no se borraron registros reales. Ya no se recuperan en la interfaz al reiniciar. Detectado que el limite anterior de 50 propuestas pendientes en 24 horas podia bloquear el chat sin permitir descartar las ya no mostradas. En rama correcciones/limite-propuestas-chat se sustituye por un limite existente de abuso: 500 creaciones por cuenta por ventana de 24 horas. No se descartan propuestas activas de otras ventanas ni confirmaciones offline; al llegar al limite se rechazan solicitudes hasta vencer la ventana. El almacenamiento compartido de limite depende de la configuracion existente.
+
+Pruebas locales H2 con datos ficticios: 51 pendientes no bloquean y confirmar dos veces una propuesta anterior produce un unico movimiento; dos usuarios aislados y limite 500/501 probados. Pruebas anteriores de servicio y concurrencia: 32 exitosas. Falta CI del commit, integracion y despliegue. develop 7431c1d prepara Android 0.1.44 codigo 45; CI Android correcta. main aun a381859 y telefono ausente. No se ha firmado ni instalado APK nueva. PR #271 obsoleto: no integrar.
+
+## Integracion develop y candidata Android - 11 noviembre 2026
+
+CI 43087378527 de eded8aa15f2c0476122fceba28808bc273cc3cde termino exitosamente en sus seis trabajos, incluidos flujos E2E y PWA. Se integro directamente por fast-forward a origin/develop despues de verificar el SHA base; conector GitHub ausente y gh sin sesion, no se creo PR. PR anterior #271 es obsoleto y NO integrar. CI y Android de develop se deben verificar antes de promover main.
+
+Rama entrega/android-044-sin-borradores creada desde develop eded8aa; candidata versionName 0.1.44 y versionCode 45, superior a 0.1.43/codigo44. Al instalarse, la migracion elimina definitivamente los borradores anteriores segun autorizacion explicita; conserva la cola de movimientos confirmados. No existe aun APK firmada ni verificacion de hash/contenido; ADB no mostraba telefono y variables de firma no estaban disponibles. Nada publicado en main ni instalado. El texto se conserva solo al cerrar/reabrir ventanita en la misma sesion.
+
+## Build Android local sin borradores - 11 noviembre 2026
+
+Rama correcciones/quitar-borradores-chat eded8aa: cap sync y Gradle local :app:testDebugUnitTest :app:lintDebug :app:assembleDebug :app:assembleDebugAndroidTest completaron BUILD SUCCESSFUL. Son builds/pruebas locales de depuracion, no CI Android ni release firmada ni prueba ejecutada en telefono. E2E local con backend H2 de prueba paso; IndexedDB ficticio verifico eliminacion de borradores y conservacion de cola confirmada. CI 43087378527 tenia cinco trabajos correctos y E2E en curso; ultima consulta GitHub agoto tiempo. No integrado ni instalado. Al instalar la nueva version se eliminan definitivamente los borradores antiguos del perfil, segun la autorizacion del usuario. PR #271 anterior no integrar.
+
+## Rama de eliminacion de borradores subida - 11 noviembre 2026
+
+Usuario confirma que no necesita conservar propuestas de borradores; solo pide conservar texto y conversacion al cerrar/reabrir ventanita en la misma sesion. Rama correcciones/quitar-borradores-chat commit eded8aa subida desde develop e4eb3f9. Elimina almacenamiento antiguo de borradores mediante migracion IndexedDB v4 y ya no restaura texto al recargar; no elimina la cola de movimientos ya confirmados. PR #271 de copias es obsoleto y no debe integrarse. El cambio aun no esta en develop/main ni instalado.
+
+Build, suite frontend 569 antes del renombre interno, 71 pruebas focales posteriores y E2E Chromium aislado de migracion/cola sin conexion pasaron. E2E con backend de prueba H2 y cuenta ficticia tambien paso: conservar texto al cerrar y reabrir, limpiar al recargar y conservar saldo ficticio. CI 43087378527 en curso sobre eded8aa; verificar resultado. Conector GitHub no disponible y gh sin sesion, asi que no se creo PR ni se leyeron credenciales. Android CI no se dispara en esta rama sin PR. Telefono desconectado; firma de release no configurada en esta sesion. No se modificaron datos reales.
+
+## Decision final y cambio de chat sin borradores - 11 noviembre 2026
+
+Usuario aclara: no necesita conservar propuestas de borradores ni guardar nada para continuar despues; al cerrar y reabrir la ventanita durante la misma sesion quiere conservar texto y conversacion como ahora. El PR #271 de copias queda descartado y NO debe integrarse. Rama nueva correcciones/quitar-borradores-chat desde develop e4eb3f9.
+
+Cambio local: quitado autoguardado y recuperacion de texto, contexto y propuestas al reiniciar; cerrar ventana conserva el estado en memoria. IndexedDB sube de version 3 a 4 y elimina el object store anterior de borradores, conforme autorizacion explicita; esto es irreversible en el perfil donde se ejecute. No se toca el object store de movimientos confirmados ni se modifica sesion. Los registros de propuestas del servidor existentes no se consultaron ni eliminaron. Se quitan mensajes de guardado de borradores en actualizacion. Datos reales y telefono no se usaron en pruebas.
+
+Build correcto; suite frontend 569 pruebas paso antes de renombrar variable de edicion en memoria; despues del renombre build y 71 pruebas focales pasaron. E2E Chromium aislado con IndexedDB real paso: migra base ficticia, elimina borrador viejo, preserva movimiento confirmado pendiente y conserva texto al cerrar/reabrir pero no al recargar. ADB desconectado. Falta CI sobre commit exacto, recorrido E2E con backend ficticio, revision, integracion develop/main y APK superior firmada si disponible; no instalado ni publicado. Quedan pendientes rendimiento real, avisos normales y carrera previa de logout, independientes de la eliminacion de borradores.
+
+## Decision: quitar borradores del chat - 11 noviembre 2026
+
+Usuario pide quitar por completo la funcionalidad de borradores y todo lo relacionado; la propuesta de copias y recuperacion del PR #271 queda descartada y no debe integrarse. Mantener anteriores instrucciones de conservar propuestas pendientes y datos existentes: no borrar, recuperar o modificar datos reales para pruebas.
+
+Creada rama correcciones/quitar-borradores-chat desde origin/develop e4eb3f922c7466693fa739e1d2069ac9d1c7fa01, worktree .local/worktrees/quitar-borradores-chat. Analisis: el registro IndexedDB borradores contiene tanto texto/contexto como acciones pendientes locales; al confirmar offline la transaccion quita la accion del mismo registro y guarda movimiento de forma atomica. Quitar todo ese codigo sin migrar las acciones podria perder propuestas o duplicar cargos. Disenar y probar separacion atomica de propuestas locales y confirmaciones, aislamiento por usuario y concurrencia, manteniendo intactos los registros existentes y sin restaurar el texto; retirar autoguardado, restauracion, textos y controles de borradores y conservar advertencias adecuadas en actualizacion PWA. No implementar guardado automatico de movimientos sin autorizacion. Falta implementar, pruebas locales y E2E ficticias, CI, integrar y entregar APK superior cuando se pueda firmar. Telefono desconectado. Prioridades posteriores: lentitud tras inactividad, avisos en uso normal y carrera de logout documentada.
+
+## Suite de seguridad de sesion - 11 noviembre 2026
+
+SesionSeguridadIntegrationTest completo en perfil test/H2: 10 pruebas, 0 fallos, incluidas las dos pruebas observacionales nuevas y las de rotacion/reutilizacion. El script Chromium aislado con Path=/api/auth tambien paso y el commit de evidencia 7dfb172 se subio a correcciones/identidad-logout. Son pruebas del comportamiento actual, no una correccion ni validacion de cookies Android. PR #271 sigue borrador pese a CI/Android exitosos: pendiente correccion integral de identidad, limpieza de copias y verificacion Android; no se publico ni instalo cambio.
+
+## Cookie con ruta equivalente a Kaptal - 11 noviembre 2026
+
+El reproductor local Chromium usa ahora HttpOnly SameSite=Lax y Path=/api/auth, como la cookie de Kaptal, con valores ficticios y servidor local. Paso al comprobar borrado por respuesta atrasada y envio de cookie nueva en logout tardio. La prueba no modela HTTPS/Secure, backend real ni Android. Dos pruebas MockMvc/H2 separadas pasaron: logout emite borrado y revoca cookie recibida, incluso si corresponde a otra cuenta ficticia. Es evidencia de mecanismos, no una solucion ni demostracion de un incidente real. Ninguna modificacion de produccion o sesion del usuario.
+
+## Prueba backend con dos cuentas ficticias - 11 noviembre 2026
+
+En correcciones/identidad-logout, SesionSeguridadIntegrationTest ejecuta logout MockMvc con cookie de una segunda cuenta creada en H2: pasa 1/1, la segunda sesion queda revocada y la primera puede renovarse. Esto demuestra el comportamiento del servidor cuando recibe esa cookie; no prueba que haya ocurrido en cuentas reales ni une aun navegador, backend y Android. El script Chromium local prueba separadamente el envio/cabecera tardia con cookies ficticias. No se modifico codigo productivo ni sesion real. Se requiere corregir coordinacion de identidad, retencion y estado nativo, y pruebas integradas antes de liberar PR #271.
+
+## Evidencia backend de logout con H2 - 11 noviembre 2026
+
+En rama correcciones/identidad-logout se anadio una prueba observacional en SesionSeguridadIntegrationTest: dos sesiones del mismo usuario ficticio, POST MockMvc de logout con cookie de la sesion nueva, comprobacion de Set-Cookie Max-Age=0 y rechazo posterior del refresh de esa cookie. Paso 1/1 en perfil test con H2 en memoria; no representa orden de navegador completo, cookies reales en Android ni usuarios reales. El script local Chromium reproduce por separado Set-Cookie tardio y envio de cookie nueva. Juntas describen mecanismos; aun falta prueba integrada y solucion compatible. No se modifico codigo productivo ni sesion real. CI PR #271 completa y Android correctas, pero permanece borrador por riesgo de retencion e identidad; no se ha integrado ni publicado.
+
+## Reproduccion aislada de cookies - 11 noviembre 2026
+
+CI PR #271 43076680307 en fec83cf paso sus seis trabajos incluido E2E; Android 43076680344 paso. Pese a CI verde, no integrar por retencion de copias y carreras de identidad sin resolver. Telefono no aparecia en ADB al comprobar.
+
+Nuevo script frontend/scripts/repro-cookie-logout-local.cjs en rama correcciones/identidad-logout: servidor local efimero y Chromium aislado con cookies HttpOnly ficticias reproducen que Set-Cookie de logout anterior elimina cookie de login nuevo y que una peticion de logout enviada despues del login adjunta la cookie nueva. Prueba paso con esos comportamientos esperados para demostrar riesgo. No accede a Kaptal real ni credenciales; no demuestra comportamiento del backend real, Android, ni dispositivos distintos. Continuan necesarias pruebas de integracion, una solucion compatible de cookie/rotacion y CAS nativo, y limpieza segura de copias.
+
+## Revision integral de identidad y descarga Android - 11 noviembre 2026
+
+Revisiones independientes confirman que logout tardio puede revocar la cookie de una sesion nueva o borrarla al llegar una respuesta; estado nativo closed puede limpiar avisos/reglas. Login/registro/Google/refresh emiten cookies, solo refresh tiene lock. No integrar un guard JS parcial ni eliminar copias sin resolver identidad, cookie y estado nativo. Rama pruebas/carrera-logout ab2b8fc reproduce en mocks solo perdida de identidad frontend A-B y A-B-A; no prueba cookies ni Android.
+
+La descarga Blob+enlace de copias funciona en Chromium escritorio sintetico, pero no esta validada en WebView Android; MainActivity no muestra puente nativo de descarga. No se afirma que falle. Si se prueba, usar debug aislado con JSON ficticio, sin login ni datos reales, comparar archivo y cancelacion; si falla evaluar selector Android ACTION_CREATE_DOCUMENT. PR #271 sigue borrador. CI 43076680307 supero instalacion y ejecuta E2E; Android 43076680344 paso. El checkout principal muestra eliminacion nueva de INSTALACION_COMPLETA_OPENCODE.md, no tocada por este trabajo; conservarla.
+
+## Evidencia de carrera subida - 11 noviembre 2026
+
+Rama pruebas/carrera-logout publicada sin integrar en ab2b8fc835b9a004d0b78cb69fcbd8f3315e6d31, autor YaxcheItz. Contiene dos pruebas intencionadamente rojas que reproducen perdida de identidad frontend con logout tardio A-B y A-B-A: 22 pasaron y 2 fallaron. Son mocks, no procesan Set-Cookie ni prueban Android; no integra ni modifica codigo productivo. Ver .local/worktrees/carrera-logout y sus documentos. El riesgo de cookie y cierre nativo requiere pruebas adicionales y coordinacion antes de cualquier correccion publicada.
+
+## Carrera de identidad reproducida con datos ficticios - 11 noviembre 2026
+
+Rama de pruebas pruebas/carrera-logout desde develop e4eb3f9, worktree .local/worktrees/carrera-logout. HttpTestingController: 24 pruebas de AuthService, 22 pasan y 2 fallan intencionadamente en A-B y A-B-A: la respuesta del logout previo deja vacia la identidad nueva. Es evidencia del estado frontend/localStorage de prueba; el mock no procesa Set-Cookie y no prueba cookies reales ni Android. No hay codigo productivo modificado en esta etapa. No integrar pruebas rojas. El diseno debe evitar tambien cierre nativo y borrado de cookie tardios, no solo ocultar el fallo de interfaz; conservar coordinacion de refresh y no usar cuentas ni sesiones reales.
+
+## CI vuelve a ejecutar E2E - 11 noviembre 2026
+
+PR #271 commit fec83cf: build y suite completa local 583 pruebas pasaron; E2E local aislado de copias y dos cuentas paso. CI 43076680307 supero instalacion de Chromium y ejecuta flujos E2E; los otros cinco trabajos pasaron. Android 43076680344 en curso. No asumir resultado E2E hasta finalizar. La recuperacion de red hace innecesario por ahora integrar el experimento #272, que fallo DNS en Ubuntu 24.
+
+El PR permanece borrador por retencion de copias tras borrar cuenta y carreras de logout/cookie/nativo descritas abajo; no integrar ni instalar solo porque CI pase. Un analisis separado prepara pruebas sinteticas de la carrera; no se manipulo sesion real. Telefono verificado en 0.1.43 codigo44 con hash coincidente.
+
+## PR de chat actualizado y riesgo de identidad - 11 noviembre 2026
+
+PR #271 sigue borrador en fec83cf788658a3f22d7ffa84b9da8dfe3b5c853. Protege cierre de voz/formulario y lectura de propuestas frente a fallos y respuestas tardias; build, 83 pruebas focales y E2E local sintetico pasaron. Suite 582 paso antes de la ultima prueba focal. No integrado ni instalado.
+
+Revision independiente: borrar una cuenta deja copias locales y logout tardio puede afectar una cuenta nueva; la respuesta /auth/logout puede borrar cookie y el cierre nativo puede limpiar reglas/avisos. Un chequeo posterior de usuario no basta. Disenar serializacion e identidad/version compartida, contrato seguro de cookie y operacion nativa condicionada; limpieza IndexedDB atomica por usuario tras exito remoto con proteccion de escrituras tardias. Probar A-B y A-B-A, procesos y errores en fixtures; no borrar cuenta ni cambiar sesion reales. No implementar limpieza parcial. Ubuntu 24 en PR #272 tambien fallo DNS antes de pruebas, no integrar. Imagen oficial Playwright es opcion sin validar: Docker Engine local no disponible, MCR no respondio y digest no confirmado; no relajar controles.
+
+## Cierres y propuestas concurrentes; privacidad aun bloqueada - 11 noviembre 2026
+
+En PR #271 se prepararon correcciones para impedir que al fallar IndexedDB se oculten transcripciones o se abra otro formulario/navegue; se muestra el error en voz. El cierre espera guardado y detecta reaperturas y cambio de identidad. Una respuesta tardia de propuestas se descarta si cambiaron las acciones o hay una operacion de confirmacion, edicion o captura en curso. Build Angular, 83 pruebas focales y E2E Chromium aislado de copias, desconexion y dos cuentas pasaron; suite completa 582 paso antes de la ultima prueba focal adicional. No se tocaron datos reales. Pendiente CI del commit final y validacion de descarga en WebView Android.
+
+PR #271 NO listo para integrar: archivos de copias pueden persistir despues de eliminar cuenta. Revision de identidad detecto que logout asincrono puede alcanzar una nueva identidad: NativeSessionPlugin.update(closed=true) limpia configuracion/avisos y /auth/logout puede borrar cookie. Un simple chequeo de identidad tras await no basta. Disenar limpieza y coordinacion segura login/logout/refresh; no borrar cuenta real ni alterar sesion para pruebas. Alternativa CI con imagen Playwright preconfigurada no se probo: Docker Engine local no disponible y registro MCR no respondio; no usar digest no verificado ni relajar los controles. #272 fallo DNS igual en Ubuntu 24 y no debe integrarse por ahora. ADB detecto APK 0.1.43 codigo44 con hash coincidente; no se instalo nada nuevo.
+
+## Revision adicional del chat y bloqueo de privacidad - 11 noviembre 2026
+
+CI #272 Ubuntu 24 fallo antes de E2E con el mismo problema DNS de repositorios; cinco trabajos pasaron. No integrar #272. Alternativa oficial con imagen Playwright preconfigurada sigue sin verificar: Docker Engine local no disponible y registro MCR no respondio; no se han debilitado las pruebas.
+
+Revision independiente detecto cierres asincronos de voz, formulario manual y navegacion que podian perder acceso a un texto si fallaba el guardado; tambien respuestas tardias de propuestas y reapertura simultanea. En rama del chat se preparan correcciones con pruebas ficticias; no publicadas ni instaladas. Build y primeras pruebas focales pasaron antes del ultimo ajuste; repetir verificaciones sobre el commit final.
+
+Bloqueo adicional para integrar: al borrar una cuenta en servidor, las nuevas copias IndexedDB podrian permanecer sin gestion desde esa cuenta. La limpieza debe coordinarse con el cierre asincrono y cambios de identidad para no afectar otra sesion ni borrar datos de otra persona; no se ha borrado ninguna cuenta real. La descarga se probo en Chromium de escritorio, no en WebView Android. No integrar ni publicar hasta resolver y probar las carreras y la retencion, y completar CI.
+
+## Ubuntu 24 no resolvio el fallo de CI - 11 noviembre 2026
+
+CI PR #272 43059117521 sobre cd57d185 fallo al instalar dependencias Chromium por Temporary failure resolving azure.archive.ubuntu.com, apt codigo 100. Los otros cinco trabajos pasaron. Ubuntu 24.04 no resolvio este fallo de DNS; no integrar el experimento ni afirmar que el E2E paso. Los dos intentos previos con Ubuntu 26 tambien fallaron por DNS. Investigar alternativa que ejecute la misma bateria sin omitir validaciones. El telefono se detecto con 0.1.43/codigo44 y hash base.apk coincidente; sin cambios de sesion o datos.
+
+## Rama experimental de CI y APK instalada verificada - 11 noviembre 2026
+
+PR borrador #272 https://github.com/YaxcheItz/gestorfinanzas/pull/272, rama correcciones/ci-e2e-runner-24 desde develop e4eb3f9, commit cd57d185c07285b1f97aba589528f1eb8db83143. Cambia solo el runner E2E a Ubuntu 24.04; conserva comandos y pruebas. CI 43059117521 y 43059086701 iniciadas; no integrado ni publicado. Es una prueba de mitigacion del fallo DNS, no causa demostrada. git diff --check paso; validadores YAML no disponibles, GitHub debe validar workflow.
+
+Telefono detectado por ADB: version 0.1.43 codigo 44, primera instalacion 2026-10-22 y ultima actualizacion 2026-11-11 07:11:50. SHA256 de base.apk instalada 49d8f862a6794897d65fd3da54caceeb1350777e87f3cc96ebfc7d44b8a8c273 coincide con APK local verificada. No se inicio la app, leyeron credenciales ni cambiaron datos o sesion.
+
+## Mitigacion experimental de CI y telefono - 11 noviembre 2026
+
+ADB detecto el telefono y dumpsys package confirmo com.kaptal.app version 0.1.43 codigo 44, ultima actualizacion 07:11:50 y primera instalacion conservada. No se abrio la app ni se cambio la sesion. El segundo intento de CI 43045479543 tambien fallo antes de E2E por fallo temporal DNS de repositorios Ubuntu; Android y los otros cinco trabajos pasaron.
+
+Nueva rama correcciones/ci-e2e-runner-24 desde develop e4eb3f9: fijar solo el job E2E a ubuntu-24.04 sin quitar instalacion de dependencias ni pruebas. GitHub documenta migracion de ubuntu-latest a 26.04 y sugiere fijar 24.04 para mitigar problemas durante el cambio: https://github.com/actions/runner-images/issues/14748. Es una hipotesis verificable, no prueba que la version de Ubuntu causara el fallo DNS. Pendiente CI de la rama y, si pasa, integrarla y volver a comprobar el PR de chat. No se ha publicado ni instalado ninguna version nueva.
+
+## Hipotesis de renovacion de sesion - 11 noviembre 2026
+
+Lectura de codigo: authGuard espera renovarSesion con token caducado; pedirRenovacion hace POST de refresh sin timeout RxJS especifico. Si la respuesta o el bloqueo compartido tardan, esa etapa puede retrasar la navegacion. No hay traza de esta etapa en el caso real, por lo que no se identifica la causa. No agregar cortes o reintentos especulativos: la rotacion de cookie y navigator.locks requieren conservar una sola renovacion coordinada y manejar respuesta incierta. Medir en condiciones reales equivalentes sin leer tokens ni cambiar sesion.
+
+## Continuacion del PR de chat - 11 noviembre 2026
+
+PR #271, rama correcciones/chat-sin-recuperacion-automatica, commit ce287cb2f4a90e6f2157252f8442dfeb18bd18b4. Solucion local de consulta, descarga y eliminacion expresas de copias por usuario; el texto no se restaura automaticamente, se conservan propuestas, la eliminacion no ocurre sin accion expresa. Build, 577 pruebas frontend y Chromium aislado con IndexedDB real, dos cuentas ficticias, descarga, borrado selectivo, sin conexion y conflicto de pestanas pasaron. La prueba E2E antigua se adapto a la revision explicita. Sin datos reales ni compras creadas localmente.
+
+CI 43045479543 intento 1: cinco trabajos pasaron, E2E fallo antes de pruebas por DNS de repositorios de Ubuntu al instalar Chromium. Reintento 2 en curso en esa instalacion; consultar resultado, no integrarlo por asumir exito. Android 43045479461 paso. Despues de CI verde revisar e integrar develop y main, verificar CI y despliegues. APK nueva aun no generada; ADB sin dispositivos y la configuracion de variables de firma no estaba presente; no consultar credenciales. La causa de lentitud real y validacion mediante aviso normal siguen pendientes. Health PC no mide API autenticada. No migrar hosting.
+
+## CI: fallo de DNS en runner y reintento - 11 noviembre 2026
+
+CI PR 43045479543 sobre ce287cb2: cinco trabajos pasaron; E2E fallo antes de las pruebas al instalar Chromium porque el runner no resolvio archive.ubuntu.com ni security.ubuntu.com; apt salio con codigo 100. Esto no es un resultado de las pruebas E2E. Se solicito reejecutar solo los trabajos fallidos; consultar resultado del nuevo intento antes de integrar. Android CI 43045479461 paso. Las pruebas locales siguen documentadas; no hay APK firmada nueva ni dispositivo conectado.
+
+## Verificacion del archivo Android existente - 11 noviembre 2026
+
+El archivo local .local/releases/Kaptal-0.1.43.apk tiene SHA256 49d8f862a6794897d65fd3da54caceeb1350777e87f3cc96ebfc7d44b8a8c273 y su certificado publico SHA256 es b5f360604095a50f3208299767dcedca2f3acfc5087df8be1fde9cc075c120c3, iguales a la evidencia anterior. Esta comprobacion es del archivo local; ADB no detecta dispositivo y no verifica instalacion actual. No se leyeron credenciales ni se genero APK nueva.
+
+## Etapa de carga identificada - 11 noviembre 2026
+
+Revision de codigo y fixture: cuando no existe lista activa en cache y las listas aun cargan, Inicio espera la lista antes de solicitar agregados para conservar el contexto correcto. En la comparacion sintetica con demora de API de 250 ms, la mediana de datos fue aproximadamente 1003 ms sin lista cacheada y 495 ms con ella. Esto demuestra una dependencia en ese escenario sintetico; no demuestra que la cache faltase ni que esta etapa causara la demora real tras doce horas. No se altero la seleccion de lista ni la coordinacion de sesion.
+
+## Verificacion de entrega Android - 11 noviembre 2026
+
+SDK Android build-tools 36.0.0 disponible; ADB sin dispositivos. La sesion no tiene configuradas todas las variables de firma exigidas por Gradle; se comprobo solo su presencia, sin consultar valores ni credenciales. No se genero ni firmo una APK nueva. Android CI 43045479461 de ce287cb2 paso; no equivale a una release firmada ni instalada. La integracion del PR sigue pendiente de la CI general.
+
+## PR actualizado y seguimiento del sondeo - 11 noviembre 2026
+
+PR #271 actualizado a ce287cb2f4a90e6f2157252f8442dfeb18bd18b4. CI 43045479543 y Android 43045479461 en curso; no integrado ni publicado aun. Se mantiene la gestion voluntaria de copias, revisada con fixtures y sin borrar datos del usuario.
+
+Consulta GitHub: Keep warm registro una ejecucion programada exitosa el 11 noviembre a las 14:25:25 UTC, sobre main a381859a; la anterior habia sido a las 02:58:43 UTC. El intervalo visible es 11 h 26 min 42 s. La primera ejecucion con el cron actualizado demuestra que puede ejecutarse, no que respete diez minutos ni que Render estuviera dormido. ADB sigue sin dispositivos.
+
+## Gestion local de copias y correccion de CI - 11 noviembre 2026
+
+CI anterior del PR #271 fallo en recuperacion.spec.ts: esperaba ver la propuesta automaticamente tras recargar. La prueba ahora exige que no se muestre y solicita su revision antes de confirmar. Android CI anterior paso; aun no hay nuevo CI del cambio.
+
+En la rama del PR se agrega gestion voluntaria por cuenta en Configuracion: consultar copias, mostrar texto solo al abrir una copia, descargar su contenido en JSON y eliminar individualmente tras confirmacion. No restaura automaticamente ni borra propuestas. La lectura limita claves a la cuenta y descarta respuestas tardias de otra identidad; la eliminacion verifica cuenta y copia. Las copias siguen en el dispositivo hasta decision expresa del usuario; se pueden acumular si no se revisan. La descarga contiene informacion financiera y debe guardarse en lugar seguro.
+
+Build Angular correcto, suite frontend 577 pruebas correctas y prueba Chromium con IndexedDB real paso: apertura explicita, datos y propuestas ficticias, descarga, eliminacion selectiva, aislamiento de otra cuenta, desconexion y conflicto entre dos pestanas. Hubo un fallo de la prueba al desconectar antes de terminar de cargar Configuracion; se corrigio el orden y paso. La prueba E2E de recuperacion adaptada aun debe ejecutarse en CI; no se probo en telefono ni contra datos reales. Pendiente commit, CI exacto, revision y publicacion.
+
+## Seguimiento del sondeo publicado ? 11 noviembre 2026, 07:43 CDMX
+
+Consulta p?blica de GitHub: workflow Keep warm figura active y main es la rama predeterminada, pero la ejecuci?n programada m?s reciente visible segu?a siendo 11 noviembre 02:58:43 UTC (10 noviembre 20:58 CDMX). No aparecen ejecuciones programadas posteriores a la publicaci?n del cron desplazado en main a381859 a las 06:10 UTC; han transcurrido aproximadamente 7 h 33 min desde entonces. El horario experimental no ha demostrado funcionar; no prueba que Render estuviera dormido ni explica por s? solo la espera del usuario. No se dispar? el workflow manualmente ni se cambi? alojamiento.
+
+## Bloqueo de integraci?n del prototipo de borrador ? 11 noviembre 2026
+
+La revisi?n de seguridad hall? que el PR #271 archiva copias en IndexedDB sin interfaz para consultarlas o gestionarlas, y puede acumular informaci?n financiera. No integrarlo ni generar APK hasta resolver preservaci?n, acceso y retenci?n con pruebas ficticias de cuenta, concurrencia y desconexi?n. La rama remota y PR permanecen en borrador. Android CI 43030814350 pas?; CI 43030814517 segu?a en curso. No se demuestra causa real de lentitud; authGuard espera renovaci?n compartida para token caducado, lo que identifica una etapa posible pero no una causa medida. Pendiente aviso normal y comparaci?n real tras inactividad.
+
+## Rama subida y CI en curso ? 11 noviembre 2026
+
+PR borrador #271 https://github.com/YaxcheItz/gestorfinanzas/pull/271, rama correcciones/chat-sin-recuperacion-automatica, commit b11fd756ae1792540fe028bbc1c13489517beb53. CI 43030814517 y Android 43030814350 en curso. No integrado, publicado ni instalado. Respaldos del texto anterior se conservan en IndexedDB pero no tienen interfaz de consulta: evaluar antes de integrar. Sigue pendiente causa de lentitud y aviso ordinario real.
+
+## Seguimiento local de chat, rendimiento y avisos ? 11 noviembre 2026 (en curso)
+
+Ramas remotas verificadas: develop e4eb3f922c7466693fa739e1d2069ac9d1c7fa01 y main a381859a8dd9481aef5f116c795b0571db323dc2. CI 42970614242 (seis trabajos) y Android 42970614211 pasaron; estado Vercel success. Health p?blico respondi? 200 en 355 ms desde PC, despu?s de la apertura, sin demostrar causa de demora. ADB sin dispositivos. El checkout principal conserva sus cambios previos. gh no tiene sesi?n, pero el conector GitHub permite leer estados.
+
+Rama correcciones/chat-sin-recuperacion-automatica, worktree .local/worktrees/chat-sin-recuperacion-automatica desde origin/develop: cambio en preparaci?n para no restaurar texto/edici?n al iniciar, revisar propuestas expl?citamente y archivar el registro anterior mediante transacci?n al sustituirlo. Al cerrar conserva una copia y vac?a el campo; si falla el almacenamiento conserva el texto y deja abierto el panel. El respaldo local no tiene interfaz de consulta: est? conservado en IndexedDB, no presentado como una funci?n de recuperaci?n. No se ha integrado, publicado ni instalado. Build Angular, suite completa frontend de 574 pruebas y prueba Chromium con IndexedDB real, desconexi?n, cierre/reapertura y conflicto entre dos pesta?as pasaron. Una prueba focal adicional de cambio de cuenta durante un guardado pendiente tambi?n pas? (77 del componente). Pendiente revisar accesibilidad de los respaldos, CI de commit exacto y entrega Android.
+
+Avisos: siete recorridos de interfaz ficticios pasaron, 17 pruebas JVM del parser y una del selector de texto pasaron. No se probaron avisos reales ni todos los formatos; esperar aviso normal. No se modificaron movimientos, compras MSI ni saldos reales. Mecanismos de sesi?n, clasificaci?n y deduplicaci?n no se tocaron.
+
+Rendimiento: comparaci?n local sint?tica, 3 contextos por escenario y mismo guion; base frente a cambio de chat antes del ?ltimo ajuste de cierre: datos en mediana 270/268 ms con sesi?n v?lida, 2488/2502 ms con refresh simulado de 2 s, 1003/999 ms con API de 250 ms sin cach? de lista, 495/491 ms con cach? y 992/996 ms con lista poblada. Archivos .local/rendimiento-11nov-base.json y .local/rendimiento-11nov-chat.json. No mide tel?fono, red real, servidor ni 12 horas de inactividad; causa de 17?18 s sigue sin identificar, no se migr? alojamiento. Falta comparar condiciones reales equivalentes.
+
+## Medición de apertura tras inactividad — 11 noviembre 2026
+
+A las 07:15:42 (hora de Ciudad de México) se abrió Kaptal Android 0.1.43/código 44 tras aproximadamente 12 horas sin usarla, sin borrar caché ni tokens, cambiar sesión o forzar el cierre. `adb shell am start -W` informó `LaunchState: WARM`, `TotalTime: 754 ms`, `WaitTime: 758 ms`; no es un arranque en frío ni mide cuándo terminan las solicitudes. El usuario observó aproximadamente 5 segundos de pantalla negra con una línea azul y 17–18 segundos en total hasta ver todos sus datos; es una estimación visual, no una traza por etapas. Después de abrir, el health público respondió 200 en 518 ms desde el PC; no mide el estado del servidor antes de abrir ni la API autenticada. La última ejecución keep-warm visible en la consulta ocurrió a las 02:58:43 UTC, pero eso no demuestra que Render estuviese dormido. La causa sigue sin identificar: faltan mediciones de sesión, red, servidor y render, y una comparación equivalente antes/después. No se manipuló información financiera. Al preparar el relevo ADB ya no mostraba dispositivos. Prioridades: investigar la demora preservando la coordinación de sesión; retirar la recuperación automática visible del borrador sin perder propuestas pendientes; comprobar avisos en uso normal y mantener el alcance documentado. El checkout raíz contiene trabajo preexistente sin commit; no sobrescribirlo ni asumir que representa develop.
+## Android 0.1.43 instalado - 11 noviembre 2026
+
+Usuario reconecto telefono; instalado com.kaptal.app 0.1.43 codigo44 mediante adb install -r. SHA256 instalado y APK 49d8f862a6794897d65fd3da54caceeb1350777e87f3cc96ebfc7d44b8a8c273; certificado APK b5f360604095a50f3208299767dcedca2f3acfc5087df8be1fde9cc075c120c3 coincide con version previa. FirstInstallTime conservado 2026-10-22 00:26:31; LastUpdateTime 2026-11-11 07:11:50. Main a381859a8dd9481aef5f116c795b0571db323dc2 CI 42970614242 y Android 42970614211 exitosos; Vercel success, interfaz publica comprobada. Evidencia .local/android-043-verification.json. La instalacion no valida captura bancaria real ni soluciona por si misma lentitud; observar uso normal sin crear compras ni examinar datos reales. La recuperacion automatica de borradores sigue activa para preservar propuestas y queda pendiente de resolver a peticion del usuario.
+## CI final 0.1.43 y conexion pendiente - 11 noviembre 2026
+
+CI 42970614242 y Android 42970614211 del main a381859a8dd9481aef5f116c795b0571db323dc2 completaron correctamente; seis jobs CI exitosos. Vercel success y web publica incluye las secciones nuevas, Render health HTTP 200. APK release .local/releases/Kaptal-0.1.43.apk version 0.1.43/codigo44 SHA256 49d8f862a6794897d65fd3da54caceeb1350777e87f3cc96ebfc7d44b8a8c273 y certificado b5f360604095a50f3208299767dcedca2f3acfc5087df8be1fde9cc075c120c3, sin debuggable y 88 archivos web verificados. Telefono desconectado a peticion del usuario durante el proceso, se solicito reconexion para actualizar; NO instalada aun. El sondeo desfasado es experimental, los avisos soportados no son universales y el mecanismo de borrador automatico sigue activo para preservar propuestas; esos puntos no deben presentarse como resueltos.
+## Publicacion 0.1.43 y verificacion web - 11 noviembre 2026
+
+PR #268 sondeo integrado a develop e4eb3f922c7466693fa739e1d2069ac9d1c7fa01 tras CI 42969192985 correcta sobre 7b0234a. PR #270 integrado a main a381859a8dd9481aef5f116c795b0571db323dc2. Vercel success; dominio publico sirve JavaScript con Tus asociaciones, Bancos y cuentas y diagnostico actualizado; Render health HTTP 200. Backend sin cambios entre main anterior y esta entrega. El arbol frontend de main coincide con e9a009a, para el que CI y Android pasaron; CI posterior main 42970614242 y Android 42970614211 siguen en curso al anotar. APK .local/releases/Kaptal-0.1.43.apk SHA256 49d8f862a6794897d65fd3da54caceeb1350777e87f3cc96ebfc7d44b8a8c273 firma b5f360604095a50f3208299767dcedca2f3acfc5087df8be1fde9cc075c120c3; no instalada. Usuario conectara telefono al terminar. No se demostro mejora de velocidad ni soporte universal; sondeo solo experimento, borrador automatico aun pendiente.
+## Entrega y sondeo en integracion - 11 noviembre 2026
+
+CI y Android de la version 0.1.43 (e9a009a) pasaron; PR #269 integrado en develop mediante 5cd81fa9780c8242406fc74390fecbf0517762ab. PR #268 de sondeo actualizado con develop a 7b0234a472ad1c39c36e69ea7697e4a70ca26b1e; CI nuevamente en curso por merge de documentacion/version. La APK firmada 0.1.43 SHA256 49d8f862a6794897d65fd3da54caceeb1350777e87f3cc96ebfc7d44b8a8c273 fue verificada localmente; no publicada ni instalada aun. Usuario desconecto telefono temporalmente y lo reconectara al terminar. Faltan integrar el sondeo, promover main, comprobar despliegues y CI, e instalar como actualizacion si ADB vuelve; no afirmar solucion definitiva de lentitud o todos los avisos. Borrador automatico sigue pendiente de resolver sin perder propuestas.
+## APK candidata 0.1.43 verificada localmente - 11 noviembre 2026
+
+Build Angular y assembleRelease pasaron sobre e9a009ab953072cc356ce550e43d1ae08d0c92bb. APK com.kaptal.app versionName 0.1.43 versionCode 44, SHA256 49d8f862a6794897d65fd3da54caceeb1350777e87f3cc96ebfc7d44b8a8c273, certificado SHA256 b5f360604095a50f3208299767dcedca2f3acfc5087df8be1fde9cc075c120c3 coincide con 0.1.42; 88 archivos web coinciden con build, sin indicador debuggable ni server.url. Copia .local/releases/Kaptal-0.1.43.apk. PR #269 CI y Android en curso; no publicada ni instalada. ADB desconectado, reconexion solicitada. PR #268 de sondeo tambien espera CI; no implica causa demostrada de lentitud.
+## Ramas de entrega y sondeo - 11 noviembre 2026
+
+PR #267 integrado a develop 3974df3d0633e530d34a3b5fffa2f74738ebbd4e; CI 42942763040 y Android 42942763025 correctos sobre 57118ea. PR #268 para sondeo se actualizo con develop mediante merge 220d10097963b3a760e1fa51ea71d30755424fc7, conservando documentos; CI en curso. Candidata Android 0.1.43/codigo44 preparada en PR borrador #269, commit e9a009ab953072cc356ce550e43d1ae08d0c92bb; build local y CI en curso. Telefono no aparece en ADB; se solicito reconexion. No se ha publicado ni instalado esta entrega. Mantener pendientes formatos bancarios no reconocidos, causa de lentitud y recuperacion automatica de borrador.
+## Candidata Android 0.1.43 - 11 noviembre 2026
+
+Se prepara versionName 0.1.43, codigo 44, en rama mejoras/android-043-avisos desde develop 3974df3d0633e530d34a3b5fffa2f74738ebbd4e. Incluye captura compacta, diagnostico y comparacion AMEX, bandeja separada, edicion de asociaciones y conservacion de apps/avisos. CI de la rama funcional 42942763040 y Android 42942763025 exitosos; suite y pruebas sinteticas locales e instrumentadas documentadas en bloques inferiores. El cambio experimental de sondeo se lleva por PR #268 aparte. No hay APK verificada ni instalacion de esta version al registrar; el telefono se desconecto. CI de la entrega, firma, contenido, hash, despliegues y actualizacion por adb pendientes. No afirmar solucion general de lentitud o de todos los bancos; borrador automatico y aceptacion visual siguen pendientes.
+## Limite de la hipotesis de inactividad - 11 noviembre 2026
+
+Se revisaron los pasos de ocho ejecuciones keep-warm recientes (42534368549 a 42924988810): todas completaron el paso de ping dentro del mismo segundo o al siguiente pese a huecos de horas entre ejecuciones de GitHub. No se conoce el trafico de otras fuentes ni la situacion exacta cuando el usuario observo ~30 s. Los huecos demuestran irregularidad del programador visible, pero no demuestran que Render estuviera dormido ni que ese sea el origen de la lentitud.
+## Prueba funcional del sondeo - 11 noviembre 2026
+
+Se ejecuto el bloque Bash real del workflow experimental: contra health publico devolvio HTTP 200 en 0.337 s; contra un puerto local ficticio cerrado devolvio codigo 1 y error. No acredita que GitHub vaya a respetar el calendario ni mejora de arranque. PR borrador #268, commit e12f2e59722bb65710faf257d474e80c2e489a1c; CI en curso. Sin publicacion.
+## Ajuste experimental del chequeo de disponibilidad - 11 noviembre 2026
+
+Ante intervalos de horas entre ejecuciones visibles del keep-warm programado cada 10 min, se preparo rama correcciones/monitoreo-arranque desde develop a274976. El cron se desplaza a los minutos 3,13,23,33,43,53 para evitar el inicio de cada hora, segun recomendaciones de GitHub sobre retrasos por carga: https://docs.github.com/en/actions/how-tos/troubleshoot-workflows. El paso registra HTTP y duracion sin credenciales. Sintaxis Bash verificada y comprobacion local HTTP 200 en 0.447 s. Es un experimento, no garantiza ejecuciones ni demuestra mejora de arranque; hay que observar frecuencia real y compararla tras publicar. No se migro alojamiento. Cambio aun sin CI, integracion ni publicacion.
+## Proteccion ante edicion sin cambios - 11 noviembre 2026
+
+Al guardar una asociacion sin modificaciones, el editor comprueba que la configuracion siga vigente y no rota credenciales; pruebas focales de cambios concurrentes y sin cambios pasaron, junto con build y E2E de edicion ficticia. El flujo conserva mecanismos de exclusion de conexion existentes. CI del conjunto e integracion/publicacion aun pendientes.
+## Conjunto de avisos y captura listo para CI - 11 noviembre 2026
+
+PR #266 integrado a develop a274976a795b105c3bf6998bfca016094ec2cd5a tras CI 42939470092 y Android 42939470012 correctos; incluye parser AMEX y panel de captura. Rama mejoras/avisos-asociaciones contiene commit 18b6900 y merge de develop 3efea4543fed865bef3866c3333bdd16180313e4 con ambos registros de documentacion conservados. PR borrador #267 https://github.com/YaxcheItz/gestorfinanzas/pull/267, aun sin integrar o publicar. Conjunto: suite frontend y build pasaron, siete E2E de avisos y dos E2E de captura con datos ficticios pasaron; tres pruebas instrumentadas en paquete debug del Samsung pasaron (terminacion AMEX, conservar seleccion y aviso, limite diez). No se crearon movimientos ni se leyeron avisos reales. Aun faltan CI del commit exacto, integracion a develop y main y APK superior si corresponde; no se afirma resuelta la lentitud de 30 s ni reconocimiento universal. Retorno de actividad Android WARM 538 ms no mide datos listos. Borradores se conservan automaticamente; retirar recuperacion completa sigue pendiente sin borrar pendientes existentes.
+## Bandeja separada y asociaciones verificadas - 11 noviembre 2026
+
+Por solicitud del usuario se separo la interfaz en Avisos y Bancos y cuentas sin desmontar estado. La segunda seccion lista asociaciones por banco, cuenta, lista y terminacion, permite añadir y editar individualmente con consentimiento, conserva el resto de reglas y rechaza solapamientos, cambios detectados durante la edicion y envios pendientes. Configuracion agrupada no permite guardar si no puede representar asociaciones multiples. Soporta automaticamente solo proveedores/formatos existentes; elegir otra app no crea un parser universal.
+
+Se corrigio en Android la sustitucion destructiva de apps de recepcion al guardar asociaciones: se verifica antes de la rotacion la union de apps del mismo usuario, limite diez, y se conservan avisos existentes. Dos pruebas instrumentadas en paquete debug separado pasaron (conservacion y limite), sin leer ni registrar datos reales. Suite frontend completa y siete E2E UI con puentes y cuentas ficticios pasaron, incluido cambio de cuenta conservando otras asociaciones, temas y geometria. Un primer fallo E2E era un selector de prueba anterior a separar secciones; se actualizo y repitio. Build paso. No se ha integrado ni publicado esta rama; falta CI y combinar con develop actual, sin perder otras ediciones. Sin validar todavia flujo real ni causa completa del fallo bancario o lentitud.
+## Asociaciones editables y proteccion de avisos - 11 noviembre 2026
+
+Usuario aclaro que quiere ver y modificar las asociaciones de banco y cuenta. En rama mejoras/avisos-asociaciones desde develop e7ef8e1 se prepara lista de asociaciones con banco, cuenta, lista y terminacion, alta y edicion individual, consentimiento y conservacion de las demas reglas; detecta origenes solapados, cambios de estado y envios pendientes. La configuracion agrupada queda protegida frente a reglas que no puede representar. Edicion usa los servicios de coordinacion de credenciales existentes, no recupera avisos historicos ni modifica movimientos.
+
+Se detecto que AutomaticBankPlugin.configure reemplazaba las apps de recepcion manual por las de reglas automaticas y NotificationNoticeStore.configure purgaba avisos de apps excluidas. Ahora se precomprueba y conserva la union de apps del mismo usuario con limite diez; pruebas instrumentadas aisladas 2/2 en debug verifican conservacion de apps/aviso ficticio y fallo seguro al exceder limite. Build, 17 pruebas focales y E2E UI ficticia inicial pasaron; se agrego prueba de edicion ficticia, pendiente ejecutar y verificar nueva version. No demuestra causa de perdida de avisos anteriores, no recupera borrados y no esta publicada ni instalada.
+## Correccion AMEX y CI de captura - 11 noviembre 2026
+
+Prueba Android aislada en com.kaptal.app.debug paso: aviso AMEX ficticio con cinco digitos y asociacion de cuatro correspondientes se reconoce; terminacion distinta se rechaza y no se encola ningun movimiento. Parser 17 pruebas y selector 1 pasaron en JVM. CI anterior 42936483004 fallo en 1 prueba E2E porque aun esperaba el texto anterior del panel; 59 pasaron y 4 se omitieron. Se ajusto la asercion al texto nuevo y el recorrido focal local paso. No se infiere que resuelva avisos de otros bancos ni lentitud. Rama aun en borrador; nueva CI requerida sobre commit actualizado.
+## Hallazgo programador y terminacion AMEX - 11 noviembre 2026
+
+El workflow keep-warm configura cron cada 10 minutos, pero la consulta de las 100 ejecuciones recientes mostro ejecuciones programadas exitosas a 2026-11-10 18:29 y 23:38 UTC y ninguna posterior hasta cerca de 2026-11-11 01:09 UTC; hay intervalos de horas en los registros visibles. La ultima duro cerca de 2 s. Esto sugiere que el mantenimiento del backend despierto no ha sido fiable y puede contribuir a arranques lentos tras inactividad; no demuestra la causa de todas las demoras ni una regresion 0.1.42. No se migro ni cambio alojamiento.
+
+Hallazgo concreto: configuracion y backend aceptan terminacion de cuatro digitos para AMEX, pero el formato explicito reconocido lleva cinco y el parser exigia igualdad exacta. En rama correcciones/rendimiento-avisos-captura se permite comparar cuatro ultimos digitos con cinco visibles, manteniendo rechazo de terminacion distinta y las validaciones existentes; unitarias Android 17 parser mas 1 selector pasaron con valores ficticios. Prueba instrumentada adicional sin encolar ni crear movimientos en curso. No demuestra causa de fallo para otros bancos. Usuario pide rediseñar zona para ver y modificar avisos/asociaciones y agregar nuevos; se creo rama mejoras/avisos-asociaciones desde develop verificado, pendiente aclarar si se refiere a asociaciones, avisos recibidos o ambos.
+## Retorno Android a primer plano - 11 noviembre 2026
+
+Se realizaron tres retornos normales mediante HOME y am start -W sin forzar cierre ni borrar sesion. Android informo primer intento WARM TotalTime 531 ms WaitTime 538 ms; intentos siguientes estado UNKNOWN WaitTime 55 y 94 ms. Miden actividad/transicion, no sesion, API ni datos listos; no comparan frio ni explican los ~30 s observados por el usuario. Telefono y app principal no se alteraron en datos; sin capturas ni lectura de finanzas.
+## Rama remota y revision pendiente - 11 noviembre 2026
+
+Rama correcciones/rendimiento-avisos-captura subida con commit 694099aeea638cb126b0e2cecfa8a474a0a91864, autor configurado YaxcheItz. PR borrador #266 https://github.com/YaxcheItz/gestorfinanzas/pull/266; CI 42936483004 y Android 42936483202 iniciados, consultar estado antes de integrar. Incluye panel compacto, historial limitado a la sesion desde Configuracion, control de propuestas pendientes y aclaracion de diagnostico; no corrige todavia la causa de la lentitud ni el reconocimiento de todos los bancos. Usuario confirmo conexion activa y leyendas de formato y terminacion. Se solicito ejemplo ficticio que preserve la estructura de un aviso no reconocido. No se ha publicado ni instalado esta rama.
+## Comparacion sintetica y verificacion de tarjeta - 11 noviembre 2026
+
+Se compararon frontends c6e4f75 (0.1.41) y arbol 7b477b7 (0.1.42) con el mismo script Chromium, tres contextos por escenario, datos y API simulados sin peticiones externas ni escrituras. Medianas de inicio y navegacion a historial en ms: sesion valida 291/78 frente a 291/88; refresh simulado de 2000 ms 2516/82 frente a 2509/78; API simulada 250 ms sin lista cacheada 997/391 frente a 1004/394; con lista cacheada 519/395 frente a 493/389; lista poblada simulada 993/397 frente a 992/406. No se reproduce regresion grande en este entorno; no mide Android, red real, servidor o SQL y no descarta demora de usuario de 30 s. Datos completos .local/rendimiento-sintetico-041-20261110.json y .local/rendimiento-sintetico-042-20261110.json.
+
+Con reglas ficticias, se confirmo que un aviso AMEX sin terminacion con tarjeta configurada recibe card_mismatch y no se encola; prueba instrumentada aislada en com.kaptal.app.debug paso 1/1 despues de un intento sin dispositivo. No se leyeron avisos reales ni se creo ningun movimiento. El diagnostico frontend ahora dice que la terminacion puede no aparecer o ser distinta, sin debilitar identificacion de cuenta. Se desconoce si este caso explica los avisos reales. La app permite revisar avisos individualmente sin asistencia, pero asociar una aplicacion no garantiza interpretacion universal o registro masivo.
+
+Captura escrita compacta probada en navegador ficticio: 320x568, horizontal 568x320 y 390x844; acceso a historial disponible de la sesion desde Configuracion y propuestas pendientes visibles; captura visual inspeccionada. Build y suite frontend 562 pruebas pasaron antes del ultimo ajuste de altura; test de aviso focal paso y E2E final paso. Conservacion automatica de borradores sigue vigente para no descartar pendientes; requisito de quitar recuperacion aun por resolver. Sin correccion causal del fallo bancario o de lentitud y sin publicacion ni actualizacion Android de esta rama.
+## Investigacion de regresion y captura compacta - 10 noviembre 2026
+
+Usuario observa carga de hasta ~30 s y lentitud general en 0.1.42 frente a 0.1.41; avisos de todos los bancos quedaban sin reconocer incluso antes de 0.1.42, conexion aparece activa segun usuario. Informa leyendas de formato/importe/moneda y terminacion. Se compararon cambios: historial paginado de 0.1.42 consulta proyecciones MSI en cada pagina y puede consultar pagina adicional; es hipotesis, sin medicion causal. am start encontro actividad ya en primer plano (11 ms, no mide datos); cinco health desde PC: Render 299-460 ms mediana 315 y Vercel 357-410 ms mediana 383, no miden sesion/API financiera ni explican 30 s. Parsers Android: 16 pruebas y selector 1 pasaron con fixtures, no reproducen avisos reales. El diagnostico card_mismatch tambien ocurre si el aviso no trae terminacion; se aclaro el texto sin relajar validacion. El usuario puede revisar avisos individuales, pero elegir app no garantiza registro automatico universal ni registro masivo seguro.
+
+En rama correcciones/rendimiento-avisos-captura desde develop e7ef8e1 se redujo altura del panel, retiraron controles visibles de ojo, limpiar y recuperar propuestas, se mantuvieron propuestas pendientes y se agrego acceso al historial de la sesion desde Configuracion. No se borro ni desactivo la conservacion automatica de borradores: pendiente acordar/implementar alcance sin perder pendientes. Primera E2E con respuestas ficticias y sin movimientos creados paso, incluyo acceso a historial; unidad focal y build pasaron. Comprobaciones completas y viewport en curso; aun sin publicar ni instalar. Falta aislar y corregir causa real de lentitud y de formatos/terminaciones, no tocar avisos ni movimientos reales; se pidio solo leyenda diagnostica.
+## CI final y despliegue Android 0.1.42 - 10 noviembre 2026
+
+CI main 42921474670 completada correctamente sobre 6ba9fced84e019de893108c99ccabf7f1027ce5c: seis jobs exitosos incluidos PostgreSQL, E2E API y PWA. Vercel success para ese main. Git fetch confirma origin/develop e7ef8e1e6cb3d4ba4e29ceaf2c5d75cfcaca5808 y origin/main 6ba9fce. Android 42920636852 paso sobre main bfcefcc, mismo codigo de aplicacion; Android 0.1.42 codigo43 instalada y hash coincide segun android-042-verification.json. Usuario confirma Render Auto-Deploy On Commit y despliegue manual exitoso, sin inspeccion directa del panel. Pendiente observar funcionamiento cotidiano de avisos y Groq y medir rendimiento real tras inactividad; no se crean compras ni se inspeccionan finanzas reales para QA.
+## Auto-Deploy Render confirmado por usuario - 10 noviembre 2026
+
+Usuario reviso Render Settings y confirma que Auto-Deploy esta en On Commit, sin haberlo modificado. Estado informado por el usuario, no inspeccion directa del panel. No se requieren cambios de esa opcion; la rama vinculada debe seguir comprobada en el panel si se cambia configuracion futura. CI main 42921474670 continuaba en E2E al registrar.
+## Sincronizacion de documentos - 10 noviembre 2026
+
+Registro de instalacion integrado a develop mediante PR #264 / merge e7ef8e1e6cb3d4ba4e29ceaf2c5d75cfcaca5808 y a main mediante PR #265 / merge 6ba9fced84e019de893108c99ccabf7f1027ce5c; solo cambia documentacion respecto al main bfcefcc. Vercel success para 6ba9fce. La CI 42920636999 de bfcefcc fue cancelada por la nueva ejecucion de main (concurrency), no fallo; Android 42920636852 paso. CI actual 42921474670 en curso al registrar; confirmar. Codigo de aplicacion exacto paso CI 42894149316 y Android 42894148844 en develop. Auto-Deploy de Render aun sin confirmacion del usuario.
+## Android 0.1.42 instalado - 10 noviembre 2026
+
+PR #263 integrado en main bfcefcc3999d177c331b67b89216facf8c6765a7. Vercel reporto success para main, web y proxy health HTTP 200, y la web publica contiene el endpoint nuevo revocar-si-coincide. El bundle publico principal difiere del local; no se afirma igualdad de bytes, aunque los arboles Git de main, develop y commit local 50f0a21 coinciden en 7b477b7c3fbdb9640bd73dfb7607f04c21f2b780. Backend Render desplegado manualmente segun usuario, health HTTP 200; no se inspecciono su panel ni SHA desplegado. APK 0.1.42/codigo43 instalada por adb install -r, primera instalacion conservada 2026-10-22 00:26:31 y ultima actualizacion 2026-11-10 17:09:43; SHA256 de base.apk instalado coincide con candidata 5ea403577b0640f4b12bfd8a82c96ad975397138b033fbdcf28ad3924ea5b82b. Certificado local coincide con la release previa b5f360604095a50f3208299767dcedca2f3acfc5087df8be1fde9cc075c120c3. CI anterior del codigo exacto 42894149316 y Android 42894148844 pasaron; CI main 42920636999 y Android 42920636852 pendientes al registrar. Usuario fue invitado a restaurar configuracion original Auto-Deploy en Render; confirmacion pendiente. Instalacion no demuestra captura real, rendimiento ni estabilidad de avisos; no se hicieron pruebas con movimientos o credenciales reales.
+## Promocion a main y backend informado - 10 noviembre 2026
+
+Usuario informo que el despliegue manual Render de 98fac8a termino correctamente; no se observo directamente su panel ni el identificador desplegado. Health publico Render HTTP 200. PR #263 integrado a main mediante bfcefcc3999d177c331b67b89216facf8c6765a7; CI del head develop 42894149316 y Android 42894148844 aprobaron. Vercel para main pendiente y CI 42920636999 / Android 42920636852 en curso al anotar; comprobar resultados antes de dar publicacion por verificada. Candidata 0.1.42 codigo43 mantiene SHA256 5ea403577b0640f4b12bfd8a82c96ad975397138b033fbdcf28ad3924ea5b82b y certificado b5f360604095a50f3208299767dcedca2f3acfc5087df8be1fde9cc075c120c3. Telefono conserva 0.1.41/codigo42, aun sin instalar. Render desactiva auto deploy al seleccionar commit; restaurarlo una vez main y backend verificados, con ayuda del usuario si no hay acceso.
+## Reintento tras abrir Render - 10 noviembre 2026
+
+Usuario indica que la sesion Render estaba cerrada y abrio el dashboard. El inventario muestra una ventana Firefox titulada Render Dashboard, pero el host de navegador automatizado sigue no disponible; el intento previo de controlar Firefox fue rechazado porque no se admite aplicar la politica de URL en ese navegador Windows. El titulo no confirma sesion ni despliegue. Git fetch funciona, develop 98fac8a y main c6e4f75; CI 42894149316 y Android 42894148844 del merge develop correctos; telefono conectado. Sin cambios en produccion ni instalacion. Hace falta acceso de navegador compatible o intervencion directa del usuario para desplegar y verificar backend antes de interfaz.
+## Reintento Git y acceso a alojamiento - 10 noviembre 2026
+
+Git fetch directo funciona: origin/develop 98fac8acb55af4d612a280d5f8f528bb7f855206 y origin/main c6e4f7592fac56ef7362366d4627748c66133a57. CI 42894149316 y Android 42894148844 del merge develop completaron correctamente; telefono sigue conectado. El navegador automatizado sigue sin estar disponible, no hay conector Render ni CLI de Render/Vercel detectados, y gh no tiene sesion. No se ha verificado ni publicado backend nuevo, promovido main ni instalado 0.1.42; conservar datos y trabajo local. Git recuperado no acredita acceso al alojamiento.
+## Salud de produccion - 10 noviembre 2026
+
+Render /api/health y proxy Vercel /api/health respondieron HTTP 200. Esto confirma disponibilidad basica, no demuestra que el backend compatible con 0.1.42 haya sido desplegado; main permanece sin promover. CI y Android del merge develop 98fac8a se iniciaron (42894149316 y 42894148844); consultar resultado actual antes de promover.
+## Android 0.1.42 integrado en develop - 10 noviembre 2026
+
+PR #262 integrado a develop por merge 98fac8acb55af4d612a280d5f8f528bb7f855206. Sobre el commit remoto 9473e3f (autor Yaxche Ramirez), CI push 42892118244 completa paso con seis jobs incluidos E2E y PostgreSQL; Android PR 42892160422 paso. La CI adicional PR 42892160365 aun estaba en curso al integrar. El arbol remoto coincide con el local 50f0a21 y la APK candidata compilada localmente. No confundir CI de ese commit con la CI posterior al merge. Main no se ha actualizado: Render y Vercel despliegan desde main y falta una forma de publicar y verificar backend compatible antes de la interfaz. APK 0.1.42 no instalada; telefono conectado. Rama local conserva 0396e3b y 50f0a21; remoto equivalente 9473e3f, no forzar push.
+## Verificacion de entrega Android - 10 noviembre 2026
+
+PR #262 apunta a 9473e3f, autor Yaxche Ramirez; su Android 42892160422 paso. CI PR 42892160365: backend, frontend, PostgreSQL, canales y WhatsApp correctos; E2E seguia en ejecucion. El objeto del commit remoto se reconstruyo y verifico localmente con SHA exacto y se actualizo solo origin/mejoras/android-042-captura-avisos; rama local 50f0a21 conserva sus commits y arbol identico, no usar push forzado. Render y Vercel despliegan main; sin acceso al panel de alojamiento no se ha verificado una promocion backend previa, por lo que no se ha integrado main ni instalado APK. Telefono conectado.
+## Rama remota y CI del merge - 10 noviembre 2026
+
+CI completa del merge develop 3bc5878 paso en ejecucion 42889701659: backend, frontend, PostgreSQL, canales, WhatsApp y E2E. Android merge 42889701837 paso. Como git push fallo por conexion reiniciada, se subio el contenido mediante el conector GitHub: commit remoto 9473e3f5c08c39da98bec2c78a9c8663b1a52657, autor Yaxche Ramirez, mismo arbol 7b477b7c3fbdb9640bd73dfb7607f04c21f2b780 que el commit local 50f0a21, sobre develop 3bc5878. Los hashes de commit difieren, pero los archivos son identicos. PR borrador #262 https://github.com/YaxcheItz/gestorfinanzas/pull/262; CI y Android del 9473e3f pendientes. Reconciliar ramas locales con remoto sin perder 0396e3b/50f0a21; no hacer push forzado. Telefono conectado, APK aun no instalada. Falta backend compatible publicado y verificado antes de interfaz; acceso navegador del alojamiento no disponible.
+## Seguimiento de rama Android - 10 noviembre 2026
+
+En el worktree .local/worktrees/android-042-captura-avisos se crearon los commits locales 0396e3b (version Android 0.1.42) y 50f0a21 (documentacion), ambos de YaxcheItz. El worktree queda limpio tras restaurar solo archivos generados por Capacitor en esta compilacion. GitHub muestra la rama remota en 3bc5878, sin esos dos commits: reintentar push y comprobar el SHA remoto antes de abrir PR y CI. No instalar la candidata hasta CI exacta y backend compatible publicado y verificado.
+## APK candidata 0.1.42 y bloqueo de entrega - 10 noviembre 2026
+
+Se compilo localmente el commit 0396e3b0266eb9e96aaae7692b7c62157dcaf12b, autor YaxcheItz, sobre develop 3bc5878. APK release local frontend/android/app/build/outputs/apk/release/app-release.apk: com.kaptal.app, version 0.1.42 codigo 43, SHA256 5ea403577b0640f4b12bfd8a82c96ad975397138b033fbdcf28ad3924ea5b82b; certificado SHA256 b5f360604095a50f3208299767dcedca2f3acfc5087df8be1fde9cc075c120c3 coincide con 0.1.41, sin indicador debuggable, 88 archivos web coinciden con build y configuracion Capacitor sin server.url. Build Angular y assembleRelease pasaron. La rama remota mejoras/android-042-captura-avisos se creo desde develop via GitHub, pero permanece en 3bc5878: el commit 0396e3b solo esta local porque git push no conecto; no confundir la rama remota con el commit local. Android merge 42889701837 paso; CI general 42889701659 seguia en curso. Telefono conectado con 0.1.41, codigo 42; no se instalo candidata. El acceso al navegador del alojamiento no esta disponible y falta publicar y verificar backend antes de interfaz, CI del commit de entrega, promocion a main y validacion de instalacion; no se alteraron sesion ni datos reales.
+## Preparacion Android 0.1.42 - 10 noviembre 2026
+
+La rama mejoras/android-042-captura-avisos parte de develop 3bc58788448da5460d404c551dbff76f0f1494b1, confirmado por GitHub; el objeto firmado se reconstruyo localmente y su hash coincide debido al fallo de conexion Git HTTPS. Se prepara versionName 0.1.42 y versionCode 43, superiores a la 0.1.41/codigo 42 observada en el telefono. El telefono esta conectado. Android del merge 42889701837 paso; CI 42889701659 seguia en curso al comprobar. Aun no hay APK release verificada ni instalacion. Antes de integrar y publicar verificar CI del commit exacto y desplegar/verificar backend compatible antes de la interfaz; no tocar sesion ni datos reales. Git fetch directo fallo por conexion a github.com:443.
+## Integracion develop y Android sintetico - 10 noviembre 2026
+
+PR #261 integrado a develop mediante merge 3bc58788448da5460d404c551dbff76f0f1494b1; commits 793f1b9 y 8c8bb58 conservan autor YaxcheItz. CI 42873810948 y Android 42873811114 pasaron para 8c8bb58, incluido PostgreSQL. En Samsung SM-A546E conectado se ejecutaron 5 pruebas instrumentadas AutomaticBankWorkerTest en paquete debug separado con claves y cola sinteticas; pasaron. No se modifico sesion ni avisos reales. App principal verificada version 0.1.41 codigo42, fecha de primera instalacion conservada. No se ha publicado a main ni instalada nueva release. Falta verificar CI del merge, compatibilidad del backend antes de interfaz, promocion y APK superior, y validar Groq real sin datos reales; desconocida causa real de desconexion y soporte automatico universal.
+
+## CI PostgreSQL y cuota de Actions - 10 noviembre 2026
+
+PR borrador #261: CI del commit 793f1b9 fallo en PostgreSQL porque una prueba MSI uso SQL sin esquema (42P01); el cambio de prueba a {h-schema} paso en H2 y se subio como 8c8bb586a127b156099ee3d2a7e3c646208e3878 con autor YaxcheItz. Nueva CI 42873810948 y Android 42873811114 en curso; verificar PostgreSQL antes de integrar. El repositorio es publico y sus workflows usan ubuntu-latest estandar; segun documentacion oficial de GitHub ese uso es gratuito para repositorios publicos, aunque facturacion de cuenta/almacenamiento es separada. No se pudo consultar el consumo total de la cuenta. No integrado ni publicado; telefono desconectado.
+
+## Rama publicada para revision - 10 noviembre 2026
+
+Por autorizacion expresa se creo commit WIP 793f1b9ba55443bbd9cbc05a9676b1ccfbce6665 con autor YaxcheItz y se subio mejoras/captura-msi-avisos. PR borrador #261 hacia develop, base fad06ef: https://github.com/YaxcheItz/gestorfinanzas/pull/261. CI 42872873530 y Android 42872873439 en curso al anotarlo. No se ha integrado develop/main ni publicado, y el telefono no estaba conectado. Pendientes revisar CI del SHA exacto, Groq real con datos ficticios, concurrencia, seguridad, pruebas Android y despliegue ordenado backend antes de frontend. Respetar autor solicitado en commits posteriores.
+
+## Regresion frontend de conexion - 10 noviembre 2026
+
+Despues de la limpieza condicional y coordinacion de conexion paso la suite completa frontend: 560 pruebas. La suite backend paso 716 con 9 omitidas y build Angular paso; E2E de avisos 6/6 con datos ficticios. No son CI ni pruebas de produccion o telefono. La etapa sigue sin publicar; backend debe estar desplegado antes de interfaz por el endpoint nuevo.
+
+## Verificacion de limpieza condicional - 10 noviembre 2026
+
+Tras el cambio de limpieza de credencial, backend completo paso 716 pruebas con 9 omitidas (PostgreSQL/fixtures de dispositivo), Angular build paso, 11 pruebas focales del servicio y 6 E2E sinteticas de avisos pasaron. Se probo el endpoint con sesion, sin sesion y con usuario distinto, asi como limpieza de clave vieja frente a nueva. No se ejecutaron pruebas instrumentadas ni se modificaron credenciales reales. La funcion nueva exige backend compatible antes de interfaz; falta CI, validacion Android, Groq real y diagnostico causal de desconexiones. No publicado ni instalado.
+
+## Limpieza condicional de conexion bancaria - 10 noviembre 2026
+
+Se corrigio una carrera adicional: si falla el guardado nativo despues de emitir una clave, la limpieza solicita revocar solo esa clave; el backend autentica al usuario, bloquea su registro y compara el hash con la clave vigente, preservando una rotacion posterior. Las pruebas H2/MockMvc y frontend con credenciales ficticias pasaron: clave antigua y otro usuario no revocan la nueva; requiere sesion; la clave vigente se revoca de forma idempotente. No se modificaron credenciales reales. Importante: desplegar y verificar el backend compatible antes de publicar la interfaz que llama al nuevo endpoint; si no existe, la limpieza falla y la excepcion original se conserva. No demuestra que esta carrera sea el origen de la desconexion del usuario. Siguen pendientes CI, Groq real y pruebas Android; suite backend completa en ejecucion y build frontend en curso.
+
+## Guardado nativo de credencial - 10 noviembre 2026
+
+Una prueba adicional confirma que la exclusion entre operaciones de conexion permanece activa hasta terminar configure en el plugin Android simulado, no solo hasta recibir la respuesta del servidor. Pasaron 11 pruebas del servicio y build Angular; previamente pasaron 23 pruebas focales del servicio y la interfaz. No acredita coordinacion entre procesos ni explica por si sola la desconexion observada. Telefono/CI y publicacion pendientes.
+
+## Coordinacion de conexion bancaria - 10 noviembre 2026
+
+Se detecto que dos renovaciones simultaneas desde la misma instancia del servicio podian rotar la clave y dejar en Android una clave anterior. Se coordinan configurar, restablecer y desconectar mediante exclusion local; una operacion concurrente se rechaza y el bloqueo se libera tambien tras error. Pasaron 23 pruebas focales frontend, incluidos renovacion/desconexion concurrentes y reintento tras error, con claves y cuentas ficticias. El control es por instancia Angular: no demuestra coordinacion entre dispositivos o procesos y no se ha demostrado que esta carrera sea la causa de las desconexiones del propietario. Pendientes revision de concurrencia entre procesos, telefono, CI y publicacion; no se modificaron credenciales reales.
+
+## Regresion tras ampliar expresiones - 10 noviembre 2026
+
+Pasaron 557 pruebas frontend y 714 backend sin fallos, con 9 omitidas por requerir PostgreSQL o fixtures de dispositivo. Build Angular y la prueba H2 de tres expresiones con Groq simulado pasaron. No prueba Groq real, desconexion bancaria ni instalacion Android. Sigue pendiente verificar CI y completar soporte de operaciones ambiguas y bancos adicionales; cambios sin commit ni publicacion.
+
+## Expresiones nuevas con Groq simulado - 10 noviembre 2026
+
+El motor reconoce me costaron, desembolse y se me fueron como frases de gasto y no mezcla el contexto anterior. Cuando falta categoria, la captura pasa por el clasificador Groq existente; prueba H2 con proveedor simulado comprobo las tres expresiones, importe 25 y cuenta ficticia sin registrar movimientos. Pasaron 70 pruebas focales de interfaz, pruebas del motor/backend y build Angular. No se infiere automaticamente si un texto carece por completo de indicacion de gasto o ingreso: se pide aclarar el tipo. Sin publicar; siguen pendientes Groq real, conexion bancaria, Android y CI.
+
+## Presupuesto de IA en captura - 10 noviembre 2026
+
+Prueba focal confirma que generateCaptura respeta el presupuesto global cero y no efectua la solicitud externa; pasaron AudioFreePolicyTest, ClasificadorCapturaGroqTest y AiHttpClientCapturaTest con servicios ficticios. No acredita velocidad ni comportamiento de Groq real. Pendientes entrada sin tipo claro, desconexion bancaria y CI. Cambios locales sin publicacion.
+
+## Captura clasificada en navegador - 10 noviembre 2026
+
+Playwright paso un recorrido aislado de interfaz con usuario y cuenta ficticios: respuesta GROQ_CATEGORIA simulada, una sola confirmacion con la version esperada y sin movimientos creados en el backend de pruebas porque la confirmacion se simulo. No demuestra el comportamiento de Groq real ni un guardado real; la persistencia y concurrencia se prueban por separado en H2. El primer intento fallo al crear una cuenta de efectivo ficticia; se ajusto a debito y se repitio con exito. Sigue pendiente interpretar entradas sin tipo claro, diagnostico bancario, CI y telefono. Trabajo local sin publicar.
+
+## Frases con ingreso y gasto - 9 noviembre 2026
+
+El motor ya no convierte en una sola operacion una frase que contiene a la vez indicadores de ingreso y gasto: pide separarlos. Pasaron MotorChatReglasTest y PropuestasChatIntegrationTest con datos ficticios. Puede requerir aclaracion para frases ambiguas; no cambia movimientos existentes. Pendientes Groq en entradas no reconocidas, diagnostico bancario, telefono y CI; cambios no publicados.
+
+## Captura con me gaste - 9 noviembre 2026
+
+Se reconoce me gaste como inicio de un movimiento nuevo, sin arrastrar contexto anterior; el concepto no conserva la palabra me. Pasaron MotorChatReglasTest y 67 pruebas focales de captura frontend. Cambios locales sin publicar. Sigue pendiente completar entrada no reconocida, conexiones bancarias, Android y CI.
+
+## Mas palabras de comida - 9 noviembre 2026
+
+Se ampliaron las reglas locales con sope/sopes, tostada/tostadas, tlacoyo/tlacoyos y mollete/molletes para categorias compatibles de comida y alimentacion. Pasaron MotorChatReglasTest y PropuestasChatIntegrationTest, incluidos Groq simulado y falla externa. No se reclasificaron movimientos reales. Sigue pendiente entrada sin regla local y no se ha publicado.
+
+## Caida de Groq con propuesta persistida - 9 noviembre 2026
+
+Se agrego prueba integrada con H2 aislado y proveedor simulado no disponible: captura local pendiente sin categoria, ningun movimiento creado y saldo ficticio intacto. La clase completa PropuestasChatIntegrationTest paso. No valida proveedor real ni resuelve todavia entrada que el motor no interpreta; falta CI, conexion bancaria y pruebas Android. La rama sigue local sin commit ni publicacion.
+
+## Limite de IA no disponible - 9 noviembre 2026
+
+Si el control compartido de limite de IA no esta disponible, se omite la clasificacion externa y se conserva la propuesta local en vez de producir un error y perder su respuesta. No se llama Groq ni se guarda automaticamente. Pasaron AiActionServiceTest, AiAssistantServiceTest y ClasificadorCapturaGroqTest con proveedores simulados. Sigue pendiente la captura completamente no reconocida, desconexion bancaria, pruebas y CI. Cambios locales sin publicar.
+
+## Regresion backend con limite de espera - 9 noviembre 2026
+
+Tras separar el cliente de clasificacion Groq con limites de conexion y lectura, paso la suite backend: 709 pruebas, 0 fallos, 9 omitidas por requerir PostgreSQL de pruebas o fixtures de dispositivo. La prueba de respuesta lenta fue local y no mide Groq real. Sigue pendiente completar captura sin regla local, investigar desconexion, validacion real y CI. Cambios sin commit, integrar ni publicar; telefono desconectado.
+
+## Limite de espera de captura Groq - 9 noviembre 2026
+
+La clasificacion de captura usa cliente HTTP separado con limite de conexion de 2 s y lectura de 5 s; las demas funciones de IA conservan sus limites existentes. Una prueba con servidor HTTP aislado de respuesta lenta paso; se probaron tambien clasificador, asistente, metricas y propuestas con Groq simulado. Si falla la llamada, se conserva la propuesta local sin guardado automatico. Son limites por fase, no una garantia de duracion total ni una medicion de Groq real. Pendientes: captura sin regla local, evaluar calidad/latencia de proveedor real, desconexion bancaria, pruebas Android y CI. No publicado ni instalado.
+
+## Regresion completa local - 9 noviembre 2026
+
+Con el estado actual pasaron 553 pruebas frontend, 708 backend sin fallos (9 omitidas: 7 PostgreSQL y 2 fixtures de dispositivo), build Angular y 6 E2E de avisos con datos ficticios. Gradle debug y compilacion de pruebas instrumentadas pasaron antes de la ultima interfaz; no se instalaron ni ejecutaron en telefono. Groq solo se probo simulado; falta resolver captura sin regla local, limites de latencia real, desconexion bancaria y soporte automatico de otros bancos, ademas de revision, pruebas omitidas y CI antes de integrar o publicar. Todo permanece en la rama local sin commit.
+
+## Regresion frontend - 9 noviembre 2026
+
+Tras incorporar la busqueda de otras aplicaciones bancarias pasaron 553 pruebas de la suite frontend y 6 pruebas E2E de avisos con puentes y datos ficticios. Build Angular paso. La suite backend completa se ejecuta en paralelo. El telefono esta desconectado; no hay instalacion ni pruebas instrumentadas en este paso. Groq real, registro universal, desconexion y CI siguen pendientes.
+
+## Buscar otras aplicaciones bancarias - 9 noviembre 2026
+
+Se hizo mas visible la seccion de aplicaciones adicionales y se agrego busqueda insensible a acentos con contador y seleccion conservada al filtrar. La interfaz aclara que avisos de formatos no soportados necesitan revision; no se prometio registro automatico universal. Despues de regenerar Angular build, Playwright paso 6/6 escenarios sinteticos de avisos, incluida la seleccion de banco ficticio y temas claro/oscuro. No se modificaron asociaciones reales; cambios sin publicar. El telefono esta desconectado.
+
+## Permiso y bateria en telefono real - 9 noviembre 2026
+
+Tras reconectar Samsung SM-A546E, ADB solo lectura mostro permiso de acceso a notificaciones concedido para com.kaptal.app y RUN_ANY_IN_BACKGROUND en modo predeterminado allow. El paquete no aparece en la lista de exencion Doze; esto no prueba una restriccion efectiva ni la causa de las desconexiones. Version instalada 0.1.41 codigo 42. No se leyeron avisos, credenciales ni movimientos y no se modifico ningun permiso, sesion o ajuste de bateria. El estado interno de la credencial y el error real de la cola no se pudieron leer sin acceder a datos privados de la app.
+
+## Cantidades ambiguas - 9 noviembre 2026
+
+Me costo se interpreta como gasto, pero no se guarda automaticamente una cantidad que podria ser unidades sin senal monetaria; se valida con pruebas ficticias. Pasaron 66 pruebas focales del chat y las pruebas focales backend de clasificacion, reglas y propuestas. Angular build posterior en curso. La suite completa 544/703 corresponde a antes de los ultimos cambios y no sustituye CI.
+
+## Ambiguedad de captura - 9 noviembre 2026
+
+Pasaron 65 pruebas focales de interfaz, incluidos ejemplos de negacion, pregunta, cantidad ambigua y MSI sin guardado automatico por Groq. El clasificador rechaza categorias compatibles con nombres duplicados normalizados; pasaron pruebas focales backend y de integracion H2. No se ha verificado Groq real, ni se han resuelto frases sin regla local o conexiones bancarias arbitrarias. Los datos y sesion reales no se modificaron.
+
+## Limite concurrente de Groq - 9 noviembre 2026
+
+Prueba con cuatro solicitudes Groq simuladas simultaneas: una quinta devuelve sin llamar al proveedor ni bloquearse; pasaron las pruebas del clasificador. No es una medicion de velocidad del proveedor real. No hay emulador Android instalado ni telefono visible por ADB; las pruebas instrumentadas siguen pendientes. No se ha publicado ni instalado esta etapa.
+
+## Prueba visual de avisos - 9 noviembre 2026
+
+Playwright paso 5/5 escenarios sinteticos de avisos y conexiones: temas claro/oscuro, accesibilidad al ocultar importes y recuperacion de envio pausado. No utiliza avisos reales ni prueba que Android mantenga la conexion; las pruebas instrumentadas nativas continuan pendientes. No se ha publicado ni instalado esta etapa.
+
+## Compilacion Android de diagnostico - 9 noviembre 2026
+
+Se regeneraron archivos de Capacitor en el worktree y se ejecuto Gradle con ANDROID_HOME local: assembleDebug y compileDebugAndroidTestJavaWithJavac terminaron correctamente. Las 13 pruebas frontend de conexiones pasaron. La APK debug no se instalo y no sustituye una release firmada, versionada y validada por CI; las pruebas instrumentadas solo compilaron porque el telefono no estaba en ADB. La separacion de codigos HTTP es diagnostico y no prueba una solucion a las desconexiones.
+
+## Diagnostico de desconexion bancaria - 9 noviembre 2026
+
+Se conserva el comportamiento de pausa y la cola para respuestas 401/403/404, y se registra solo el codigo HTTP para mostrar un motivo diferenciado sin capturar avisos ni credenciales. Pasaron 13 pruebas de la interfaz; se agregaron pruebas instrumentadas con datos sinteticos, aun sin ejecutar porque el telefono esta desconectado. La primera compilacion Gradle no inicio por archivos generados de Capacitor ausentes; se esta regenerando el proyecto y repitiendo. Esto NO demuestra la causa de la desconexion frecuente ni la corrige por si solo. Aun no publicado ni instalado.
+
+## Aislamiento de categorias - 9 noviembre 2026
+
+Se comprobo con usuarios y cuentas H2 ficticios que no se puede asignar a la propuesta una categoria privada de otra persona ni de un tipo incompatible; PropuestasChatIntegrationTest completo paso. No se crearon movimientos reales. La clasificacion Groq, los cambios MSI y la interfaz siguen en el worktree sin commit ni despliegue.
+
+## Minimizacion del concepto de Groq - 9 noviembre 2026
+
+Antes de la clasificacion se retiran del concepto los nombres de las cuentas conocidas y el alias Amex cuando corresponde; no se envia historial ni saldos al clasificador. Una prueba integrada con proveedor simulado verifica que el concepto ficticio conserva el comercio y omite el nombre de cuenta; pasaron las pruebas focales y Angular build. Esto no garantiza anonimizar cualquier dato personal escrito en el concepto; las categorias compatibles se envian a Groq y se informa en la interfaz. No se ha publicado ni probado con proveedor real.
+
+## Estado del sondeo de produccion - 9 noviembre 2026
+
+API publica de GitHub: ultima ejecucion Keep warm anterior a la medicion fue 2026-11-09 20:52:51 UTC, resultado success; apertura Android aprox. 21:23 UTC. El intervalo supera 30 minutos; los sondeos anteriores tambien presentan huecos de horas. Un sondeo exitoso no prueba que el alojamiento estuviera dormido al abrir, pues puede haber trafico adicional; no se midieron estado del servidor ni duracion del refresh inicial. CI 42453088692 y APK 42453088746 de main c6e4f75 figuran success; no prueban los cambios locales sin commit.
+
+## Categoria de ingresos - 9 noviembre 2026
+
+Se corrigio el valor predeterminado Salario: solo se aplica a ingresos sin un concepto distinto tras excluir la cuenta; un ingreso descrito como venta queda sin categoria para poder clasificarlo. Se conservaron ingresos sin concepto y categorias explicitas. Pasaron MotorChatReglasTest, AiAssistantServiceTest, ClasificadorCapturaGroqTest y PropuestasChatIntegrationTest con datos ficticios; no se reclasifico ningun movimiento. El trabajo sigue local, sin publicar.
+
+## Frases de gasto - 9 noviembre 2026
+
+Se agregaron las expresiones me costo y me cobraron al reconocedor de gasto; se evito arrastrar contexto anterior al iniciar una captura nueva con esas frases. Pasaron pruebas focales de backend y 60 de la interfaz de captura. Angular build posterior a esos cambios paso. La suite completa 544/703 indicada debajo es anterior a estas pequenas modificaciones; Groq real y demas pendientes siguen sin verificarse.
+
+## Limite de clasificacion - 9 noviembre 2026
+
+Se agrego y paso una prueba: si se agota el limite por usuario, se conserva la propuesta local, sin consultar Groq ni registrar movimiento. La suite completa anterior paso; tras esta unica prueba nueva pasaron de nuevo las pruebas focales. Las 9 omitidas corresponden a 7 de PostgreSQL y 2 de dispositivo; Docker no tiene daemon activo y el telefono dejo de aparecer en ADB. Pendientes y limites de la seccion anterior siguen vigentes.
+
+## Suite local completa - 9 noviembre 2026
+
+Con los cambios actuales pasaron 544 pruebas frontend y Maven termino correctamente con 703 pruebas, 0 fallos y 9 omitidas: 7 requieren PostgreSQL de pruebas y 2 requieren fixtures explicitas de dispositivo. Incluye prueba H2 con Groq simulado, categoria, etiqueta y confirmaciones idempotentes; no acredita comportamiento de Groq real, PostgreSQL, Android fisico ni produccion. Continuan pendientes la ruta sin regla local, verificar UX y tiempo real de Groq, desconexion bancaria, bancos adicionales, revision y CI. La rama sigue local sin commit ni publicacion.
+
+## Verificacion ampliada y conexion bancaria - 9 noviembre 2026
+
+Pasaron las 544 pruebas frontend y la compilacion Angular; suite completa backend en ejecucion. Android AutomaticBankWorker borra la cola cuando se revoca el permiso de avisos; una prueba instrumentada define ese comportamiento. No se ha cambiado: requiere revisar la decision de privacidad y evidencia de la causa real. El telefono se desconecto de ADB antes de comprobar permiso y ahorro de bateria; su estado es desconocido, no inferir que faltan permisos. No se tocaron sesion ni avisos reales.
+
+## Verificacion integral preliminar Groq - 9 noviembre 2026
+
+Con Groq simulado, H2 y cuentas ficticias paso captura de categoria y etiqueta, confirmacion repetida sin duplicar y saldo esperado; la prueba de confirmacion concurrente tambien paso. Pasaron 58 pruebas de la interfaz de captura, el conjunto focal del backend y npm run build. El clasificador tiene limites de concurrencia, presupuesto de proveedor y tasa por usuario; fallo externo deja la propuesta sin guardar. No se ha consultado Groq real ni publicado. Pendientes: ruta sin regla local, rendimiento/tiempo de espera del proveedor (configuracion actual permite hasta 10 s de conexion y 30 s de lectura), revision completa de seguridad/UX, reconexion y bancos adicionales, CI y distribucion. No prometer resultados universales ni velocidad medida de Groq.
+
+## Concurrencia de captura Groq - 9 noviembre 2026
+
+Una prueba H2 aislada paso con dos confirmaciones simultaneas de la misma propuesta clasificada: solo un movimiento, saldo correcto, bloqueo de usuario y version anterior. Se anadio limite por usuario y concurrencia del clasificador; se agrego prueba frontend de respuesta de guardado perdida. Se estan repitiendo las pruebas completas focales despues de esos ultimos cambios. Groq no se ha llamado con datos reales; falta validar ruta sin regla local, calidad de etiquetas, guardado y UX integral, reconexion bancaria, rendimiento de paginacion, CI y despliegue.
+
+El propietario no observo la apertura tras las 14 horas, por lo que solo existen las mediciones de la actividad Android ya documentadas, no la duracion de carga de datos.
+
+## Integracion preliminar de Groq - 9 noviembre 2026
+
+En el worktree captura-msi-avisos se conecto el clasificador a propuestas locales con categoria faltante y se agrego guardado automatico en interfaz para una propuesta GROQ_CATEGORIA con cuenta, importe y categoria inequivocos; las compras MSI no se guardan automaticamente por este camino. La asignacion valida categoria activa del usuario y version de propuesta. Backend focal (ClasificadorCapturaGroqTest, AiAssistantServiceTest, AiActionServiceTest) y 57 pruebas de captura frontend pasaron. Implementacion preliminar sin publicar: faltan pruebas de persistencia y concurrencia, reintentos idempotentes, fallos del proveedor, validacion de UX y compilacion final. No se uso proveedor ni informacion real. El caso local null sigue pendiente; no se debe activar el flujo general que envia contexto financiero completo sin permiso.
+
+## Clasificador Groq aislado - 9 noviembre 2026
+
+En el worktree captura-msi-avisos se anadio ClasificadorCapturaGroq con tres pruebas unitarias exitosas y proveedor simulado. Envia solo concepto y categorias activas del tipo correcto; valida ID y etiquetas, y ante fallo no produce clasificacion. Aun NO esta conectado a captura ni al guardado automatico. Falta integrar con verificaciones de cuenta/importe, idempotencia y concurrencia, probar y completar la peticion del propietario. No se consulto Groq real ni se usaron datos financieros reales.
+
+## Apertura Android despues de inactividad - 9 noviembre 2026
+
+El propietario indico unas 14 horas sin abrir Kaptal. Samsung SM-A546E conectado por ADB; el proceso ya existia antes de abrir, pantalla despierta y launcher delante. Sin force-stop, borrar cache ni modificar sesion, am start -W informo WARM, TotalTime 882 ms y WaitTime 887 ms (1050 ms medidos desde PC). Tres retornos posteriores desde inicio Android: WaitTime 58, 33 y 63 ms, LaunchState UNKNOWN. Son tiempos de actividad, no de sesion/API/renderizado final; no se capturo contenido ni se observo la respuesta inicial, por lo que no se demuestra ni descarta lentitud de datos ni causa de alojamiento. Queda pendiente observacion del propietario y medicion instrumentada segura de sesion y API en un siguiente caso lento. Se mantuvo la sesion y los datos.
+
+## Preferencia de comunicaci?n ? 8 noviembre 2026
+
+Al terminar cada cambio o parte, explicar brevemente qu? se hizo y registrarlo para futuros chats. Se agreg? esta instrucci?n a `AGENTS.md` y a la memoria del usuario.
+
+## Continuaci?n: historial MSI y verificaci?n local ? 8 noviembre 2026
+
+En `.local/worktrees/captura-msi-avisos`, rama `mejoras/captura-msi-avisos` sin commit, se ampli? la implementaci?n para intercalar compras MSI anteriores en el historial paginado sin sumarlas a los totales contables; Inicio y Movimientos identifican las proyecciones por referencia y claves distintas para evitar colisiones con cuotas. Angular pas? 73 pruebas focales y compil?; Maven pas? 79 pruebas focales (40 del diccionario, 3 de distribuci?n de p?ginas y 36 de exactitud financiera), incluida una prueba con H2 que comprueba ubicaci?n, ausencia de duplicados y conservaci?n de saldo y cr?dito retenido. Revisar coste de consultar proyecciones en cada p?gina y la consulta adicional del l?mite antes de publicar. Las p?ginas pueden mostrar proyecciones adicionales sin cambiar el total contable.
+
+Sigue pendiente implementar y probar Groq con guardado autom?tico autorizado, etiquetas, estados ambiguos, idempotencia y errores sin enviar el historial financiero completo; diagnosticar y resolver desconexiones con evidencia y facilitar bancos adicionales sin afirmar compatibilidad universal. El tel?fono no aparece en ADB. No se ha integrado, publicado ni instalado esta etapa. No usar datos financieros reales para pruebas. Contin?a vigente la medici?n pendiente tras varias horas de inactividad.
+
+## Captura inteligente, MSI y avisos: trabajo en curso - 8 noviembre 2026
+
+El propietario pide ampliar diccionario de alimentos, consultar Groq automaticamente cuando reglas no reconozcan y guardar automaticamente sin pedir confirmacion cuando sea seguro; confirmo expresamente esa preferencia. No ejecutar pruebas con movimientos reales; validar importe y cuenta inequivos, permisos, categoria disponible, idempotencia y falla de proveedor, sin enviar saldos completos; pedir aclaracion si datos indispensables no son verificables. Esta funcionalidad aun NO esta implementada ni activada.
+
+Rama mejoras/captura-msi-avisos en .local/worktrees/captura-msi-avisos desde origin/develop fad06ef. Cambios locales sin commit: ampliacion de alimentos en MotorChatReglas, 40 pruebas focales Maven pasan; Inicio mezcla proyecciones MSI anteriores por fecha y limite, 52 pruebas focales frontend pasan; el historial paginado sigue pendiente, no ocultar compras antiguas ni alterar saldos. Aspecto de conexiones bancarias redise?ado en seccion especifica con bancos compactos; E2E 5/5 en claro y oscuro tras corregir desbordamiento con fuente grande. Falta aceptacion visual real, build final y pruebas ampliadas.
+
+Diagnostico de desconexion: permiso de Android, cuenta, estado pausado y credencial con vencimiento configurado a 90 dias son posibles causas; el worker pausa ante 401/403/404 y conserva elementos en cola. No se demostro cual sucede al propietario. ADB no detectaba telefono en esta tarea; no leer avisos personales, cambiar permisos o modificar sesion. Bancos soportados tienen parsers especificos; un banco arbitrario necesita incorporacion segura y estado de revision para formatos no verificados, no prometer lectura o registro universal. Falta implementar Groq automatico, etiquetas, guardado idempotente, historial MSI, investigar/concretar reconexion y diseno completo, CI, despliegue y APK si corresponde. El propietario autorizo guardado automatico al completar con Groq; no sustituir esta decision por la preferencia anterior de confirmacion.
+
+## Medicion con telefono conectado y sesion simulada - 8 noviembre 2026
+
+ADB confirma Samsung y 0.1.41/codigo42. Tres am start -S -W: TotalTime 508, 611, 478 ms y LaunchState WARM; tres retornos desde inicio: WaitTime 79, 64, 58 ms, LaunchState UNKNOWN. Baseline 0.1.40 en sesion anterior 1230,800,773 ms y retornos 392,186,202 ms: condiciones no controladas ni misma sesion, no atribuir diferencia al cambio. Android mide apertura de actividad, no datos listos ni frio real. No se borraron tokens, cache, datos ni se cambio cuenta.
+
+Script local Chromium con usuario y respuestas ficticias aisladas, 3 muestras cada caso: token valido Inicio 506-658 ms; refresh artificial de 2 s Inicio 2644-2783 ms; API artificial 250 ms sin lista cacheada Inicio 1145-1394 ms; navegacion a movimientos respectivamente 190-205, 160-271 y 453-472 ms. Evidencia .local/rendimiento-041-simulacion-sesion.json. Tiempo de refresh no es medido en produccion o Android; la prueba confirma sensibilidad de la ruta a una espera, no identifica la causa real. Salud publica HTTP200 0.468 s, sin probar servicio dormido. Pendiente observar un caso lento real tras horas y aislar causas sin tocar sesion o finanzas.
+
+## Entrega Android 0.1.41 y diagnostico de lentitud - 8 noviembre 2026
+
+Revision de refresh: el servicio comparte una renovacion mientras esta en vuelo y libera esa referencia al terminar; ante fallo temporal el guard permite continuar si la identidad no cambio, y las solicitudes posteriores con acceso vencido pueden volver a intentar. Esto es consistente con tres intentos en el fixture 503, pero no demuestra que ocurra en el uso real ni justifica cambiar la sesion sin reproducirlo con mediciones. CI de main 42453088692 y Android 42453088746 confirmadas exitosas; todos los jobs generales aprobados. ADB desconectado despues de verificar instalacion 0.1.41; comparacion posterior pendiente.
+
+PR258 y PR259 integrados; promocion PR260 integrada. Correccion 6373206c16d005c03e88b4b755e4785a6b6e032d; entrega 79019d6149f1caa2c8d64a1cc07ba0050ec10a21; develop fad06ef34bab078339dde26fb2a8fbee4ec19bf8; main c6e4f7592fac56ef7362366d4627748c66133a57. Ambos arboles a50ea2a939e0d2ddfcd319fb91ef14358f4ee615 coinciden con la entrega probada. CI exacta correccion 42452268176/Android42452268190 y entrega 42452276081/Android42452276110, y main 42453088692/Android42453088746, aprobadas. El fallo previo por clase de skeleton se corrigio y su E2E especifica paso; no confundir con CI final.
+
+UI: skeletons discretos y separacion de carga/error/vacio en Inicio, sesion, Movimientos, Avisos, Categorias, Metas, Etiquetas y Libro diario; sin redisenar historial ni calendario. 539 pruebas frontend y E2E locales de historial, presupuestos, avisos, metas y carga lenta aprobadas con fixtures ficticios. Sesion compartida y logica financiera se conservaron. No confundir cambios de interfaz con mejora probada de latencia.
+
+Produccion Vercel 7632149864 y Render 7632144812 success para main c6e4f75; web y health HTTP200, main JS publico coincide en bytes con build local. APK .local/releases/Kaptal-0.1.41.apk codigo42 SHA256 41511a659302e38394e7f3561ece6d7946ff08f6d27364d9c3bab00ec569f113, certificado b5f360604095a50f3208299767dcedca2f3acfc5087df8be1fde9cc075c120c3, 88 web files coincidentes, sin debuggable ni servidor desarrollo. Instalada por actualizacion -r en Samsung SM-A546E; fecha primera instalacion conservada 2026-10-22 00:26:31, ultima 2026-11-08 00:07:37, APK extraida coincide con SHA. Evidencia .local/android-041-verification.json. Telefono se desconecto despues de instalacion; comparacion posterior ADB no ejecutada.
+
+Causa de lentitud tras varias horas no demostrada: JWT configurado 15 min y guard espera refresh; workflow de sondeo configurado cada 10 min presenta ejecuciones separadas por horas, aunque otra actividad puede mantener servidor activo. Render Free documenta suspension tras 15 min sin trafico; no se midio estado real del servidor ni refresh de usuario al reproducir demora. Antes se midio Android WARM tras force-stop 773-1230 ms y retornos 186-392 ms; no equivale a sesion/API/listo. Medicion sintetica Chromium valida 263-509 ms y refresh con 2 s artificiales 2487-2505 ms en escenario distinto; no demuestra ganancia real. Pendiente obtener apertura lenta real, medir cada capa con datos ficticios sin extraer credenciales o movimientos; no migrar alojamiento todavia. No se abrieron datos financieros para pruebas.
+
+Siguiente: reconectar telefono, medir arranque posterior comparable y solicitar experiencia visual, despues capturar con metodo seguro la proxima apertura lenta tras inactividad; revisar los reintentos 503 sinteticos. Leer AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y ambos documentos locales. Preservar sesion y finanzas reales.
+
+## Revision adicional y nueva APK candidata - 7 noviembre 2026
+
+PR258 ahora en 6373206c16d005c03e88b4b755e4785a6b6e032d; entrega PR259 en 79019d6149f1caa2c8d64a1cc07ba0050ec10a21. Corregidos estados de carga/error/vacio en Categorias, Metas, Etiquetas y Libro diario, con pruebas ficticias y proteccion contra respuestas anteriores en las consultas de metas/etiquetas. 539 pruebas frontend aprobadas localmente; E2E de metas en curso. Candidato 0.1.41/codigo42 actualizado para 79019d6, SHA256 41511a659302e38394e7f3561ece6d7946ff08f6d27364d9c3bab00ec569f113, firma habitual, 88 archivos web verificados, sin URL de desarrollo; no instalado. CI correccion 42452268176/Android42452268190 y entrega 42452276081/Android42452276110 en curso. Las CI anteriores se cancelaron al actualizar ramas, no confundirlas con aprobacion del commit actual. Pendientes CI final, revision y publicacion; medicion real tras varias horas y causas siguen sin confirmar.
+
+## Preparacion Android 0.1.41 - 7 noviembre 2026
+
+CI Android 42451449192 y 42451545736 aprobaron para correccion y entrega respectivamente; CI generales todavia en curso. Cinco E2E locales de interfaz de avisos con fixtures aprobaron sobre entrega 71ca231.
+
+Candidato local 0.1.41 construido para 71ca231: SHA256 5a0d8a3f780c42a6e72b50ebd59e675554d18e197915a89a3f1d8426afaddcfc, certificado b5f360604095a50f3208299767dcedca2f3acfc5087df8be1fde9cc075c120c3, versionCode42, 88 archivos web coincidentes, sin debuggable ni URL de desarrollo. Archivo .local/releases/Kaptal-0.1.41.apk; no instalado, CI y despliegues aun pendientes.
+
+Rama entrega/android-041-carga creada desde origin/develop e02c3b9 con rama de PR258 incorporada; PR259 borrador, commit 71ca23110d34c2318e20360260ed6b3da27796ec. Repositorio anterior 0.1.40/codigo41; candidato 0.1.41/codigo42. CI correccion 42451449141 en curso y Android 42451449192 aprobado para 87f6ccb; CI entrega 42451545633 y Android 42451545736 en curso para 71ca231. Compilacion firmada local en progreso, todavia no instalada ni publicada. Integrar solo tras CI y comprobaciones de archivo y despliegue. No atribuir mejora de latencia a estos cambios visuales.
+
+## CI: correccion de prueba de carga - 7 noviembre 2026
+
+CI 42450692659 para efa6c54 fallo 1 E2E: esperaba .home-amount-loading, clase que se habia reemplazado al creer incorrectamente que no tenia estilos. La hoja publica frontend/public/styles/home.css si contiene esos estilos. Se restauraron clases originales de Inicio en commit 87f6ccba74c3599e11d00efb232e824e05b4f76c; el escenario E2E fallido paso localmente con fixture aislado y el skeleton neutro de presupuesto permanece. Android CI anterior aprobo; el nuevo commit necesita CI exacta completa, integracion y entrega, no afirmar publicado. En aquel CI 57 E2E pasaron, 4 se omitieron y uno fallo; PWA y medicion posterior no se ejecutaron. PR258 sigue borrador.
+
+## Avisos: correccion adicional en PR 258 - 7 noviembre 2026
+
+Actualizacion: sobre efa6c54 pasaron nuevamente los dos recorridos E2E locales y check-startup sintetico 200/401/503. Build y 535 pruebas unitarias aprobadas. CI exacta sigue en curso al actualizar; no confundir con CI del commit anterior.
+
+PR borrador 258 actualizado a efa6c547319c882439a5799cc709d2532b985934. Avisos oculta filas de filtro anterior mientras carga y ante error; skeleton usa estilos existentes. Prueba de interfaz con aviso ficticio confirma carga y error sin mostrar registro anterior. Build y 535 pruebas frontend aprobados. CI exacta 42450692659 y Android 42450692641 pendientes al registrar. Dos E2E locales de historial/presupuestos se ejecutaron sobre commit anterior 1d3b1b9; repetir o verificar CI del nuevo. No integrado, publicado ni instalado. Mantener pendientes mediciones de sesion/API tras varias horas y las demas comprobaciones de rendimiento.
+
+## Continuacion: latencia tras horas y estados - 7 noviembre 2026
+
+Actualizacion de comprobaciones: Android CI 42450383251 aprobado para 1d3b1b9; CI general 42450383303 todavia en curso. Repeticion sintetica del commit completo guardada en .local/rendimiento-arranque-1d3b1b9-sintetico.json: Inicio con token valido 263-509 ms y con refresh demorado artificialmente 2487-2505 ms; no comparacion fisica ni prueba de mejora. El archivo temporal navigation-before.json fue eliminado por Playwright al ejecutar E2E; sus rangos quedaron documentados anteriormente, no se conserva el detalle original. Revision adicional detecta que Avisos conserva filas anteriores mientras cambia filtro o se presenta error; aun pendiente corregir y probar con fixtures.
+
+Propietario observa carga intermitente, especialmente tras varias horas. Configuracion del repositorio JWT 900000 ms y guard espera renovacion de token vencido; valores efectivos de entorno en produccion no leidos. GitHub Actions keep-warm esta activo y configurado cada 10 min, pero ejecuciones publicas recientes muestran intervalos de 3 a 8 horas; otras visitas pueden mantener activo el servidor, de modo que no demuestra que Render haya dormido. Render documenta suspension de instancia Free tras 15 min sin trafico y alrededor de un minuto para arrancar. Tres solicitudes publicas de salud recientes respondieron 200 en 0.44-0.54 s; no se reprodujo un despertar frio ni se midio sesion real tras horas.
+
+PR borrador 258, rama rendimiento/arranque-estados-carga, commit 1d3b1b984065558f17a681281a7e5e01b3a9a739. Skeleton neutro al esperar sesion y presupuestos, estilos de carga existentes para Inicio; historial esconde datos viejos durante consultas, usa skeleton y muestra error/reintento separado de vacio. Build, 534 pruebas frontend y 2 E2E locales historial/presupuestos aprobados; check-startup 200/401/503 paso sin token vencido, con tres intentos 503 que requieren investigacion. CI 42450383303 y Android 42450383251 en curso al documentar. Sin integracion ni publicacion, sin APK nueva. Se respetaron sesion y finanzas reales; pruebas E2E usan servidor y cuentas ficticias locales.
+
+Pendiente medir arranque completo en telefono y API tras inactividad real, verificar diferencias y mas pantallas, revisar CI exacta, completar entrega autorizada y APK superior antes de instalar; no atribuir mejoras de latencia a skeletons. Preservar refreshEnVuelo, shareReplay y navigator.locks.
+
+## Telefono conectado: medicion parcial - 7 noviembre 2026
+
+ADB detecta Samsung SM-A546E RZCW80EJNHX. Paquete com.kaptal.app version 0.1.40 codigo 41, primera instalacion 2026-10-22 00:26:31, ultima actualizacion 2026-11-07 13:42:30. SHA256 APK instalada 872cd282f8931017f3f63dea703e8879427445be16b7a88e76dc542ee0882e89 coincide con entrega documentada. No se reinstalo ni se limpio almacenamiento.
+
+Tres aperturas usando am start -S -W: TotalTime 1230, 800, 773 ms; Android reporto WARM en las tres, no son prueba de arranque frio. Tres retornos desde inicio del sistema: WaitTime 392, 186, 202 ms, LaunchState UNKNOWN. Son tiempos nativos hasta actividad, no miden sesion, API, render de datos o navegacion de Kaptal; no concluir causa ni ganancia. No se inspeccionaron ni guardaron datos financieros. Pendientes instrumentacion segura por fixture, frio real, estado de carga completo y comparacion en telefono. El 503 sintetico genero tres intentos separados de refresh; diagnosticar antes de modificar coordinacion.
+
+## Rendimiento y carga: investigacion en curso - 7 noviembre 2026
+
+Actualizacion: build Angular del cambio aprobado; 51 pruebas focales de Inicio aprobadas. check-startup sintetico 200/401/503 paso sin enviar peticiones protegidas antes del refresh ni con token vencido; 503 registro tres intentos y debe investigarse su impacto. Comparacion local repetida: Inicio con sesion valida antes 518-740 ms y despues 538-598 ms; refresh simulado de 2 s antes 2641-2740 ms y despues 2649-2698 ms. Tres muestras no demuestran mejora de velocidad. Mediciones en test-results/navigation-before.json y navigation-synthetic.json del worktree, ignoradas por Git. No se probaron todas las pantallas ni concurrencia completa, CI del cambio, despliegues nuevos o Android; no integrado/publicado/instalado.
+
+Rama rendimiento/arranque-estados-carga, worktree .local/worktrees/rendimiento-arranque, creada desde origin/develop e02c3b926b32028e60fda53fe92cc4b7c24ba8b0. Main remoto 1c2d0d98569861e1cd07f6ec71238d9ccb95bccc; PR255/256/257 integrados. API publica registra CI42407097060 y Android42407097076 exitosos para main. gh sin autenticacion; no se modifico configuracion. ADB disponible por SDK sin dispositivos, por lo que arranque Android y APK instalada actual no se pudieron comprobar. Estado 0.1.40 es evidencia previa, no verificacion actual. Sin acceso a finanzas ni cambios de sesion.
+
+Linea base Chromium local con fixtures y tres muestras por caso en frontend/test-results/navigation-synthetic.json del worktree: sesion valida Inicio 518-740 ms; refresh artificial 2 s Inicio 2641-2740 ms; API artificial 250 ms sin cache de lista 1166-1269 ms. No representa telefono ni produccion. Salud y web publicas respondieron HTTP200 en una muestra, sin diagnosticar alojamiento. Se encontro que Inicio muestra encabezado presupuestos mientras desconoce datos y texto visible durante espera de sesion. Cambios locales en preparacion sustituyen estos por skeletons; aun requieren pruebas, comparacion, revision de demas pantallas, CI, integracion y entrega. No publicar ni instalar hasta completar comprobaciones solicitadas. Conservar cambios originales en carpeta principal y coordinacion refreshEnVuelo/shareReplay/navigator.locks.
+
+Siguiente: ejecutar pruebas focales y build del worktree, check-startup y medicion comparativa, revisar estados en pantallas principales con fixtures, medir en Android cuando conecte, completar CI y despliegue autorizado solo tras comprobaciones. Leer AGENTS.md y estos planes antes de continuar.
+
+## Preferencia de herramientas para proximas tareas
+
+El propietario solicita que Codex revise y utilice autonomamente las skills y plugins instalados que sean necesarios o aporten valor, sin pedirle que los seleccione. Instruccion agregada a ~/.codex/AGENTS.md y reforzada en AGENTS.md del proyecto. Se mantienen las instrucciones y permisos de cada herramienta; no se ejecutan herramientas irrelevantes. Siguiente etapa solicitada: investigar y medir la lentitud y los estados de carga, usando datos ficticios y preservando datos financieros reales.
+
+## Cierre vigente: acciones MSI y tema inmediato, Android0.1.40 - 7 noviembre 2026
+
+MSI anteriores permiten deslizar y revelar Editar/Eliminar tanto en Inicio como historial. Editar abre el plan completo y solicita fecha original cuando no fue conservada; guardar sin fecha no se permite. Eliminar pide confirmacion y usa plan completo, revirtiendo impactos y liberando retenciones conforme al servicio existente. Quitados textos MSI informativos de Inicio, historial, detalle y tarjeta. No se modificaron compras/saldos reales para pruebas.
+
+Apariencia se redujo a Cambiar tema: claro/oscuro/automatico se aplican y guardan al elegir; se evita guardar solicitudes simultaneas, se recupera el tema previo si falla y se conservan las demas preferencias. No se eliminaron preferencias persistidas. Mantener verificacion del propietario para presentacion fisica y experiencia.
+
+Rama correcciones/msi-acciones-tema, worktree .local/worktrees/msi-acciones-tema. PR255 y PR256 integrados; promocion PR257. Correccion ec4d21f014af09cae41a580ab80e5e01c177a82e; entrega a1d3d88dbbbc468b450fb32c1576eedcc2294d6c; develop e02c3b926b32028e60fda53fe92cc4b7c24ba8b0; main 1c2d0d98569861e1cd07f6ec71238d9ccb95bccc; arbol e6d14645124cbc6a27052cba036742d4bc52840a coincide con entrega verificada. Documentacion final local posterior a commits y despliegues; cambios previos preservados.
+
+CI exacta correccion42406149556/Android42406149568 y entrega42406161165/Android42406161145 aprobadas. Backend 692 contabilizadas, 9 omitidas; frontend 532 aprobadas; E2E 58 aprobadas/4 omitidas; PWA 4; PostgreSQL migracion/recuperacion. Local 2 E2E MSI con datos ficticios, una proyeccion simulada y API real: revelar acciones, fecha requerida, eliminar completo y liberar retencion. Android 28 unitarias, lint y assembleRelease. No crear compras de prueba en produccion ni usar datos reales para QA.
+
+Produccion Vercel 7626055785 y Render 7626042320 success para main indicado; web y salud API verificadas. APK .local/releases/Kaptal-0.1.40.apk, version0.1.40/codigo41 superior a0.1.39/codigo40. SHA256 872cd282f8931017f3f63dea703e8879427445be16b7a88e76dc542ee0882e89; certificado habitual b5f360604095a50f3208299767dcedca2f3acfc5087df8be1fde9cc075c120c3; 88 archivos web coinciden con build, sin debuggable ni serverURL remoto. Codigo exacto CI y APK firmada local comprobados por separado.
+
+Instalada en Samsung SM-A546E RZCW80EJNHX mediante actualizacion -r sin desinstalar ni limpiar datos. Primera instalacion 2026-10-22 00:26:31 conservada; actualizacion 2026-11-07 13:42:30. APK instalada extraida coincide exactamente con el hash candidato. Evidencia .local/android-040-verification.json y .local/android-040-installed.apk. No se abrio ni manipulo sesion financiera para QA.
+
+Siguiente: aceptacion visual y funcional del propietario. En nuevo chat leer AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md, .local/PLAN_MAESTRO_KAPTAL_2026-10-18.md y .local/PROMPT_CONTINUAR_KAPTAL_ACTUAL.md; comprobar estado actual, no reinstalar por rutina ni modificar datos reales para pruebas.
+
+## Acciones MSI y tema: correccion preparada - 7 noviembre 2026
+
+Rama correcciones/msi-acciones-tema desde develop eb8f4cd. Compra MSI anterior permite revelar Editar y Eliminar en Inicio e historial, usa plan completo real y confirmacion; no se accedio ni cambio finanzas reales. Como no se conserva fecha original de esas compras, el editor solicita introducirla en lugar de inventarla. Se quitaron textos MSI informativos de Inicio, historial y detalle. Apariencia queda en Cambiar tema, aplicado al tocar, con guardado inmediato, bloqueo de pulsaciones concurrentes y reversion ante fallo; se conservan las demas preferencias almacenadas sin controles adicionales en esa seccion.
+
+532 pruebas frontend aprobadas antes del ultimo texto de ayuda; prueba E2E con fixture ficticio y proyeccion simulada paso gesto de editar, fecha requerida y eliminar con liberacion de retencion. Falta CI exacta, publicacion y APK superior a0.1.39. No afirmar instalado hasta verificar archivo extraido.
+
+## Trabajo local pendiente: acciones MSI y tema - 7 noviembre 2026
+
+Rama correcciones/msi-acciones-tema, worktree .local/worktrees/msi-acciones-tema desde develop eb8f4cd. Cambios locales sin commit: habilitar gestos de editar/eliminar para proyeccion MSI anterior, quitar textos informativos, reducir apariencia a tema y aplicar al seleccionar. Build y 530 pruebas frontend existentes pasan. Falta verificar especificamente edicion/borrado de plan con fixtures, errores y cambios rapidos de tema (posible carrera de respuestas), integracion, CI, publicacion y APK superior a0.1.39. No se probaron ni modificaron compras reales. No afirmar entregado ni instalado. Continuar con pruebas, corregir carreras, completar entrega autorizada y actualizar documentacion.
+
+## Cierre vigente: MSI anteriores y primer cargo corregidos, Android0.1.39 - 7 noviembre 2026
+
+Compras anteriores aV18 con plan vinculado se muestran en Inicio y tarjeta en Compras MSI anteriores, con total informativo calculado desde cuotas registradas + pendiente. Proyeccion de SOLO LECTURA: no crea movimientos, no modifica compra real/saldos/retenciones/cuotas/auditoria/libro diario y no duplica gastos. Fecha expresamente rotulada como fecha de registro; no se inventa fecha original de compra perdida. Planes antiguos cancelados sin total verificable no se reconstruyen. Compras nuevas con recibo persistido mantienen su historial existente sin duplicar proyeccion. Se respetan filtros de cuenta, lista/propiedad, autor, moneda, fecha de registro, monto total, texto, etiquetas y categoria.
+
+Recurrencias expone proximoCargo y montoTotal. Proximo cargo al corte muestra la primera cuota pendiente (por ejemplo noviembre13) y Cuota siguiente distingue diciembre13, sin cambiar el calendario ni cobrar al consultar. Tras contabilizar la primera cuota muestra el siguiente cargo. El proceso previo de cuota pendiente al corte sigue ejecutandose mientras el servidor esta activo y al iniciar; no prometer ejecucion puntual mientras el hosting duerme. Tarjetas antiguas son informativas y de solo lectura; editar plan sigue disponible desde Configuracion/Recurrentes.
+
+PR252 y253 integrados; promocion PR254. Correccion4b0683b74bf83063ec57dc1f3c47e8ec0758996c; entrega8ea94a8db3a106c22503eebfaf613e9e1cdf1c4a; developeb8f4cd795a0d381a0f496986fbfe49c905d56c6; main929a34c3866b298063571ad6753f682dfab791ed; arbol probado4c12e1604a07de5b64e1fde922b195fc3731fa97 coincide con ambas ramas integradas. Worktrees .local/worktrees/msi-compatibilidad y .local/worktrees/android039, ramas correcciones/msi-anteriores-proximo-corte y entrega/android-039-msi-anteriores. Cambios previos preservados.
+
+Local backend692 contabilizadas,9 omitidas,0 fallos/errores, BUILD SUCCESS;530 frontend y2 E2E MSI aprobados. CI exacta42401498099/Android42401498222 y entrega42401547137/Android42401547154 aprobadas: backend692/9 omitidas, frontend530, E2E57/4 omitidas, PWA4, PostgreSQL migracion/recuperacion aprobados. Android28 unitarias, lint y assembleRelease aprobados. Fixtures ficticios prueban plan anterior sin recibo, monto con centavos, continuidad despues del corte, ausencia de escrituras por consulta, aislamiento, filtros y no duplicar compras nuevas. No se hicieron compras de prueba ni cambios financieros reales.
+
+Produccion Vercel7625410901 y Render7625400918 success para main indicado; web200 con campos/rotulos nuevos en JS publico y API200/UP. Solo recursos publicos/salud para verificar produccion. Evidencia .local/msi-039-production-web.json y .local/android-039-verification.json. Documentacion de cierre actualizada localmente despues de los commits comprobados; no afirmar que este cierre forma parte del despliegue.
+
+APK .local/releases/Kaptal-0.1.39.apk, version0.1.39/codigo40 superior a0.1.38/codigo39 instalada anteriormente. SHA25640328116c4c540685251ea69afc12091fb74edd549005e3e8c607d8c9e7148ae; certificado habitual b5f360604095a50f3208299767dcedca2f3acfc5087df8be1fde9cc075c120c3.88 archivos web coinciden con build del codigo exacto, sin debuggable ni serverURL de desarrollo. APK firmada local y codigo CI comprobados por separado.
+
+Instalada en Samsung SM-A546E RZCW80EJNHX mediante actualizacion -r sin desinstalar ni limpiar datos. Primera instalacion 2026-10-22 00:26:31 conservada; actualizacion 2026-11-07 12:45:24. APK extraida coincide exactamente con el hash del candidato firmado.
+
+Revision visual de solo lectura autorizada: en dispositivo se observo la compra anterior en Inicio y valores de tarjeta iguales a la observacion previa. No se guardaron importes/conceptos reales en documentos. Captura temporal eliminada. No se comprobo visualmente en el telefono el campo concreto de primer cargo del plan; ese comportamiento esta probado con fixtures/CI.
+
+Pendiente: aceptacion visual/funcional del propietario. No usar compras reales para QA ni crear cargos para forzar una prueba. No se recuperan registros cancelados sin evidencia fiable ni se cambia automaticamente fecha original. Calendario e historial visual sin rediseno global.
+
+Nuevo chat: leer AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md, .local/PLAN_MAESTRO_KAPTAL_2026-10-18.md y .local/PROMPT_CONTINUAR_KAPTAL_ACTUAL.md. Verificar Git/remoto/PR/CI/ADB; revisar observaciones del propietario y evidencia039. No regenerar/reinstalar por rutina ni alterar datos reales.
+
+## Compatibilidad MSI anteriores y proximo corte implementados - 7 noviembre 2026
+
+Rama correcciones/msi-anteriores-proximo-corte desde origin/develop b26b0a8. Se reproduce omision: compra anterior sin recibo informativo queda oculta aunque retiene credito; siguienteFecha corresponde a cuota posterior y no muestra primera pendiente. Nueva proyeccion de solo lectura para planes anteriores vinculados, visible en Inicio y tarjeta, suma cuotas registradas + pendiente sin crear transacciones ni modificar datos financieros. Usa fecha de registro expresamente rotulada, no inventa fecha original. Compras nuevas con recibo no se duplican. Respeta filtros/propiedad/lista; proyeccion separada del contenido contable y sus totales. Cancelados antiguos sin plan no se reconstruyen porque no conservan total fiable.
+
+API de recurrencias agrega proximoCargo (primera cuota pendiente antes de siguienteFecha) y montoTotal. UI distingue proximo cargo al corte y cuota siguiente. No se reprograma ni aplica ningun cargo al consultar. Edicion de plan sigue en Configuracion; tarjetas informativas de compatibilidad son solo lectura.
+
+35 pruebas de exactitud financiera y530 frontend aprobadas; build Angular y2 E2E MSI locales aprobados. CI exacta/publicacion/APK superior a0.1.38 pendientes. No afirmar correccion instalada. No se modificaron compras reales ni saldos; revision visual previa autorizada por propietario limitada a su tarjeta, sin copias de datos reales en documentos.
+
+## Revision de compra MSI anterior a 0.1.38 - 7 noviembre 2026
+
+El propietario autorizo ahora revisar su compra concreta y su tarjeta en modo solo lectura; sigue sin autorizar cambios sobre datos financieros reales. Se observo pantalla de cuentas en Kaptal: diferencia entre limite, deuda y disponible coincide con el importe MSI indicado por el propietario, compatible con credito retenido. No se guardan importes/conceptos reales en esta bitacora.
+
+Hallazgo de codigo confirmado: historiales/Inicio excluyen impactoPendiente; migracionV18 solo agrega compra_msi_informativa=false y el registro total se crea exclusivamente en nuevas compras. Por ello una compra anterior con primera cuota pendiente puede desaparecer del listado aunque su retencion permanezca. No se puede afirmar que la compra concreta fue borrada ni validar su plan completo con esta evidencia.
+
+Pendiente inspeccion visual del plan concreto en Configuracion/Movimientos recurrentes. Se solicito dejar esa pantalla abierta; telefono cambio de aplicacion durante revision y no se continuo navegando sobre otras apps. Captura temporal eliminada. No se leyeron tokens, bases privadas, backups o credenciales; no se editaron/eliminaron/crearon movimientos ni se modificaron saldos. No hay nueva correccion, publicacion o APK en esta revision. Siguiente: confirmar plan/corte y distinguir credito retenido de deuda; despues resolver compatibilidad de historia anterior con fixtures sin inventar fecha de compra ni recalcular automaticamente datos reales.
+
+## Android 0.1.38 instalada y verificada - 7 noviembre 2026
+
+Samsung SM-A546E RZCW80EJNHX conectado. Version previa comprobada 0.1.37/codigo38; actualizada a0.1.38/codigo39 mediante adb install -r, sin desinstalar ni limpiar datos. Firma habitual comprobada antes de instalar. APK instalada extraida y SHA2561559e81cb687980fc70000d66614a4c764f09485d172bf9c95d25d404ef4ed2d coincide exactamente con el candidato firmado. Primera instalacion2026-10-22 00:26:31 conservada; actualizacion2026-11-07 12:06:47. Evidencia .local/android-038-verification.json y .local/android-038-installed.apk.
+
+CI del codigo exacto reconsultada:42388711905 y Android42388711919 success. Origin/main2fe2ea345eac3938da1391254f3a12d220383be1 comprobado contra remoto. Incluye total informativo MSI en Inicio y tarjeta, con cuota al corte sin duplicar gasto. No se abrio la app ni se accedio/modifico informacion financiera o sesiones. No se regenero APK ni se repitieron pruebas financieras en produccion.
+
+La instalacion pendiente del cierre anterior queda resuelta. Pendiente solo aceptacion visual/funcional del propietario; compras anteriores no reconstruidas automaticamente. Documentacion de cierre actualizada localmente conservando cambios previos.
+
+Continuar en nuevo chat: leer AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md, .local/PLAN_MAESTRO_KAPTAL_2026-10-18.md y .local/PROMPT_CONTINUAR_KAPTAL_ACTUAL.md. Kaptal0.1.38 ya instalada y hash verificado; verificar estado actual, recoger observaciones del propietario sin usar compras reales para QA ni reinstalar por rutina.
+
+## Cierre vigente: compra MSI total publicada, Android 0.1.38 - 7 noviembre 2026
+
+Este cierre sustituye los pendientes anteriores de esta correccion. Nuevas compras MSI muestran el importe TOTAL negativo en Inicio y en historial de tarjeta, con fecha de compra y distintivo informativo. Retienen credito una sola vez sin afectar saldo neto/gasto/cashback/libro diario. La cuota futura permanece oculta; al corte se contabiliza y aparece como cargo separado, conservando la compra total sin duplicar gastos. El servidor procesa cuotas vencidas cada minuto mientras esta activo y al iniciar; no prometer ejecucion puntual mientras el hosting duerme.
+
+Edicion actualiza total informativo y cuotas del plan; borrado completo elimina ambos sin devolucion ficticia. Cancelar pendientes conserva la compra historica. Respaldo/restauracion, CSV financiero, totales y backfill excluyen el total informativo de efectos contables. V18 agrega bandera defaultfalse sin inventar fecha/total de compras antiguas. No se consulto ni modifico compra real u otros datos financieros. Esta correccion no reconstruye automaticamente registros anteriores a V18.
+
+PR249 integrado en develop9b7ad3b6e675495644138512aef81f60d9c69aa1; PR250 en developb26b0a8fd66509a67e05bf1d18af73163ca9fea9; PR251 en main2fe2ea345eac3938da1391254f3a12d220383be1. Arbol e7dbe238f4ab6b611da0d7b50f9a0d5c9eb05e7c identico al commit probado0b2fd2caa0db2c03dc61aefcf5479034a6c3bf24. Ramas/worktrees correcciones/msi-historial-compra-total/.local/worktrees/msi-historial-total y entrega/android-038-msi-total/.local/worktrees/android038. Cambios previos de la carpeta principal y worktrees anteriores preservados.
+
+CI exacta de correccion42388653035/Android42388652950 y entrega42388711905/Android42388711919 aprobadas. Backend690 contabilizadas,9 omitidas,0 fallos/errores; frontend528 aprobadas; E2E Chromium/API/PostgreSQL57 aprobadas,4 omitidas; PWA4 aprobadas; migracion/recuperacion PostgreSQL aprobadas. Android local28 y lint aprobados. Fixtures ficticios verifican total90/retencion90/saldo0 antes del corte, cuota30 como unico gasto al corte, persistencia del total, edicion y borrado coherentes. Compilar o publicar no equivale a aceptacion visual del propietario.
+
+Produccion: Vercel Production7623555252 y Render main-kaptal-api7623548210 success para main2fe2ea3; web200 con compraMsiInformativa presente en JS publico y API200/UP. Solo consultas de salud y recursos publicos; sin compras/pruebas financieras en produccion. Evidencia .local/msi-total-038-production-web.json y .local/android-038-verification.json.
+
+APK .local/releases/Kaptal-0.1.38.apk, version0.1.38/codigo39, superior a0.1.37/codigo38. SHA2561559e81cb687980fc70000d66614a4c764f09485d172bf9c95d25d404ef4ed2d. Certificado habitual b5f360604095a50f3208299767dcedca2f3acfc5087df8be1fde9cc075c120c3;88 archivos web coinciden con build local del commit probado; sin debuggable ni serverURL de desarrollo. CI del mismo codigo aprobada; no confundir APK firmada local con artefacto debug de CI.
+
+NO instalada: ADB no detecta dispositivos al cierre. Ultima instalacion comprobada anteriormente: 0.1.37/codigo38. No afirmar version actual sin conexion. Al reconectar Samsung RZCW80EJNHX ejecutar .local/install-038.py: actualizacion -r, comprobar firma/hash/version, conservar primera instalacion y comparar APK extraida; no abrir sesion ni usar finanzas reales.
+
+Pendiente: instalacion si ADB sigue ausente y aceptacion visual/funcional del propietario. Historial visual y calendario sin rediseno. Cierre documental local posterior a commits probados, sin afirmar que estos apuntes estan incluidos en el despliegue.
+
+Continuar: leer AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md, .local/PLAN_MAESTRO_KAPTAL_2026-10-18.md y .local/PROMPT_CONTINUAR_KAPTAL_ACTUAL.md. Verificar Git/remoto/PR/CI/ADB; instalar APK038 ya comprobada cuando vuelva el telefono y verificar archivo instalado. No regenerar ni reinstalar por rutina, ni manipular compras reales para QA.
+
+## Compra MSI total informativa implementada localmente - 7 noviembre 2026
+
+En correcciones/msi-historial-compra-total: nuevas compras MSI crean un registro durable del importe TOTAL con fecha de compra, vinculado al mismo plan. Es informativo: no aplica saldo neto, gasto agregado, cashback ni libro diario. Se muestra como importe total en Inicio y en el historial de la tarjeta; la cuota pendiente permanece oculta y al corte aparece como cargo separado. No se duplica el gasto al conservar ambos registros.
+
+Edicion actualiza la compra informativa existente; eliminar plan borra todas las cuotas y la compra informativa sin devolucion ficticia; cancelar pendientes conserva el registro historico de compra. Backfill y CSV financiero excluyen la compra informativa, respaldo conserva su bandera y valida que sea MSI. MigracionV18 agrega bandera defaultfalse sin inventar compras de historiales anteriores. No se reconstruye automaticamente fecha/total de compras reales antiguas.
+
+Suite backend690 contabilizadas,0 fallos/errores,9 omitidas antes de ultimos ajustes menores;33 pruebas focales aprobaron compra total persistente despues del corte y cuota como unico gasto. Build Angular aprobado antes de ultimos textos. Falta CI exacta, E2E final, integracion/publicacion y APK superior a0.1.37. No declarar entregado aun. Sin acceso ni modificaciones a datos financieros reales.
+
+## Historial MSI: compra total y cargos mensuales - 7 noviembre 2026
+
+Nueva solicitud del propietario: mostrar desde la compra el importe TOTAL negativo en historial de la tarjeta y en Inicio, como compra/credito comprometido SIN impacto en saldo neto. Al corte, conservar compra original y agregar cuota mensual que SI afecta saldo neto. No sumar la compra informativa y las cuotas como gastos duplicados.
+
+Rama correcciones/msi-historial-compra-total en .local/worktrees/msi-historial-total, creada desde origin/develop1ba60d9 comprobado. Se encontro fuga en Inicio: DashboardService usa findTop10PorPeriodo distinto del historial; no excluia impactoPendiente. Se corrigieron consultas propias/compartidas de Inicio y sus callers y se agrego regresion con compra ficticia a90/3MSI que exige no listar la cuota futura y saldo0/retencion90. Pruebas en .local/worktrees/msi-historial-pruebas.log.
+
+Falta implementar registro durable de compra informativa total, con fecha de compra real, vinculo al plan y cuotas, exclusion de saldo neto/gastos/cashback/libro diario, render coherente en tarjeta/Inicio y soporte de editar/eliminar/restaurar sin duplicaciones. No simular ese total cambiando el monto contable de la cuota ni calcularlo solamente mientras este pendiente: debe conservarse despues del corte. No alterar historia real automaticamente ni consultar compra real. No publicar/instalar como tarea completa antes de implementar y probar esa parte. La version instalada sigue0.1.37 segun evidencia anterior, sin nueva verificacion del dispositivo en esta parte.
+
+## Android 0.1.37 instalada y verificada - 7 noviembre 2026
+
+- Samsung SM-A546E RZCW80EJNHX conectado: se comprobo version0.1.36/codigo37 y se actualizo a0.1.37/codigo38 mediante adb install -r, sin desinstalar ni limpiar datos. Firma y SHA256 del candidato comprobados antes de instalar.
+- APK extraida tras instalar coincide exactamente con SHA25681ee3b85bf381bead3ee90967967846e1541531e6e913f4bef3d9a6897408f0e. Primera instalacion2026-10-22 00:26:31 conservada; actualizacion2026-11-07 09:22:16. Evidencia .local/android-037-verification.json actualizada y .local/android-037-installed.apk.
+- Incluye cargo MSI pendiente al corte e Ingresos de Inicio enlazado al historial completo. CI y publicacion verificadas en la etapa anterior; no se repitio despliegue ni se regenero APK. No se abrio la app ni se consultaron datos financieros, se cambiaron sesiones o se guardaron movimientos reales.
+- Pendiente: aceptacion visual y funcional del propietario. La compra real anterior no se recalculo automaticamente; su historial se conserva hasta una edicion expresa. Siguiente chat: leer AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y los planes/prompts locales; verificar estado actual y no reinstalar0.1.37 por rutina. Cierre documental local preservando cambios previos.
+
+## Cargo MSI al corte e Ingresos publicados; Android 0.1.37 pendiente de instalar - 7 noviembre 2026
+
+- PR246 integrado en develop78c9f70994c76a796075e3325003f5853fab6181 tras CI completa del commit d4a10ff92ae32fbd24539294d1b15697648af369. PR247 integrado en develop1ba60d92023426d2d5df005e6321ceb70870cbdf; CI exacta de entrega43064d4c0d2fd54afcec41750d705d9b7cacdfb3 aprobada, runs42376214190 y Android42376214084. PR248 integrado en main eaf7698137f24d4d3aab952054453a96c049ffe2. Arbol325e1b07e199f1d23f94188bbf6b825fd8a5cec5 coincide con el probado.
+- MSI con primer corte futuro retiene el total sin afectar saldo/deuda/saldo neto, cashback ni libro diario antes del corte. La cuota queda pendiente y oculta del historial de cargos/totales de gastos; proceso del servidor cada minuto mientras esta activo y al iniciar aplica vencidas una sola vez con bloqueo y auditoria. Servidor dormido no ejecuta tareas: al volver se procesan vencidas. No prometer ejecucion fisica exacta a medianoche en hosting gratuito.
+- Edicion, eliminacion, cancelacion de pendientes, consultas propias/compartidas, backfill y respaldo preservan el estado sin deuda ni devolucion ficticia antes del corte. Desde Configuracion/Recurrentes se abre Editar compra MSI aunque la cuota pendiente no figure como cargo. MigracionV17 agrega impacto_pendiente=false a historia existente: no recalcula ni altera compras anteriores; una correccion de su plan requiere edicion expresa del propietario.
+- Inicio/Ingresos es un enlace accesible a /transacciones?tipo=INGRESO, sin limitar el historial al mes actual. Prueba de navegador verifico navegacion y filtro.
+- CI: backend688 contabilizadas,0 fallos/errores,9 omitidas en H2; frontend527 aprobadas; E2E PostgreSQL57 aprobadas,4 omitidas;4 PWA aprobadas; migraciones/recuperacion PostgreSQL aprobadas; Android local28 y lint aprobados. Ejemplos ficticios prueban retener90/saldo0 antes del corte, aplicar30/dejar60 retenidos al corte sin duplicados, editar/borrar antes del corte, respaldo y evitar cargo por backfill. No pruebas con compras ni datos financieros reales.
+- Vercel Production7621786444 y Render main-kaptal-api7621775948 success para main eaf7698; web200 con enlace Ingresos nuevo comprobado en JS publico y API200/UP. No afirmar identidad binaria de bundles Vercel/Windows.
+- APK .local/releases/Kaptal-0.1.37.apk, version0.1.37/codigo38 superior a0.1.36/codigo37. Firma habitual b5f360604095a50f3208299767dcedca2f3acfc5087df8be1fde9cc075c120c3,88 archivos web coinciden, sin debuggable ni servidor remoto de desarrollo. SHA25681ee3b85bf381bead3ee90967967846e1541531e6e913f4bef3d9a6897408f0e. Evidencia .local/android-037-verification.json y .local/corte-037-production-web.json.
+- NO instalada: ADB sin dispositivos al cierre actual. Ultima evidencia anterior de telefono0.1.36; no se releyo version por falta de conexion. Cuando vuelva Samsung RZCW80EJNHX, verificar version/firma y ejecutar actualizacion -r conservando datos, comparar APK extraida y fecha original de instalacion. Script local .local/install-037.py exige CI y produccion aprobadas, verifica hash/version y preservacion de primera instalacion. No regenerar/reinstalar por rutina. No abrir su sesion ni usar finanzas reales para QA.
+- Documentos cerrados localmente despues de los commits de entrega, preservando cambios anteriores de la carpeta principal. Worktrees .local/worktrees/msi-cargo-al-corte y .local/worktrees/android037. Siguiente: instalar APK verificada al conectar telefono y aceptacion fisica del propietario. Calendario e historial visual sin rediseno; carreras generales de sesion/duplicados de transferencias siguen separadas.
+
+## Cargo MSI diferido e historial de ingresos - 7 noviembre 2026
+
+Rama correcciones/msi-cargo-al-corte desde develop21fc08c. Se retiene el total MSI antes del primer corte, sin deuda/cashback/libro diario hasta aplicar la cuota pendiente. Proceso automatico cada minuto mientras el servidor esta activo y al reiniciar, con bloqueo e idempotencia. Consultas de gastos e historial excluyen cuotas pendientes; desde Configuracion/Recurrentes se puede abrir la compra para editar el plan antes del corte. Edicion y borrado consideran la retencion pendiente sin crear devoluciones; respaldo conserva impactoPendiente y valida su cobertura. No se migra automaticamente el historial financiero anterior: los planes antiguos mantienen sus datos hasta edicion expresa.
+
+Inicio/Ingresos ahora abre /transacciones?tipo=INGRESO y muestra todo el historial de ingresos. Prueba Chromium sintetica aprobada; build Angular aprobado. Suite backend previa a ultimos ajustes de validacion/restauracion y enlace de gestion:688 contabilizadas,0 fallos/errores,9 omitidas. Falta CI exacta, pruebas integrales finales, integracion, publicacion y APK superior a0.1.36 si procede; no declarar instalado. Sin consultas ni modificaciones a datos financieros reales.
+
+## Cargo MSI al corte: implementacion parcial local
+
+En .local/worktrees/msi-cargo-al-corte se implemento impactoPendiente en Transaccion y migracionV17: al crear MSI con primera cuota futura se retiene total, no se aplica saldo ni cashback ni libro diario. aplicarCuotaAlCorte usa bloqueo por transaccion, comprueba fecha y estado, libera retencion de esa cuota y aplica saldo/libro/cashback una sola vez. Primera regresion sintetica aprobada; segunda prueba de fecha/idempotencia en comprobacion. Trabajo SIN publicar: faltan ejecucion automatica, filtros/consultas agregadas, respaldo del estado pendiente, edicion y cancelacion/borrado seguros y compatibilidad con planes existentes. No usar esta rama como entrega ni instalar APK parcial. La compra real no se consulto ni modifico.
+
+## MSI: cargo diferido al corte - trabajo pendiente
+
+El propietario precisa que se debe comprometer el credito total al comprar, pero no afectar saldo neto ni registrar el cargo hasta el corte. La version 0.1.36 fecha la cuota al corte pero aplica el saldo y libro diario inmediatamente; no cumple este requisito. Rama correcciones/msi-cargo-al-corte creada desde origin/develop 21fc08c. Hay una nueva prueba sintetica de regresion sin confirmar en el worktree .local/worktrees/msi-cargo-al-corte; ejecucion en .local/worktrees/msi-corte-regresion.log. Falta implementar cargo diferido seguro, ejecucion al corte, idempotencia, plan previo, saldos, cashback, libro diario, edicion, borrado y respaldos; no publicar ni instalar como solucion antes de comprobarlo. No acceder ni modificar datos financieros reales.
+
+## Entrega MSI completada: Android 0.1.36 - 6 noviembre 2026
+
+- PR243 integrado en develop cdab795615649015a909000e96d411ed14126135 tras CI completa del commit2679aa7; PR244 integrado en develop21fc08c47b633db22c67316573412c22f98a2351 tras CI completa y Android del commit exacto3da6c1fb0d22c97d44912661c7dfe05b644dce9c. PR245 integrado en main7e7cfc218c71f0cd73b722f65aee80acbf83ca3d; arbol publicado cf6faa2c260a56ea0e2b8902708b1bf72d5c1fe2 identico al probado.
+- Chat conserva el plazo MSI, separa Compre de aclaraciones anteriores y mantiene contexto al responder Compras. Primera cuota de nuevas compras al corte; falta configurar corte impide crear MSI. La contabilizacion de movimientos futuros mantiene el comportamiento existente: el saldo/retencion se aplican al registrar. No se modifico automaticamente historia anterior.
+- Desde cualquier cuota se edita el total/plazo del plan completo conservando IDs y grupo, recalculando cuotas, saldos, cashback, retencion y fechas. Edicion atomica, permisos propios/lista y bloqueos; no se admite reducir plazo por debajo de cuotas emitidas ni cambiar moneda. Plan pausado sigue pausado; plan cancelado conserva historia y permite eliminacion completa, no reabrirse. Eliminar exige confirmacion explicita y revierte todas las cuotas/cashback, libera solo su retencion y conserva asientos/auditoria con resumen del plan. Deslizar revela Editar y requiere pulsarlo.
+- CI exacta3da6c1f: run42338183101 y Android42338183193 exitosos. Backend684 contabilizadas,9 omitidas,0 fallos/errores; frontend527 aprobadas; E2E PostgreSQL55 aprobadas,4 omitidas, mas4 PWA; Android local28 aprobadas y lint correcto. Pruebas ficticias incluyen credito insuficiente con rollback, permisos, cashback, respaldo/restauracion de plan editado, cuotas/centavos, chat idempotente, gesto, editor, borrado y asientos cuadrados. No sustituyen aceptacion fisica por el propietario.
+- Vercel Production deployment7616601095 y Render main-kaptal-api7616593992 success para main7e7cfc2. Web200 y API200/UP. Editor nuevo comprobado en JS publico. Los bundles Windows/Vercel no son identicos byte a byte; la publicacion se vincula al SHA exacto y a la comprobacion publica, no se afirma identidad de todos los binarios web.
+- APK .local/releases/Kaptal-0.1.36.apk/codigo37, certificado habitual b5f360604095a50f3208299767dcedca2f3acfc5087df8be1fde9cc075c120c3;88 archivos web empaquetados coinciden, sin debuggable ni servidor remoto de desarrollo. SHA2566a6d7c2da6cd49c6b59e261ff8d40c2aba1a4493799c04cc82215d279d8137fe.
+- Instalada por adb install -r en Samsung SM-A546E. APK extraida coincide exactamente con ese hash; version0.1.36/codigo37, primera instalacion2026-10-22 00:26:31 conservada y actualizacion2026-11-06 22:39:23. No desinstalar, limpiar datos, cambiar sesion ni usar compras reales para QA. No se abrio la app ni se consultaron datos financieros. Evidencia .local/android-036-verification.json y .local/msi-device-before.json.
+- Pendiente de aceptacion del propietario: apariencia y comportamiento fisico del gesto/editor con ejemplos ficticios; no se probaron operaciones financieras en su sesion. Calendario aprobado, rediseno del historial aplazado. Siguen separadas carreras generales de sesion, transferencias duplicadas y cobertura de avisos bancarios.
+- Cierre documental actualizado localmente conservando cambios previos de la carpeta principal; los commits probados/publicados identificados arriba no contienen este cierre posterior. Worktrees: .local/worktrees/chat-msi-edicion y .local/worktrees/android036. Proxima tarea nueva en rama desde origin/develop actualizado, sin reinstalar0.1.36 por rutina.
+
+## Android 0.1.31 instalada y captura publicada (5 noviembre 2026)
+
+- PR228 integrado en develop 67c0a3a con CI completa de 539f8f8; PR229 integrado develop ec3813c con CI completa efc804fb; PR230 integrado en main c1d1b4c646d8d12bf99eeb812527cfb0450f317b. Arbol de main coincide con entrega probada. Vercel Production y Render main-kaptal-api success para ese SHA; API health 200 UP.
+- APK 0.1.31 codigo32 generada .local/releases/Kaptal-0.1.31.apk, 87 archivos web coinciden, 27 pruebas Android, firma habitual b5f360604095a50f3208299767dcedca2f3acfc5087df8be1fde9cc075c120c3, hash f2b302bde0aa7d2383a76dcf6422f0280c81229c850fa8a0e00da85e1a0634f8. Instalada mediante adb install -r en SM-A546E; APK extraida coincide, primera instalacion 2026-10-22 00:26:31 conservada, actualizacion 2026-11-05 16:29:48.
+- Reconocimiento de categorias y modismos, etiquetas y Amex; voz guarda directamente solo si una propuesta de reglas tiene datos claros, deja revisar preguntas, ejemplos y ambiguedades. Acceso a Movimientos despues de guardar, sin deshacer de un toque. Consentimiento de audio recordado y revocable; chat incorpora funciones del asistente con consentimiento de IA. Pruebas sinteticas end-to-end con backend local y CI PostgreSQL pasaron; falta validacion fisica por propietario, especialmente reconocimiento y guardado por voz. No se guardaron movimientos reales para QA ni se abrio la app. No declarar resueltas carreras de sesion ni duplicacion de transferencias.
+## Catalogo personal organizado (5 noviembre 2026)
+
+- Por autorizacion expresa del propietario, en la cuenta Personal se renombro la categoria existente Alimentacion a Comida mediante editar; la app confirmo actualizacion. No se consultaron ni modificaron movimientos. El cambio conserva la categoria existente; no se verificaron individualmente sus referencias historicas.
+- Se crearon Supermercado, Transporte, Salud, Entretenimiento y Vivienda y servicios; se conservaron Compras, Gimnasio, Recargas y Salario. Kaptal confirmo creacion y se comprobaron visualmente las categorias, salvo que no se revisaron sus movimientos ni saldos.
+- Se crearon y verificaron ocho etiquetas: restaurante, despensa, en-linea, electronica, gasolina, suscripcion, mensual y nomina. El catalogo estaba vacio. Una notificacion ajena aparecio brevemente sobre una captura de pantalla; esa captura temporal fue sobrescrita y eliminada, sin registrar su contenido en documentos.
+- Pendiente implementar en una rama nueva desde develop actualizado: reconocimiento de categorias y diccionario ampliado de modismos, permiso de microfono sin solicitudes repetitivas, guardar por voz directamente al continuar cuando los datos esten claros segun nueva autorizacion del propietario, y unificar capacidades del asistente en el chat. Verificar fallos, duplicados, ambiguedad y ofrecer correccion/deshacer; probar solo con datos ficticios. El propietario cambio expresamente la preferencia anterior de confirmacion final para voz.
+## Android 0.1.30 instalada y verificada (5 noviembre 2026)
+
+- Samsung SM-A546E: actualizacion de 0.1.29/codigo 30 a 0.1.30/codigo 31 mediante adb install -r, resultado Success. Firma anterior y candidata coinciden. APK extraida tras instalar SHA256 03e9a2c83cd58c7e785b3c55836f8217f6b78ca76862af25d7e52e70b3cb290f, igual a la entrega verificada.
+- Primera instalacion conservada: 2026-10-22 00:26:31; ultima actualizacion 2026-11-05 08:51:00. Conexion USB intermitente al comienzo; se recupero sin reiniciar ADB ni el telefono. No se desinstalo, limpio almacenamiento, abrio la app ni consultaron datos financieros.
+- Git remoto confirma develop 747a7fbe y main 160c4b54; PR227 integrado y CI completa 42045089942 exitosa para SHA4f3dc01, comprobados de nuevo. Evidencia .local/android-030-verification.json actualizada. Publicacion confirmada en etapa anterior, no repetida en esta instalacion.
+- Pendiente: prueba del propietario de captura escrita/voz y catalogos, con ejemplos ficticios y sin guardar movimientos reales; continuar Inicio seccion por seccion. No declarar resueltas carreras de sesion ni posible duplicacion de transferencias.
+## Entrega completada: captura, etiquetas y categorias (5 noviembre 2026)
+
+- PR226 integrado con CI completa de 1f20944. PR227 entrega Android integrado en develop 747a7fbe3272603dc320b27d467a3b21778a126f. PR192 integrado en main 160c4b549b69d78dc9efeecd661e6509753625fc. El arbol de main coincide exactamente con la entrega probada4f3dc01:7dd8f0d153d28a9773717505030db6ae0568e54a.
+- Publicacion confirmada por GitHub Deployments para ese SHA: Vercel Production success 14:38:45UTC y Render main-kaptal-api success14:42:38UTC. Web200, bundle main-JEDHXZEA.js coincide por SHA256 con build local; API health200/UP tras terminar Render. Sin consultas financieras productivas.
+- APK0.1.30/codigo31 generada y verificada, NO instalada: .local/releases/Kaptal-0.1.30.apk, SHA25603e9a2c83cd58c7e785b3c55836f8217f6b78ca76862af25d7e52e70b3cb290f, firma habitual b5f360604095a50f3208299767dcedca2f3acfc5087df8be1fde9cc075c120c3; 87 archivos web coinciden, release sin debuggable y27 pruebas Android aprobadas. CI completa del SHA4f3dc01 success run42045089942; APK CI success. Se cancelo una ejecucion duplicada42045137650 detenida instalando Chromium, despues de aprobar la ejecucion completa del mismo SHA.
+- Eliminacion fisica de categorias del catalogo con conservacion historica independiente; presupuestos vigentes y recurrencias activas se reasignan explicitamente en operacion atomica. No Archivar. Etiquetas altas/bajas conservan etiquetas historicas de movimientos; aliasesAmex y etiquetas expresas reconocidos por captura local. Propuestas siempre revisables antes de guardar. Interfaz categorias compactada y validada con letra grande.
+- Pruebas locales: buildAngular,499 frontend,657 backend contabilizadas (9 omitidas reservadas aPostgreSQL),4 pruebas posteriores de recurrencias y E2E de accesibilidad, respaldo/restauracion, eliminacion historica y reasignacion activa/etiquetas. CI PostgreSQL y E2E completas aprobadas para entrega. No prueba fisica nueva ni registros reales.
+- ADB sin dispositivos al cerrar por desconexion voluntaria. Version anterior instalada0.1.29 segun evidencia anterior, no comprobada en telefono esta sesion. Cuando vuelva: verificar version/firma, adb install -r, comparar hash de APK extraido y primera instalacion; validar captura y catalogos con frase ficticia sin guardar movimientos.
+- Pendientes separados: aceptacion fisica de la nueva version y revision de Inicio con propietario seccion por seccion. Carreras de sesion y posible duplicacion de transferencias no declaradas resueltas; seguridad global y migracion gratuita diferidas.
+- Evidencia privada: .local/android-030-verification.json y .local/kaptal-030-delivery-verification.json. Este cierre documental se conserva localmente; commits de codigo y APK exacta identificados arriba.
+## Transcripcion incremental en desarrollo (4 noviembre 2026)
+
+Rama mejoras/transcripcion-incremental creada desde develop 5590468 y actualizada con PR209. Vista previa Groq envia audio acumulado con intervalo aproximado de ocho segundos, maximo una solicitud simultanea, exige consentimiento, cancela previas al detener/cerrar y conserva grabacion completa para transcripcion final. La respuesta parcial puede cambiar; si falla la final se puede revisar texto parcial. No se guardan movimientos automaticamente ni se introduce proveedor nuevo. Audio generado localmente y respuestas Groq simuladas: E2E confirma avance durante grabacion y texto final editable; 34 pruebas focales y build pasan. No se ha verificado que Groq acepte archivos parciales ni latencia o cuota en Samsung; puede consumir mas cuota gratuita. Pendiente CI exacta, pruebas de dispositivo consentidas con frase ficticia, integracion, publicacion y APK; no afirmar tiempo real sin demora ni funcionamiento real probado. Usuario conecto Samsung; instalada 0.1.27. No usar datos financieros; carreras sesion y transferencias siguen pendientes.
+
+## Seguimiento de voz simulada (4 noviembre 2026)
+
+PR209 en curso. Prueba unitaria con grabador y respuesta simulados confirma consentimiento, texto revisable sin interpretar ni guardar al finalizar; 33 pruebas focales correctas. E2E local previo de pantalla, permiso y navegacion paso. Transcripcion en vivo NO implementada: Groq actual recibe archivo tras detener; los resultados parciales Android dependen del servicio, posible cambio de proveedor/privacidad requiere diseno y pruebas. No publicar ni instalar esta etapa incompleta; falta probar flujo grabacion real, accesibilidad, CI y dispositivo. Ver docs oficiales https://console.groq.com/docs/speech-to-text y https://developer.android.com/reference/android/speech/RecognitionListener .
+
+## Diseno de voz, escritura y herramientas en curso (4 noviembre 2026)
+
+Rama diseno/captura-voz-herramientas desde develop 5590468 con PR208 14d1f92 incorporado. Sin telefono por pedido del propietario. Mic abre pantalla separada con consentimiento y cancelacion; transcripcion Groq sigue por archivo al terminar, texto revisable antes de enviar: NO implementada transcripcion en vivo solicitada y grabacion real/fisica pendiente. Lapiz mantiene captura y consultas por reglas/IA consentida; tarjetas de propuesta ajustadas; lupa y lapiz a izquierda, microfono a derecha. Herramientas retiradas del selector de listas y enlaces trasladados a Configuracion. Build y 491 unitarias frontend antes de ajustes finales, 39 focales posteriores, E2E H2 de accesos y permiso, cuentas/presupuestos y repeticion correctos. Falta comprobar grabacion completa simulada, transcripcion continua, revision visual, CI, integracion, publicacion y APK nueva; no afirmar terminada la tarea. PR207/208 abiertos al inicio. Sin datos financieros reales. Carreras de sesion y posible duplicacion de transferencias siguen pendientes.
+
+## Revision de Configuracion e integracion (4 noviembre 2026)
+
+El propietario reviso y aprobo Configuracion en Android 0.1.26. PR206 integrado a develop 55904684f9b6442a29adccf0a2bbbc2ca05bf0b1; PR205 figura integrado por inclusion. PR204 captura tenia CI verde pero conflicto documental al combinar con develop; PR207 integracion/captura-configuracion-20261104 SHA 9766a6a887dc54309411071b698a40977e4cb4b4 combina ambos y conserva ambos documentos, CI en curso. Pendiente integrar tras CI exacta, publicar a main y preparar APK superior con captura. APK instalada 0.1.26 sin captura PR204. Solicitada prueba de voz ficticia sin guardar; estado Groq no confirmado. No acceder datos financieros. Mantener carreras de sesion y posible duplicacion de transferencias pendientes.
+
+## CI de Configuracion y WhatsApp (4 noviembre 2026)
+
+CI del SHA f051243 fallo en E2E porque la prueba WhatsApp intentaba llenar un formulario dentro de Perfil cerrado. Se actualizo el recorrido para abrir el apartado antes de interactuar. E2E local completo de WhatsApp con H2 y Miniflare paso con proveedor simulado y usuarios ficticios; ninguna conexion real. Backend, frontend, PostgreSQL y Android de esa CI pasaron. El nuevo commit requiere CI exacta; ADB sigue sin telefono, sin APK nueva ni publicacion. PR #204 sigue separado y su CI E2E fallo por selector ambiguo y elemento desprendido; no declarar captura resuelta.
+
+## Configuracion organizada (4 noviembre 2026)
+
+Rama diseno/organizacion-configuracion creada desde develop dc0c230. Revision previa: accesos duplicados a categorias y recurrentes, perfil/apariencia siempre abiertos; se conservan seguridad, respaldo, eliminacion y conexiones. Nueva pantalla agrupa cuenta, preferencias y avisos, finanzas y datos; perfil y apariencia se pliegan, se retiran accesos duplicados conservando los apartados y fragmentos existentes. No se eliminaron funciones ni datos. WhatsApp sigue en Perfil, etiquetado explicitamente; configuracion futura de tarjetas sigue pendiente.
+
+Build y 486 pruebas frontend correctos; 16 pruebas focales; E2E H2 correctos para organizacion movil y fragmentos, respaldo/restauracion, recurrentes, proteccion de borrado y accesibilidad al 200 por ciento. Captura sintetica .local/configuracion-organizada-sintetica.png. ADB sin dispositivo; pendiente CI del SHA, aceptacion fisica, integracion y publicacion. PR #204 sigue abierto: CI 41865086704 fallo por dos pruebas E2E (selector ambiguo en captura y elemento desprendido en gesto), requiere diagnostico y correccion antes de integrar. Groq/voz aun no verificados. No se usaron datos financieros reales.
+## Captura: reparacion de pruebas E2E (4 noviembre 2026)
+
+PR #204: CI anterior fallo por boton ambiguo y barra reemplazada durante la carga. Se identifica el acceso de la zona de Recientes, se abre Escribir o dictar en el formulario y se espera la consulta del periodo antes del gesto. Ambos recorridos pasaron localmente con H2 y datos ficticios. Falta CI del nuevo SHA; no afirmar que se corrigieron todos los errores de captura. La APK 0.1.26 preparada en PR206 contiene Configuracion, no contiene PR204; instalacion pendiente por desconexion USB.
+
+## Captura escrita: comprobacion completa (4 noviembre 2026)
+
+La prueba E2E con H2 detecto que la categoria predeterminada se llama Alimentos y Supermercado. Se corrigio la asociacion de comida/restaurantes a esa categoria o Comida cuando hay una sola coincidencia; ante varias se pide elegir. E2E Chromium paso: propuesta ficticia, categoria por texto, cero movimientos antes de confirmar y uno con categoria e importe correctos despues. MotorChatReglas y 31 pruebas focales frontend correctos tras el ajuste. PR #204 en borrador depende de PR #203. No se conoce aun el resultado de CI del ultimo commit ni hay despliegue o APK nueva. Groq y aceptacion fisica del nuevo flujo siguen pendientes; no afirmar solucion de todos los errores de captura.
+
+## Captura escrita: categoria y confirmacion (4 noviembre 2026)
+
+El propietario confirmo visualmente que los gestos funcionan en Android 0.1.25. Informo que la captura volvia a pedir categoria o datos y fallaba al confirmar. Rama correcciones/captura-categorias-confirmacion creada desde develop f833ff6 y adelantada con PR203 388d9d4 aun no integrado. Se reprodujeron dos casos: restaurantes plural no asociaba Comida y responder una categoria a propuesta pendiente no la actualizaba. Se aceptan nombres exactos activos para una unica propuesta sin categoria y restaurante/restaurantes como Comida, sin guardar automaticamente; se conserva texto si falla la actualizacion. Motor reconoce restaurantes plural. Faltan mas sinonimos y diagnosticar otros casos de confirmacion reportados; no declarar resuelta la interpretacion general.
+
+Pruebas: build frontend; 488 unitarias frontend; MotorChatReglasTest, AiActionServiceTest y PropuestasChatIntegrationTest correctos y prueba H2 adicional de editar categoria, conservar datos y confirmar idempotentemente. PR, CI exacta, integracion, despliegue y validacion fisica pendientes. ADB sin dispositivos; no hay APK nueva ni instalacion. Groq: propietario estaba desplegando configuracion en Render; no comprobada ni probada voz. No operaciones financieras reales. Carreras de sesion y posible duplicacion de transferencias siguen pendientes.
+
 ## Permiso de microfono Android en revision (3 noviembre 2026)
 
 El propietario reporto que Kaptal no mostraba permiso y decia que el navegador bloqueo el microfono. Se verifico que la APK 0.1.21 no declara RECORD_AUDIO y el BridgeWebChromeClient de Capacitor solicita RECORD_AUDIO y MODIFY_AUDIO_SETTINGS al usar captura de audio. Se declararon ambos en el manifiesto y se aclaro el mensaje de denegacion; la app conserva el consentimiento previo al acceso. Android exige declaracion y permiso en tiempo de ejecucion: https://developer.android.com/media/platform/mediarecorder . Build y 84 pruebas focales correctos; E2E, CI, empaquetado y prueba fisica aun pendientes al registrar. No se grabo ni envio audio.
@@ -1421,3 +2235,206 @@ Se precisa que `usage_unavailable` cuenta solo eventos emitidos tras procesar el
 
 - APK 0.1.25 codigo 26 instalada por actualizacion; hash del dispositivo 8cc5d114b00fc268caccfbf612d9bdcc12d029f563212754de66ba992a03b139 coincide con el archivo local; fecha de primera instalacion conservada. CI integral y APK pasaron para af4aebf6e01f5e231fdfd664d8c33b61f46875cb (PR #203).
 - Las etiquetas del gesto estan fuera del carrusel y en limites de pantalla en pruebas sinteticas; falta aceptacion fisica. No se abrio la app ni se consultaron finanzas. El proveedor Groq aun no esta configurado. No integrado ni publicado.
+
+### Revision de voz dentro de su ventana (2026-11-04)
+- El usuario confirmo que el microfono transcribe, pero el texto solo aparecio al detener y salto al chat; solicita editarlo en la misma ventana. No se confirma la transcripcion parcial durante la grabacion.
+- Rama `correcciones/revision-voz-en-ventana`, creada desde develop y adelantada con el codigo de PR #211: la transcripcion final y la parcial recuperada se editan en la ventana de voz; solo al elegir Continuar se pasa el texto al chat, sin guardar movimientos. Build Angular y 34 pruebas del componente pasaron. E2E y CI pendientes al registrar.
+- Investigar por que el audio provisional no aparece en Samsung/Groq, sin presumir la causa ni exponer datos. Pendiente prueba fisica de la nueva interfaz, APK superior a 0.1.28, integracion y publicacion. Despues probar captura escrita, categoria y confirmacion con datos ficticios y continuar Inicio por secciones.
+- E2E local: el caso de revision y edicion en ventana paso con audio y respuesta simulados; otro caso fallo al abrir el dialogo durante el arranque. Diagnostico y repeticion pendientes; no se declara toda la suite aprobada. PR #212 en borrador; APK 0.1.28 sigue instalada y no incluye esta correccion.
+- Repeticion E2E local: 2 de 2 casos aprobados; el fallo inicial de apertura no se reprodujo, causa no identificada. La prueba usa respuestas simuladas y no demuestra audio parcial real.
+
+### Captura: Amex y etiquetas expresadas en lenguaje natural
+- El usuario confirmo que la edicion de transcripcion funciona en la ventana de voz de Android 0.1.29. Solicita mejorar captura y administracion visual de categorias y etiquetas.
+- Rama mejoras/captura-diccionario-etiquetas, desde develop y adelantada con entrega #213: reconoce Amex/American Express para cuentas existentes y pide aclaracion ante varias; separa expresiones como con etiqueta viaje del concepto, conserva hashtags, amplia algunos sinonimos y muestra etiquetas en la propuesta. No guarda sin confirmacion. El reconocimiento nuevo de etiquetas se aplica al backend con conexion; el modo sin conexion sigue pendiente.
+- Build Angular y 34 pruebas de componente aprobados; 38 pruebas focales backend aprobadas; 53 pruebas anteriores incluyendo H2 aprobaron antes del ultimo ajuste al parser. CI, E2E actualizado, aceptacion del usuario, integracion y publicacion pendientes.
+- Pendiente implementar administracion minimalista de etiquetas (no hay catalogo independiente) y categorias, con eliminacion segura sin modificar historial, presupuestos ni recurrencias. No confundir archivar con borrar. Mantener 0.1.29 instalada hasta una entrega superior verificada.
+
+### Eliminacion de categorias (avance 2026-11-04)
+- El propietario pide quitar Archivar y utilizar Eliminar. Rama mejoras/eliminacion-categorias-etiquetas desde develop adelantada con PR #214: pantalla sin filtros ni botones de archivo; eliminacion fisica de categorias personalizadas sin referencias, con confirmacion. Categorias vinculadas a movimientos, presupuestos o recurrencias se rechazan para preservar los datos; queda pendiente una solucion para eliminarlas sin perder historial, y la seccion minimalista de etiquetas y categorias solicitada aun no esta terminada.
+- Compilacion Angular, 8 pruebas frontend y 7 pruebas CategoriaService pasaron. Falta prueba integral de eliminacion, CI, pruebas visuales, APK, integracion y publicacion. Las etiquetas se almacenan en movimientos y requieren diseno propio sin alterar datos. Usuario confirmo edicion de voz en APK 0.1.29.
+
+### Catalogo personal de etiquetas (avance 2026-11-04)
+- Rama mejoras/catalogo-etiquetas desde develop adelantada con PR #215. Prototipo: catalogo personal con crear/eliminar, interfaz accesible desde Ajustes y sugerencias en formulario manual. Eliminar del catalogo no modifica etiquetas de movimientos. No hay archivo en la pantalla de categorias; la eliminacion de categorias con referencias sigue pendiente de resolver sin perder historial.
+- Migracion V15 nueva: todavia requiere CI PostgreSQL, pruebas de migracion/recuperacion, seguridad de alcance por usuario, respaldo/restauracion, pruebas de interfaz y aceptacion. Las etiquetas anteriores aun no se importan automaticamente y el catalogo todavia no esta conectado a sugerencias del chat. No instalar ni publicar sin terminar esas comprobaciones.
+- Build Angular y 57 pruebas de Inicio/categorias aprobados; 9 pruebas unitarias backend para etiquetas/categorias aprobadas. Trabajos no integrados ni publicados; APK 0.1.29 permanece instalada.
+
+- La interfaz de etiquetas paso su prueba de creacion y eliminacion con servicio simulado; el commit de prueba es 7f008e4 en PR #216. Siguen pendientes respaldo, migracion PostgreSQL, alcance de acceso, integracion con chat y validacion visual. No integrado, publicado ni instalado.
+
+### Correccion de comprobacion de migracion
+- PR #216 fallo en comprobacion PostgreSQL; las pruebas aun esperaban V14 y usaban V15 para fallo simulado, que ahora coincide con la migracion del catalogo. Rama correcciones/migracion-etiquetas-ci desde develop adelantada con #216: actualiza las expectativas y agrega caso V14 a V15 que comprueba preservacion de etiquetas historicas. Falta confirmar la causa en el log de CI y ejecutar en PostgreSQL real: Docker local no esta disponible. No se han integrado ni publicado estos cambios.
+
+### Etiquetas disponibles en captura escrita
+- PR #217: PostgreSQL y recuperacion aprobaron para e36b881; CI integral aun debe comprobarse al momento de integrar. El fallo anterior se confirmo en dos expectativas fijadas a V14.
+- Rama mejoras/etiquetas-captura-escrita desde develop adelantada con #217: muestra etiquetas personales al redactar y permite agregarlas sin duplicarlas, sin guardar movimiento. Build Angular y 35 pruebas de captura pasaron; CI, pruebas visuales y APK pendientes.
+- Siguen pendientes respaldo/restauracion del catalogo, categorias vinculadas, revision minimalista final, integracion y publicacion. Sin modificar finanzas reales.
+
+### Respaldo de etiquetas personales
+- Rama mejoras/respaldo-etiquetas desde develop adelantada con PR #218. El respaldo incorpora nombres del catalogo personal; restaurar combina con los existentes y valida nombres, duplicados y limite de registros, conservando compatibilidad con respaldos anteriores sin el campo. Pruebas unitarias y H2: 34 aprobadas, con datos ficticios; pendiente CI PostgreSQL, prueba E2E y revision de compatibilidad completa. No integrado ni publicado.
+- El propietario desconectara el telefono: no generar ni instalar APK hasta completar cambios y verificaciones. Pendiente eliminacion segura de categorias vinculadas y revision visual de categorias/etiquetas.
+
+### Accesibilidad y restauracion con etiquetas
+- En CI del PR #217 fallaron una expectativa del filtro Archivadas ya retirado y el ajuste horizontal de Ajustes con letra grande. Rama correcciones/accesibilidad-categorias-etiquetas desde develop adelantada con #219: adapta la prueba al boton Eliminar y permite que el contenido de Ajustes se ajuste al ancho.
+- Dos E2E Chromium con cuentas ficticias, accesibilidad y respaldo/restauracion, pasaron localmente. PR #219 incluye respaldo de etiquetas y paso 34 pruebas unitarias/H2. CI exacta y pruebas PostgreSQL del cambio final pendientes; no integrado, publicado ni instalado. Telefono desconectado por decision del propietario.
+- Pendiente resolver eliminacion de categorias vinculadas sin archivo ni perdida historica, completar interfaz y validar en dispositivo cuando corresponda.
+
+### Captura sin conexion: etiquetas y Amex
+- Rama mejoras/captura-sin-conexion-etiquetas desde develop adelantada con PR #220: extrae etiquetas expresas y hashtags antes de preparar el concepto sin conexion, reconoce Amex/American Express entre cuentas existentes y no selecciona la unica cuenta cuando se menciona explicitamente otra cuenta desconocida. No guarda sin confirmacion. Build Angular y 49 pruebas focales correctos; CI y prueba E2E pendientes.
+- PR #219 respaldo y restauracion paso 34 pruebas H2/unitarias; PR #220 paso dos pruebas E2E locales de accesibilidad/respaldo. Falta comprobacion integral exacta, categorias vinculadas sin archivo ni perdida historica, revision visual y entrega. No se ha generado ni instalado una nueva APK, segun indicacion del propietario.
+
+### Preferencia sobre categorias vinculadas y diseno
+- El propietario indica que, al eliminar una categoria con presupuesto o recurrencia activa, se le pida reasignarlos primero; los movimientos anteriores deben conservar su informacion historica. No desea Archivar. La reasignacion guiada y el borrado real conservando historia todavia no estan implementados; el servidor bloquea la eliminacion y comunica el motivo. No afirmar que ese flujo esta terminado.
+- Rama diseno/categorias-gestion-compacta desde develop adelantada con #221: filas mas compactas, texto y acentos corregidos, y mensajes diferenciados de dependencias. Build Angular, 44 pruebas frontend y 7 pruebas backend pasaron. Falta revision visual, CI y E2E.
+- No generar ni instalar APK hasta completar los cambios; telefono desconectado segun instruccion. No integrado ni publicado.
+
+### Reasignacion de categoria antes de eliminar
+- El propietario indico pedir reasignar presupuestos y recurrencias activas antes de eliminar y conservar movimientos anteriores. Rama mejoras/reasignar-categoria-antes-eliminar desde develop, adelantada con #222. Se prepara una pantalla y servicio para seleccionar categoria del mismo tipo, revisar conflictos de presupuesto y reasignar presupuestos actuales/futuros y recurrencias activas; no elimina automaticamente ni modifica movimientos anteriores.
+- Build Angular, 9 pruebas de componente, 10 unitarias backend y un caso de integracion H2 con movimiento anterior aprobaron. Falta revisar concurrencia, acceso y preservacion de todas las referencias, prueba E2E y PostgreSQL, y la eliminacion real con historia; por ahora el servidor la bloquea. No integrado ni publicado. No generar APK hasta terminar todos los cambios, telefono desconectado por indicacion del propietario.
+
+### Proteccion de referencias del libro diario
+- Rama correcciones/proteger-categoria-libro-diario desde develop adelantada con PR #223: se detecto que LineaAsiento guarda categoriaId sin clave externa; la eliminacion ahora se rechaza si existe esa referencia historica. Se anadio prueba enfocada; 11 pruebas CategoriaService pasaron.
+- La reasignacion de referencias activas se probo con H2, pero sigue pendiente el diseno e implementacion de eliminacion real conservando historia, concurrencia, CI y E2E; no se habilito borrado de categorias vinculadas ni se usaron datos reales. No generar APK antes de completar etapas; telefono desconectado por indicacion del propietario.
+
+### Referencias antes de eliminar categoria
+- Rama mejoras/historial-categorias-eliminadas desde develop adelantada con #224: vista previa de conteos de movimientos, presupuestos, recurrencias y lineas del libro, con verificacion de propiedad de categoria. Build Angular, 9 pruebas frontend y 12 pruebas backend pasaron. La vista no habilita el borrado de categorias con historia.
+- La eliminacion historica real aun requiere migracion y adaptacion de informes, respaldo, transacciones y presupuestos; se mantiene bloqueada. No estan completos los cuatro puntos, ni hay despliegue ni APK nueva. Revisar CI exacta, E2E y diseno visual antes de integrar o publicar. El usuario pidio esperar a terminar todos los cambios para instalar.
+
+### Prueba integral pendiente de borrado historico
+- Rama mejoras/eliminar-categoria-con-historial desde develop adelantada con #225. Se anadio prueba E2E local con cuenta y movimiento ficticios: intenta eliminar una categoria utilizada y comprueba nombre en movimiento y respaldo. La prueba falla en la eliminacion porque el servidor conserva el bloqueo; no se ha implementado el borrado historico.
+- Las relaciones actuales de transacciones, presupuestos y recurrencias dependen de categorias; las lineas del libro conservan categoriaId sin FK y los informes y respaldos usan ese identificador. Falta implementar una representacion historica que permita borrar la categoria activa sin reclasificar, preservar todas estas referencias y restaurar respaldos; no sustituir por archivado. La prueba se conserva como regresion pendiente y no debe integrarse hasta pasar.
+- No se integraron ni publicaron cambios, ni se genero o instalo una APK. CI previa #225: frontend, backend y PostgreSQL aprobados; E2E estaba en curso al verificar. El propietario pidio completar los cuatro puntos antes de entregar.
+
+### Eliminacion real con referencia historica (2026-11-05)
+- Se implementa CategoriaHistorica en tabla independiente: al eliminar una categoria personal se conserva su identificador, nombre, tipo, icono y color; las referencias anteriores de movimientos, presupuestos pasados y recurrencias inactivas pasan a esa copia y se borra la fila del catalogo original. El libro diario conserva su identificador. No hay opcion de restaurar o archivar.
+- Presupuestos vigentes/futuros y recurrencias activas exigen destino del mismo tipo; la confirmacion puede reasignar y eliminar dentro de una sola transaccion. Conflictos de presupuesto revierten toda la operacion. Consultas, filtros, informes y respaldo v8 conservan la clasificacion historica. Restauracion reconstruye referencias historicas sin devolverlas al catalogo.
+- Migracion V16, preserva datos existentes sin reclasificacion masiva. Build frontend y 499 pruebas frontend pasaron; 657 pruebas backend pasaron con 9 reservadas a PostgreSQL; 4 pruebas de recurrencias posteriores pasaron. Tres E2E locales de accesibilidad, eliminacion con historia y respaldo pasaron; prueba ampliada de confirmacion y etiquetas en curso. CI PostgreSQL y despliegue pendientes. No generar ni instalar APK hasta completar comprobaciones.
+
+### Cierre visual de eliminacion y etiquetas
+- Revision final local: build Angular correcto y dos E2E Chromium aprobados tras compactar acciones de categorias: accesibilidad con letra grande y flujo ampliado de eliminacion, reasignacion de presupuesto activo, preservacion historica y alta/baja de etiqueta sin quitarla del movimiento anterior.
+- CI de 67e21e5: backend, frontend, PostgreSQL y APK aprobados; E2E remoto pendiente al registrar. ADB sin dispositivos. Todavia no integrado, publicado ni instalado; no se genero entrega nueva.
+### Integracion de captura y catalogos; entrega Android 0.1.30
+- PR #226 integrado en develop 370f760 tras todos los checks exitosos del SHA 1f20944, incluidas dos ejecuciones E2E completas, PostgreSQL, backend, frontend y Android.
+- Nueva rama mejoras/android-030-entrega-catalogos creada desde develop actualizado. Se incrementa Android de 0.1.29/codigo30 a 0.1.30/codigo31. Generacion, firma, contenido y CI exacta de esta entrega pendientes al registrar; no instalada. Telefono desconectado voluntariamente.
+- Produccion aun pendiente. No se accedio a datos financieros reales ni se cambio la sesion del telefono. Pendientes de usuario: validacion fisica de captura y catalogos tras instalacion; no declarar carreras de sesion ni duplicacion de transferencias resueltas.
+### Inicio y Cuentas / Android 0.1.32 — 2026-11-05
+- Inicio conserva su estructura: Ingresos y Saldo neto son ligeramente mayores; Saldo neto abre Cuentas, Ingresos permanece sin enlace. Cuentas muestra el nombre y sus datos con jerarquía más clara, sin cambiar cálculos ni operaciones.
+- PR #231 integrado; PR #232 (versión 0.1.32, código 33) con CI completo aprobado e integrado. PR #233 integrado en main ea226075a75bea0e2f02297ff1209349936e1ad9; despliegue en seguimiento. El árbol publicado coincide con el commit probado 82470dc4dc6f7403c4b0feed323ba9235af7f7c8.
+- APK firmada SHA-256 9ab3758a06744c40bad3ea6a64fcfc6d915ebae45fb3a3b4068d50c580aebdad, instalada por actualización en Samsung y extraída con el mismo hash; se conserva la fecha original de instalación. Evidencia: .local/android-032-verification.json.
+- Pendiente: comprobar visualmente Inicio y Cuentas con el usuario, decidir el destino de Ingresos y retomar detalles visuales de captura. No se utilizaron datos financieros reales en las pruebas. No se han dado por resueltas carreras de sesión ni duplicaciones de transferencias.
+- Seguimiento de producción: Vercel completó el despliegue del commit ea226075a75bea0e2f02297ff1209349936e1ad9 y el bundle principal coincide por SHA-256 con el compilado local. La API respondió HTTP 200/UP, pero el estado del nuevo despliegue de Render seguía en curso al cierre; confirmar antes de afirmar que terminó.
+- Confirmacion posterior del propietario: Inicio y Cuentas se ven bien en el telefono. Despliegues Vercel Production y Render main-kaptal-api exitosos para ea226075a75bea0e2f02297ff1209349936e1ad9. Siguiente: precisar los detalles visuales de captura escrita y voz antes de cambiarlos.
+
+### Solicitud actual: voz, busqueda e Inicio
+- Rama mejoras/voz-busqueda-inicio desde develop af0f12b: ajustes de voz, ingreso con Salario por defecto en captura y registro rapido, busqueda al detalle y espacio para categorias. Build Angular, 133 pruebas frontend, 37 pruebas MotorChatReglas y E2E accesibilidad local pasaron. Pendiente CI, revision de flujos restantes, integracion y APK.
+- Proxima etapa: investigar y corregir registro de gastos desde notificaciones y mejorar su diseno; el propietario informa que no funciona bien. Usar avisos ficticios y evitar datos financieros reales.
+- PR #234 subido, commit c32a12d6167ef1e7e64ee38920485821da13b639; CI pendiente. Pasaron 4 pruebas E2E locales de captura y voz tras actualizar la prueba que esperaba el boton eliminado. No integrado ni publicado; APK 0.1.32 sigue instalada.
+- CI previa de #234 detecto que recuperacion.spec esperaba seleccionar Salario. Se adapto a la seleccion automatica y la prueba de descartar paso localmente sin registrar movimiento. Commit actual 06e382e; CI nueva en curso. El propietario desconecto el telefono; no instalar hasta aviso.
+- PR #234 integrado en develop a4e24648e691d770dc537abefbdf493b88ac3887 tras CI completa exitosa. Entrega Android 0.1.33 codigo 34 en PR #235, commit 1182e1df62378ca955addcaf9b60be018b10a62c; CI pendiente. APK generada y firmada con certificado habitual, 87 archivos web verificados, 27 pruebas Android, SHA-256 91ca4664b717949cc1867ac9bb95c706a45630012a9794c7570d164c96d7f23d. No instalada; telefono desconectado. Evidencia .local/android-033-verification.json. PR #236 de produccion abierto, sin integrar.
+- PR #235 integrado en develop 7b39fd5 con CI completa exitosa; PR #236 integrado en main 3c3b8b8dbe55506f14c40a6ec46e534f4965862f. El arbol de main coincide con el commit probado 1182e1d. Despliegue en seguimiento; APK 0.1.33 aun no instalada por telefono desconectado.
+- Cierre de despliegue: Vercel Production y Render main-kaptal-api confirmaron success para main 3c3b8b8dbe55506f14c40a6ec46e534f4965862f; health API 200/UP. APK 0.1.33 generada y verificada, pendiente de instalar y validar en Samsung cuando el propietario lo conecte. La preferencia Salario se aplico a captura por reglas y registro rapido; falta evaluar otras vias de ingreso antes de afirmar cobertura universal. Transferencias siguen en revision, no se afirma resuelta la posible duplicacion. Proxima etapa: diagnostico y diseno de notificaciones de gastos con datos ficticios.
+- Android 0.1.33/codigo 34 instalada por actualizacion en Samsung SM-A546E; APK extraida coincide con SHA-256 91ca4664b717949cc1867ac9bb95c706a45630012a9794c7570d164c96d7f23d, primera instalacion 2026-10-22 00:26:31 conservada. Pendiente aceptacion visual y funcional del propietario con frases ficticias sin guardar. El codigo ya esta integrado y publicado; revisar otras vias de ingreso antes de afirmar Salario universal, y la correccion de notificaciones es la siguiente etapa.
+
+### Avisos, ingresos e Inicio (en CI)
+- PR #237, rama correcciones/avisos-ingresos desde develop 7b39fd5, commit 4354c30fad421e257311dafec5b1a796034aeaf2. Fallback conservador de recepcion manual ante error automatico (marca incierto y pide revisar movimientos para evitar duplicado), uso de texto breve cuando el expandido esta vacio; sin evidencia de que explique todos los avisos perdidos. La revision de ingresos conserva tipo y Salario se propone en avisos y formularios adicionales sin reclasificar devoluciones o historia.
+- La bandeja indica estado de recepcion, filtro separa emoji y nombre y el calendario es icono arriba a la derecha. Pasaron build Angular, pruebas focales frontend, integracion H2, pruebas Android unitarias y compilacion de instrumentadas, E2E sinteticos de bandeja, interfaz y filtro. Instrumentacion en telefono y confirmacion de captura real estan pendientes. CI, integracion, publicacion y APK aun pendientes; telefono desconectado por instruccion del propietario.
+- PR #237 integrado en develop 965f185fc03c9e5ef3005ce9729d04205f4bb120 con dos CI integrales exitosas. Rama entrega/android-034-avisos desde develop incrementa 0.1.33/codigo34 a 0.1.34/codigo35; PR #238 con CI y construccion de APK en curso. PR #239 abierto para produccion. No instalado: telefono desconectado por el propietario.
+- APK 0.1.34 codigo35 generada desde 0dfe4caa350b1c2e3f0186e324fcd117a85350e0, firma habitual comprobada, 87 archivos web coinciden, 28 pruebas Android unitarias, SHA-256 10d52a0b140e4996b7d818d2e5bcd07a2e1e939d13ce30ce1fb371a5bd98f337. CI de PR #238 pendiente, no instalada; evidencia .local/android-034-verification.json.
+- PR #238 integrado en develop 621974c007e2c3935f64690b51fa5797e5ad47cf con CI completa aprobada; PR #239 integrado en main f0a5621add6352d69cf3e27788688db341841731, arbol identico al commit probado. Despliegues en curso. APK 0.1.34 no instalada: telefono desconectado. Prueba fisica de notificaciones y aceptacion visual pendientes.
+- Vercel Production y Render main-kaptal-api confirmaron success para f0a5621add6352d69cf3e27788688db341841731; API health HTTP 200/UP. APK 0.1.34/codigo35 firmada y verificada, CI exitosa, aun no instalada por desconexion. Pendiente instalar al aviso del propietario, comparar APK extraida y verificar visualmente el icono del calendario, separacion del filtro y la bandeja. La recepcion real de bancos sigue sin evidencia concluyente; no probar con datos financieros reales ni declarar resueltas duplicaciones o carreras de sesion.
+- Android 0.1.34/codigo35 instalada por actualizacion en Samsung SM-A546E; APK extraida coincide con SHA-256 10d52a0b140e4996b7d818d2e5bcd07a2e1e939d13ce30ce1fb371a5bd98f337 y se conserva primera instalacion 2026-10-22 00:26:31. Pendiente aceptacion visual del calendario y filtro, y validacion de avisos sin acceder a datos financieros reales. No se demuestra resuelto el fallo completo de notificaciones.
+
+### Confirmacion y redise?o de historial
+- El propietario indica que una compra ordinaria de Santander se registro automaticamente en la version 0.1.34; no se consultaron importe, comercio ni otros datos. Una sola experiencia no demuestra cobertura de otros bancos ni ausencia general de duplicados.
+- Rama diseno/historial-minimalista desde develop 621974c: calendario entre privacidad y Configuracion en la barra de Inicio y simplificacion visual del historial, manteniendo filtros, busqueda, detalle y operaciones. Pruebas, CI, despliegue y APK pendientes; ADB sin telefono al comenzar.
+- PR #240 abierto desde diseno/historial-minimalista, commit da44f6b; build y pruebas focales aprobadas, CI integral pendiente. Telefono no disponible por ADB, no instalar aun.
+- PR #240 integrado en develop a994da883f3333f58ee5fb9dbfba9835e26e3609 tras CI completa; commit final da9632a. Se simplifico tambien el detalle, manteniendo datos secundarios en Informacion adicional. PR #241 prepara Android 0.1.35/codigo36 desde develop, commit de8fcb8c3849365406d92d252849c0f6f617de81; build y CI de entrega pendientes. PR #242 abierto para produccion. Telefono no conectado; validacion visual pendiente.
+- APK 0.1.35/codigo36 generada desde de8fcb8c3849365406d92d252849c0f6f617de81, firma habitual, 88 archivos web coinciden y 28 pruebas Android pasaron. SHA-256 7d59af5212130dc6c5d47034cc80986f47fdc2d0c7a97b4a034e74431634ccb8; evidencia .local/android-035-verification.json. CI PR #241 pendiente, no instalada.
+- PR #241 integrado en develop 2001379daa478716333ce0bb2c3e8f5f0a2ab6f6 con CI completa aprobada; PR #242 integrado en main 39c4607a9b6c13f87af366cb473bf2497a70f605, arbol identico al commit probado. Despliegues en seguimiento; APK 0.1.35 verificada pero no instalada porque ADB no muestra dispositivos. Revision visual del propietario pendiente.
+- Vercel Production y Render main-kaptal-api confirmaron success para 39c4607a9b6c13f87af366cb473bf2497a70f605. APK 0.1.35/codigo36 firmada y verificada, CI exitosa, aun no instalada: ADB no muestra dispositivo. Pendiente instalar por actualizacion y comparar APK extraida, y revision visual del historial y calendario. El propietario confirmo una compra Santander registrada automaticamente; no extrapolar a otros bancos ni declarar resueltos duplicados o carreras de sesion.
+- Android 0.1.35/codigo36 instalada por actualizacion en Samsung SM-A546E; APK extraida coincide con SHA-256 7d59af5212130dc6c5d47034cc80986f47fdc2d0c7a97b4a034e74431634ccb8 y se conserva primera instalacion 2026-10-22 00:26:31. Pendiente revision visual del calendario e historial por el propietario. Confirmacion previa: una compra Santander se registro automaticamente; no extrapolar a otros bancos ni declarar ausencia de duplicados.
+
+### Incidencia chat y MSI (trabajo en curso)
+- El propietario aprobo visualmente el calendario; no le gusto el historial y desea aplazar su redise?o. Reporto que una compra a meses no se completo en el chat, que la primera cuota aparece en fecha de compra y que no puede editar o eliminar la operacion. No consultar ni modificar la compra real.
+- Rama correcciones/chat-msi-edicion desde develop 2001379: se comprobo que TransaccionService crea la primera cuota en fecha de compra, aplica su impacto y retiene el resto; cuotas MSI individuales se bloquean expresamente al editar y eliminar. Cambiarlo requiere dise?o y pruebas integrales de saldo, retencion, fechas, cashback, libro diario, idempotencia, cancelacion e historial previo; no se ha implementado.
+- Se preparo una correccion local para reconocer Compre como solicitud nueva y mostrar el boton Editar al deslizar; 104 pruebas frontend y build pasaron. El flujo completo de chat MSI, la edicion/eliminacion de la compra, los cambios contables y pruebas E2E siguen pendientes. No integrado, publicado ni instalado; ADB sin dispositivos. No declarar resueltos los problemas.
+
+## Seguimiento chat y MSI ? 6 noviembre 2026
+
+- Se confirm? por fetch y ls-remote que `origin/develop` est? en `2001379daa478716333ce0bb2c3e8f5f0a2ab6f6` y `origin/main` en `39c4607a9b6c13f87af366cb473bf2497a70f605`. La rama `correcciones/chat-msi-edicion` parte de ese develop y conserva tres archivos frontend modificados sin commit. La carpeta principal contiene cambios documentales previos que se conservaron.
+- GitHub muestra CI y Android APK exitosos para develop (runs 42245261210 y 42245261202); existen PR antiguos abiertos #188, #189, #193, #198 y #199. Esos resultados no comprueban los cambios locales. GitHub CLI no tiene sesi?n. ADB, consultado desde el SDK, no detecta dispositivos.
+- Se repitieron las pruebas de `quick-capture.component.spec.ts`: 54 aprobadas, incluida la regresi?n local de compra nueva; no se prob? el flujo completo ni el gesto f?sico. La correcci?n local del gesto desactiva la acci?n autom?tica de la tarjeta por defecto, pendiente de prueba funcional.
+- Diagn?stico adicional: `MotorChatReglas` considera la palabra categor?a una consulta, el plazo MSI no est? representado en su propuesta y un segundo n?mero puede impedir interpretar la captura. El dise?o MSI actual registra la primera cuota y su impacto al crear la compra, retiene solo el resto y usa esa cuota como ancla tambi?n en restauraci?n. Cambiar ?nicamente su fecha no resuelve la contabilizaci?n ni protege el historial.
+- Sigue pendiente implementar y probar el flujo completo de chat y el ciclo de vida MSI, incluyendo primera cuota en corte, concurrencia, saldo, retenci?n, libro diario, cashback, respaldos y planes existentes; despu?s CI exacta, integraci?n, publicaci?n y APK superior verificada. No se consultaron ni modificaron datos financieros reales. Calendario aprobado; redise?o del historial aplazado.
+
+## Implementacion parcial chat MSI ? 6 noviembre 2026
+
+- MotorChatReglas ahora extrae un plazo unico de 2 a 60 MSI/meses, lo separa del importe y conserva el campo msi en la propuesta. Una captura MSI con categoria explicita ya no entra como consulta. Rechaza gasto MSI en cuenta sin credito y pide plazo ante MSI incompleto.
+- Nuevas regresiones sinteticas de monto/plazo/categoria/fecha y rechazo de plazo invalido o cuenta no crediticia. Pasaron 76 pruebas backend: MotorChatReglas 39, AiActionService 9, AiAssistantService 12 y PropuestasChatIntegration 16; H2 aislado. La integracion existente no demuestra aun el recorrido MSI completo.
+- Se preservaron las correcciones locales de solicitud nueva y gesto. Pasaron 54 pruebas de quick-capture y una nueva regresion de tarjeta: onSwipeEdit no emite editar ni cierra la bandeja con el valor por defecto. Prueba tactil integral y fisica pendientes.
+- El ciclo contable MSI (primera cuota al corte, editar/eliminar plan completo, retencion, historial/libro diario, compatibilidad y respaldo) sigue SIN implementar en esta correccion. No integrado ni publicado; sin APK nueva. No se consultaron ni modificaron finanzas reales.
+
+## Primera cuota MSI al corte - 6 noviembre 2026
+
+- Nuevas compras MSI usan el corte correspondiente: compra antes o en el corte usa ese corte; compra posterior pasa al siguiente mes. Sin dia de corte valido se rechaza antes de aplicar saldo o retencion. La cuota conserva el comportamiento contable actual de los movimientos futuros: el impacto se aplica al registrar; no se ha implementado contabilizacion diferida al vencimiento.
+- El ancla guarda el dia nominal de corte para recuperar el 30 tras febrero; la programacion de planes anteriores no se modifica ni se relee el corte cambiante de la tarjeta. Respaldos conservan el ancla existente.
+- Pruebas focales anteriores aprobadas: 25 TransaccionService y 19 ExactitudFinancieraIntegration; se agrego despues una regresion de cambio de corte sin reprogramar plan. Suite completa backend en comprobacion. Solo H2 y cuentas ficticias; ADB sin dispositivos.
+- Falta editar/eliminar plan completo y sus pruebas de atomicidad, saldo, retencion, cashback y libro diario; prueba integral chat MSI y GUI; CI exacta, integracion, produccion y APK superior. No afirmar completo ni instalar una entrega parcial.
+
+- Comprobacion final de esta parte: Maven BUILD SUCCESS y salida 0, 677 pruebas contabilizadas, 0 fallos, 0 errores, 9 omitidas. ExactitudFinancieraIntegration incluye 20 casos. Registro privado: .local/worktrees/chat-msi-backend-confirmado.log. Edicion/eliminacion del plan completo y entrega continuan pendientes.
+
+## Plan MSI completo en verificacion - 6 noviembre 2026
+
+- La edicion carga el total y plazo del plan desde el servidor, recalcula todas las cuotas registradas conservando sus IDs/grupo, ajusta saldo, cashback y retencion y programa las pendientes. Se impide reducir el plazo por debajo del numero ya registrado, cambiar moneda o editar una cuota aislada. Un plan pausado sigue pausado. Un plan cancelado no se reabre: admite eliminacion completa, conservando auditoria.
+- Eliminar MSI requiere confirmacion explicita de plan completo; revierte cuotas/cashback y libera solo su retencion en una transaccion atomica. Las llamadas antiguas sin confirmacion no eliminan un plan. Se mantienen asientos por cuota y resumen de auditoria EDITAR_MSI/BORRAR_MSI con totales y numero de cuotas. Permisos propios/lista y bloqueos de escritura protegen las operaciones.
+- Detalle, tarjeta movil e Inicio permiten gestionar MSI. El gesto revela Editar y exige pulsar el boton. El editor indica alcance completo y distingue importe total/plazo. No se redisenaron historial ni calendario.
+- Build Angular aprobado; suite frontend 525 aprobadas y una expectativa antigua de texto corregida, con 16 pruebas de Transacciones repetidas y aprobadas. Backend completo anterior a los ultimos bloqueos/resumen: 682 contabilizadas, 0 fallos/errores, 9 omitidas. Prueba integral inicial chat/edicion/borrado paso; ampliacion de gesto/libro diario en comprobacion. Nuevas regresiones cubren rollback por limite de credito, permisos y cancelacion previa; cashback y respaldo editado en comprobacion.
+- Samsung detectado al inicio de esta parte; conexion USB intermitente, sin operaciones financieras ni apertura de la app. Falta CI exacta e integracion/publicacion y APK superior a 0.1.35/codigo36 con firma habitual, contenido/hash verificados y actualizacion conservando datos al recuperar conexion. No declarar entregado todavia.
+
+## Preparacion Android 0.1.36 - 6 noviembre 2026
+
+- Rama entrega/android-036-msi creada desde origin/develop comprobado, incorporando correcciones/chat-msi-edicion como dependencia pendiente del PR243. Version incrementada desde 0.1.35/codigo36 a 0.1.36/codigo37. Incluye correccion para que la aclaracion Compras conserve el contexto MSI y sincroniza tipos de auditoria del frontend.
+- Prueba integral ampliada local aprobada: chat MSI idempotente, primera cuota al corte, gesto que revela Editar sin abrirlo, edicion del total/plazo, eliminacion completa, saldos/retencion a cero, auditoria y asientos cuadrados. CI del PR243 tiene backend/frontend/PostgreSQL/Android aprobados; E2E completa aun en curso. La entrega requiere CI de su commit exacto, firma/contenido/hash y despliegue antes de instalar.
+- Se comprobo por ADB APK instalada 0.1.35/codigo36, certificado habitual y hash 7d59af5212130dc6c5d47034cc80986f47fdc2d0c7a97b4a034e74431634ccb8; primera instalacion 2026-10-22 00:26:31. Solo lectura de metadatos y binario del paquete, sin abrir la app ni finanzas.
+
+## Android 0.1.37 en preparacion - 7 noviembre 2026
+
+Rama entrega/android-037-msi-corte creada desde develop comprobado e incorporando PR246 como dependencia. Repositorio previo0.1.36/codigo37; nueva entrega0.1.37/codigo38. Incluye cargo MSI pendiente al corte e Ingresos enlazado al historial completo. No instalar ni publicar hasta CI exacta, verificacion del APK y despliegue. ADB sin dispositivo al verificar esta etapa.
+
+## Android 0.1.38 en preparacion - 7 noviembre 2026
+
+Rama entrega/android-038-msi-total creada desde develop comprobado con PR249 como dependencia. Version incrementada0.1.37/codigo38 a0.1.38/codigo39. Compra total informativa durable en ambos historiales y cargos separados al corte, sin sumar dos veces. Pruebas locales backend690 y E2E focales aprobadas antes de ultimos ajustes; CI exacta, APK firmada y despliegue pendientes. Sin dispositivo ADB al comprobar; no usar finanzas reales.
+
+## Revision de herramientas generales - 7 noviembre 2026
+
+Por solicitud del propietario se revisaron instalaciones externas sin modificar datos financieros: logo-design instalado para Codex desde bbf31e521d765eb6d53242549bbee7c2e5bbd6bc y consulta local del catalogo comprobada; skills de Emil faltantes animation-performance, choreograph y remove-animations instaladas desde c8a79627b59d72d764d6ab6f2c87c09a48169833, preservando las existentes. Filee 2.3.0 instalado para usuario tras verificar hash y firma, ayuda CLI comprobada; pendiente prueba visual y conversion. DeskBox 1.5.9 no instalado: instalador directo sin firma; hash coincide. ARTEMIS no instalado: issue google/artemis#55 abierto y patrones reportados presentes en commit 351ca8422f7b5b54e80a9c1ce03a222e02415b6b. No instalaron billion-context, Glance ni Mailflare por exclusion del propietario. Estos resultados no son una auditoria integral de seguridad. Pendiente revisar via oficial firmada de DeskBox y correccion verificable de ARTEMIS.
+
+## DeskBox y Filee - verificacion posterior - 7 noviembre 2026
+
+Propietario solicito instalar DeskBox tras conocer falta de firma y revisar codigo. DeskBox 1.5.9 commit fuente 4cae1d4ebb0e416af7d66a764f52f6ccaafdda3a: revision estatica parcial de instalador, red, archivos y cadena de suministro; sin demostrar equivalencia fuente/binario ni auditoria exhaustiva. Instalador oficial SHA256 3B8FAD94B8A0E0AE136572AE8DA378C72C406C7C370F875212CB71B8CB586E4A coincide, Authenticode ausente, analisis Defender sin detecciones recientes. Instalado mediante /CURRENTUSER; registro HKCU y version 1.5.9 verificados; no se ejecuto ni manipularon archivos del escritorio. Actualizaciones automaticas habilitadas por defecto en codigo; informar al usuario. Filee 2.3.0: menu contextual clasico HKCU Convertir con Filee registrado y activado, menu moderno no comprobado; prueba CLI PNG ficticio a JPG paso y salida 16x16 legible. No se instalaron motores opcionales; Filee inicio con Windows estaba activado cuando se comprobo, preservado. Pendiente aceptacion visual, revisar motores segun necesidad y actualizaciones DeskBox.
+
+## DeskBox desinstalado - 7 noviembre 2026
+
+A solicitud del propietario se desinstalo DeskBox 1.5.9 con su desinstalador oficial, conservando datos y archivos. Salida 0; registro, proceso, ejecutable y entrada de inicio ya no aparecen. Carpeta de datos local conservada. Filee permanece instalado.
+
+
+## Auditoría visual inicial - 11 noviembre 2026
+Revisión parcial documentada en docs/REVISION_VISUAL_2026-11-11.md; evidencias sintéticas en .local/visual-1111. Rama auditoria/visual-1111 desde develop remoto 74a85bb; main mismo árbol. ADB confirma 0.1.44/código45. Sin rediseño, instalación ni publicación. Hallazgos: superposición de controles flotantes, entrada voz/texto poco clara y fallback Gemini sin proveedor confirmado. Pendientes: contratos correctos de fixtures, propuestas/edición del chat, estados, accesibilidad y Android físico aislado. Conservar calendario, aplazar historial, no borradores persistentes ni PR271. Siguiente: completar evidencia del chat y decidir sección por sección.
+
+
+## Ampliación de diseño y funcionalidad - 11 noviembre 2026
+Ver docs/REVISION_DISENO_AMPLIADA_2026-11-11.md y .local/visual-deep-1111. Se corrigió el hallazgo voz/texto: aria-label no visible, no fallo visual. Pruebas sintéticas de propuesta/editor/error chat, fuente raíz200% a320px, Inicio/Reportes y catálogos. Hallazgos: error de chat fuera de vista, Desc ar tar fragmentado, editor estrecho, nombres/mes cortados y controles flotantes superpuestos. Referencias documentales MonAi/Wallet/Spendee; propuestas mantener/simplificar/añadir, sin implementación. Pendientes explícitos en informe; no auditoría integral terminada. Siguiente decisión: chat, después controles globales y accesibilidad. Conservar calendario, historial aplazado, no borradores ni PR271.
+
+
+## Primera sección: chat, propuesta revisable
+Ver docs/PROPUESTA_CHAT_REVISION_2026-11-11.md y .local/chat-review-final. Error503 visible al desplazar al fondo, pero no automáticamente; editor llega a acciones con scroll interno. No son bloqueos totales. Desc ar tar continúa fragmentado. Texto conserva sesión y desaparece al recargar, comprobado con fixture. Propuesta: expandir ante propuesta/edición, error junto al compositor, botones sin palabras rotas, más espacio al editor. Sin implementación. Después: controles flotantes y texto ampliado. Conservadas protecciones y decisiones anteriores.
+
+
+## Chat: ajustes visuales locales - 11 noviembre 2026
+Rama mejoras/chat-visual-espacio-error desde origin/develop74a85bb, worktree .local/worktrees/chat-visual-ajustes. Conversación ampliada, error junto al compositor, botones sin palabras rotas y campos del editor con scroll/acciones visibles. Build y569 pruebas frontend aprobados; QA ficticia Chromium en320/390/escritorio y oscuro, sesión temporal conservada. Ver docs/CHAT_VISUAL_IMPLEMENTACION_2026-11-11.md. Sin instalación/publicación; pendiente Android físico/aceptación. Siguiente: controles flotantes y texto ampliado, por sección. No borradores ni PR271.
+
+
+## Controles y texto ampliado - 11 noviembre 2026
+Rama mejoras/controles-texto-accesible desde develop74a85bb con chat0fd3f6a como dependencia (cherry-pick86c5ea5). Fila de accesos en pantallas secundarias; Inicio/Movimientos conservan dock flotante y su solapamiento al desplazar queda pendiente. Nombres de cuentas con ancho completo, mes/año apilados, botones sin ruptura arbitraria y métricas de Inicio relativas/adaptativas. Build final,569 pruebas frontend y1 E2E sintético aprobados. Ver docs/CONTROLES_TEXTO_2026-11-11.md. Auditoría b29ea7f y chat0fd3f6a ya subidos y verificados en remoto; subir esta etapa por separado. Sin instalación/despliegue/integración. Pendientes: aceptación visual, Android físico, contraste y formularios de Cuentas/Presupuestos. Preservar cambios anteriores.
+
+
+Verificación remota: etapa controles/texto subida en mejoras/controles-texto-accesible, código37168d6, hash confirmado por ls-remote; auditoría b29ea7f y chat0fd3f6a también remotos. Sin integración ni despliegue.
+
