@@ -1776,3 +1776,6 @@ Rama entrega/android-037-msi-corte creada desde develop comprobado e incorporand
 ## Android 0.1.38 en preparacion - 7 noviembre 2026
 
 Rama entrega/android-038-msi-total creada desde develop comprobado con PR249 como dependencia. Version incrementada0.1.37/codigo38 a0.1.38/codigo39. Compra total informativa durable en ambos historiales y cargos separados al corte, sin sumar dos veces. Pruebas locales backend690 y E2E focales aprobadas antes de ultimos ajustes; CI exacta, APK firmada y despliegue pendientes. Sin dispositivo ADB al comprobar; no usar finanzas reales.
+
+## Chat: ajustes visuales locales - 11 noviembre 2026
+Rama mejoras/chat-visual-espacio-error desde origin/develop74a85bb, worktree .local/worktrees/chat-visual-ajustes. Conversación ampliada, error junto al compositor, botones sin palabras rotas y campos del editor con scroll/acciones visibles. Build y569 pruebas frontend aprobados; QA ficticia Chromium en320/390/escritorio y oscuro, sesión temporal conservada. Ver docs/CHAT_VISUAL_IMPLEMENTACION_2026-11-11.md. Sin instalación/publicación; pendiente Android físico/aceptación. Siguiente: controles flotantes y texto ampliado, por sección. No borradores ni PR271.
