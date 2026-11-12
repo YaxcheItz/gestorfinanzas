@@ -22,7 +22,7 @@ type FormularioAbierto = 'aporte' | 'gasto' | 'pago' | null;
   standalone: true,
   imports: [TextoFinancieroPipe, MontoPrivadoDirective, CommonModule, FormsModule, FocusTrapDirective, MontoPipe],
   template: `
-    <div class="finance-page max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-5 sm:space-y-8">
+    <div class="shared-finance-page finance-page max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-5 sm:space-y-8">
 
       <header class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
@@ -125,7 +125,7 @@ type FormularioAbierto = 'aporte' | 'gasto' | 'pago' | null;
           <p role="status" class="rounded-xl border border-slate-200 p-4 text-sm dark:border-slate-700">Historial archivado de consulta. No puedes registrar ni eliminar movimientos aquí.</p>
         }
         <!-- Resumen del fondo -->
-        <section class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <section class="shared-summary grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs dark:border-slate-700 dark:bg-slate-900">
             <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Fondo común</p>
             <p class="mt-1 text-2xl font-bold"
@@ -188,7 +188,7 @@ type FormularioAbierto = 'aporte' | 'gasto' | 'pago' | null;
             }
           </div>
           @for (aporte of estado()!.aportes; track aporte.id) {
-            <article class="flex items-start justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+            <article class="shared-movement flex items-start justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
               <div class="min-w-0">
                 <p class="truncate text-sm font-medium text-slate-900">{{ aporte.usuarioNombre }}</p>
                 <p class="text-xs text-slate-500">
@@ -262,7 +262,7 @@ type FormularioAbierto = 'aporte' | 'gasto' | 'pago' | null;
             }
           </div>
           @for (pago of estado()!.pagos; track pago.id) {
-            <article class="flex items-start justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+            <article class="shared-movement flex items-start justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
               <div class="min-w-0">
                 <p class="truncate text-sm font-medium text-slate-900">
                   {{ pago.pagadorNombre }} → {{ pago.beneficiarioNombre }}
@@ -291,9 +291,9 @@ type FormularioAbierto = 'aporte' | 'gasto' | 'pago' | null;
 
     @if (formulario()) {
       <div class="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/50 p-3 sm:items-center" (click)="cerrar()">
-        <div appFocusTrap role="dialog" aria-modal="true" [attr.aria-label]="tituloFormulario()"
+        <div appFocusTrap (focusTrapEscape)="cerrar()" tabindex="-1" role="dialog" aria-modal="true" [attr.aria-label]="tituloFormulario()"
           (click)="$event.stopPropagation()"
-          class="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-xl sm:p-6 dark:border-slate-700 dark:bg-slate-900">
+          class="shared-finance-dialog w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-xl sm:p-6 dark:border-slate-700 dark:bg-slate-900">
 
           <h2 class="text-lg font-semibold text-slate-900">{{ tituloFormulario() }}</h2>
           @if (explicacion()) {
