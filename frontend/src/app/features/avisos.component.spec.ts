@@ -48,8 +48,8 @@ describe('Bandeja de avisos',()=>{
   it('ignora una respuesta antigua al cambiar de filtro',()=>{
     const anterior=new Subject<any>();api.listar.mockReturnValueOnce(anterior);
     fixture=TestBed.createComponent(AvisosComponent);const c=fixture.componentInstance;
-    api.listar.mockReturnValueOnce(of({data:{content:[{id:'nuevo'}],totalPages:1}}));
-    c.filtrar('REGISTRADO');anterior.next({data:{content:[{id:'anterior'}],totalPages:1}});
+    api.listar.mockReturnValueOnce(of({success:true,data:{content:[{id:'nuevo'}],totalPages:1}}));
+    c.filtrar('REGISTRADO');anterior.next({success:true,data:{content:[{id:'anterior'}],totalPages:1}});
     expect(c.avisos().map(x=>x.id)).toEqual(['nuevo']);
   });
   it('conserva identificador y datos al reintentar una recepcion incierta',()=>{

@@ -1,0 +1,37 @@
+# Casillas, selección y gráficos — 12 noviembre 2026
+
+Rama `mejoras/widgets-graficos-accesibles`, worktree `.local/worktrees/widgets-graficos`. Desde `origin/develop` comprobado (`74a85bb60a7301e38198fa7245d817d57d85f82b`), con dependencia `a5bc941219653c36ca5f73b7e29cb7ba5bace831` por fast-forward. Skills: web-design-guidelines y ponytail; inventario de controles, interfaz renderizada y cambios mínimos. API/sesión ficticias, red externa y escrituras interceptadas.
+
+## Hallazgos por sección
+
+- `frontend/public/styles/home.css:110`: las barras normal/cerca del límite de Inicio daban 2,27/1,92:1 en claro frente al fondo. Ahora comparten colores semánticos con Presupuestos: mínimo medido 4,56:1 en claro y 6,10:1 en oscuro para normal/cerca/excedido. Se conservan los importes, anchos, porcentajes, umbrales y etiquetas textuales de estado.
+- `frontend/src/app/features/presupuestos/presupuestos.component.ts:866`: verde/ámbar daban 2,32/1,96:1 en claro; la normal oscura caía a 1,35:1 por una regla heredada. Se sustituyen exclusivamente las clases de color de las tres ramas por tokens de ingreso/advertencia/gasto. Mínimos finales medidos: 4,66:1 claro y 6,10:1 oscuro. La misma función alcanza resumen, categoría y detalle; los casos renderizados miden las tres categorías y estados.
+- `frontend/src/app/features/dashboard/dashboard.component.html:165`: la selección de categoría no declaraba `aria-pressed`; el nombre accesible tampoco incluía el importe mostrado. Ahora anuncia estado y monto con el pipe de privacidad existente; la regresión unitaria confirma que al ocultarlo el nombre dice «•••» y deja de contener el número. El contorno visible de las barras conserva su forma frente al fondo, aunque el tono pastel sea muy claro. Enter selecciona y vuelve a quitar el filtro local de lectura. No se abre una compra ni se registra dinero.
+- `frontend/src/app/features/reportes/reportes.css:3`: las series de igual altura se distinguían por verde/rojo. Gastos añade trama diagonal y la leyenda repite la forma; Ingresos conserva relleno sólido. Se mantiene la tabla textual accesible mediante Enter en «Ver cifras por mes», con cabeceras y valores. La trama no altera alturas ni crea una altura mínima en datos cero.
+- `frontend/src/app/features/categorias/categorias.component.ts:141`: el icono elegido tenía una clase de selección sin estilo; el color y los emojis sugeridos tampoco mostraban una marca permanente. Ahora los tres selectores tienen una marca ✓ visible, independiente del color y oculta para tecnología de asistencia; conservan `aria-pressed`. Icono/emoji tienen borde seleccionado; los colores usan objetivos de 44 px con unidad relativa. El badge usa superficie/texto del tema. Se comprueba seleccionar por Espacio, mover el foco a otra opción, pasar el cursor y cambiar de icono a emoji manteniendo una sola selección de icono/emoji.
+- Casillas de Perfil, categoría con límite, consentimiento de incorporación del Libro diario y filtros por categoría de Movimientos: cambian/restauran con Espacio y muestran el check nativo. Radios de frecuencia en Inicio: Espacio y flecha cambian la opción y conservan el punto nativo. Foco visible con contraste calculado de al menos 3:1 en los controles inspeccionados, en ambos temas y raíz al 200%/320 px. Ya funcionaban y no se modifican sus dibujos ni su lógica. En Libro diario solo se consulta un resumen GET simulado y se cambia la casilla; no se pulsa incorporar asientos ni se envía formulario.
+
+La revisión usa colores computados y composición alfa sobre los ancestros; los valores se redondean solo para el informe. Las casillas/radios conservan el dibujo del navegador: las capturas verifican sus marcas, sin atribuirles una medición CSS del píxel nativo. No certifica todos los iconos, todos los consentimientos o dispositivos, Windows con colores forzados, ni WCAG completa. Referencias: [contraste no textual](https://www.w3.org/WAI/WCAG22/Understanding/non-text-contrast.html), [uso del color](https://www.w3.org/WAI/WCAG22/Understanding/use-of-color.html) y [Web Interface Guidelines](https://raw.githubusercontent.com/vercel-labs/web-interface-guidelines/main/command.md).
+
+## Verificación y evidencia
+
+Build final y 571 unitarias/65 archivos aprobados; se amplió una regresión existente de privacidad de categoría. Doce E2E nuevos y regresión acumulada de 58 casos aprobados en una ejecución de 4,2 minutos. Después se añadió la misma marca a los emojis sugeridos: build, 571 unitarias, TypeScript estricto y dos E2E focales de selección (claro/oscuro) se repitieron/aprobaron; estos comprueban también el cambio icono→emoji. El ajuste final de emoji no repitió la acumulada completa. `git diff --check` aprobado.
+
+```text
+npm run build
+npm test -- --watch=false
+npx --no-install playwright test --config playwright.widgets.config.ts
+npx --no-install playwright test --config playwright.revision-integral.config.ts
+```
+
+Evidencias privadas en `frontend/.local/` del worktree: `widgets-before`, `controles-before`, `foco-nativos-before`, `widgets-after`, `regresion-final` y `emoji-final`. Los primeros intentos de la prueba necesitaron completar el resumen ficticio de backfill, pulsar su consulta de lectura y esperar la paleta antes de contar opciones. Después se reprodujeron las ausencias de marca/estado y los contrastes indicados. No se accede a datos financieros, cuentas o sesiones reales. Persisten los avisos CSS previos de Avisos 4,49 kB y automatic-bank 5,01 kB frente a 4 kB. No se añadió dependencia, lint ni cobertura nueva.
+
+## Android y CI
+
+ADB local no muestra dispositivos conectados. Sin prueba física de TalkBack, teclado o instalación nueva. Las capturas de Chromium no acreditan el renderizado de WebView Android. No se abre el calendario aprobado ni se rediseña el historial; continúan aplazados lentitud/logout. Chat sin borradores persistentes y PR271 excluido.
+
+GitHub CLI no tiene sesión, pero la API pública permite consultar los trabajos. La ejecución anterior [43306213442](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/43306213442), del SHA exacto `a5bc941219653c36ca5f73b7e29cb7ba5bace831`, falló en «Flujos con API real» del E2E Chromium/API/PostgreSQL; los otros cinco trabajos aprobaron. La descarga del registro responde HTTP403 sin autenticar y las anotaciones solo indican salida1 y avisos del runner. No se atribuye causa ni se cambian workflows para ocultarlo.
+
+Implementación inicial `1640b67cb781874b6192e2ec1e2666089a5d7d28`, subida y comparada con `ls-remote`. CI [43316942132](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/43316942132) consultada durante el cierre: Frontend, Backend, WhatsApp y Canales personales aprobados; PostgreSQL y E2E todavía en curso en esa consulta. Hubo después seguimiento documental y el ajuste final de emojis, que disparan nuevas ejecuciones: comprobar [la última CI de la rama](https://github.com/YaxcheItz/gestorfinanzas/actions?query=branch%3Amejoras%2Fwidgets-graficos-accesibles) y su SHA antes de integrar. No se certifica CI completa en verde. Sin integración ni despliegue.
+
+Para continuar: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/WIDGETS_GRAFICOS_2026-11-12.md, además de los planes locales. Comprueba el SHA y CI de esta etapa; si E2E remoto falla, obtiene el registro autenticado para identificar la causa. Mantén calendario aprobado e historial aplazado; Android/TalkBack y aceptación visual permanecen pendientes».

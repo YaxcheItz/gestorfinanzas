@@ -82,13 +82,13 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
     <!-- Voice Waveform: solo durante grabación activa -->
     @if (open()) {
       <div class="voice-dialog-backdrop" (click)="close()"></div>
-      <section appDialogViewport role="dialog" aria-modal="true" tabindex="-1" (keydown)="tecladoPanel($event)" id="quick-capture-panel" class="capture-panel" [class.capture-panel--compact]="!captureTurns().length && !pendingCaptureText() && !loading() && !editando()" aria-label="Kaptal, captura y reportes">
+      <section appDialogViewport role="dialog" aria-modal="true" tabindex="-1" (keydown)="tecladoPanel($event)" id="quick-capture-panel" class="capture-panel" [class.capture-panel--editing]="!!editando()" [class.capture-panel--compact]="!captureTurns().length && !pendingCaptureText() && !loading() && !editando()" aria-label="Kaptal, captura y reportes">
         <header class="capture-panel__head">
           <div><strong>{{ escuchando() ? 'Te escucho' : transcribiendoVoz() ? 'Transcribiendo' : loading() ? 'Organizando' : 'Añadir movimiento' }}</strong></div>
           <button type="button" (click)="close()" aria-label="Cerrar">×</button>
         </header>
         <div class="capture-panel__tools">
-          <button type="button" class="capture-manual" (click)="abrirConTeclado()" [disabled]="loading() || confirming() !== null || escuchando()">Introducir datos manualmente</button>
+          <button type="button" class="capture-manual" (click)="abrirConTeclado()" [disabled]="loading() || confirming() !== null || escuchando()">Registro manual</button>
         </div>
 
     @if (escuchando()) {
@@ -106,6 +106,7 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
           @if (editando()) {
             <form class="capture-editor" (ngSubmit)="guardarEdicion()" aria-label="Editar propuesta">
               <strong>Editar antes de guardar</strong>
+              <div class="capture-editor__fields">
               <label>Tipo<select name="editTipo" [(ngModel)]="edicionPropuesta['tipo']"><option value="GASTO">Gasto</option><option value="INGRESO">Ingreso</option><option value="TRANSFERENCIA">Transferencia</option></select></label>
               <label>Monto<input appMontoPrivado name="editMonto" type="number" min="0.01" step="0.01" inputmode="decimal" [(ngModel)]="edicionPropuesta['monto']" required></label>
               <label>Fecha<input name="editFecha" type="date" [(ngModel)]="edicionPropuesta['fecha']" required></label>
@@ -119,6 +120,7 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
               }
               <label>Descripción<input name="editDescripcion" maxlength="200" [(ngModel)]="edicionPropuesta['descripcion']"></label>
               <label>Notas<input name="editNotas" maxlength="500" [(ngModel)]="edicionPropuesta['notas']"></label>
+              </div>
               <div class="capture-proposal__actions"><button type="button" class="capture-cancel" (click)="editando.set(null)">Cancelar edición</button><button type="submit" class="capture-save" [disabled]="confirming()!==null">Actualizar propuesta</button></div>
               <p>Actualizar prepara la propuesta. Confirma después para registrar el movimiento.</p>
             </form>
@@ -186,7 +188,6 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
             }
             @if (pendingCaptureText()) {<article class="capture-chat__user"><span>{{ pendingCaptureText() | textoFinanciero }}</span></article>}
             @if (loading()) {<article class="capture-chat__assistant"><span class="capture-chat__avatar" aria-hidden="true">✦</span><div class="capture-chat__reply capture-chat__typing"><i></i><i></i><i></i><span>Revisando movimiento</span></div></article>}
-            @if (error()) {<p class="capture-error" role="alert">{{ error() }}</p>}
             @if (aiConsentRequired()) {
               <section class="capture-ai-consent" aria-label="Permiso para usar inteligencia artificial">
                 <p>El registro local no reconoció el mensaje. ¿Quieres permitir que la IA lo interprete? El movimiento aún no se ha guardado.</p>
@@ -203,6 +204,7 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
               }
             </div>
           }
+          @if (error()) {<p class="capture-error capture-chat__error" role="alert">{{ error() }}</p>}
           <form class="capture-chat__composer" (ngSubmit)="submit()">
             <label class="sr-only" for="quick-capture-text">Escribe el movimiento que quieres registrar</label>
             <textarea id="quick-capture-text" name="content" [(ngModel)]="content" (ngModelChange)="alCambiarTexto()" (keydown.enter)="enviarConEnter($event)" rows="1" maxlength="1200" enterkeyhint="send" placeholder="Ej. Café 45 #trabajo" [readOnly]="loading() || escuchando() || stopping()" [attr.aria-busy]="loading()"></textarea>

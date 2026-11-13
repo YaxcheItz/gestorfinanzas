@@ -9,12 +9,14 @@
   --kaptal-content: #111111;
   --kaptal-content-muted: #737373;
   --kaptal-border: #EBEBEB;
+  --kaptal-control-border: #808080;
   --kaptal-brand: #B83E36;
   --kaptal-on-brand: #ffffff;
   --kaptal-focus: #B83E36;
   --kaptal-voice: #FF746B;
   --kaptal-income: #287D48;
   --kaptal-expense: #AD3847;
+  --kaptal-warning: #925600;
   --kaptal-float-shadow: 0 6px 28px rgb(37 37 34 / 8%);
 }
 
@@ -27,11 +29,13 @@ html.dark {
   --kaptal-content: #FFFFFF;
   --kaptal-content-muted: #A1A1A6;
   --kaptal-border: #38383A;
+  --kaptal-control-border: #94949A;
   --kaptal-brand: #FF8A80;
   --kaptal-on-brand: #111111;
   --kaptal-focus: #FF8A80;
   --kaptal-income: #86D49D;
   --kaptal-expense: #FF8A80;
+  --kaptal-warning: #FBBF24;
   --kaptal-float-shadow: 0 6px 28px rgb(0 0 0 / 20%);
 }
 
@@ -48,7 +52,7 @@ html.dark .monai-theme :is([class~="bg-slate-100"], [class~="bg-gray-100"], [cla
 html.dark .monai-theme :is([class~="border-slate-100"], [class~="border-slate-200"], [class~="border-gray-100"], [class~="border-gray-200"]) { border-color: var(--kaptal-border) !important; }
 html .monai-theme :where(button, a) { touch-action: manipulation; }
 html .monai-theme :is(button, a):is([class~="bg-emerald-600"], [class~="bg-emerald-700"], [class~="bg-emerald-800"]) { background-color: var(--kaptal-brand) !important; color: var(--kaptal-on-brand) !important; }
-html .monai-theme :where(button, a, input, select, textarea):focus-visible { outline: 2px solid var(--kaptal-focus); outline-offset: 3px; }
+html .monai-theme :where(button, a, input, select, textarea, summary):focus-visible { outline: 2px solid var(--kaptal-focus); outline-offset: 3px; }
 html .monai-theme .app-content-with-bottom-nav { padding-bottom: calc(6.5rem + env(safe-area-inset-bottom)); }
 html .monai-theme .hero-swipe-indicator { display: none; }
 html .monai-theme .tx-item { border: 0; background: var(--kaptal-surface); padding: .9rem; border-radius: 1.2rem; }
@@ -103,10 +107,10 @@ html .monai-theme .account-manage { border-color: var(--kaptal-border); cursor: 
 .account-manage summary:focus-visible { outline: 2px solid var(--kaptal-focus); outline-offset: 2px; border-radius: .5rem; }
 .account-manage[open] summary { color: var(--kaptal-content); }
 .account-manage__actions { display: flex; flex-wrap: wrap; gap: .25rem; padding-top: .35rem; }
-html .monai-theme .budget-category-card { border-color: var(--kaptal-border); box-shadow: none; display: grid; gap: 1.25rem; }
-.budget-category-head { gap: .75rem; }
+html .monai-theme .budget-category-card { border-color: var(--kaptal-border); box-shadow: none; display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.25rem; }
+.budget-category-head { min-width: 0; gap: .75rem; }
 .budget-category-head h3 { overflow-wrap: anywhere; line-height: 1.4; }
-.budget-category-head > div:last-child { flex-shrink: 0; }
+.budget-category-head > div:last-child { flex-shrink: 0; flex-wrap: wrap; max-width: 100%; }
 .budget-remaining { display: grid; gap: .2rem; }
 .budget-remaining span { color: var(--kaptal-content-muted); font-size: .75rem; }
 .budget-remaining strong { color: var(--kaptal-content); font-size: 1.75rem; letter-spacing: -.035em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
@@ -174,3 +178,62 @@ html .monai-theme .history-page .ledger-filter-btn{border:0;border-radius:999px}
 html .monai-theme .history-page .history-day>h2{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 0 4px;font-size:13px;color:var(--kaptal-content-muted)}
 html .monai-theme :is(.ledger-detail-sheet,.ledger-filter-sheet,.quick-entry,#quick-capture-panel){border:0;border-radius:30px 30px 0 0}
 @media(prefers-reduced-transparency:reduce){html .monai-theme{--kaptal-glass:var(--kaptal-surface-subtle)}.workspace-selector,.glass-icon,.capture-dock__manual{backdrop-filter:none}}
+
+/* Reservar el ancho para los nombres al ampliar texto en tarjetas estrechas. */
+html .monai-theme .account-card { container-type: inline-size; }
+html .monai-theme .account-card h2.account-card__name { overflow: visible; text-overflow: clip; overflow-wrap: break-word; }
+@container (max-width: 18rem) {
+  .account-card__heading { flex-direction: column-reverse; align-items: flex-start; }
+  .account-card__heading > div { width: 100%; min-width: 0; }
+}
+@media (max-width: 28rem) {
+  .budget-period-controls { display: grid; grid-template-columns: minmax(0, 1fr); width: 100%; }
+  .budget-period-controls > span { display: none; }
+  .budget-period-controls > select { width: 100%; }
+  .budgets-page button { overflow-wrap: normal; word-break: normal; }
+  .budgets-page button svg { flex-shrink: 0; }
+}
+
+/* Los días de la tarjeta necesitan una columna propia con texto ampliado. */
+@media (max-width: 28rem) {
+  .account-entry-sheet .credit-card-dates { grid-template-columns: minmax(0, 1fr); }
+  .account-entry-sheet .credit-card-dates input { min-width: 0; width: 100%; }
+}
+
+/* Detalle de presupuesto: conservar importes y descripciones al ampliar texto. */
+.budget-detail-sheet .budget-detail-totals { grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr)); }
+.budget-detail-totals > div { min-width: 0; padding: 8px; }
+.budget-detail-totals p { overflow-wrap: anywhere; }
+.budget-detail-movement { gap: .75rem; }
+.budget-detail-description { overflow-wrap: anywhere; }
+.budget-detail-actions { flex-wrap: wrap; }
+.budget-detail-actions button { min-height: 44px; }
+@media (max-width: 28rem) {
+  .budget-detail-movement { flex-direction: column; align-items: flex-start; }
+  .budget-detail-movement > div { width: 100%; padding-right: 0; }
+  .budget-detail-movement > span { max-width: 100%; overflow-wrap: anywhere; }
+  .budget-detail-actions button { flex: 1 1 7rem; }
+}
+.budget-detail-totals > div:last-child { grid-column: 1 / -1; }
+
+/* Fondos compartidos: evitar anchos intrínsecos y acciones fuera del diálogo. */
+.shared-finance-page, .shared-finance-page section, .shared-finance-page section > div { min-width: 0; }
+.shared-finance-page p { overflow-wrap: anywhere; }
+.shared-finance-page p.truncate { white-space: normal; overflow: visible; }
+.shared-finance-dialog { max-height: calc(100dvh - 1.5rem); overflow-y: auto; overscroll-behavior: contain; }
+.shared-finance-dialog form > div:last-child { flex-wrap: wrap; }
+.shared-finance-dialog form > div:last-child button { flex: 1 1 7rem; }
+@media (max-width: 28rem) {
+  .shared-finance-page .shared-movement { flex-direction: column; align-items: stretch; }
+  .shared-finance-page .shared-movement > div { min-width: 0; width: 100%; }
+  .shared-finance-page .shared-movement > div:last-child { justify-content: space-between; flex-wrap: wrap; }
+}
+
+@media (max-width: 28rem) {
+  .shared-finance-page article .flex { flex-wrap: wrap; min-width: 0; }
+  .shared-finance-page article .shrink-0 { flex-shrink: 1; max-width: 100%; }
+  .shared-finance-page article span { min-width: 0; overflow-wrap: anywhere; }
+}
+
+.shared-finance-page .shared-summary > div { padding: 8px; }
+.shared-finance-page .shared-summary p.font-bold { font-size: 1.25rem; }
