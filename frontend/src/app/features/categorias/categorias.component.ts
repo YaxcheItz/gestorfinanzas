@@ -30,7 +30,7 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
       </header>
 
       @if (error()) {
-        <div role="alert" class="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-sm flex justify-between gap-3">
+        <div role="alert" class="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-sm flex flex-wrap justify-between gap-3">
           <span>{{ error() }}</span>
           <button type="button" (click)="cargar()" class="underline font-semibold cursor-pointer">Reintentar</button>
         </div>
@@ -138,8 +138,9 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
               <legend class="mb-2 block text-xs font-semibold text-slate-700">Icono</legend>
               <div class="mb-3 flex flex-wrap gap-2" aria-label="Emojis nativos">
                 @for (emoji of emojisDisponibles; track emoji) {
-                  <button type="button" (click)="seleccionarEmoji(emoji)" [attr.aria-label]="'Usar emoji ' + emoji" [attr.aria-pressed]="emojiPersonalizado === emoji" class="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-xl hover:bg-emerald-50">
+                  <button type="button" (click)="seleccionarEmoji(emoji)" [attr.aria-label]="'Usar emoji ' + emoji" [attr.aria-pressed]="emojiPersonalizado === emoji" [class.category-icon-option--selected]="emojiPersonalizado === emoji" class="category-icon-option flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-xl hover:bg-emerald-50">
                     {{ emoji }}
+                    @if (emojiPersonalizado === emoji) {<span class="category-choice-check category-choice-check--corner" aria-hidden="true">✓</span>}
                   </button>
                 }
               </div>
@@ -154,6 +155,7 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
                     [class.category-icon-option--selected]="icono === opcion.codigo"
                     class="category-icon-option flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border">
                     <app-categoria-icono [icono]="opcion.codigo" [clase]="'h-5 w-5'" />
+                    @if (icono === opcion.codigo) {<span class="category-choice-check category-choice-check--corner" aria-hidden="true">✓</span>}
                   </button>
                 }
               </div>
@@ -174,7 +176,8 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
               <legend class="mb-2 text-xs font-semibold text-slate-700">Color</legend>
               <div class="flex flex-wrap gap-2">
                 @for (opcion of coloresDisponibles; track opcion) {
-                  <button type="button" (click)="color = opcion" [style.backgroundColor]="opcion" [attr.aria-label]="'Color ' + opcion" [attr.aria-pressed]="color === opcion" class="h-9 w-9 rounded-full border border-slate-300 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2">
+                  <button type="button" (click)="color = opcion" [style.backgroundColor]="opcion" [attr.aria-label]="'Color ' + opcion" [attr.aria-pressed]="color === opcion" class="flex h-11 w-11 items-center justify-center rounded-full border border-slate-300 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2">
+                    @if (color === opcion) {<span class="category-choice-check" aria-hidden="true">✓</span>}
                   </button>
                 }
               </div>

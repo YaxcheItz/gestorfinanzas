@@ -162,7 +162,8 @@
                         (pointerleave)="cancelarPresionCategoria()"
                         (click)="tocarCategoria(categoria)"
                         (contextmenu)="abrirContextoCategoria($event,categoria)"
-                        [attr.aria-label]="'Filtrar movimientos de ' + categoria.categoriaNombre">
+                        [attr.aria-pressed]="categoriaFiltroSeleccionada()?.categoriaId === categoria.categoriaId"
+                        [attr.aria-label]="'Filtrar movimientos de ' + categoria.categoriaNombre + ': ' + (categoria.monto | monto:categoria.moneda:'symbol':'1.0-2')">
                   <span class="home-category__track"
                         [class.is-budget-warning]="categoria.presupuesto?.porcentajeConsumido! >= 80 && categoria.presupuesto?.porcentajeConsumido! < 100"
                         [class.is-budget-over]="categoria.presupuesto?.porcentajeConsumido! >= 100">

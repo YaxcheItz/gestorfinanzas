@@ -19,7 +19,7 @@ test('listas separan movimientos, conservan etiquetas y comparten con permisos r
   await page.getByRole('button',{name:'Cambiar a Vacaciones',exact:true}).click();
   await expect(page.getByRole('button',{name:'Cambiar lista',exact:true})).toContainText('Vacaciones');
   await page.locator('.capture-dock').getByRole('button',{name:'Añadir movimiento',exact:true}).click();
-  await page.locator('#quick-capture-panel').getByRole('button',{name:'Introducir datos manualmente'}).click();
+  await page.locator('#quick-capture-panel').getByRole('button',{name:'Registro manual'}).click();
   const entrada=page.getByRole('dialog',{name:'Añadir movimiento',exact:true});
   await entrada.locator('select[name="cuenta"]').selectOption({label:'Banco Viaje · MXN'});
   await page.locator('#quick-entry-amount').fill('25');await entrada.locator('summary').click();

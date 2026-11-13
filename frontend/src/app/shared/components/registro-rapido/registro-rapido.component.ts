@@ -88,10 +88,12 @@ type TipoRegistro = 'GASTO' | 'INGRESO' | 'TRANSFERENCIA';
                 </label>
                 <div class="entry-tags-quick" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">
                   @for (sug of etiquetasSugeridas; track sug) {
-                    <button type="button" class="entry-tag-chip" style="font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid var(--kaptal-border);background:var(--kaptal-surface);color:var(--kaptal-content);cursor:pointer" [style.background]="etiquetaEstaActiva(sug) ? 'var(--kaptal-brand)' : ''" [style.color]="etiquetaEstaActiva(sug) ? '#fff' : ''" (click)="alternarEtiqueta(sug)">#{{ sug }}</button>
+                    <button type="button" class="entry-tag-chip" style="font-size:.75rem;min-height:44px;padding:2px 8px;border-radius:999px;border:1px solid var(--kaptal-control-border);background:var(--kaptal-surface);color:var(--kaptal-content);cursor:pointer" [attr.aria-pressed]="etiquetaEstaActiva(sug)" [style.background]="etiquetaEstaActiva(sug) ? 'var(--kaptal-brand)' : ''" [style.color]="etiquetaEstaActiva(sug) ? 'var(--kaptal-on-brand)' : ''" (click)="alternarEtiqueta(sug)">#{{ sug }}</button>
                   }
                 </div>
-                <label>Fecha<input name="fecha" type="date" [(ngModel)]="fecha" (ngModelChange)="consultarPresupuestoDisponible()" required /></label><label>Nota<input name="nota" [(ngModel)]="nota" maxlength="500" /></label><button type="button" class="entry-text-button" (click)="avanzado()">Opciones avanzadas: recurrentes y meses sin intereses</button>
+                <label>Fecha<input name="fecha" type="date" aria-describedby="quick-entry-selected-date" [(ngModel)]="fecha" (ngModelChange)="consultarPresupuestoDisponible()" required /></label>
+                <p id="quick-entry-selected-date" class="entry-date">Fecha seleccionada (año-mes-día): {{ fecha || 'sin fecha' }}.</p>
+                <label>Nota<input name="nota" [(ngModel)]="nota" maxlength="500" /></label><button type="button" class="entry-text-button" (click)="avanzado()">Opciones avanzadas: recurrentes y meses sin intereses</button>
               </details>
             }
           </fieldset>

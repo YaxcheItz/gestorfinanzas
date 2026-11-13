@@ -41,7 +41,7 @@ import {
 
         <div class="flex w-full sm:w-auto flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
           <!-- Selector de Mes y Año -->
-          <div class="flex items-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-1 shadow-2xs">
+          <div class="budget-period-controls flex items-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-1 shadow-2xs">
             <select
               [ngModel]="mesSeleccionado()"
               (ngModelChange)="cambiarMes($event)"
@@ -78,8 +78,8 @@ import {
 
       <!-- Alertas o Mensaje de Error -->
       @if (error()) {
-        <div role="alert" class="bg-rose-50 border border-rose-200 text-rose-700 text-sm px-4 py-3 rounded-2xl flex items-center justify-between">
-          <div class="flex items-center space-x-2">
+        <div role="alert" class="bg-rose-50 border border-rose-200 text-rose-700 text-sm px-4 py-3 rounded-2xl flex flex-wrap items-center justify-between">
+          <div class="flex flex-wrap items-center space-x-2">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-rose-500 shrink-0" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
             </svg>
@@ -145,7 +145,7 @@ import {
               <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
               </svg>
-              <span class="min-w-0 [overflow-wrap:anywhere]">Crear primer presupuesto</span>
+              <span class="min-w-0">Crear primer presupuesto</span>
             </button>
           </div>
         } @else {
@@ -180,7 +180,7 @@ import {
                   </div>
 
                   <!-- Botones de Acción -->
-                  <div class="flex items-center space-x-1">
+                  <div class="flex flex-wrap items-center justify-end gap-1">
                     <button 
                       type="button"
                       (click)="abrirDetalle(p)"
@@ -222,7 +222,7 @@ import {
                 <!-- Barra de Progreso y Montos -->
                 <div class="budget-remaining" [class.is-over]="p.montoDisponible < 0"><span>{{ p.montoDisponible >= 0 ? 'Te queda' : 'Te excediste' }} · {{ p.moneda }}</span><strong>{{ (p.montoDisponible >= 0 ? p.montoDisponible : -p.montoDisponible) | monto:p.moneda:'symbol':'1.2-2' }}</strong></div>
                 <div class="space-y-2">
-                  <div class="flex items-center justify-between text-xs">
+                  <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
                     <span class="font-medium text-slate-500 dark:text-slate-400">Gastado: {{ p.montoGastado | monto:p.moneda:'symbol':'1.2-2' }}</span>
                     <span class="font-bold text-slate-800 dark:text-slate-100">Meta: {{ p.montoLimite | monto:p.moneda:'symbol':'1.2-2' }}</span>
                   </div>
@@ -266,15 +266,15 @@ import {
         
         <div appFocusTrap (focusTrapEscape)="cerrarModal()" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="presupuesto-modal-titulo" class="budget-entry-sheet max-h-[calc(100dvh_-_env(safe-area-inset-top)_-_env(safe-area-inset-bottom))] w-full max-w-md overflow-y-auto rounded-t-3xl border border-slate-200 bg-white shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-200 dark:border-slate-700 dark:bg-slate-900 sm:rounded-3xl">
           
-          <div class="flex items-center justify-between border-b border-slate-100 p-4 dark:border-slate-700 sm:p-6">
-            <h2 id="presupuesto-modal-titulo" class="text-lg font-bold text-slate-900 dark:text-white">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 p-4 dark:border-slate-700 sm:p-6">
+            <h2 id="presupuesto-modal-titulo" class="min-w-0 flex-[1_1_10rem] [overflow-wrap:anywhere] text-lg font-bold text-slate-900 dark:text-white">
               {{ modoEdicion() ? 'Editar Presupuesto' : 'Fijar Presupuesto' }}
             </h2>
             <button 
               type="button"
               (click)="cerrarModal()" 
               aria-label="Cerrar formulario de presupuesto"
-              class="inline-flex min-h-11 min-w-11 items-center justify-center text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600">
+              class="ml-auto inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -284,7 +284,7 @@ import {
           <form (ngSubmit)="guardarPresupuesto()" class="p-4 sm:p-6 space-y-4">
             
             @if (modalError()) {
-              <div class="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs">
+              <div role="alert" class="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs">
                 {{ modalError() }}
               </div>
             }
@@ -378,7 +378,7 @@ import {
             </div>
 
             <!-- Período informativo -->
-            <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 flex items-center justify-between">
+            <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 flex flex-wrap items-center justify-between gap-2">
               <span>Período de aplicación:</span>
               <span class="font-bold text-slate-800 dark:text-white">{{ nombreMes(mesSeleccionado()) }} {{ anioSeleccionado() }}</span>
             </div>
@@ -414,7 +414,7 @@ import {
     <!-- Modal Detalle del Presupuesto y Movimientos -->
     @if (modalDetalleAbierto()) {
       <div class="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-slate-900/60 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] backdrop-blur-xs sm:items-center sm:p-4">
-        <div appFocusTrap (focusTrapEscape)="cerrarDetalle()" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="detalle-modal-titulo" class="budget-entry-sheet max-h-[calc(100dvh_-_env(safe-area-inset-top)_-_env(safe-area-inset-bottom))] w-full max-w-lg overflow-y-auto rounded-t-3xl border border-slate-200 bg-white shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-200 dark:border-slate-700 dark:bg-slate-900 sm:rounded-3xl">
+        <div appFocusTrap (focusTrapEscape)="cerrarDetalle()" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="detalle-modal-titulo" class="budget-detail-sheet budget-entry-sheet max-h-[calc(100dvh_-_env(safe-area-inset-top)_-_env(safe-area-inset-bottom))] w-full max-w-lg overflow-y-auto rounded-t-3xl border border-slate-200 bg-white shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-200 dark:border-slate-700 dark:bg-slate-900 sm:rounded-3xl">
           
           <div class="flex items-center justify-between border-b border-slate-100 p-4 dark:border-slate-700 sm:p-6">
             <div>
@@ -448,12 +448,12 @@ import {
                 Cargando movimientos del presupuesto...
               </div>
             } @else if (errorDetalle()) {
-              <div class="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs">
+              <div role="alert" class="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs">
                 {{ errorDetalle() }}
               </div>
             } @else if (detallePresupuesto(); as det) {
               <!-- Resumen de montos -->
-              <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div class="budget-detail-totals grid grid-cols-2 sm:grid-cols-3 gap-3">
                 <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700">
                   <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Límite mensual</p>
                   <p class="text-base font-bold text-slate-800 dark:text-white tabular-nums mt-0.5">
@@ -509,9 +509,9 @@ import {
                 } @else {
                   <div class="divide-y divide-slate-100 dark:divide-slate-800 max-h-60 overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30">
                     @for (m of det.movimientos; track m.id) {
-                      <div class="p-3 flex items-center justify-between text-xs hover:bg-white dark:hover:bg-slate-800/80 transition-colors">
+                      <div class="budget-detail-movement p-3 flex items-center justify-between text-xs hover:bg-white dark:hover:bg-slate-800/80 transition-colors">
                         <div class="min-w-0 pr-3">
-                          <p class="font-semibold text-slate-800 dark:text-white truncate">
+                          <p class="budget-detail-description font-semibold text-slate-800 dark:text-white">
                             {{ m.descripcion || det.presupuesto.categoriaNombre }}
                           </p>
                           <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-1.5 flex-wrap">
@@ -532,7 +532,7 @@ import {
               </div>
 
               <!-- Acciones del detalle -->
-              <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+              <div class="budget-detail-actions flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
                 <button 
                   type="button"
                   (click)="editarDesdeDetalle(det.presupuesto)"
@@ -864,9 +864,9 @@ export class PresupuestosComponent implements OnInit {
   }
 
   obtenerColorBarra(porcentaje: number): string {
-    if (porcentaje >= 100) return 'bg-rose-500';
-    if (porcentaje >= 80) return 'bg-amber-500';
-    return 'bg-emerald-500';
+    if (porcentaje >= 100) return 'bg-[var(--kaptal-expense)]';
+    if (porcentaje >= 80) return 'bg-[var(--kaptal-warning)]';
+    return 'bg-[var(--kaptal-income)]';
   }
 
   obtenerBadgeEstadoClass(estado: string): string {

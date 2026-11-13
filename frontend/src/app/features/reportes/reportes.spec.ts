@@ -20,6 +20,16 @@ describe('Reportes', () => {
     http.expectOne(req => req.url.endsWith('/dashboard/comparacion')).flush({ success: true, data: { porMoneda: [] } });
   }
 
+  it('expone mes y año completos sin desplazar años de dos dígitos al siglo XX', () => {
+    const fixture = TestBed.createComponent(Reportes);
+    responder();
+    fixture.componentInstance.periodo.set('2027-02');
+    expect(fixture.componentInstance.periodoLegible()).toBe('febrero de 2027');
+    fixture.componentInstance.periodo.set('0099-02');
+    expect(fixture.componentInstance.periodoLegible()).toBe('febrero de 99');
+    fixture.destroy();
+  });
+
   it('consulta el mismo rango y el anterior explicito en resumen, categorias y comparacion', () => {
     TestBed.overrideProvider(ActivatedRoute, { useValue: { snapshot: { queryParamMap: convertToParamMap({ desde: '2024-03-31', hasta: '2024-04-29', desdeAnterior: '2024-02-29', hastaAnterior: '2024-03-30' }) } } });
     const fixture = TestBed.createComponent(Reportes);

@@ -177,11 +177,11 @@
             <section aria-labelledby="filtro-tipo-title">
               <h3 id="filtro-tipo-title">Tipo</h3>
               <div class="ledger-chip-row" role="group" aria-label="Filtrar por tipo">
-                <button type="button" class="ledger-chip" [class.is-active]="borradorTipo() === ''" (click)="borradorTipo.set('')">Todos</button>
-                <button type="button" class="ledger-chip ledger-chip--expense" [class.is-active]="borradorTipo() === 'GASTO'" (click)="borradorTipo.set('GASTO')">Solo gastos</button>
-                <button type="button" class="ledger-chip ledger-chip--income" [class.is-active]="borradorTipo() === 'INGRESO'" (click)="borradorTipo.set('INGRESO')">Solo ingresos</button>
-                <button type="button" class="ledger-chip" [class.is-active]="borradorTipo() === 'TRANSFERENCIA'" (click)="borradorTipo.set('TRANSFERENCIA')">Solo transferencias</button>
-                <button type="button" class="ledger-chip" [class.is-active]="borradorTipo() === 'SALDO_INICIAL'" (click)="borradorTipo.set('SALDO_INICIAL')">Saldos iniciales</button>
+                <button type="button" class="ledger-chip" [class.is-active]="borradorTipo() === ''" [attr.aria-pressed]="borradorTipo() === ''" (click)="borradorTipo.set('')">Todos</button>
+                <button type="button" class="ledger-chip ledger-chip--expense" [class.is-active]="borradorTipo() === 'GASTO'" [attr.aria-pressed]="borradorTipo() === 'GASTO'" (click)="borradorTipo.set('GASTO')">Solo gastos</button>
+                <button type="button" class="ledger-chip ledger-chip--income" [class.is-active]="borradorTipo() === 'INGRESO'" [attr.aria-pressed]="borradorTipo() === 'INGRESO'" (click)="borradorTipo.set('INGRESO')">Solo ingresos</button>
+                <button type="button" class="ledger-chip" [class.is-active]="borradorTipo() === 'TRANSFERENCIA'" [attr.aria-pressed]="borradorTipo() === 'TRANSFERENCIA'" (click)="borradorTipo.set('TRANSFERENCIA')">Solo transferencias</button>
+                <button type="button" class="ledger-chip" [class.is-active]="borradorTipo() === 'SALDO_INICIAL'" [attr.aria-pressed]="borradorTipo() === 'SALDO_INICIAL'" (click)="borradorTipo.set('SALDO_INICIAL')">Saldos iniciales</button>
               </div>
             </section>
 
@@ -228,13 +228,14 @@
                   (selectedIdChange)="borradorCuentaId.set($event)" />
                 <label>
                   <span>Desde</span>
-                  <input type="date" [ngModel]="borradorFechaInicio()" (ngModelChange)="borradorFechaInicio.set($event)" />
+                  <input type="date" aria-describedby="movement-date-range" [ngModel]="borradorFechaInicio()" (ngModelChange)="borradorFechaInicio.set($event)" />
                 </label>
                 <label>
                   <span>Hasta</span>
-                  <input type="date" [ngModel]="borradorFechaFin()" (ngModelChange)="borradorFechaFin.set($event)" />
+                  <input type="date" aria-describedby="movement-date-range" [ngModel]="borradorFechaFin()" (ngModelChange)="borradorFechaFin.set($event)" />
                 </label>
               </div>
+              <p id="movement-date-range" class="finance-state-note">Fechas (año-mes-día): desde {{ borradorFechaInicio() || 'sin límite' }} hasta {{ borradorFechaFin() || 'sin límite' }}.</p>
               <div class="ledger-chip-row ledger-chip-row--compact">
                 <button type="button" class="ledger-chip" (click)="aplicarRangoRapidoBorrador('ESTE_MES')">Este mes</button>
                 <button type="button" class="ledger-chip" (click)="aplicarRangoRapidoBorrador('MES_PASADO')">Mes anterior</button>

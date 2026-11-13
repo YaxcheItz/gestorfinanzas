@@ -5,6 +5,7 @@ import { fechaFinanciera } from '../../core/utils/fecha-financiera';
 import { Component, DestroyRef, OnInit, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive';
 import { SwPush } from '@angular/service-worker';
 import { firstValueFrom } from 'rxjs';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -29,7 +30,7 @@ import {
 @Component({
   selector: 'app-configuracion',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, MontoPipe, GoogleSignInComponent, WhatsappConnectionComponent, ScreenPrivacyComponent, AppLockComponent],
+  imports: [CommonModule, FormsModule, FocusTrapDirective, RouterLink, MontoPipe, GoogleSignInComponent, WhatsappConnectionComponent, ScreenPrivacyComponent, AppLockComponent],
   template: `
     <main class="finance-page settings-page mx-auto max-w-4xl space-y-5 px-3 py-5 sm:space-y-7 sm:px-6 sm:py-8">
       <header class="flex min-w-0 items-center gap-3 sm:gap-4">
@@ -194,8 +195,12 @@ import {
           <h2 class="text-base font-bold text-slate-900 dark:text-white">Avisos en tu dispositivo</h2>
           <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">Recibe recordatorios de corte, pago estimado y movimientos programados aunque Kaptal no esté abierto.</p>
         </div>
-        @if (!pushConfigurado()) {
-          <p class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900" role="status">
+        @if (cargandoEstadoPush()) {
+          <div class="finance-loading-card" role="status" aria-label="Consultando avisos"><span class="sr-only">Consultando disponibilidad de avisos…</span><span class="loading-placeholder" aria-hidden="true"></span></div>
+        } @else if (errorEstadoPush()) {
+          <div role="alert" class="flex flex-wrap items-center gap-3 rounded-xl bg-rose-50 p-3 text-sm text-rose-700"><span>{{ errorEstadoPush() }}</span><button type="button" (click)="cargarEstadoPush()" class="min-h-11 font-semibold underline">Reintentar consulta de avisos</button></div>
+        } @else if (!pushConfigurado()) {
+          <p class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:text-amber-200" role="status">
             El servidor todavía no tiene claves Web Push. El administrador debe configurarlas para activar esta opción.
           </p>
         } @else if (!swPush.isEnabled) {
@@ -247,7 +252,7 @@ import {
       <details id="recurring" class="settings-disclosure scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6" [open]="seccionAbierta() === 'recurring'" (toggle)="alternarSeccion('recurring', $event)">
         <summary><strong>Movimientos recurrentes</strong><span>Revisa tus registros programados</span></summary>
         <div class="settings-disclosure__content">
-        <div class="mb-4 flex items-start justify-between gap-3">
+        <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2 class="text-base font-bold text-slate-900">Movimientos recurrentes</h2>
             <p class="mt-1 text-xs text-slate-500">Kaptal no crea cargos automáticamente. Confirma cada movimiento cuando llegue su fecha.</p>
@@ -256,12 +261,12 @@ import {
         </div>
 
         @if (errorPlantillas()) {
-          <div role="alert" class="flex justify-between gap-3 rounded-xl bg-rose-50 p-3 text-sm text-rose-700">
+          <div role="alert" class="flex flex-wrap justify-between gap-3 rounded-xl bg-rose-50 p-3 text-sm text-rose-700">
             <span>{{ errorPlantillas() }}</span>
             <button type="button" (click)="cargarPlantillas()" class="font-semibold underline">Reintentar</button>
           </div>
         } @else if (cargandoPlantillas()) {
-          <p class="py-6 text-center text-sm text-slate-400">Cargando plantillas...</p>
+          <div class="finance-loading-card" role="status" aria-label="Cargando movimientos recurrentes"><span class="sr-only">Cargando plantillas…</span><span class="loading-placeholder" aria-hidden="true"></span></div>
         } @else if (plantillas().length === 0) {
           <p class="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">Aún no hay movimientos recurrentes. Puedes crear uno al registrar un gasto o ingreso.</p>
         } @else {
@@ -403,7 +408,7 @@ import {
                   {{ restaurandoRespaldo() ? 'Restaurando...' : 'Restaurar mis datos' }}
                 </button>
               } @else {
-                <p class="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-medium text-amber-900">
+                <p class="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-medium text-amber-900 dark:text-amber-200">
                   No se puede restaurar en esta cuenta porque ya contiene datos financieros.
                 </p>
               }
@@ -421,7 +426,7 @@ import {
             Borra tu cuenta y todos sus datos financieros. Esta acción es permanente y no se puede deshacer.
           </p>
         </div>
-        <ul class="mb-5 space-y-1.5 rounded-xl bg-rose-50 p-4 text-sm text-rose-900">
+        <ul class="mb-5 space-y-1.5 rounded-xl bg-rose-50 p-4 text-sm text-rose-900 dark:text-rose-200">
           <li class="flex gap-2"><span aria-hidden="true">·</span><span>Cuentas, movimientos, presupuestos y recurrencias</span></li>
           <li class="flex gap-2"><span aria-hidden="true">·</span><span>Categorías personalizadas</span></li>
           <li class="flex gap-2"><span aria-hidden="true">·</span><span>Libro contable e historial de auditoría</span></li>
@@ -443,13 +448,16 @@ import {
       </div>
 
       @if (modalBorradoAbierto()) {
-        <div class="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/60 p-3 sm:items-center" (click)="cerrarConfirmacionBorrado()">
+        <div class="fixed inset-0 z-50 !mt-0 flex items-end justify-center bg-slate-900/60 p-3 sm:items-center" (click)="cerrarConfirmacionBorrado()">
           <div
+            appFocusTrap
+            (focusTrapEscape)="cerrarConfirmacionBorrado()"
+            tabindex="-1"
             role="dialog"
             aria-modal="true"
             aria-labelledby="titulo-borrado"
             (click)="$event.stopPropagation()"
-            class="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl sm:p-6">
+            class="max-h-[calc(100dvh_-_1.5rem)] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-5 shadow-xl [overflow-wrap:anywhere] sm:p-6">
             <h3 id="titulo-borrado" class="text-lg font-bold text-slate-900">¿Borrar tus datos y eliminar la cuenta definitivamente?</h3>
             <p class="mt-2 text-sm text-slate-600">
               Se borrarán tus cuentas, movimientos, libro contable y toda tu información personal.
@@ -474,7 +482,7 @@ import {
                 [(ngModel)]="entiendoBorrado"
                 type="checkbox"
                 class="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-rose-600 focus:ring-rose-500" />
-              <span>Entiendo que se eliminará mi cuenta y toda su información permanentemente.</span>
+              <span class="min-w-0 flex-1">Entiendo que se eliminará mi cuenta y toda su información permanentemente.</span>
             </label>
                 <label class="mt-4 block text-xs font-semibold text-slate-700">
                   Escribe ELIMINAR para confirmar
@@ -536,6 +544,8 @@ export class ConfiguracionComponent implements OnInit {
   readonly errorBorrado = signal<string | null>(null);
   get hoy(): string { return fechaFinanciera(); }
   readonly pushConfigurado = signal(false);
+  readonly cargandoEstadoPush = signal(false);
+  readonly errorEstadoPush = signal<string | null>(null);
   readonly pushActivo = signal(false);
   readonly guardandoPush = signal(false);
   readonly probandoWhatsApp = signal(false);
@@ -613,18 +623,28 @@ export class ConfiguracionComponent implements OnInit {
     void this.cargarEstadoPush();
   }
 
-  private async cargarEstadoPush(): Promise<void> {
+  async cargarEstadoPush(): Promise<void> {
+    if (this.cargandoEstadoPush()) return;
+    this.cargandoEstadoPush.set(true);
+    this.errorEstadoPush.set(null);
     try {
       const response = await firstValueFrom(this.finanzasService.getConfiguracionPush());
-      this.pushConfigurado.set(response.success && response.data?.configurado === true);
+      if (!response.success || !response.data) {
+        this.errorEstadoPush.set(response.message || 'No se pudo consultar la disponibilidad de avisos.');
+        return;
+      }
+      this.pushConfigurado.set(response.data.configurado === true);
       if (!this.pushConfigurado() || !this.swPush.isEnabled) return;
       const subscription = await firstValueFrom(this.swPush.subscription);
       this.pushActivo.set(subscription !== null);
       if (subscription) {
         await firstValueFrom(this.finanzasService.guardarSuscripcionPush(subscription.toJSON()));
       }
-    } catch {
+    } catch (error: unknown) {
       this.pushActivo.set(false);
+      this.errorEstadoPush.set(mensajeDeError(error, 'No se pudo consultar la disponibilidad de avisos.'));
+    } finally {
+      this.cargandoEstadoPush.set(false);
     }
   }
 

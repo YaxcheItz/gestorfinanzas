@@ -44,7 +44,7 @@ test('periodos: preferencia persistida, rangos coherentes, comparacion e histori
   await page.goto('/reportes?desde=2025-12-20&hasta=2026-01-19&desdeAnterior=2025-11-19&hastaAnterior=2025-12-19');
   await expect(page).toHaveURL(/reportes\?/);
   await expect(page.locator('.reports-summary')).toContainText('25.00');
-  await expect(page.locator('.reports-comparison').first()).toContainText('2025-12-20');
+  await expect(page.locator('.reports-comparison').filter({hasText:/^Del /})).toContainText('2025-12-20 al 2026-01-19');
   await page.goBack();
   // La consulta temporal no modifica la preferencia: al volver se recupera el ciclo guardado.
   await page.locator('.time-dropdown-btn').click();

@@ -33,30 +33,31 @@ import { nombreCuentaVisible } from '../../core/utils/cuenta-financiera';
           <h2 class="text-sm font-bold text-slate-900 dark:text-white">Buscar asientos</h2>
           <span class="text-xs text-slate-500">Los filtros se aplican también al cambiar de página.</span>
         </div>
-        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
           <label class="block text-xs font-semibold text-slate-700 dark:text-slate-200">Desde
-            <input type="date" name="desde" [ngModel]="filtroDesde()" (ngModelChange)="filtroDesde.set($event)" class="mt-1 block min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-normal text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
+            <input type="date" name="desde" aria-describedby="ledger-date-range" [ngModel]="filtroDesde()" (ngModelChange)="filtroDesde.set($event)" class="mt-1 block min-h-11 min-w-0 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-normal text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
           </label>
           <label class="block text-xs font-semibold text-slate-700 dark:text-slate-200">Hasta
-            <input type="date" name="hasta" [ngModel]="filtroHasta()" (ngModelChange)="filtroHasta.set($event)" class="mt-1 block min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-normal text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
+            <input type="date" name="hasta" aria-describedby="ledger-date-range" [ngModel]="filtroHasta()" (ngModelChange)="filtroHasta.set($event)" class="mt-1 block min-h-11 min-w-0 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-normal text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
           </label>
           <label class="block text-xs font-semibold text-slate-700 dark:text-slate-200">Movimiento
-            <select name="tipoMovimiento" [ngModel]="filtroTipoMovimiento()" (ngModelChange)="filtroTipoMovimiento.set($event)" class="mt-1 block min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-normal text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+            <select name="tipoMovimiento" [ngModel]="filtroTipoMovimiento()" (ngModelChange)="filtroTipoMovimiento.set($event)" class="mt-1 block min-h-11 min-w-0 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-normal text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
               <option value="">Todos</option><option value="INGRESO">Ingreso</option><option value="GASTO">Gasto</option><option value="TRANSFERENCIA">Transferencia</option><option value="SALDO_INICIAL">Saldo inicial</option>
             </select>
           </label>
           <label class="block text-xs font-semibold text-slate-700 dark:text-slate-200">Evento contable
-            <select name="tipoEvento" [ngModel]="filtroTipoEvento()" (ngModelChange)="filtroTipoEvento.set($event)" class="mt-1 block min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-normal text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+            <select name="tipoEvento" [ngModel]="filtroTipoEvento()" (ngModelChange)="filtroTipoEvento.set($event)" class="mt-1 block min-h-11 min-w-0 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-normal text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
               <option value="">Todos</option><option value="CREACION">Registro</option><option value="SALDO_INICIAL">Saldo inicial</option><option value="ACTUALIZACION">Corrección</option><option value="ELIMINACION">Reversión</option><option value="BACKFILL">Historial incorporado</option>
             </select>
           </label>
           <label class="block text-xs font-semibold text-slate-700 dark:text-slate-200">Cuenta
-            <select name="cuentaId" [ngModel]="filtroCuentaId()?.toString() ?? ''" (ngModelChange)="onCuentaFiltroChange($event)" class="mt-1 block min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-normal text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+            <select name="cuentaId" [ngModel]="filtroCuentaId()?.toString() ?? ''" (ngModelChange)="onCuentaFiltroChange($event)" class="mt-1 block min-h-11 min-w-0 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-normal text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
               <option value="">Todas</option>
               @for (cuenta of cuentas(); track cuenta.id) { <option [value]="cuenta.id">{{ nombreCuentaVisible(cuenta.nombre) }} · {{ cuenta.moneda }}</option> }
             </select>
           </label>
         </div>
+        <p id="ledger-date-range" class="mt-3 break-words text-xs text-slate-500">Fechas (año-mes-día): desde {{ filtroDesde() || 'sin límite' }} hasta {{ filtroHasta() || 'sin límite' }}.</p>
         <div class="mt-3 flex flex-wrap justify-end gap-2">
           @if (tieneFiltros()) { <button type="button" (click)="limpiarFiltros()" class="min-h-11 rounded-lg px-4 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800">Limpiar</button> }
           <button type="submit" [disabled]="cargando()" class="min-h-11 rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-50">{{ cargando() ? 'Buscando…' : 'Aplicar filtros' }}</button>
@@ -236,16 +237,16 @@ import { nombreCuentaVisible } from '../../core/utils/cuenta-financiera';
           }
         </section>
 
-        <nav aria-label="Paginación del libro diario" class="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3">
+        <nav aria-label="Paginación del libro diario" class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3">
           <button type="button" (click)="cambiarPagina(-1)" [disabled]="pagina()?.first || cargando()"
-            class="min-h-10 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-700 disabled:opacity-50">
+            class="min-h-10 min-w-0 flex-[1_1_7rem] rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-700 disabled:opacity-50">
             Anterior
           </button>
-          <p class="text-center text-xs text-slate-600">
+          <p class="order-first w-full text-center text-xs text-slate-600">
             Página {{ (pagina()?.number ?? 0) + 1 }} de {{ pagina()?.totalPages ?? 1 }}
           </p>
           <button type="button" (click)="cambiarPagina(1)" [disabled]="pagina()?.last || cargando()"
-            class="min-h-10 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-700 disabled:opacity-50">
+            class="min-h-10 min-w-0 flex-[1_1_7rem] rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-700 disabled:opacity-50">
             Siguiente
           </button>
         </nav>

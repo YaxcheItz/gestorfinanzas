@@ -55,7 +55,7 @@ import { fechaCivilFinanciera } from '../../core/utils/periodo-financiero';
       </div>
 
       @if (error()) {
-        <div role="alert" class="p-4 bg-rose-50 border border-rose-200 rounded-xl text-sm text-rose-700 flex items-center justify-between gap-3">
+        <div role="alert" class="p-4 bg-rose-50 border border-rose-200 rounded-xl text-sm text-rose-700 flex flex-wrap items-center justify-between gap-3">
           <span>{{ error() }}</span>
           <button type="button" (click)="cargarCuentas()" class="font-semibold underline cursor-pointer">Reintentar</button>
         </div>
@@ -87,7 +87,7 @@ import { fechaCivilFinanciera } from '../../core/utils/periodo-financiero';
               <a [routerLink]="['/transacciones']" [queryParams]="{ cuentaId: cuenta.id }" [attr.aria-label]="'Ver transacciones de ' + nombreCuentaVisible(cuenta.nombre)" class="absolute inset-0 z-10 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600">
                 <span class="sr-only">Ver todas las transacciones de {{ nombreCuentaVisible(cuenta.nombre) }}</span>
               </a>
-              <div class="flex min-h-11 items-start justify-between gap-4">
+              <div class="account-card__heading flex min-h-11 items-start justify-between gap-4">
                 <div class="min-w-0">
                   <h2 class="account-card__name truncate text-lg font-bold text-slate-900">{{ nombreCuentaVisible(cuenta.nombre) }}</h2>
                   <p class="account-card__meta"><span>{{ tipoCuentaLabel(cuenta.tipo) }}</span><span aria-hidden="true">·</span><span>{{ cuenta.moneda }}</span></p>
@@ -215,7 +215,7 @@ import { fechaCivilFinanciera } from '../../core/utils/periodo-financiero';
           role="dialog"
           aria-modal="true"
           aria-labelledby="cuenta-modal-titulo"
-          class="bg-white rounded-2xl max-w-lg w-full max-h-[calc(100dvh-1rem)] overflow-y-auto border border-slate-200 shadow-2xl">
+          class="account-entry-sheet bg-white rounded-2xl max-w-lg w-full max-h-[calc(100dvh-1rem)] overflow-y-auto border border-slate-200 shadow-2xl">
           <header class="p-4 sm:p-6 border-b border-slate-100 flex items-center justify-between">
             <div>
               <h2 id="cuenta-modal-titulo" class="text-lg font-bold text-slate-900">
@@ -343,7 +343,7 @@ import { fechaCivilFinanciera } from '../../core/utils/periodo-financiero';
                     class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
                     placeholder="Ej. 25000" />
                 </div>
-                <div class="grid grid-cols-2 gap-3">
+                <div class="credit-card-dates grid grid-cols-2 gap-3">
                   <div>
                     <label for="cuenta-dia-corte" class="block text-xs font-semibold text-slate-700 mb-1.5">Día de corte <span class="text-rose-600">*</span></label>
                     <input
