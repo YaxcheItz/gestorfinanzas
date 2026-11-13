@@ -77,6 +77,19 @@ describe('QuickCaptureComponent processing and gestures', () => {
 
   afterEach(() => { fixture.destroy(); vi.useRealTimers(); vi.unstubAllGlobals(); });
 
+  it('prepara un inicio rápido sin enviar ni guardar el movimiento', () => {
+    const submit=vi.spyOn(component,'submit');
+    const confirm=vi.spyOn(TestBed.inject(FinanzasService),'confirmAiAction');
+    component.error.set('Error anterior');
+    component.aiConsentRequired.set(true);
+    component.usarEjemplo('Gasté ');
+    expect(component.content).toBe('Gasté ');
+    expect(component.error()).toBe('');
+    expect(component.aiConsentRequired()).toBe(false);
+    expect(submit).not.toHaveBeenCalled();
+    expect(confirm).not.toHaveBeenCalled();
+  });
+
   it('guarda voz una sola vez cuando cuenta y categoria son claras', () => {
     component.categories.set([{id: 10, nombre:'Comida', tipo:'GASTO', activo:true, esPersonalizada:true}]);
     component.cuentasEdicion.set([{id: 1, nombre:'Efectivo', tipo:'EFECTIVO', moneda:'MXN', activo:true} as any]);

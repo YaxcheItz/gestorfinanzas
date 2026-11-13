@@ -32,11 +32,13 @@ for(const [width,height,font,dark] of [[390,844,'100%',false],[320,640,'200%',fa
  for(const route of ['dashboard','transacciones']){
  await p.goto(origin+'/'+route);await p.waitForTimeout(500);
  await p.evaluate(({font,dark})=>{document.documentElement.style.fontSize=font;document.documentElement.classList.toggle('dark',dark);},{font,dark});
+ if(route==='dashboard'){
  const contrast=await p.locator('.capture-dock__voice').evaluate(e=>{
  const style=getComputedStyle(e);
  const lum=(color:string)=>{const channels=color.match(/[\d.]+/g)!.slice(0,3).map(Number).map(v=>{v/=255;return v<=.04045?v/12.92:((v+.055)/1.055)**2.4;});return channels.reduce((sum,v,i)=>sum+v*[.2126,.7152,.0722][i],0);};
  const colors=[lum(style.color),lum(style.backgroundColor)].sort((a,b)=>a-b);return (colors[1]+.05)/(colors[0]+.05);
  });assert(contrast>=3);
+ }else{assert.equal(await p.locator('.capture-dock').count(),0);}
  await p.evaluate(()=>window.scrollTo(0,document.documentElement.scrollHeight));
  await p.screenshot({path:output+'/'+route+'-'+width+'-'+height+'-'+font+'-bottom.png'});
  if(route==='transacciones'){
