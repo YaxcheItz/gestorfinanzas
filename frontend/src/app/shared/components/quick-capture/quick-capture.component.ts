@@ -82,14 +82,12 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
     <!-- Voice Waveform: solo durante grabación activa -->
     @if (open()) {
       <div class="voice-dialog-backdrop" (click)="close()"></div>
-      <section appDialogViewport role="dialog" aria-modal="true" tabindex="-1" (keydown)="tecladoPanel($event)" id="quick-capture-panel" class="capture-panel" [class.capture-panel--editing]="!!editando()" [class.capture-panel--compact]="!captureTurns().length && !pendingCaptureText() && !loading() && !editando()" aria-label="Kaptal, captura y reportes">
+      <section appDialogViewport role="dialog" aria-modal="true" tabindex="-1" (keydown)="tecladoPanel($event)" id="quick-capture-panel" class="capture-panel" [class.capture-panel--editing]="!!editando()" [class.capture-panel--empty]="!captureTurns().length && !pendingCaptureText() && !loading() && !editando()" aria-label="Kaptal, captura y reportes">
         <header class="capture-panel__head">
-          <div><strong>{{ escuchando() ? 'Te escucho' : transcribiendoVoz() ? 'Transcribiendo' : loading() ? 'Organizando' : 'Añadir movimiento' }}</strong></div>
-          <button type="button" (click)="close()" aria-label="Cerrar">×</button>
+          <button type="button" class="capture-panel__back" (click)="close()" aria-label="Cerrar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button>
+          <div class="capture-panel__title"><h2>{{ escuchando() ? 'Te escucho' : transcribiendoVoz() ? 'Transcribiendo…' : loading() ? 'Preparando respuesta…' : editando() ? 'Revisar propuesta' : 'Chat de Kaptal' }}</h2><small>{{ editando() ? 'Ajusta los datos antes de confirmar' : 'Un espacio para registrar y consultar' }}</small></div>
+          @if (!editando()) {<button type="button" class="capture-manual" (click)="abrirConTeclado()" [disabled]="loading() || confirming() !== null || escuchando()" aria-label="Registro manual" title="Registro manual"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 4 5 5M4 16l12-12 4 4L8 20H4z"/></svg><span>Formulario</span></button>}
         </header>
-        <div class="capture-panel__tools">
-          <button type="button" class="capture-manual" (click)="abrirConTeclado()" [disabled]="loading() || confirming() !== null || escuchando()">Registro manual</button>
-        </div>
 
     @if (escuchando()) {
       <div class="voice-waveform" role="status" aria-live="polite">
@@ -127,7 +125,15 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
           } @else {
           <div #chatScroll id="capture-chat-thread" class="capture-chat" (scroll)="actualizarSeguimiento($event)" aria-live="polite" aria-relevant="additions text" [attr.aria-busy]="loading()">
             @if (captureTurns().length === 0 && !pendingCaptureText()) {
-              <div class="capture-chat__intro"><div><strong>Cuéntame tu movimiento</strong><p>Escribe un gasto, ingreso o pregunta.</p></div></div>
+              <div class="capture-chat__intro">
+                <span class="capture-chat__welcome-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 4h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9l-6 3V6a2 2 0 0 1 2-2Z"/><path d="M7 9h10M7 13h6"/></svg></span>
+                <div><strong>¿Qué quieres hacer?</strong><p>Cuéntalo con tus palabras. Revisa la propuesta antes de confirmar un movimiento.</p></div>
+                <div class="capture-chat__suggestions" aria-label="Empezar una conversación">
+                  <button type="button" (click)="usarEjemplo('Gasté ')" [disabled]="loading() || catalogoCargando()">Registrar gasto <span aria-hidden="true">↗</span></button>
+                  <button type="button" (click)="usarEjemplo('Recibí ')" [disabled]="loading() || catalogoCargando()">Registrar ingreso <span aria-hidden="true">↗</span></button>
+                  <button type="button" (click)="usarEjemplo('¿En qué gasté más este mes?')" [disabled]="loading() || catalogoCargando()">Consultar gastos <span aria-hidden="true">↗</span></button>
+                </div>
+              </div>
             }
             @for (turn of turnosVisibles(); track turn.id) {
               <article class="capture-chat__user"><span>{{ turn.user | textoFinanciero }}</span></article>
@@ -146,7 +152,7 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
                 }
                 @if (turn.suggestions?.length) {<div class="chat-followups">@for (suggestion of turn.suggestions; track suggestion) {<button type="button" (click)="usarSugerencia(suggestion)" [disabled]="loading() || confirming() !== null">{{ suggestion | textoFinanciero }}</button>}</div>}
                 @for (proposal of turn.actions; track proposal.id) {
-                  @if (proposal.type === 'CREATE_TRANSACTION') {<button type="button" class="capture-cancel" style="min-height:44px" (click)="abrirEdicion(proposal)" [disabled]="confirming()!==null">Editar propuesta</button>}
+                  @if (proposal.type === 'CREATE_TRANSACTION') {<button type="button" class="capture-edit" (click)="abrirEdicion(proposal)" [disabled]="confirming()!==null">Editar propuesta</button>}
                   @if (etiquetasPropuesta(proposal).length) {<p>Etiquetas: {{ etiquetasPropuesta(proposal).join(', ') }}</p>}
                   @if (necesitaCategoria(proposal)) {
                     <section class="categorization-review" aria-label="Elige una categoría">
@@ -181,7 +187,7 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
                     @if (proposal.type.startsWith('DELETE_') && borradoPendiente() !== proposal.id) {<button type="button" class="capture-save" (click)="borradoPendiente.set(proposal.id)">Revisar eliminación</button>}
                     @else {<button type="button" class="capture-save" (click)="confirm(proposal)" [disabled]="confirming() !== null">{{ proposal.type.startsWith('DELETE_') ? 'Confirmar eliminación' : 'Confirmar acción' }}</button>}</div></article>
                   } @else {
-                    <article class="capture-proposal"><div><small>Confirma para guardar</small><strong>{{ proposal.summary | textoFinanciero }}</strong></div><div class="capture-proposal__actions"><button type="button" class="capture-cancel" (click)="dismiss(proposal.id)">Descartar</button><button type="button" class="capture-save" (click)="confirm(proposal)" [disabled]="confirming() !== null">{{ confirming() === proposal.id ? 'Guardando…' : 'Guardar movimiento' }}</button></div></article>
+                    <article class="capture-proposal"><div><small>Movimiento por revisar</small><strong>{{ proposal.summary | textoFinanciero }}</strong></div><div class="capture-proposal__actions"><button type="button" class="capture-cancel" (click)="dismiss(proposal.id)">Descartar</button><button type="button" class="capture-save" (click)="confirm(proposal)" [disabled]="confirming() !== null">{{ confirming() === proposal.id ? 'Guardando…' : 'Guardar movimiento' }}</button></div></article>
                   }
                 }
               </div></article>
@@ -195,7 +201,7 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
               </section>
             }
           </div>
-          @if (!seguirFinal()) {<button type="button" class="capture-jump-latest" (click)="irAlFinal()">Ir al último mensaje ↓</button>}
+          @if (!seguirFinal() && (captureTurns().length || pendingCaptureText())) {<button type="button" class="capture-jump-latest" (click)="irAlFinal()">Ir al último mensaje ↓</button>}
           @if (permisoVoz()) {<section class="voice-permission" role="status"><p>El audio se enviará para transcribirlo. Revisa el movimiento antes de guardarlo.</p><button type="button" (click)="permitirVoz()">Permitir audio y grabar</button></section>}
           @if (etiquetasPersonales().length) {
             <div class="capture-tags" aria-label="Etiquetas disponibles">
@@ -207,7 +213,7 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
           @if (error()) {<p class="capture-error capture-chat__error" role="alert">{{ error() }}</p>}
           <form class="capture-chat__composer" (ngSubmit)="submit()">
             <label class="sr-only" for="quick-capture-text">Escribe el movimiento que quieres registrar</label>
-            <textarea id="quick-capture-text" name="content" [(ngModel)]="content" (ngModelChange)="alCambiarTexto()" (keydown.enter)="enviarConEnter($event)" rows="1" maxlength="1200" enterkeyhint="send" placeholder="Ej. Café 45 #trabajo" [readOnly]="loading() || escuchando() || stopping()" [attr.aria-busy]="loading()"></textarea>
+            <textarea id="quick-capture-text" name="content" [(ngModel)]="content" (ngModelChange)="alCambiarTexto()" (keydown.enter)="enviarConEnter($event)" rows="1" maxlength="1200" enterkeyhint="send" placeholder="Escribe un movimiento o una pregunta…" [readOnly]="loading() || escuchando() || stopping()" [attr.aria-busy]="loading()"></textarea>
             <button type="button" class="capture-mic" (click)="toggleVoice()" [class.is-listening]="escuchando()" [disabled]="loading() || transcribiendoVoz() || stopping()" [attr.aria-label]="escuchando() ? 'Detener dictado' : 'Dictar movimiento'"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5m-4 0h8"/></svg></button>
             <button type="submit" class="capture-chat__send" [disabled]="loading() || catalogoCargando() || escuchando() || stopping() || !content.trim()" aria-label="Enviar movimiento"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 14-7-5 14-3-6-6-1Z"/><path d="m11 13 4-4"/></svg></button>
           </form>
@@ -495,6 +501,7 @@ export class QuickCaptureComponent implements OnDestroy {
   }
   usarEjemplo(text: string): void {
     this.content = text;
+    this.alCambiarTexto();
     requestAnimationFrame(() => document.getElementById('quick-capture-text')?.focus());
   }
   close(): void { this.confirmarVozAlResolver = false; this.limpiarHoldTimer(); this.pointerGesture = false; this.stopVoice(true); if (this.processingStep()) this.cancelarTranscripcion(); this.open.set(false); this.pantallaVoz.set(false); this.changeDetector.detectChanges(); }
