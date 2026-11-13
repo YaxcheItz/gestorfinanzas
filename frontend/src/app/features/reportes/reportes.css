@@ -3,3 +3,5 @@
 .expense-bar,.chart-key span:last-child::before{background-image:repeating-linear-gradient(135deg,transparent 0 3px,var(--kaptal-surface) 3px 5px)}
 .chart-key span{display:inline-flex;align-items:center;gap:.4rem}
 .chart-key span::before{content:'';display:inline-block;flex:none;width:.9rem;height:.9rem;background-color:currentColor}
+/* El título ampliado y el control de privacidad pueden ocupar filas separadas. */
+.reports-heading{flex-wrap:wrap}

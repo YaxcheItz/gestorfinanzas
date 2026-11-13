@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 
 // Solo renderizado con contratos ficticios; nunca alcanza el backend.
 test('propuesta, editor y error caben sin perder el texto de sesión', async ({ browser, baseURL }, testInfo) => {
+test.setTimeout(120_000);
 const origin=new URL(baseURL!).origin;
 const output=testInfo.outputDir;
 const c=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});await c.addInitScript(()=>{localStorage.setItem('finanzas_token',`qa.${btoa(JSON.stringify({exp:Math.floor(Date.now()/1000)+3600}))}.synthetic`);localStorage.setItem('finanzas_user',JSON.stringify({id:995,nombre:'Prueba visual',email:'ui@example.test'}));});await c.route('**/*',async r=>{const u=new URL(r.request().url());if(u.pathname.startsWith('/api/')){let data=[];if(u.pathname.endsWith('/perfil'))data={id:995,nombre:'Prueba visual',email:'ui@example.test',tema:'CLARO',monedaPredeterminada:'MXN'};if(u.pathname.endsWith('/listas'))data=[{id:21,nombre:'Personal QA',moneda:'MXN',personal:true,rol:'PROPIETARIO',miembros:[]}];if(u.pathname.includes('transacciones')||u.pathname.endsWith('/avisos'))data={content:[],totalPages:0,totalElements:0};

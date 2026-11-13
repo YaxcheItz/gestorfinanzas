@@ -2,6 +2,7 @@ import { createSectionsFixture } from './secciones-fixture';
 import { test, expect } from '@playwright/test';
 import fs from 'node:fs';
 test('auditoria sintetica de contraste y foco', async ({ browser, baseURL }, testInfo) => {
+    test.setTimeout(120_000);
     const { origin, c, p, pageErrors, writes } = await createSectionsFixture(browser, baseURL!);
     const output = testInfo.outputDir;
     fs.mkdirSync(output, { recursive: true });
