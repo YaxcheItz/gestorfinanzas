@@ -33,7 +33,10 @@ test('captura clasificada confirma una sola vez con respuestas ficticias',async(
   await expect(panel.getByRole('button',{name:'Cerrar',exact:true})).toBeVisible();
   await expect(panel.getByRole('button',{name:'Limpiar historial del chat'})).toHaveCount(0);
   await expect(panel.getByRole('button',{name:'Recuperar propuestas pendientes'})).toHaveCount(0);
-  expect(await panel.evaluate(el=>el.getBoundingClientRect().height)).toBeLessThan(600);
+  const initialBounds=await panel.boundingBox();expect(initialBounds).not.toBeNull();
+  expect(initialBounds!.height).toBeGreaterThanOrEqual(844*.95);
+  expect(initialBounds!.y).toBeGreaterThanOrEqual(0);
+  expect(initialBounds!.y+initialBounds!.height).toBeLessThanOrEqual(844);
   for (const viewport of [{width:320,height:568},{width:568,height:320}]) {
     await page.setViewportSize(viewport);
     await expect.poll(()=>panel.evaluate(el=>{
