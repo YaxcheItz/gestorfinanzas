@@ -607,5 +607,5 @@ html .monai-theme #quick-capture-panel[data-compact-viewport] .capture-chat__int
   html .monai-theme #quick-capture-panel .capture-panel__head { padding-top:max(.65rem,env(safe-area-inset-top)); padding-bottom:.65rem; }
   html .monai-theme #quick-capture-panel .capture-manual span { display:none; }
   html .monai-theme #quick-capture-panel .capture-panel__title small { display:none; }
-  html .monai-theme #quick-capture-panel[data-compact-viewport] .capture-panel__head { padding-top:.4rem; padding-bottom:.4rem; }
+  html .monai-theme #quick-capture-panel[data-compact-viewport] .capture-panel__head { padding-top:max(.4rem,env(safe-area-inset-top)); padding-bottom:.4rem; }
 }

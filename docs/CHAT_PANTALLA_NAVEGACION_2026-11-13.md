@@ -52,7 +52,13 @@ Commit inicial `ab3227b89f86d9a39d3053590de55f88f2f3c9c5`, subido y SHA remoto c
 
 Se actualizan solo esas expectativas: encabezado/bienvenida del chat actual y altura completa dentro del viewport; se conservan los pasos de voz/consentimiento, una sola confirmación, revisión de categoría, operaciones contra backend de pruebas, offline y ausencia de duplicados. La ejecución duplicada por push43497300807 se canceló intencionadamente al verificar que el mismo SHA tenía CI/Android del PR; no se presenta esa cancelación como fallo funcional.
 
-Se compilaron clases backend/test y aprobaron los cinco casos de esos dos archivos (1min) sobre H2 en memoria/perfil test con `FINANZAS_E2E=true`, sin `.env` real ni datos de producción. El cierre del nuevo SHA y sus ejecuciones se registra en el checkout principal/planes locales y cuerpo del PR para evitar cancelar CI con seguimiento documental sucesivo.
+Se compilaron clases backend/test y aprobaron los cinco casos de esos dos archivos (1min) sobre H2 en memoria/perfil test con `FINANZAS_E2E=true`, sin `.env` real ni datos de producción. Se subió9af5f37 con estos ajustes, aplicación idéntica a la primera QA; sus ejecuciones se sustituyen por las del último cambio CSS descrito debajo.
+
+## Área segura al compactar la cabecera
+
+La inspección de capturas nativas encontró que el modo compacto (<480px de viewport, como al abrir este teclado) sobrescribía el padding superior con `.4rem` y perdía el inset del sistema. Se cambia únicamente esa declaración a `max(.4rem,env(safe-area-inset-top))`. No se cambian altura de fuente, datos o comportamiento. Se reconstruyó el build y la APK QA, y se repitió el recorrido nativo con una aserción nueva: inset superior34px y botón de volver en y34px con IME abierto, ambos comprobados. También pasan el compositor y la edición con el teclado; prueba final14,5s, cero escrituras/erroresJS/orígenes externos inesperados. QA/forward retirados otra vez y metadatos habituales intactos. Evidencia final en `frontend/.local/chat-native-safe`; no usar la captura previa de cabecera compacta como resultado final.
+
+Se repitió la regresión visual después de este último CSS:6 E2E aprobados en1,1min; los resultados exactos y las ejecuciones finales de CI/Android se cierran en el checkout principal/planes locales y cuerpo del PR. La suite unitaria579 y los cinco flujos H2 corresponden al código TypeScript sin cambios posteriores; la CI del último SHA volverá a comprobarlos.
 
 El código se sube en su rama para verificar CI general de su SHA exacto. Los resultados posteriores se anotan en el checkout principal y planes locales sin pushes sucesivos que cancelen la ejecución. Publicar/instalar una nueva versión requiere una etapa posterior; no se presenta0.1.45 como si incluyera estos cambios.
 
