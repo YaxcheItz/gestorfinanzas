@@ -1,3 +1,16 @@
+<!-- KAPTAL_ESTADO_VIGENTE_INICIO -->
+## Resumen vigente — 14 noviembre 2026
+
+- Continúa la revisión por secciones con datos ficticios. Mantener fondo carbón, rojo profundo y grises neutros aprobados. Calendario aprobado; historial sin rediseño, lentitud/logout aplazados y PR271 excluido.
+- Reportes/Metas: PR279/e4ca4e3, CI43608740365 y Android43608740305 revalidadas completed/success; cierre anterior documentado con69 E2E locales,579 unitarias,132 E2E remotas y4 PWA separadas.
+- Parte actual: mejoras/compartidos-avisos-texto-ampliado, rama nueva desde develop remoto fe13575 comprobado, con e4ca4e3 por fast-forward. Tres ajustes: nombres completos del desglose, fuentes de Avisos en rem y navegación que se apila al necesitarlo.
+- Tres regresiones fallaron antes y aprobaron después3/3;579 unitarias/66 archivos, TypeScript estricto y build488,56kB aprobados. Regresión integral72 E2E y publicación/CI del commit final en curso.
+- Comparativa actual: http://127.0.0.1:14349 ,64 estados/128 imágenes comprobadas. Informe docs/REVISION_COMPARTIDOS_AVISOS_2026-11-14.md. Cero escrituras/errores JS y cero recortes/desbordes finales en las vistas auditadas.
+- Sin integración, despliegue o instalación. No se usan finanzas reales. Android/permisos son puentes ficticios. Siguiente paso: valorar Compartidos/Avisos en la comparativa y continuar por secciones con Ajustes según el plan.
+
+Los apartados siguientes conservan el historial y la evidencia de las etapas anteriores.
+<!-- KAPTAL_ESTADO_VIGENTE_FIN -->
+
 ## Publicacion del chat sin borradores - 11 noviembre 2026
 
 El codigo funcional de develop 9e7a70ecc42f29c93b66f3878e9300fa031abab9 paso los seis trabajos de CI 43091982543 y fue integrado a main b91fed190dd901c87bf52efaf2db0f1bc976ed7e con arbol identico. Despliegues Vercel Production 7720518355 y Render main-kaptal-api 7720496965 success para b91fed1. La pagina publica respondio HTTP 200 en 0.350 s y health backend HTTP 200 en 0.310 s desde PC; no mide API autenticada ni determina causa de lentitud prolongada. CI Android de main 43093942714 success; CI general 43093942757 aun en curso al registrar. PR #271 obsoleto: no integrar.
@@ -2000,3 +2013,12 @@ Calendario aprobado,historial sin rediseñar estructura/datos,lentitud/logout ap
 
 
 Comprobación final de foco:la gráfica desplazable se hacía tabulable automáticamente en Chromium pese a ser decorativa. Se reprodujo con Shift+Tab y se añade tabindex=-1,conservando la tabla como acceso de teclado a las seis cifras. El spec comprueba la ruta real de foco,la separación de etiquetas,último mes alcanzable y tabla de6 filas;TypeScript estricto aprobado tras la ampliación. La ejecución integral anterior se interrumpió tras50 casos aprobados al identificar este punto;se repite completa sobre la plantilla final. La UI y cálculos de Metas se conservan,solo tipos/tamaño/textos de presentación y nombres accesibles de sus acciones cambian.
+
+
+## Compartidos y Avisos: texto ampliado — 14 noviembre 2026
+
+Rama nueva mejoras/compartidos-avisos-texto-ampliado desde develop remoto fe13575 comprobado, con dependencia e4ca4e3/PR279 por fast-forward. CI general43608740365 y Android43608740305 de PR279 revalidadas completed/success. Diagnóstico presentado antes de corregir: nombres truncados del desglose en Compartidos, fuentes fijas de Avisos y botón Bancos y cuentas recortado a320/200%. Se cambia truncate por break-words, cinco tamaños de Avisos a rem equivalentes y navegación con ajuste de filas. Sin cambios financieros, APIs o guardados.
+
+Tres regresiones nuevas fallaron antes y aprobaron después3/3 en14,4s; TypeScript estricto aprobado.579 unitarias/66 archivos y build488,56kB aprobados. Avisos CSS Login4,30kB/automatic-bank5,02kB previos y Avisos4,53kB (antes4,49). Auditoría64 vistas por versión,128 capturas, cero escrituras/errores JS y cero recortes/desbordes finales. Android ficticio, API interceptada, perfiles nuevos y red externa bloqueada. Comparativa privada http://127.0.0.1:14349 ,128 imágenes y ajuste390px verificados. Informe docs/REVISION_COMPARTIDOS_AVISOS_2026-11-14.md. Regresión integral72 E2E en curso; publicar PR borrador y comprobar SHA/CI al cerrar.
+
+Sin merge, despliegue o instalación; no usar datos reales. Mantener calendario aprobado, historial sin rediseño, lentitud/logout aplazados y PR271 excluido. Siguiente paso: valoración de Compartidos/Avisos en comparativa14349 y después Ajustes según plan. Para otro chat: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/REVISION_COMPARTIDOS_AVISOS_2026-11-14.md. Revalida SHA/CI de mejoras/compartidos-avisos-texto-ampliado; continúa revisión por secciones con datos ficticios, sin integrar PR271».
