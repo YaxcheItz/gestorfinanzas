@@ -21,3 +21,22 @@ Publicado313af8d8e797ac73cd4407c3e84d09826d18e918 en PR278 borrador hacia develo
 Validación local definitiva de313af8d:67/67 E2E aprobadas en4,4min (frontend/.local/etiquetas-integral-final),incluyendo las dos regresiones nuevas y auditoría28 combinaciones de texto/foco. CI frontend132320879404 confirma579 unitarias/66 archivos,build y revisión de dependencias aprobados. No se atribuye la CI de9e573b0 a este SHA. Comparativa14337 verificada en28 estados/56 imágenes. PR277 pasó su fase API/E2E y está en PWA al registrar;CI final de ambas partes por confirmar.
 
 Dependencia PR277 cerrada:CI43552587091 y Android43552587113 aprobadas en9e573b0. Android43553451833 de313af8d también aprobado;CI general43553451812 aún en curso.
+
+
+## Incidencia de CI313af8d: limpieza del arnés MSI
+
+CI general43553451812 falló en el caso preexistente msi-anterior-acciones.spec.ts: apiResponse.json: Response has been disposed.129 E2E aprobaron,4PWA se omitieron condicionalmente y1 falló;Android43553451833 y los otros cinco trabajos generales aprobaron. La regresión nueva de Etiquetas también aprobó remotamente. PWA separada no llegó a ejecutarse y no se declara aprobada para este SHA.
+
+Se descargó artefacto14098145395 (.local/ci-313af8d-evidence) y se leyó la traza. La aserción final de saldo/retención[0,0] terminó en348394,863;teardown de contexto empezó348395,397 mientras un GET interceptado seguía abierto hasta348397,985. El cierre invalidó la respuesta que el callback estaba leyendo. Se añade finally con page.unrouteAll({behavior:'wait'}) al caso MSI,usando la API disponible en los tipos de Playwright;se esperan callbacks,sin ignorar errores,ampliar timeouts o quitar aserciones. No se cambia lógica MSI ni se toca ninguna compra real. TypeScript estricto aprobado. Se está repitiendo3 veces contra backend H2 en memoria/perfil test y frontend local14341;configuración aislada de pruebas,ningún servicio de producción. Nuevo SHA/CI pendientes al registrar.
+
+
+## Corrección de cierre del arnés tras CI313af8d
+
+CI43553451812 falló en msi-anterior-acciones.spec.ts con apiResponse.json: Response has been disposed;129 E2E aprobadas,4 PWA omitidas condicionalmente y1 fallo. La nueva prueba de Etiquetas aprobó remotamente; Android43553451833 y los otros cinco trabajos generales aprobaron. La fase PWA separada no se ejecutó tras ese fallo.
+
+Artefacto14098145395 y trace.zip conservados en frontend/.local/ci-313af8d-evidence. La traza registra que la aserción final[0,0] completó348394,863 y el teardown de contexto empezó348395,397,con un GET interceptado aún abierto hasta348397,985. El callback leía una respuesta invalidada al cerrar. Se añade finally con page.unrouteAll({behavior:'wait'}) antes de que termine el test. La API está documentada en los tipos de Playwright instalado: espera handlers en curso. No se ignoran errores,no se aumentan timeouts,reintentos o umbrales y no se quitan aserciones. No se cambia la lógica MSI ni ninguna compra real.
+
+Verificación local:3/3 repeticiones del caso aprobadas en1min,con backend de perfil test/H2 en memoria y frontend local14341;puertos18080/14341 libres al terminar. TypeScript estricto del caso aprobado. Las67 E2E visuales de313af8d aprobaron en4,4min;la fuente de aplicación y estilos se mantienen idénticos tras esta corrección exclusiva del arnés. No se presenta H2 como PostgreSQL ni como validación real de usuario. La CI completa del nuevo SHA sigue pendiente hasta su comprobación y se registra en checkout principal/planes/PR.
+
+
+Nuevo cierre candidato publicado:c56395fbeaa935e71e296bc65b8242d16dda4bfa,remoto comprobado;PR278 borrador. Solo añade finally/unrouteAll(wait) al arnés MSI y documentación sobre313af8d,con fuente de aplicación/estilos idénticos.3/3 repeticiones H2 y TypeScript aprobados,servidores temporales detenidos. CI general43555058023 y Android43555058028 en curso sobre el nuevo SHA;push duplicado43555054177 cancelado tras comprobar SHA/evento y ejecuciones PR. La interfaz capturada en313af8d sigue siendo la misma del nuevo head,con67 E2E visuales aprobadas;la CI completa nueva queda pendiente.

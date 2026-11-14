@@ -1,3 +1,17 @@
+<!-- KAPTAL_ESTADO_VIGENTE_INICIO -->
+## Resumen vigente — 13 noviembre 2026
+
+- Revisión por secciones: Cuentas, Presupuestos, Categorías y Etiquetas, con datos ficticios. Mantener el fondo carbón aprobado y la propuesta de rojo profundo/grises neutros durante la revisión.
+- PR277:9e573b0958adef533c57027fa66c2ddd1e205ee7,CI43552587091 y Android43552587113 aprobadas;66 E2E locales,579 unitarias remotas,129 E2E remotas y4 PWA separadas aprobadas.
+- PR278:c56395fbeaa935e71e296bc65b8242d16dda4bfa publicado y verificado;limpieza del arnés MSI validada3/3 con H2 local. UI/estilos idénticos a313af8d,cuyas67 E2E locales aprobaron. CI general43555058023 y Android43555058028 en curso;313af8d tuvo1 fallo de teardown diagnosticado y no se declara verde.
+- Ramas independientes: mejoras/detalle-presupuesto-texto-ampliado y mejoras/etiquetas-texto-ampliado; ambas derivadas de develop remoto comprobado con dependencias por fast-forward. PRs en borrador,sin integración o despliegue.
+- Comparativa privada: http://127.0.0.1:14337 ,28 estados/56 imágenes. Informes: docs/REVISION_CUENTAS_PRESUPUESTOS_2026-11-13.md y docs/REVISION_CATEGORIAS_ETIQUETAS_2026-11-13.md. Resultados finales se guardan en checkout principal/planes/PR para conservar la CI del código final.
+- Teléfono desconectado; no se instala ni se usan finanzas reales. Calendario aprobado,historial sin rediseño de estructura/datos,lentitud/logout aplazados y PR271 excluido.
+- Siguiente sección: Reportes y Metas con controles/estados poblados. Comprobación física del tema final cuando vuelva el teléfono,en QA aislada reconstruida desde el SHA vigente.
+
+Los apartados siguientes conservan el historial y la evidencia de las etapas anteriores.
+<!-- KAPTAL_ESTADO_VIGENTE_FIN -->
+
 ## Validacion del propietario tras Android 0.1.44 - 11 noviembre 2026
 
 El propietario confirma que el punto de comportamiento del chat funciona como queria y que un aviso normal reciente de Amex funciono. Es validacion real reportada por el usuario, sin inspeccion del aviso ni acceso a movimientos. No demuestra soporte de todos los bancos o formatos. No se confirmo nueva medicion de apertura tras horas de inactividad. La carrera preexistente de logout sigue como riesgo reproducido con datos ficticios, sin evidencia de incidente real del propietario; aclarar alcance antes de afirmar solucion.
@@ -2956,3 +2970,22 @@ Validación local definitiva de313af8d:67/67 E2E aprobadas en4,4min (frontend/.l
 Commit9e573b0958adef533c57027fa66c2ddd1e205ee7 publicado y comprobado. CI general43552587091 y Android43552587113 completadas/success; los seis trabajos generales aprobaron. Logs del job132318150173:129 E2E aprobadas en13,4min y4 PWA omitidas condicionalmente; la fase PWA separada aprueba4/4 en26,7s. Navegación sintética aprobada. CI frontend confirma579 unitarias/66 archivos. Regresión local final66/66 en4,4min,3 E2E focales,TypeScript y auditoría28 combinaciones aprobados. El aviso Cerca del límite mide7,51:1 frente a1,55:1 antes. La duplicada push43552553336 fue cancelada intencionadamente; no es un fallo del PR.
 
 PR277 sigue borrador hacia develop,https://github.com/YaxcheItz/gestorfinanzas/pull/277 . No merge,producción o instalación. La etapa posterior de Etiquetas se publica en313af8d/PR278 y contiene esta dependencia; tiene67 E2E locales finales y Android43553451833 aprobados,con CI general43553451812 todavía en curso. No atribuir los resultados de9e573b0 al nuevo SHA. Comparativa privada14337 presenta ambos PR con etiquetas correctas. Siguiente sección tras cierre de estas partes: Reportes/Metas. Teléfono desconectado y PR271 excluido.
+
+
+## Incidencia de CI313af8d: limpieza del arnés MSI
+
+CI general43553451812 falló en el caso preexistente msi-anterior-acciones.spec.ts: apiResponse.json: Response has been disposed.129 E2E aprobaron,4PWA se omitieron condicionalmente y1 falló;Android43553451833 y los otros cinco trabajos generales aprobaron. La regresión nueva de Etiquetas también aprobó remotamente. PWA separada no llegó a ejecutarse y no se declara aprobada para este SHA.
+
+Se descargó artefacto14098145395 (.local/ci-313af8d-evidence) y se leyó la traza. La aserción final de saldo/retención[0,0] terminó en348394,863;teardown de contexto empezó348395,397 mientras un GET interceptado seguía abierto hasta348397,985. El cierre invalidó la respuesta que el callback estaba leyendo. Se añade finally con page.unrouteAll({behavior:'wait'}) al caso MSI,usando la API disponible en los tipos de Playwright;se esperan callbacks,sin ignorar errores,ampliar timeouts o quitar aserciones. No se cambia lógica MSI ni se toca ninguna compra real. TypeScript estricto aprobado. Se está repitiendo3 veces contra backend H2 en memoria/perfil test y frontend local14341;configuración aislada de pruebas,ningún servicio de producción. Nuevo SHA/CI pendientes al registrar.
+
+
+## Corrección de cierre del arnés tras CI313af8d
+
+CI43553451812 falló en msi-anterior-acciones.spec.ts con apiResponse.json: Response has been disposed;129 E2E aprobadas,4 PWA omitidas condicionalmente y1 fallo. La nueva prueba de Etiquetas aprobó remotamente; Android43553451833 y los otros cinco trabajos generales aprobaron. La fase PWA separada no se ejecutó tras ese fallo.
+
+Artefacto14098145395 y trace.zip conservados en frontend/.local/ci-313af8d-evidence. La traza registra que la aserción final[0,0] completó348394,863 y el teardown de contexto empezó348395,397,con un GET interceptado aún abierto hasta348397,985. El callback leía una respuesta invalidada al cerrar. Se añade finally con page.unrouteAll({behavior:'wait'}) antes de que termine el test. La API está documentada en los tipos de Playwright instalado: espera handlers en curso. No se ignoran errores,no se aumentan timeouts,reintentos o umbrales y no se quitan aserciones. No se cambia la lógica MSI ni ninguna compra real.
+
+Verificación local:3/3 repeticiones del caso aprobadas en1min,con backend de perfil test/H2 en memoria y frontend local14341;puertos18080/14341 libres al terminar. TypeScript estricto del caso aprobado. Las67 E2E visuales de313af8d aprobaron en4,4min;la fuente de aplicación y estilos se mantienen idénticos tras esta corrección exclusiva del arnés. No se presenta H2 como PostgreSQL ni como validación real de usuario. La CI completa del nuevo SHA sigue pendiente hasta su comprobación y se registra en checkout principal/planes/PR.
+
+
+Nuevo cierre candidato publicado:c56395fbeaa935e71e296bc65b8242d16dda4bfa,remoto comprobado;PR278 borrador. Solo añade finally/unrouteAll(wait) al arnés MSI y documentación sobre313af8d,con fuente de aplicación/estilos idénticos.3/3 repeticiones H2 y TypeScript aprobados,servidores temporales detenidos. CI general43555058023 y Android43555058028 en curso sobre el nuevo SHA;push duplicado43555054177 cancelado tras comprobar SHA/evento y ejecuciones PR. La interfaz capturada en313af8d sigue siendo la misma del nuevo head,con67 E2E visuales aprobadas;la CI completa nueva queda pendiente.
