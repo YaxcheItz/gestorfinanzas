@@ -2850,3 +2850,15 @@ Para continuar: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL
 
 
 Publicación exacta de la nueva etapa: Git directo recuperado y push1d876b1a0f7d3ea632215c42fcdd714b58a5310d comprobado por ls-remote;worktree limpio. PR276 borrador hacia develop,https://github.com/YaxcheItz/gestorfinanzas/pull/276 . CI general43542682886 y Android43542682896 en curso sobre ese SHA. No se publicó el tema mediante un commit alternativo del conector. Comparativa18estados disponible en127.0.0.1:14326; aceptación estética pendiente y teléfono desconectado.
+
+
+## Refinamiento final de campos y fondos
+
+La inspección visual posterior a1d876b1 detectó campos de Reportes/Presupuestos/Movimientos todavía verdosos por una regla antigua más específica, el fondo azul del hilo del asistente y bordes por defecto demasiado claros en contenedores sin color explícito. Se reprodujo primero el fallo de coherencia del campo de Reportes mediante una aserción de superficie real, sin cambiar umbrales de contraste. Se sustituyen esos valores heredados por los tokens comunes; el hilo obtiene una clase de estilo y los bordes decorativos sin color explícito usan el separador del tema. Se conservan acentos semánticos, campos de categorías y el consentimiento del asistente.
+
+Build final y579 unitarias/66 archivos repetidos aprobaron. Regresión focal final:6 E2E aprobadas en52,6s, incluida la auditoría28 combinaciones y comprobaciones de campos/hilo/bordes reales; no se atribuyen las64 del paso1d876b1 al nuevo SHA. El build también informa Login4,30kB (300bytes sobre aviso4kB),además de Avisos4,49kB y automatic-bank5,01kB; no hay errores de compilación. El total inicial487,86kB sigue dentro del presupuesto500kB. El cierre del SHA/CI nuevo se registra en el checkout principal y cuerpo del PR276. Teléfono desconectado,sin instalación o validación física del tema final.
+
+
+## SHA final de paleta: 1b70808 — seguimiento
+
+El refinamiento de campos/fondo del asistente/bordes se confirmó y subió directamente en1b708080d6bd94a47fcca8f4197429a298bdddf3,remoto verificado. PR276 conserva borrador/base develop. CI general43543716382 y Android43543716425 son las ejecuciones del SHA final;las de1d876b1 son intermedias/sustituidas y no prueban el nuevo CSS. La duplicada push43543712155 se canceló intencionadamente al comprobar SHA/evento y las dos ejecuciones del PR. Comprobadas6 E2E focales finales y579 unitarias repetidas;regresión completa64 del final en curso al registrar. Comparativa18estados actualizada con las capturas de esta paleta. No cambios posteriores de código,ni teléfono instalado o datos reales usados.
