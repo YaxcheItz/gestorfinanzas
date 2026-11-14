@@ -1,6 +1,7 @@
 /* Kaptal: a quiet, mobile first finance interface with a contextual white/coral design system.
    Loaded after the legacy styles so every screen shares the same surface tokens. */
 :root {
+  --kaptal-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --kaptal-glass: rgb(255 255 255 / .8);
   --kaptal-glass-border: rgb(0 0 0 / .04);
   --kaptal-canvas: #FFFFFF;
@@ -17,25 +18,29 @@
   --kaptal-income: #287D48;
   --kaptal-expense: #AD3847;
   --kaptal-warning: #925600;
+  --kaptal-info: #2563EB;
   --kaptal-float-shadow: 0 6px 28px rgb(37 37 34 / 8%);
 }
 
 html.dark {
-  --kaptal-glass: rgb(40 40 40 / .78);
-  --kaptal-glass-border: rgb(255 255 255 / .08);
-  --kaptal-canvas: #000000;
-  --kaptal-surface: #1C1C1E;
-  --kaptal-surface-subtle: #2C2C2E;
-  --kaptal-content: #FFFFFF;
-  --kaptal-content-muted: #A1A1A6;
-  --kaptal-border: #38383A;
-  --kaptal-control-border: #94949A;
-  --kaptal-brand: #FF8A80;
-  --kaptal-on-brand: #111111;
-  --kaptal-focus: #FF8A80;
-  --kaptal-income: #86D49D;
-  --kaptal-expense: #FF8A80;
-  --kaptal-warning: #FBBF24;
+  --kaptal-font: 'Manrope Variable', Manrope, ui-sans-serif, system-ui, sans-serif;
+  --kaptal-glass: rgb(31 34 37 / .92);
+  --kaptal-glass-border: #3A4045;
+  --kaptal-canvas: #151719;
+  --kaptal-surface: #1F2225;
+  --kaptal-surface-subtle: #282C30;
+  --kaptal-content: #ECEEEA;
+  --kaptal-content-muted: #AEB4B8;
+  --kaptal-border: #3A4045;
+  --kaptal-control-border: #7B858D;
+  --kaptal-brand: #F09586;
+  --kaptal-on-brand: #1B2024;
+  --kaptal-focus: #F09586;
+  --kaptal-voice: #F09586;
+  --kaptal-income: #A3C7AF;
+  --kaptal-expense: #EFA29D;
+  --kaptal-warning: #DDC28B;
+  --kaptal-info: #A9C2D4;
   --kaptal-float-shadow: 0 6px 28px rgb(0 0 0 / 20%);
 }
 
@@ -158,7 +163,10 @@ html .monai-theme .utility-button svg { width: 22px; height: 22px; fill: none; s
 /* El hilo ocupa el espacio libre; las acciones y la escritura permanecen accesibles. */
 
 /* Shared content rows stay on the page surface. Only controls use glass. */
-html .monai-theme{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+html .monai-theme{font-family:var(--kaptal-font)}
+/* Conservar el tema claro; en oscuro, suavizar la densidad y el blanco de los títulos. */
+html.dark .monai-theme :is(h1,h2,h3) { font-weight:600; letter-spacing:-.025em; }
+html.dark .monai-theme .settings-disclosure > summary strong { font-weight:600; }
 html .monai-theme .app-content-with-bottom-nav{padding-bottom:calc(112px + env(safe-area-inset-bottom))}
 html .monai-theme .tx-item{padding:12px 0;border:0;background:transparent;border-radius:0;min-height:72px}
 html .monai-theme .tx-item__icon{width:44px;height:44px;border-radius:50%;font-size:24px}

@@ -28,7 +28,7 @@ import { PrivacyToggleComponent } from '../privacy-toggle/privacy-toggle.compone
     <div class="capture-dock" aria-label="Acciones de movimientos">
       <div class="capture-dock__left">
       <button type="button" class="capture-dock__search glass-icon" (click)="buscar()" aria-label="Buscar movimientos" title="Buscar"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></button>
-      <button type="button" class="capture-dock__manual" (click)="anadir()" aria-label="Añadir movimiento" title="Registro manual"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 4 5 5M4 16l12-12 4 4L8 20H4z"/></svg></button>
+      <button type="button" class="capture-dock__manual" (click)="anadir()" aria-label="Añadir movimiento" title="Escribir en el chat"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 4 5 5M4 16l12-12 4 4L8 20H4z"/></svg></button>
       </div>
       <button type="button" class="capture-dock__voice" (click)="voz()" aria-label="Registrar por voz o texto" title="Hablar o escribir"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5m-4 0h8"/></svg></button>
     </div>

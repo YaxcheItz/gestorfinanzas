@@ -86,7 +86,7 @@ interface WeeklyCategory { name: string; amount: number; percent: number; curren
         <header class="capture-panel__head">
           <button type="button" class="capture-panel__back" (click)="close()" aria-label="Cerrar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button>
           <div class="capture-panel__title"><h2>{{ escuchando() ? 'Te escucho' : transcribiendoVoz() ? 'Transcribiendo…' : loading() ? 'Preparando respuesta…' : editando() ? 'Revisar propuesta' : 'Chat de Kaptal' }}</h2><small>{{ editando() ? 'Ajusta los datos antes de confirmar' : 'Un espacio para registrar y consultar' }}</small></div>
-          @if (!editando()) {<button type="button" class="capture-manual" (click)="abrirConTeclado()" [disabled]="loading() || confirming() !== null || escuchando()" aria-label="Registro manual" title="Registro manual"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 4 5 5M4 16l12-12 4 4L8 20H4z"/></svg><span>Formulario</span></button>}
+          @if (!editando()) {<button type="button" class="capture-manual" (click)="abrirConTeclado()" [disabled]="loading() || confirming() !== null || escuchando()" aria-label="Abrir formulario" title="Abrir formulario"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 4 5 5M4 16l12-12 4 4L8 20H4z"/></svg></button>}
         </header>
 
     @if (escuchando()) {

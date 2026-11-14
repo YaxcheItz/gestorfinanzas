@@ -14,7 +14,7 @@ html .monai-theme .dashboard-screen__amount{margin:0;color:var(--kaptal-content)
 .home-metric__label{font-size:11px;font-weight:500;color:var(--kaptal-content-muted);margin-bottom:2px}
 .home-metric__value{font-size:13px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:var(--kaptal-content);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
 .home-metric--income .home-metric__value{color:#15803d}
-html.dark .home-metric--income .home-metric__value{color:#4ade80}
+html.dark .home-metric--income .home-metric__value{color:var(--kaptal-income)}
 .home-metric__value.is-negative{color:var(--kaptal-expense)}
 .home-account-summary{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:10px;font-size:12px;color:var(--kaptal-content-muted);margin:4px auto 6px;max-width:390px}
 .home-account-summary strong{color:var(--kaptal-content);font-weight:600}

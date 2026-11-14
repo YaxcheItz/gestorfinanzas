@@ -245,34 +245,34 @@ import { GoogleSignInComponent } from '../google-sign-in/google-sign-in.componen
       .login-submit__spinner { animation: none; }
     }
     :host-context(html.dark) .login-card {
-      border-color: #27272a;
-      background: #121212;
+      border-color: var(--kaptal-border);
+      background: var(--kaptal-surface);
       box-shadow: none;
     }
-    :host-context(html.dark) .login-card__icon { background: #1f1f1f; color: #f4f4f5; }
-    :host-context(html.dark) .login-card__intro h1 { color: #f9fafb; }
+    :host-context(html.dark) .login-card__icon { background: var(--kaptal-surface-subtle); color: var(--kaptal-content); }
+    :host-context(html.dark) .login-card__intro h1 { color: var(--kaptal-content); }
     :host-context(html.dark) .login-card__intro p,
-    :host-context(html.dark) .login-footer { color: #9ca3af; }
-    :host-context(html.dark) .login-field > span { color: #d1d5db; }
+    :host-context(html.dark) .login-footer { color: var(--kaptal-content-muted); }
+    :host-context(html.dark) .login-field > span { color: var(--kaptal-content); }
     :host-context(html.dark) .login-field input {
-      border-color: #3f3f46;
-      background: #1a1a1a;
-      color: #f9fafb;
+      border-color: var(--kaptal-control-border);
+      background: var(--kaptal-surface-subtle);
+      color: var(--kaptal-content);
     }
     :host-context(html.dark) .login-field input:focus {
-      border-color: #e5e7eb;
-      background: #111113;
+      border-color: var(--kaptal-focus);
+      background: var(--kaptal-surface-subtle);
     }
-    :host-context(html.dark) .login-field__password button { color: #d1d5db; }
+    :host-context(html.dark) .login-field__password button { color: var(--kaptal-content-muted); }
     :host-context(html.dark) .login-submit {
       background: var(--kaptal-brand) !important;
       color: var(--kaptal-on-brand) !important;
     }
     :host-context(html.dark) .login-link,
-    :host-context(html.dark) .login-footer a { color: #f4f4f5; }
-    :host-context(html.dark) .login-footer { border-top-color: #27272a; }
-    :host-context(html.dark) .login-alert--warn { border-color: #78350f; background: #1c1917; color: #fbbf24; }
-    :host-context(html.dark) .login-alert--error { border-color: #7f1d1d; background: #1c1917; color: #fca5a5; }
+    :host-context(html.dark) .login-footer a { color: var(--kaptal-brand); }
+    :host-context(html.dark) .login-footer { border-top-color: var(--kaptal-border); }
+    :host-context(html.dark) .login-alert--warn { border-color: var(--kaptal-warning); background: var(--kaptal-surface-subtle); color: var(--kaptal-warning); }
+    :host-context(html.dark) .login-alert--error { border-color: var(--kaptal-expense); background: var(--kaptal-surface-subtle); color: var(--kaptal-expense); }
   `]
 })
 export class LoginComponent {

@@ -1,0 +1,45 @@
+# Tema oscuro y acceso al formulario — 13 noviembre 2026
+
+## Petición y base comprobada
+
+El propietario considera adecuado el diseño general del chat del PR275 y pide reducir o renombrar el acceso al registro manual. También solicita revisar y mejorar el modo oscuro en toda la aplicación, porque su tipografía/combinación de colores no le convence. Esta petición autoriza el ajuste visual común; no cambia cálculos ni flujos financieros.
+
+Nueva rama `mejoras/tema-oscuro-formulario`, worktree `.local/worktrees/tema-oscuro-formulario`, creada desde develop remoto comprobado `fe13575532c8c055fe699374660988a888b01f6f`. Se incorporó por fast-forward la dependencia `f526c82014c94dee9811e3a9572d467a73e83eec` del PR275, con CI general43504281521 y Android43504281163 aprobados. PR275 permanece sin integrar. La rama nueva contiene su chat final y estos refinamientos; no se debe entregar el PR275 por separado como si incluyera el tema nuevo.
+
+Skills utilizadas: ponytail, ui-ux-pro-max, redesign-existing-projects, angular-developer, playwright-cli y debugging-and-error-recovery. Se revisaron los plugins y se usa GitHub para publicar/verificar ante el bloqueo de Git directo. No se añaden dependencias, fuentes externas, servicios o cuentas.
+
+## Diagnóstico renderizado previo
+
+Las vistas autenticadas compartían fondo `#000000`, texto principal `#FFFFFF`, grises muy separados y algunos acentos saturados. Se cargaba Manrope localmente, pero la capa común y el chat imponían la fuente del sistema. Además había varias reglas históricas de oscuro con valores propios, especialmente en utilidades antiguas, acceso y respuestas/gráficas del asistente.
+
+Se guardaron capturas de referencia antes de cambiar estilos. La revisión autenticada recorre Inicio, cuentas, presupuestos, categorías, etiquetas, reportes, metas, libro diario, compartidos, avisos, configuración, asistente y movimientos, más chat/formulario. Acceso, registro y recuperación se revisan en contextos nuevos sin sesión: no se cuenta como revisión pública la primera captura que fue redirigida a Inicio por el usuario ficticio del arnés. Se esperan fuentes y fin de transición antes de usar las capturas públicas como evidencia visual.
+
+## Cambios
+
+- Oscuro con fondo carbón `#151719`, superficies `#1F2225`/`#282C30`, texto marfil suave `#ECEEEA`, secundario `#AEB4B8` y coral `#F09586`. Ingresos, gastos, información y avisos mantienen roles diferenciados con tonos menos intensos. Los bordes decorativos y los de campos conservan funciones distintas.
+- Manrope ya incluida en el proyecto se aplica al modo oscuro, con títulos/pesos más suaves. El tema claro conserva su paleta y fuente del sistema. No se reduce el tamaño de fuente para esconder desbordes ni se descarga tipografía de terceros.
+- Las utilidades oscuras históricas, el acceso y los mensajes/gráficas del asistente usan los mismos tokens, evitando paneles que conserven negro/blanco o una paleta paralela.
+- Acceso al formulario como lápiz discreto de18px en una zona táctil44×44, sin texto ancho ni borde visible. Nombre/ayuda «Abrir formulario». El lápiz de Inicio se describe como «Escribir en el chat», porque abre el chat. Se mantienen apertura del formulario, texto de sesión, estados deshabilitados y confirmaciones.
+- Se actualizaron únicamente los selectores E2E que dependían del nombre anterior y la expectativa de tipografía de cada tema.
+
+## Verificación y correcciones
+
+Build Angular aprobado; permanecen los avisos CSS anteriores de Avisos4,49kB y automatic-bank5,01kB. Suite579 pruebas/66 archivos y auditoría frontend/4 pruebas aprobadas, sin vulnerabilidades conocidas en esa consulta. No se afirma cobertura nueva ni lint frontend inexistente.
+
+La primera regresión integral obtuvo62 aprobadas/1 fallo: «Categorías personalizadas» en la lista de eliminación de cuenta sobresalía2,73px a320px y raíz200% con la nueva fuente. Se localizó el span flex con min-width automático y se permitió encoger/envolver solo ese texto. No se pulsó eliminar ni se envió una petición. La siguiente ejecución de63 casos aprobó completa en4,4min. Tras terminar la unificación de reglas históricas y acceso la regresión final de64 casos, incluida una nueva prueba pública sin sesión, aprobó completa en4,6min.
+
+La auditoría de texto/foco en28 combinaciones de pantallas/formularios claros y oscuros no encontró fallos en su alcance. Las nuevas pruebas verifican contraste de roles (4,5:1 texto/3:1 bordes de campos y foco), carga de Manrope, regreso al tema claro, acceso por teclado al formulario, conservación de texto sin enviar y ajuste móvil/escritorio/200%. La revisión no pretende certificar todos los estados posibles por estas mediciones.
+
+Las API se interceptan y la red externa se bloquea en los recorridos visuales; cuentas, listas, propuestas y demás contratos son ficticios. Las simulaciones de propuestas no guardan movimientos en un servidor. Los avisos de Google de las capturas públicas proceden del bloqueo deliberado de red del arnés, no de una comprobación del proveedor real.
+
+## Teléfono y entrega
+
+El propietario desconectó el teléfono e indicó continuar con todo lo independiente. Se había preparado/compilado una QA debug separada, pero no se instaló. Esa preparación no acredita físicamente el tema final y no se presenta como release. La aplicación habitual0.1.45/código46 conserva el diseño publicado anterior; la QA del chat de la parte previa fue retirada. No se abrió sesión ni se usaron finanzas reales, ni se cambiaron permisos/ajustes del teléfono en esta etapa.
+
+Pendiente físico específico: ver el tema final y su tipografía en la QA aislada cuando vuelva el dispositivo. No bloquea la revisión sintética ni la subida/CI. No hay integración, producción ni APK habitual actualizada por esta parte. Calendario aprobado; historial sin rediseño de estructura/datos, lentitud y logout aplazados; chat sin borradores y PR271 excluido.
+
+## Cierre de publicación
+
+Publicar la rama en borrador y comprobar su SHA/CI general y Android exactos. El resultado posterior se registra en el checkout principal, planes locales y cuerpo del PR sin sucesivos pushes documentales que sustituyan la CI del código final. Comparativa local preparada en .local/revision-tema-oscuro/index.html,18 estados/36 capturas,servidor127.0.0.1:14326; todas las imágenes/selector y ajuste390px comprobados en Edge aislado. Aceptación estética del tema nuevo pendiente.
+
+Para continuar: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/TEMA_OSCURO_FORMULARIO_2026-11-13.md, además del cierre del PR275 y planes locales. Continúa la revisión visual de mejoras/tema-oscuro-formulario y revalida su SHA/CI exactos. El teléfono está desconectado: seguir con trabajo local/sintético y dejar solo la comprobación física del tema final pendiente; no usar datos reales ni integrar PR271».

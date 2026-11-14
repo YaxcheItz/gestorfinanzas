@@ -195,7 +195,7 @@ html.dark .text-slate-600 {
 
 html.dark .text-slate-500,
 html.dark .text-slate-400 {
-  color: rgb(148 163 184);
+  color: var(--kaptal-content-muted);
 }
 
 html:not(.dark) .text-slate-400 {
@@ -208,7 +208,7 @@ html:not(.dark) ::placeholder {
 }
 
 html.dark ::placeholder {
-  color: #94a3b8;
+  color: var(--kaptal-content-muted);
   opacity: 1;
 }
 
@@ -228,12 +228,12 @@ html.dark .bg-emerald-100 {
 
 html.dark .text-emerald-800,
 html.dark .text-emerald-700 {
-  color: #34d399;
+  color: var(--kaptal-income);
 }
 
 html.dark .text-blue-700,
 html.dark .text-blue-600 {
-  color: #60a5fa;
+  color: var(--kaptal-info);
 }
 
 html.dark .border-emerald-100,
@@ -256,7 +256,7 @@ html.dark .bg-rose-100 {
 html.dark .text-rose-800,
 html.dark .text-rose-700,
 html.dark .text-rose-600 {
-  color: #fb7185;
+  color: var(--kaptal-expense);
 }
 
 html.dark .border-rose-100,
@@ -271,7 +271,7 @@ html.dark .bg-amber-50 {
 html.dark .text-amber-950,
 html.dark .text-amber-800,
 html.dark .text-amber-700 {
-  color: #fbbf24;
+  color: var(--kaptal-warning);
 }
 
 html.dark .border-amber-200 {
@@ -1021,38 +1021,38 @@ html.dark .categorization-review__drop-icon { color: #9ca3af; }
 html.dark .categorization-review__drop small { color: #d1d5db; }
 html.dark .report-welcome { background: #1c1c1f; color: #f4f4f5; } html.dark .report-welcome p,
 html.dark .report-chart__heading span { color: #a1a1aa; } html.dark .report-welcome button { border-color: #3f3f46; background: #27272a; color: #e4e4e7; }
-html.dark .report-message__bubble { background: #1c1c1f; color: #f4f4f5; } html.dark .report-message.is-user .report-message__bubble { background: #e4e4e7; color: #111113; }
+html.dark .report-message__bubble { background:var(--kaptal-surface); color:var(--kaptal-content); } html.dark .report-message.is-user .report-message__bubble { background:color-mix(in srgb,var(--kaptal-brand) 14%,var(--kaptal-surface)); color:var(--kaptal-content); }
 @keyframes chat-dot { to { opacity: .35; transform: translateY(-2px); } }
 
-/* El tema oscuro es negro neutro en todas las páginas y controles, no solo en Inicio. */
+/* Las utilidades antiguas comparten los tokens del tema oscuro en todas las páginas. */
 html.dark {
   color-scheme: dark;
-  background: #000;
+  background: var(--kaptal-canvas);
 }
-html.dark body { min-height: 100dvh; background: #000 !important; color: #f4f4f5; }
+html.dark body { min-height: 100dvh; background: var(--kaptal-canvas) !important; color: var(--kaptal-content); }
 html.dark .app-shell,
-html.dark main { background-color: transparent; color: #f4f4f5; }
-html.dark :where(a,button,input,select,textarea):focus-visible { outline-color: #fafafa; }
+html.dark main { background-color: transparent; color: var(--kaptal-content); }
+html.dark :where(a,button,input,select,textarea):focus-visible { outline-color: var(--kaptal-focus); }
 html.dark [class~="bg-white"],
-html.dark [class~="dark:bg-white"] { background-color: #09090b !important; }
+html.dark [class~="dark:bg-white"] { background-color: var(--kaptal-surface) !important; }
 html.dark [class~="bg-slate-50"],
 html.dark [class~="bg-gray-50"],
-html.dark [class~="dark:bg-slate-900"] { background-color: #09090b !important; }
+html.dark [class~="dark:bg-slate-900"] { background-color: var(--kaptal-surface) !important; }
 html.dark [class~="bg-slate-100"],
 html.dark [class~="bg-gray-100"],
 html.dark [class~="dark:bg-slate-800"],
-html.dark [class~="dark:bg-slate-700"] { background-color: #111113 !important; }
+html.dark [class~="dark:bg-slate-700"] { background-color: var(--kaptal-surface-subtle) !important; }
 html.dark [class~="bg-slate-200"],
-html.dark [class~="bg-gray-200"] { background-color: #18181b !important; }
+html.dark [class~="bg-gray-200"] { background-color: var(--kaptal-surface-subtle) !important; }
 html.dark [class~="border-slate-100"],
 html.dark [class~="border-slate-200"],
 html.dark [class~="border-gray-100"],
 html.dark [class~="border-gray-200"],
 html.dark [class~="dark:border-slate-700"],
-html.dark [class~="dark:border-slate-600"] { border-color: #27272a !important; }
+html.dark [class~="dark:border-slate-600"] { border-color: var(--kaptal-border) !important; }
 html.dark [class~="text-slate-900"],
 html.dark [class~="text-gray-900"],
-html.dark [class~="dark:text-white"] { color: #f4f4f5 !important; }
+html.dark [class~="dark:text-white"] { color: var(--kaptal-content) !important; }
 html.dark [class~="text-slate-800"],
 html.dark [class~="text-slate-700"],
 html.dark [class~="text-slate-600"],
@@ -1060,37 +1060,37 @@ html.dark [class~="text-gray-800"],
 html.dark [class~="text-gray-700"],
 html.dark [class~="text-gray-600"],
 html.dark [class~="dark:text-slate-200"],
-html.dark [class~="dark:text-slate-300"] { color: #d4d4d8 !important; }
+html.dark [class~="dark:text-slate-300"] { color: var(--kaptal-content-muted) !important; }
 html.dark [class~="text-slate-500"],
 html.dark [class~="text-slate-400"],
 html.dark [class~="text-gray-500"],
-html.dark [class~="text-gray-400"] { color: #a1a1aa !important; }
+html.dark [class~="text-gray-400"] { color: var(--kaptal-content-muted) !important; }
 html.dark [class*="bg-emerald-"],
-html.dark [class*="dark:bg-emerald-"] { background-color: #111113 !important; }
+html.dark [class*="dark:bg-emerald-"] { background-color: var(--kaptal-surface-subtle) !important; }
 html.dark [class*="text-emerald-"],
 html.dark [class*="dark:text-emerald-"],
-html.dark [class*="hover:text-emerald-"] { color: #d4d4d8 !important; }
+html.dark [class*="hover:text-emerald-"] { color: var(--kaptal-content-muted) !important; }
 html.dark [class*="border-emerald-"],
 html.dark [class*="dark:border-emerald-"],
-html.dark [class*="ring-emerald-"] { border-color: #3f3f46 !important; --tw-ring-color: #71717a !important; }
+html.dark [class*="ring-emerald-"] { border-color: var(--kaptal-border) !important; --tw-ring-color: var(--kaptal-focus) !important; }
 html.dark [class*="shadow-emerald-"] { --tw-shadow-color: rgb(255 255 255 / .08) !important; }
 html.dark [class*="bg-blue-"],
 html.dark [class*="dark:bg-blue-"],
 html.dark [class*="bg-indigo-"],
-html.dark [class*="dark:bg-indigo-"] { background-color: #18181b !important; }
+html.dark [class*="dark:bg-indigo-"] { background-color: var(--kaptal-surface-subtle) !important; }
 html.dark [class*="text-blue-"],
 html.dark [class*="dark:text-blue-"],
 html.dark [class*="text-indigo-"],
-html.dark [class*="dark:text-indigo-"] { color: #d4d4d8 !important; }
+html.dark [class*="dark:text-indigo-"] { color: var(--kaptal-content-muted) !important; }
 html.dark [class*="border-blue-"],
-html.dark [class*="border-indigo-"] { border-color: #3f3f46 !important; }
+html.dark [class*="border-indigo-"] { border-color: var(--kaptal-border) !important; }
 
 html.dark .app-topbar nav[aria-label^='Navegación'] > a[aria-current='page'],
-html.dark .app-topbar nav[aria-label^='Navegación'] [data-nav-more] > button[aria-expanded='true'] { background: #18181b; color: #f4f4f5; }
+html.dark .app-topbar nav[aria-label^='Navegación'] [data-nav-more] > button[aria-expanded='true'] { background: var(--kaptal-surface-subtle); color: var(--kaptal-content); }
 @media (pointer: coarse) { input,
 select { font-size: 16px; } }
     html.dark .app-topbar nav[aria-label^='Navegación'] > a[aria-current='page'],
-html.dark .app-topbar nav[aria-label^='Navegación'] [data-nav-more] > button[aria-expanded='true'] { background: #18181b; color: #f4f4f5; }
+html.dark .app-topbar nav[aria-label^='Navegación'] [data-nav-more] > button[aria-expanded='true'] { background: var(--kaptal-surface-subtle); color: var(--kaptal-content); }
 
 /* Final mobile constraints: keep the panel centered after all legacy layout rules. */
 @keyframes capture-in-centered {
@@ -1274,15 +1274,16 @@ html:not(.dark) [class~="border-emerald-300"] { border-color: #d4d4d8 !important
 .ai-report-widget__data li { display: flex; justify-content: space-between; gap: .75rem; border-top: 1px solid var(--kaptal-border); padding-top: .4rem; font-size: .72rem; }
 .ai-report-widget__data li span { min-width: 0; overflow-wrap: anywhere; color: #52525b; }
 .ai-report-widget__data li strong { flex: none; color: #18181b; font-variant-numeric: tabular-nums; }
-html.dark .ai-report-prompts button { border-color: #3f3f46; background: #18181b; color: #f4f4f5; }
-html.dark .ai-report-prompts button:hover:not(:disabled) { border-color: #047857; background: #052e2b; }
-html.dark .ai-report-widget { border-color: #3f3f46; background: #18181b; }
+html.dark .ai-report-prompts button { border-color:var(--kaptal-border); background:var(--kaptal-surface); color:var(--kaptal-content); }
+html.dark .ai-report-prompts button:hover:not(:disabled) { border-color:var(--kaptal-brand); background:var(--kaptal-surface-subtle); }
+html.dark .ai-report-widget { border-color:var(--kaptal-border); background:var(--kaptal-surface); }
 html.dark .ai-report-widget__header h3,
-html.dark .ai-report-widget__data li strong { color: #f4f4f5; }
+html.dark .ai-report-widget__data li strong { color:var(--kaptal-content); }
 html.dark .ai-report-widget__label,
-html.dark .ai-report-widget__value { fill: #e4e4e7; }
-html.dark .ai-report-widget__data li { border-color: #3f3f46; }
-html.dark .ai-report-widget__data li span { color: #d4d4d8; }
+html.dark .ai-report-widget__value { fill:var(--kaptal-content); }
+html.dark .ai-report-widget__bar { fill:var(--kaptal-income); }
+html.dark .ai-report-widget__data li { border-color:var(--kaptal-border); }
+html.dark .ai-report-widget__data li span { color:var(--kaptal-content-muted); }
 
 @media (min-width: 640px) {
   .ai-report-widget { padding: 1rem; }

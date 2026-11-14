@@ -29,7 +29,7 @@ test('chat adaptable, inicios sin envío y propuestas revisables',async({browser
       await p.evaluate(dark=>document.documentElement.classList.toggle('dark',dark),dark);
       await p.locator('.capture-dock__manual').click();
       const panel=p.locator('#quick-capture-panel');await expect(panel).toBeVisible();
-      await expect(panel).toHaveCSS('font-family', /Segoe UI/);
+      await expect(panel).toHaveCSS('font-family', dark ? /Manrope/ : /Segoe UI/);
       const box=await panel.boundingBox();expect(box).not.toBeNull();
       expect(box!.height).toBeGreaterThanOrEqual(height*(width<640?.95:.7));
       expect(box!.y).toBeGreaterThanOrEqual(-1);expect(box!.y+box!.height).toBeLessThanOrEqual(height+1);
