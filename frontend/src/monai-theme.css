@@ -214,6 +214,7 @@ html .monai-theme .account-card h2.account-card__name { overflow: visible; text-
 }
 
 /* Detalle de presupuesto: conservar importes y descripciones al ampliar texto. */
+.budget-overview__totals { grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr)); }
 .budget-detail-sheet .budget-detail-totals { grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr)); }
 .budget-detail-totals > div { min-width: 0; padding: 8px; }
 .budget-detail-totals p { overflow-wrap: anywhere; }

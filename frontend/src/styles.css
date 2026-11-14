@@ -268,6 +268,10 @@ html.dark .bg-amber-50 {
   background-color: rgba(245, 158, 11, 0.1);
 }
 
+html.dark .bg-amber-100 {
+  background-color: color-mix(in srgb, var(--kaptal-warning) 12%, var(--kaptal-surface));
+}
+
 html.dark .text-amber-950,
 html.dark .text-amber-800,
 html.dark .text-amber-700 {
@@ -1030,6 +1034,7 @@ html.dark {
   background: var(--kaptal-canvas);
 }
 html.dark body { min-height: 100dvh; background: var(--kaptal-canvas) !important; color: var(--kaptal-content); }
+html.dark [class~="bg-slate-900/60"] { background-color: rgb(0 0 0 / .6); }
 html.dark .app-shell,
 html.dark main { background-color: transparent; color: var(--kaptal-content); }
 html.dark :where(a,button,input,select,textarea):focus-visible { outline-color: var(--kaptal-focus); }
