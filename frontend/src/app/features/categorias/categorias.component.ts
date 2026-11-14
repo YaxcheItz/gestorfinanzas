@@ -71,7 +71,7 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
                 <app-categoria-icono [icono]="categoria.icono" [tipo]="categoria.tipo" clase="h-5 w-5" />
               </span>
               <div class="min-w-0 flex-1 basis-[8ch]">
-                <h2 class="font-semibold text-slate-900 truncate">{{ categoria.nombre }}</h2>
+                <h2 class="font-semibold text-slate-900 break-words">{{ categoria.nombre }}</h2>
                 <p class="text-xs text-slate-500">{{ categoria.tipo === 'GASTO' ? 'Gasto' : 'Ingreso' }}</p>
               </div>
               <div class="flex shrink-0">

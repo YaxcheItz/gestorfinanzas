@@ -251,3 +251,4 @@ html .monai-theme .account-card h2.account-card__name { overflow: visible; text-
 
 .shared-finance-page .shared-summary > div { padding: 8px; }
 .shared-finance-page .shared-summary p.font-bold { font-size: 1.25rem; }
+.shared-finance-page .text-emerald-600 { color: var(--kaptal-income); }

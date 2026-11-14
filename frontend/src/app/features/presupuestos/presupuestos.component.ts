@@ -51,7 +51,7 @@ import {
                 <option [value]="mes.numero">{{ mes.nombre }}</option>
               }
             </select>
-            <span class="text-slate-300 dark:text-slate-600">|</span>
+            <span aria-hidden="true" class="text-slate-300 dark:text-slate-600">|</span>
             <select
               [ngModel]="anioSeleccionado()"
               (ngModelChange)="cambiarAnio($event)"

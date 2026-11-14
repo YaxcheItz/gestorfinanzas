@@ -47,6 +47,7 @@ html:has(.workspace-panel[open],.home-sheet-backdrop,.time-dropdown-backdrop){ov
 .category-emoji{font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif;font-size:22px}.category-emoji-large{font-size:28px;line-height:1.25}
 html .monai-theme .finance-page{max-width:48rem;padding-inline:20px}
 html .monai-theme .finance-page h1{font-size:30px;line-height:1.2}
+html .monai-theme .finance-page:not(.history-page) h1{font-size:1.875rem;overflow-wrap:anywhere}
 @media(min-width:768px){.workspace-tools{padding-top:24px}.workspace-panel{bottom:16px;border-radius:30px}}
 @supports not (backdrop-filter:blur(20px)){.workspace-selector,.glass-icon,.capture-dock__manual,.capture-dock__search{background:var(--kaptal-surface-subtle)}}
 @media(prefers-reduced-motion:reduce){.capture-dock__voice{transition:none}}
