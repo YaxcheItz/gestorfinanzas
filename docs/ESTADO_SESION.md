@@ -1,9 +1,9 @@
 <!-- KAPTAL_ESTADO_VIGENTE_INICIO -->
-## Resumen vigente — 13 noviembre 2026
+## Resumen vigente — 14 noviembre 2026
 
 - Revisión por secciones: Cuentas, Presupuestos, Categorías y Etiquetas, con datos ficticios. Mantener el fondo carbón aprobado y la propuesta de rojo profundo/grises neutros durante la revisión.
 - PR277:9e573b0958adef533c57027fa66c2ddd1e205ee7,CI43552587091 y Android43552587113 aprobadas;66 E2E locales,579 unitarias remotas,129 E2E remotas y4 PWA separadas aprobadas.
-- PR278:c56395fbeaa935e71e296bc65b8242d16dda4bfa publicado y verificado;limpieza del arnés MSI validada3/3 con H2 local. UI/estilos idénticos a313af8d,cuyas67 E2E locales aprobaron. CI general43555058023 y Android43555058028 en curso;313af8d tuvo1 fallo de teardown diagnosticado y no se declara verde.
+- PR278:c56395fbeaa935e71e296bc65b8242d16dda4bfa publicado y verificado;limpieza del arnés MSI validada3/3 con H2 local. UI/estilos idénticos a313af8d,cuyas67 E2E locales aprobaron. CI general43555058023 y Android43555058028 aprobadas en c56395f;579 unitarias,130 E2E y4 PWA separadas aprobadas.313af8d tuvo1 fallo de teardown diagnosticado y no se declara verde.
 - Ramas independientes: mejoras/detalle-presupuesto-texto-ampliado y mejoras/etiquetas-texto-ampliado; ambas derivadas de develop remoto comprobado con dependencias por fast-forward. PRs en borrador,sin integración o despliegue.
 - Comparativa privada: http://127.0.0.1:14337 ,28 estados/56 imágenes. Informes: docs/REVISION_CUENTAS_PRESUPUESTOS_2026-11-13.md y docs/REVISION_CATEGORIAS_ETIQUETAS_2026-11-13.md. Resultados finales se guardan en checkout principal/planes/PR para conservar la CI del código final.
 - Teléfono desconectado; no se instala ni se usan finanzas reales. Calendario aprobado,historial sin rediseño de estructura/datos,lentitud/logout aplazados y PR271 excluido.
@@ -2989,3 +2989,16 @@ Verificación local:3/3 repeticiones del caso aprobadas en1min,con backend de pe
 
 
 Nuevo cierre candidato publicado:c56395fbeaa935e71e296bc65b8242d16dda4bfa,remoto comprobado;PR278 borrador. Solo añade finally/unrouteAll(wait) al arnés MSI y documentación sobre313af8d,con fuente de aplicación/estilos idénticos.3/3 repeticiones H2 y TypeScript aprobados,servidores temporales detenidos. CI general43555058023 y Android43555058028 en curso sobre el nuevo SHA;push duplicado43555054177 cancelado tras comprobar SHA/evento y ejecuciones PR. La interfaz capturada en313af8d sigue siendo la misma del nuevo head,con67 E2E visuales aprobadas;la CI completa nueva queda pendiente.
+
+
+## Cierre verificado PR278 — 14 noviembre 2026
+
+Head c56395fbeaa935e71e296bc65b8242d16dda4bfa publicado y remoto comprobado,worktree limpio. CI general43555058023 y Android43555058028 completadas/success,verificadas de nuevo el14 de noviembre. Los seis trabajos generales aprobaron:frontend,backend,PostgreSQL/migraciones/recuperación,WhatsApp/D1,Python y E2E Chromium/API/PostgreSQL. Logs del job132325926325:130 E2E aprobadas en12,6min,4 PWA omitidas condicionalmente en la suite principal y4/4 PWA aprobadas en fase separada en21,5s. El caso MSI con limpieza de interceptores aprobó en2,9s. Medición de navegación sintética aprobada. CI frontend132325926279 confirma579 unitarias/66 archivos y build. No se declara exitosa la ejecución fallida43553451812 de313af8d;la duplicada push43555054177 fue cancelada intencionadamente.
+
+La UI/estilos son idénticos a313af8d,con67 E2E visuales locales aprobadas en4,4min;la corrección posterior solo añade finally/unrouteAll(wait) al caso MSI y documentación.3/3 repeticiones H2 del caso y TypeScript aprobados,servidores temporales detenidos. La CI nueva sí comprueba PostgreSQL y el SHA final. Build de aplicación488,56kB frente a presupuesto500kB;persisten avisos CSS Login4,30kB,Avisos4,49kB y automatic-bank5,02kB,sin errores de compilación.
+
+PR278 sigue borrador hacia develop,https://github.com/YaxcheItz/gestorfinanzas/pull/278 . PR277 también queda con CI general43552587091/Android43552587113 aprobadas en9e573b0. Comparativa14337 contiene28 estados/56 imágenes y distingue antes/después de cada PR;la captura UI313af8d representa la misma fuente de aplicación en c56395f. Cuentas y Categorías no recibieron correcciones sin defecto demostrado. Se corrigieron cierre/totales/aviso de Presupuestos,tono de capa modal oscura y distribución de nombres/campo/acciones de Etiquetas. Datos ficticios,API interceptada y red externa bloqueada en la revisión;no se guardan o eliminan finanzas reales.
+
+Develop permanece fe13575532c8c055fe699374660988a888b01f6f y main1fd9402bb40012aba4c894b81ecceb09dcfb48a1. No integración,despliegue o instalación en el teléfono. La última indicación del propietario mantiene el teléfono fuera de esta revisión;comprobación física del tema final pendiente para QA aislada reconstruida desde el SHA vigente. Calendario aprobado,historial sin rediseñar estructura/datos,lentitud/logout aplazados y PR271 excluido.
+
+El propietario pide continuar el14 de noviembre: siguiente revisión concreta,Reportes y Metas con controles y estados poblados. Para continuar: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/REVISION_CATEGORIAS_ETIQUETAS_2026-11-13.md,además de REVISION_CUENTAS_PRESUPUESTOS_2026-11-13.md. PR277/PR278 tienen subida y CI cerradas;head vigente c56395f. Sigue con Reportes/Metas con datos ficticios,sin integrar PR271 ni usar datos reales».
