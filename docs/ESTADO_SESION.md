@@ -7,7 +7,7 @@
 - Ramas independientes: mejoras/detalle-presupuesto-texto-ampliado y mejoras/etiquetas-texto-ampliado; ambas derivadas de develop remoto comprobado con dependencias por fast-forward. PRs en borrador,sin integración o despliegue.
 - Comparativa privada: http://127.0.0.1:14337 ,28 estados/56 imágenes. Informes: docs/REVISION_CUENTAS_PRESUPUESTOS_2026-11-13.md y docs/REVISION_CATEGORIAS_ETIQUETAS_2026-11-13.md. Resultados finales se guardan en checkout principal/planes/PR para conservar la CI del código final.
 - Teléfono desconectado; no se instala ni se usan finanzas reales. Calendario aprobado,historial sin rediseño de estructura/datos,lentitud/logout aplazados y PR271 excluido.
-- Siguiente sección: Reportes y Metas con controles/estados poblados. Comprobación física del tema final cuando vuelva el teléfono,en QA aislada reconstruida desde el SHA vigente.
+- Trabajo actual:Reportes/Metas en PR279,e4ca4e3,CI43608740365 en curso y Android43608740305 aprobado. Siguiente sección:Compartidos/Avisos. Comprobación física del tema final cuando vuelva el teléfono,en QA aislada reconstruida desde el SHA vigente.
 
 Los apartados siguientes conservan el historial y la evidencia de las etapas anteriores.
 <!-- KAPTAL_ESTADO_VIGENTE_FIN -->
@@ -3002,3 +3002,23 @@ PR278 sigue borrador hacia develop,https://github.com/YaxcheItz/gestorfinanzas/p
 Develop permanece fe13575532c8c055fe699374660988a888b01f6f y main1fd9402bb40012aba4c894b81ecceb09dcfb48a1. No integración,despliegue o instalación en el teléfono. La última indicación del propietario mantiene el teléfono fuera de esta revisión;comprobación física del tema final pendiente para QA aislada reconstruida desde el SHA vigente. Calendario aprobado,historial sin rediseñar estructura/datos,lentitud/logout aplazados y PR271 excluido.
 
 El propietario pide continuar el14 de noviembre: siguiente revisión concreta,Reportes y Metas con controles y estados poblados. Para continuar: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/REVISION_CATEGORIAS_ETIQUETAS_2026-11-13.md,además de REVISION_CUENTAS_PRESUPUESTOS_2026-11-13.md. PR277/PR278 tienen subida y CI cerradas;head vigente c56395f. Sigue con Reportes/Metas con datos ficticios,sin integrar PR271 ni usar datos reales».
+
+
+## Reportes y Metas — 14 noviembre 2026
+
+Rama mejoras/reportes-metas-texto-ampliado creada desde develop remoto fe13575 comprobado,con dependencia c56395f/PR278 por fast-forward. PR277/278 ya tienen subida y CI general/Android cerradas. Se presentaron defectos renderizados:gráfica de6 meses invade11px el control de tabla a320/200%,y Metas mantiene controles16px pese al texto ampliado. Se corrige altura/espacio de gráfica con desplazamiento interno al necesitarlo y tabla numérica conservada;Metas usa1rem (32px al200%),acciones breves con aria-label completo y separador del formulario con token común. Sin cambios de valores,reglas,APIs,guardados o transferencias.
+
+20 vistas iniciales/finales de ambos temas,móvil/escritorio/200%,con6 meses y2 monedas/3 estados de meta. Cero escrituras/errores JS;ningún aporte,retiro,creación o cancelación enviados. Dos E2E nuevas reproducen el defecto y después aprueban (11,8s),TypeScript estricto aprobado,579 unitarias/66 archivos y build488,56kB aprobados. Avisos CSS anteriores Login4,30kB,Avisos4,49kB y automatic-bank5,02kB. Regresión integral final69 E2E en curso;no atribuirlas hasta terminar. Informe docs/REVISION_REPORTES_METAS_2026-11-14.md. Publicar PR borrador y cerrar SHA/CI;registro remoto posterior en checkout principal/planes/PR para preservar la CI final.
+
+Calendario aprobado,historial sin rediseñar estructura/datos,lentitud/logout aplazados,PR271 excluido. Sin instalación o producción;comprobación física del tema final pendiente cuando vuelva el teléfono. Siguiente sección Compartidos/Avisos. Para continuar: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/REVISION_REPORTES_METAS_2026-11-14.md. Revalida SHA/CI de mejoras/reportes-metas-texto-ampliado y sigue con Compartidos/Avisos con datos ficticios».
+
+
+Publicación final:e4ca4e345156b81c40327659889bee3ee9f10d0c,remoto comprobado,PR279 borrador hacia develop. CI general43608740365 y Android43608740305 en curso;push duplicado43608685066 cancelado intencionadamente tras verificar SHA/evento y ejecuciones PR. El commit intermedio2723795 fue sustituido antes de abrir el PR. Build final488,56kB y2 E2E focales finales11,2s aprobados,TypeScript estricto aprobado;579 unitarias aprobadas antes del último atributo de foco. Regresión integral final69 casos en curso sobre e4ca4e3.
+
+Auditoría complementaria de moneda:24 vistas primarias por versión,incluidas4 vistas USD con sus datos ficticios y4 recortes adicionales de gráfica. El primer intento del selector exacto de Moneda no contemplaba el nombre implícito de sus opciones;corregido al select observado,repetidos ambos recorridos con cero escrituras/errores JS. Comparativa privada14345 de28 estados/56 imágenes,carga de todas y ajuste390px comprobados en Edge aislado. Es una captura estática,las pruebas focales verifican desplazamiento real y teclado.
+
+
+Regresión integral final de e4ca4e3:69/69 E2E aprobadas en6,6min (.local/reportes-metas-integral-final-e4ca4e3),incluyendo ambos casos nuevos y auditoría28 combinaciones de texto/foco. No se atribuye este resultado al commit intermedio2723795. Build final488,56kB,dos focales11,2s y TypeScript estricto aprobados;579 unitarias de la implementación previa al último atributo de foco,con CI del nuevo SHA por confirmar en sus logs. El recorrido complementario de24 vistas y4 recortes por versión aprobó,cero escrituras/errores JS.
+
+
+CI frontend132488876869 de e4ca4e3 confirma579 unitarias/66 archivos y build aprobados;consulta de dependencias sin vulnerabilidades conocidas en esa ejecución. Android43608740305 completado/success. Los otros cinco trabajos de CI general43608740365 aprobaron;E2E/API aún en curso. Fuente final local69/69 ya aprobada.
