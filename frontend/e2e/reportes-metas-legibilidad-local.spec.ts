@@ -31,6 +31,9 @@ test('seis meses ampliados conservan etiquetas separadas de la tabla y cifras ac
       }
       const summary = p.locator('.report-table summary');
       await summary.focus();
+      await summary.press('Shift+Tab');
+      await expect(chart).not.toBeFocused();
+      await summary.focus();
       await summary.press('Enter');
       await expect(p.locator('.report-table table')).toBeVisible();
       await expect(p.locator('.report-table tbody tr')).toHaveCount(6);
