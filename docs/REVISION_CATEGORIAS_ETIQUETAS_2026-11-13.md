@@ -13,3 +13,12 @@ Build final488,56kB aprobado (presupuesto500kB); advertencias CSS previas Login4
 Informe: docs/REVISION_CATEGORIAS_ETIQUETAS_2026-11-13.md. Comparativa específica de etiquetas se añadirá a14337. Teléfono desconectado,sin instalación o producción. Mantener calendario aprobado,historial sin rediseño de estructura/datos,lentitud/logout aplazados y PR271 excluido.
 
 Siguiente sección: Reportes y Metas con sus controles/estados poblados,usando datos ficticios. Para continuar: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/REVISION_CATEGORIAS_ETIQUETAS_2026-11-13.md,además de REVISION_CUENTAS_PRESUPUESTOS_2026-11-13.md. Revalida los SHA/CI de PR277 y de mejoras/etiquetas-texto-ampliado; sigue con Reportes/Metas. Teléfono desconectado; no usar datos reales».
+
+
+## Corrección de cierre del arnés tras CI313af8d
+
+CI43553451812 falló en msi-anterior-acciones.spec.ts con apiResponse.json: Response has been disposed;129 E2E aprobadas,4 PWA omitidas condicionalmente y1 fallo. La nueva prueba de Etiquetas aprobó remotamente; Android43553451833 y los otros cinco trabajos generales aprobaron. La fase PWA separada no se ejecutó tras ese fallo.
+
+Artefacto14098145395 y trace.zip conservados en frontend/.local/ci-313af8d-evidence. La traza registra que la aserción final[0,0] completó348394,863 y el teardown de contexto empezó348395,397,con un GET interceptado aún abierto hasta348397,985. El callback leía una respuesta invalidada al cerrar. Se añade finally con page.unrouteAll({behavior:'wait'}) antes de que termine el test. La API está documentada en los tipos de Playwright instalado: espera handlers en curso. No se ignoran errores,no se aumentan timeouts,reintentos o umbrales y no se quitan aserciones. No se cambia la lógica MSI ni ninguna compra real.
+
+Verificación local:3/3 repeticiones del caso aprobadas en1min,con backend de perfil test/H2 en memoria y frontend local14341;puertos18080/14341 libres al terminar. TypeScript estricto del caso aprobado. Las67 E2E visuales de313af8d aprobaron en4,4min;la fuente de aplicación y estilos se mantienen idénticos tras esta corrección exclusiva del arnés. No se presenta H2 como PostgreSQL ni como validación real de usuario. La CI completa del nuevo SHA sigue pendiente hasta su comprobación y se registra en checkout principal/planes/PR.
