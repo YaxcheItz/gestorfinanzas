@@ -1,13 +1,13 @@
 <!-- KAPTAL_ESTADO_VIGENTE_INICIO -->
 ## Resumen vigente — 14 noviembre 2026
 
-- Revisión por secciones: Cuentas, Presupuestos, Categorías y Etiquetas, con datos ficticios. Mantener el fondo carbón aprobado y la propuesta de rojo profundo/grises neutros durante la revisión.
+- Revisión por secciones: Cuentas, Presupuestos, Categorías, Etiquetas, Reportes y Metas, con datos ficticios. Mantener el fondo carbón aprobado y la propuesta de rojo profundo/grises neutros durante la revisión.
 - PR277:9e573b0958adef533c57027fa66c2ddd1e205ee7,CI43552587091 y Android43552587113 aprobadas;66 E2E locales,579 unitarias remotas,129 E2E remotas y4 PWA separadas aprobadas.
 - PR278:c56395fbeaa935e71e296bc65b8242d16dda4bfa publicado y verificado;limpieza del arnés MSI validada3/3 con H2 local. UI/estilos idénticos a313af8d,cuyas67 E2E locales aprobaron. CI general43555058023 y Android43555058028 aprobadas en c56395f;579 unitarias,130 E2E y4 PWA separadas aprobadas.313af8d tuvo1 fallo de teardown diagnosticado y no se declara verde.
-- Ramas independientes: mejoras/detalle-presupuesto-texto-ampliado y mejoras/etiquetas-texto-ampliado; ambas derivadas de develop remoto comprobado con dependencias por fast-forward. PRs en borrador,sin integración o despliegue.
-- Comparativa privada: http://127.0.0.1:14337 ,28 estados/56 imágenes. Informes: docs/REVISION_CUENTAS_PRESUPUESTOS_2026-11-13.md y docs/REVISION_CATEGORIAS_ETIQUETAS_2026-11-13.md. Resultados finales se guardan en checkout principal/planes/PR para conservar la CI del código final.
+- Ramas independientes: mejoras/detalle-presupuesto-texto-ampliado,mejoras/etiquetas-texto-ampliado y mejoras/reportes-metas-texto-ampliado; creadas de develop remoto comprobado con dependencias por fast-forward. PRs en borrador,sin integración o despliegue.
+- Comparativa actual: http://127.0.0.1:14345 (Reportes/Metas),28 estados/56 imágenes;anterior14337 (Cuentas/Presupuestos/Etiquetas). Informe actual:docs/REVISION_REPORTES_METAS_2026-11-14.md. Resultados finales se guardan en checkout principal/planes/PR para conservar la CI del código final.
 - Teléfono desconectado; no se instala ni se usan finanzas reales. Calendario aprobado,historial sin rediseño de estructura/datos,lentitud/logout aplazados y PR271 excluido.
-- Trabajo actual:Reportes/Metas en PR279,e4ca4e3,CI43608740365 en curso y Android43608740305 aprobado. Siguiente sección:Compartidos/Avisos. Comprobación física del tema final cuando vuelva el teléfono,en QA aislada reconstruida desde el SHA vigente.
+- Última etapa cerrada:Reportes/Metas en PR279,e4ca4e3,CI43608740365 y Android43608740305 aprobadas;69 E2E locales,579 unitarias y132 E2E remotas más4 PWA separadas aprobadas. Siguiente sección:Compartidos/Avisos. Comprobación física del tema final cuando vuelva el teléfono,en QA aislada reconstruida desde el SHA vigente.
 
 Los apartados siguientes conservan el historial y la evidencia de las etapas anteriores.
 <!-- KAPTAL_ESTADO_VIGENTE_FIN -->
@@ -2802,3 +2802,16 @@ Regresión integral final de e4ca4e3:69/69 E2E aprobadas en6,6min (.local/report
 
 
 CI frontend132488876869 de e4ca4e3 confirma579 unitarias/66 archivos y build aprobados;consulta de dependencias sin vulnerabilidades conocidas en esa ejecución. Android43608740305 completado/success. Los otros cinco trabajos de CI general43608740365 aprobaron;E2E/API aún en curso. Fuente final local69/69 ya aprobada.
+
+
+## Cierre verificado de Reportes y Metas / PR279 — 14 noviembre 2026
+
+Commit e4ca4e345156b81c40327659889bee3ee9f10d0c publicado y remoto comprobado,worktree limpio. PR279 borrador hacia develop,https://github.com/YaxcheItz/gestorfinanzas/pull/279 . CI general43608740365 y Android43608740305 completed/success. Los seis trabajos generales aprobaron:frontend,backend,PostgreSQL/migraciones/recuperación,WhatsApp/D1,Python y E2E Chromium/API/PostgreSQL. Log del job132488876980:132 E2E aprobadas en13,3min,4 PWA omitidas condicionalmente y después4/4 PWA aprobadas en fase separada en23,6s. Ambos casos nuevos de Reportes/Metas aprobaron remotamente. Navegación sintética aprobada. CI frontend132488876869 confirma579 unitarias/66 archivos y build del head exacto. La duplicada push43608685066 fue cancelada intencionadamente;el commit intermedio2723795 se sustituyó antes del PR y no acredita este cierre.
+
+Local final:69/69 E2E en6,6min,dos focales finales11,2s,TypeScript estricto y build488,56kB aprobados (presupuesto500kB). Permanecen avisos CSS Login4,30kB,Avisos4,49kB y automatic-bank5,02kB,sin errores de compilación. La última prueba de foco reproduce y evita la parada automática de Tab en la gráfica decorativa;la tabla numérica abre con teclado y conserva6 filas. Reportes mantiene etiquetas separadas de la tabla y gráfica desplazable cuando el texto/espacio lo exige. Metas usa1rem en campos/acciones,32px al200%,textos visibles breves y aria-label con el nombre completo;se conservan eventos,deshabilitados,ocultación y reglas financieras.
+
+Auditoría final:24 vistas primarias por versión,con4 vistas USD adicionales,y4 recortes de gráfica;comparativa privada28 estados/56 imágenes en http://127.0.0.1:14345 . Selectores,imágenes y ajuste390px comprobados. Inicialmente el selector exacto Moneda del arnés no encontraba el nombre implícito;se corrigió y completaron ambos recorridos sin escrituras/errores JS. En oscuro320/200%,las etiquetas terminan71px antes del inicio del control de tabla (antes lo invadían11px). Ningún aporte,retiro,creación o cancelación enviados en los recorridos;perfiles/API ficticios y red externa bloqueada. No se extrapola navegación sintética a la lentitud real tras horas de inactividad.
+
+PR277 conserva CI/Android aprobadas en9e573b0 y PR278 en c56395f. Develop sigue fe13575532c8c055fe699374660988a888b01f6f y main1fd9402bb40012aba4c894b81ecceb09dcfb48a1,remotos reconsultados. Sin merge,despliegue o instalación en el teléfono. PR271 no es ancestro del head final y permanece excluido. Mantener calendario aprobado,historial sin rediseño de estructura/datos y lentitud/logout aplazados. La valoración estética del propietario continúa con la comparativa;la comprobación física del tema final se retoma en QA aislada cuando vuelva el dispositivo.
+
+Resultados posteriores registrados en checkout principal/planes locales/PR para conservar la CI del código final. Siguiente sección concreta:Compartidos y Avisos con contenido largo y paneles,usando datos ficticios. Para continuar: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/REVISION_REPORTES_METAS_2026-11-14.md. PR279 publica e4ca4e3 con CI general/Android aprobadas;69 E2E locales,579 unitarias,132 E2E remotas y4 PWA separadas aprobadas. Continúa con Compartidos/Avisos,sin usar datos reales ni integrar PR271».
