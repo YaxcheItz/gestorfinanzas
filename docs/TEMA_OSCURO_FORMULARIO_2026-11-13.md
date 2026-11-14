@@ -55,3 +55,24 @@ Build final y579 unitarias/66 archivos repetidos aprobaron. Regresión focal fin
 ## SHA final de paleta: 1b70808 — seguimiento
 
 El refinamiento de campos/fondo del asistente/bordes se confirmó y subió directamente en1b708080d6bd94a47fcca8f4197429a298bdddf3,remoto verificado. PR276 conserva borrador/base develop. CI general43543716382 y Android43543716425 son las ejecuciones del SHA final;las de1d876b1 son intermedias/sustituidas y no prueban el nuevo CSS. La duplicada push43543712155 se canceló intencionadamente al comprobar SHA/evento y las dos ejecuciones del PR. Comprobadas6 E2E focales finales y579 unitarias repetidas;regresión completa64 del final en curso al registrar. Comparativa18estados actualizada con las capturas de esta paleta. No cambios posteriores de código,ni teléfono instalado o datos reales usados.
+
+
+## Ajuste solicitado: rojo profundo y grises neutros — 13 noviembre 2026
+
+El propietario aprueba conservar el fondo carbón y pide un rojo más oscuro, grises más neutros y retirar los tintes verdes ajenos al diseño. Se conserva exactamente el canvas #151719; superficies #1D1D1D/#272727, contenido #EFEFEF y secundario #B6B6B6. Botones/micrófono #C34842 con texto blanco; enlaces/textos de acento y foco #E7756B para mantener legibilidad. Los ingresos usan un gris claro y conservan sus etiquetas/signos, los gastos rojo y las advertencias ámbar. No se alteran colores de categorías elegidos por el usuario. El tema claro conserva su paleta y fuente; el micrófono de la pantalla de voz adopta tinta oscura para mantener contraste sobre su coral existente.
+
+Se retiró el verde real del placeholder del chat, de los roles de ingreso y del indicador porcentual de Presupuestos con datos. Este último se reprodujo con una aserción sobre el estilo renderizado (recibido rgb167,227,180), antes de sustituir la regla antigua por los tokens neutros. Se unificó también la caja informativa azul heredada. El acceso al formulario sigue como lápiz discreto de18px y área44×44, ayuda «Abrir formulario».
+
+CI del SHA intermedio1b70808: general43543716382 falló solo en E2E (126 aprobadas,4 omitidas condicionalmente,1 fallo); Android43543716425 aprobó. La captura/Linux mostró scrollWidth323 en320px al recuperar Categorías vacías con texto200%. El padding p-12 comprimía la frase: ahora px-4 py-8 sm:p-12 y break-words, sin reducir fuente ni relajar la prueba original. Se añade un caso con Arial de reserva,200% y modo sin conexión.
+
+Build local aprobado (bundle inicial488,24kB frente a presupuesto500kB);579 unitarias/66 archivos y9 E2E focales aprobadas antes del último ajuste de indicador. TypeScript estricto del nuevo spec aprobado. Avisos CSS: Login4,30kB, Avisos4,49kB y automatic-bank5,02kB; no errores de compilación. La regresión completa y la comprobación final del indicador se registran al finalizar. Auditoría28 combinaciones de texto/foco y capturas de18 estados con contratos ficticios; sin escrituras financieras reales. La comparativa127.0.0.1:14326 muestra ahora antes/después de esta petición; aceptación estética final del propietario pendiente.
+
+El teléfono permanece desconectado: no se instala esta paleta en la app habitual ni se atribuye validación física al build Android. El cierre de SHA remoto/CI se anotará en el checkout principal, planes locales y PR276 para conservar la CI del código final. PR275 queda publicado con su CI aprobada; PR276 continúa borrador, sin integración o despliegue. Calendario aprobado; estructura/datos del historial, lentitud y logout aplazados; PR271 excluido.
+
+Para continuar: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/TEMA_OSCURO_FORMULARIO_2026-11-13.md. Revalida el SHA y CI del PR276 y continúa la revisión visual de la paleta rojo profundo/grises neutros en127.0.0.1:14326. No usar datos reales; teléfono desconectado y comprobación física del tema final pendiente».
+
+Publicación328983f1af8f03ac0014dea41ff3f0dd2729464b comprobada por ls-remote;PR276 borrador. Build final488,24kB,prueba de indicador poblado aprobada y auditorías finales13 secciones/3públicas aprobadas. CI43547268394 y Android43547268297 en curso. Las36 imágenes/18 selectores y ajuste390px de la comparativa final se comprobaron sin imágenes rotas.
+
+Android43547268297 aprobado en328983f; CI frontend132301385206 confirma579 unitarias/66 archivos,build y revisión de dependencias aprobados. También backend,PostgreSQL,WhatsApp y Python aprobados; E2E/API todavía en curso. Push duplicado43547263092 cancelado tras comprobar el mismo SHA,event push y la ejecución PR activa.
+
+Regresión local definitiva de328983f:65/65 E2E aprobadas en6,4min (.local/deep-red-final),incluidos Categorías vacías/200%/Arial/offline y el porcentaje neutro de Presupuestos poblados. Se mantienen umbrales originales y no hay fallos ocultos. Android remoto aprobado;último trabajo E2E/API en curso.
