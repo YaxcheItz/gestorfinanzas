@@ -1,13 +1,12 @@
 <!-- KAPTAL_ESTADO_VIGENTE_INICIO -->
 ## Resumen vigente — 14 noviembre 2026
 
-- Revisión por secciones con datos ficticios. Mantener fondo carbón, rojo profundo y grises neutros. Calendario aprobado; historial sin rediseño, lentitud/logout aplazados y PR271 excluido.
-- Compartidos/Avisos cerrado en PR280, rama mejoras/compartidos-avisos-texto-ampliado, commit90586cf687960ccb803559350433f65c5f07bfa8. Remoto comprobado. CI general43623272401 y Android43623272198 completed/success, seis trabajos generales aprobados.
-- Código final:72 E2E locales en4,8min,3 focales en14,4s,579 unitarias/66 archivos locales y remotos, TypeScript estricto y build488,56kB aprobados. CI confirma135 E2E remotas y4 PWA separadas.
-- Tres correcciones: nombres completos en el desglose de gastos, fuentes de Avisos que crecen con el texto y navegación que se apila al faltar espacio. Auditoría64 vistas antes/después más64 complementarias a375px y844×390/200%, en ambos temas; cero escrituras/errores JS y cero recortes/desbordes finales medidos.
-- Comparativa actual: http://127.0.0.1:14349 ,64 estados/128 imágenes verificadas. Informe docs/REVISION_COMPARTIDOS_AVISOS_2026-11-14.md. Cierre posterior registrado aquí, planes locales y PR para conservar la CI del código final.
-- PR279/e4ca4e3 conserva CI43608740365 y Android43608740305 aprobadas, reconsultadas. Rama nueva creada de develop fe13575 remoto comprobado e incorpora e4ca4e3 por fast-forward. Develop y main no se integraron ni desplegaron.
-- No se usan finanzas reales ni teléfono. Android y permisos son puentes ficticios. Siguiente paso: valoración de Compartidos/Avisos en comparativa14349 y continuar por secciones con Ajustes según el plan vigente.
+- Ajustes implementado en PR281 borrador,8448633ac0861762b1122b82f4d2e00b40b9f3ad,remoto verificado. Rama mejoras/ajustes-texto-ampliado creada desde develop fe13575 remoto comprobado,con90586cf/PR280 por fast-forward.
+- Local final:79 E2E en5,3min,7 focales en20,2s,3 repeticiones de contraste en10,1s,579 unitarias/66 archivos,TypeScript estricto y build488,56kB aprobados.64 vistas antes/después más64 complementarias sin recortes/desbordes finales;comparativa14353,128 imágenes comprobadas.
+- Android43628292170 completed/success. CI43628292178 primer intento:cinco trabajos aprobados,142 E2E aprobadas en12,1min,pero check-startup.cjs falló expiredRequests2 frente a0 antes de ejecutar PWA. No se declara CI verde ni PWA remota aprobada.
+- Se reintenta solo el trabajo fallido del mismo SHA. AuthService/interceptor/guard/script no cambian respecto a90586cf. No se reprodujo en10 rondas locales diagnósticas ni en el script original. El reintento no acredita una corrección de sesión o arranque. Comprobación PWA local con H2 de prueba en curso,separada de CI/PostgreSQL.
+- Informe docs/REVISION_AJUSTES_2026-11-14.md. Calendario aprobado,historial sin rediseño,lentitud/logout aplazados,PR271 excluido. Fondo carbón/rojo profundo/grises neutros conservados.
+- Solo datos ficticios,previsualización interceptada sin restauración;sin merge,despliegue,instalación o cambios de canales/permisos reales. Siguiente:cerrar resultado del reintento y valorar Ajustes/coherencia entre secciones en comparativas.
 
 Los apartados siguientes conservan el historial y la evidencia de las etapas anteriores.
 <!-- KAPTAL_ESTADO_VIGENTE_FIN -->
@@ -2828,3 +2827,12 @@ Auditoría64 vistas por versión más64 finales complementarias a375px/200% y pa
 Comparativa privada64 estados/128 imágenes: http://127.0.0.1:14349 ; selectores, todas las imágenes y adaptación390px comprobados con Chromium aislado. Archivos .local/revision-compartidos-avisos, evidencia adicional frontend/.local/compartidos-avisos-extra. El informe actualizado está en docs/REVISION_COMPARTIDOS_AVISOS_2026-11-14.md del checkout principal. Resultados posteriores también registrados en planes locales y PR para preservar CI del código final. El informe de la rama contiene el corte de publicación inicial; este cierre es posterior.
 
 Develop fe13575532c8c055fe699374660988a888b01f6f y main1fd9402bb40012aba4c894b81ecceb09dcfb48a1 reconsultados, sin merge, despliegue o instalación. PR271 excluido. Calendario aprobado, historial sin rediseñar, lentitud/logout aplazados. Siguiente paso: valoración de la comparativa de Compartidos/Avisos y después Ajustes según el plan. Para otro chat: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/REVISION_COMPARTIDOS_AVISOS_2026-11-14.md. PR280 publica90586cf con CI general/Android aprobadas y72 E2E locales. Revisa la comparativa14349 y continúa por secciones con Ajustes usando datos ficticios; no integrar PR271».
+
+
+## Ajustes PR281: primer intento CI y reintento — 14 noviembre 2026
+
+8448633 publicado y remoto comprobado,PR281 borrador,worktree limpio.79 E2E locales,7 focales,579 unitarias/build/TypeScript aprobados;comparativa http://127.0.0.1:14353 ,64 estados/128 imágenes verificadas. Android43628292170 approved/completed(success). El primer intento de CI43628292178 falló en el job132549013077 después de142 E2E aprobadas en12,1min:node scripts/check-startup.cjs contó2 solicitudes protegidas distintas del token fresco esperado,frente a0. La fase PWA todavía no se ejecutó. Frontend132549013232 confirma579 unitarias/66 archivos y build;los otros cuatro trabajos generales también aprobaron.
+
+AuthService,interceptor,guard y script de arranque son idénticos a90586cf. No se reprodujo en10 rondas diagnósticas Chromium locales ni al ejecutar el script original con200/401/503. El caso503 conserva3 refreshes y cero solicitudes contadas en esas rondas;no se afirma una solución. Se solicita reintento solo del trabajo fallido,sin cambiar código,ignorar aserciones o reabrir la corrección aplazada de sesión. Conservar el primer intento como fallido aunque el reintento pase. Resultado del reintento pendiente. También se ejecutan4 PWA locales con service worker real,backend test/H2 en memoria y cuentas ficticias;no equivalen a CI/PostgreSQL.
+
+Sin integración,producción o instalación. Continúan calendario aprobado,historial sin rediseño,lentitud/logout aplazados y PR271 excluido. Para otro chat:«Lee AGENTS.md,docs/ESTADO_SESION.md,docs/PLAN_MAESTRO_KAPTAL.md y docs/REVISION_AJUSTES_2026-11-14.md. PR281 publica8448633;CI43628292178 está en reintento tras fallo de check-startup,con142 E2E iniciales aprobadas. Verifica ese resultado y PWA local/CI por separado;valora comparativa14353,sin usar datos reales ni reabrir logout o integrar PR271».
