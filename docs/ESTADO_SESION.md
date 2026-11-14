@@ -1,12 +1,13 @@
 <!-- KAPTAL_ESTADO_VIGENTE_INICIO -->
 ## Resumen vigente — 14 noviembre 2026
 
-- Continúa la revisión por secciones con datos ficticios. Mantener fondo carbón, rojo profundo y grises neutros aprobados. Calendario aprobado; historial sin rediseño, lentitud/logout aplazados y PR271 excluido.
-- Reportes/Metas: PR279/e4ca4e3, CI43608740365 y Android43608740305 revalidadas completed/success; cierre anterior documentado con69 E2E locales,579 unitarias,132 E2E remotas y4 PWA separadas.
-- Parte actual: mejoras/compartidos-avisos-texto-ampliado, rama nueva desde develop remoto fe13575 comprobado, con e4ca4e3 por fast-forward. Tres ajustes: nombres completos del desglose, fuentes de Avisos en rem y navegación que se apila al necesitarlo.
-- Tres regresiones fallaron antes y aprobaron después3/3;579 unitarias/66 archivos, TypeScript estricto y build488,56kB aprobados. Regresión integral72 E2E y publicación/CI del commit final en curso.
-- Comparativa actual: http://127.0.0.1:14349 ,64 estados/128 imágenes comprobadas. Informe docs/REVISION_COMPARTIDOS_AVISOS_2026-11-14.md. Cero escrituras/errores JS y cero recortes/desbordes finales en las vistas auditadas.
-- Sin integración, despliegue o instalación. No se usan finanzas reales. Android/permisos son puentes ficticios. Siguiente paso: valorar Compartidos/Avisos en la comparativa y continuar por secciones con Ajustes según el plan.
+- Revisión por secciones con datos ficticios. Mantener fondo carbón,rojo profundo y grises neutros. Calendario aprobado;historial sin rediseño,lentitud/logout aplazados y PR271 excluido.
+- PR280/90586cf revalidado:CI43623272401 y Android43623272198 completed/success. Su cierre anterior confirma72 E2E locales,579 unitarias,135 E2E remotas y4 PWA separadas.
+- Parte actual:Ajustes en mejoras/ajustes-texto-ampliado,rama nueva desde develop fe13575 remoto comprobado con90586cf por fast-forward. Texto largo sin desbordes,notas completas,mejor espacio al200%,WhatsApp ampliable y error con contraste legible.
+- Siete regresiones finales reprodujeron fallos antes y aprueban después;TypeScript estricto y build488,56kB aprobados.579 unitarias/66 archivos aprobadas. Regresión integral final79 E2E y publicación/CI en curso.
+- Auditoría64 vistas antes/después más64 finales complementarias. API/perfil/WhatsApp/Android ficticios y red externa bloqueada. Solo POST de previsualización ficticia,no guardados/restauraciones/eliminaciones o cambios de permisos.
+- Comparativa prevista: http://127.0.0.1:14353 ,64 estados/128 imágenes. Informe docs/REVISION_AJUSTES_2026-11-14.md. Siguiente paso:valorar Ajustes y revisar coherencia entre secciones mediante las comparativas.
+- Sin merge,despliegue o instalación. No se usan finanzas reales. El cierre del SHA/CI exacto se registrará en checkout principal/planes/PR.
 
 Los apartados siguientes conservan el historial y la evidencia de las etapas anteriores.
 <!-- KAPTAL_ESTADO_VIGENTE_FIN -->
@@ -2242,3 +2243,14 @@ Rama nueva mejoras/compartidos-avisos-texto-ampliado desde develop remoto fe1357
 Tres regresiones nuevas fallaron antes y aprobaron después3/3 en14,4s; TypeScript estricto aprobado.579 unitarias/66 archivos y build488,56kB aprobados. Avisos CSS Login4,30kB/automatic-bank5,02kB previos y Avisos4,53kB (antes4,49). Auditoría64 vistas por versión,128 capturas, cero escrituras/errores JS y cero recortes/desbordes finales. Android ficticio, API interceptada, perfiles nuevos y red externa bloqueada. Comparativa privada http://127.0.0.1:14349 ,128 imágenes y ajuste390px verificados. Informe docs/REVISION_COMPARTIDOS_AVISOS_2026-11-14.md. Regresión integral72 E2E en curso; publicar PR borrador y comprobar SHA/CI al cerrar.
 
 Sin merge, despliegue o instalación; no usar datos reales. Mantener calendario aprobado, historial sin rediseño, lentitud/logout aplazados y PR271 excluido. Siguiente paso: valoración de Compartidos/Avisos en comparativa14349 y después Ajustes según plan. Para otro chat: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/REVISION_COMPARTIDOS_AVISOS_2026-11-14.md. Revalida SHA/CI de mejoras/compartidos-avisos-texto-ampliado; continúa revisión por secciones con datos ficticios, sin integrar PR271».
+
+
+## Ajustes: legibilidad y texto ampliado — 14 noviembre 2026
+
+Rama nueva mejoras/ajustes-texto-ampliado desde develop fe13575 comprobado e incorporación de90586cf/PR280 por fast-forward. CI43623272401 y Android43623272198 de esa dependencia revalidadas completed/success. Diagnóstico presentado antes de corregir:correo largo desborda Seguridad,nombres y descripciones del resumen invaden el signo +,márgenes al200% estrechan el texto,herramientas con mínimo fijo,notas truncadas y WhatsApp con tamaños fijos/error oscuro2,56:1.
+
+Se permite envolver contenido largo,se apila encabezado del perfil,se aprovecha el ancho estrecho sin bajar fuente,y la cuadrícula de herramientas crece con el texto. Notas completas y WhatsApp en rem con error del tema>=4,5:1. Sin cambios de reglas,eventos,datos,APIs,consentimientos o persistencia. Siete regresiones reproducidas antes y aprobadas después;TypeScript estricto,579 unitarias/66 archivos y build488,56kB aprobados. Regresión integral final79 E2E en curso;una ejecución intermedia se detuvo tras30 casos antes del ajuste final de espaciado y no acredita el cierre.
+
+Auditoría64 estados antes/después más64 complementarios a375px y844×390/200%,ambos temas. Cero escrituras de guardado y errores JS;4 POST ficticios de previsualización por recorrido,interceptados sin backend ni restauración. No se exporta,elimina,vincula,restaura o cambia un permiso. La carrera del arnés de contraste se diagnosticó1/3 con nodo desconectado;se mide el error inicial en un contexto independiente por tema,sin relajar criterios o timeouts. Comparativa prevista14353. Informe docs/REVISION_AJUSTES_2026-11-14.md. Publicar PR borrador y verificar SHA remoto/CI.
+
+Sin integración,producción o instalación. Calendario aprobado,historial sin rediseño,lentitud/logout aplazados,PR271 excluido. Siguiente paso:valorar Ajustes y revisar coherencia visual entre las secciones trabajadas. Para otro chat:«Lee AGENTS.md,docs/ESTADO_SESION.md,docs/PLAN_MAESTRO_KAPTAL.md y docs/REVISION_AJUSTES_2026-11-14.md. Revalida SHA/CI de mejoras/ajustes-texto-ampliado y revisa comparativa14353;continúa comparativas y coherencia entre secciones con datos ficticios,sin integrar PR271 ni desplegar».
