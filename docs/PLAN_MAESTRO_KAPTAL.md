@@ -2706,3 +2706,33 @@ Publicación comprobada:9e573b0958adef533c57027fa66c2ddd1e205ee7,PR277 borrador 
 
 
 Validación local final de9e573b0:66/66 E2E aprobadas en4,4min en frontend/.local/detalle-integral-final; auditoría28 combinaciones de texto/foco sin fallos en su alcance. TypeScript estricto repetido tras los últimos cambios de ambos specs,aprobado. CI frontend132318150210 aprobó build,579 unitarias/66 archivos y consulta de dependencias sin vulnerabilidades conocidas. Comparativa14337:24 estados/48 imágenes cargan correctamente,ajuste390px comprobado,imágenes móviles a escala real. El404 inicial era solo favicon local,se añadió icono embebido y la recarga quedó sin error. Cero escrituras y errores JS de aplicación en los recorridos. CI general43552587091/Android43552587113 en curso;duplicada push43552553336 cancelada tras verificar SHA/evento y ejecución PR.
+
+
+## Categorías y Etiquetas — 13 noviembre 2026
+
+La revisión avanzó mientras terminaba la CI de Presupuestos. Se inspeccionaron16 vistas de categorías pobladas/editor/colores y etiquetas, en390/1280 oscuros y320px/200% en ambos temas. Categorías no presenta nuevos desbordes demostrados en ese alcance; los verdes elegidos como color de categoría son intencionales y se conservan. El primer intento de auditoría apuntó a input[type=color],inexistente en el selector actual; se corrigió al fieldset Color y el recorrido completó sin errores JS/escrituras. No se presenta aquel timeout del arnés como fallo de aplicación.
+
+En Etiquetas,al320/200%,el botón Eliminar comprimía el nombre casi letra por letra y el campo de alta quedaba en100,72px. Se presentó el hallazgo antes de corregirlo. Nueva rama mejoras/etiquetas-texto-ampliado creada desde develop remoto fe13575532c8c055fe699374660988a888b01f6f comprobado,incorporando9e573b0/PR277 por fast-forward; worktree .local/worktrees/etiquetas-texto-ampliado. No se reutiliza la rama anterior.
+
+Cambio mínimo en Etiquetas: campo con base12rem y filas que pueden envolver; el nombre conserva una base12ch y el botón no se comprime. Al aumentar la fuente,el nombre y la acción pueden ocupar filas propias. No se reduce fuente ni se trunca nombre,ni se cambian creación/eliminación,confirmación,validaciones o servicios. No se guardó ni eliminó ninguna etiqueta. La prueba reproduce primero el campo100,72px frente al mínimo200px; después verifica nombre de al menos180px y hasta5 líneas,campo de al menos200px con fuente32px,acciones44px dentro de pantalla,sin desbordes y conservando texto local sin enviar,en cuatro configuraciones.
+
+Build final488,56kB aprobado (presupuesto500kB); advertencias CSS previas Login4,30kB,Avisos4,49kB y automatic-bank5,02kB. E2E focal y TypeScript estricto aprobados. Regresión integral final67 casos en curso;no atribuir a este SHA las66 de PR277. API ficticia,red externa bloqueada,cero escrituras y erroresJS en la prueba. Publicar rama y PR borrador,verificar SHA/CI exactos y registrar resultados posteriores en checkout principal/planes/PR sin sustituir CI mediante pushes documentales. PR277 conserva su propio9e573b0,66 E2E locales y CI remota en curso al escribir esto.
+
+Informe: docs/REVISION_CATEGORIAS_ETIQUETAS_2026-11-13.md. Comparativa específica de etiquetas se añadirá a14337. Teléfono desconectado,sin instalación o producción. Mantener calendario aprobado,historial sin rediseño de estructura/datos,lentitud/logout aplazados y PR271 excluido.
+
+Siguiente sección: Reportes y Metas con sus controles/estados poblados,usando datos ficticios. Para continuar: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/REVISION_CATEGORIAS_ETIQUETAS_2026-11-13.md,además de REVISION_CUENTAS_PRESUPUESTOS_2026-11-13.md. Revalida los SHA/CI de PR277 y de mejoras/etiquetas-texto-ampliado; sigue con Reportes/Metas. Teléfono desconectado; no usar datos reales».
+
+Publicado313af8d8e797ac73cd4407c3e84d09826d18e918 y verificado por ls-remote,worktree limpio. PR278 borrador;CI por comprobar.
+
+
+Publicado313af8d8e797ac73cd4407c3e84d09826d18e918 en PR278 borrador hacia develop,remoto verificado. CI general43553451812 y Android43553451833 en curso;duplicada push43553415165 cancelada intencionadamente tras verificar SHA/evento y ejecuciones PR. Comparativa14337 incluye Etiquetas y distingue correctamente PR277/PR278,28 estados/56 imágenes sin roturas,ajuste390px comprobado. La nueva prueba focal conserva nombres completos y fuente32px;67 E2E integrales finales en curso.
+
+
+Validación local definitiva de313af8d:67/67 E2E aprobadas en4,4min (frontend/.local/etiquetas-integral-final),incluyendo las dos regresiones nuevas y auditoría28 combinaciones de texto/foco. CI frontend132320879404 confirma579 unitarias/66 archivos,build y revisión de dependencias aprobados. No se atribuye la CI de9e573b0 a este SHA. Comparativa14337 verificada en28 estados/56 imágenes. PR277 pasó su fase API/E2E y está en PWA al registrar;CI final de ambas partes por confirmar.
+
+
+## Cierre remoto PR277 — 13 noviembre 2026
+
+Commit9e573b0958adef533c57027fa66c2ddd1e205ee7 publicado y comprobado. CI general43552587091 y Android43552587113 completadas/success; los seis trabajos generales aprobaron. Logs del job132318150173:129 E2E aprobadas en13,4min y4 PWA omitidas condicionalmente; la fase PWA separada aprueba4/4 en26,7s. Navegación sintética aprobada. CI frontend confirma579 unitarias/66 archivos. Regresión local final66/66 en4,4min,3 E2E focales,TypeScript y auditoría28 combinaciones aprobados. El aviso Cerca del límite mide7,51:1 frente a1,55:1 antes. La duplicada push43552553336 fue cancelada intencionadamente; no es un fallo del PR.
+
+PR277 sigue borrador hacia develop,https://github.com/YaxcheItz/gestorfinanzas/pull/277 . No merge,producción o instalación. La etapa posterior de Etiquetas se publica en313af8d/PR278 y contiene esta dependencia; tiene67 E2E locales finales y Android43553451833 aprobados,con CI general43553451812 todavía en curso. No atribuir los resultados de9e573b0 al nuevo SHA. Comparativa privada14337 presenta ambos PR con etiquetas correctas. Siguiente sección tras cierre de estas partes: Reportes/Metas. Teléfono desconectado y PR271 excluido.

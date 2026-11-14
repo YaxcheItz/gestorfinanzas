@@ -44,3 +44,10 @@ Publicación comprobada:9e573b0958adef533c57027fa66c2ddd1e205ee7,PR277 borrador 
 
 
 Validación local final de9e573b0:66/66 E2E aprobadas en4,4min en frontend/.local/detalle-integral-final; auditoría28 combinaciones de texto/foco sin fallos en su alcance. TypeScript estricto repetido tras los últimos cambios de ambos specs,aprobado. CI frontend132318150210 aprobó build,579 unitarias/66 archivos y consulta de dependencias sin vulnerabilidades conocidas. Comparativa14337:24 estados/48 imágenes cargan correctamente,ajuste390px comprobado,imágenes móviles a escala real. El404 inicial era solo favicon local,se añadió icono embebido y la recarga quedó sin error. Cero escrituras y errores JS de aplicación en los recorridos. CI general43552587091/Android43552587113 en curso;duplicada push43552553336 cancelada tras verificar SHA/evento y ejecución PR.
+
+
+## Cierre remoto PR277 — 13 noviembre 2026
+
+Commit9e573b0958adef533c57027fa66c2ddd1e205ee7 publicado y comprobado. CI general43552587091 y Android43552587113 completadas/success; los seis trabajos generales aprobaron. Logs del job132318150173:129 E2E aprobadas en13,4min y4 PWA omitidas condicionalmente; la fase PWA separada aprueba4/4 en26,7s. Navegación sintética aprobada. CI frontend confirma579 unitarias/66 archivos. Regresión local final66/66 en4,4min,3 E2E focales,TypeScript y auditoría28 combinaciones aprobados. El aviso Cerca del límite mide7,51:1 frente a1,55:1 antes. La duplicada push43552553336 fue cancelada intencionadamente; no es un fallo del PR.
+
+PR277 sigue borrador hacia develop,https://github.com/YaxcheItz/gestorfinanzas/pull/277 . No merge,producción o instalación. La etapa posterior de Etiquetas se publica en313af8d/PR278 y contiene esta dependencia; tiene67 E2E locales finales y Android43553451833 aprobados,con CI general43553451812 todavía en curso. No atribuir los resultados de9e573b0 al nuevo SHA. Comparativa privada14337 presenta ambos PR con etiquetas correctas. Siguiente sección tras cierre de estas partes: Reportes/Metas. Teléfono desconectado y PR271 excluido.
