@@ -8,16 +8,16 @@ import { mensajeDeError } from '../../core/utils/mensaje-error';
   <header><h1 class="text-2xl font-bold">Mis etiquetas</h1><p class="text-sm text-slate-500 mt-1">Crea etiquetas para organizarte.</p></header>
   <form (ngSubmit)="crear()" class="flex flex-wrap gap-2">
     <label for="etiqueta-nueva" class="sr-only">Nombre de la etiqueta</label>
-    <input id="etiqueta-nueva" name="nombre" [(ngModel)]="nombre" maxlength="32" placeholder="Nueva etiqueta" class="min-h-11 flex-1 min-w-0 rounded-xl border border-slate-300 px-3" />
+    <input id="etiqueta-nueva" name="nombre" [(ngModel)]="nombre" maxlength="32" placeholder="Nueva etiqueta" class="min-h-11 flex-[1_1_12rem] min-w-0 rounded-xl border border-slate-300 px-3" />
     <button type="submit" [disabled]="ocupado()" class="min-h-11 rounded-xl bg-emerald-700 px-4 font-semibold text-white">Añadir</button>
   </form>
   @if (error()) {<div role="alert" class="flex flex-wrap items-center gap-3 text-rose-700"><span>{{error()}}</span>@if (errorCarga()) {<button type="button" (click)="cargar()" [disabled]="cargando()" class="min-h-11 font-semibold underline">Reintentar</button>}</div>}
   <p class="text-sm text-slate-500">Eliminar una etiqueta de esta lista no cambia los movimientos anteriores.</p>
   @if (cargando()) {<div class="finance-loading-card" role="status" aria-label="Cargando etiquetas"><span class="loading-placeholder" aria-hidden="true"></span></div>} @else if (!errorCarga() && !etiquetas().length) {<p class="rounded-2xl border p-5 text-slate-500">Aún no tienes etiquetas en tu lista.</p>}
   @if (!cargando() && !errorCarga()) {<ul class="space-y-2">@for (etiqueta of etiquetas(); track etiqueta.id) {
-    <li class="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-2">
-      <span class="font-semibold break-all">#{{etiqueta.nombre}}</span>
-      <button type="button" (click)="eliminar(etiqueta)" [disabled]="ocupado()" [attr.aria-label]="'Eliminar etiqueta ' + etiqueta.nombre" class="min-h-11 px-3 text-rose-700 font-semibold">Eliminar</button>
+    <li class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-2">
+      <span class="min-w-0 flex-[1_1_12ch] font-semibold break-all">#{{etiqueta.nombre}}</span>
+      <button type="button" (click)="eliminar(etiqueta)" [disabled]="ocupado()" [attr.aria-label]="'Eliminar etiqueta ' + etiqueta.nombre" class="ml-auto min-h-11 shrink-0 px-3 text-rose-700 font-semibold">Eliminar</button>
     </li>
   }</ul>}
 </main>`})

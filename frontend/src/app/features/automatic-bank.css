@@ -45,7 +45,7 @@ details { border-top: 1px solid var(--kaptal-border); margin-top: .8rem; }
 
 .profile > summary { min-height: 52px; display: flex; align-items: center; justify-content: space-between; gap: .75rem; cursor: pointer; font-weight: 650; }
 .profile-state { color: var(--kaptal-content-muted); font-size: .8rem; font-weight: 500; }
-.profile[open] > summary { color: var(--kaptal-brand); }
+.profile[open] > summary { color:var(--kaptal-brand-ink); }
 
 .profile > summary::after { content: "\203A"; color: var(--kaptal-content-muted); font-size: 1.25rem; line-height: 1; }
 .profile[open] > summary::after { transform: rotate(90deg); }
