@@ -26,7 +26,8 @@ test('accesos separan voz y escritura y llevan herramientas a ajustes', async ({
   await voice.getByRole('button', { name: 'Cerrar voz' }).click();
   await pencil.click();
   await expect(page.locator('#quick-capture-panel')).toBeVisible();
-  await expect(page.getByText('Cuéntame tu movimiento')).toBeVisible();
+  await expect(page.locator('#quick-capture-panel').getByRole('heading',{name:'Chat de Kaptal',exact:true})).toBeVisible();
+  await expect(page.locator('#quick-capture-panel').getByText('¿Qué quieres hacer?',{exact:true})).toBeVisible();
   await page.locator('#quick-capture-panel').getByRole('button', { name: 'Cerrar', exact: true }).click();
   await page.getByRole('button', { name: 'Cambiar lista' }).click();
   await expect(page.getByRole('button', { name: /^Herramientas/ })).toHaveCount(0);
