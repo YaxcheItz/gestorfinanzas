@@ -20,7 +20,7 @@ test('tema oscuro legible en superficies, campos y acciones; claro conservado', 
           const rgb=[...ctx.getImageData(0,0,1,1).data].slice(0,3).map(v=>{v/=255;return v<=.04045?v/12.92:((v+.055)/1.055)**2.4;});
           return rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722;
         };
-        const pairs=[...['canvas','surface','surface-subtle'].flatMap(bg=>['content','content-muted'].map(fg=>({fg,bg,min:4.5}))),{fg:'on-brand',bg:'brand',min:4.5},{fg:'control-border',bg:'surface-subtle',min:3},{fg:'focus',bg:'surface-subtle',min:3}];
+        const pairs=[...['canvas','surface','surface-subtle'].flatMap(bg=>['content','content-muted','brand-ink'].map(fg=>({fg,bg,min:4.5}))),{fg:'on-brand',bg:'brand',min:4.5},{fg:'on-voice',bg:'voice',min:4.5},{fg:'brand',bg:'surface-subtle',min:3},{fg:'control-border',bg:'surface-subtle',min:3},{fg:'focus',bg:'surface-subtle',min:3}];
         return {canvas:lum('canvas'),surface:lum('surface'),pairs:pairs.map(pair=>{const a=lum(pair.fg),b=lum(pair.bg);return {...pair,ratio:(Math.max(a,b)+.05)/(Math.min(a,b)+.05)};})};
       });
       expect(ratios.canvas).toBeGreaterThan(0);expect(ratios.canvas).toBeLessThan(.03);
@@ -60,6 +60,10 @@ test('acceso discreto al formulario mantiene foco, área táctil y texto del cha
       await p.setViewportSize({width,height:844});await p.goto(origin+'/dashboard');
       await p.evaluate(font=>{document.documentElement.style.fontSize=font;document.documentElement.classList.add('dark');},font);
       await p.locator('.capture-dock__manual').click();
+      expect(await p.locator('#quick-capture-text').evaluate(e=>{
+        const probe=document.createElement('div');probe.style.color='var(--kaptal-content-muted)';document.body.append(probe);
+        const same=getComputedStyle(e,'::placeholder').color===getComputedStyle(probe).color;probe.remove();return same;
+      }),'El placeholder del chat debe ser neutro, sin tinte verde').toBe(true);
       await p.locator('#quick-capture-text').fill('Texto ficticio sin enviar');
       const button=p.getByRole('button',{name:'Abrir formulario',exact:true});
       await expect(button).toHaveAttribute('title','Abrir formulario');await expect(button.locator('span')).toHaveCount(0);
@@ -73,6 +77,20 @@ test('acceso discreto al formulario mantiene foco, área táctil y texto del cha
     }
     expect(writes).toEqual([]);expect(pageErrors).toEqual([]);
   } finally {await c.close();}
+});
+
+test('categorías vacías caben al 200% incluso con fuente de reserva y sin conexión',async({browser,baseURL})=>{
+  const {c,p,origin,writes,pageErrors}=await createSectionsFixture(browser,baseURL!);
+  try{
+    await p.setViewportSize({width:320,height:844});await p.goto(origin+'/categorias');
+    await expect(p.getByText('Aún no has creado categorías personalizadas.',{exact:true})).toBeVisible();
+    await p.evaluate(()=>{document.documentElement.style.fontSize='200%';document.documentElement.classList.add('dark');document.querySelector<HTMLElement>('.monai-theme')!.style.fontFamily='Arial, sans-serif';});
+    await c.setOffline(true);
+    expect(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+    const empty=p.getByText('Aún no has creado categorías personalizadas.',{exact:true});
+    expect(await empty.evaluate(e=>e.scrollWidth<=e.clientWidth)).toBe(true);
+    expect(writes).toEqual([]);expect(pageErrors).toEqual([]);
+  }finally{await c.setOffline(false);await c.close();}
 });
 
 test('acceso, registro y recuperación usan el tema oscuro sin enviar formularios',async({browser,baseURL})=>{

@@ -53,7 +53,7 @@
 .voice-screen header h2 { margin: 6px 0 0; font-size: 1.35rem; font-weight: 700; }
 .voice-screen header button { width: 44px; height: 44px; border-radius: 50%; background: var(--kaptal-surface-subtle); font-size: 1.5rem; }
 .voice-screen__hint,.voice-screen__note { color: var(--kaptal-content-muted); line-height: 1.5; font-size: .9rem; margin: 20px auto; }
-.voice-screen__mic { display: grid; place-items: center; width: 100px; height: 100px; margin: 32px auto 12px; border: 0; border-radius: 50%; background: var(--kaptal-voice); color: white; }
+.voice-screen__mic { display: grid; place-items: center; width: 100px; height: 100px; margin: 32px auto 12px; border: 0; border-radius: 50%; background: var(--kaptal-voice); color: var(--kaptal-on-voice); }
 .voice-screen__mic svg { width: 40px; height: 40px; }
 .voice-screen__status { font-weight: 700; min-height: 24px; }
 .voice-screen__transcript { min-height: 4.5rem; max-height: 25dvh; overflow-y: auto; padding: 1rem; margin: 1rem 0; border-radius: 1rem; background: var(--kaptal-surface-subtle); color: var(--kaptal-content); line-height: 1.55; text-align: left; overflow-wrap: anywhere; }
@@ -366,7 +366,7 @@ html.dark .ai-chat-composer { border-color: #3f3f46; background: #09090b; }
 @media (min-width: 640px) {
   .ai-chat-composer { margin-inline: -1.25rem; padding: .85rem 1.25rem 0; }
 }
-html .monai-theme .dashboard-screen__action--chat .dashboard-screen__chat-icon { background: var(--kaptal-surface-subtle); color: var(--kaptal-brand); border-radius: 50%; }
+html .monai-theme .dashboard-screen__action--chat .dashboard-screen__chat-icon { background: var(--kaptal-surface-subtle); color:var(--kaptal-brand-ink); border-radius: 50%; }
 html .monai-theme .capture-launch { left: auto; right: max(1rem, env(safe-area-inset-right)); bottom: calc(.9rem + env(safe-area-inset-bottom)); width: 3.75rem; height: 3.75rem; z-index: 45; transform: none; background: var(--kaptal-voice); box-shadow: 0 6px 20px rgb(173 77 53 / 20%); touch-action: manipulation; }
 html .monai-theme .capture-launch svg { width: 1.55rem; height: 1.55rem; }
 html .monai-theme .capture-launch.is-listening { transform: scale(1.06); background: #aa3030; }
@@ -379,7 +379,7 @@ html .monai-theme .capture-panel__head small { color: var(--kaptal-content-muted
 html .monai-theme .capture-chat__composer textarea { background: var(--kaptal-surface-subtle); color: var(--kaptal-content); border-color: var(--kaptal-border); }
 html .monai-theme .capture-chat__suggestions button { background: var(--kaptal-surface-subtle); color: var(--kaptal-content); border-color: var(--kaptal-border); }
 html .monai-theme .capture-panel__spark,
-html .monai-theme .capture-chat__avatar { background: var(--kaptal-surface-subtle); color: var(--kaptal-brand); }
+html .monai-theme .capture-chat__avatar { background: var(--kaptal-surface-subtle); color:var(--kaptal-brand-ink); }
 
 @media (hover: hover) and (pointer: fine) {
   html .monai-theme .capture-launch:hover { transform: translateY(-2px); background: #923c29; }
@@ -418,7 +418,7 @@ html .monai-theme .capture-launch.is-listening { transform: none; animation: non
 .entry-types { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .35rem; background: var(--kaptal-surface-subtle); border-radius: .85rem; padding: .25rem; }
 .entry-types button { min-height: 44px; border-radius: .65rem; font-size: .8rem; }
 .entry-types .is-active,
-.entry-category-chips .is-active { background: var(--kaptal-surface); color: var(--kaptal-brand); box-shadow: 0 0 0 1px var(--kaptal-brand); font-weight: 700; }
+.entry-category-chips .is-active { background: var(--kaptal-surface); color:var(--kaptal-brand-ink); box-shadow: 0 0 0 1px var(--kaptal-brand); font-weight: 700; }
 .entry-amount { position: relative; }
 .entry-amount span { position: absolute; right: 0; top: 0; color: var(--kaptal-content-muted); }
 .quick-entry .entry-amount input { font-size: 2.25rem; min-height: 70px; padding: .5rem 0; background: transparent; border: 0; border-bottom: 1px solid var(--kaptal-border); border-radius: 0; font-weight: 600; }
@@ -427,7 +427,7 @@ html .monai-theme .capture-launch.is-listening { transform: none; animation: non
 .entry-category-chips button { min-height: 44px; padding: .5rem .65rem; white-space: nowrap; border-radius: .7rem; background: var(--kaptal-surface-subtle); font-size: .75rem; }
 .entry-details summary { min-height: 44px; padding-block: .7rem; cursor: pointer; color: var(--kaptal-content-muted); font-size: .8rem; }
 .entry-details label { margin-bottom: .75rem; }
-.entry-text-button { text-align: left; min-height: 44px; font-size: .8rem; color: var(--kaptal-brand); }
+.entry-text-button { text-align: left; min-height: 44px; font-size: .8rem; color:var(--kaptal-brand-ink); }
 .entry-save,
 .entry-voice,
 .voice-record-button,
@@ -559,7 +559,7 @@ html .monai-theme #quick-capture-panel .capture-chat__intro { display:grid; alig
 html .monai-theme #quick-capture-panel .capture-chat__intro > div { display:grid; gap:.6rem; width:100%; min-width:0; }
 html .monai-theme #quick-capture-panel .capture-chat__intro strong { font-size:clamp(1.4rem, 5vw, 1.85rem); line-height:1.2; letter-spacing:-.035em; color:var(--kaptal-content); text-wrap:balance; }
 html .monai-theme #quick-capture-panel .capture-chat__intro p { margin:0; font-size:.9rem; line-height:1.6; color:var(--kaptal-content-muted); }
-html .monai-theme #quick-capture-panel .capture-chat__welcome-icon { display:grid; place-items:center; width:48px; height:48px; border-radius:1rem; background:color-mix(in srgb,var(--kaptal-brand) 14%,var(--kaptal-surface)); color:var(--kaptal-brand); }
+html .monai-theme #quick-capture-panel .capture-chat__welcome-icon { display:grid; place-items:center; width:48px; height:48px; border-radius:1rem; background:color-mix(in srgb,var(--kaptal-brand) 14%,var(--kaptal-surface)); color:var(--kaptal-brand-ink); }
 html .monai-theme #quick-capture-panel .capture-chat__welcome-icon svg { width:25px; height:25px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
 html .monai-theme #quick-capture-panel .capture-chat__intro .capture-chat__suggestions { gap:.5rem; }
 html .monai-theme #quick-capture-panel .capture-chat__suggestions button { display:flex; align-items:center; justify-content:space-between; gap:.75rem; min-height:48px; max-width:100%; padding:.7rem .9rem; border:1px solid var(--kaptal-border); border-radius:.9rem; background:var(--kaptal-surface); color:var(--kaptal-content); font-size:.875rem; line-height:1.4; text-align:left; white-space:normal; }

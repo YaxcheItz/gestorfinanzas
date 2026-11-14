@@ -18,14 +18,14 @@ html.dark .home-metric--income .home-metric__value{color:var(--kaptal-income)}
 .home-metric__value.is-negative{color:var(--kaptal-expense)}
 .home-account-summary{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:10px;font-size:12px;color:var(--kaptal-content-muted);margin:4px auto 6px;max-width:390px}
 .home-account-summary strong{color:var(--kaptal-content);font-weight:600}
-.home-link-inline{background:transparent;border:0;color:var(--kaptal-brand);font-size:12px;font-weight:600;padding:4px 6px;min-height:36px;cursor:pointer}
+.home-link-inline{background:transparent;border:0;color:var(--kaptal-brand-ink);font-size:12px;font-weight:600;padding:4px 6px;min-height:36px;cursor:pointer}
 .home-period{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px;max-width:100%}
 html .monai-theme .home-period .time-dropdown-btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 16px;min-height:44px;max-width:100%;border:0;border-radius:999px;background:var(--kaptal-surface-subtle);color:var(--kaptal-content);font-size:13px;font-weight:600;box-shadow:none}
 .home-period-arrow{width:44px;height:44px;border-radius:50%;font-size:24px;color:var(--kaptal-content-muted)}
 .home-period-arrow:disabled{opacity:.25}
 .home-account-details{width:min(100%,340px);margin:8px auto;text-align:left;font-size:12px}
 .home-account-details summary{min-height:44px;align-content:center;text-align:center;color:var(--kaptal-content-muted);cursor:pointer}
-.home-account-details>div{display:flex;justify-content:space-between;gap:16px;padding:8px 0}.home-account-details button{min-height:44px;color:var(--kaptal-brand)}
+.home-account-details>div{display:flex;justify-content:space-between;gap:16px;padding:8px 0}.home-account-details button{min-height:44px;color:var(--kaptal-brand-ink)}
 .home-categories{min-width:0;position:relative}
 .home-category-chart{display:grid;grid-auto-flow:column;grid-auto-columns:64px;justify-content:safe center;align-items:end;gap:12px;overflow-x:auto;scroll-snap-type:x proximity;overscroll-behavior-inline:contain;scrollbar-width:none;padding:0 0 8px;min-width:0}
 .home-category-chart::-webkit-scrollbar{display:none}
@@ -48,9 +48,9 @@ html.dark .home-category__bar{filter:brightness(.85)}
 .home-budget-row>div{flex:1;min-width:0}.home-budget-row strong{font-size:14px;font-weight:600}.home-budget-row small{display:block;font-size:12px;color:var(--kaptal-content-muted);margin-top:4px}
 
 .dashboard-screen__recent-list{display:flex;flex-direction:column;gap:0}
-.home-inline-state,.dashboard-screen__muted{font-size:13px;color:var(--kaptal-content-muted);line-height:1.6}.home-inline-state button{min-height:44px;color:var(--kaptal-brand)}
-.home-empty{display:flex;flex-direction:column;align-items:center;text-align:center;padding:24px 16px 32px;gap:12px}.home-empty>span{font-size:32px}.home-empty h2{font-size:18px;font-weight:600}.home-empty p{font-size:14px;color:var(--kaptal-content-muted);max-width:280px}.home-empty button{font-size:13px;min-height:44px;color:var(--kaptal-brand)}
-.dashboard-screen__inline-empty{font-size:13px;color:var(--kaptal-content-muted);line-height:1.6;padding:16px 0}.dashboard-screen__inline-empty button{min-height:44px;color:var(--kaptal-brand)}
+.home-inline-state,.dashboard-screen__muted{font-size:13px;color:var(--kaptal-content-muted);line-height:1.6}.home-inline-state button{min-height:44px;color:var(--kaptal-brand-ink)}
+.home-empty{display:flex;flex-direction:column;align-items:center;text-align:center;padding:24px 16px 32px;gap:12px}.home-empty>span{font-size:32px}.home-empty h2{font-size:18px;font-weight:600}.home-empty p{font-size:14px;color:var(--kaptal-content-muted);max-width:280px}.home-empty button{font-size:13px;min-height:44px;color:var(--kaptal-brand-ink)}
+.dashboard-screen__inline-empty{font-size:13px;color:var(--kaptal-content-muted);line-height:1.6;padding:16px 0}.dashboard-screen__inline-empty button{min-height:44px;color:var(--kaptal-brand-ink)}
 .home-sheet-backdrop{position:fixed;inset:0;z-index:70;display:flex;align-items:flex-end;justify-content:center;background:rgb(0 0 0 / .28);padding-top:env(safe-area-inset-top)}
 .home-context-sheet{position:relative;width:min(100%,32rem);max-height:85dvh;overflow:auto;padding:24px 24px calc(24px + env(safe-area-inset-bottom));border-radius:30px 30px 0 0;background:var(--kaptal-surface);color:var(--kaptal-content)}
 .home-context-sheet>header{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:24px}.home-context-sheet header>div{display:flex;align-items:center;gap:12px}.home-context-sheet h2{font-size:24px;font-weight:700;letter-spacing:-.035em}
@@ -62,7 +62,7 @@ html .monai-theme .time-dropdown-modal{width:min(100%,32rem);max-height:85dvh;ov
 .period-month-stepper{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:16px;font-size:13px}.period-month-stepper button{width:44px;height:44px;border-radius:50%;font-size:24px}.period-month-stepper button:disabled{opacity:.25}
 html .monai-theme .time-option-card{border:0;border-radius:18px;background:var(--kaptal-surface-subtle);min-height:64px;padding:12px 16px;box-shadow:none}.time-option-card.is-active{outline:1px solid var(--kaptal-brand)}
 .time-option-card__info strong{font-size:14px}.time-option-card__info small{font-size:12px;color:var(--kaptal-content-muted)}
-.dashboard-screen__notice{padding:16px;border-radius:16px;background:var(--kaptal-surface-subtle);font-size:13px;line-height:1.5;overflow-wrap:anywhere}.dashboard-screen__notice button{min-height:44px;color:var(--kaptal-brand)}.dashboard-screen__notice summary{min-height:44px;align-content:center}.dashboard-screen__notice--error,.is-over{color:var(--kaptal-expense)}
+.dashboard-screen__notice{padding:16px;border-radius:16px;background:var(--kaptal-surface-subtle);font-size:13px;line-height:1.5;overflow-wrap:anywhere}.dashboard-screen__notice button{min-height:44px;color:var(--kaptal-brand-ink)}.dashboard-screen__notice summary{min-height:44px;align-content:center}.dashboard-screen__notice--error,.is-over{color:var(--kaptal-expense)}
 .dashboard-screen__recurring{display:flex;align-items:center;gap:12px;padding:12px 0}.dashboard-screen__recurring-copy{min-width:0;flex:1}.dashboard-screen__recurring-copy strong{display:block;font-size:14px}.dashboard-screen__recurring-copy span,.dashboard-screen__footnote{font-size:12px;color:var(--kaptal-content-muted)}.dashboard-screen__recurring-amount{font-size:14px}.dashboard-screen__confirm{min-height:44px;font-size:12px}.dashboard-screen__section-icon{display:none}.dashboard-screen__eyebrow{font-size:11px;color:var(--kaptal-content-muted)}
 .home-amount-loading{width:200px;height:52px;background:var(--kaptal-surface-subtle);border-radius:16px}.home-chart-loading{display:flex;align-items:flex-end;justify-content:center;height:200px;gap:16px}.home-chart-loading span{height:120px;width:48px;border-radius:24px;background:var(--kaptal-surface-subtle)}.home-chart-loading span:nth-child(2){height:160px}.home-chart-loading span:nth-child(3){height:80px}
 .dashboard-loading-movements{display:grid;gap:16px}.dashboard-loading-row{display:flex;align-items:center;gap:12px;min-height:64px}.loading-placeholder{display:block;border-radius:8px;background:var(--kaptal-surface-subtle);height:12px}.loading-placeholder--icon{width:44px;height:44px;border-radius:50%}.loading-placeholder--text{width:40%}.loading-placeholder--value{width:20%;margin-left:auto}

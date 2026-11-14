@@ -12,9 +12,11 @@
   --kaptal-border: #EBEBEB;
   --kaptal-control-border: #808080;
   --kaptal-brand: #B83E36;
+  --kaptal-brand-ink: var(--kaptal-brand);
   --kaptal-on-brand: #ffffff;
   --kaptal-focus: #B83E36;
   --kaptal-voice: #FF746B;
+  --kaptal-on-voice: #111111;
   --kaptal-income: #287D48;
   --kaptal-expense: #AD3847;
   --kaptal-warning: #925600;
@@ -24,23 +26,25 @@
 
 html.dark {
   --kaptal-font: 'Manrope Variable', Manrope, ui-sans-serif, system-ui, sans-serif;
-  --kaptal-glass: rgb(31 34 37 / .92);
-  --kaptal-glass-border: #3A4045;
+  --kaptal-glass: rgb(29 29 29 / .94);
+  --kaptal-glass-border: #3D3D3D;
   --kaptal-canvas: #151719;
-  --kaptal-surface: #1F2225;
-  --kaptal-surface-subtle: #282C30;
-  --kaptal-content: #ECEEEA;
-  --kaptal-content-muted: #AEB4B8;
-  --kaptal-border: #3A4045;
-  --kaptal-control-border: #7B858D;
-  --kaptal-brand: #F09586;
-  --kaptal-on-brand: #1B2024;
-  --kaptal-focus: #F09586;
-  --kaptal-voice: #F09586;
-  --kaptal-income: #A3C7AF;
-  --kaptal-expense: #EFA29D;
+  --kaptal-surface: #1D1D1D;
+  --kaptal-surface-subtle: #272727;
+  --kaptal-content: #EFEFEF;
+  --kaptal-content-muted: #B6B6B6;
+  --kaptal-border: #3D3D3D;
+  --kaptal-control-border: #7E7E7E;
+  --kaptal-brand: #C34842;
+  --kaptal-brand-ink: #E7756B;
+  --kaptal-on-brand: #FFFFFF;
+  --kaptal-focus: #E7756B;
+  --kaptal-voice: #C34842;
+  --kaptal-on-voice: #FFFFFF;
+  --kaptal-income: #E0E0E0;
+  --kaptal-expense: #E7756B;
   --kaptal-warning: #DDC28B;
-  --kaptal-info: #A9C2D4;
+  --kaptal-info: #C4C4C4;
   --kaptal-float-shadow: 0 6px 28px rgb(0 0 0 / 20%);
 }
 
@@ -140,7 +144,7 @@ html .monai-theme :is(.login-card, .auth-card) label { color: var(--kaptal-conte
 html .monai-theme :is(.login-card, .auth-card) input:not([type="checkbox"]) { min-height: 48px; font-size: 1rem; border-color: var(--kaptal-border); background: var(--kaptal-surface-subtle); color: var(--kaptal-content); }
 html .monai-theme :is(.login-card, .auth-card) button { min-height: 44px; }
 html .monai-theme .login-submit { min-height: 48px; background: var(--kaptal-brand) !important; color: var(--kaptal-on-brand) !important; box-shadow: none; }
-html .monai-theme :is(.login-link, .login-footer a) { color: var(--kaptal-brand); }
+html .monai-theme :is(.login-link, .login-footer a) { color:var(--kaptal-brand-ink); }
 html .monai-theme .auth-card p[role="alert"] { color: var(--kaptal-expense); }
 html .monai-theme .auth-card p[role="status"] { color: var(--kaptal-income); }
 @media (max-width: 639px) {
@@ -167,6 +171,7 @@ html .monai-theme{font-family:var(--kaptal-font)}
 /* Conservar el tema claro; en oscuro, suavizar la densidad y el blanco de los títulos. */
 html.dark .monai-theme :is(h1,h2,h3) { font-weight:600; letter-spacing:-.025em; }
 html.dark .monai-theme .settings-disclosure > summary strong { font-weight:600; }
+html.dark .monai-theme :is(input,textarea)::placeholder { color:var(--kaptal-content-muted); opacity:1; }
 html .monai-theme .app-content-with-bottom-nav{padding-bottom:calc(112px + env(safe-area-inset-bottom))}
 html .monai-theme .tx-item{padding:12px 0;border:0;background:transparent;border-radius:0;min-height:72px}
 html .monai-theme .tx-item__icon{width:44px;height:44px;border-radius:50%;font-size:24px}

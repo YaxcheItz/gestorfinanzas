@@ -28,7 +28,7 @@ html .monai-theme :is(.utility-button,.privacy-toggle){min-height:48px;min-width
 .capture-dock{position:fixed;z-index:35;left:max(20px,calc((100vw - 48rem)/2 + 20px));right:max(20px,calc((100vw - 48rem)/2 + 20px));bottom:calc(20px + env(safe-area-inset-bottom));display:flex;align-items:center;justify-content:space-between;pointer-events:none}
 .capture-dock__left{display:flex;align-items:center;gap:12px}.capture-dock button{pointer-events:auto}
 .capture-dock__search,.capture-dock__manual{width:48px;height:48px}.capture-dock svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.capture-dock__voice{display:grid;place-items:center;width:64px;height:64px;border:0;border-radius:50%;background:var(--kaptal-voice);color:#111;box-shadow:0 8px 26px rgb(255 116 107 / .24);transition:transform 180ms ease-out}
+.capture-dock__voice{display:grid;place-items:center;width:64px;height:64px;border:0;border-radius:50%;background:var(--kaptal-voice);color:var(--kaptal-on-voice);box-shadow:0 8px 26px color-mix(in srgb,var(--kaptal-voice) 24%,transparent);transition:transform 180ms ease-out}
 .capture-dock__voice svg{width:27px;height:27px}.capture-dock__voice:active{transform:scale(.94)}
 html:has(.capture-panel,.voice-screen,.quick-entry,.home-sheet-backdrop,.time-dropdown-backdrop) .capture-dock{visibility:hidden}
 .workspace-panel{position:fixed;inset:auto 0 0;width:min(100%,32rem);max-height:85dvh;margin:0 auto;padding:24px 20px calc(24px + env(safe-area-inset-bottom));overflow:auto;border:0;border-radius:30px 30px 0 0;background:var(--kaptal-surface);color:var(--kaptal-content);box-sizing:border-box}

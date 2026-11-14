@@ -52,6 +52,10 @@ for (const scenario of cases) {
                 const geometry = await p.evaluate(() => ({ width: innerWidth, scroll: document.documentElement.scrollWidth, grids: [...document.querySelectorAll<HTMLElement>('.budget-category-card')].map(e => ({ width: e.clientWidth, columns: getComputedStyle(e).gridTemplateColumns, children: [...e.children].map(x => ({ class: x.className, width: x.getBoundingClientRect().width, min: getComputedStyle(x).minWidth })) })), offenders: [...document.querySelectorAll<HTMLElement>('#main-content *')].filter(e => e.getBoundingClientRect().right > innerWidth + 1 && e.offsetWidth > 0 && !e.closest('.overflow-x-auto,.report-table')).slice(0, 15).map(e => ({ tag: e.tagName, classes: e.className, text: e.textContent?.trim().slice(0, 70), rect: e.getBoundingClientRect().toJSON() })) }));
                 fs.writeFileSync(info.outputPath('geometry-' + width + '.json'), JSON.stringify(geometry, null, 2));
                 if (scenario.path === 'presupuestos') {
+                    if(dark) {
+                        await expect(p.locator('.budget-overview__percent')).toHaveCSS('color','rgb(182, 182, 182)');
+                        await expect(p.locator('.budget-overview__percent')).toHaveCSS('background-color','rgb(39, 39, 39)');
+                    }
                     const menu = p.locator('.budget-manage summary');
                     await menu.press('Enter');
                     const action = p.getByRole('button', { name: /^Eliminar presupuesto de / });

@@ -269,7 +269,7 @@ import { GoogleSignInComponent } from '../google-sign-in/google-sign-in.componen
       color: var(--kaptal-on-brand) !important;
     }
     :host-context(html.dark) .login-link,
-    :host-context(html.dark) .login-footer a { color: var(--kaptal-brand); }
+    :host-context(html.dark) .login-footer a { color:var(--kaptal-brand-ink); }
     :host-context(html.dark) .login-footer { border-top-color: var(--kaptal-border); }
     :host-context(html.dark) .login-alert--warn { border-color: var(--kaptal-warning); background: var(--kaptal-surface-subtle); color: var(--kaptal-warning); }
     :host-context(html.dark) .login-alert--error { border-color: var(--kaptal-expense); background: var(--kaptal-surface-subtle); color: var(--kaptal-expense); }

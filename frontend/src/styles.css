@@ -279,15 +279,15 @@ html.dark .border-amber-200 {
 }
 
 html.dark .bg-sky-50 {
-  background-color: rgba(14, 165, 233, 0.1);
+  background-color: var(--kaptal-surface);
 }
 
 html.dark .text-sky-900 {
-  color: #bae6fd;
+  color: var(--kaptal-content);
 }
 
 html.dark .border-sky-200 {
-  border-color: rgba(14, 165, 233, 0.3);
+  border-color: var(--kaptal-border);
 }
 
 html.dark .bg-violet-50,
@@ -354,7 +354,7 @@ html.dark .quick-category-editor input:not([type='color']) {
 
 html.dark .cashback-badge {
   background-color: rgba(52, 211, 153, 0.2);
-  color: var(--kaptal-brand);
+  color:var(--kaptal-brand-ink);
 }
 
 html.dark .quick-category-icon {
@@ -366,7 +366,7 @@ html.dark .quick-category-icon {
 html.dark .quick-category-icon--selected {
   border-color: var(--kaptal-brand);
   background-color: rgba(52, 211, 153, 0.1);
-  color: var(--kaptal-brand);
+  color:var(--kaptal-brand-ink);
 }
 
 html.dark .toast-notification {
@@ -504,7 +504,7 @@ html.dark .confirm-dialog-card__message {
   font-variant-numeric: tabular-nums;
 }
 
-html.dark .budget-overview__percent { background: rgb(37 91 62 / 0.46); color: #a7e3b4; }
+html.dark .budget-overview__percent { background: var(--kaptal-surface-subtle); color: var(--kaptal-content-muted); }
 
 .finance-page > header h1,
 .finance-page > header h2,
