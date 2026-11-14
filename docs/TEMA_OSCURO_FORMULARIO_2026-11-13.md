@@ -76,3 +76,22 @@ Publicación328983f1af8f03ac0014dea41ff3f0dd2729464b comprobada por ls-remote;PR
 Android43547268297 aprobado en328983f; CI frontend132301385206 confirma579 unitarias/66 archivos,build y revisión de dependencias aprobados. También backend,PostgreSQL,WhatsApp y Python aprobados; E2E/API todavía en curso. Push duplicado43547263092 cancelado tras comprobar el mismo SHA,event push y la ejecución PR activa.
 
 Regresión local definitiva de328983f:65/65 E2E aprobadas en6,4min (.local/deep-red-final),incluidos Categorías vacías/200%/Arial/offline y el porcentaje neutro de Presupuestos poblados. Se mantienen umbrales originales y no hay fallos ocultos. Android remoto aprobado;último trabajo E2E/API en curso.
+
+
+## Cierre verificado de PR276 — 13 noviembre 2026, 20:50 local
+
+Resultado vigente: commit de código 328983f1af8f03ac0014dea41ff3f0dd2729464b, rama mejoras/tema-oscuro-formulario, remoto comprobado y worktree limpio. Sustituye los seguimientos «en curso» anteriores: CI general43547268394 y Android43547268297 completadas con éxito sobre este head. Los seis trabajos generales aprobaron: frontend, backend, PostgreSQL/migraciones/recuperación, WhatsApp/D1, Python y E2E Chromium/API/PostgreSQL. La duplicada push43547263092 fue cancelada intencionadamente; no es el resultado del PR.
+
+Los logs remotos confirman 579 unitarias en66 archivos y 128 E2E aprobadas en11,6min, con4 casos PWA omitidos condicionalmente en esa primera suite; la fase PWA de producción separada aprobó sus4 pruebas en17s. Medición de navegación sintética aprobada, sin peticiones externas; no acredita la lentitud real tras horas de inactividad. No se confunde la CI fallida de1b70808 con el cierre actual.
+
+Validación local del CSS final: build488,24kB (presupuesto500kB),65/65 E2E en6,4min, TypeScript estricto de ambos specs modificados y auditoría de28 combinaciones de texto/foco aprobados. Capturas finales de13 secciones sin verde inesperado visible y3 pantallas públicas sin sesión,18 estados/36 imágenes de comparativa y ajuste390px comprobados. Tres advertencias CSS registradas: Login4,30kB, Avisos4,49kB y automatic-bank5,02kB, sin errores de compilación. Todos los recorridos visuales usan datos ficticios,API interceptada y red externa bloqueada.
+
+Se mantiene el fondo carbón aprobado; rojo profundo para botones, grises neutros y tono rojo de texto separado para legibilidad. Placeholder del chat, ingresos e indicador de Presupuestos dejan de conservar verde heredado; categorías elegidas por el usuario conservan sus colores. El lápiz «Abrir formulario» sigue discreto,18px/44×44. La corrección de Categorías a200% no reduce fuente ni relaja las pruebas.
+
+PR276 sigue abierto en borrador hacia develop: https://github.com/YaxcheItz/gestorfinanzas/pull/276 . CI general: https://github.com/YaxcheItz/gestorfinanzas/actions/runs/43547268394 . Android: https://github.com/YaxcheItz/gestorfinanzas/actions/runs/43547268297 . PR275 sigue publicado en f526c82 con sus CI general43504281521 y Android43504281163 aprobadas. Develop continúa fe13575532c8c055fe699374660988a888b01f6f y main1fd9402bb40012aba4c894b81ecceb09dcfb48a1; no merge, despliegue ni actualización habitual de APK.
+
+La comparativa privada http://127.0.0.1:14326 queda disponible para la valoración estética final del propietario. Teléfono desconectado; esta paleta no se instaló ni se validó físicamente. La QA preparatoria archivada es intermedia y no debe usarse como entrega final; al retomar el dispositivo se reconstruye desde328983f en destino aislado. La app habitual0.1.45/código46 no se tocó. Conservar calendario aprobado, estructura/datos del historial sin rediseñar, lentitud/logout aplazados y PR271 excluido.
+
+Siguiente etapa: continuar la revisión visual con el propietario sobre esta comparativa y, cuando vuelva el dispositivo, comprobar el tema final en QA aislada. El resultado de CI se registra en este checkout principal/planes locales/PR para no sustituir el SHA probado con pushes documentales en la rama de código.
+
+Para continuar: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/TEMA_OSCURO_FORMULARIO_2026-11-13.md. PR275 tiene subida/CI cerradas; PR276 publica328983f con CI general y Android aprobadas. Sigue la revisión visual del rojo profundo/grises neutros en127.0.0.1:14326. Teléfono desconectado: reconstruir QA aislada desde el SHA final cuando vuelva; no usar datos reales ni integrar PR271».
