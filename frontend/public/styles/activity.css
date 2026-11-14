@@ -419,7 +419,7 @@ html .monai-theme .history-types button { min-width: 0; min-height: 44px; paddin
 html .monai-theme .history-types button.is-active { background: var(--kaptal-surface); color: var(--kaptal-content); font-weight: 700; box-shadow: 0 1px 3px rgb(0 0 0 / .08); }
 html .monai-theme .history-page .ledger-active-filters { max-width: none; gap: .75rem; padding: .5rem .75rem; background: var(--kaptal-surface-subtle); color: var(--kaptal-content); border-color: var(--kaptal-border); }
 html .monai-theme .history-page .ledger-active-filters > span { min-width: 0; overflow-wrap: anywhere; }
-html .monai-theme .history-page .ledger-active-filters button { min-height: 44px; flex: none; color: var(--kaptal-brand); }
+html .monai-theme .history-page .ledger-active-filters button { min-height: 44px; flex: none; color:var(--kaptal-brand-ink); }
 html .monai-theme .history-summary { padding: .8rem 1rem; box-shadow: none; }
 html .monai-theme .history-summary h2 { text-transform: none; letter-spacing: 0; font-weight: 500; }
 html .monai-theme .history-summary > div { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: .5rem 1rem; }

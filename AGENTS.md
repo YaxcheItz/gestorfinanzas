@@ -5,6 +5,7 @@
 - Lee las instrucciones de las skills seleccionadas y explica brevemente cuál aplicas y para qué cuando corresponda.
 - No uses todas las skills o plugins por el simple hecho de estar instalados; selecciona los pertinentes según la tarea.
 - Comunica en español.
+- La validación con lector de pantalla se reserva para el cierre final de toda la aplicación. Hasta entonces, no volver a introducir este pendiente en actualizaciones, preguntas, cierres de etapa ni textos para continuar.
 - Trabaja cada etapa en una rama distinta, creada desde `develop` actualizado y comprobado contra el remoto. No implementes etapas nuevas directamente sobre `develop` ni reutilices la rama de una etapa anterior.
 - Al terminar cada parte, actualiza `docs/PLAN_MAESTRO_KAPTAL.md` y `docs/ESTADO_SESION.md` con lo realizado, las comprobaciones y los pendientes. Mantén sincronizado el plan local si existe.
 - Al finalizar cada tarea, incluye un texto breve listo para pegar en un nuevo chat, indicando la etapa siguiente y los documentos que debe leer.

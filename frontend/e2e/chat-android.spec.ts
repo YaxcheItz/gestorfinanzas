@@ -33,7 +33,10 @@ test('captura clasificada confirma una sola vez con respuestas ficticias',async(
   await expect(panel.getByRole('button',{name:'Cerrar',exact:true})).toBeVisible();
   await expect(panel.getByRole('button',{name:'Limpiar historial del chat'})).toHaveCount(0);
   await expect(panel.getByRole('button',{name:'Recuperar propuestas pendientes'})).toHaveCount(0);
-  expect(await panel.evaluate(el=>el.getBoundingClientRect().height)).toBeLessThan(600);
+  const initialBounds=await panel.boundingBox();expect(initialBounds).not.toBeNull();
+  expect(initialBounds!.height).toBeGreaterThanOrEqual(844*.95);
+  expect(initialBounds!.y).toBeGreaterThanOrEqual(0);
+  expect(initialBounds!.y+initialBounds!.height).toBeLessThanOrEqual(844);
   for (const viewport of [{width:320,height:568},{width:568,height:320}]) {
     await page.setViewportSize(viewport);
     await expect.poll(()=>panel.evaluate(el=>{
@@ -108,7 +111,7 @@ test('chat mantiene escritura visible y guarda categoría offline sin duplicados
   await expect(panel.getByRole('button',{name:'Cerrar',exact:true})).toBeFocused();
   await opcionesIa.click();
   await expect(panel.getByRole('checkbox')).not.toBeVisible();
-  await expect(panel.getByRole('button',{name:'Registro manual',exact:true})).toBeVisible();
+  await expect(panel.getByRole('button',{name:'Abrir formulario',exact:true})).toBeVisible();
   await expect(panel.getByRole('button',{name:'Dictar movimiento'})).toBeVisible();
   expect(await panel.locator('.capture-chat').evaluate(e=>e.clientHeight)).toBeGreaterThan(80);
   await text.fill('Quiero revisar estos movimientos antes de guardarlos. '.repeat(15));
@@ -148,7 +151,7 @@ test('chat mantiene escritura visible y guarda categoría offline sin duplicados
     const movimientos=(await r.json()).data.content;
     return movimientos.filter((m:{monto:number;categoriaId:number|null})=>m.monto===25&&m.categoriaId!==null).length;
   },{timeout:30000}).toBe(1);
-  await page.setViewportSize({width:390,height:844});await panel.getByRole('button',{name:'Registro manual',exact:true}).click();
+  await page.setViewportSize({width:390,height:844});await panel.getByRole('button',{name:'Abrir formulario',exact:true}).click();
   await expect(page.getByRole('dialog',{name:'Añadir movimiento'})).toBeVisible();
   await expect(page).toHaveURL(/dashboard/);
 });

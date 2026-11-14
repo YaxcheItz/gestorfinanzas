@@ -1,6 +1,9 @@
 /* Shared surfaces and controls; layout-specific rules stay with their features. */
 .page-eyebrow{font-size:.7rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--kaptal-content-muted);margin-bottom:.45rem}
 #main-content{outline:none;min-width:0}
+/* Los contenedores sin color de borde explícito usan el separador del tema. */
+html.dark .monai-theme #main-content :is(section,article,form,p)[class~="border"]:not([class*="border-"]){border-color:var(--kaptal-border)}
+html.dark .monai-theme .assistant-thread{background-color:var(--kaptal-canvas)}
 html .monai-theme .finance-page :is(h1,h2){letter-spacing:-.035em}
 html .monai-theme :is(input,select,textarea){font-variant-numeric:tabular-nums}
 html .monai-theme :is(input:not([type="checkbox"]):not([type="radio"]),select,textarea){background-color:var(--kaptal-surface-subtle);color:var(--kaptal-content);border-color:var(--kaptal-border)}
@@ -25,7 +28,7 @@ html .monai-theme :is(.utility-button,.privacy-toggle){min-height:48px;min-width
 .capture-dock{position:fixed;z-index:35;left:max(20px,calc((100vw - 48rem)/2 + 20px));right:max(20px,calc((100vw - 48rem)/2 + 20px));bottom:calc(20px + env(safe-area-inset-bottom));display:flex;align-items:center;justify-content:space-between;pointer-events:none}
 .capture-dock__left{display:flex;align-items:center;gap:12px}.capture-dock button{pointer-events:auto}
 .capture-dock__search,.capture-dock__manual{width:48px;height:48px}.capture-dock svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.capture-dock__voice{display:grid;place-items:center;width:64px;height:64px;border:0;border-radius:50%;background:var(--kaptal-voice);color:#111;box-shadow:0 8px 26px rgb(255 116 107 / .24);transition:transform 180ms ease-out}
+.capture-dock__voice{display:grid;place-items:center;width:64px;height:64px;border:0;border-radius:50%;background:var(--kaptal-voice);color:var(--kaptal-on-voice);box-shadow:0 8px 26px color-mix(in srgb,var(--kaptal-voice) 24%,transparent);transition:transform 180ms ease-out}
 .capture-dock__voice svg{width:27px;height:27px}.capture-dock__voice:active{transform:scale(.94)}
 html:has(.capture-panel,.voice-screen,.quick-entry,.home-sheet-backdrop,.time-dropdown-backdrop) .capture-dock{visibility:hidden}
 .workspace-panel{position:fixed;inset:auto 0 0;width:min(100%,32rem);max-height:85dvh;margin:0 auto;padding:24px 20px calc(24px + env(safe-area-inset-bottom));overflow:auto;border:0;border-radius:30px 30px 0 0;background:var(--kaptal-surface);color:var(--kaptal-content);box-sizing:border-box}
