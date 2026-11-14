@@ -582,19 +582,19 @@ html.dark .app-topbar {
 }
 
 html.dark .finance-page :is(section, article).rounded-2xl.border.bg-white, html.dark .finance-page :is(section, article).rounded-3xl.border.bg-white {
-  border-color: #344139;
-  background-color: rgb(24 33 28 / 0.96);
+  border-color: var(--kaptal-border);
+  background-color: var(--kaptal-surface);
   box-shadow: 0 10px 30px rgb(0 0 0 / 0.14);
 }
 
 html.dark .finance-page :is(input:not([type='checkbox']):not([type='radio']), select, textarea) {
-  border-color: #405047;
-  background-color: #18211c;
-  color: #edf4ef;
+  border-color: var(--kaptal-control-border);
+  background-color: var(--kaptal-surface-subtle);
+  color: var(--kaptal-content);
 }
 
 html.dark .finance-page :is(input:not([type='checkbox']):not([type='radio']), select, textarea):focus {
-  border-color: #65aa7e;
+  border-color: var(--kaptal-focus);
 }
 
 

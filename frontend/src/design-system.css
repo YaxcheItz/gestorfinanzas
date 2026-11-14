@@ -1,6 +1,9 @@
 /* Shared surfaces and controls; layout-specific rules stay with their features. */
 .page-eyebrow{font-size:.7rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--kaptal-content-muted);margin-bottom:.45rem}
 #main-content{outline:none;min-width:0}
+/* Los contenedores sin color de borde explícito usan el separador del tema. */
+html.dark .monai-theme #main-content :is(section,article,form,p)[class~="border"]:not([class*="border-"]){border-color:var(--kaptal-border)}
+html.dark .monai-theme .assistant-thread{background-color:var(--kaptal-canvas)}
 html .monai-theme .finance-page :is(h1,h2){letter-spacing:-.035em}
 html .monai-theme :is(input,select,textarea){font-variant-numeric:tabular-nums}
 html .monai-theme :is(input:not([type="checkbox"]):not([type="radio"]),select,textarea){background-color:var(--kaptal-surface-subtle);color:var(--kaptal-content);border-color:var(--kaptal-border)}

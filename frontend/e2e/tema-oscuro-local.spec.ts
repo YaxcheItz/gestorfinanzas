@@ -4,7 +4,7 @@ import { createSectionsFixture } from './secciones-fixture';
 test('tema oscuro legible en superficies, campos y acciones; claro conservado', async ({browser,baseURL})=>{
   const {c,p,origin,writes,pageErrors}=await createSectionsFixture(browser,baseURL!);
   try {
-    for(const route of ['dashboard','cuentas','reportes','configuracion','categorias','asistente']){
+    for(const route of ['dashboard','cuentas','reportes','configuracion','categorias','asistente','metas']){
       await p.goto(origin+'/'+route);
       await expect(p.locator('#main-content')).toBeVisible();
       await p.evaluate(()=>document.documentElement.classList.add('dark'));
@@ -26,6 +26,24 @@ test('tema oscuro legible en superficies, campos y acciones; claro conservado', 
       expect(ratios.canvas).toBeGreaterThan(0);expect(ratios.canvas).toBeLessThan(.03);
       expect(ratios.surface).toBeGreaterThan(ratios.canvas);
       for(const pair of ratios.pairs)expect(pair.ratio,route+' '+pair.fg+'/'+pair.bg).toBeGreaterThanOrEqual(pair.min);
+      if(route==='reportes'){
+        expect(await p.locator('input[type=month]').evaluate(e=>{
+          const probe=document.createElement('div');probe.style.backgroundColor='var(--kaptal-surface-subtle)';document.body.append(probe);
+          const same=getComputedStyle(e).backgroundColor===getComputedStyle(probe).backgroundColor;probe.remove();return same;
+        }),'El campo debe usar la superficie común, sin verde heredado').toBe(true);
+      }
+      if(route==='asistente'){
+        expect(await p.locator('[aria-relevant="additions text"]').evaluate(e=>{
+          const probe=document.createElement('div');probe.style.backgroundColor='var(--kaptal-canvas)';document.body.append(probe);
+          const same=getComputedStyle(e).backgroundColor===getComputedStyle(probe).backgroundColor;probe.remove();return same;
+        }),'El hilo debe usar el fondo común, sin azul heredado').toBe(true);
+      }
+      if(route==='metas'){
+        expect(await p.locator('app-metas form').first().evaluate(e=>{
+          const probe=document.createElement('div');probe.style.color='var(--kaptal-border)';document.body.append(probe);
+          const same=getComputedStyle(e).borderColor===getComputedStyle(probe).color;probe.remove();return same;
+        }),'El borde decorativo debe usar el separador común').toBe(true);
+      }
       await p.evaluate(()=>document.documentElement.classList.remove('dark'));
       await expect(p.locator('body')).toHaveCSS('background-color','rgb(255, 255, 255)');
       await expect(p.locator('.monai-theme')).toHaveCSS('font-family',/Segoe UI/);
