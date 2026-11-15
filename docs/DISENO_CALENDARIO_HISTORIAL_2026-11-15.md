@@ -53,3 +53,31 @@ Para otro chat: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL
 ## Cierre local final
 
 Código final: 580 unitarias en 66 archivos, 101 E2E en 10,7 min y siete casos con backend H2 en 2,5 min aprobados. Estos siete son tres funcionales y cuatro PWA con service worker real, sin omisiones. TypeScript estricto y build de 489,14 kB correctos. Auditoría final de 144 estados sin desbordes del documento ni fallos de contraste medidos; galería de 288 imágenes verificada. La ejecución integral intermedia detenida y los fallos de arnés/entorno no se cuentan como aprobados. Queda consultar CI del SHA publicado y la valoración estética del propietario. Sin integración, instalación o despliegue manual.
+
+
+## Publicación comprobada del diseño / PR284 — 15 noviembre 2026
+
+Rama diseno/calendario-historial-minimalista publicada en3f4d720382936a84cdeecf6c86256a3f1014887f, idéntico al SHA remoto comprobado, y worktree limpio. PR284 borrador hacia develop: https://github.com/YaxcheItz/gestorfinanzas/pull/284 . La base developfe13575 y main1fd9402 permanecen sin cambios; PR271 no integrado. PR283/d875d85 tiene CI general y Android revalidadas con éxito.
+
+El propietario autorizó rediseñar calendario e historial. La propuesta simplifica meses y selección, hace legibles las filas y controles del historial, adapta títulos al doble de fuente, conserva cifras/centavos/privacidad al indicar la moneda en sus etiquetas y amplía el campo del chat. Revisar http://127.0.0.1:14368 :288 imágenes,24 vistas,seis modos; galerías14359 y14361 conservadas. Auditoría final144 estados sin desbordes del documento ni fallos de contraste visibles medidos. Datos ficticios y contextos aislados; sin escrituras/previsualizaciones/errores JS en auditoría y focales.
+
+Código final:580 unitarias/66 archivos,101 E2E locales en10,7min,TypeScript estricto y build489,14kB aprobados. Siete casos locales adicionales en2,5min con backend H2 en memoria: tres funcionales y cuatro PWA con service worker real, sin omisiones. Siete de los ocho focales fallan contra d875d85 y los ocho pasan en la propuesta; contraste oscuro ya pasaba antes. No se equipara lo local con CI/PostgreSQL, teléfono o datos reales.
+
+CI general43767153271 y Android43767153323 están en curso al registrar. Consultar por el SHA exacto; no declarar CI remota aprobada todavía. El cierre posterior permanece en checkout documental, planes locales y PR para preservar el SHA del código verificado.
+
+No hubo integración, instalación o despliegue manual. La conexión existente de Vercel generó automáticamente la Preview7810676038 para3f4d720: GitHub devuelve environment=Preview y production_environment=false. No se cambió hosting ni producción.
+
+Pendiente: resultado de CI general/Android y valoración estética del propietario. Continuar ajustes concretos desde esta propuesta, manteniendo reglas/datos, chat sin borradores, PR271 excluido y lentitud/logout aplazados.
+
+Para otro chat: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/DISENO_CALENDARIO_HISTORIAL_2026-11-15.md. Continúa desde PR284/3f4d720, revalida SHA/CI y revisa comparativa14368. Calendario e historial tienen autorización nueva de rediseño. Usa datos ficticios; no integres PR271 ni despliegues manualmente».
+
+
+## Revisión de PR284 y comparativa14368 — 15 noviembre 2026
+
+Ver docs/REVISION_PR284_COMPARATIVA14368_2026-11-15.md. SHA3f4d720 remoto revalidado, PR284 abierto/borrador; PR271 sin integrar y develop/main sin cambios. Android CI aprobada; CI general aún en curso en la consulta inicial, con cinco jobs aprobados y E2E ejecutándose. El informe contiene la última consulta.
+
+Se comprobaron288 imágenes por HTTP local, decodificación e igualdad con la fuente. Se inspeccionaron28 capturas focales de ocho superficies. El detalle al320/200% conserva el importe partido en tres líneas en claro/oscuro, igual que PR283: pendiente preexistente, no regresión nueva. Observación menor de espacio del pie del presupuesto; valorar densidad del historial y scroll de calendario. No se modificó código ni se usaron datos reales. Las pruebas de la etapa anterior no se repitieron.
+
+Documentación en rama nueva revision/pr284-comparativa14368, desde develop remoto comprobado y fast-forward solo en esa rama a PR284. Sin integración, instalación o despliegue manual. Siguiente: resolver el detalle ampliado en una etapa de implementación con prueba focal y nueva rama. Valoración estética del propietario pendiente.
+
+Para otro chat: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md, docs/DISENO_CALENDARIO_HISTORIAL_2026-11-15.md y docs/REVISION_PR284_COMPARATIVA14368_2026-11-15.md. Continúa PR284/3f4d720: confirma CI y atiende el importe partido del detalle a320/200% con datos ficticios. No integres PR271 ni despliegues manualmente».
