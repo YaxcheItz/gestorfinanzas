@@ -1,13 +1,14 @@
 <!-- KAPTAL_ESTADO_VIGENTE_INICIO -->
-## Resumen vigente — 15 noviembre 2026
+## Resumen vigente — 15 noviembre 2026 · calendario e historial
 
-- Continuación de PR282/d52f3fc: CI general43637651542 y Android43637651540 revalidadas con éxito. Developfe13575 y main1fd9402 sin cambios; PR271 sigue borrador no integrado.
-- Rama nueva mejoras/ajustes-visuales-comparativa14359 creada desde origin/develop comprobado y con d52f3fc incorporado por fast-forward solo en esta rama. Worktree .local/worktrees/cuentas-enlace-legible.
-- Ajustes demostrados: Cuentas conserva «transacciones» completa sin la flecha decorativa; captura manual distribuye título/controles y los tres tipos según el espacio, sin reducir fuentes. Cambian solo presentación de Cuentas y capture.css.
-- Código final local: 579 unitarias/66 archivos, 19 E2E en2,6min, TypeScript estricto y build488,72kB aprobados. Auditoría de120 estados finales: cero desbordes del documento y fallos de contraste medidos. Los defectos se reprodujeron antes del ajuste; no se equipara esta API ficticia con backend, teléfono o service worker reales.
-- Comparativa original14359 conservada y verificada. Nueva http://127.0.0.1:14361 compara d52f3fc con estos ajustes:240 imágenes/20 vistas/seis modos, selectores independientes y ancho390px verificados sin errores JS. Capturas nuevas con fecha ficticia fija14 noviembre. Artefactos privados, sin guardados, previsualizaciones o datos reales.
-- Informe docs/REVISION_AJUSTES_COMPARATIVA_2026-11-15.md. Siguiente: valorar Cuentas/captura manual en14361 y después revisar cifras y títulos largos al200%, por sección. El campo del chat estrecho también queda registrado como observación; no hay aprobación estética global.
-- Calendario e historial conservados; PR271 excluido. PR283/d875d85 publicado y SHA remoto verificado. CI43738402517 en curso; Android43738402492 completed/success. Frontend/canales/Worker aprobados. Sin integración ni instalación. No se ejecutó despliegue manual; Vercel generó automáticamente una Preview no productiva al abrir el PR (ver cierre).
+- El propietario autoriza ahora mejorar también calendario e historial con un diseño más minimalista. Esta decisión sustituye la conservación/aplazamiento anteriores; mantener datos y reglas financieras, PR271 excluido y ningún despliegue manual.
+- PR283/d875d85: CI general43738402517 y Android43738402492 completed/success revalidadas. Rama nueva diseno/calendario-historial-minimalista desde origin/develop fe13575 comprobado, incorporando d875d85 por fast-forward solo en esta rama. Main1fd9402 no cambia. Worktree .local/worktrees/calendario-historial-minimalista.
+- Calendario: una etiqueta por mes, nombre completo/año accesible, controles44px, fuentes rem, selección discreta y cuadrícula adaptable. El botón de año siguiente refleja el límite futuro que ya aplicaba su handler.
+- Historial: descripciones/cifras con espacio propio, menos paneles, textos escalables, buscador ancho y tipos sin ocultarse lateralmente. Encabezado y foco corregidos a320/200%; mejor contraste de ingreso y detalle claro. Conserva filtros, paginación, detalle y gestos.
+- Títulos22/24/28px al100%,44/48/56px al200%. Cuentas/Presupuestos indican la moneda en etiquetas, sin repetirla en la cifra principal; conservan precisión y privacidad. Campo del chat en fila propia cuando falta ancho.
+- Local:580 unitarias/66 archivos, ocho focales, TypeScript y build489,14kB aprobados. Auditoría144 estados finales sin desbordes del documento ni fallos de contraste medidos. Galería http://127.0.0.1:14368 con288 imágenes/24 vistas/seis modos y controles verificados. Solo API ficticia, contextos nuevos y red externa bloqueada, sin escrituras/previsualizaciones/errores JS en auditoría/focales.
+- Batería integral final: 101 E2E aprobadas en 10,7 min. Siete casos finales con backend H2 aprobados en 2,5 min: tres funcionales y cuatro PWA con service worker real, sin omisiones. Se documentan el reintento temporal de Windows y ajustes del arnés; no equivalen a dispositivo real. CI del nuevo SHA pendiente de consulta al publicar.
+- PR284/3f4d720 publicado y SHA remoto comprobado. CI general43767153271 y Android43767153323 en curso. Informe docs/DISENO_CALENDARIO_HISTORIAL_2026-11-15.md. Siguiente: verificar CI y valorar comparativa14368; sin integración ni instalación. Preview automática de Vercel no productiva comprobada; no hubo despliegue manual.
 
 Los apartados siguientes conservan el historial y la evidencia de las etapas anteriores.
 <!-- KAPTAL_ESTADO_VIGENTE_FIN -->
@@ -3121,3 +3122,20 @@ Siguiente: reconsultar CI/Android del SHA d875d85 y valorar comparativa14361; de
 
 
 Actualización posterior del cierre: Android43738402492 completed/success para d875d853b4f3a60fe18bd529dc36cb854e9ece66. CI general43738402517 sigue en curso; no se declara aprobada. Sin instalación.
+
+
+## Publicación comprobada del diseño / PR284 — 15 noviembre 2026
+
+Rama diseno/calendario-historial-minimalista publicada en3f4d720382936a84cdeecf6c86256a3f1014887f, idéntico al SHA remoto comprobado, y worktree limpio. PR284 borrador hacia develop: https://github.com/YaxcheItz/gestorfinanzas/pull/284 . La base developfe13575 y main1fd9402 permanecen sin cambios; PR271 no integrado. PR283/d875d85 tiene CI general y Android revalidadas con éxito.
+
+El propietario autorizó rediseñar calendario e historial. La propuesta simplifica meses y selección, hace legibles las filas y controles del historial, adapta títulos al doble de fuente, conserva cifras/centavos/privacidad al indicar la moneda en sus etiquetas y amplía el campo del chat. Revisar http://127.0.0.1:14368 :288 imágenes,24 vistas,seis modos; galerías14359 y14361 conservadas. Auditoría final144 estados sin desbordes del documento ni fallos de contraste visibles medidos. Datos ficticios y contextos aislados; sin escrituras/previsualizaciones/errores JS en auditoría y focales.
+
+Código final:580 unitarias/66 archivos,101 E2E locales en10,7min,TypeScript estricto y build489,14kB aprobados. Siete casos locales adicionales en2,5min con backend H2 en memoria: tres funcionales y cuatro PWA con service worker real, sin omisiones. Siete de los ocho focales fallan contra d875d85 y los ocho pasan en la propuesta; contraste oscuro ya pasaba antes. No se equipara lo local con CI/PostgreSQL, teléfono o datos reales.
+
+CI general43767153271 y Android43767153323 están en curso al registrar. Consultar por el SHA exacto; no declarar CI remota aprobada todavía. El cierre posterior permanece en checkout documental, planes locales y PR para preservar el SHA del código verificado.
+
+No hubo integración, instalación o despliegue manual. La conexión existente de Vercel generó automáticamente la Preview7810676038 para3f4d720: GitHub devuelve environment=Preview y production_environment=false. No se cambió hosting ni producción.
+
+Pendiente: resultado de CI general/Android y valoración estética del propietario. Continuar ajustes concretos desde esta propuesta, manteniendo reglas/datos, chat sin borradores, PR271 excluido y lentitud/logout aplazados.
+
+Para otro chat: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/DISENO_CALENDARIO_HISTORIAL_2026-11-15.md. Continúa desde PR284/3f4d720, revalida SHA/CI y revisa comparativa14368. Calendario e historial tienen autorización nueva de rediseño. Usa datos ficticios; no integres PR271 ni despliegues manualmente».
