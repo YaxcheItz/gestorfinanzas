@@ -440,16 +440,21 @@ html .monai-theme .history-page .history-filter-list { justify-content: flex-sta
 html .monai-theme .history-page .ledger-active-filters .history-filter-chip { display: inline-flex; align-items: center; gap: .6rem; max-width: 100%; padding: .4rem .7rem; border: 1px solid var(--kaptal-border); border-radius: .75rem; background: var(--kaptal-surface-subtle); color: var(--kaptal-content); font-size: .75rem; font-weight: 500; text-align: left; text-decoration: none; white-space: normal; overflow-wrap: anywhere; }
 html .monai-theme .history-filter-chip > span { flex: none; color: var(--kaptal-content-muted); font-size: 1rem; }
 html .monai-theme .history-page .history-filter-reset { padding: .4rem .6rem; font-size: .75rem; }
-html .monai-theme .ledger-detail-sheet { top: var(--dialog-visible-top,0px); bottom: auto; height: var(--dialog-visible-height,100dvh); max-height: var(--dialog-visible-height,100dvh); }
+html .monai-theme .ledger-detail-sheet { top: var(--dialog-visible-top,0px); bottom: auto; height: var(--dialog-visible-height,100dvh); max-height: var(--dialog-visible-height,100dvh); padding-inline:16px; }
 html .monai-theme .ledger-detail-sheet__head { position: sticky; top: 0; z-index: 2; flex: none; padding-block: .3rem; background: var(--kaptal-surface); }
 html .monai-theme .ledger-detail-sheet__head > button { min-width: 44px; min-height: 44px; }
-html .monai-theme .ledger-detail-sheet__hero { min-width: 0; padding: 1.25rem 1rem; box-shadow: none; }
+html .monai-theme .ledger-detail-sheet__hero { min-width: 0; padding: 1.25rem 0; box-shadow: none; }
 html .monai-theme .ledger-detail-sheet__amount,
 html .monai-theme .ledger-detail-sheet__category { max-width: 100%; overflow-wrap: anywhere; }
+html .monai-theme .ledger-detail-sheet__amount { font-size:1.5rem; line-height:1.25; white-space:nowrap; overflow-wrap:normal; }
 html .monai-theme .ledger-detail-sheet__hero:not(.is-expense):not(.is-income) .ledger-detail-sheet__amount { color: var(--kaptal-content); }
 html .monai-theme .history-detail-currency { margin: 0 0 .5rem; color: var(--kaptal-content-muted); font-size: .75rem; }
 html .monai-theme .ledger-detail-sheet__meta dd { white-space: pre-wrap; }
+html .monai-theme .ledger-detail-sheet__meta > div { grid-template-columns:repeat(auto-fit,minmax(min(100%,9rem),1fr)); }
 html .monai-theme .ledger-detail-sheet__actions { position: sticky; bottom: 0; flex: none; padding-block: .75rem; background: var(--kaptal-surface); }
+@media (max-width:359px) {
+  html .monai-theme .ledger-detail-sheet__amount { font-size:1.25rem; }
+}
 html .monai-theme .ledger-detail-sheet__actions { flex-wrap: wrap; gap: .5rem; }
 html .monai-theme .ledger-detail-sheet__actions .history-repeat-button { flex: 1 0 100%; min-height: 48px; border-color: var(--kaptal-brand); background: var(--kaptal-brand); color: var(--kaptal-on-brand); }
 @media (max-width: 359px) {

@@ -241,7 +241,7 @@ import {
                     }
                   </div>
 
-                  <div class="flex items-center justify-between text-xs pt-1">
+                  <div class="budget-usage-caption flex flex-wrap items-center justify-between gap-x-3 gap-y-2 text-xs pt-1">
                     <span class="text-slate-500 dark:text-slate-400">
                       Del límite mensual
                       @if (p.porcentajeAlerta) { · aviso al {{ p.porcentajeAlerta }}% }

@@ -752,7 +752,7 @@
           <div class="ledger-detail-sheet__hero" [class.is-income]="det.tipo === 'INGRESO' || det.tipo === 'SALDO_INICIAL'" [class.is-expense]="det.tipo === 'GASTO'">
             <p class="ledger-detail-sheet__type">{{ etiquetaTipoDetalle(det.tipo) }}</p>
             <p class="ledger-detail-sheet__amount">
-              {{ (det.tipo === 'INGRESO' || det.tipo === 'SALDO_INICIAL') ? '+' : (det.tipo === 'GASTO' ? '−' : '') }}{{ det.monto | monto:det.moneda:'symbol':'1.2-2' }}
+              {{ (det.tipo === 'INGRESO' || det.tipo === 'SALDO_INICIAL') ? '+' : (det.tipo === 'GASTO' ? '−' : '') }}{{ det.monto | monto:det.moneda:'':'1.2-2' }}
             </p>
             <p class="history-detail-currency">{{ det.moneda }}</p>
             <p class="ledger-detail-sheet__category">{{ (det.descripcion || det.categoriaNombre || 'Movimiento') | textoFinanciero }}</p>

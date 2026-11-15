@@ -49,3 +49,8 @@ El host del navegador integrado no estaba disponible y la ventana nativa de revi
 Siguiente etapa: resolver el importe del detalle al 200% con un caso focal que reproduzca el hallazgo, y revisar el espacio del pie de presupuesto si corresponde. Valorar con el propietario densidad del historial y desplazamiento del calendario. Cualquier implementación debe partir de una rama nueva desde develop remoto comprobado y conservar la dependencia de PR284. PR271 excluido; lentitud/logout siguen aplazados. Integración solo cuando se autorice; ningún despliegue manual.
 
 Para otro chat: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md, docs/DISENO_CALENDARIO_HISTORIAL_2026-11-15.md y docs/REVISION_PR284_COMPARATIVA14368_2026-11-15.md. Continúa PR284/3f4d720: confirma su CI y atiende el importe partido en Detalle a 320/200% con datos ficticios, conservando decimales, signo, privacidad y ampliación. No integres PR271 ni despliegues manualmente».
+
+
+## Seguimiento: corrección propuesta del detalle
+
+El hallazgo sobre3f4d720 permanece como evidencia histórica. La propuesta posterior está en correcciones/detalle-importe-ampliado y comparativa14372; ver docs/CORRECCION_DETALLE_IMPORTE_2026-11-15.md. Reproduce y corrige el importe partido y las columnas estrechas, además del espacio del pie del presupuesto. CI general de PR284 terminó con fallo en check-startup antes de PWA; se solicitó reintento. No atribuir los pases locales de la corrección a CI ni a finanzas reales.

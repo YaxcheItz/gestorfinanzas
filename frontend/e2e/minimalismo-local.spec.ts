@@ -48,6 +48,57 @@ async function contrast(p: Page, selector: string) {
 }
 
 for (const dark of [false, true]) {
+  test(`importe del detalle completo y ampliable en ${dark ? 'oscuro' : 'claro'}`, async ({ browser, baseURL }, info) => {
+    const { c, p, writes, pageErrors } = await coherenceFixture(browser, baseURL!);
+    let movement = { id: 71, cuentaId: 11, cuentaDestinoId: 12, cuentaNombre: 'Cuenta ficticia', tipo: 'GASTO', monto: 125.4, moneda: 'MXN', fecha: '2026-11-14', descripcion: 'Importe ficticio', fechaCreacion: '2026-11-14T12:00:00Z' };
+    let hidden = false;
+    await p.route('**/api/**', r => {
+      if (r.request().method() !== 'GET') return r.fallback();
+      const path = new URL(r.request().url()).pathname;
+      if (path === '/api/perfil') return r.fulfill({ json: { success: true, data: { id: 995, nombre: 'Prueba visual', email: 'ui@example.test', tema: dark ? 'OSCURO' : 'CLARO', monedaPredeterminada: 'MXN', ocultarMontos: hidden } } });
+      if (path !== '/api/transacciones') return r.fallback();
+      return r.fulfill({ json: { success: true, data: { content: [movement], totalPages: 1, totalElements: 1, number: 0, size: 20, first: true, last: true, empty: false } } });
+    });
+    try {
+      const sizes = new Map<number, number>();
+      for (const [width, scale] of [[320, 200], [320, 100], [390, 100], [1280, 100]]) {
+        for (const [tipo, monto, visible] of [['GASTO', 125.4, '−125.40'], ['INGRESO', 9876543.21, '+9,876,543.21'], ['TRANSFERENCIA', 125.4, '125.40'], ['SALDO_INICIAL', 0, '+0.00']] as const) {
+          movement = { ...movement, tipo, monto };
+          await open(p, 'transacciones', width, scale, dark);
+          await p.getByRole('button', { name: 'Ver detalle de Importe ficticio', exact: true }).click();
+          const dialog = p.getByRole('dialog', { name: 'Detalle', exact: true });
+          await expect(dialog).toBeVisible();
+          if (tipo === 'GASTO') await p.screenshot({ path: info.outputPath(`detalle-${width}-${scale}.png`) });
+          if (tipo === 'INGRESO') await p.screenshot({ path: info.outputPath(`detalle-ingreso-${width}-${scale}.png`) });
+          await oneLine(p, '.ledger-detail-sheet__amount');
+          await wordsWhole(p, '.ledger-detail-sheet > .ledger-detail-sheet__meta');
+          await expect(dialog.locator('.ledger-detail-sheet__amount')).toHaveText(visible);
+          await expect(dialog.locator('.history-detail-currency')).toHaveText('MXN');
+          expect(await dialog.evaluate(e => e.scrollWidth <= e.clientWidth + 1)).toBe(true);
+          if (width === 320 && tipo === 'GASTO') sizes.set(scale, await dialog.locator('.ledger-detail-sheet__amount').evaluate(e => parseFloat(getComputedStyle(e).fontSize)));
+          if (width === 320 && scale === 200 && tipo === 'GASTO') {
+            const account = dialog.getByText('Cuenta ficticia', { exact: true });
+            await account.evaluate(e => e.scrollIntoView({ block: 'center' }));
+            const box = await account.boundingBox();
+            const head = await dialog.locator('.ledger-detail-sheet__head').boundingBox();
+            const actions = await dialog.locator('.ledger-detail-sheet__actions').boundingBox();
+            expect(box!.y).toBeGreaterThanOrEqual(head!.y + head!.height);
+            expect(box!.y + box!.height).toBeLessThanOrEqual(actions!.y);
+            await p.screenshot({ path: info.outputPath('detalle-datos-320-200.png') });
+          }
+        }
+      }
+      expect(sizes.get(200)).toBe(2 * sizes.get(100)!);
+      hidden = true;
+      movement = { ...movement, tipo: 'GASTO', monto: 125.4 };
+      await open(p, 'transacciones', 320, 200, dark);
+      await p.getByRole('button', { name: 'Ver detalle de Importe ficticio', exact: true }).click();
+      await expect(p.locator('.ledger-detail-sheet__amount')).toHaveText('−•••');
+      await oneLine(p, '.ledger-detail-sheet__amount');
+      expect(writes).toEqual([]); expect(pageErrors).toEqual([]);
+    } finally { await c.close(); }
+  });
+
   test(`ingreso y acciones de detalle contrastan en ${dark ? 'oscuro' : 'claro'}`, async ({ browser, baseURL }) => {
     const { c, p, writes, pageErrors } = await coherenceFixture(browser, baseURL!);
     await p.route('**/api/**', r => {
@@ -155,6 +206,11 @@ for (const dark of [false, true]) {
         if (path === 'presupuestos') {
           await oneLine(p, '.budget-remaining strong, .budget-overview__totals p.text-xl');
           await expect(p.locator('.budget-remaining strong')).toHaveText('1,500.00');
+          const caption = p.locator('.budget-usage-caption').first();
+          const label = await caption.locator('span').first().boundingBox();
+          const percentage = await caption.locator('span').last().boundingBox();
+          expect(percentage!.y >= label!.y + label!.height + 7 || percentage!.x >= label!.x + label!.width + 7).toBe(true);
+          await p.screenshot({ path: info.outputPath('presupuesto-320-200.png'), fullPage: true });
         }
       }
       await open(p, 'dashboard', 320, 200, dark);
