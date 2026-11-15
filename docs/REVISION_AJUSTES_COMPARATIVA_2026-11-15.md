@@ -54,3 +54,6 @@ Local final:579 unitarias/66 archivos,19 E2E en2,6min,TypeScript estricto y buil
 Sin integración ni instalación; developfe13575 y main1fd9402 permanecen sin cambios y PR271 no integrado. No se ejecutó despliegue manual. La integración existente de Vercel generó automáticamente la Preview7806724356 para el SHA del PR, marcada environment=Preview y production_environment=false por GitHub; no es producción. Se registra esta automatización y no se cambia la configuración de hosting. El cierre posterior se conserva en este checkout, planes locales y PR para mantener la CI del código publicado.
 
 Siguiente: reconsultar CI/Android del SHA d875d85 y valorar comparativa14361; después trabajar cifras y títulos largos al200% por sección, manteniendo calendario/historial, PR271 excluido y sin despliegues manuales.
+
+
+Actualización posterior del cierre: Android43738402492 completed/success para d875d853b4f3a60fe18bd529dc36cb854e9ece66. CI general43738402517 sigue en curso; no se declara aprobada. Sin instalación.

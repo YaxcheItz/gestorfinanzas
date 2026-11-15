@@ -7,7 +7,7 @@
 - Código final local: 579 unitarias/66 archivos, 19 E2E en2,6min, TypeScript estricto y build488,72kB aprobados. Auditoría de120 estados finales: cero desbordes del documento y fallos de contraste medidos. Los defectos se reprodujeron antes del ajuste; no se equipara esta API ficticia con backend, teléfono o service worker reales.
 - Comparativa original14359 conservada y verificada. Nueva http://127.0.0.1:14361 compara d52f3fc con estos ajustes:240 imágenes/20 vistas/seis modos, selectores independientes y ancho390px verificados sin errores JS. Capturas nuevas con fecha ficticia fija14 noviembre. Artefactos privados, sin guardados, previsualizaciones o datos reales.
 - Informe docs/REVISION_AJUSTES_COMPARATIVA_2026-11-15.md. Siguiente: valorar Cuentas/captura manual en14361 y después revisar cifras y títulos largos al200%, por sección. El campo del chat estrecho también queda registrado como observación; no hay aprobación estética global.
-- Calendario e historial conservados; PR271 excluido. PR283/d875d85 publicado y SHA remoto verificado. CI43738402517 y Android43738402492 en curso; frontend/canales/Worker aprobados. Sin integración ni instalación. No se ejecutó despliegue manual; Vercel generó automáticamente una Preview no productiva al abrir el PR (ver cierre).
+- Calendario e historial conservados; PR271 excluido. PR283/d875d85 publicado y SHA remoto verificado. CI43738402517 en curso; Android43738402492 completed/success. Frontend/canales/Worker aprobados. Sin integración ni instalación. No se ejecutó despliegue manual; Vercel generó automáticamente una Preview no productiva al abrir el PR (ver cierre).
 
 Los apartados siguientes conservan el historial y la evidencia de las etapas anteriores.
 <!-- KAPTAL_ESTADO_VIGENTE_FIN -->
@@ -2898,3 +2898,6 @@ Local final:579 unitarias/66 archivos,19 E2E en2,6min,TypeScript estricto y buil
 Sin integración ni instalación; developfe13575 y main1fd9402 permanecen sin cambios y PR271 no integrado. No se ejecutó despliegue manual. La integración existente de Vercel generó automáticamente la Preview7806724356 para el SHA del PR, marcada environment=Preview y production_environment=false por GitHub; no es producción. Se registra esta automatización y no se cambia la configuración de hosting. El cierre posterior se conserva en este checkout, planes locales y PR para mantener la CI del código publicado.
 
 Siguiente: reconsultar CI/Android del SHA d875d85 y valorar comparativa14361; después trabajar cifras y títulos largos al200% por sección, manteniendo calendario/historial, PR271 excluido y sin despliegues manuales.
+
+
+Actualización posterior del cierre: Android43738402492 completed/success para d875d853b4f3a60fe18bd529dc36cb854e9ece66. CI general43738402517 sigue en curso; no se declara aprobada. Sin instalación.
