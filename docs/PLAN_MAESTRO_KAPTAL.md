@@ -1,13 +1,14 @@
 <!-- KAPTAL_ESTADO_VIGENTE_INICIO -->
-## Resumen vigente — 15 noviembre 2026
+## Resumen vigente — 15 noviembre 2026 · calendario e historial
 
-- Continuación de PR282/d52f3fc: CI general43637651542 y Android43637651540 revalidadas con éxito. Developfe13575 y main1fd9402 sin cambios; PR271 sigue borrador no integrado.
-- Rama nueva mejoras/ajustes-visuales-comparativa14359 creada desde origin/develop comprobado y con d52f3fc incorporado por fast-forward solo en esta rama. Worktree .local/worktrees/cuentas-enlace-legible.
-- Ajustes demostrados: Cuentas conserva «transacciones» completa sin la flecha decorativa; captura manual distribuye título/controles y los tres tipos según el espacio, sin reducir fuentes. Cambian solo presentación de Cuentas y capture.css.
-- Código final local: 579 unitarias/66 archivos, 19 E2E en2,6min, TypeScript estricto y build488,72kB aprobados. Auditoría de120 estados finales: cero desbordes del documento y fallos de contraste medidos. Los defectos se reprodujeron antes del ajuste; no se equipara esta API ficticia con backend, teléfono o service worker reales.
-- Comparativa original14359 conservada y verificada. Nueva http://127.0.0.1:14361 compara d52f3fc con estos ajustes:240 imágenes/20 vistas/seis modos, selectores independientes y ancho390px verificados sin errores JS. Capturas nuevas con fecha ficticia fija14 noviembre. Artefactos privados, sin guardados, previsualizaciones o datos reales.
-- Informe docs/REVISION_AJUSTES_COMPARATIVA_2026-11-15.md. Siguiente: valorar Cuentas/captura manual en14361 y después revisar cifras y títulos largos al200%, por sección. El campo del chat estrecho también queda registrado como observación; no hay aprobación estética global.
-- Calendario aprobado e historial conservados, chat sin borradores, lentitud/logout aplazados y PR271 excluido. Sin integración, despliegue o instalación. Publicar y verificar la rama; la CI nueva debe consultarse por su SHA, sin atribuirle la de PR282.
+- El propietario autoriza ahora mejorar también calendario e historial con un diseño más minimalista. Esta decisión sustituye la conservación/aplazamiento anteriores; mantener datos y reglas financieras, PR271 excluido y ningún despliegue manual.
+- PR283/d875d85: CI general43738402517 y Android43738402492 completed/success revalidadas. Rama nueva diseno/calendario-historial-minimalista desde origin/develop fe13575 comprobado, incorporando d875d85 por fast-forward solo en esta rama. Main1fd9402 no cambia. Worktree .local/worktrees/calendario-historial-minimalista.
+- Calendario: una etiqueta por mes, nombre completo/año accesible, controles44px, fuentes rem, selección discreta y cuadrícula adaptable. El botón de año siguiente refleja el límite futuro que ya aplicaba su handler.
+- Historial: descripciones/cifras con espacio propio, menos paneles, textos escalables, buscador ancho y tipos sin ocultarse lateralmente. Encabezado y foco corregidos a320/200%; mejor contraste de ingreso y detalle claro. Conserva filtros, paginación, detalle y gestos.
+- Títulos22/24/28px al100%,44/48/56px al200%. Cuentas/Presupuestos indican la moneda en etiquetas, sin repetirla en la cifra principal; conservan precisión y privacidad. Campo del chat en fila propia cuando falta ancho.
+- Local:580 unitarias/66 archivos, ocho focales, TypeScript y build489,14kB aprobados. Auditoría144 estados finales sin desbordes del documento ni fallos de contraste medidos. Galería http://127.0.0.1:14368 con288 imágenes/24 vistas/seis modos y controles verificados. Solo API ficticia, contextos nuevos y red externa bloqueada, sin escrituras/previsualizaciones/errores JS en auditoría/focales.
+- Batería integral final: 101 E2E aprobadas en 10,7 min. Siete casos finales con backend H2 aprobados en 2,5 min: tres funcionales y cuatro PWA con service worker real, sin omisiones. Se documentan el reintento temporal de Windows y ajustes del arnés; no equivalen a dispositivo real. CI del nuevo SHA pendiente de consulta al publicar.
+- Leer docs/DISENO_CALENDARIO_HISTORIAL_2026-11-15.md. Siguiente: cerrar resultados/CI y valorar calendario, historial, cifras y chat en14368. Lentitud/logout siguen aplazados; chat sin borradores. Sin integración ni instalación; la conexión existente puede generar Preview automática no productiva al publicar el PR.
 
 Los apartados siguientes conservan el historial y la evidencia de las etapas anteriores.
 <!-- KAPTAL_ESTADO_VIGENTE_FIN -->
@@ -2041,3 +2042,13 @@ Sin integración,producción o instalación. Calendario aprobado,historial sin r
 Ver docs/REVISION_AJUSTES_COMPARATIVA_2026-11-15.md. Continúa PR282/d52f3fc en la rama nueva mejoras/ajustes-visuales-comparativa14359, desde develop remoto comprobado. Cuentas sin palabra partida ni flecha decorativa y captura manual con título/tipos adaptables; sin reducir letra. Local: 579 unitarias/66 archivos,19 E2E,TypeScript y build488,72kB aprobados; auditoría120 estados sin desbordes/fallos de contraste medidos. Comparativa nueva14361 de240 imágenes; original14359 conservada. API ficticia y red externa bloqueada, cero escrituras/previsualizaciones/errores JS. Faltan valoración estética de cifras/títulos al200% y CI del nuevo SHA; la CI de PR282 sí se revalidó. Sin integración ni despliegue; calendario/historial conservados y PR271 excluido.
 
 Para otro chat: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/REVISION_AJUSTES_COMPARATIVA_2026-11-15.md. Continúa comparativa14361 desde mejoras/ajustes-visuales-comparativa14359, dependiente de PR282/d52f3fc. Revalida SHA/CI y revisa cifras/títulos al200% con datos ficticios. Conserva calendario/historial; no integres PR271 ni despliegues».
+
+
+## Diseño autorizado de calendario e historial — 15 noviembre 2026
+
+El propietario autoriza mejorar también estas dos superficies. Ver docs/DISENO_CALENDARIO_HISTORIAL_2026-11-15.md y comparativa14368: calendario plano, historial con lectura clara, títulos escalables, cifras completas y chat con más ancho. Rama diseno/calendario-historial-minimalista, dependiente de PR283/d875d85 con CI aprobada; fuente desde develop remoto comprobado. Local580 unitarias/66 archivos, ocho focales, build489,14kB, TypeScript y auditoría144 estados/288 imágenes aprobados. Integral101 y funcionales/PWA finales en curso; registrar resultado y SHA/CI al cerrar. Sin integración, instalación, datos reales o despliegue manual; PR271 excluido.
+
+Para otro chat: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/DISENO_CALENDARIO_HISTORIAL_2026-11-15.md. Continúa desde diseno/calendario-historial-minimalista y comparativa14368; revalida SHA/CI y revisa el diseño con datos ficticios. Calendario e historial tienen autorización nueva de rediseño. No integres PR271 ni despliegues manualmente».
+
+
+Cierre local final de minimalismo: 580 unitarias/66 archivos, 101 E2E en 10,7 min y siete funcionales/PWA en 2,5 min aprobados; build 489,14 kB y TypeScript correctos. Auditoría de 144 estados y galería de 288 imágenes verificadas, sin desbordes del documento ni fallos de contraste medidos. Continuar con SHA remoto/CI y valoración estética del propietario; sin integración ni instalación.

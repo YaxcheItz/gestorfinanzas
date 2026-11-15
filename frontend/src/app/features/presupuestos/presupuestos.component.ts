@@ -101,8 +101,8 @@ import {
               <span class="budget-overview__percent" [class.is-over]="moneda.totalDisponible < 0">{{ moneda.porcentajeConsumido | number:'1.0-0' }}%</span>
             </div>
             <div class="budget-overview__totals mt-4 grid gap-3">
-              <div><p class="text-xs font-medium text-slate-500 dark:text-slate-400">Ya gastaste</p><p class="mt-1 break-words text-xl font-bold tracking-tight text-slate-900 tabular-nums dark:text-white">{{ moneda.totalGastado | monto:moneda.moneda:'symbol':'1.2-2' }}</p></div>
-              <div class="text-right"><p class="text-xs font-medium text-slate-500 dark:text-slate-400">{{ moneda.totalDisponible >= 0 ? 'Te queda' : 'Te excediste' }}</p><p class="mt-1 break-words text-xl font-bold tracking-tight tabular-nums" [ngClass]="moneda.totalDisponible >= 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'">{{ (moneda.totalDisponible >= 0 ? moneda.totalDisponible : -moneda.totalDisponible) | monto:moneda.moneda:'symbol':'1.2-2' }}</p></div>
+              <div><p class="text-xs font-medium text-slate-500 dark:text-slate-400">Ya gastaste</p><p class="mt-1 break-words text-xl font-bold tracking-tight text-slate-900 tabular-nums dark:text-white">{{ moneda.totalGastado | monto:moneda.moneda:'':'1.2-2' }}</p></div>
+              <div class="text-right"><p class="text-xs font-medium text-slate-500 dark:text-slate-400">{{ moneda.totalDisponible >= 0 ? 'Te queda' : 'Te excediste' }}</p><p class="mt-1 break-words text-xl font-bold tracking-tight tabular-nums" [ngClass]="moneda.totalDisponible >= 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'">{{ (moneda.totalDisponible >= 0 ? moneda.totalDisponible : -moneda.totalDisponible) | monto:moneda.moneda:'':'1.2-2' }}</p></div>
             </div>
             <div class="mt-4 h-2.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800" role="progressbar" [attr.aria-label]="'Uso del presupuesto en ' + moneda.moneda" aria-valuemin="0" [attr.aria-valuemax]="moneda.totalPresupuestado" [attr.aria-valuenow]="gastadoLimitado(moneda.totalGastado, moneda.totalPresupuestado)"><div [style.width.%]="obtenerAnchoBarra(moneda.porcentajeConsumido)" [class]="obtenerColorBarra(moneda.porcentajeConsumido)" class="h-full rounded-full"></div></div>
             <p class="mt-2 text-right text-xs text-slate-500 dark:text-slate-400">de {{ moneda.totalPresupuestado | monto:moneda.moneda:'symbol':'1.2-2' }} presupuestados</p>
@@ -220,7 +220,7 @@ import {
                 </div>
 
                 <!-- Barra de Progreso y Montos -->
-                <div class="budget-remaining" [class.is-over]="p.montoDisponible < 0"><span>{{ p.montoDisponible >= 0 ? 'Te queda' : 'Te excediste' }} · {{ p.moneda }}</span><strong>{{ (p.montoDisponible >= 0 ? p.montoDisponible : -p.montoDisponible) | monto:p.moneda:'symbol':'1.2-2' }}</strong></div>
+                <div class="budget-remaining" [class.is-over]="p.montoDisponible < 0"><span>{{ p.montoDisponible >= 0 ? 'Te queda' : 'Te excediste' }} · {{ p.moneda }}</span><strong>{{ (p.montoDisponible >= 0 ? p.montoDisponible : -p.montoDisponible) | monto:p.moneda:'':'1.2-2' }}</strong></div>
                 <div class="space-y-2">
                   <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
                     <span class="font-medium text-slate-500 dark:text-slate-400">Gastado: {{ p.montoGastado | monto:p.moneda:'symbol':'1.2-2' }}</span>

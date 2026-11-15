@@ -292,7 +292,7 @@
       }
 
       <!-- Tabla de Transacciones -->
-      <div class="history-results bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden" [attr.aria-busy]="loading()">
+      <div class="history-results overflow-hidden" [attr.aria-busy]="loading()">
 
         @if (loading()) {
           <div class="finance-loading-list p-4" role="status" aria-label="Cargando movimientos">

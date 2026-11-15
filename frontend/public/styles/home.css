@@ -83,18 +83,18 @@ html .monai-theme .time-option-card{border:0;border-radius:18px;background:var(-
 
 /* Period sheet: choices remain comfortable at 375px and when the keyboard opens. */
 .period-form fieldset{border:0;margin:0;padding:0;min-width:0}
-.period-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:16px 0}
-.period-choice{display:flex;align-items:flex-start;gap:8px;padding:12px;border-radius:16px;background:var(--kaptal-surface-subtle);border:1px solid transparent;min-height:64px;cursor:pointer;min-width:0}
+.period-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,9rem),1fr));gap:8px;margin:16px 0}
+.period-choice{display:flex;align-items:flex-start;gap:8px;padding:12px;border-radius:12px;background:var(--kaptal-surface);border:1px solid var(--kaptal-border);min-height:64px;cursor:pointer;min-width:0}
 .period-choice.is-active{border-color:var(--kaptal-brand)}
 .period-choice input{margin-top:4px;accent-color:var(--kaptal-brand);flex-shrink:0}
-.period-choice strong{display:block;font-size:14px}.period-choice small{display:block;font-size:12px;color:var(--kaptal-content-muted);line-height:1.5;margin-top:4px}
-.period-field{display:grid;gap:8px;margin:16px 0;font-size:14px;font-weight:600}
-.period-field input{min-height:48px;width:100%;min-width:0;max-width:100%;box-sizing:border-box;border:1px solid var(--kaptal-border);border-radius:14px;padding:12px;background:var(--kaptal-surface-subtle);color:var(--kaptal-content);font:inherit;font-size:16px}
-.period-help{font-size:12px;color:var(--kaptal-content-muted);line-height:1.5}
-.period-default{display:flex;align-items:center;gap:12px;min-height:44px;font-size:14px;margin-top:16px}.period-default input{width:20px;height:20px;accent-color:var(--kaptal-brand)}
+.period-choice strong{display:block;font-size:.875rem}.period-choice small{display:block;font-size:.75rem;color:var(--kaptal-content-muted);line-height:1.5;margin-top:4px}
+.period-field{display:grid;gap:8px;margin:16px 0;font-size:.875rem;font-weight:600}
+.period-field input{min-height:48px;width:100%;min-width:0;max-width:100%;box-sizing:border-box;border:1px solid var(--kaptal-border);border-radius:12px;padding:12px;background:var(--kaptal-surface-subtle);color:var(--kaptal-content);font:inherit;font-size:1rem}
+.period-help{font-size:.75rem;color:var(--kaptal-content-muted);line-height:1.5}
+.period-default{display:flex;align-items:center;gap:12px;min-height:44px;font-size:.875rem;margin-top:16px}.period-default input{width:20px;height:20px;flex:none;accent-color:var(--kaptal-brand)}
 .period-apply{width:100%;min-height:52px;border-radius:16px;margin-top:16px;background:var(--kaptal-brand);color:var(--kaptal-on-brand);font-weight:650}
 .period-custom{width:100%;min-height:48px;border-radius:16px;background:var(--kaptal-surface-subtle);margin-top:16px;font-size:14px}
-.period-error{font-size:14px;line-height:1.5;color:var(--kaptal-expense);margin-top:12px}
+.period-error{font-size:.875rem;line-height:1.5;color:var(--kaptal-expense);margin-top:12px}
 .period-form :focus-visible{outline:2px solid var(--kaptal-brand);outline-offset:3px}.period-form :disabled{opacity:.6}
 
 /* ── MonAi Budget Progress & Dotted Threshold Indicator ──────── */
@@ -198,64 +198,52 @@ html.dark .home-filter-chip__close{background:rgba(255,255,255,.15)}
 
 /* Modal contenedor MonAi */
 .monai-period-modal {
-  max-width: 420px;
-  width: 92%;
-  border-radius: 24px;
-  padding: 20px;
-  background: var(--kaptal-surface);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.22);
-  border: 1px solid var(--kaptal-border);
   display: flex;
   flex-direction: column;
   gap: 16px;
-  animation: monai-modal-pop 200ms cubic-bezier(0.16, 1, 0.3, 1);
 }
-@keyframes monai-modal-pop {
-  from { opacity: 0; transform: scale(0.95) translateY(10px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
-}
-
+html .monai-theme .monai-period-modal { container-type:inline-size; width:min(100%,28rem); padding:20px 20px calc(20px + env(safe-area-inset-bottom)); border-radius:20px 20px 0 0; }
 .monai-period-modal__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 44px;
+  align-items: start;
+  gap: 12px;
   border-bottom: 1px solid var(--kaptal-border);
   padding-bottom: 12px;
 }
 .monai-period-modal__nav-tabs {
   display: flex;
-  background: var(--kaptal-surface-subtle);
-  padding: 3px;
-  border-radius: 999px;
-  gap: 2px;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 .monai-period-modal__nav-tabs button {
   border: none;
   background: transparent;
-  padding: 6px 14px;
-  font-size: 12px;
+  min-height: 44px;
+  padding: 8px 10px;
+  font-size: .8125rem;
+  line-height: 1.4;
   font-weight: 600;
-  border-radius: 999px;
+  border-radius: 8px;
   color: var(--kaptal-content-muted);
   cursor: pointer;
   transition: background-color 150ms ease, color 150ms ease;
 }
 .monai-period-modal__nav-tabs button.is-active {
-  background: var(--kaptal-surface);
+  background: var(--kaptal-surface-subtle);
   color: var(--kaptal-content);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  box-shadow: none;
 }
 .monai-period-modal__close {
   display: inline-grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
   border: none;
   background: var(--kaptal-surface-subtle);
   color: var(--kaptal-content-muted);
-  font-size: 20px;
+  font-size: 24px;
   cursor: pointer;
   line-height: 1;
 }
@@ -265,19 +253,19 @@ html.dark .home-filter-chip__close{background:rgba(255,255,255,.15)}
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 4px 12px;
-  margin-bottom: 12px;
+  padding: 0;
+  margin-bottom: 16px;
 }
 .monai-year-stepper button {
   display: inline-grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: 1px solid var(--kaptal-border);
-  background: var(--kaptal-surface-subtle);
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  border: 0;
+  background: transparent;
   color: var(--kaptal-content);
-  font-size: 20px;
+  font-size: 24px;
   cursor: pointer;
   transition: background 150ms ease;
 }
@@ -289,62 +277,57 @@ html.dark .home-filter-chip__close{background:rgba(255,255,255,.15)}
   cursor: not-allowed;
 }
 .monai-year-title {
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 1.125rem;
+  font-weight: 600;
   letter-spacing: -0.01em;
   color: var(--kaptal-content);
 }
 
-/* Cuadrícula de 12 meses estilo MonAi */
+/* Una sola etiqueta por mes; la cuadrícula crece con la letra. */
 .monai-month-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
+  grid-template-columns: repeat(4,minmax(0,1fr));
+  gap: 8px;
 }
 .monai-month-btn {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 12px 6px;
-  border-radius: 16px;
-  border: 1px solid var(--kaptal-border);
-  background: var(--kaptal-surface-subtle);
+  min-width: 0;
+  min-height: 3.25rem;
+  padding: 10px 6px;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background: transparent;
   color: var(--kaptal-content);
   cursor: pointer;
-  transition: transform 120ms ease, background-color 150ms ease, border-color 150ms ease;
+  transition: background-color 150ms ease, border-color 150ms ease;
 }
 .monai-month-btn:hover:not(:disabled) {
-  background: var(--kaptal-surface);
-  border-color: var(--kaptal-brand);
-  transform: translateY(-2px);
-}
-.monai-month-btn:active:not(:disabled) {
-  transform: scale(0.96);
+  background: var(--kaptal-surface-subtle);
 }
 .monai-month-btn.is-selected {
-  background: var(--kaptal-brand);
+  background: var(--kaptal-surface-subtle);
   border-color: var(--kaptal-brand);
-  color: var(--kaptal-on-brand);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
-}
-.monai-month-btn.is-selected .monai-month-full {
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--kaptal-brand-ink);
+  box-shadow: none;
 }
 .monai-month-btn:disabled {
   opacity: 0.35;
   cursor: not-allowed;
 }
 .monai-month-short {
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
+  font-size: .875rem;
+  font-weight: 600;
 }
-.monai-month-full {
-  font-size: 10px;
-  text-transform: capitalize;
-  color: var(--kaptal-content-muted);
-  margin-top: 2px;
+.monai-period-modal :focus-visible { outline:2px solid var(--kaptal-focus); outline-offset:2px; }
+@container(max-width:12rem) {
+  .monai-month-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media(min-width:768px) {
+  html .monai-theme .time-dropdown-backdrop { align-items:center; padding:24px; }
+  html .monai-theme .monai-period-modal { border-radius:20px; }
 }
 
 /* ─── Etiquetas Chips (Tags) ─────────────────────────────────────────── */

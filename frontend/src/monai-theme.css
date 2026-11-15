@@ -188,12 +188,15 @@ html .monai-theme .settings-page>nav a{border:0;border-radius:999px;background:v
 html .monai-theme .history-page .history-actions{gap:8px}
 html .monai-theme .history-page .ledger-search{border:0;border-radius:999px;background:var(--kaptal-surface-subtle)}
 html .monai-theme .history-page .ledger-filter-btn{border:0;border-radius:999px}
-html .monai-theme .history-page .history-day>h2{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 0 4px;font-size:13px;color:var(--kaptal-content-muted)}
+html .monai-theme .history-page .history-day>h2{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 12px;padding:12px 0;font-size:.8125rem;color:var(--kaptal-content-muted)}
 html .monai-theme :is(.ledger-detail-sheet,.ledger-filter-sheet,.quick-entry,#quick-capture-panel){border:0;border-radius:30px 30px 0 0}
 @media(prefers-reduced-transparency:reduce){html .monai-theme{--kaptal-glass:var(--kaptal-surface-subtle)}.workspace-selector,.glass-icon,.capture-dock__manual{backdrop-filter:none}}
 
 /* Reservar el ancho para los nombres al ampliar texto en tarjetas estrechas. */
 html .monai-theme .account-card { container-type: inline-size; }
+@media (max-width: 639px) {
+  html .monai-theme :is(.account-card, .budget-overview, .budget-category-card) { padding: 16px; }
+}
 html .monai-theme .account-card h2.account-card__name { overflow: visible; text-overflow: clip; overflow-wrap: break-word; }
 @container (max-width: 18rem) {
   .account-card__heading { flex-direction: column-reverse; align-items: flex-start; }

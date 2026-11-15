@@ -581,7 +581,13 @@ html .monai-theme #quick-capture-panel .capture-cancel { border:1px solid var(--
 html .monai-theme #quick-capture-panel .capture-save { background:var(--kaptal-brand); color:var(--kaptal-on-brand); }
 html .monai-theme #quick-capture-panel .capture-chat__typing { display:flex; align-items:center; gap:.4rem; padding:.5rem 0; }
 html .monai-theme #quick-capture-panel .capture-chat__error { flex-shrink:0; margin:.4rem var(--chat-gutter); max-height:5rem; overflow-y:auto; overscroll-behavior:contain; font-size:.85rem; }
+html .monai-theme #quick-capture-panel { container-type:inline-size; }
 html .monai-theme #quick-capture-panel .capture-chat__composer { display:grid; grid-template-columns:minmax(0,1fr) 44px 44px; align-items:end; gap:.35rem; width:calc(100% - var(--chat-gutter) * 2); margin:.5rem var(--chat-gutter) 0; padding:.45rem; border:1px solid var(--kaptal-control-border); border-radius:1.25rem; background:var(--kaptal-surface-subtle); }
+@container (max-width:20rem) {
+  html .monai-theme #quick-capture-panel .capture-chat__composer textarea { grid-column:1 / -1; }
+  html .monai-theme #quick-capture-panel .capture-chat__composer .capture-mic { grid-column:2; }
+  html .monai-theme #quick-capture-panel .capture-chat__composer .capture-chat__send { grid-column:3; }
+}
 html .monai-theme #quick-capture-panel .capture-chat__composer:focus-within { border-color:var(--kaptal-focus); box-shadow:0 0 0 1px var(--kaptal-focus); }
 html .monai-theme #quick-capture-panel #quick-capture-text { width:100%; min-width:0; min-height:44px; max-height:min(8rem,calc(var(--dialog-visible-height,100dvh) * .24)); padding:.55rem .3rem; resize:none; overflow-y:auto; field-sizing:content; border:0; border-radius:0; outline:none; box-shadow:none; background:transparent; color:var(--kaptal-content); font-size:1rem; line-height:1.45; }
 html .monai-theme #quick-capture-panel .capture-chat__composer button { display:grid; place-items:center; flex:none; width:44px; min-width:44px; height:44px; min-height:44px; margin:0; border:0; border-radius:.85rem; touch-action:manipulation; }

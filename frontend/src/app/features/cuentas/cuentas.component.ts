@@ -114,16 +114,16 @@ import { fechaCivilFinanciera } from '../../core/utils/periodo-financiero';
               @if (cuenta.tipo === 'CREDITO') {
                 <div class="account-credit-summary mt-4 sm:mt-6 grid grid-cols-2 gap-3">
                   <div>
-                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Deuda actual</p>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Deuda actual · {{ cuenta.moneda }}</p>
                     <p class="mt-1 text-lg font-bold text-slate-900">
-                      {{ deudaActualCuenta(cuenta) | monto:cuenta.moneda:'symbol':'1.2-2' }}
+                      {{ deudaActualCuenta(cuenta) | monto:cuenta.moneda:'':'1.2-2' }}
                     </p>
                   </div>
                   <div class="text-right">
-                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Crédito disponible</p>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Crédito disponible · {{ cuenta.moneda }}</p>
                     @if (cuenta.limiteCredito != null) {
                       <p class="mt-1 text-lg font-bold text-emerald-700">
-                        {{ creditoDisponibleCuenta(cuenta) ?? 0 | monto:cuenta.moneda:'symbol':'1.2-2' }}
+                        {{ creditoDisponibleCuenta(cuenta) ?? 0 | monto:cuenta.moneda:'':'1.2-2' }}
                       </p>
                     } @else {
                       <p class="mt-1 text-xs font-semibold text-amber-700">Configura el límite</p>
@@ -150,9 +150,9 @@ import { fechaCivilFinanciera } from '../../core/utils/periodo-financiero';
                   </p>
                 }
               } @else {
-                <p class="mt-4 sm:mt-6 text-xs font-semibold uppercase tracking-wider text-slate-400">Saldo actual</p>
+                <p class="mt-4 sm:mt-6 text-xs font-semibold uppercase tracking-wider text-slate-400">Saldo actual · {{ cuenta.moneda }}</p>
                 <p class="mt-1 text-xl sm:text-2xl font-bold text-slate-900">
-                  {{ cuenta.saldoActual | monto:cuenta.moneda:'symbol':'1.2-2' }}
+                  {{ cuenta.saldoActual | monto:cuenta.moneda:'':'1.2-2' }}
                 </p>
               }
               @if (cuenta.cashbackPorcentaje && cuenta.cashbackPorcentaje > 0) {

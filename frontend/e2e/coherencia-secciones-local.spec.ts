@@ -12,7 +12,7 @@ test(`título de ${path} respeta el texto ampliado`,async({browser,baseURL})=>{
  const {c,p,writes,pageErrors}=await coherenceFixture(browser,baseURL!);
  try{
   for(const[width,font,dark]of layouts){
-   await open(p,path,width,font,dark);expect(await p.locator('#main-content h1').first().evaluate(e=>parseFloat(getComputedStyle(e).fontSize))).toBe(font==='200%'?60:30);
+   await open(p,path,width,font,dark);expect(await p.locator('#main-content h1').first().evaluate(e=>parseFloat(getComputedStyle(e).fontSize))).toBe((width>=768?28:width>=375?24:22)*(font==='200%'?2:1));
    expect(await p.evaluate(()=>document.documentElement.scrollWidth)).toBe(width);
    if(path==='presupuestos')await expect(p.locator('.budget-period-controls span').filter({hasText:'|'})).toHaveAttribute('aria-hidden','true');
   }
@@ -57,10 +57,10 @@ test('aportes de Compartidos usan el color de ingreso y contraste legible',async
  }finally{await c.close();}
 });
 
-test('referencia de Movimientos conserva tipografía y filas existentes',async({browser,baseURL})=>{
+test('Movimientos usa tipografía escalable en sus filas y encabezado',async({browser,baseURL})=>{
  const {c,p,writes,pageErrors}=await coherenceFixture(browser,baseURL!);
  try{
-  for(const[width,font,dark]of layouts){await open(p,'transacciones',width,font,dark);expect(await p.locator('#main-content h1').first().evaluate(e=>parseFloat(getComputedStyle(e).fontSize))).toBeCloseTo(width===1280?32:width===390?25.35:25,2);expect(await p.locator('.tx-item__title').first().evaluate(e=>parseFloat(getComputedStyle(e).fontSize))).toBe(15);expect(await p.locator('.tx-item__account').first().evaluate(e=>parseFloat(getComputedStyle(e).fontSize))).toBe(12);expect(await p.evaluate(()=>document.documentElement.scrollWidth)).toBe(width);}
+  for(const[width,font,dark]of layouts){await open(p,'transacciones',width,font,dark);expect(await p.locator('#main-content h1').first().evaluate(e=>parseFloat(getComputedStyle(e).fontSize))).toBe((width>=768?28:width>=375?24:22)*(font==='200%'?2:1));expect(await p.locator('.tx-item__title').first().evaluate(e=>parseFloat(getComputedStyle(e).fontSize))).toBe(15*(font==='200%'?2:1));expect(await p.locator('.tx-item__account').first().evaluate(e=>parseFloat(getComputedStyle(e).fontSize))).toBe(12*(font==='200%'?2:1));expect(await p.evaluate(()=>document.documentElement.scrollWidth)).toBe(width);}
   expect(writes).toEqual([]);expect(pageErrors).toEqual([]);
  }finally{await c.close();}
 });

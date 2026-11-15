@@ -27,6 +27,13 @@ describe('MontoPipe', () => {
     expect(pipe.transform(1234.5, 'MXN', 'symbol', '1.2-2')).toBe('•••');
   });
 
+  it('conserva signo y centavos cuando la moneda se indica en la etiqueta', () => {
+    privacidad.aplicar(1, false);
+    expect(pipe.transform(-9876543.21, 'MXN', '', '1.2-2')).toBe('-9,876,543.21');
+    privacidad.aplicar(1, true);
+    expect(pipe.transform(-9876543.21, 'MXN', '', '1.2-2')).toBe('•••');
+  });
+
   it('tapa los montos sin decimales igual que los que si los tienen', () => {
     privacidad.aplicar(1, true);
 
