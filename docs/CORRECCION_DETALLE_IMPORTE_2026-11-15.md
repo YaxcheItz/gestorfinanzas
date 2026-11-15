@@ -43,3 +43,14 @@ Se solicitó reintentar los jobs fallidos por la herramienta GitHub. El reintent
 Siguiente: consultar la CI del SHA de esta corrección y el reintento de PR284, revisar detalle y pie del presupuesto en comparativa14372 y continuar únicamente con los ajustes demostrados. La densidad del historial y el desplazamiento del calendario siguen para valoración estética del propietario. PR271 excluido; lentitud/logout aplazados. Sin finanzas reales, integración, instalación o despliegue manual. La conexión existente de Vercel puede generar una Preview automática al abrir el PR; no se cambia hosting.
 
 Para otro chat: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md, docs/REVISION_PR284_COMPARATIVA14368_2026-11-15.md y docs/CORRECCION_DETALLE_IMPORTE_2026-11-15.md. Continúa desde correcciones/detalle-importe-ampliado: revalida SHA/CI y revisa comparativa14372 con datos ficticios. Conserva PR271 excluido y no despliegues manualmente».
+
+
+## Publicación y CI comprobadas — 15 noviembre 2026, 22:39 UTC
+
+PR285 borrador hacia develop: https://github.com/YaxcheItz/gestorfinanzas/pull/285 . Commit de código y evidencia local `2b0fe058424fb5a26d1ff9608a06d080a66c0bbd`, publicado con SHA remoto idéntico. El cierre documental posterior mantiene el mismo código; comprobar el head final del PR para su propia CI. Rama correcciones/detalle-importe-ampliado; comparativa14372 comprobada con288 imágenes/selectores/ancho390px y cero errores JS.14368 conservada.
+
+Reintento de PR284/3f4d720: CI general43767153271 completed/success y Android43767153323 completed/success reconsultadas. Log del job132980684597:164 casos en11,9min, cuatro reservados a PWA omitidos en el proyecto normal y los cuatro PWA dedicados aprobados después en16,8s. check-startup pasó200/401/503 con cero solicitudes protegidas antes del refresh y cero cabeceras inesperadas. Se conserva el primer fallo; el reintento no demuestra su causa ni una corrección de autenticación.
+
+CI iniciada para2b0fe05: general43770362555 y Android43770362553 en curso al registrar. No se atribuye al nuevo SHA la CI aprobada de PR284. El cierre documental genera otro head con código idéntico: verificar su CI exacta. Desarrollo/main y PR284 conservan sus SHA; PR271 excluido, sin integración, instalación o despliegue manual. La configuración de hosting no se cambió; una Preview automática de la conexión existente no constituye un despliegue manual.
+
+Siguiente: comprobar CI del head final de PR285 y valorar el detalle/Presupuestos en comparativa14372. Si reaparece el fallo de check-startup, usar su diagnóstico nuevo sin desactivar las aserciones. Para continuar, leer AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/CORRECCION_DETALLE_IMPORTE_2026-11-15.md; conservar datos ficticios, PR271 excluido y ningún despliegue manual.
