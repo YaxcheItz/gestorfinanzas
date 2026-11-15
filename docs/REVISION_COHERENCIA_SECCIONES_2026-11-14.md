@@ -59,3 +59,8 @@ Auditoría/focales con contextos nuevos, API ficticia, red externa bloqueada, ce
 Develop fe13575532c8c055fe699374660988a888b01f6f y main 1fd9402bb40012aba4c894b81ecceb09dcfb48a1 reconsultados, sin integración, despliegue o instalación. Calendario aprobado, historial sin rediseño, lentitud/logout aplazados y PR271 excluido. La documentación de la rama conserva el corte de publicación; este cierre posterior está en checkout principal, planes locales y PR para preservar la CI exacta.
 
 Siguiente: valorar la comparativa conjunta y concretar los ajustes visuales que el propietario quiera antes de integrar ramas. Para otro chat: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/REVISION_COHERENCIA_SECCIONES_2026-11-14.md. PR282 publica d52f3fc con CI general/Android aprobadas y 89 E2E locales. Revisa comparativa14359 y continúa los ajustes visuales concretos con datos ficticios; conserva calendario/historial y no integres PR271 ni despliegues».
+
+
+## Continuación del 15 de noviembre
+
+Ajustes concretos y comparativa contra PR282 en docs/REVISION_AJUSTES_COMPARATIVA_2026-11-15.md y http://127.0.0.1:14361. La galería14359 conserva la evidencia original. No se integra ni despliega.

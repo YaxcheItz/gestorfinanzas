@@ -1,14 +1,13 @@
 <!-- KAPTAL_ESTADO_VIGENTE_INICIO -->
-## Resumen vigente — 14 noviembre 2026
+## Resumen vigente — 15 noviembre 2026
 
-- Revisión de coherencia entre secciones con datos ficticios. Rama nueva auditoria/coherencia-visual-secciones desde origin/develop fe13575532c8c055fe699374660988a888b01f6f comprobado, incorporando 8448633/PR281 por fast-forward. PR281 conserva CI general 43628292178 y Android 43628292170 exitosas al reconsultar.
-- Auditoría comparada: 20 vistas en seis configuraciones, 120 estados por versión. Temas claro/oscuro, 390/100%, 1280/100% y 320/200%. Tokens y familias tipográficas coherentes por tema; no se impone una jerarquía idéntica a todas las pantallas.
-- Cambios mínimos: títulos de seis secciones amplían de 30 a 60px al 200%; selector/enlaces/títulos de Inicio escalables y cabecera adaptable; nombre de categoría y nota de Metas completos; aporte de Compartidos usa el token de ingresos y supera 4,5:1. Separador decorativo de Presupuestos identificado como tal.
-- Diez regresiones focales: nueve reproducen defectos sobre el artefacto inmutable 8448633 y la referencia de Movimientos pasa antes/después. TypeScript estricto, 579 unitarias/66 archivos y build 488,72kB aprobados. 89 E2E locales finales y cuatro PWA locales aprobadas. PR282 publica d52f3fc91b9a837cbc5c917a2e54bda597abc5bd; CI general 43637651542 y Android 43637651540 exitosas: 152 E2E remotas y cuatro PWA separadas.
-- Galería privada http://127.0.0.1:14359 : 240 imágenes verificadas, selectores independientes, seis modos y ajuste a 390px sin errores JS. Vistas finales sin desbordes del documento o fallos de contraste medidos; se conservan elipsis de movimientos/resumen de captura y el marcador decorativo del icono seleccionado.
-- SHA remoto comprobado y worktree limpio. Seis trabajos generales de CI aprobados. Cierre posterior registrado aquí, planes locales y PR para conservar la CI del código final.
-- Informe docs/REVISION_COHERENCIA_SECCIONES_2026-11-14.md. Sin escrituras o previsualizaciones en esta auditoría/focales, API ficticia, contextos nuevos y red externa bloqueada. La suite integral usa sus escenarios ficticios existentes; no equivale a datos ni dispositivo reales.
-- Calendario aprobado, historial sin rediseño, lentitud/logout aplazados y PR271 excluido. Sin integración, despliegue o instalación. Siguiente: valorar la comparativa conjunta y acordar ajustes visuales concretos antes de integrar las ramas.
+- Continuación de PR282/d52f3fc: CI general43637651542 y Android43637651540 revalidadas con éxito. Developfe13575 y main1fd9402 sin cambios; PR271 sigue borrador no integrado.
+- Rama nueva mejoras/ajustes-visuales-comparativa14359 creada desde origin/develop comprobado y con d52f3fc incorporado por fast-forward solo en esta rama. Worktree .local/worktrees/cuentas-enlace-legible.
+- Ajustes demostrados: Cuentas conserva «transacciones» completa sin la flecha decorativa; captura manual distribuye título/controles y los tres tipos según el espacio, sin reducir fuentes. Cambian solo presentación de Cuentas y capture.css.
+- Código final local: 579 unitarias/66 archivos, 19 E2E en2,6min, TypeScript estricto y build488,72kB aprobados. Auditoría de120 estados finales: cero desbordes del documento y fallos de contraste medidos. Los defectos se reprodujeron antes del ajuste; no se equipara esta API ficticia con backend, teléfono o service worker reales.
+- Comparativa original14359 conservada y verificada. Nueva http://127.0.0.1:14361 compara d52f3fc con estos ajustes:240 imágenes/20 vistas/seis modos, selectores independientes y ancho390px verificados sin errores JS. Capturas nuevas con fecha ficticia fija14 noviembre. Artefactos privados, sin guardados, previsualizaciones o datos reales.
+- Informe docs/REVISION_AJUSTES_COMPARATIVA_2026-11-15.md. Siguiente: valorar Cuentas/captura manual en14361 y después revisar cifras y títulos largos al200%, por sección. El campo del chat estrecho también queda registrado como observación; no hay aprobación estética global.
+- Calendario e historial conservados; PR271 excluido. PR283/d875d85 publicado y SHA remoto verificado. CI43738402517 y Android43738402492 en curso; frontend/canales/Worker aprobados. Sin integración ni instalación. No se ejecutó despliegue manual; Vercel generó automáticamente una Preview no productiva al abrir el PR (ver cierre).
 
 Los apartados siguientes conservan el historial y la evidencia de las etapas anteriores.
 <!-- KAPTAL_ESTADO_VIGENTE_FIN -->
@@ -2881,3 +2880,21 @@ Auditoría/focales con contextos nuevos, API ficticia, red externa bloqueada, ce
 Develop fe13575532c8c055fe699374660988a888b01f6f y main 1fd9402bb40012aba4c894b81ecceb09dcfb48a1 reconsultados, sin integración, despliegue o instalación. Calendario aprobado, historial sin rediseño, lentitud/logout aplazados y PR271 excluido. La documentación de la rama conserva el corte de publicación; este cierre posterior está en checkout principal, planes locales y PR para preservar la CI exacta.
 
 Siguiente: valorar la comparativa conjunta y concretar los ajustes visuales que el propietario quiera antes de integrar ramas. Para otro chat: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/REVISION_COHERENCIA_SECCIONES_2026-11-14.md. PR282 publica d52f3fc con CI general/Android aprobadas y 89 E2E locales. Revisa comparativa14359 y continúa los ajustes visuales concretos con datos ficticios; conserva calendario/historial y no integres PR271 ni despliegues».
+
+
+## Revisión concreta de comparativa14359 — 15 noviembre 2026
+
+Ver docs/REVISION_AJUSTES_COMPARATIVA_2026-11-15.md. Continúa PR282/d52f3fc en la rama nueva mejoras/ajustes-visuales-comparativa14359, desde develop remoto comprobado. Cuentas sin palabra partida ni flecha decorativa y captura manual con título/tipos adaptables; sin reducir letra. Local: 579 unitarias/66 archivos,19 E2E,TypeScript y build488,72kB aprobados; auditoría120 estados sin desbordes/fallos de contraste medidos. Comparativa nueva14361 de240 imágenes; original14359 conservada. API ficticia y red externa bloqueada, cero escrituras/previsualizaciones/errores JS. Faltan valoración estética de cifras/títulos al200% y CI del nuevo SHA; la CI de PR282 sí se revalidó. Sin integración ni despliegue; calendario/historial conservados y PR271 excluido.
+
+Para otro chat: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/REVISION_AJUSTES_COMPARATIVA_2026-11-15.md. Continúa comparativa14361 desde mejoras/ajustes-visuales-comparativa14359, dependiente de PR282/d52f3fc. Revalida SHA/CI y revisa cifras/títulos al200% con datos ficticios. Conserva calendario/historial; no integres PR271 ni despliegues».
+
+
+## Publicación comprobada / PR283 — 15 noviembre 2026
+
+Publicado mejoras/ajustes-visuales-comparativa14359, commit d875d853b4f3a60fe18bd529dc36cb854e9ece66, idéntico al SHA remoto comprobado. PR283 borrador hacia develop: https://github.com/YaxcheItz/gestorfinanzas/pull/283 . Worktree limpio. CI general43738402517 y Android43738402492 en curso al cierre: frontend, canales y Worker aprobados, backend/PostgreSQL/E2E pendientes de concluir. No se atribuye al nuevo SHA la CI de PR282.
+
+Local final:579 unitarias/66 archivos,19 E2E en2,6min,TypeScript estricto y build488,72kB aprobados; auditoría120 estados y galería240 imágenes, sin desbordes del documento, fallos de contraste medidos o errores JS. Capturas ficticias/contextos aislados/red externa bloqueada; sin escrituras ni previsualizaciones de datos. Comparativa14361 y original14359 disponibles, con README de reinicio.
+
+Sin integración ni instalación; developfe13575 y main1fd9402 permanecen sin cambios y PR271 no integrado. No se ejecutó despliegue manual. La integración existente de Vercel generó automáticamente la Preview7806724356 para el SHA del PR, marcada environment=Preview y production_environment=false por GitHub; no es producción. Se registra esta automatización y no se cambia la configuración de hosting. El cierre posterior se conserva en este checkout, planes locales y PR para mantener la CI del código publicado.
+
+Siguiente: reconsultar CI/Android del SHA d875d85 y valorar comparativa14361; después trabajar cifras y títulos largos al200% por sección, manteniendo calendario/historial, PR271 excluido y sin despliegues manuales.
