@@ -164,8 +164,8 @@ import { fechaCivilFinanciera } from '../../core/utils/periodo-financiero';
                 </p>
               }
 
-              <p class="pointer-events-none relative mt-3 inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-emerald-700 dark:text-emerald-300">
-                Ver transacciones <span aria-hidden="true">&rarr;</span>
+              <p class="pointer-events-none relative mt-3 block min-h-11 text-sm font-semibold text-emerald-700 dark:text-emerald-300">
+                Ver transacciones
               </p>
 
               <details class="account-manage relative z-20 mt-4 border-t border-slate-100 pt-3">

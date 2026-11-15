@@ -42,3 +42,25 @@ Evidencia local: frontend/.local/coherencia-base y coherencia-after (audit.json 
 Publicar la rama y PR borrador hacia develop, verificar SHA remoto y CI. Los resultados posteriores se registran en checkout principal, planes locales y PR para mantener la CI del código final. Sin integración, producción o instalación. Siguiente paso: valorar la comparativa conjunta y concretar los ajustes que el propietario quiera antes de integrar las ramas.
 
 Para otro chat: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/REVISION_COHERENCIA_SECCIONES_2026-11-14.md. Revalida SHA/CI de auditoria/coherencia-visual-secciones y revisa la comparativa 14359. Continúa con ajustes visuales concretos usando datos ficticios, conservando calendario/historial y sin integrar PR271 ni desplegar».
+
+
+## Cierre verificado de coherencia entre secciones / PR282 — 14 noviembre 2026
+
+Rama auditoria/coherencia-visual-secciones publicada, SHA d52f3fc91b9a837cbc5c917a2e54bda597abc5bd remoto comprobado y worktree limpio. PR282 borrador hacia develop: https://github.com/YaxcheItz/gestorfinanzas/pull/282 . CI general 43637651542 y Android 43637651540 completed/success. Seis trabajos generales exitosos. El log del trabajo 132577906320 confirma 152 E2E y cuatro PWA separadas; las omisiones condicionales no se cuentan como aprobadas. Trabajo frontend 132577906327: 579 unitarias en 66 archivos, build y comprobación de dependencias aprobados. Estas comprobaciones no implican una corrección del fallo intermitente de arranque observado en PR281 ni de sesiones/logout.
+
+Local final: 89/89 E2E en 8,6min, incluidos los diez focales nuevos; 579 unitarias/66 archivos, TypeScript estricto y build de producción 488,72kB aprobados. Las nueve regresiones de defectos fallan contra el artefacto inmutable 8448633 y la referencia de Movimientos pasa antes/después. Cuatro PWA locales aprobadas en 1,9min con service worker real y backend de prueba H2 en memoria; se distinguen de CI/PostgreSQL. Una ejecución intermedia se detuvo al dividir la prueba de títulos y no acredita el resultado final.
+
+Auditoría de 120 estados por versión y galería de 240 imágenes. Final: cero desbordes del documento y cero fallos de contraste en el texto visible medido. Se mantienen las elipsis de movimientos/resumen de captura y el marcador decorativo de icono seleccionado; no se afirma que desaparezcan todos los recortes intencionados ni que toda la app tenga aprobación estética final. Los títulos de las seis secciones crecen de 30 a 60px al 200%; Inicio conserva los tamaños originales al 100% y amplía controles/títulos; nombre de categoría y nota de Metas completos; aporte de Compartidos legible con el token de ingresos. A 320/200% algunos títulos largos, como Presupuestos, y cifras se dividen entre líneas para conservar el contenido; esta presentación queda explícita para valoración visual del propietario. No cambian reglas financieras ni handlers.
+
+Comparativa privada http://127.0.0.1:14359 : 20 vistas, seis configuraciones (390/100%,1280/100%,320/200%, claro/oscuro), selectores independientes para comparar dos secciones, carga de todas las imágenes y ancho 390px comprobados sin errores JS. Los doce tokens y familias tipográficas coinciden entre las vistas de cada tema. Evidencia en .local/revision-coherencia-secciones y frontend/.local/coherencia-base, coherencia-after, coherencia-baseline-split, coherencia-integral-final, coherencia-pwa y gallery-check.json. No se suben imágenes ni perfiles.
+
+Auditoría/focales con contextos nuevos, API ficticia, red externa bloqueada, cero escrituras/previsualizaciones/errores JS. La suite integral y PWA usan escenarios sintéticos de sus respectivos arneses; no demuestran comportamiento con finanzas reales o dispositivo físico. No se leen credenciales, cambian permisos ni se usan avisos del teléfono.
+
+Develop fe13575532c8c055fe699374660988a888b01f6f y main 1fd9402bb40012aba4c894b81ecceb09dcfb48a1 reconsultados, sin integración, despliegue o instalación. Calendario aprobado, historial sin rediseño, lentitud/logout aplazados y PR271 excluido. La documentación de la rama conserva el corte de publicación; este cierre posterior está en checkout principal, planes locales y PR para preservar la CI exacta.
+
+Siguiente: valorar la comparativa conjunta y concretar los ajustes visuales que el propietario quiera antes de integrar ramas. Para otro chat: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/REVISION_COHERENCIA_SECCIONES_2026-11-14.md. PR282 publica d52f3fc con CI general/Android aprobadas y 89 E2E locales. Revisa comparativa14359 y continúa los ajustes visuales concretos con datos ficticios; conserva calendario/historial y no integres PR271 ni despliegues».
+
+
+## Continuación del 15 de noviembre
+
+Ajustes concretos y comparativa contra PR282 en docs/REVISION_AJUSTES_COMPARATIVA_2026-11-15.md y http://127.0.0.1:14361. La galería14359 conserva la evidencia original. No se integra ni despliega.
