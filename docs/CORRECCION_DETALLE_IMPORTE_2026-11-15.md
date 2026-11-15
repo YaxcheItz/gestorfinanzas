@@ -54,3 +54,12 @@ Reintento de PR284/3f4d720: CI general43767153271 completed/success y Android437
 CI iniciada para2b0fe05: general43770362555 y Android43770362553 en curso al registrar. No se atribuye al nuevo SHA la CI aprobada de PR284. El cierre documental genera otro head con código idéntico: verificar su CI exacta. Desarrollo/main y PR284 conservan sus SHA; PR271 excluido, sin integración, instalación o despliegue manual. La configuración de hosting no se cambió; una Preview automática de la conexión existente no constituye un despliegue manual.
 
 Siguiente: comprobar CI del head final de PR285 y valorar el detalle/Presupuestos en comparativa14372. Si reaparece el fallo de check-startup, usar su diagnóstico nuevo sin desactivar las aserciones. Para continuar, leer AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/CORRECCION_DETALLE_IMPORTE_2026-11-15.md; conservar datos ficticios, PR271 excluido y ningún despliegue manual.
+
+
+## CI y revisión comprobadas de PR285 — 15 noviembre 2026
+
+PR285/head b23f38a0c807f07b626d97fb0c4ad9142cee2275: CI general43770582994 y Android43770582797 completed/success comprobadas en 2026-11-15 22:56:54 UTC. Se conserva el head del PR y su CI. Ver docs/CI_REVISION_PR285_2026-11-15.md. Esta rama solo publica documentación del cierre, sin integrar develop/main o PR271 y sin despliegue manual.
+
+Comparativa14372 revalidada con288 imágenes y cero errores JS; inspección visual de12 PNG focales sin defecto nuevo reproducible. Seis combinaciones adicionales de detalle comprueban accesibilidad del cierre al desplazar y Escape, con datos ficticios, cero escrituras y cero errores JS. Las baterías locales anteriores no se repiten. Falta la valoración estética del propietario; su elección visual no autoriza integrar ni desplegar.
+
+Para otro chat: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md, docs/CORRECCION_DETALLE_IMPORTE_2026-11-15.md y docs/CI_REVISION_PR285_2026-11-15.md. Continúa PR285/b23f38a desde la revisión documental revision/pr285-ci-comparativa14372: la CI ya aprobó; recoge la valoración visual de comparativa14372 y atiende ajustes concretos con datos ficticios. No integres PR271 ni despliegues manualmente.».
