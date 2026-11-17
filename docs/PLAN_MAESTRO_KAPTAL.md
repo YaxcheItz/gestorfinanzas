@@ -12,6 +12,16 @@
 Los apartados siguientes conservan el historial y la evidencia de las etapas anteriores.
 <!-- KAPTAL_ESTADO_VIGENTE_FIN -->
 
+## Valoraci?n por secci?n ? 17 noviembre 2026, 23:36 UTC
+
+Rama `revision/valoracion-14384-inicio-cuentas`, creada desde origin/develop fe135755 comprobado y adelantada a dc974d6 solo en esta rama. Inspecci?n directa de18 PNG actuales de Inicio, Gastos en pareja y Mis cuentas, en seis modos;18 pares antes/actual id?nticos por SHA256. Galer?a14384 revalidada:336 im?genes decodificadas,28 vistas, seis modos, selectores independientes, cero errores JS y sin desborde de galer?a a390px. No equivale a recorrer la aplicaci?n interactiva ni a inspeccionar336 capturas.
+
+Pareja y Cuentas conservan legibilidad en la muestra; sin ajuste demostrado. En Inicio los botones flotantes se superponen visualmente al contenido de las capturas completas: pendiente comprobar desplazamiento/acceso con API ficticia antes de inferir defecto o modificar estilos. Sin cambios de producto/dependencias y sin repetir suites anteriores. CI y picomatch conservan su ?ltimo diagn?stico documentado, no reconsultado en esta parte. Informe: docs/VALORACION_14384_INICIO_PAREJA_CUENTAS_2026-11-17.md. Develop/main y rama visual de PR288 conservan sus SHA remotos comprobados; sin integraci?n, instalaci?n ni despliegue manual. PR271 excluido.
+
+Siguiente: comprobaci?n interactiva de Inicio con datos ficticios y despu?s formulario de cuenta/Presupuestos en14384. Calendario conservado; historial/lentitud/logout aplazados. Para otro chat: ?Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/VALORACION_14384_INICIO_PAREJA_CUENTAS_2026-11-17.md. Contin?a la valoraci?n desde revision/valoracion-14384-inicio-cuentas con datos ficticios. No integres PR271 ni despliegues manualmente?.
+
+
+
 ## Publicacion del chat sin borradores - 11 noviembre 2026
 
 El codigo funcional de develop 9e7a70ecc42f29c93b66f3878e9300fa031abab9 paso los seis trabajos de CI 43091982543 y fue integrado a main b91fed190dd901c87bf52efaf2db0f1bc976ed7e con arbol identico. Despliegues Vercel Production 7720518355 y Render main-kaptal-api 7720496965 success para b91fed1. La pagina publica respondio HTTP 200 en 0.350 s y health backend HTTP 200 en 0.310 s desde PC; no mide API autenticada ni determina causa de lentitud prolongada. CI Android de main 43093942714 success; CI general 43093942757 aun en curso al registrar. PR #271 obsoleto: no integrar.
