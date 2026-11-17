@@ -1,12 +1,13 @@
 <!-- KAPTAL_ESTADO_VIGENTE_INICIO -->
-## Resumen vigente — 15 noviembre 2026 · CI y revisión de PR285
+## Resumen vigente — 16 noviembre 2026 · Valoración por secciones y Reportes
 
-- PR285 sigue abierto/borrador hacia develop, head `b23f38a0c807f07b626d97fb0c4ad9142cee2275` comprobado contra checkout y remoto. CI general43770582994 y Android43770582797 completed/success para ese SHA exacto. Ver docs/CI_REVISION_PR285_2026-11-15.md para los resultados E2E/PWA y la hora de consulta.
-- Revisión nueva en rama documental revision/pr285-ci-comparativa14372, desde origin/develop fe13575 actualizado/comprobado y fast-forward de PR285 solo en esta rama. No cambia el código del PR. Main1fd9402, developfe13575 y PR284/3f4d720 sin cambios; PR271 excluido. Sin integración, instalación o despliegue manual.
-- Comparativa http://127.0.0.1:14372 revalidada:288 imágenes,24 vistas/seis modos, controles independientes, ancho390px y cero errores JS. Inspección directa de12 PNG focales. El importe y el pie de Presupuestos mantienen las correcciones; no se detectan defectos nuevos reproducibles en la muestra.14368 conservada.
-- Comprobación local adicional del detalle en seis combinaciones (390/100%,1280/100%,320/200%, claro/oscuro): cierre accesible al puntero antes/después de desplazar y Escape correcto; cero escrituras/errores JS. No se diagnostica un fallo por una captura parcial. Datos ficticios y contexto aislado, sin consultar finanzas reales.
-- Las580 unitarias/66 archivos,29 E2E focales/regresión y auditoría144 estados anteriores no se repiten. La CI actual es evidencia remota nueva y separada. Las mediciones de contraste/desborde de la auditoría anterior conservan su alcance, sin aprobación global de la aplicación o prueba de teléfono.
-- Siguiente: valoración estética del propietario de14372 y ajustes concretos por sección si los indica. La pregunta visual no autoriza integrar o desplegar. No iniciar otro rediseño sin hallazgo o preferencia concreta; lentitud/logout siguen aplazados. Leer docs/CI_REVISION_PR285_2026-11-15.md y docs/CORRECCION_DETALLE_IMPORTE_2026-11-15.md.
+- PR285 conserva head `b23f38a0c807f07b626d97fb0c4ad9142cee2275`, abierto/borrador; CI general43770582994 y Android43770582797 reconsultadas completed/success. No se atribuyen esos resultados al cambio nuevo.
+- Rama nueva `correcciones/reportes-importes-legibles` desde origin/develop `fe13575532c8c055fe699374660988a888b01f6f` actualizado/comprobado y fast-forward de be45b6a solo en esta rama para continuar la cadena visual. Main conserva1fd9402; develop conservafe13575. Sin integración de PR285/PR271, instalación o despliegue manual.
+- Inspección directa de24 vistas en390px/claro y muestra de seis vistas ampliadas de14372. Valoración por sección en docs/REVISION_REPORTES_IMPORTES_2026-11-16.md; no implica aprobación estética del propietario ni revisión individual de288 imágenes.
+- Ajuste concreto de Reportes: cifras completas y moneda debajo con el pipe existente; conservación de signo, decimales y privacidad, aumento real al doble, cuadrícula adaptable y desplazamiento con teclado para cifras excepcionales. Sin cambios de cálculos, filtros ni datos.
+- Comprobaciones locales:580 unitarias/66 archivos, build, TypeScript aplicación/E2E y siete E2E focales/regresión aprobados. Dos casos reprodujeron primero el corte original. Evidencia y fallos intermedios preservados en el informe. No se suman repeticiones como casos nuevos.
+- Comparativa nueva http://127.0.0.1:14376: seis modos de Reportes,12 capturas antes/después con la misma API ficticia y cero escrituras/previsualizaciones/errores JS.14372 y14368 conservadas. La CI del cambio nuevo se comprueba sobre su propio SHA después de publicar.
+- Siguiente: valoración de Reportes y reproducción del espacio del nombre de Metas al200%, con cambios mínimos en otra rama de etapa. Calendario conservado; historial/lentitud/logout aplazados. No consultar finanzas reales.
 
 Los apartados siguientes conservan el historial y la evidencia de las etapas anteriores.
 <!-- KAPTAL_ESTADO_VIGENTE_FIN -->

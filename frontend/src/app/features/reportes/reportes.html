@@ -13,9 +13,9 @@
     <section class="reports-empty" role="alert"><h2>No pudimos cargar tus datos</h2><p>{{ error() }}</p><button type="button" (click)="cargar()">Reintentar</button></section>
   } @else if (seleccionado(); as datos) {
     <section class="reports-summary" aria-label="Resumen del periodo">
-      <article><span>↑ Ingresos</span><strong>{{ datos.ingresosMes | monto:moneda():'symbol':'1.2-2' }}</strong></article>
-      <article><span>↓ Gastos</span><strong>{{ datos.gastosMes | monto:moneda():'symbol':'1.2-2' }}</strong></article>
-      <article><span>Diferencia del periodo</span><strong>{{ datos.balanceMes | monto:moneda():'symbol':'1.2-2' }}</strong><small>Ingresos menos gastos; no es el saldo de tus cuentas.</small></article>
+      <article><span>↑ Ingresos</span><strong tabindex="0">{{ datos.ingresosMes | monto:moneda():'':'1.2-2' }}</strong><small>{{ moneda() }}</small></article>
+      <article><span>↓ Gastos</span><strong tabindex="0">{{ datos.gastosMes | monto:moneda():'':'1.2-2' }}</strong><small>{{ moneda() }}</small></article>
+      <article><span>Diferencia del periodo</span><strong tabindex="0">{{ datos.balanceMes | monto:moneda():'':'1.2-2' }}</strong><small>{{ moneda() }}</small><small>Ingresos menos gastos; no es el saldo de tus cuentas.</small></article>
     </section>
     @if (anterior(); as previo) {<p class="reports-comparison">Frente al {{ rangoConsulta() ? 'periodo' : 'mes' }} anterior: {{ previo.variacionGastos | monto:moneda():'symbol':'1.2-2' }} de diferencia en gastos.</p>}
     <div class="reports-grid">
