@@ -47,7 +47,8 @@ import { fechaCivilFinanciera } from '../core/utils/periodo-financiero';
     }
     <p class="break-words">Los movimientos aparecen en tu historial como transferencias. Cancelar no devuelve fondos automáticamente; puedes retirarlos cuando lo decidas.</p>
   </section>`,
-  styles:`label{display:grid;gap:6px}input,select,button{min-height:44px;padding:10px;border:1px solid var(--kaptal-border);border-radius:12px;background:var(--kaptal-surface);color:var(--kaptal-content);font-size:1rem}input,select{width:100%;min-width:0}button{margin-right:8px;max-width:100%}button:disabled{opacity:.5}article{overflow-wrap:anywhere}form{border-color:var(--kaptal-border)}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--kaptal-focus);outline-offset:2px}`
+  // El espacio horizontal fijo deja crecer la letra sin estrechar también las palabras.
+  styles:`section,section>form,article{padding-inline:16px}label{display:grid;gap:6px}input,select,button{min-height:44px;padding:10px;border:1px solid var(--kaptal-border);border-radius:12px;background:var(--kaptal-surface);color:var(--kaptal-content);font-size:1rem}input,select{width:100%;min-width:0}button{margin-right:8px;max-width:100%}button:disabled{opacity:.5}article{overflow-wrap:anywhere}form{border-color:var(--kaptal-border)}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--kaptal-focus);outline-offset:2px}`
 })
 export class MetasComponent implements OnInit {
   private readonly http=inject(HttpClient);
