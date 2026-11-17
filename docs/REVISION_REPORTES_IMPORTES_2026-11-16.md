@@ -50,3 +50,12 @@ Evidencia privada: `.local/reportes-importes-red`, `.local/reportes-importes-cie
 Valorar Reportes en comparativa14376 y continuar con la reproducción focal de Metas al 200%, en una rama nueva desde develop comprobado, conservando la cadena visual necesaria solo en esa rama. La inspección de una muestra no aprueba toda la aplicación ni acredita teléfono físico. Lentitud/logout siguen aplazados; no se consultaron finanzas reales.
 
 Para otro chat: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md, docs/CI_REVISION_PR285_2026-11-15.md y docs/REVISION_REPORTES_IMPORTES_2026-11-16.md. Verifica el SHA y CI de la rama correcciones/reportes-importes-legibles, revisa comparativa14376 y continúa por Metas con datos ficticios y ajustes demostrados. Conserva PR285 y PR271 sin integrar y no despliegues manualmente.»
+
+
+## Publicación y consulta de CI — 17 noviembre 2026, 04:08:45 UTC
+
+[PR286](https://github.com/YaxcheItz/gestorfinanzas/pull/286) está abierto/borrador hacia develop, head `685a4ff11c3157541bee2b4bbedf822bdac7c3b7`, verificado por git ls-remote y plugin GitHub. [CI general44014983650](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44014983650) y [Android44014983634](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44014983634) siguen in_progress en esta consulta. Frontend (unitarias/build/dependencias), Canales y Worker aprobaron; Backend, PostgreSQL y E2E siguen en curso. Los pasos E2E/PWA no se declaran aprobados antes de concluir. Instantánea privada en `.local/revision-reportes-importes/ci-in-progress.json`.
+
+El cierre documental se publica por separado en `revision/reportes-importes-pr286`, creada desde develop remoto actualizado/comprobado y adelantada a685a4ff solamente en esa rama. El contenido de frontend es idéntico al PR; se conserva el SHA de la propuesta y su CI en ejecución. Estado, plan y continuidad locales sincronizados. PR285/b23f38a, develop/fe13575 y main/1fd9402 siguen sin cambios. Sin integración, instalación o despliegue manual.
+
+Para otro chat: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/REVISION_REPORTES_IMPORTES_2026-11-16.md. PR286/685a4ff está publicado en borrador; comprueba la conclusión de CI general44014983650 y Android44014983634. Revisa comparativa14376 y continúa por Metas con datos ficticios. El cierre documental está en revision/reportes-importes-pr286. No integres PR285/PR271 ni despliegues manualmente.»

@@ -9,6 +9,10 @@
 - Comparativa nueva http://127.0.0.1:14376: seis modos de Reportes,12 capturas antes/después con la misma API ficticia y cero escrituras/previsualizaciones/errores JS.14372 y14368 conservadas. La CI del cambio nuevo se comprueba sobre su propio SHA después de publicar.
 - Siguiente: valoración de Reportes y reproducción del espacio del nombre de Metas al200%, con cambios mínimos en otra rama de etapa. Calendario conservado; historial/lentitud/logout aplazados. No consultar finanzas reales.
 
+
+- Publicación comprobada: PR286 abierto/borrador hacia develop, https://github.com/YaxcheItz/gestorfinanzas/pull/286 , head `685a4ff11c3157541bee2b4bbedf822bdac7c3b7` idéntico al remoto. A2026-11-17 04:08:45UTC, CI general44014983650 y Android44014983634 in_progress; frontend de CI, Canales y Worker ya success. Falta conclusión de ambas ejecuciones, incluidos E2E/PWA. No confundir pruebas locales o CI de PR285 con aprobación de PR286.
+- Cierre en rama documental nueva `revision/reportes-importes-pr286`, desde develop remoto actualizado/comprobado y fast-forward de685a4ff solo en esa rama; el PR286 conserva su head probado. No cambia código de la propuesta ni las ramas protegidas.
+
 Los apartados siguientes conservan el historial y la evidencia de las etapas anteriores.
 <!-- KAPTAL_ESTADO_VIGENTE_FIN -->
 
