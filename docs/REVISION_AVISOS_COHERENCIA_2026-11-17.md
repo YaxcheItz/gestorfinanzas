@@ -31,8 +31,24 @@ Comparativa privada: `http://127.0.0.1:14382`. Carga de48 imágenes, cuatro secc
 
 Evidencia privada: `.local/avisos-coherencia-red-confirmed`, `.local/avisos-editor-red`, `.local/avisos-editor-save-red`, `.local/avisos-coherencia-entrega`, `.local/avisos-unitarias-final.log`, `.local/avisos-build-final.log`, `.local/avisos-capture-before-final`, `.local/avisos-capture-after-final` y `.local/revision-avisos-coherencia`. Reproducción focal desde `frontend`: `npx --no-install playwright test -c playwright.avisos-coherencia.config.ts`.
 
-## Continuidad
+## Comparativa general actualizada
 
-El cambio nuevo necesita su propia CI por SHA al publicar; no se le atribuyen los resultados aprobados de PR287. Siguiente: valorar conjuntamente Avisos14382, Metas14378 y Reportes14376 y continuar únicamente con ajustes demostrados o preferencias concretas del propietario. Calendario conservado; historial/lentitud/logout aplazados. La matriz sintética no equivale a aceptación estética ni prueba física.
+Galería privada nueva: `http://127.0.0.1:14384`. Reúne 24 vistas web y cuatro vistas con Android simulado, en seis modos y antes/después: 336 PNG. Referencia compilada e2b4bf7 (mismo código de producto que PR287/3b14ac6) y actual e205152. Los selectores de sección y versión son independientes; las 336 imágenes cargan, no hay errores JS y la galería se ajusta a 390px. Se conservan las galerías anteriores. Reinicio desde raíz: `python -m http.server 14384 --bind 127.0.0.1 --directory .local/revision-general-20261117`.
 
-Para otro chat: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/REVISION_AVISOS_COHERENCIA_2026-11-17.md. Comprueba el SHA y CI publicados de mejoras/avisos-coherencia-visual, revisa comparativa14382 y continúa por sección con datos ficticios y cambios concretos. No integres PR271 ni despliegues manualmente.»
+Cada versión web recorre 144 estados con API ficticia, fecha fija, red externa/SW bloqueados y cero escrituras, previsualizaciones API o errores JS. No se detecta desborde documental ni hallazgos en el cálculo de contraste de texto visible que cubre el arnés; excluye controles deshabilitados/texto semitransparente y no mide todos los estados posibles. Esta medición corresponde a las 24 vistas web; no se extrapola al puente Android.
+
+Fuera de las dos vistas web de Avisos, 128 de 132 capturas son idénticas byte a byte. Las cuatro diferencias de raster se limitan a rectángulos de 12×51px, 12×42px, 3×50px y 57×33px en captura manual, formulario de categoría y fondo difuminado de rango libre. Se inspeccionaron los cuatro pares completos; las métricas de estilo, controles, títulos, contraste y desborde recopiladas coinciden para los 132 estados. No se afirma identidad total ni se introducen cambios en esas secciones.
+
+Se inspeccionaron muestras de Avisos en claro/oscuro y letra grande, los cuatro pares con diferencias y la galería general de escritorio. Generar/comprobar las 336 imágenes no significa inspeccionar personalmente cada una. La valoración estética del propietario sigue abierta.
+
+Artefactos privados: `.local/avisos-general-before`, `.local/avisos-general-after`, `.local/revision-general-20261117/summary.json`, `metric-differences.json`, `raster-differences.json` y `gallery-check.json`; scripts de captura y comprobación en `frontend/.local/` y generador `.local/build-general-gallery.py`.
+
+## CI propia y continuidad
+
+[PR288](https://github.com/YaxcheItz/gestorfinanzas/pull/288), abierto/borrador, conserva head `e205152a5936f8f4803c977b5c99633d8577663b` publicado y remoto comprobado. CI general 44194248517 completed/failure, con Frontend fallido en security:check por picomatch sin parche publicado. Las unitarias remotas se omitieron por ese fallo; las 580 registradas son locales. Backend, PostgreSQL, Canales y Worker aprobados. E2E Chromium/API/PostgreSQL terminado correctamente: 176 pruebas del proyecto normal y 4 PWA en el proyecto dedicado; las cuatro PWA se omiten solo en el proyecto normal. Arranque y navegación sintéticos aprobados. Android 44194248531 completed/success; sin instalar. Consulta: 2026-11-17 23:10:02 UTC. Diagnóstico y siguiente acción en [CI de dependencias](CI_AVISOS_DEPENDENCIAS_2026-11-17.md). El control de seguridad y las dependencias permanecen intactos.
+
+Cierre documental en rama `revision/avisos-coherencia-pr288`, creada desde develop remoto comprobado y adelantada al head visual solo en esa rama. No cambia el código ni el head del PR. Siguiente: valorar conjuntamente las galerías 14384/14382/14378/14376 y continuar por sección con ajustes demostrados o preferencias concretas. Calendario conservado; historial/lentitud/logout aplazados. Sin integración, instalación, datos reales o despliegue manual.
+
+La primera reconsulta Git del cierre falló por conexión reiniciada y la lectura remota posterior por imposibilidad de conectar a GitHub:443. Los reintentos con HTTP/1.1 completaron fetch y ls-remote; develop/main y el head visual conservaron los SHA registrados. No se descartaron cambios ni se modificó la configuración Git persistente.
+
+Para otro chat: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md, docs/REVISION_AVISOS_COHERENCIA_2026-11-17.md y docs/CI_AVISOS_DEPENDENCIAS_2026-11-17.md. PR288/e205152 conserva el ajuste visual; CI general con fallo de seguridad por picomatch sin parche. Revisa la comparativa 14384 y continúa por sección con datos ficticios. Reconsulta el aviso antes de integrar; no integres PR271 ni despliegues manualmente.»
