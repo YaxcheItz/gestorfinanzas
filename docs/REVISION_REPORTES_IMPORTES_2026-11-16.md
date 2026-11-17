@@ -59,3 +59,10 @@ Para otro chat: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL
 El cierre documental se publica por separado en `revision/reportes-importes-pr286`, creada desde develop remoto actualizado/comprobado y adelantada a685a4ff solamente en esa rama. El contenido de frontend es idéntico al PR; se conserva el SHA de la propuesta y su CI en ejecución. Estado, plan y continuidad locales sincronizados. PR285/b23f38a, develop/fe13575 y main/1fd9402 siguen sin cambios. Sin integración, instalación o despliegue manual.
 
 Para otro chat: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/REVISION_REPORTES_IMPORTES_2026-11-16.md. PR286/685a4ff está publicado en borrador; comprueba la conclusión de CI general44014983650 y Android44014983634. Revisa comparativa14376 y continúa por Metas con datos ficticios. El cierre documental está en revision/reportes-importes-pr286. No integres PR285/PR271 ni despliegues manualmente.»
+
+
+## CI concluida — 2026-11-17 20:47:03 UTC
+
+PR286/`685a4ff11c3157541bee2b4bbedf822bdac7c3b7`: CI general44014983650 completed/success; Android44014983634 completed/success. Consulta 2026-11-17 20:47:03 UTC.
+
+Los seis trabajos de [CI general44014983650](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44014983650) aprobaron para685a4ff. El job133810626520 registra170 casos normales y luego cuatro PWA dedicados; cuatro reservados a PWA se omiten solo en el proyecto normal. [Android44014983634](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44014983634) también completed/success. Se conserva el head del PR286. Evidencia y continuidad nuevas en docs/REVISION_METAS_TEXTO_2026-11-16.md, en rama documental revision/metas-texto-pr287; sin integración, instalación o despliegue manual.

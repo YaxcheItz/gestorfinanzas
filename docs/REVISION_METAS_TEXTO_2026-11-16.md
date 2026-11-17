@@ -28,8 +28,21 @@ Reproducción focal desde `frontend`: `npx --no-install playwright test -c playw
 
 ## CI y siguiente parte
 
-PR286/685a4ff fue reconsultado: Android44014983634 completed/success. CI general44014983650 aún in_progress, con cinco trabajos aprobados y E2E en curso en esa consulta. Su conclusión y la CI del nuevo cambio deben registrarse por SHA; los pases locales no las sustituyen.
+PR286/`685a4ff11c3157541bee2b4bbedf822bdac7c3b7`: CI general44014983650 completed/success; Android44014983634 completed/success. Consulta 2026-11-17 20:47:03 UTC. Los pases locales no sustituyen la CI de otro SHA.
 
 Siguiente: valorar Metas en comparativa14378 y continuar la revisión visual por sección con hallazgos o preferencias concretas; Avisos conserva una diferencia tipográfica pendiente de valoración. No iniciar un rediseño general. Calendario conservado; historial/lentitud/logout aplazados. No se usaron finanzas reales, sesiones habituales ni teléfono físico.
 
 Para otro chat: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/REVISION_METAS_TEXTO_2026-11-16.md. Comprueba SHA y CI de correcciones/metas-texto-ampliado y PR286/685a4ff; revisa comparativa14378 y continúa la valoración por sección con datos ficticios y cambios demostrados. No integres PR271 ni despliegues manualmente.»
+
+
+## Publicación y CI comprobadas — 2026-11-17 20:47:03 UTC
+
+PR287 abierto/borrador hacia develop, https://github.com/YaxcheItz/gestorfinanzas/pull/287 , head `3b14ac65ea9b89d5f802fb8835b0032db19e33a0` idéntico al remoto. CI general44016506925 completed/success; Android44016506845 completed/success. Consulta 2026-11-17 20:47:03 UTC; no atribuir al nuevo SHA la CI de PR286.
+
+[CI general44016506925](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44016506925) y [Android44016506845](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44016506845) completed/success para3b14ac6. Los seis trabajos de CI aprobaron. El log del job133815619048 registra172 casos normales aprobados en14,2min, cuatro reservados a PWA omitidos en ese proyecto y luego los cuatro PWA dedicados aprobados en20,9s. Check-startup y navegación sintética también aprobaron. Compilación Android de CI, sin instalación o validación física.
+
+PR286/685a4ff: CI general44014983650 y Android44014983634 completed/success. Su job133810626520 registra170 casos normales aprobados en17,2min y luego cuatro PWA dedicados en28,3s; los cuatro reservados se omiten solo en el proyecto normal. La conclusión de PR286 se conserva por separado de la de PR287.
+
+El cierre documental se publica aparte en `revision/metas-texto-pr287`, creada desde develop remoto actualizado/comprobado y adelantada al head3b14ac6 solo en esa rama. El código de frontend es idéntico al PR. Estado, plan y continuidad locales sincronizados. Sin integración, instalación ni despliegue manual. Evidencia de CI por SHA en `.local/revision-metas-texto/ci-closing.json`.
+
+Para otro chat: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/REVISION_METAS_TEXTO_2026-11-16.md. PR287/3b14ac6 y PR286/685a4ff tienen CI general y Android aprobadas; revalida sus head actuales. Revisa comparativa14378 y continúa la valoración por sección con datos ficticios y cambios concretos; sigue la tipografía de Avisos si corresponde. El cierre documental está en revision/metas-texto-pr287. No integres PR271 ni despliegues manualmente.»

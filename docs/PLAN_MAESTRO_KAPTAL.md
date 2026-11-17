@@ -1,12 +1,17 @@
 <!-- KAPTAL_ESTADO_VIGENTE_INICIO -->
-## Resumen vigente — 16 noviembre 2026 · Metas con texto ampliado
+## Resumen vigente — 17 noviembre 2026 · Metas y CI aprobadas
 
-- PR286 conserva head `685a4ff11c3157541bee2b4bbedf822bdac7c3b7`, abierto/borrador; Android44014983634 completed/success. CI general44014983650 reconsultada in_progress, cinco trabajos success y E2E en curso. Registrar su conclusión por SHA; no trasladar resultados al cambio nuevo.
+- PR286/`685a4ff11c3157541bee2b4bbedf822bdac7c3b7`: CI general44014983650 completed/success; Android44014983634 completed/success. Consulta 2026-11-17 20:47:03 UTC.
 - Rama nueva `correcciones/metas-texto-ampliado` desde origin/develop `fe13575532c8c055fe699374660988a888b01f6f` actualizado/comprobado y fast-forward de a71a527 solo en esta rama. PR285/b23f38a, PR286/685a4ff, develop/fe13575 y main/1fd9402 conservados; PR271 excluido. Sin integración, instalación o despliegue manual.
 - Hallazgo reproducido en ambos temas: «vacaciones» se dividía en dos líneas a320px/200%. Una regla CSS fija en16px el padding horizontal de Metas, sus tarjetas y el formulario exterior; conserva palabras, fuente20→40px, controles16→32px y ajuste de nombres sin separadores. No cambia lógica, datos ni transferencias.
 - Validación de esta etapa:580 unitarias/66 archivos, build de producción, TypeScript aplicación/E2E y ocho E2E focales/regresión aprobados; dos nuevos reprodujeron primero el corte original. Solo tres avisos CSS anteriores. Detalles en docs/REVISION_METAS_TEXTO_2026-11-16.md.
 - Comparativa nueva http://127.0.0.1:14378: Metas/aporte, seis modos,24 PNG con la misma API ficticia. Las ocho capturas al100% son idénticas byte a byte; la mejora se aprecia al ampliar. Carga/controles/ancho390px comprobados, cero escrituras/previsualizaciones/errores JS; medición focal sin desbordes ni fallos de contraste visibles.14376/14372/14368 conservadas.
 - Siguiente: valoración de Metas y siguientes ajustes concretos por sección; Avisos conserva una diferencia tipográfica para valorar. No iniciar rediseño general. Calendario conservado; historial/lentitud/logout aplazados. No usar finanzas reales ni sesiones habituales.
+
+
+- Publicación comprobada: PR287 abierto/borrador hacia develop, https://github.com/YaxcheItz/gestorfinanzas/pull/287 , head `3b14ac65ea9b89d5f802fb8835b0032db19e33a0` idéntico al remoto. CI general44016506925 completed/success; Android44016506845 completed/success. Consulta 2026-11-17 20:47:03 UTC; no atribuir al nuevo SHA la CI de PR286.
+- CI E2E exacta: PR286,170 casos normales y cuatro PWA dedicados; PR287,172 casos normales y cuatro PWA dedicados. En cada proyecto normal se omiten cuatro casos reservados a PWA; no se cuentan como aprobados. Los seis trabajos de cada CI general aprobaron.
+- Cierre documental separado en `revision/metas-texto-pr287`, desde develop remoto actualizado/comprobado y fast-forward de3b14ac6 solo en esta rama. Código idéntico al PR287; se conserva su head y las ramas protegidas.
 
 Los apartados siguientes conservan el historial y la evidencia de las etapas anteriores.
 <!-- KAPTAL_ESTADO_VIGENTE_FIN -->
