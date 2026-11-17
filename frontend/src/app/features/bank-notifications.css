@@ -1,3 +1,4 @@
+h2,h3 { font-weight: 700; }
 .permissions { border-top: 1px solid var(--kaptal-border); border-bottom: 1px solid var(--kaptal-border); padding: .4rem 0; }
 .permission-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .4rem .8rem; padding: .5rem 0; }
 .permission-header h2 { font-size: 1rem; }
