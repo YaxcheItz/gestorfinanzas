@@ -1,12 +1,12 @@
 <!-- KAPTAL_ESTADO_VIGENTE_INICIO -->
-## Resumen vigente — 18 noviembre 2026 · Revisión conjunta de Avisos, Cuentas y Presupuestos
+## Resumen vigente — 18 noviembre 2026 · Revisión de Reportes tras publicación web
 
-- Rama `mejoras/revision-conjunta-avisos-cuentas-presupuestos` en `.local/worktrees/kaptal-revision-conjunta`, creada desde `origin/develop` `0ed4cc7` verificado. Reúne Avisos `05c5946`, Cuentas `4daea3f` y Presupuestos `47a5204`. [Informe de la revisión conjunta](REVISION_CONJUNTA_AVISOS_CUENTAS_PRESUPUESTOS_2026-11-18.md).
-- El build conjunto pasó TypeScript y 580 unitarias. Pasaron 23 casos ficticios en Chromium y siete en Firefox. Se recorrieron las tres secciones desde Configuración en una sola sesión en cada tema. Capturas y registros en `.local/revision-conjunta-avisos-cuentas-presupuestos/`.
-- La CI de Avisos y Cuentas aprobó sus seis trabajos. Al registrar la revisión, Presupuestos tenía 5 de seis trabajos aprobados. La ejecución se puede comprobar en el enlace. [CI de Presupuestos](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44377764033).
-- Calendario conservado. Historial, lentitud y logout siguen aplazados. Referencia de producción `73fe866`. Publicar en producción o instalar una APK requiere confirmación explícita.
+- Rama `revision/reportes-web-postpublicacion` desde `origin/develop` `b0dc3a0` comprobado. Producción `01135ec` constatada en el remoto. `/reportes` respondió HTTP 200 y los JavaScript inicial y de la sección coincidieron por SHA-256 con el build local. [Informe de revisión](REVISION_REPORTES_WEB_2026-11-18.md).
+- El cambio de un rango a un mes actualiza los importes en pantalla y conserva en el enlace el rango anterior. La recarga restaura ese rango. El estado vacío de un mes con otros meses poblados usa un mensaje de primera actividad. Ambos puntos se comprobaron en Chromium y Firefox con datos ficticios.
+- Se completaron 18 casos de Reportes, incluida la comprobación de la tabla por teclado al 200 %. Capturas y resultados en `.local/revision-reportes-web-postpublicacion/`.
+- Calendario conservado. Historial, lentitud y logout siguen aplazados. Publicar en producción o instalar una APK requiere confirmación.
 
-Para otro chat, abre `.local/worktrees/kaptal-revision-conjunta` y lee `AGENTS.md`, `docs/ESTADO_SESION.md`, `docs/PLAN_MAESTRO_KAPTAL.md` y [el informe de revisión](REVISION_CONJUNTA_AVISOS_CUENTAS_PRESUPUESTOS_2026-11-18.md). Comprueba el SHA y la CI de la rama conjunta y retoma la revisión de capturas con datos ficticios. Si se plantea una entrega, presenta SHA, cambios y destino para confirmación.
+Para otro chat, abre `.local/worktrees/kaptal-revision-reportes-web` y lee `AGENTS.md`, `docs/ESTADO_SESION.md`, `docs/PLAN_MAESTRO_KAPTAL.md` y [el informe de revisión](REVISION_REPORTES_WEB_2026-11-18.md). La próxima intervención acotada es sincronizar el filtro de mes con su URL y ajustar el mensaje de periodo vacío. Usa datos ficticios y conserva los aplazamientos.
 
 Los apartados siguientes conservan el historial y la evidencia de las etapas anteriores.
 <!-- KAPTAL_ESTADO_VIGENTE_FIN -->
