@@ -2,6 +2,16 @@
 
 El backport se aplica al instalar las dependencias de desarrollo. El control de seguridad sigue bloqueando la integración porque npm audita las versiones publicadas y el aviso sigue abierto.
 
+## Acuerdo vigente y desenlace de CI
+
+El usuario confirmó continuar con la actualización a versiones oficiales corregidas de ambas líneas, retirar el backport y verificar instalación limpia, auditoría y CI antes de preparar la integración visual. La reconsulta del 18 de noviembre UTC devuelve 2.3.2 como última versión 2.x y 4.0.7 como última versión 4.x. El aviso oficial sigue con rango afectado <=4.0.7 y sin versión corregida. La actualización acordada está bloqueada por la publicación pendiente de esas versiones. El backport se conserva mientras tanto.
+
+La CI 44220998503 de `63b0fd1b571ec56d88a2a84945406ea63e52af62` terminó completed/failure el 18 de noviembre de 2026 a las 02:24:02 UTC. Backend, PostgreSQL, Canales y Worker aprobaron. Frontend instaló el parche en cuatro copias y compiló, después falló en security:check y omitió sus unitarias. Los 176 E2E normales aprobaron. El paso PWA falló antes de ejecutar sus cuatro pruebas, en `check-startup.cjs`, al recibir 401 y observar dos solicitudes sin autorización a /api/cuentas y /api/categorias. La medición posterior de navegación se omitió. Ese resultado reemplaza el estado pendiente de la consulta inicial. [CI del backport](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44220998503).
+
+La comparación local de los dos builds disponibles encontró idénticos los 71 archivos JS/CSS/HTML de producto por SHA-256. El código de producto y la comprobación de arranque coinciden con e205152. Se registra la observación de arranque dentro del límite vigente de logout aplazado, sin atribuir una causa nueva al parche ni afirmar aprobadas las PWA.
+
+El cierre de esta reconsulta usa la rama documental `revision/picomatch-version-oficial`, creada desde develop remoto comprobado y adelantada a 63b0fd1 solo en esa rama, en el mismo worktree de mitigación. El checkout principal sigue en c4fdbce.
+
 La rama `correcciones/mitigacion-picomatch-pr288` se creó en un worktree separado desde `origin/develop` verificado en `fe13575532c8c055fe699374660988a888b01f6f`. Solo en esta rama se adelantó a `c4fdbce48092b738e538c433343ede260d159f8a`, que conserva PR288 y los cierres anteriores. El checkout principal permanece en `revision/cierre-ci-picomatch-pr288`.
 
 El registro npm y el aviso GHSA-fc5q-39xc-vjpf se reconsultaron el 18 de noviembre de 2026 UTC, 17 de noviembre en México. La última versión disponible era 4.0.7 y seguía afectada. Las dos propuestas de origen aún estaban abiertas. [Versiones de picomatch](https://github.com/micromatch/picomatch/releases), [aviso oficial](https://github.com/advisories/GHSA-fc5q-39xc-vjpf).
