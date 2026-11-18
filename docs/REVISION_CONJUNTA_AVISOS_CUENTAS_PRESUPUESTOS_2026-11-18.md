@@ -13,7 +13,7 @@ La rama `mejoras/revision-conjunta-avisos-cuentas-presupuestos` parte de `origin
 | Presupuestos | Categoría y Moneda visibles, importes íntegros y ocultación de montos. Se verificaron MXN y USD, exceso, cambio de mes, mes vacío, reintento, alta y edición ficticias. |
 | Navegación conjunta | Desde Configuración se entró en las tres secciones sin recargar la sesión, se abrió cada formulario y Escape restauró el foco. La prueba en claro y oscuro a 320 px y 200 % no registró escrituras ni errores de página. |
 
-Se revisaron seis capturas de Chromium de las tres secciones en claro y oscuro a 320 px y 200 %. En Cuentas, la confirmación temporal se superpone a parte de «Agregar cuenta» mientras está visible. El mensaje quedó en dos líneas y se verificó el control para cerrarlo.
+Se revisaron seis capturas de Chromium de las tres secciones en claro y oscuro a 320 px y 200 %. En Cuentas, la confirmación temporal se superpone a parte de «Agregar cuenta» mientras está visible. El mensaje quedó en dos líneas. La revisión posterior de las seis capturas equivalentes en Firefox mostró la misma disposición. Cuatro casos adicionales con datos ficticios a 320 px y 200 % confirmaron que tocar el centro de «Agregar cuenta» abre el formulario mientras el mensaje sigue visible. También se comprobó la reapertura después del cierre manual en claro y de la desaparición automática en oscuro, en Chromium y Firefox. Registro local en `.local/revision-conjunta-avisos-cuentas-presupuestos/confirmacion-cuentas.log`.
 
 Build Angular de 492,24 kB iniciales, TypeScript y 580 pruebas unitarias aprobados. El build emitió avisos de presupuesto CSS en acceso, Avisos y Bancos y cuentas. Playwright aprobó 23 casos en Chromium y siete en Firefox sobre el mismo build. El servidor de pruebas sirvió los archivos locales y rechazó las peticiones de API sin interceptar. En los registros no aparecen peticiones de ese tipo. Capturas y registros en `.local/revision-conjunta-avisos-cuentas-presupuestos/`. La muestra está en `muestra-320-200/`.
 
@@ -25,10 +25,10 @@ Build Angular de 492,24 kB iniciales, TypeScript y 580 pruebas unitarias aprobad
 | Cuentas | `4daea3fcbf5355b142e96fc4ac7f9e57286cb414` | [CI de Cuentas](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44344639336) |
 | Presupuestos | `47a52044ece4c9e698c822bd3d4236d00e602057` | [CI de Presupuestos](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44377764033) |
 
-Avisos y Cuentas aprobaron sus seis trabajos. Al registrar la revisión, Presupuestos tenía 5 de seis trabajos aprobados. La ejecución se puede comprobar en el enlace. La rama conjunta ejecuta su propia [CI de GitHub Actions](https://github.com/YaxcheItz/gestorfinanzas/actions/workflows/ci.yml?query=branch%3Amejoras%2Frevision-conjunta-avisos-cuentas-presupuestos).
+Las tres ramas de origen aprobaron sus seis trabajos. La rama conjunta aprobó sus seis trabajos para `b0dc3a023ff9c1ae17ca87ce158effa137c20306`, incluidos los flujos con API y PostgreSQL de pruebas, la PWA con service worker y la navegación sintética. La suite de navegador registró 182 pruebas aprobadas y cuatro omitidas. Las cuatro pruebas específicas de PWA aprobaron. [CI conjunta](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44379497495).
 
 ## Continuidad
 
 Calendario conservado. Historial, lentitud y logout siguen aplazados. La referencia de producción verificada es `main` `73fe866ef72cd098a577690a33b504a070c2e9b9`, con estados exitosos en [Vercel](https://github.com/YaxcheItz/gestorfinanzas/deployments/Production) y [Render](https://github.com/YaxcheItz/gestorfinanzas/deployments). La publicación en producción y la instalación en teléfono requieren confirmación explícita por destino.
 
-Siguiente etapa. Revisar las capturas junto con el resultado de CI de la rama conjunta. Si se solicita promover una entrega, preparar su SHA, cambios y destino para aprobación del propietario.
+La entrega se promovió a producción web tras la confirmación del propietario. El resultado y las comprobaciones se registran en [el informe de publicación](PUBLICACION_WEB_AVISOS_CUENTAS_PRESUPUESTOS_2026-11-18.md).

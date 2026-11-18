@@ -1,12 +1,12 @@
 <!-- KAPTAL_ESTADO_VIGENTE_INICIO -->
-## Resumen vigente — 18 noviembre 2026 · Revisión conjunta de Avisos, Cuentas y Presupuestos
+## Resumen vigente — 18 noviembre 2026 · Avisos, Cuentas y Presupuestos en producción web
 
-- Rama `mejoras/revision-conjunta-avisos-cuentas-presupuestos` en `.local/worktrees/kaptal-revision-conjunta`, creada desde `origin/develop` `0ed4cc7` verificado. Reúne Avisos `05c5946`, Cuentas `4daea3f` y Presupuestos `47a5204`. [Informe de la revisión conjunta](REVISION_CONJUNTA_AVISOS_CUENTAS_PRESUPUESTOS_2026-11-18.md).
-- El build conjunto pasó TypeScript y 580 unitarias. Pasaron 23 casos ficticios en Chromium y siete en Firefox. Se recorrieron las tres secciones desde Configuración en una sola sesión en cada tema. Capturas y registros en `.local/revision-conjunta-avisos-cuentas-presupuestos/`.
-- La CI de Avisos y Cuentas aprobó sus seis trabajos. Al registrar la revisión, Presupuestos tenía 5 de seis trabajos aprobados. La ejecución se puede comprobar en el enlace. [CI de Presupuestos](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44377764033).
-- Calendario conservado. Historial, lentitud y logout siguen aplazados. Referencia de producción `73fe866`. Publicar en producción o instalar una APK requiere confirmación explícita.
+- La integración autorizada avanzó `develop` a `b0dc3a0` y publicó `main` `01135ec`. Ambos SHA se verificaron en el remoto. Comparten el árbol `74ce7f7` aprobado en la revisión conjunta. [Informe de publicación](PUBLICACION_WEB_AVISOS_CUENTAS_PRESUPUESTOS_2026-11-18.md).
+- Vercel Production `7894422257` y Render `7894403101` aprobaron para `01135ec`. Inicio, Avisos, Cuentas y Presupuestos devolvieron HTTP 200 y se compararon 15 recursos públicos por SHA-256, incluidos los de las tres secciones. La API respondió 200 y UP por Vercel y Render. [Kaptal web](https://kaptalgf.vercel.app).
+- CI general y Android aprobaron en ambas ramas. El primer intento de `main` falló en un arranque 401 simulado y el segundo pasó sobre el mismo commit. Las 24 repeticiones locales del chequeo de arranque aprobaron. [CI de main](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44384278723/attempts/2) · [CI de develop](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44384249618).
+- Se conserva calendario. Historial, lentitud y logout siguen aplazados. Las verificaciones de operaciones usan datos ficticios. Instalar una APK requiere confirmación independiente.
 
-Para otro chat, abre `.local/worktrees/kaptal-revision-conjunta` y lee `AGENTS.md`, `docs/ESTADO_SESION.md`, `docs/PLAN_MAESTRO_KAPTAL.md` y [el informe de revisión](REVISION_CONJUNTA_AVISOS_CUENTAS_PRESUPUESTOS_2026-11-18.md). Comprueba el SHA y la CI de la rama conjunta y retoma la revisión de capturas con datos ficticios. Si se plantea una entrega, presenta SHA, cambios y destino para confirmación.
+Para otro chat, abre `.local/worktrees/kaptal-publicacion-web` y lee `AGENTS.md`, `docs/ESTADO_SESION.md`, `docs/PLAN_MAESTRO_KAPTAL.md` y [el informe de publicación](PUBLICACION_WEB_AVISOS_CUENTAS_PRESUPUESTOS_2026-11-18.md). Revalida los SHA remotos y continúa la revisión por sección con datos ficticios desde `develop` verificado. Mantén los aplazamientos y tramita por separado cualquier instalación de APK.
 
 Los apartados siguientes conservan el historial y la evidencia de las etapas anteriores.
 <!-- KAPTAL_ESTADO_VIGENTE_FIN -->
