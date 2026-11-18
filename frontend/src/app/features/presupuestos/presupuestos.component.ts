@@ -51,7 +51,7 @@ import {
                 <option [value]="mes.numero">{{ mes.nombre }}</option>
               }
             </select>
-            <span class="text-slate-300 dark:text-slate-600">|</span>
+            <span aria-hidden="true" class="text-slate-300 dark:text-slate-600">|</span>
             <select
               [ngModel]="anioSeleccionado()"
               (ngModelChange)="cambiarAnio($event)"
@@ -100,9 +100,9 @@ import {
               <div><p class="text-xs font-semibold text-slate-500 dark:text-slate-400">Límites del mes</p><h2 class="mt-1 text-sm font-bold text-slate-800 dark:text-slate-100">{{ moneda.moneda }}</h2></div>
               <span class="budget-overview__percent" [class.is-over]="moneda.totalDisponible < 0">{{ moneda.porcentajeConsumido | number:'1.0-0' }}%</span>
             </div>
-            <div class="mt-4 grid grid-cols-2 gap-3">
-              <div><p class="text-xs font-medium text-slate-500 dark:text-slate-400">Ya gastaste</p><p class="mt-1 break-words text-xl font-bold tracking-tight text-slate-900 tabular-nums dark:text-white">{{ moneda.totalGastado | monto:moneda.moneda:'symbol':'1.2-2' }}</p></div>
-              <div class="text-right"><p class="text-xs font-medium text-slate-500 dark:text-slate-400">{{ moneda.totalDisponible >= 0 ? 'Te queda' : 'Te excediste' }}</p><p class="mt-1 break-words text-xl font-bold tracking-tight tabular-nums" [ngClass]="moneda.totalDisponible >= 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'">{{ (moneda.totalDisponible >= 0 ? moneda.totalDisponible : -moneda.totalDisponible) | monto:moneda.moneda:'symbol':'1.2-2' }}</p></div>
+            <div class="budget-overview__totals mt-4 grid gap-3">
+              <div><p class="text-xs font-medium text-slate-500 dark:text-slate-400">Ya gastaste</p><p class="mt-1 break-words text-xl font-bold tracking-tight text-slate-900 tabular-nums dark:text-white">{{ moneda.totalGastado | monto:moneda.moneda:'':'1.2-2' }}</p></div>
+              <div class="text-right"><p class="text-xs font-medium text-slate-500 dark:text-slate-400">{{ moneda.totalDisponible >= 0 ? 'Te queda' : 'Te excediste' }}</p><p class="mt-1 break-words text-xl font-bold tracking-tight tabular-nums" [ngClass]="moneda.totalDisponible >= 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'">{{ (moneda.totalDisponible >= 0 ? moneda.totalDisponible : -moneda.totalDisponible) | monto:moneda.moneda:'':'1.2-2' }}</p></div>
             </div>
             <div class="mt-4 h-2.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800" role="progressbar" [attr.aria-label]="'Uso del presupuesto en ' + moneda.moneda" aria-valuemin="0" [attr.aria-valuemax]="moneda.totalPresupuestado" [attr.aria-valuenow]="gastadoLimitado(moneda.totalGastado, moneda.totalPresupuestado)"><div [style.width.%]="obtenerAnchoBarra(moneda.porcentajeConsumido)" [class]="obtenerColorBarra(moneda.porcentajeConsumido)" class="h-full rounded-full"></div></div>
             <p class="mt-2 text-right text-xs text-slate-500 dark:text-slate-400">de {{ moneda.totalPresupuestado | monto:moneda.moneda:'symbol':'1.2-2' }} presupuestados</p>
@@ -220,7 +220,7 @@ import {
                 </div>
 
                 <!-- Barra de Progreso y Montos -->
-                <div class="budget-remaining" [class.is-over]="p.montoDisponible < 0"><span>{{ p.montoDisponible >= 0 ? 'Te queda' : 'Te excediste' }} · {{ p.moneda }}</span><strong>{{ (p.montoDisponible >= 0 ? p.montoDisponible : -p.montoDisponible) | monto:p.moneda:'symbol':'1.2-2' }}</strong></div>
+                <div class="budget-remaining" [class.is-over]="p.montoDisponible < 0"><span>{{ p.montoDisponible >= 0 ? 'Te queda' : 'Te excediste' }} · {{ p.moneda }}</span><strong>{{ (p.montoDisponible >= 0 ? p.montoDisponible : -p.montoDisponible) | monto:p.moneda:'':'1.2-2' }}</strong></div>
                 <div class="space-y-2">
                   <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
                     <span class="font-medium text-slate-500 dark:text-slate-400">Gastado: {{ p.montoGastado | monto:p.moneda:'symbol':'1.2-2' }}</span>
@@ -241,7 +241,7 @@ import {
                     }
                   </div>
 
-                  <div class="flex items-center justify-between text-xs pt-1">
+                  <div class="budget-usage-caption flex flex-wrap items-center justify-between gap-x-3 gap-y-2 text-xs pt-1">
                     <span class="text-slate-500 dark:text-slate-400">
                       Del límite mensual
                       @if (p.porcentajeAlerta) { · aviso al {{ p.porcentajeAlerta }}% }
@@ -416,9 +416,9 @@ import {
       <div class="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-slate-900/60 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] backdrop-blur-xs sm:items-center sm:p-4">
         <div appFocusTrap (focusTrapEscape)="cerrarDetalle()" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="detalle-modal-titulo" class="budget-detail-sheet budget-entry-sheet max-h-[calc(100dvh_-_env(safe-area-inset-top)_-_env(safe-area-inset-bottom))] w-full max-w-lg overflow-y-auto rounded-t-3xl border border-slate-200 bg-white shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-200 dark:border-slate-700 dark:bg-slate-900 sm:rounded-3xl">
           
-          <div class="flex items-center justify-between border-b border-slate-100 p-4 dark:border-slate-700 sm:p-6">
-            <div>
-              <h2 id="detalle-modal-titulo" class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 p-4 dark:border-slate-700 sm:p-6">
+            <div class="min-w-0 flex-[1_1_10rem] [overflow-wrap:anywhere]">
+              <h2 id="detalle-modal-titulo" class="text-lg font-bold text-slate-900 dark:text-white flex flex-wrap items-center gap-2">
                 <span>Detalle del Presupuesto</span>
                 @if (detallePresupuesto()?.presupuesto?.listaNombre; as ln) {
                   <span class="text-xs font-normal px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
@@ -434,7 +434,7 @@ import {
               type="button"
               (click)="cerrarDetalle()" 
               aria-label="Cerrar detalle"
-              class="inline-flex min-h-11 min-w-11 items-center justify-center text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-600">
+              class="ml-auto inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-600">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>

@@ -13,9 +13,9 @@
     <section class="reports-empty" role="alert"><h2>No pudimos cargar tus datos</h2><p>{{ error() }}</p><button type="button" (click)="cargar()">Reintentar</button></section>
   } @else if (seleccionado(); as datos) {
     <section class="reports-summary" aria-label="Resumen del periodo">
-      <article><span>↑ Ingresos</span><strong>{{ datos.ingresosMes | monto:moneda():'symbol':'1.2-2' }}</strong></article>
-      <article><span>↓ Gastos</span><strong>{{ datos.gastosMes | monto:moneda():'symbol':'1.2-2' }}</strong></article>
-      <article><span>Diferencia del periodo</span><strong>{{ datos.balanceMes | monto:moneda():'symbol':'1.2-2' }}</strong><small>Ingresos menos gastos; no es el saldo de tus cuentas.</small></article>
+      <article><span>↑ Ingresos</span><strong tabindex="0">{{ datos.ingresosMes | monto:moneda():'':'1.2-2' }}</strong><small>{{ moneda() }}</small></article>
+      <article><span>↓ Gastos</span><strong tabindex="0">{{ datos.gastosMes | monto:moneda():'':'1.2-2' }}</strong><small>{{ moneda() }}</small></article>
+      <article><span>Diferencia del periodo</span><strong tabindex="0">{{ datos.balanceMes | monto:moneda():'':'1.2-2' }}</strong><small>{{ moneda() }}</small><small>Ingresos menos gastos; no es el saldo de tus cuentas.</small></article>
     </section>
     @if (anterior(); as previo) {<p class="reports-comparison">Frente al {{ rangoConsulta() ? 'periodo' : 'mes' }} anterior: {{ previo.variacionGastos | monto:moneda():'symbol':'1.2-2' }} de diferencia en gastos.</p>}
     <div class="reports-grid">
@@ -24,7 +24,7 @@
         <ul class="category-breakdown">@for (item of categorias(); track item.categoriaId) {<li><div><span>{{ item.categoriaNombre }}</span><strong>{{ item.monto | monto:moneda():'symbol':'1.2-2' }}</strong></div><div class="report-track" aria-hidden="true"><span [style.width.%]="ancho(item.monto, datos.gastosMes)"></span></div></li>}</ul>
       </section>
       <section class="report-panel" aria-labelledby="trend-title"><h2 id="trend-title">Últimos seis meses</h2><p class="chart-key"><span>↑ Ingresos</span><span>↓ Gastos</span></p>
-        <div class="trend-chart" aria-hidden="true">@for (item of tendencia(); track item.anio + '-' + item.mes) {<div><div class="trend-bars"><span class="income-bar" [style.height.%]="ancho(item.ingresos, maximo())"></span><span class="expense-bar" [style.height.%]="ancho(item.gastos, maximo())"></span></div><small>{{ etiquetaMes(item.mes, item.anio) }}</small></div>}</div>
+        <div class="trend-chart" aria-hidden="true" tabindex="-1">@for (item of tendencia(); track item.anio + '-' + item.mes) {<div><div class="trend-bars"><span class="income-bar" [style.height.%]="ancho(item.ingresos, maximo())"></span><span class="expense-bar" [style.height.%]="ancho(item.gastos, maximo())"></span></div><small>{{ etiquetaMes(item.mes, item.anio) }}</small></div>}</div>
         <details class="report-table"><summary>Ver cifras por mes</summary><table><caption class="sr-only">Ingresos y gastos por mes en {{ moneda() }}</caption><thead><tr><th>Mes</th><th>Ingresos</th><th>Gastos</th></tr></thead><tbody>@for (item of tendencia(); track item.anio + '-' + item.mes) {<tr><th scope="row">{{ etiquetaMes(item.mes, item.anio) }}</th><td>{{ item.ingresos | monto:moneda():'symbol':'1.2-2' }}</td><td>{{ item.gastos | monto:moneda():'symbol':'1.2-2' }}</td></tr>}</tbody></table></details>
       </section>
     </div>

@@ -41,7 +41,7 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
       } @else if (error()) {
         <p class="finance-state-note">No se pueden consultar tus categorías ahora.</p>
       } @else if (categoriasVisibles().length === 0) {
-        <p class="p-12 bg-white border border-slate-200 rounded-2xl text-center text-sm text-slate-500">
+        <p class="px-4 py-8 sm:p-12 break-words bg-white border border-slate-200 rounded-2xl text-center text-sm text-slate-500">
           Aún no has creado categorías personalizadas.
         </p>
       } @else {
@@ -71,7 +71,7 @@ import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive
                 <app-categoria-icono [icono]="categoria.icono" [tipo]="categoria.tipo" clase="h-5 w-5" />
               </span>
               <div class="min-w-0 flex-1 basis-[8ch]">
-                <h2 class="font-semibold text-slate-900 truncate">{{ categoria.nombre }}</h2>
+                <h2 class="font-semibold text-slate-900 break-words">{{ categoria.nombre }}</h2>
                 <p class="text-xs text-slate-500">{{ categoria.tipo === 'GASTO' ? 'Gasto' : 'Ingreso' }}</p>
               </div>
               <div class="flex shrink-0">

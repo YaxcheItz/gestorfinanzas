@@ -21,12 +21,12 @@ fs.mkdirSync(output,{recursive:true});
 await p.setViewportSize({width:320,height:640});
 for (const route of ['configuracion','reportes','metas','libro-diario','cuentas','presupuestos']) {
   await p.goto(origin+'/'+route);
-  await p.locator('.capture-dock--inline').waitFor();
+  await p.locator('h1').first().waitFor();
   await p.evaluate(()=>document.fonts.ready);
-  const dock=await p.locator('.capture-dock').boundingBox();
   const main=await p.locator('#main-content').boundingBox();
-  assert(dock&&main&&dock.y+dock.height<=main.y+1);
-  assert.equal(await p.locator('.capture-dock').evaluate(e=>getComputedStyle(e).position),'static');
+  assert(main);
+  assert.equal(await p.locator('.capture-dock').count(),0);
+  assert.equal(await p.locator('#main-content').evaluate(e=>e.classList.contains('app-content-with-bottom-nav')),false);
   await p.screenshot({path:output+'/'+route+'.png',fullPage:true});
 }
 for (const route of ['cuentas','presupuestos']) {
@@ -48,6 +48,6 @@ const before=await p.locator('.home-metric__value').first().evaluate(e=>parseFlo
 await p.evaluate(()=>document.documentElement.style.fontSize='200%');
 const after=await p.locator('.home-metric__value').first().evaluate(e=>parseFloat(getComputedStyle(e).fontSize));assert(after>=before*1.9);
 await p.screenshot({path:output+'/inicio-200.png',fullPage:true});
-await p.goto(origin+'/cuentas');await p.locator('.capture-dock__manual').click();await p.locator('#quick-capture-text').waitFor();
+await p.goto(origin+'/dashboard');await p.locator('.capture-dock__manual').click();await p.locator('#quick-capture-text').waitFor();
 await c.close();
 });

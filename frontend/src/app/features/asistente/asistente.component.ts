@@ -53,7 +53,7 @@ interface ChatEntry extends AiChatMessage {
             <p role="alert" class="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2.5 text-sm text-rose-700 dark:border-rose-800 dark:bg-rose-950 dark:text-rose-200">{{ error() }}</p>
           }
 
-          <div aria-live="polite" aria-relevant="additions text" [attr.aria-busy]="enviando()" class="mb-3 min-h-56 flex-1 space-y-4 overflow-y-auto overscroll-contain rounded-2xl bg-slate-50/80 p-3 sm:p-5 dark:bg-slate-950/60">
+          <div aria-live="polite" aria-relevant="additions text" [attr.aria-busy]="enviando()" class="assistant-thread mb-3 min-h-56 flex-1 space-y-4 overflow-y-auto overscroll-contain rounded-2xl bg-slate-50/80 p-3 sm:p-5 dark:bg-slate-950/60">
             @if (mensajes().length === 0) {
               <div class="flex min-h-56 flex-col items-center justify-center px-4 py-8 text-center">
                 <span class="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-800" aria-hidden="true">

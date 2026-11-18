@@ -1,10 +1,12 @@
 import { execSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
+import { verifyPatchedPicomatch } from './patch-picomatch.mjs';
 
 const known = 'https://github.com/advisories/GHSA-vfj7-8cjw-p6xm';
 const chain = new Set(['braces', 'chokidar', 'micromatch', 'fast-glob', 'tailwindcss']);
+const picomatchAdvisory = 'https://github.com/advisories/GHSA-fc5q-39xc-vjpf';
 
-export function revisar(report, production = false) {
+export function revisar(report, production = false, patchedPicomatch = false) {
   if (report.error || !report.vulnerabilities || report.auditReportVersion !== 2)
     throw new Error('La auditoría no devolvió un informe válido.');
   const entries = Object.entries(report.vulnerabilities);
@@ -16,8 +18,16 @@ export function revisar(report, production = false) {
     return item.via.every(via => typeof via === 'string'
       ? accepted(via, next) : via.url === known && via.dependency === 'braces');
   };
-  if (entries.some(([name]) => !accepted(name)))
-    throw new Error('La auditoría contiene vulnerabilidades nuevas o ajenas a la cadena conocida de braces.');
+  const coveredByPatchedPicomatch = (name, visited = new Set()) => {
+    const item = report.vulnerabilities[name];
+    if (!patchedPicomatch || !item || visited.has(name) || !item.via?.length) return false;
+    const next = new Set(visited).add(name);
+    return item.via.every(via => typeof via === 'string'
+      ? coveredByPatchedPicomatch(via, next)
+      : name === 'picomatch' && via.dependency === 'picomatch' && via.url === picomatchAdvisory);
+  };
+  if (entries.some(([name]) => !accepted(name) && !coveredByPatchedPicomatch(name)))
+    throw new Error('La auditoría contiene vulnerabilidades nuevas o sin mitigación verificada.');
   return entries.length;
 }
 
@@ -28,7 +38,8 @@ function audit(production) {
     if (error.status !== 1 || !error.stdout) throw new Error('No se pudo ejecutar npm audit.');
     output = error.stdout;
   }
-  return revisar(JSON.parse(output), production);
+  const patched = !production && verifyPatchedPicomatch() > 0;
+  return revisar(JSON.parse(output), production, patched);
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
@@ -36,7 +47,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     audit(true);
     const pending = audit(false);
     console.log('Producción: sin vulnerabilidades conocidas.');
-    if (pending) console.warn(`${pending} alertas de desarrollo pendientes, sin parche publicado: ${known}`);
+    if (pending) console.warn(`${pending} entradas de desarrollo admitidas por el control: braces conocido o picomatch con backport verificado. npm audit conserva los avisos del registro.`);
     else console.log('Desarrollo: sin vulnerabilidades conocidas.');
   } catch (error) { console.error(error.message); process.exitCode = 1; }
 }

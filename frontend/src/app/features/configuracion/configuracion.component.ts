@@ -60,7 +60,7 @@ import {
         <summary><strong>Perfil y WhatsApp</strong><span>Datos de tu cuenta y recordatorios por WhatsApp</span></summary>
         <div class="settings-disclosure__content">
         <div class="mb-5">
-          <div class="flex items-center gap-3">
+          <div class="settings-profile-heading flex items-center gap-3">
             <span role="img" [attr.aria-label]="'Avatar de ' + nombre" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-sm font-bold uppercase text-emerald-800">
               {{ avatarIniciales() }}
             </span>
@@ -300,7 +300,7 @@ import {
                       <p class="mt-1 text-xs text-slate-500">Pendiente: {{ (plantilla.montoPendiente ?? plantilla.monto * (plantilla.cuotasTotales - (plantilla.cuotasPagadas ?? 0))) | monto:plantilla.moneda:'symbol':'1.2-2' }}. La última cuota ajusta los centavos.</p>
                     }
                     @if (plantilla.notas) {
-                      <p class="mt-1 truncate text-xs text-slate-400">{{ plantilla.notas }}</p>
+                      <p class="mt-1 break-words text-xs text-slate-400">{{ plantilla.notas }}</p>
                     }
                   </div>
                   <div class="flex shrink-0 flex-wrap gap-2">

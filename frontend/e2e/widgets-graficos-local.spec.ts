@@ -91,6 +91,11 @@ for(const dark of [false,true]){
       await p.route('**/api/presupuestos*',r=>r.fulfill({json:{success:true,data:{mes:11,anio:2026,presupuestos:[50,85,110].map((value,i)=>({id:51+i,categoriaId:i+1,categoriaNombre:['Normal ficticio','Cerca ficticio','Excedido ficticio'][i],montoLimite:100,montoGastado:value,montoDisponible:100-value,porcentajeConsumido:value,moneda:'MXN',mes:11,anio:2026,estado:value>=100?'EXCEDIDO':value>=80?'ALERTA':'NORMAL'})),resumenPorMoneda:[]}}}));
       await p.setViewportSize({width:320,height:844});await p.goto(origin+'/'+view);await p.evaluate(dark=>{document.documentElement.style.fontSize='200%';document.documentElement.classList.toggle('dark',dark);},dark);
       const bars=p.getByRole('progressbar');await expect(bars).toHaveCount(3);const values=[];
+      if(view==='presupuestos'){
+        const badges=p.locator('.budget-category-card span').filter({hasText:/Bajo control|Cerca del límite \(80%\)|Excedido/});await expect(badges).toHaveCount(3);const badgeValues=[];
+        for(const badge of await badges.all()){const value={text:await badge.innerText(),...await contrast(badge,'color')};badgeValues.push(value);expect(value.ratio,value.text).toBeGreaterThanOrEqual(4.5);}
+        fs.writeFileSync(info.outputPath('avisos-contraste.json'),JSON.stringify(badgeValues,null,2));
+      }
       for(const bar of await bars.all()){
         const fill=view==='dashboard'?bar.locator('.home-budget-progress__fill'):bar.locator('div').first();await bar.scrollIntoViewIfNeeded();
         values.push(await contrast(fill));
