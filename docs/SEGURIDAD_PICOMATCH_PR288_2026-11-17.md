@@ -20,12 +20,14 @@
 | [Aviso oficial GHSA-fc5q-39xc-vjpf / CVE-2026-112366](https://github.com/advisories/GHSA-fc5q-39xc-vjpf) | Revisado el 17 de noviembre; rango afectado `<=4.0.7`, sin versión corregida. ReDoS por extglobs repetidos de una sola rama. |
 | Registro npm: `npm view picomatch version dist-tags versions --json` | `latest: 4.0.7`; no se publica una versión posterior ni otro dist-tag en la consulta. Actualizar 4.0.4 a 4.0.7 no elimina este aviso. |
 | `npm ls picomatch --all` y package-lock | 4.0.4 en Angular/build/CLI/devkit, Sass/Parcel, tinyglobby/fdir, Vite y Vitest; 2.3.2 en anymatch/readdirp/micromatch de Tailwind 3.4.19. Cuatro ubicaciones, todas `dev: true`, coincidentes entre árbol instalado y lock. |
-| `npm audit --json` | Salida 1, 23 entradas altas contando propagaciones. `picomatch.fixAvailable: false`, aviso exacto GHSA-fc5q-39xc-vjpf. Las entradas no equivalen a 23 vulnerabilidades independientes. |
+| `npm audit --json` | Salida 1, 23 entradas altas contando propagaciones de un único aviso distinto, GHSA-fc5q-39xc-vjpf. `picomatch.fixAvailable: false`. Las entradas no equivalen a 23 vulnerabilidades independientes. |
 | `npm audit --omit=dev --json` | Salida 0; cero vulnerabilidades reportadas. No certifica toda la aplicación. |
 | `npm run security:check` | Cuatro pruebas del control aprobadas; después salida 1 con «La auditoría contiene vulnerabilidades nuevas o ajenas a la cadena conocida de braces». |
 | Revisión con el informe real reducido solo a picomatch | `revisar` rechaza ese aviso; acepta el informe limpio de producción. No se requiere ni se introduce un cambio en el control. |
 
 Entorno local: Node 24.10.0, npm 11.13.0. CI usa Node 22. No se ha ejecutado `npm audit fix --force`, reinstalado dependencias ni modificado node_modules.
+
+Skills aplicadas: `debugging-and-error-recovery` para reproducir y localizar el fallo; `ponytail` para limitar el cambio a evidencia necesaria; `ecc-verification-loop` para auditorías, diff y comprobación de CI. Conector GitHub para PR, jobs y logs; CLI GitHub para listar el run de push, que el conector disponible filtra a eventos pull_request.
 
 ## Alternativas contrastadas
 
@@ -45,7 +47,13 @@ Se reconsultó el [run 44194248517](https://github.com/YaxcheItz/gestorfinanzas/
 
 Los otros cinco trabajos de ese run están aprobados. Son antecedentes de e205152: 176 E2E y 4 PWA, Android 44194248531 aprobado, 580 unitarias y 9 E2E focales locales. No se trasladan estos resultados a un SHA nuevo. Esta parte documental no repite build, unitarias de producto ni E2E; comprueba auditorías, pruebas del control, rechazo del aviso real, ascendencia y diff. Al subir la rama `correcciones/**`, el workflow CI existente se activa; su resultado se debe consultar por el SHA publicado. No se reintenta la CI antigua suponiendo que haya una reparación.
 
-Evidencia privada: `.local/picomatch-recheck-audit.json`, `picomatch-recheck-production.json`, `picomatch-recheck-versions.json`; resultados de cierre en `.local/picomatch-pr288-cierre.json`. No contienen datos financieros.
+### CI nueva observada
+
+El commit documental `ad29a5676c73cde9905f109ffc2d65ecce56aa4e` se subió y se comprobó por `ls-remote`. Su [CI 44215413415](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44215413415), evento push, reproduce el fallo en Frontend 134503902189: instalación, compilación, medición y subida de artefacto aprobadas; las cuatro pruebas del control pasan y la auditoría sale con código 1 a 2026-11-18 01:23:45 UTC. Las unitarias de producto se omiten. Backend, PostgreSQL, Canales y Worker ya terminaron correctamente; E2E seguía en ejecución al tomar esta evidencia. El run completo no se declara aprobado ni se atribuyen a él los 176 E2E/4 PWA anteriores.
+
+El commit posterior de cierre solo incorpora esta evidencia y precisión documental, con producto idéntico a ad29a56 y e205152. Su push activa otra ejecución por la configuración existente de concurrencia; puede cancelar la ejecución anterior todavía activa. Se consulta el nuevo run por su SHA al cerrar; los resultados completos/pendientes se registran en la evidencia local y la respuesta de entrega. Una comprobación de seguridad fallida ya impide aprobar la CI, aunque otros trabajos continúen.
+
+Evidencia privada: `.local/picomatch-recheck-audit.json`, `picomatch-recheck-production.json`, `picomatch-recheck-versions.json`, `picomatch-ci-security-evidence.json`; resultados y SHA final de cierre en `.local/picomatch-pr288-cierre.json`. No contienen datos financieros.
 
 ## Siguiente parte
 
