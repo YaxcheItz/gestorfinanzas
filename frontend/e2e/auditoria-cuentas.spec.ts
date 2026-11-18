@@ -68,3 +68,57 @@ test('conserva el vencimiento pendiente según México aunque el navegador ya es
   await expect(page.locator('.account-card')).toContainText('17 nov 2026');
   await expect(page.locator('.account-card')).toContainText('Base: 15 nov 2026');
 });
+
+for (const dark of [false, true]) {
+  test(`alta de cuenta con tipo y confirmación legibles a 320 px y 200 % · ${dark ? 'oscuro' : 'claro'}`, async ({ page, baseURL }, info) => {
+    const origin = new URL(baseURL!);
+    expect(origin.hostname).toBe('localhost');
+    await page.route('**/*', route => new URL(route.request().url()).origin === origin.origin ? route.fallback() : route.abort());
+    await page.goto('/cuentas');
+    await page.getByRole('button', { name: /Agregar cuenta/ }).click();
+    const form = page.getByRole('dialog', { name: 'Agregar cuenta' });
+    await page.evaluate(darkTheme => {
+      document.documentElement.style.fontSize = '200%';
+      document.documentElement.classList.toggle('dark', darkTheme);
+    }, dark);
+    await page.evaluate(() => document.fonts.ready);
+    const type = form.getByRole('combobox', { name: 'Tipo de cuenta' });
+    const selected = form.locator('.account-type-value');
+    await form.locator('#cuenta-nombre').focus();
+    await page.keyboard.press('Tab');
+    await expect(type).toBeFocused();
+    await expect(selected).toHaveCSS('outline-style', 'solid');
+    await type.selectOption({ label: 'Cuenta de Ahorro' });
+    await expect(selected).toHaveText('Cuenta de Ahorro');
+    await type.selectOption({ label: 'Tarjeta de Crédito' });
+    await type.scrollIntoViewIfNeeded();
+    await page.screenshot({ path: info.outputPath('tipo-320-200.png') });
+    await expect(selected).toHaveText('Tarjeta de Crédito');
+    const text = selected.locator('span').first();
+    await expect(text).toHaveCSS('font-size', '28px');
+    expect(await text.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
+    await form.locator('#cuenta-nombre').fill('Tarjeta ficticia de prueba');
+    await form.locator('#cuenta-limite-credito').fill('1200');
+    await form.locator('#cuenta-dia-corte').fill('12');
+    await form.locator('#cuenta-dia-pago').fill('29');
+    const request = page.waitForRequest(r => r.method() === 'POST' && new URL(r.url()).pathname === '/api/cuentas');
+    await form.getByRole('button', { name: 'Crear cuenta' }).click();
+    expect((await request).postDataJSON()).toMatchObject({ tipo: 'CREDITO', diaCorte: 12, diaPago: 29 });
+    await expect(form).toHaveCount(0);
+    const toast = page.locator('.toast-notification').filter({ hasText: 'Cuenta creada correctamente.' });
+    const message = toast.locator('.toast-notification__message');
+    await expect(message).toHaveCSS('font-size', '24px');
+    await page.screenshot({ path: info.outputPath('confirmacion-320-200.png') });
+    const geometry = await message.evaluate(el => {
+      const range = document.createRange();
+      const node = el.firstChild!;
+      range.setStart(node, node.textContent!.indexOf('correctamente'));
+      range.setEnd(node, node.textContent!.length);
+      const box = el.closest('.toast-notification')!.getBoundingClientRect();
+      return { lines: range.getClientRects().length, fits: box.top >= 0 && box.bottom <= innerHeight };
+    });
+    expect(geometry).toEqual({ lines: 1, fits: true });
+    await toast.getByRole('button', { name: 'Cerrar notificación' }).click();
+    await expect(toast).toHaveCount(0);
+  });
+}
