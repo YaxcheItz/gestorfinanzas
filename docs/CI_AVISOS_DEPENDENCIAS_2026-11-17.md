@@ -1,5 +1,7 @@
 # CI de Avisos: dependencia sin parche — 17 noviembre 2026
 
+Seguimiento posterior de CI 44216292307, propuestas upstream 238/264/265/266 y reproducción acotada en ambas versiones instaladas: [CI_PICOMATCH_SEGUIMIENTO_2026-11-17.md](CI_PICOMATCH_SEGUIMIENTO_2026-11-17.md). Los resultados siguientes conservan su fecha y SHA originales.
+
 ## Reconsulta prioritaria de seguridad (18 noviembre 01:19 UTC / 17 en México)
 
 El bloqueo se volvió a comprobar: latest sigue en 4.0.7, afectada, y el aviso oficial no publica versión corregida. Auditoría completa y security:check fallan; producción reporta cero vulnerabilidades. Se revisaron el árbol instalado/lock, el control y la propuesta upstream 194, que deja sin corregir +(*a). Sin solución compatible completa demostrada: dependencias, control y excepciones intactos. Evidencia, alternativas descartadas, rama nueva y continuidad en [SEGURIDAD_PICOMATCH_PR288_2026-11-17.md](SEGURIDAD_PICOMATCH_PR288_2026-11-17.md). Los resultados siguientes conservan su SHA y fecha originales.

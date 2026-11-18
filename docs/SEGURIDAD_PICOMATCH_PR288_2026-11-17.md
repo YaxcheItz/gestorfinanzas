@@ -1,5 +1,7 @@
 # PR288: reconsulta del bloqueo de picomatch
 
+Seguimiento posterior: [CI, propuestas upstream recientes y reproducción aislada](CI_PICOMATCH_SEGUIMIENTO_2026-11-17.md). Este documento conserva la evidencia de la primera investigación.
+
 17 noviembre 2026, hora de México; reconsulta a partir del 18 noviembre 2026, 01:19 UTC.
 
 ## Resultado
