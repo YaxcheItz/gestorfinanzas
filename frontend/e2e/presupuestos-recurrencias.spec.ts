@@ -20,7 +20,7 @@ test('presupuesto respeta lista y moneda, oculta importes y restaura limites ind
   await page.goto('/login');await page.locator('#email').fill(email);await page.locator('#password').fill(password);
   await page.getByRole('button',{name:'Iniciar sesi\u00f3n',exact:true}).click();await expect(page).toHaveURL(/dashboard/);
   await page.getByRole('button',{name:'A\u00f1adir movimiento',exact:true}).click();
-  await page.locator('#quick-capture-panel').getByRole('button',{name:'Registro manual'}).click();
+  await page.locator('#quick-capture-panel').getByRole('button',{name:'Abrir formulario'}).click();
   const dialog=page.getByRole('dialog',{name:'A\u00f1adir movimiento',exact:true});
   await dialog.locator('select[name="cuenta"]').selectOption({label:'Banco Presupuestos \u00b7 MXN'});
   await page.locator('#quick-entry-amount').fill('25');await dialog.locator('summary').click();

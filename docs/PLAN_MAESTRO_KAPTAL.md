@@ -1,3 +1,28 @@
+<!-- KAPTAL_ESTADO_VIGENTE_INICIO -->
+## Resumen vigente — 17 noviembre 2026 · Picomatch con control verificado
+
+- Rama `correcciones/picomatch-parche-verificado` creada desde origin/develop `fe13575532c8c055fe699374660988a888b01f6f` tras fetch/ls-remote y adelantada a `ba72c2c` solo en esta rama. Worktree `.local/worktrees/mitigacion-picomatch-pr288`. El checkout principal conserva `revision/cierre-ci-picomatch-pr288/c4fdbce`. PR288 conserva e205152 y su cadena visual.
+- Se corrigió un caso residual del backport anterior, +(!(a)), que aún bloqueaba procesos en ambas líneas. La negación genera un comodín implícito y ahora entra en la protección del parser. La comparación acotada reproduce el bloqueo en los paquetes originales y termina correctamente con el backport corregido.
+- Security:check admite temporalmente el aviso exacto GHSA-fc5q-39xc-vjpf solo en desarrollo y con verificación del backport. Ejecuta 19 pruebas, con 1.248 evaluaciones adversarias acotadas a tres segundos por proceso. Comprueba los hashes de los parsers corregidos, las demás fuentes ejecutables y package.json de todas las copias. Copias alteradas/ausentes, versiones desconocidas, alertas distintas y vulnerabilidades en producción siguen bloqueando.
+- Instalación limpia, security:check, build de 489,19 kB iniciales, 580 unitarias y 9 E2E focales aprobados localmente. Arranque sintético 200/401/503 aprobado. npm audit conserva los avisos del registro. La actualización oficial permanece pendiente para retirar el backport y esta aceptación.
+- Detalle en docs/PICOMATCH_CONTROL_VERIFICADO_2026-11-17.md. La CI del SHA publicado se consulta al cerrar y queda registrada en `.local/picomatch-control-verificado-ci.json`. La CI anterior 44220998503 falló por seguridad y arranque 401, con 176 E2E normales aprobados y cuatro PWA sin ejecutar.
+- Solo con CI completa aprobada preparar integración visual. PR271 excluido. Sin despliegue manual ni instalación en teléfono. Datos ficticios, sin finanzas reales, sesiones habituales ni configuración del dispositivo. Calendario conservado. Historial, lentitud y logout aplazados.
+
+Para otro chat: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/PICOMATCH_CONTROL_VERIFICADO_2026-11-17.md en .local/worktrees/mitigacion-picomatch-pr288, rama correcciones/picomatch-parche-verificado. Consulta la CI por SHA. El control admite solo el aviso exacto de picomatch con backport comprobado por hashes y pruebas adversarias. Verifica CI completa antes de preparar integración visual. Conserva PR288 y excluye PR271. Sin despliegue manual, solo datos ficticios y sin finanzas reales/sesiones/teléfono. Calendario conservado, historial/lentitud/logout aplazados».
+
+Los apartados siguientes conservan el historial y la evidencia de las etapas anteriores.
+<!-- KAPTAL_ESTADO_VIGENTE_FIN -->
+
+## Valoraci?n por secci?n ? 17 noviembre 2026, 23:36 UTC
+
+Rama `revision/valoracion-14384-inicio-cuentas`, creada desde origin/develop fe135755 comprobado y adelantada a dc974d6 solo en esta rama. Inspecci?n directa de18 PNG actuales de Inicio, Gastos en pareja y Mis cuentas, en seis modos;18 pares antes/actual id?nticos por SHA256. Galer?a14384 revalidada:336 im?genes decodificadas,28 vistas, seis modos, selectores independientes, cero errores JS y sin desborde de galer?a a390px. No equivale a recorrer la aplicaci?n interactiva ni a inspeccionar336 capturas.
+
+Pareja y Cuentas conservan legibilidad en la muestra; sin ajuste demostrado. En Inicio los botones flotantes se superponen visualmente al contenido de las capturas completas: pendiente comprobar desplazamiento/acceso con API ficticia antes de inferir defecto o modificar estilos. Sin cambios de producto/dependencias y sin repetir suites anteriores. CI y picomatch conservan su ?ltimo diagn?stico documentado, no reconsultado en esta parte. Informe: docs/VALORACION_14384_INICIO_PAREJA_CUENTAS_2026-11-17.md. Develop/main y rama visual de PR288 conservan sus SHA remotos comprobados; sin integraci?n, instalaci?n ni despliegue manual. PR271 excluido.
+
+Siguiente: comprobaci?n interactiva de Inicio con datos ficticios y despu?s formulario de cuenta/Presupuestos en14384. Calendario conservado; historial/lentitud/logout aplazados. Para otro chat: ?Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/VALORACION_14384_INICIO_PAREJA_CUENTAS_2026-11-17.md. Contin?a la valoraci?n desde revision/valoracion-14384-inicio-cuentas con datos ficticios. No integres PR271 ni despliegues manualmente?.
+
+
+
 ## Publicacion del chat sin borradores - 11 noviembre 2026
 
 El codigo funcional de develop 9e7a70ecc42f29c93b66f3878e9300fa031abab9 paso los seis trabajos de CI 43091982543 y fue integrado a main b91fed190dd901c87bf52efaf2db0f1bc976ed7e con arbol identico. Despliegues Vercel Production 7720518355 y Render main-kaptal-api 7720496965 success para b91fed1. La pagina publica respondio HTTP 200 en 0.350 s y health backend HTTP 200 en 0.310 s desde PC; no mide API autenticada ni determina causa de lentitud prolongada. CI Android de main 43093942714 success; CI general 43093942757 aun en curso al registrar. PR #271 obsoleto: no integrar.
@@ -1872,3 +1897,210 @@ Para continuar: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL
 ## Android0.1.45: entrega visual preparada localmente — 12 noviembre 2026
 
 Rama entrega/android-045-visual creada desde develop74a85bb remoto comprobado con dependencia35113c2 por fast-forward; PR271 excluido. Único cambio nuevo de aplicación: versión0.1.45/código46; backend/API/cálculos sin cambios. Build,571 unitarias frontend,29 JVM, auditoría frontend limpia con4 tests del verificador, lint debug/release sin errores (23 advertencias/1hint conservados) y build release/instrumentación aprobados. APK com.kaptal.app sin debuggable/server.url/QA,87 recursos iguales al build y certificado igual al instalado0.1.44. SHA25632240a85d2557a2de03a57a2165ec898f3dd4ddcef49eb5d84e91561a85a66fa; artefacto local .local/releases/Kaptal-0.1.45.apk. Inicial lint de local.properties corregido/regenerado sin relajar reglas. Ver docs/ENTREGA_ANDROID_0_1_45_VISUAL.md. Preparar PR borrador para CI general/Android del SHA exacto; cierre posterior en estado/plan principal y planes locales, sin pushes documentales que cancelen CI. Sin integración/despliegue/publicación/instalación de release. TalkBack al último; calendario aprobado e historial/lentitud/logout aplazados, sin borradores ni PR271.
+## Promoción0.1.45 autorizada y en curso — 12 noviembre 2026
+
+El propietario autorizó integrar/promover y actualizar el celular; no pedir otra confirmación de esas acciones ya autorizadas. PR273 integrado en develop fe13575532c8c055fe699374660988a888b01f6f, árbol idéntico a278cb4c probado. Rama nueva de seguimiento entrega/android-045-promocion creada desde ese develop remoto comprobado. PR274 develop->main abierto: https://github.com/YaxcheItz/gestorfinanzas/pull/274 . CI develop43360960588/Android43360960646 y CI PR27443361049180/Android43361048150 en curso. Esperar conclusiones antes de integrar main, comprobar producción y usar adb install -r con APK0.1.45/código46/hash32240a85... ya verificado. Preservar datos/firstInstallTime; sin consultas financieras reales. AGENTS.md contiene la preferencia de comunicación vigente: respetarla y omitir ese pendiente de avances/cierres/handoffs ordinarios. Ver docs/PROMOCION_ANDROID_0_1_45.md. Calendario aprobado; historial y lentitud/logout aplazados; chat sin borradores y PR271 excluido.
+## Android0.1.45 publicado e instalado — cierre
+
+PR273 integrado en develop fe13575532c8c055fe699374660988a888b01f6f y PR274 en main1fd9402bb40012aba4c894b81ecceb09dcfb48a1, árboles de aplicación equivalentes a la entrega278cb4c probada. Las cuatro ejecuciones de integración/promoción aprobaron. CI main43362581605 terminó success con seis trabajos y Android43362581662 success, ambas del main exacto, verificado contra remoto antes de instalar.
+
+Producción comprobada: Vercel7756743830 environment Production/state success y Render7756736059 para el mismo SHA/state success. Dominio público sirve capture/activity/home.css idénticos a los blobs Git nuevos; archivos locales Windows solo diferían en CRLF. Health canónico200/UP después de Render y antes de instalar. Sin cambios de credenciales/infraestructura ni consultas a finanzas reales.
+
+Actualización com.kaptal.app usuario0 mediante adb install -r --user 0:0.1.44/código45 ->0.1.45/código46. Certificado habitual revalidado, hash del APK instalado32240a85d2557a2de03a57a2165ec898f3dd4ddcef49eb5d84e91561a85a66fa coincide con el artefacto, firstInstallTime idéntico y lastUpdateTime cambió. Sin desinstalar ni resetear/conceder permisos. No se abrió la sesión ni se leyó contenido financiero; continuidad de instalación no equivale a validar estado interno o funcionamiento bancario. Evidencia privada .local/android-045-install-verification.json y .local/android-045-promocion/. Ver docs/PROMOCION_ANDROID_0_1_45.md.
+
+Siguiente: revisión visual por el propietario en su app actualizada y los pendientes del plan que indique, sin repetir entrega ni operaciones financieras reales. Calendario aprobado e historial/lentitud/logout aplazados; chat sin borradores y PR271 excluido. La regla de comunicación de AGENTS.md rige también los textos para continuar.
+
+Para continuar: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/PROMOCION_ANDROID_0_1_45.md, además de planes locales. PR273/274 integrados y producción/CI main aprobadas; Android0.1.45/código46 ya instalado con hash y continuidad verificados. Sigue revisión visual del propietario y pendientes del plan; no repetir instalación ni abrir finanzas reales por iniciativa propia».
+## Chat rediseñado y barra inferior solo en Inicio — 13 noviembre 2026
+
+Petición concreta del propietario: chat con otro diseño mejor adaptado y quitar barra inferior al salir del dashboard. Rama mejoras/chat-pantalla-navegacion desde develop remoto fe13575 comprobado, dependencia8fd7390 por fast-forward; worktree .local/worktrees/chat-redisenado. Chat móvil a pantalla completa y escritorio centrado, cabecera/compositor fijos respecto del scroll, inicio con Gasto/Ingreso/Consultar que prepara texto sin enviar, propuestas/editor más claros. Conserva consentimientos, flujo de voz, revisión escrita y texto en sesión sin borradores persistentes. Barra búsqueda/lápiz/micrófono solo dashboard y padding reservado solo allí; navegación de regreso conservada. Sin backend/API/cálculos/dependencias nuevos. Skills ui-ux-pro-max/redesign-existing-projects/angular-developer/playwright-cli.
+
+Build aprobado,579 unitarias en pasada completa anterior al último ajuste menor de plantilla; última repetición en curso y se anotará conclusión exacta. Regresión focal final6 E2E aprobados: diseño8 tamaños/temas, barra/rutas,200% y tres regresiones anteriores. Se reprodujo overflow del compositor200% (697,52 frente640) y corrigió cabecera redundante/botón al último sin mensajes; caso final aprobado sin reducir fuente. Error inicial de7 tests nuevos por compileComponents corregido en el arnés. Solo fixtures; ocho POST simulados para propuestas y ninguna operación real/guardado. Teléfono no aparece por ADB, QA IME nuevo pendiente. Ver docs/CHAT_PANTALLA_NAVEGACION_2026-11-13.md. Subir y verificar CI exacta; cierre de resultados en checkout principal/locales sin cancelar runs. No integración/despliegue/instalación: celular0.1.45 todavía corresponde al diseño anterior.
+
+Verificación previa al commit:build final,579 unitarias/66 archivos repetidas después del último cambio de plantilla,6 E2E focales, TypeScript estricto y diff check aprobados. Auditoría frontend actual limpia (producción/desarrollo),4 pruebas del verificador aprobadas. Sin lint/cobertura nuevos ni QA IME física por ausencia de dispositivo.
+
+## Chat: teclado físico comprobado y ajuste de dos pruebas visuales
+
+El propietario reconectó Samsung SM-A546E/Android16. QA separada com.kaptal.app.qa.chat, solo API/sesión ficticias y red externa bloqueada. Teclado Samsung efectivamente abierto (flags true),viewport384x832->384x478,58; textarea/Enviar y Descripción/Actualizar propuesta quedan dentro del área visible. Taps Android y capturas ADB nativas;1 prueba aprobada11s,una solicitud simulada de propuesta,cero escrituras/erroresJS/orígenes externos inesperados. No se guardó ni actualizó propuesta. QA y forward19323 retirados,ausencia comprobada; versión/código/fechas de la app habitual0.1.45 intactos. Sin ajustes globales de texto/giro ni audio.
+
+CI inicialab3227b:Android43497385566 aprobado,general43497385668 con cinco trabajos aprobados y E2E122pasados/4PWAomitidos/2fallos. Fallos por bienvenida vieja y altura<600 del diseño compacto,ahora pantalla completa844. Se adaptan solo expectativas de captura-voz-herramientas/chat-android; aserciones financieras/voz/offline/deduplicación conservadas. Los5 casos de esos archivos aprobaron localmente sobre H2 efímera con perfiltest/FINANZAS_E2E=true,backend test-compile aprobado. Ver docs/CHAT_PANTALLA_NAVEGACION_2026-11-13.md. Subir nuevoSHA y comprobar CI/Android; no publicar/instalar aún el rediseño.
+## Chat: área segura comprobada con teclado real
+
+La inspección nativa detectó que la cabecera compacta sustituía el padding seguro superior por.4rem. Corrección mínima CSS:usar max(.4rem,env(safe-area-inset-top)). Build/QA reconstruidos;repetición física aprobada14,5s con aserción inset34px/botónVolver y34px mientras IME abierto,compositor y editor visibles. Cero escrituras/erroresJS/orígenes externos inesperados. QA/forward retirados otra vez y metadatos habituales intactos. Evidencia final chat-native-safe. Se repiten6 E2E visuales del CSS final antes de subir;sin otros cambios TypeScript/lógica.9af5f37 fue paso intermedio,comprobar CI/Android del siguienteSHA final y no confundir runs sustituidos con resultados del final.
+
+## PR275: subida y CI finales cerradas; revisión visual — 13 noviembre 2026
+
+El contenido final del chat está publicado y comprobado en `f526c82014c94dee9811e3a9572d467a73e83eec`, PR275 borrador hacia develop. Al persistir el bloqueo de Git443, el plugin GitHub publicó exactamente el árbol `5b2dfb0ce4070a3fa5cef49c7a73746bf0560795`, idéntico al commit local original baba89a, conservado en respaldo/chat-baba89a-antes-conector. El respaldo documental anterior11e8e1c también se publicó con árbol idéntico como b081a39 y se conservó el original. Ramas locales y referencias se sincronizaron tras reconstruir/verificar los objetos remotos; sin force push ni cambios globales de red/credenciales. Los SHA alternativos cambian metadatos, no contenido. La subida ya no queda pendiente.
+
+CI general43504281521 completed/success con seis trabajos y Android43504281163 completed/success, ambos del head exacto f526c82. Registro remoto:579 unitarias/66 archivos; E2E124 aprobados en12,6min y4PWA omitidos condicionales, seguidos de4PWA aprobados en22,9s con configuración específica. No atribuir estos resultados al commit local baba89a como si ese objeto se hubiera subido literalmente. Informe: docs/CI_REVISION_CHAT_PR275_2026-11-13.md.
+
+Revisión visual de inicio claro/oscuro, propuesta, editor y escritorio realizada sobre capturas finales ficticias. Comparativa nueva `.local/revision-chat-pr275/index.html` (servidor local127.0.0.1:14315 y Edge aislado), cinco estados/diez imágenes; selector y ajuste390px comprobados. Sin otro cambio de diseño. Se solicita valoración del propietario; no se presume aceptación.
+
+Comprobación física adicional por discrepancia de una captura de transición: mismo APK QA/CSS final verificados. Primer intento bloqueado por Dozing/NotificationShade, sin acreditar recorrido; después del desbloqueo del propietario1 prueba aprobó en16,3s tras estabilizar frames. IME abierto, viewport384x478,58, Volver y34/44x44, compositor y editor visibles; bienvenida desplazable dentro del scroll. Una propuesta simulada,cero escrituras reales/erroresJS/orígenes inesperados. QA y forward19323 retirados; ausencia verificada y metadatos habituales0.1.45/código46 idénticos. No se abrió sesión ni finanzas reales. Sin corrección nueva de aplicación por esta revisión.
+
+Siguiente: continuar la decisión visual del propietario con la comparativa concreta; mantener PR275 borrador hasta esa decisión y preparar entrega en etapa posterior. No hay integración/promoción productiva ni nueva release instalada. Conservar calendario aprobado,historial/lentitud/logout aplazados,chat sin borradores y PR271 excluido.
+
+Para continuar: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md, docs/CHAT_PANTALLA_NAVEGACION_2026-11-13.md y docs/CI_REVISION_CHAT_PR275_2026-11-13.md. PR275 publica f526c82 con CI general/Android aprobados. Continúa la revisión visual del propietario en .local/revision-chat-pr275/index.html antes de preparar otra entrega; no repetir QA física sin motivo nuevo».
+
+
+## Tema oscuro y acceso al formulario — 13 noviembre 2026
+
+El propietario considera adecuado el chat en general y pide compactar el acceso manual y mejorar el modo oscuro de toda la app. Nueva rama mejoras/tema-oscuro-formulario,worktree .local/worktrees/tema-oscuro-formulario,creada desde developfe13575 remoto comprobado y dependencia final f526c82/PR275 por fast-forward. No se implementó sobre develop ni se reutilizó la rama anterior.
+
+Se sustituyen negro/blanco puros por carbón, superficies escalonadas, texto suave y coral menos intenso; se unifican reglas oscuras antiguas, acceso y asistente con los tokens. Manrope ya incluida se aplica en oscuro y títulos más suaves; claro conserva paleta/fuente. Acceso manual como icono18px,área44x44,ayuda «Abrir formulario»; el lápiz de Inicio dice «Escribir en el chat». Sin cambios de cálculos,APIs,persistencia,consentimientos o confirmación.
+
+Build,579 unitarias/66 archivos y auditoría frontend limpia/4 pruebas aprobados. Primera regresión62pasadas/1fallo por span«Categorías personalizadas»a320px/200% que sobresalía2,73px;corregido min-width/envoltura sin reducir fuente. Tras la corrección63pasadas;ejecución final tras unificar reglas/acceso:64E2E aprobadas en4,6min,28combinaciones de auditoría texto/foco sin fallos en su alcance. Tres pruebas nuevas de roles,formulario/texto y pantallas públicas sin sesión. Revisión visual13vistas autenticadas,3públicas reales,chat/formulario,API ficticia y red externa bloqueada;sin escrituras reales. Comparativa privada .local/revision-tema-oscuro/index.html,18estados/36capturas,servida en127.0.0.1:14326 y probada a390px.
+
+El propietario desconectó el teléfono e indicó continuar. QA debug preparatoria compilada localmente,pero no instalada;no acredita el CSS final ni es release. Verificación física del tema final pendiente para cuando vuelva;no bloquea trabajo local/CI. La app habitual0.1.45/código46 conserva el diseño anterior. Ver docs/TEMA_OSCURO_FORMULARIO_2026-11-13.md. Publicar rama/PR borrador y cerrar CI general/Android del SHA final;resultados posteriores en checkout principal/planes/cuerpo del PR sin sustituir CI por pushes documentales. No integración,producción ni nueva versión instalada. Conservar calendario aprobado,historial sin rediseño de estructura/datos,lentitud/logout aplazados,chat sin borradores y PR271 excluido.
+
+Para continuar: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md, docs/CI_REVISION_CHAT_PR275_2026-11-13.md y docs/TEMA_OSCURO_FORMULARIO_2026-11-13.md,además de planes locales. Revalida el SHA/CI de mejoras/tema-oscuro-formulario y sigue su revisión visual en la comparativa18estados. Teléfono desconectado: solo queda pendiente la comprobación física del tema final; no usar finanzas reales ni integrar PR271».
+
+
+## Refinamiento final de campos y fondos
+
+La inspección visual posterior a1d876b1 detectó campos de Reportes/Presupuestos/Movimientos todavía verdosos por una regla antigua más específica, el fondo azul del hilo del asistente y bordes por defecto demasiado claros en contenedores sin color explícito. Se reprodujo primero el fallo de coherencia del campo de Reportes mediante una aserción de superficie real, sin cambiar umbrales de contraste. Se sustituyen esos valores heredados por los tokens comunes; el hilo obtiene una clase de estilo y los bordes decorativos sin color explícito usan el separador del tema. Se conservan acentos semánticos, campos de categorías y el consentimiento del asistente.
+
+Build final y579 unitarias/66 archivos repetidos aprobaron. Regresión focal final:6 E2E aprobadas en52,6s, incluida la auditoría28 combinaciones y comprobaciones de campos/hilo/bordes reales; no se atribuyen las64 del paso1d876b1 al nuevo SHA. El build también informa Login4,30kB (300bytes sobre aviso4kB),además de Avisos4,49kB y automatic-bank5,01kB; no hay errores de compilación. El total inicial487,86kB sigue dentro del presupuesto500kB. El cierre del SHA/CI nuevo se registra en el checkout principal y cuerpo del PR276. Teléfono desconectado,sin instalación o validación física del tema final.
+
+
+## Ajuste solicitado: rojo profundo y grises neutros — 13 noviembre 2026
+
+El propietario aprueba conservar el fondo carbón y pide un rojo más oscuro, grises más neutros y retirar los tintes verdes ajenos al diseño. Se conserva exactamente el canvas #151719; superficies #1D1D1D/#272727, contenido #EFEFEF y secundario #B6B6B6. Botones/micrófono #C34842 con texto blanco; enlaces/textos de acento y foco #E7756B para mantener legibilidad. Los ingresos usan un gris claro y conservan sus etiquetas/signos, los gastos rojo y las advertencias ámbar. No se alteran colores de categorías elegidos por el usuario. El tema claro conserva su paleta y fuente; el micrófono de la pantalla de voz adopta tinta oscura para mantener contraste sobre su coral existente.
+
+Se retiró el verde real del placeholder del chat, de los roles de ingreso y del indicador porcentual de Presupuestos con datos. Este último se reprodujo con una aserción sobre el estilo renderizado (recibido rgb167,227,180), antes de sustituir la regla antigua por los tokens neutros. Se unificó también la caja informativa azul heredada. El acceso al formulario sigue como lápiz discreto de18px y área44×44, ayuda «Abrir formulario».
+
+CI del SHA intermedio1b70808: general43543716382 falló solo en E2E (126 aprobadas,4 omitidas condicionalmente,1 fallo); Android43543716425 aprobó. La captura/Linux mostró scrollWidth323 en320px al recuperar Categorías vacías con texto200%. El padding p-12 comprimía la frase: ahora px-4 py-8 sm:p-12 y break-words, sin reducir fuente ni relajar la prueba original. Se añade un caso con Arial de reserva,200% y modo sin conexión.
+
+Build local aprobado (bundle inicial488,24kB frente a presupuesto500kB);579 unitarias/66 archivos y9 E2E focales aprobadas antes del último ajuste de indicador. TypeScript estricto del nuevo spec aprobado. Avisos CSS: Login4,30kB, Avisos4,49kB y automatic-bank5,02kB; no errores de compilación. La regresión previa al último ajuste de indicador aprobó65/65; la ejecución completa sobre el CSS final sigue en curso y se registra en el checkout principal al finalizar. La auditoría visual final añade13 secciones sin verde inesperado en elementos visibles y3 pantallas públicas sin sesión, ambas aprobadas; TypeScript estricto de ambos specs modificados aprobado. Auditoría28 combinaciones de texto/foco y capturas de18 estados con contratos ficticios; sin escrituras financieras reales. La comparativa127.0.0.1:14326 muestra ahora antes/después de esta petición; aceptación estética final del propietario pendiente.
+
+El teléfono permanece desconectado: no se instala esta paleta en la app habitual ni se atribuye validación física al build Android. El cierre de SHA remoto/CI se anotará en el checkout principal, planes locales y PR276 para conservar la CI del código final. PR275 queda publicado con su CI aprobada; PR276 continúa borrador, sin integración o despliegue. Calendario aprobado; estructura/datos del historial, lentitud y logout aplazados; PR271 excluido.
+
+Para continuar: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/TEMA_OSCURO_FORMULARIO_2026-11-13.md. Revalida el SHA y CI del PR276 y continúa la revisión visual de la paleta rojo profundo/grises neutros en127.0.0.1:14326. No usar datos reales; teléfono desconectado y comprobación física del tema final pendiente».
+
+
+## Continuación visual: Cuentas y Presupuestos — 13 noviembre 2026
+
+Se revalidó PR276/328983f con CI general y Android aprobadas y se continuó por Cuentas/Presupuestos. Nueva rama mejoras/detalle-presupuesto-texto-ampliado creada desde develop remoto fe13575 comprobado, incorporando328983f por fast-forward; worktree .local/worktrees/detalle-presupuesto-texto-ampliado. La rama anterior no se reutiliza.
+
+Revisión renderizada de24 vistas de crédito/cashback/editor y presupuesto poblado/detalle/límite, en móvil, escritorio y320px/200%. Cuentas no requiere cambio demostrado. En Presupuestos se corrige cierre que sobresale del detalle (scrollWidth330/client318), título/etiqueta con nombres largos y totales comprimidos en dos columnas fijas al200%. Se permite envolver el encabezado y pasar totales a una columna según espacio/fuente, manteniendo tamaño e importes. La capa modal azul bg-slate-900/60 se neutraliza solo en oscuro. El aviso Cerca del límite tenía contraste1,55:1; su fondo ahora mezcla advertencia/superficie y mide7,51:1. Los tres avisos pasan4,5:1 en ambos temas. No se cambian cálculos,APIs,confirmaciones o colores de categorías del usuario.
+
+Build final488,49kB aprobado (presupuesto500kB); avisos CSS previos de Login4,30kB,Avisos4,49kB y automatic-bank5,02kB. Tres E2E focales finales y TypeScript estricto de ambos specs aprobados. Auditoría final24 vistas completada con cero escrituras/errores JS y sin verdes o desbordes inesperados en oscuro. Una ejecución integral intermedia se detuvo tras47 aprobadas al descubrir el fallo de contraste; no se presenta como cierre. Regresión final66 E2E en curso. El contraste previo se reprodujo sin bajar el umbral y se corrigió un selector de prueba que omitía espacios de plantilla.
+
+Informe: docs/REVISION_CUENTAS_PRESUPUESTOS_2026-11-13.md. Se prepara comparativa específica en127.0.0.1:14337. Datos ficticios,perfil/contexto aislados,API interceptada,red externa bloqueada y ningún guardado financiero real. Publicar rama/PR borrador y cerrar CI del SHA exacto; resultados remotos posteriores en checkout principal/planes/PR para no sustituir la CI con pushes documentales. Sin instalación o producción; teléfono desconectado. Calendario aprobado,estructura/datos del historial,lentitud/logout aplazados y PR271 excluido.
+
+Siguiente sección: Categorías y Etiquetas con sus editores/selecciones. Para continuar: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/REVISION_CUENTAS_PRESUPUESTOS_2026-11-13.md. Revalida SHA/CI de mejoras/detalle-presupuesto-texto-ampliado y sigue con Categorías/Etiquetas,usando datos ficticios; teléfono desconectado».
+
+
+## Categorías y Etiquetas — 13 noviembre 2026
+
+La revisión avanzó mientras terminaba la CI de Presupuestos. Se inspeccionaron16 vistas de categorías pobladas/editor/colores y etiquetas, en390/1280 oscuros y320px/200% en ambos temas. Categorías no presenta nuevos desbordes demostrados en ese alcance; los verdes elegidos como color de categoría son intencionales y se conservan. El primer intento de auditoría apuntó a input[type=color],inexistente en el selector actual; se corrigió al fieldset Color y el recorrido completó sin errores JS/escrituras. No se presenta aquel timeout del arnés como fallo de aplicación.
+
+En Etiquetas,al320/200%,el botón Eliminar comprimía el nombre casi letra por letra y el campo de alta quedaba en100,72px. Se presentó el hallazgo antes de corregirlo. Nueva rama mejoras/etiquetas-texto-ampliado creada desde develop remoto fe13575532c8c055fe699374660988a888b01f6f comprobado,incorporando9e573b0/PR277 por fast-forward; worktree .local/worktrees/etiquetas-texto-ampliado. No se reutiliza la rama anterior.
+
+Cambio mínimo en Etiquetas: campo con base12rem y filas que pueden envolver; el nombre conserva una base12ch y el botón no se comprime. Al aumentar la fuente,el nombre y la acción pueden ocupar filas propias. No se reduce fuente ni se trunca nombre,ni se cambian creación/eliminación,confirmación,validaciones o servicios. No se guardó ni eliminó ninguna etiqueta. La prueba reproduce primero el campo100,72px frente al mínimo200px; después verifica nombre de al menos180px y hasta5 líneas,campo de al menos200px con fuente32px,acciones44px dentro de pantalla,sin desbordes y conservando texto local sin enviar,en cuatro configuraciones.
+
+Build final488,56kB aprobado (presupuesto500kB); advertencias CSS previas Login4,30kB,Avisos4,49kB y automatic-bank5,02kB. E2E focal y TypeScript estricto aprobados. Regresión integral final67 casos en curso;no atribuir a este SHA las66 de PR277. API ficticia,red externa bloqueada,cero escrituras y erroresJS en la prueba. Publicar rama y PR borrador,verificar SHA/CI exactos y registrar resultados posteriores en checkout principal/planes/PR sin sustituir CI mediante pushes documentales. PR277 conserva su propio9e573b0,66 E2E locales y CI remota en curso al escribir esto.
+
+Informe: docs/REVISION_CATEGORIAS_ETIQUETAS_2026-11-13.md. Comparativa específica de etiquetas se añadirá a14337. Teléfono desconectado,sin instalación o producción. Mantener calendario aprobado,historial sin rediseño de estructura/datos,lentitud/logout aplazados y PR271 excluido.
+
+Siguiente sección: Reportes y Metas con sus controles/estados poblados,usando datos ficticios. Para continuar: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/REVISION_CATEGORIAS_ETIQUETAS_2026-11-13.md,además de REVISION_CUENTAS_PRESUPUESTOS_2026-11-13.md. Revalida los SHA/CI de PR277 y de mejoras/etiquetas-texto-ampliado; sigue con Reportes/Metas. Teléfono desconectado; no usar datos reales».
+
+
+## Corrección de cierre del arnés tras CI313af8d
+
+CI43553451812 falló en msi-anterior-acciones.spec.ts con apiResponse.json: Response has been disposed;129 E2E aprobadas,4 PWA omitidas condicionalmente y1 fallo. La nueva prueba de Etiquetas aprobó remotamente; Android43553451833 y los otros cinco trabajos generales aprobaron. La fase PWA separada no se ejecutó tras ese fallo.
+
+Artefacto14098145395 y trace.zip conservados en frontend/.local/ci-313af8d-evidence. La traza registra que la aserción final[0,0] completó348394,863 y el teardown de contexto empezó348395,397,con un GET interceptado aún abierto hasta348397,985. El callback leía una respuesta invalidada al cerrar. Se añade finally con page.unrouteAll({behavior:'wait'}) antes de que termine el test. La API está documentada en los tipos de Playwright instalado: espera handlers en curso. No se ignoran errores,no se aumentan timeouts,reintentos o umbrales y no se quitan aserciones. No se cambia la lógica MSI ni ninguna compra real.
+
+Verificación local:3/3 repeticiones del caso aprobadas en1min,con backend de perfil test/H2 en memoria y frontend local14341;puertos18080/14341 libres al terminar. TypeScript estricto del caso aprobado. Las67 E2E visuales de313af8d aprobaron en4,4min;la fuente de aplicación y estilos se mantienen idénticos tras esta corrección exclusiva del arnés. No se presenta H2 como PostgreSQL ni como validación real de usuario. La CI completa del nuevo SHA sigue pendiente hasta su comprobación y se registra en checkout principal/planes/PR.
+
+
+## Reportes y Metas — 14 noviembre 2026
+
+Rama mejoras/reportes-metas-texto-ampliado creada desde develop remoto fe13575 comprobado,con dependencia c56395f/PR278 por fast-forward. PR277/278 ya tienen subida y CI general/Android cerradas. Se presentaron defectos renderizados:gráfica de6 meses invade11px el control de tabla a320/200%,y Metas mantiene controles16px pese al texto ampliado. Se corrige altura/espacio de gráfica con desplazamiento interno al necesitarlo y tabla numérica conservada;Metas usa1rem (32px al200%),acciones breves con aria-label completo y separador del formulario con token común. Sin cambios de valores,reglas,APIs,guardados o transferencias.
+
+20 vistas iniciales/finales de ambos temas,móvil/escritorio/200%,con6 meses y2 monedas/3 estados de meta. Cero escrituras/errores JS;ningún aporte,retiro,creación o cancelación enviados. Dos E2E nuevas reproducen el defecto y después aprueban (11,8s),TypeScript estricto aprobado,579 unitarias/66 archivos y build488,56kB aprobados. Avisos CSS anteriores Login4,30kB,Avisos4,49kB y automatic-bank5,02kB. Regresión integral final69 E2E en curso;no atribuirlas hasta terminar. Informe docs/REVISION_REPORTES_METAS_2026-11-14.md. Publicar PR borrador y cerrar SHA/CI;registro remoto posterior en checkout principal/planes/PR para preservar la CI final.
+
+Calendario aprobado,historial sin rediseñar estructura/datos,lentitud/logout aplazados,PR271 excluido. Sin instalación o producción;comprobación física del tema final pendiente cuando vuelva el teléfono. Siguiente sección Compartidos/Avisos. Para continuar: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/REVISION_REPORTES_METAS_2026-11-14.md. Revalida SHA/CI de mejoras/reportes-metas-texto-ampliado y sigue con Compartidos/Avisos con datos ficticios».
+
+
+Comprobación final de foco:la gráfica desplazable se hacía tabulable automáticamente en Chromium pese a ser decorativa. Se reprodujo con Shift+Tab y se añade tabindex=-1,conservando la tabla como acceso de teclado a las seis cifras. El spec comprueba la ruta real de foco,la separación de etiquetas,último mes alcanzable y tabla de6 filas;TypeScript estricto aprobado tras la ampliación. La ejecución integral anterior se interrumpió tras50 casos aprobados al identificar este punto;se repite completa sobre la plantilla final. La UI y cálculos de Metas se conservan,solo tipos/tamaño/textos de presentación y nombres accesibles de sus acciones cambian.
+
+
+## Compartidos y Avisos: texto ampliado — 14 noviembre 2026
+
+Rama nueva mejoras/compartidos-avisos-texto-ampliado desde develop remoto fe13575 comprobado, con dependencia e4ca4e3/PR279 por fast-forward. CI general43608740365 y Android43608740305 de PR279 revalidadas completed/success. Diagnóstico presentado antes de corregir: nombres truncados del desglose en Compartidos, fuentes fijas de Avisos y botón Bancos y cuentas recortado a320/200%. Se cambia truncate por break-words, cinco tamaños de Avisos a rem equivalentes y navegación con ajuste de filas. Sin cambios financieros, APIs o guardados.
+
+Tres regresiones nuevas fallaron antes y aprobaron después3/3 en14,4s; TypeScript estricto aprobado.579 unitarias/66 archivos y build488,56kB aprobados. Avisos CSS Login4,30kB/automatic-bank5,02kB previos y Avisos4,53kB (antes4,49). Auditoría64 vistas por versión,128 capturas, cero escrituras/errores JS y cero recortes/desbordes finales. Android ficticio, API interceptada, perfiles nuevos y red externa bloqueada. Comparativa privada http://127.0.0.1:14349 ,128 imágenes y ajuste390px verificados. Informe docs/REVISION_COMPARTIDOS_AVISOS_2026-11-14.md. Regresión integral72 E2E en curso; publicar PR borrador y comprobar SHA/CI al cerrar.
+
+Sin merge, despliegue o instalación; no usar datos reales. Mantener calendario aprobado, historial sin rediseño, lentitud/logout aplazados y PR271 excluido. Siguiente paso: valoración de Compartidos/Avisos en comparativa14349 y después Ajustes según plan. Para otro chat: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/REVISION_COMPARTIDOS_AVISOS_2026-11-14.md. Revalida SHA/CI de mejoras/compartidos-avisos-texto-ampliado; continúa revisión por secciones con datos ficticios, sin integrar PR271».
+
+
+## Ajustes: legibilidad y texto ampliado — 14 noviembre 2026
+
+Rama nueva mejoras/ajustes-texto-ampliado desde develop fe13575 comprobado e incorporación de90586cf/PR280 por fast-forward. CI43623272401 y Android43623272198 de esa dependencia revalidadas completed/success. Diagnóstico presentado antes de corregir:correo largo desborda Seguridad,nombres y descripciones del resumen invaden el signo +,márgenes al200% estrechan el texto,herramientas con mínimo fijo,notas truncadas y WhatsApp con tamaños fijos/error oscuro2,56:1.
+
+Se permite envolver contenido largo,se apila encabezado del perfil,se aprovecha el ancho estrecho sin bajar fuente,y la cuadrícula de herramientas crece con el texto. Notas completas y WhatsApp en rem con error del tema>=4,5:1. Sin cambios de reglas,eventos,datos,APIs,consentimientos o persistencia. Siete regresiones reproducidas antes y aprobadas después;TypeScript estricto,579 unitarias/66 archivos y build488,56kB aprobados. Regresión integral final79 E2E en curso;una ejecución intermedia se detuvo tras30 casos antes del ajuste final de espaciado y no acredita el cierre.
+
+Auditoría64 estados antes/después más64 complementarios a375px y844×390/200%,ambos temas. Cero escrituras de guardado y errores JS;4 POST ficticios de previsualización por recorrido,interceptados sin backend ni restauración. No se exporta,elimina,vincula,restaura o cambia un permiso. La carrera del arnés de contraste se diagnosticó1/3 con nodo desconectado;se mide el error inicial en un contexto independiente por tema,sin relajar criterios o timeouts. Comparativa prevista14353. Informe docs/REVISION_AJUSTES_2026-11-14.md. Publicar PR borrador y verificar SHA remoto/CI.
+
+Sin integración,producción o instalación. Calendario aprobado,historial sin rediseño,lentitud/logout aplazados,PR271 excluido. Siguiente paso:valorar Ajustes y revisar coherencia visual entre las secciones trabajadas. Para otro chat:«Lee AGENTS.md,docs/ESTADO_SESION.md,docs/PLAN_MAESTRO_KAPTAL.md y docs/REVISION_AJUSTES_2026-11-14.md. Revalida SHA/CI de mejoras/ajustes-texto-ampliado y revisa comparativa14353;continúa comparativas y coherencia entre secciones con datos ficticios,sin integrar PR271 ni desplegar».
+
+
+## Revisión concreta de comparativa14359 — 15 noviembre 2026
+
+Ver docs/REVISION_AJUSTES_COMPARATIVA_2026-11-15.md. Continúa PR282/d52f3fc en la rama nueva mejoras/ajustes-visuales-comparativa14359, desde develop remoto comprobado. Cuentas sin palabra partida ni flecha decorativa y captura manual con título/tipos adaptables; sin reducir letra. Local: 579 unitarias/66 archivos,19 E2E,TypeScript y build488,72kB aprobados; auditoría120 estados sin desbordes/fallos de contraste medidos. Comparativa nueva14361 de240 imágenes; original14359 conservada. API ficticia y red externa bloqueada, cero escrituras/previsualizaciones/errores JS. Faltan valoración estética de cifras/títulos al200% y CI del nuevo SHA; la CI de PR282 sí se revalidó. Sin integración ni despliegue; calendario/historial conservados y PR271 excluido.
+
+Para otro chat: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/REVISION_AJUSTES_COMPARATIVA_2026-11-15.md. Continúa comparativa14361 desde mejoras/ajustes-visuales-comparativa14359, dependiente de PR282/d52f3fc. Revalida SHA/CI y revisa cifras/títulos al200% con datos ficticios. Conserva calendario/historial; no integres PR271 ni despliegues».
+
+
+## Diseño autorizado de calendario e historial — 15 noviembre 2026
+
+El propietario autoriza mejorar también estas dos superficies. Ver docs/DISENO_CALENDARIO_HISTORIAL_2026-11-15.md y comparativa14368: calendario plano, historial con lectura clara, títulos escalables, cifras completas y chat con más ancho. Rama diseno/calendario-historial-minimalista, dependiente de PR283/d875d85 con CI aprobada; fuente desde develop remoto comprobado. Local580 unitarias/66 archivos, ocho focales, build489,14kB, TypeScript y auditoría144 estados/288 imágenes aprobados. Integral101 y funcionales/PWA finales en curso; registrar resultado y SHA/CI al cerrar. Sin integración, instalación, datos reales o despliegue manual; PR271 excluido.
+
+Para otro chat: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/DISENO_CALENDARIO_HISTORIAL_2026-11-15.md. Continúa desde diseno/calendario-historial-minimalista y comparativa14368; revalida SHA/CI y revisa el diseño con datos ficticios. Calendario e historial tienen autorización nueva de rediseño. No integres PR271 ni despliegues manualmente».
+
+
+Cierre local final de minimalismo: 580 unitarias/66 archivos, 101 E2E en 10,7 min y siete funcionales/PWA en 2,5 min aprobados; build 489,14 kB y TypeScript correctos. Auditoría de 144 estados y galería de 288 imágenes verificadas, sin desbordes del documento ni fallos de contraste medidos. Continuar con SHA remoto/CI y valoración estética del propietario; sin integración ni instalación.
+
+
+## Revisión de PR284 y comparativa14368 — 15 noviembre 2026
+
+Ver docs/REVISION_PR284_COMPARATIVA14368_2026-11-15.md. SHA3f4d720 remoto revalidado, PR284 abierto/borrador; PR271 sin integrar y develop/main sin cambios. Android CI aprobada; CI general aún en curso en la consulta inicial, con cinco jobs aprobados y E2E ejecutándose. El informe contiene la última consulta.
+
+Se comprobaron288 imágenes por HTTP local, decodificación e igualdad con la fuente. Se inspeccionaron28 capturas focales de ocho superficies. El detalle al320/200% conserva el importe partido en tres líneas en claro/oscuro, igual que PR283: pendiente preexistente, no regresión nueva. Observación menor de espacio del pie del presupuesto; valorar densidad del historial y scroll de calendario. No se modificó código ni se usaron datos reales. Las pruebas de la etapa anterior no se repitieron.
+
+Documentación en rama nueva revision/pr284-comparativa14368, desde develop remoto comprobado y fast-forward solo en esa rama a PR284. Sin integración, instalación o despliegue manual. Siguiente: resolver el detalle ampliado en una etapa de implementación con prueba focal y nueva rama. Valoración estética del propietario pendiente.
+
+Para otro chat: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md, docs/DISENO_CALENDARIO_HISTORIAL_2026-11-15.md y docs/REVISION_PR284_COMPARATIVA14368_2026-11-15.md. Continúa PR284/3f4d720: confirma CI y atiende el importe partido del detalle a320/200% con datos ficticios. No integres PR271 ni despliegues manualmente».
+
+
+## Corrección del importe del detalle — 15 noviembre 2026
+
+Ver docs/CORRECCION_DETALLE_IMPORTE_2026-11-15.md. Rama nueva correcciones/detalle-importe-ampliado, dependiente de PR284/3f4d720 y su revisión13a14bd. Importe en una línea con signo/centavos/privacidad y moneda explícita; letra se duplica al200%. Datos del detalle con columnas adaptables y pie del presupuesto separado. Se reprodujeron los defectos antes de corregirlos. No se modifica la lógica de autenticación; check-startup solo mejora el diagnóstico sin imprimir tokens.
+
+Local580 unitarias/66 archivos,29 E2E distintos (10 focales y19 de regresión), TypeScript y build489,19kB aprobados. Los dos focales del detalle volvieron a pasar con la comprobación adicional de desplazamiento. Auditoría144 estados y galería288 imágenes comprobadas; comparativa14372 nueva y14368 conservada. Solo datos ficticios; sin escrituras ni errores JS. Esto no acredita teléfono, datos reales ni nueva ejecución PWA/API real.
+
+CI general original de PR284 falló en el comprobador de arranque antes de PWA; Android sí aprobó. Reintento en curso al preparar publicación. Registrar la conclusión y CI del nuevo SHA sin atribuir al nuevo código resultados de otro commit. Estado y planes locales sincronizados. Sin integración, instalación o despliegue manual; PR271 excluido.
+
+Para otro chat: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md, docs/REVISION_PR284_COMPARATIVA14368_2026-11-15.md y docs/CORRECCION_DETALLE_IMPORTE_2026-11-15.md. Continúa desde correcciones/detalle-importe-ampliado: revalida SHA/CI y revisa comparativa14372 con datos ficticios. No integres PR271 ni despliegues manualmente».
+
+
+## Publicación y CI comprobadas — 15 noviembre 2026, 22:39 UTC
+
+PR285 borrador hacia develop: https://github.com/YaxcheItz/gestorfinanzas/pull/285 . Commit de código y evidencia local `2b0fe058424fb5a26d1ff9608a06d080a66c0bbd`, publicado con SHA remoto idéntico. El cierre documental posterior mantiene el mismo código; comprobar el head final del PR para su propia CI. Rama correcciones/detalle-importe-ampliado; comparativa14372 comprobada con288 imágenes/selectores/ancho390px y cero errores JS.14368 conservada.
+
+Reintento de PR284/3f4d720: CI general43767153271 completed/success y Android43767153323 completed/success reconsultadas. Log del job132980684597:164 casos en11,9min, cuatro reservados a PWA omitidos en el proyecto normal y los cuatro PWA dedicados aprobados después en16,8s. check-startup pasó200/401/503 con cero solicitudes protegidas antes del refresh y cero cabeceras inesperadas. Se conserva el primer fallo; el reintento no demuestra su causa ni una corrección de autenticación.
+
+CI iniciada para2b0fe05: general43770362555 y Android43770362553 en curso al registrar. No se atribuye al nuevo SHA la CI aprobada de PR284. El cierre documental genera otro head con código idéntico: verificar su CI exacta. Desarrollo/main y PR284 conservan sus SHA; PR271 excluido, sin integración, instalación o despliegue manual. La configuración de hosting no se cambió; una Preview automática de la conexión existente no constituye un despliegue manual.
+
+Siguiente: comprobar CI del head final de PR285 y valorar el detalle/Presupuestos en comparativa14372. Si reaparece el fallo de check-startup, usar su diagnóstico nuevo sin desactivar las aserciones. Para continuar, leer AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/CORRECCION_DETALLE_IMPORTE_2026-11-15.md; conservar datos ficticios, PR271 excluido y ningún despliegue manual.
+
+
+## CI y revisión comprobadas de PR285 — 15 noviembre 2026
+
+PR285/head b23f38a0c807f07b626d97fb0c4ad9142cee2275: CI general43770582994 y Android43770582797 completed/success comprobadas en 2026-11-15 22:56:54 UTC. Se conserva el head del PR y su CI. Ver docs/CI_REVISION_PR285_2026-11-15.md. Esta rama solo publica documentación del cierre, sin integrar develop/main o PR271 y sin despliegue manual.
+
+Comparativa14372 revalidada con288 imágenes y cero errores JS; inspección visual de12 PNG focales sin defecto nuevo reproducible. Seis combinaciones adicionales de detalle comprueban accesibilidad del cierre al desplazar y Escape, con datos ficticios, cero escrituras y cero errores JS. Las baterías locales anteriores no se repiten. Falta la valoración estética del propietario; su elección visual no autoriza integrar ni desplegar.
+
+Para otro chat: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md, docs/CORRECCION_DETALLE_IMPORTE_2026-11-15.md y docs/CI_REVISION_PR285_2026-11-15.md. Continúa PR285/b23f38a desde la revisión documental revision/pr285-ci-comparativa14372: la CI ya aprobó; recoge la valoración visual de comparativa14372 y atiende ajustes concretos con datos ficticios. No integres PR271 ni despliegues manualmente.».

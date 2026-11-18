@@ -31,6 +31,7 @@ async function run() {
       let refreshes = 0;
       let protectedBeforeRefresh = 0;
       let expiredRequests = 0;
+      const invalidProtectedRequests = [];
       const fresh = token(Math.floor(Date.now()/1000) + 3600);
       await context.addInitScript(({user, access}) => {
         localStorage.setItem('finanzas_token', access);
@@ -49,7 +50,11 @@ async function run() {
         }
         if (!url.pathname.startsWith('/api/auth/')) {
           if (!released) protectedBeforeRefresh++;
-          if (route.request().headers()['authorization'] !== `Bearer ${fresh}`) expiredRequests++;
+          const authorization = route.request().headers()['authorization'];
+          if (authorization !== `Bearer ${fresh}`) {
+            expiredRequests++;
+            invalidProtectedRequests.push({path: url.pathname, authorization: !authorization ? 'absent' : authorization === `Bearer ${token(1)}` ? 'expired' : 'unexpected'});
+          }
         }
         let data = [];
         if (url.pathname.endsWith('/perfil')) data = {...user, tema: 'CLARO', monedaPredeterminada: 'MXN'};
@@ -82,7 +87,7 @@ async function run() {
           await page.locator('app-dashboard').waitFor();
           assert.equal(await page.evaluate(() => localStorage.getItem('finanzas_token')), token(1));
         }
-        assert.equal(expiredRequests, 0, 'Nunca envia datos protegidos con el token vencido');
+        assert.equal(expiredRequests, 0, `Nunca envia datos protegidos con el token vencido: ${JSON.stringify({status, requests: invalidProtectedRequests})}`);
         report.push({status, shellMs, protectedBeforeRefresh, expiredRequests, refreshes});
       } finally { release(); await context.close(); }
     }

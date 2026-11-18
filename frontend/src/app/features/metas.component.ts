@@ -30,9 +30,9 @@ import { fechaCivilFinanciera } from '../core/utils/periodo-financiero';
         <h2 class="text-xl font-semibold">{{meta.nombre}}</h2>
         <p>{{meta.saldoActual | monto:meta.moneda}} de {{meta.metaObjetivo! | monto:meta.moneda}}</p>
         <p>{{meta.metaCancelada ? 'Cancelada · fondos conservados' : meta.saldoActual >= meta.metaObjetivo! ? 'Objetivo alcanzado' : 'En progreso'}}</p>
-        <button type="button" [disabled]="ocupada()" (click)="abrir(meta,'aporte')" [hidden]="meta.metaCancelada || !meta.activo">Aportar a {{meta.nombre}}</button>
-        <button type="button" [disabled]="ocupada() || meta.saldoActual <= 0 || !meta.activo" (click)="abrir(meta,'retiro')">Retirar de {{meta.nombre}}</button>
-        <button type="button" [disabled]="ocupada()" (click)="cancelar(meta)">{{meta.metaCancelada ? 'Reanudar' : 'Cancelar'}} meta {{meta.nombre}}</button>
+        <button type="button" [disabled]="ocupada()" (click)="abrir(meta,'aporte')" [hidden]="meta.metaCancelada || !meta.activo" [attr.aria-label]="'Aportar a ' + meta.nombre">Aportar</button>
+        <button type="button" [disabled]="ocupada() || meta.saldoActual <= 0 || !meta.activo" (click)="abrir(meta,'retiro')" [attr.aria-label]="'Retirar de ' + meta.nombre">Retirar</button>
+        <button type="button" [disabled]="ocupada()" (click)="cancelar(meta)" [attr.aria-label]="(meta.metaCancelada ? 'Reanudar' : 'Cancelar') + ' meta ' + meta.nombre">{{meta.metaCancelada ? 'Reanudar' : 'Cancelar'}} meta</button>
         @if(elegida()?.id === meta.id){
           <form (ngSubmit)="transferir()" class="space-y-3 border-t pt-3">
             <h3>{{direccion === 'aporte' ? 'Aportar' : 'Retirar'}}</h3>
@@ -45,9 +45,10 @@ import { fechaCivilFinanciera } from '../core/utils/periodo-financiero';
       </article>
     } @empty {<p>Aún no tienes metas. Crea una y aporta desde una cuenta de la misma moneda.</p>}
     }
-    <p>Los movimientos aparecen en tu historial como transferencias. Cancelar no devuelve fondos automáticamente; puedes retirarlos cuando lo decidas.</p>
+    <p class="break-words">Los movimientos aparecen en tu historial como transferencias. Cancelar no devuelve fondos automáticamente; puedes retirarlos cuando lo decidas.</p>
   </section>`,
-  styles:`label{display:grid;gap:6px}input,select,button{min-height:44px;padding:10px;border:1px solid var(--kaptal-border);border-radius:12px;background:var(--kaptal-surface);color:var(--kaptal-content);font-size:16px}input,select{width:100%;min-width:0}button{margin-right:8px}button:disabled{opacity:.5}article{overflow-wrap:anywhere}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--kaptal-focus);outline-offset:2px}`
+  // El espacio horizontal fijo deja crecer la letra sin estrechar también las palabras.
+  styles:`section,section>form,article{padding-inline:16px}label{display:grid;gap:6px}input,select,button{min-height:44px;padding:10px;border:1px solid var(--kaptal-border);border-radius:12px;background:var(--kaptal-surface);color:var(--kaptal-content);font-size:1rem}input,select{width:100%;min-width:0}button{margin-right:8px;max-width:100%}button:disabled{opacity:.5}article{overflow-wrap:anywhere}form{border-color:var(--kaptal-border)}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--kaptal-focus);outline-offset:2px}`
 })
 export class MetasComponent implements OnInit {
   private readonly http=inject(HttpClient);

@@ -239,7 +239,7 @@ type FormularioAbierto = 'aporte' | 'gasto' | 'pago' | null;
               <ul class="mt-3 space-y-1 border-t border-slate-100 pt-3 dark:border-slate-800">
                 @for (parte of gasto.repartos; track parte.usuarioId) {
                   <li class="flex items-center justify-between gap-3 text-xs">
-                    <span class="min-w-0 truncate text-slate-600 dark:text-slate-300">
+                    <span class="min-w-0 break-words text-slate-600 dark:text-slate-300">
                       {{ parte.usuarioNombre }} ({{ parte.porcentaje | number:'1.0-2' }}%)
                       @if (parte.partes != null) { · {{ parte.partes }} partes }
                     </span>

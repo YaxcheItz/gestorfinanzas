@@ -2,7 +2,7 @@ import { ListasService } from './core/services/listas.service';
 import { Component, HostListener, inject } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { effect } from '@angular/core';
-import { RouterLink, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterOutlet } from '@angular/router';
 import { NavbarComponent } from './shared/components/navbar/navbar.component';
 import { ToastContainerComponent } from './shared/components/toast-container/toast-container.component';
 import { ConfirmDialogComponent } from './shared/components/confirm-dialog/confirm-dialog.component';
@@ -22,6 +22,8 @@ import { NativeCaptureService } from './core/services/native-capture.service';
   styleUrl: './app.css'
 })
 export class App {
+  private readonly router = inject(Router);
+  esInicio(): boolean { return this.router.url.split(/[?#]/)[0] === '/dashboard'; }
   private readonly nativeCapture = inject(NativeCaptureService);
   readonly sharedNotice = inject(SharedNoticeService);
   closeSharedNoticeError(): void { void this.sharedNotice.discard().catch(() => undefined); }

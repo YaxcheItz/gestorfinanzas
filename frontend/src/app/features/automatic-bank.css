@@ -1,6 +1,6 @@
-.automation { padding: 1.25rem; margin: 1.5rem 0; border-radius: 1.25rem; background: var(--kaptal-surface-subtle); }
+.automation { padding: 1.25rem 20px; margin: 1.5rem 0; border-radius: 1.25rem; background: var(--kaptal-surface-subtle); }
 .automation-header { display: flex; align-items: flex-start; justify-content: space-between; gap: .75rem; }
-h2 { font-size: 1.25rem; letter-spacing: -.025em; margin: .3rem 0 .65rem; }
+h2 { font-size: 1.25rem; font-weight: 700; letter-spacing: -.025em; margin: .3rem 0 .65rem; }
 .scope { display: inline-flex; align-items: center; gap: .4rem; color: var(--notice-muted); font-size: .8125rem; white-space: nowrap; }
 .scope::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--notice-muted); }
 .scope.active { color: var(--kaptal-income); }
@@ -29,7 +29,7 @@ details { border-top: 1px solid var(--kaptal-border); margin-top: .8rem; }
 .save { width: 100%; margin-top: .5rem; }
 .support { margin-top: 1rem; }
 .support p + p { margin-top: .75rem; }
-@media(max-width:359px) { .automation { padding: 1rem; } .automation-header { flex-direction: column; } .metrics { gap: .5rem; } }
+@media(max-width:359px) { .automation { padding: 1rem 16px; } .automation-header { flex-direction: column; } .metrics { gap: .5rem; } }
 
 .automation { border: 1px solid var(--kaptal-border); background: var(--kaptal-surface); box-shadow: 0 8px 24px rgb(0 0 0 / .04); }
 .automation-eyebrow { margin: 0; color: var(--kaptal-content-muted); font-size: .75rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
@@ -45,7 +45,7 @@ details { border-top: 1px solid var(--kaptal-border); margin-top: .8rem; }
 
 .profile > summary { min-height: 52px; display: flex; align-items: center; justify-content: space-between; gap: .75rem; cursor: pointer; font-weight: 650; }
 .profile-state { color: var(--kaptal-content-muted); font-size: .8rem; font-weight: 500; }
-.profile[open] > summary { color: var(--kaptal-brand); }
+.profile[open] > summary { color:var(--kaptal-brand-ink); }
 
 .profile > summary::after { content: "\203A"; color: var(--kaptal-content-muted); font-size: 1.25rem; line-height: 1; }
 .profile[open] > summary::after { transform: rotate(90deg); }
@@ -62,7 +62,7 @@ details { border-top: 1px solid var(--kaptal-border); margin-top: .8rem; }
 .association-card { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; padding: .9rem; border: 1px solid var(--kaptal-border); border-radius: 1rem; background: var(--kaptal-surface-subtle); }
 .association-card > div { min-width: 0; overflow-wrap: anywhere; }
 .association-card p { margin: .25rem 0 0; }
-.association-editor { display: grid; gap: .8rem; padding: 1rem; border: 1px solid var(--kaptal-border); border-radius: 1rem; background: var(--kaptal-surface); }
+.association-editor { display: grid; gap: .8rem; padding: 1rem 16px; border: 1px solid var(--kaptal-border); border-radius: 1rem; background: var(--kaptal-surface); }
 .association-editor__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .5rem; }
 .legacy-setup { margin-top: 1.25rem; }
 .legacy-setup > summary { min-height: 48px; display: flex; align-items: center; font-weight: 650; cursor: pointer; }

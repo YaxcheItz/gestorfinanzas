@@ -85,7 +85,7 @@ test('etiqueta de captura seleccionable con teclado y fecha legible',async({brow
     await p.emulateMedia({reducedMotion:'reduce'});await p.setViewportSize({width:320,height:844});await p.goto(origin+'/dashboard');
     await p.evaluate(()=>{document.documentElement.style.fontSize='200%';document.documentElement.classList.add('dark');});
     await p.locator('.capture-dock__manual').click();
-    await p.getByRole('button',{name:'Registro manual',exact:true}).click();
+    await p.getByRole('button',{name:'Abrir formulario',exact:true}).click();
     const dialog=p.getByRole('dialog');await expect(dialog).toBeVisible();
     await p.screenshot({path:info.outputPath('captura-abierta.png'),fullPage:true});
     await dialog.locator('.entry-details summary').click();

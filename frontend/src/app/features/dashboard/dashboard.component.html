@@ -23,7 +23,7 @@
                 <div class="monai-year-stepper">
                   <button type="button" (click)="cambiarAnioModal(-1)" [disabled]="anioNavegacionModal() <= 2000" aria-label="Año anterior">&lsaquo;</button>
                   <strong class="monai-year-title">{{ anioNavegacionModal() }}</strong>
-                  <button type="button" (click)="cambiarAnioModal(1)" [disabled]="anioNavegacionModal() >= 2100" aria-label="Año siguiente">&rsaquo;</button>
+                  <button type="button" (click)="cambiarAnioModal(1)" [disabled]="anioNavegacionModal() >= +fechaHoy().slice(0, 4)" aria-label="Año siguiente">&rsaquo;</button>
                 </div>
                 <div class="monai-month-grid" role="grid" aria-label="Meses del año">
                   @for (mes of mesesLista; track mes.numero) {
@@ -31,14 +31,13 @@
                             class="monai-month-btn"
                             [class.is-selected]="mesEsSeleccionado(mes.numero)"
                             [disabled]="mesEsFuturo(mes.numero)"
+                            [attr.aria-label]="mes.nombreCompleto + ' de ' + anioNavegacionModal()"
                             [attr.aria-pressed]="mesEsSeleccionado(mes.numero)"
                             (click)="seleccionarMesDirecto(mes.numero)">
                       <span class="monai-month-short">{{ mes.nombreCorto }}</span>
-                      <small class="monai-month-full">{{ mes.nombreCompleto }}</small>
                     </button>
                   }
                 </div>
-                <p class="period-help text-center">Toca cualquier mes para consultar sus movimientos al instante.</p>
               </div>
             }
 

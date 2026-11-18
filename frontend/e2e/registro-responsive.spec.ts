@@ -27,6 +27,8 @@ test('registra un gasto una vez y conserva los diálogos dentro del viewport',as
   await expect.poll(()=>page.evaluate(()=>localStorage.getItem('finanzas_token'))).not.toContain('.signature');
   expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('finanzas_user')!).id)).toBe(auth.id);
   await page.goto('/transacciones');
+  await expect(page.locator('.history-page')).toBeVisible();
+  await expect(page.locator('.history-results')).toHaveAttribute('aria-busy','false');
   for(const viewport of [{width:320,height:568},{width:390,height:844},{width:844,height:390},{width:1440,height:900}]) {
     await page.setViewportSize(viewport);
     await page.evaluate(()=>window.dispatchEvent(new Event('kaptal-abrir-registro-manual')));

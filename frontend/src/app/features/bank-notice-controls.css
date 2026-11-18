@@ -11,7 +11,8 @@ h2, h3 { margin: 0; overflow-wrap: anywhere; }
 .hint, small { color: var(--notice-muted); font-size: .875rem; line-height: 1.6; }
 button, select, input { font: inherit; }
 button, summary, a { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
-button { min-height: 48px; padding: .7rem 1rem; border: 0; border-radius: .8rem; background: var(--kaptal-surface-subtle); color: inherit; cursor: pointer; line-height: 1.4; overflow-wrap: anywhere; }
+/* La letra puede crecer sin duplicar también el espacio lateral del botón. */
+button { min-height: 48px; padding: .7rem 16px; border: 0; border-radius: .8rem; background: var(--kaptal-surface-subtle); color: inherit; cursor: pointer; line-height: 1.4; overflow-wrap: anywhere; }
 button.primary { background: var(--kaptal-brand); color: var(--kaptal-on-brand); font-weight: 650; }
 button.quiet { background: transparent; color: var(--notice-muted); }
 button.danger { color: var(--kaptal-expense); background: transparent; text-align: left; }

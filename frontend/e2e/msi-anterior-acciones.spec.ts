@@ -8,6 +8,7 @@ test('compra antigua permite editar y eliminar el plan sin duplicar el importe',
  const cuenta=await page.request.post('/api/cuentas',{headers,data:{nombre:'Tarjeta QA antigua',tipo:'CREDITO',moneda:'MXN',limiteCredito:1000,diaCorte:28,diaPago:10,saldoInicial:0}});const cid=(await cuenta.json()).data.id;
  const f=new Date();f.setUTCMonth(f.getUTCMonth()+1,1);const fecha=f.toISOString().slice(0,10);
  const creado=await page.request.post('/api/transacciones',{headers,data:{cuentaId:cid,tipo:'GASTO',monto:90,fecha,descripcion:'Plan QA anterior',msi:3}});expect(creado.ok()).toBeTruthy();const cuota=(await creado.json()).data;
+ try {
  await page.route('**/api/dashboard/resumen?*',async route=>{
    const response=await route.fetch();const body=await response.json();
    body.data.ultimosMovimientos=body.data.ultimosMovimientos.filter((x:any)=>x.compraMsiId!==cuota.compraMsiId);
@@ -23,4 +24,8 @@ test('compra antigua permite editar y eliminar el plan sin duplicar el importe',
  const otra=page.locator('app-movimiento-mobile-card').filter({hasText:'Plan QA anterior'}).first();await expect(otra).toBeVisible();await swipe(otra,-1);const eliminar=otra.locator('.swipe-actions__action--delete');await expect(eliminar).toBeEnabled();await eliminar.click();
  const confirm=page.locator('app-confirm-dialog [role="dialog"]');await expect(confirm).toContainText('compra completa');await confirm.locator('button').last().click();
  await expect.poll(async()=>{const rows=(await (await page.request.get('/api/cuentas',{headers})).json()).data;const c=rows.find((x:any)=>x.id===cid);return [c.saldoActual,c.limiteRetenido]}).toEqual([0,0]);
+ } finally {
+  // Terminar las respuestas interceptadas antes de que se cierre su contexto.
+  await page.unrouteAll({behavior:'wait'});
+ }
 });
