@@ -1,11 +1,12 @@
 <!-- KAPTAL_ESTADO_VIGENTE_INICIO -->
-## Resumen vigente — 18 noviembre 2026 · Corrección del mes en Reportes
+## Resumen vigente — 18 noviembre 2026 · Filtro de Reportes integrado en develop
 
-- Rama `correcciones/reportes-filtro-mensual-url` desde `origin/develop` `b0dc3a0` verificado. Elegir un mes actualiza la URL, conserva la lista activa y la vista recupera el mes al recargar. El estado vacío describe el mes o rango consultado. [Informe](CORRECCION_FILTRO_REPORTES_2026-11-18.md).
-- Las dos regresiones se verificaron en Chromium y Firefox. Aprobaron Angular, TypeScript y 580 unitarias. Capturas y registros en `.local/reportes-filtro-mensual-url/`.
-- Producción en `01135ec` verificado. Calendario conservado. Historial, lentitud y logout siguen aplazados. Publicar en producción o instalar una APK requiere confirmación.
+- `develop` remoto avanzó a `1f0f4ca`. El filtro mensual queda en la URL y se recupera al recargar. El mensaje vacío distingue el mes o rango consultado. [Informe de integración](CORRECCION_FILTRO_REPORTES_2026-11-18.md).
+- Los seis trabajos de CI de la corrección y los seis de `develop` aprobaron para el mismo commit. Android de `develop` aprobó su compilación. [CI de develop](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44418976896) · [Android de develop](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44418976906).
+- El merge simulado con `main` produjo el árbol ya probado `fbef048`. Producción sigue en `01135ec`. Reportes respondió HTTP 200 con los recursos de esa versión y la API respondió UP.
+- Calendario conservado. Historial, lentitud y logout siguen aplazados. Publicar en producción web o instalar una APK requiere confirmación por destino.
 
-Para otro chat, abre `.local/worktrees/kaptal-reportes-filtro-url` y lee `AGENTS.md`, `docs/ESTADO_SESION.md`, `docs/PLAN_MAESTRO_KAPTAL.md` y [el informe](CORRECCION_FILTRO_REPORTES_2026-11-18.md). Verifica el SHA remoto y la CI de la corrección antes de valorar su integración. Si se continúa la revisión visual, usa datos ficticios y conserva los aplazamientos.
+Para otro chat, abre `.local/worktrees/kaptal-integracion-reportes` y lee `AGENTS.md`, `docs/ESTADO_SESION.md`, `docs/PLAN_MAESTRO_KAPTAL.md` y [el informe de integración](CORRECCION_FILTRO_REPORTES_2026-11-18.md). Revalida `develop` `1f0f4ca` y `main` `01135ec`. La siguiente etapa es confirmar si se promueve Reportes a producción web. Usa datos ficticios y conserva los aplazamientos.
 
 Los apartados siguientes conservan el historial y la evidencia de las etapas anteriores.
 <!-- KAPTAL_ESTADO_VIGENTE_FIN -->
