@@ -25,6 +25,29 @@ import {
   selector: 'app-presupuestos',
   standalone: true,
   imports: [MontoPrivadoDirective, CommonModule, FormsModule, FocusTrapDirective, MontoPipe],
+  styles: [`
+    .budget-select { position: relative; }
+    .budget-select select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; }
+    .budget-select-value {
+      border-color: var(--kaptal-control-border);
+      background: var(--kaptal-surface-subtle);
+      padding-inline: 14px;
+      gap: 8px;
+    }
+    .budget-select-value::after {
+      content: '';
+      flex: 0 0 7px;
+      height: 7px;
+      border: solid currentColor;
+      border-width: 0 2px 2px 0;
+      transform: translateY(-2px) rotate(45deg);
+    }
+    .budget-select select:focus-visible + .budget-select-value { outline: 2px solid var(--kaptal-focus); outline-offset: 3px; }
+    .budget-select select:disabled + .budget-select-value { opacity: .6; }
+    @media (max-width: 420px) {
+      .budget-entry-form, .budget-detail-body { padding-inline: 16px; }
+    }
+  `],
   template: `
     <div class="finance-page budgets-page max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-5 sm:space-y-8">
       
@@ -281,7 +304,7 @@ import {
             </button>
           </div>
 
-          <form (ngSubmit)="guardarPresupuesto()" class="p-4 sm:p-6 space-y-4">
+          <form (ngSubmit)="guardarPresupuesto()" class="budget-entry-form p-4 sm:p-6 space-y-4">
             
             @if (modalError()) {
               <div role="alert" class="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs">
@@ -294,18 +317,17 @@ import {
               <label for="modalCat" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                 Categoría
               </label>
-              <select
-                id="modalCat"
-                required
-                [disabled]="modoEdicion()"
-                [(ngModel)]="formCategoriaId"
-                name="categoriaId"
-                class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all disabled:opacity-60 disabled:cursor-not-allowed dark:bg-slate-800 dark:border-slate-600 dark:text-white">
-                <option [ngValue]="null" disabled>Selecciona una categoría de gasto</option>
-                @for (cat of categorias(); track cat.id) {
-                  <option [ngValue]="cat.id">{{ cat.nombre }}</option>
-                }
-              </select>
+              <div class="budget-select">
+                <select id="modalCat" name="categoriaId" [(ngModel)]="formCategoriaId" [disabled]="modoEdicion()" required class="disabled:cursor-not-allowed">
+                  <option [ngValue]="null" disabled>Selecciona una categoría de gasto</option>
+                  @for (cat of categorias(); track cat.id) {
+                    <option [ngValue]="cat.id">{{ cat.nombre }}</option>
+                  }
+                </select>
+                <span aria-hidden="true" class="budget-select-value pointer-events-none flex min-h-11 items-center rounded-xl border py-2.5 text-sm">
+                  <span class="min-w-0 flex-1 [overflow-wrap:anywhere]">{{ nombreCategoriaSeleccionada() }}</span>
+                </span>
+              </div>
             </div>
 
             <!-- Lista financiera -->
@@ -327,11 +349,16 @@ import {
 
             <div>
               <label for="modalMoneda" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Moneda del presupuesto</label>
-              <select id="modalMoneda" [(ngModel)]="formMoneda" name="moneda" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm dark:bg-slate-800 dark:border-slate-600 dark:text-white">
-                @for (moneda of monedasDisponibles; track moneda.codigo) {
-                  <option [ngValue]="moneda.codigo">{{ moneda.codigo }} — {{ moneda.nombre }}</option>
-                }
-              </select>
+              <div class="budget-select">
+                <select id="modalMoneda" [(ngModel)]="formMoneda" name="moneda" required>
+                  @for (moneda of monedasDisponibles; track moneda.codigo) {
+                    <option [ngValue]="moneda.codigo">{{ moneda.codigo }} — {{ moneda.nombre }}</option>
+                  }
+                </select>
+                <span aria-hidden="true" class="budget-select-value pointer-events-none flex min-h-11 items-center rounded-xl border py-2.5 text-sm">
+                  <span class="min-w-0 flex-1 [overflow-wrap:anywhere]">{{ etiquetaMonedaSeleccionada() }}</span>
+                </span>
+              </div>
             </div>
 
             <!-- Monto Límite -->
@@ -441,7 +468,7 @@ import {
             </button>
           </div>
 
-          <div class="p-4 sm:p-6 space-y-5">
+          <div class="budget-detail-body p-4 sm:p-6 space-y-5">
             @if (loadingDetalle()) {
               <div class="flex items-center justify-center py-10 text-sm text-slate-500">
                 <div class="w-5 h-5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin mr-2"></div>
@@ -452,25 +479,28 @@ import {
                 {{ errorDetalle() }}
               </div>
             } @else if (detallePresupuesto(); as det) {
+              <ng-template #importeDetalle let-importe>
+                @for (grupo of gruposImporteDetalle(importe); track $index) {<span class="whitespace-nowrap">{{ grupo }}</span><wbr>}
+              </ng-template>
               <!-- Resumen de montos -->
               <div class="budget-detail-totals grid grid-cols-2 sm:grid-cols-3 gap-3">
                 <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700">
                   <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Límite mensual</p>
                   <p class="text-base font-bold text-slate-800 dark:text-white tabular-nums mt-0.5">
-                    {{ det.presupuesto.montoLimite | monto:det.presupuesto.moneda:'symbol':'1.2-2' }}
+                    <ng-container *ngTemplateOutlet="importeDetalle; context: { $implicit: (det.presupuesto.montoLimite | monto:det.presupuesto.moneda:'symbol':'1.2-2') }"/>
                   </p>
                 </div>
                 <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700">
                   <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Total gastado</p>
                   <p class="text-base font-bold text-slate-900 dark:text-white tabular-nums mt-0.5">
-                    {{ det.presupuesto.montoGastado | monto:det.presupuesto.moneda:'symbol':'1.2-2' }}
+                    <ng-container *ngTemplateOutlet="importeDetalle; context: { $implicit: (det.presupuesto.montoGastado | monto:det.presupuesto.moneda:'symbol':'1.2-2') }"/>
                   </p>
                 </div>
                 <div class="p-3 col-span-2 sm:col-span-1 rounded-xl border"
                      [ngClass]="det.presupuesto.montoDisponible >= 0 ? 'bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-200' : 'bg-rose-50 border-rose-200 text-rose-800 dark:bg-rose-950/40 dark:border-rose-800 dark:text-rose-200'">
                   <p class="text-[11px] font-medium opacity-80">{{ det.presupuesto.montoDisponible >= 0 ? 'Disponible restante' : 'Excedido por' }}</p>
                   <p class="text-base font-bold tabular-nums mt-0.5">
-                    {{ (det.presupuesto.montoDisponible >= 0 ? det.presupuesto.montoDisponible : -det.presupuesto.montoDisponible) | monto:det.presupuesto.moneda:'symbol':'1.2-2' }}
+                    <ng-container *ngTemplateOutlet="importeDetalle; context: { $implicit: ((det.presupuesto.montoDisponible >= 0 ? det.presupuesto.montoDisponible : -det.presupuesto.montoDisponible) | monto:det.presupuesto.moneda:'symbol':'1.2-2') }"/>
                   </p>
                 </div>
               </div>
@@ -828,6 +858,21 @@ export class PresupuestosComponent implements OnInit {
         this.modalError.set(err.error?.message || 'Error al guardar el presupuesto');
       }
     });
+  }
+
+  nombreCategoriaSeleccionada(): string {
+    if (this.formCategoriaId === null) return 'Selecciona una categoría de gasto';
+    return this.categorias().find(categoria => categoria.id === this.formCategoriaId)?.nombre ?? '';
+  }
+
+  etiquetaMonedaSeleccionada(): string {
+    const moneda = this.monedasDisponibles.find(item => item.codigo === this.formMoneda);
+    return moneda ? `${moneda.codigo} — ${moneda.nombre}` : '';
+  }
+
+  gruposImporteDetalle(importe: string | null): string[] {
+    // El formato muestra dos decimales. Solo se puede saltar antes de un grupo de tres dígitos.
+    return importe?.match(/.*?[.,\u00a0\u202f](?=\d{3}(?!\d))|.+/g) ?? [];
   }
 
   async eliminarPresupuesto(id: number): Promise<void> {

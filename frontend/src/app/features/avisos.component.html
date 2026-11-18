@@ -55,10 +55,40 @@
     @if(clase==='AUTORIZACION'){<p class="notice">Es una autorización pendiente. Espera el cargo definitivo antes de guardarlo como movimiento.</p>}
     <label>Descripción<input name="descripcion" [(ngModel)]="datos.descripcion" maxlength="200" /></label>
     <div class="fields"><label>Importe<input name="monto" type="number" inputmode="decimal" min="0.01" step="0.01" [(ngModel)]="datos.monto" /></label><label>Moneda<input name="moneda" [(ngModel)]="moneda" maxlength="3" pattern="[A-Z]{3}" required /></label></div>
-    <label>Cuenta<select name="cuenta" [(ngModel)]="datos.cuentaId"><option [ngValue]="null">Por elegir</option>@for(c of cuentas();track c.id){<option [ngValue]="c.id">{{c.nombre}} · {{c.moneda}}</option>}</select></label>
+    <label>Cuenta
+      <span class="select-wrap">
+        <select name="cuenta" [(ngModel)]="datos.cuentaId">
+          <option [ngValue]="null">Por elegir</option>
+          @for (cuenta of cuentas(); track cuenta.id) {
+            <option [ngValue]="cuenta.id">{{ cuenta.nombre }} · {{ cuenta.moneda }}</option>
+          }
+        </select>
+        <span class="select-value" aria-hidden="true">
+          @if (cuentaElegida(); as cuenta) { {{ cuenta.nombre }} · {{ cuenta.moneda }} }
+          @else if (datos.cuentaId === null) { Por elegir }
+        </span>
+      </span>
+    </label>
     @if(datos.tipo==='TRANSFERENCIA'){
       <label>Cuenta de destino<select name="destino" [(ngModel)]="datos.cuentaDestinoId"><option [ngValue]="null">Por elegir</option>@for(c of cuentas();track c.id){<option [ngValue]="c.id">{{c.nombre}} · {{c.moneda}}</option>}</select></label><label>Tipo de cambio, si las monedas difieren<input name="tasa" type="number" inputmode="decimal" min="0.00000001" step="0.00000001" [(ngModel)]="datos.tasaCambio" /></label>
-    }@else{<label>Categoría<select name="categoria" [(ngModel)]="datos.categoriaId"><option [ngValue]="null">Sin categoría</option>@for(c of categorias();track c.id){@if(c.tipo===datos.tipo){<option [ngValue]="c.id">{{c.nombre}}</option>}}</select></label>}
+    } @else {
+      <label>Categoría
+        <span class="select-wrap">
+          <select name="categoria" [(ngModel)]="datos.categoriaId">
+            <option [ngValue]="null">Sin categoría</option>
+            @for (categoria of categorias(); track categoria.id) {
+              @if (categoria.tipo === datos.tipo) {
+                <option [ngValue]="categoria.id">{{ categoria.nombre }}</option>
+              }
+            }
+          </select>
+          <span class="select-value" aria-hidden="true">
+            @if (categoriaElegida(); as categoria) { {{ categoria.nombre }} }
+            @else if (datos.categoriaId == null) { Sin categoría }
+          </span>
+        </span>
+      </label>
+    }
     <label>Lista<select name="lista" [(ngModel)]="datos.listaId">@for(l of listas.listas();track l.id){@if(!l.archivada && l.rol!=='LECTOR'){<option [ngValue]="l.id">{{l.nombre}}</option>}}</select></label>
     <label>Fecha<input name="fecha" type="date" [(ngModel)]="datos.fecha" /></label>
     <button class="primary" type="submit" [disabled]="ocupado()||cargandoCatalogo()">{{ocupado()?'Guardando…':original()?'Enviar revisión a mi cuenta':'Guardar revisión'}}</button><p class="muted">Guardar la revisión conserva un aviso pendiente. No registra dinero.</p>

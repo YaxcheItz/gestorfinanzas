@@ -20,6 +20,9 @@ import { fechaCivilFinanciera } from '../../core/utils/periodo-financiero';
   selector: 'app-cuentas',
   standalone: true,
   imports: [TextoFinancieroPipe, MontoPrivadoDirective, CommonModule, FormsModule, RouterLink, FocusTrapDirective, MontoPipe],
+  styles: [`
+    #cuenta-tipo:focus-visible + .account-type-value { outline: 2px solid var(--kaptal-focus); outline-offset: 3px; }
+  `],
   template: `
     <main class="finance-page accounts-page max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-4 sm:space-y-6">
       <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
@@ -303,17 +306,24 @@ import { fechaCivilFinanciera } from '../../core/utils/periodo-financiero';
             } @else {
               <div>
                 <label for="cuenta-tipo" class="block text-xs font-semibold text-slate-700 mb-1.5">Tipo de cuenta</label>
-                <select
-                  id="cuenta-tipo"
-                  name="tipo"
-                  required
-                  [(ngModel)]="tipo"
-                  (ngModelChange)="tipoCuentaCambio($event)"
-                  class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500">
-                  @for (opcion of tiposCuentaDisponibles(); track opcion.valor) {
-                    <option [ngValue]="opcion.valor">{{ opcion.etiqueta }}</option>
-                  }
-                </select>
+                <div class="relative">
+                  <select
+                    id="cuenta-tipo"
+                    name="tipo"
+                    required
+                    [(ngModel)]="tipo"
+                    (ngModelChange)="tipoCuentaCambio($event)"
+                    class="absolute inset-0 size-full opacity-0">
+                    @for (opcion of tiposCuentaDisponibles(); track opcion.valor) {
+                      <option [ngValue]="opcion.valor">{{ opcion.etiqueta }}</option>
+                    }
+                  </select>
+                  <span aria-hidden="true"
+                    class="account-type-value pointer-events-none flex min-h-11 items-center gap-2 rounded-xl border border-(--kaptal-control-border) bg-(--kaptal-surface-subtle) px-3.5 py-2.5 text-sm">
+                    <span class="min-w-0 flex-1 [overflow-wrap:anywhere]">{{ tipoCuentaLabel(tipo) }}</span>
+                    <span class="size-[7px] shrink-0 -translate-y-0.5 rotate-45 border-r-2 border-b-2 border-current"></span>
+                  </span>
+                </div>
               </div>
             }
 
