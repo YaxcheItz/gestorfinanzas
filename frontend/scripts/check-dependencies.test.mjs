@@ -19,3 +19,24 @@ test('rechaza errores, cadenas incompletas y ciclos', () => {
   for (const item of [{}, { error: 'network' }, report({ micromatch: { via: ['braces'] } }), report({ braces: { via: ['micromatch'] }, micromatch: { via: ['braces'] } })])
     assert.throws(() => revisar(item));
 });
+
+const picomatchVia = {
+  url: 'https://github.com/advisories/GHSA-fc5q-39xc-vjpf', dependency: 'picomatch',
+};
+test('solo admite el aviso exacto y sus propagaciones con el backport verificado', () => {
+  const affected = report({picomatch:{via:[picomatchVia]},vite:{via:['picomatch']}});
+  assert.throws(() => revisar(affected));
+  assert.equal(revisar(affected, false, true), 2);
+  assert.throws(() => revisar(affected, true, true));
+  assert.throws(() => revisar(report({picomatch:{via:[{...picomatchVia,url:'https://github.com/advisories/nuevo'}]}}), false, true));
+  assert.throws(() => revisar(report({otro:{via:[picomatchVia]}}), false, true));
+  assert.throws(() => revisar(report({vite:{via:['ausente']}}), false, true));
+  assert.throws(() => revisar(report({picomatch:{via:['vite']},vite:{via:['picomatch']}}), false, true));
+});
+test('un segundo aviso en una dependencia cubierta sigue bloqueando', () => {
+  assert.throws(() => revisar(report({
+    picomatch:{via:[picomatchVia]},
+    vite:{via:['picomatch',{url:'https://github.com/advisories/nuevo',dependency:'vite'}]},
+  }), false, true));
+  assert.throws(() => revisar(report({paquete:{via:[via]}}), false, true));
+});

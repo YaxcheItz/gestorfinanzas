@@ -1,15 +1,27 @@
 <!-- KAPTAL_ESTADO_VIGENTE_INICIO -->
-## Resumen vigente — 17 noviembre 2026 · Avisos y Bancos y cuentas
+## Resumen vigente — 17 noviembre 2026 · Picomatch con control verificado
 
-- Rama nueva `mejoras/avisos-coherencia-visual` desde origin/develop `fe13575532c8c055fe699374660988a888b01f6f` actualizado/comprobado y fast-forward documental de e2b4bf7 solo en esta rama. PR287 conserva3b14ac6 con CI general44016506925 y Android44016506845 completed/success reconsultadas. Main conserva1fd9402; develop conservafe13575. PR271 excluido, sin integración, instalación ni despliegue manual.
-- Revisión renderizada de Avisos, Bancos y cuentas, formulario de aviso y editor de asociación, con API/Android ficticios. Título integrado en la escala financiera22/24/28px y encabezados700 en claro/600 en oscuro; padding normal conservado y aumento real de letra al doble.
-- Corregido corte de «Cancelar» y «asociación» al200%: espacio horizontal fijo en panel/editor/controles. Guardar sigue deshabilitado sin consentimiento. Sin cambios de lógica, parsers, reglas, credenciales o datos financieros.
-- Nueve E2E focales/regresión (cuatro nuevos),580 unitarias/66 archivos, build489,19kB y TypeScript aplicación/E2E aprobados. Registros de reproducción y correcciones intermedias preservados. Tres avisos CSS existentes, sin subir presupuestos.
-- Comparativa nueva http://127.0.0.1:14382:48 PNG, cuatro vistas y seis modos; mismas API/puente ficticios y fecha. Carga/controles/ancho390px comprobados. Cero escrituras API, cambios de configuración nativa y errores JS; comprobación de desborde y palabras de botones.14378/14376/14372 conservadas. Informe docs/REVISION_AVISOS_COHERENCIA_2026-11-17.md.
-- La nueva CI debe comprobarse por su propio SHA tras publicar. Siguiente: valorar Avisos junto a Metas/Reportes y continuar por sección con hallazgos o preferencias concretas; sin abrir rediseño general. Calendario conservado; historial/lentitud/logout aplazados. Datos ficticios, sin sesiones habituales o prueba física.
+- Rama `correcciones/picomatch-parche-verificado` creada desde origin/develop `fe13575532c8c055fe699374660988a888b01f6f` tras fetch/ls-remote y adelantada a `ba72c2c` solo en esta rama. Worktree `.local/worktrees/mitigacion-picomatch-pr288`. El checkout principal conserva `revision/cierre-ci-picomatch-pr288/c4fdbce`. PR288 conserva e205152 y su cadena visual.
+- Se corrigió un caso residual del backport anterior, +(!(a)), que aún bloqueaba procesos en ambas líneas. La negación genera un comodín implícito y ahora entra en la protección del parser. La comparación acotada reproduce el bloqueo en los paquetes originales y termina correctamente con el backport corregido.
+- Security:check admite temporalmente el aviso exacto GHSA-fc5q-39xc-vjpf solo en desarrollo y con verificación del backport. Ejecuta 19 pruebas, con 1.248 evaluaciones adversarias acotadas a tres segundos por proceso. Comprueba los hashes de los parsers corregidos, las demás fuentes ejecutables y package.json de todas las copias. Copias alteradas/ausentes, versiones desconocidas, alertas distintas y vulnerabilidades en producción siguen bloqueando.
+- Instalación limpia, security:check, build de 489,19 kB iniciales, 580 unitarias y 9 E2E focales aprobados localmente. Arranque sintético 200/401/503 aprobado. npm audit conserva los avisos del registro. La actualización oficial permanece pendiente para retirar el backport y esta aceptación.
+- Detalle en docs/PICOMATCH_CONTROL_VERIFICADO_2026-11-17.md. La CI del SHA publicado se consulta al cerrar y queda registrada en `.local/picomatch-control-verificado-ci.json`. La CI anterior 44220998503 falló por seguridad y arranque 401, con 176 E2E normales aprobados y cuatro PWA sin ejecutar.
+- Solo con CI completa aprobada preparar integración visual. PR271 excluido. Sin despliegue manual ni instalación en teléfono. Datos ficticios, sin finanzas reales, sesiones habituales ni configuración del dispositivo. Calendario conservado. Historial, lentitud y logout aplazados.
+
+Para otro chat: «Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/PICOMATCH_CONTROL_VERIFICADO_2026-11-17.md en .local/worktrees/mitigacion-picomatch-pr288, rama correcciones/picomatch-parche-verificado. Consulta la CI por SHA. El control admite solo el aviso exacto de picomatch con backport comprobado por hashes y pruebas adversarias. Verifica CI completa antes de preparar integración visual. Conserva PR288 y excluye PR271. Sin despliegue manual, solo datos ficticios y sin finanzas reales/sesiones/teléfono. Calendario conservado, historial/lentitud/logout aplazados».
 
 Los apartados siguientes conservan el historial y la evidencia de las etapas anteriores.
 <!-- KAPTAL_ESTADO_VIGENTE_FIN -->
+
+## Valoraci?n por secci?n ? 17 noviembre 2026, 23:36 UTC
+
+Rama `revision/valoracion-14384-inicio-cuentas`, creada desde origin/develop fe135755 comprobado y adelantada a dc974d6 solo en esta rama. Inspecci?n directa de18 PNG actuales de Inicio, Gastos en pareja y Mis cuentas, en seis modos;18 pares antes/actual id?nticos por SHA256. Galer?a14384 revalidada:336 im?genes decodificadas,28 vistas, seis modos, selectores independientes, cero errores JS y sin desborde de galer?a a390px. No equivale a recorrer la aplicaci?n interactiva ni a inspeccionar336 capturas.
+
+Pareja y Cuentas conservan legibilidad en la muestra; sin ajuste demostrado. En Inicio los botones flotantes se superponen visualmente al contenido de las capturas completas: pendiente comprobar desplazamiento/acceso con API ficticia antes de inferir defecto o modificar estilos. Sin cambios de producto/dependencias y sin repetir suites anteriores. CI y picomatch conservan su ?ltimo diagn?stico documentado, no reconsultado en esta parte. Informe: docs/VALORACION_14384_INICIO_PAREJA_CUENTAS_2026-11-17.md. Develop/main y rama visual de PR288 conservan sus SHA remotos comprobados; sin integraci?n, instalaci?n ni despliegue manual. PR271 excluido.
+
+Siguiente: comprobaci?n interactiva de Inicio con datos ficticios y despu?s formulario de cuenta/Presupuestos en14384. Calendario conservado; historial/lentitud/logout aplazados. Para otro chat: ?Lee AGENTS.md, docs/ESTADO_SESION.md, docs/PLAN_MAESTRO_KAPTAL.md y docs/VALORACION_14384_INICIO_PAREJA_CUENTAS_2026-11-17.md. Contin?a la valoraci?n desde revision/valoracion-14384-inicio-cuentas con datos ficticios. No integres PR271 ni despliegues manualmente?.
+
+
 
 ## Publicacion del chat sin borradores - 11 noviembre 2026
 
