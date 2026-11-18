@@ -1,5 +1,10 @@
 # CI de Avisos: dependencia sin parche — 17 noviembre 2026
 
+## Reconsulta prioritaria de seguridad (18 noviembre 01:19 UTC / 17 en México)
+
+El bloqueo se volvió a comprobar: latest sigue en 4.0.7, afectada, y el aviso oficial no publica versión corregida. Auditoría completa y security:check fallan; producción reporta cero vulnerabilidades. Se revisaron el árbol instalado/lock, el control y la propuesta upstream 194, que deja sin corregir +(*a). Sin solución compatible completa demostrada: dependencias, control y excepciones intactos. Evidencia, alternativas descartadas, rama nueva y continuidad en [SEGURIDAD_PICOMATCH_PR288_2026-11-17.md](SEGURIDAD_PICOMATCH_PR288_2026-11-17.md). Los resultados siguientes conservan su SHA y fecha originales.
+
+
 ## Resultado y separación de evidencia
 
 PR288 conserva head `e205152a5936f8f4803c977b5c99633d8577663b`. [CI general 44194248517](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44194248517): completed/failure. Frontend terminó con fallo en `npm run security:check`, después de compilar y medir el build correctamente. Su paso de unitarias se omitió; las 580 unitarias de esta etapa son locales. Backend, PostgreSQL, Canales y Worker terminaron correctamente. E2E Chromium/API/PostgreSQL terminado correctamente: 176 pruebas del proyecto normal y 4 PWA en el proyecto dedicado; las cuatro PWA se omiten solo en el proyecto normal. Arranque y navegación sintéticos aprobados. [Android 44194248531](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44194248531) completed/success; APK no instalada. Consulta: 2026-11-17 23:10:02 UTC.
