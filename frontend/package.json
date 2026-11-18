@@ -2,6 +2,7 @@
   "name": "frontend",
   "version": "0.0.0",
   "scripts": {
+    "postinstall": "node scripts/patch-picomatch.mjs",
     "ng": "ng",
     "start": "ng serve --host 0.0.0.0 --proxy-config proxy.conf.json",
     "start:e2e": "ng serve --proxy-config proxy.e2e.conf.json",
