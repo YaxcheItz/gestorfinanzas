@@ -10,7 +10,7 @@ const cases = [
     { path: 'metas', api: '/cuentas', loading: /Cargando metas/, empty: 'Aún no tienes metas.', data: [] },
     { path: 'libro-diario', api: '/libro-diario', loading: /Cargando asientos/, empty: 'Aún no hay asientos contables', data: emptyPage },
     { path: 'pareja', api: '/pareja', loading: /Cargando.*pareja/, empty: 'Invita a tu pareja', data: null },
-    { path: 'reportes', api: '/dashboard/resumen', loading: /Cargando reportes/, empty: 'Tu historia empieza con un movimiento', data: { balanceTotal: 0, ingresosMes: 0, gastosMes: 0, balanceMes: 0, tasaAhorro: 0, totalCuentas: 0, mes: 11, anio: 2026, ultimosMovimientos: [], resumenPorMoneda: [] } },
+    { path: 'reportes', api: '/dashboard/resumen', loading: /Cargando reportes/, empty: 'No hay movimientos en', data: { balanceTotal: 0, ingresosMes: 0, gastosMes: 0, balanceMes: 0, tasaAhorro: 0, totalCuentas: 0, mes: 11, anio: 2026, ultimosMovimientos: [], resumenPorMoneda: [] } },
     { path: 'avisos', api: '/avisos', loading: /Cargando avisos/, empty: 'No hay revisiones pendientes', data: emptyPage },
 ] as const;
 for (const scenario of cases) {

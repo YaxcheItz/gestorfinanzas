@@ -1,12 +1,11 @@
 <!-- KAPTAL_ESTADO_VIGENTE_INICIO -->
-## Resumen vigente — 18 noviembre 2026 · Revisión conjunta de Avisos, Cuentas y Presupuestos
+## Resumen vigente — 18 noviembre 2026 · Corrección del mes en Reportes
 
-- Rama `mejoras/revision-conjunta-avisos-cuentas-presupuestos` en `.local/worktrees/kaptal-revision-conjunta`, creada desde `origin/develop` `0ed4cc7` verificado. Reúne Avisos `05c5946`, Cuentas `4daea3f` y Presupuestos `47a5204`. [Informe de la revisión conjunta](REVISION_CONJUNTA_AVISOS_CUENTAS_PRESUPUESTOS_2026-11-18.md).
-- El build conjunto pasó TypeScript y 580 unitarias. Pasaron 23 casos ficticios en Chromium y siete en Firefox. Se recorrieron las tres secciones desde Configuración en una sola sesión en cada tema. Capturas y registros en `.local/revision-conjunta-avisos-cuentas-presupuestos/`.
-- La CI de Avisos y Cuentas aprobó sus seis trabajos. Al registrar la revisión, Presupuestos tenía 5 de seis trabajos aprobados. La ejecución se puede comprobar en el enlace. [CI de Presupuestos](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44377764033).
-- Calendario conservado. Historial, lentitud y logout siguen aplazados. Referencia de producción `73fe866`. Publicar en producción o instalar una APK requiere confirmación explícita.
+- Rama `correcciones/reportes-filtro-mensual-url` desde `origin/develop` `b0dc3a0` verificado. Elegir un mes actualiza la URL, conserva la lista activa y la vista recupera el mes al recargar. El estado vacío describe el mes o rango consultado. [Informe](CORRECCION_FILTRO_REPORTES_2026-11-18.md).
+- Las dos regresiones se verificaron en Chromium y Firefox. Aprobaron Angular, TypeScript y 580 unitarias. Capturas y registros en `.local/reportes-filtro-mensual-url/`.
+- Producción en `01135ec` verificado. Calendario conservado. Historial, lentitud y logout siguen aplazados. Publicar en producción o instalar una APK requiere confirmación.
 
-Para otro chat, abre `.local/worktrees/kaptal-revision-conjunta` y lee `AGENTS.md`, `docs/ESTADO_SESION.md`, `docs/PLAN_MAESTRO_KAPTAL.md` y [el informe de revisión](REVISION_CONJUNTA_AVISOS_CUENTAS_PRESUPUESTOS_2026-11-18.md). Comprueba el SHA y la CI de la rama conjunta y retoma la revisión de capturas con datos ficticios. Si se plantea una entrega, presenta SHA, cambios y destino para confirmación.
+Para otro chat, abre `.local/worktrees/kaptal-reportes-filtro-url` y lee `AGENTS.md`, `docs/ESTADO_SESION.md`, `docs/PLAN_MAESTRO_KAPTAL.md` y [el informe](CORRECCION_FILTRO_REPORTES_2026-11-18.md). Verifica el SHA remoto y la CI de la corrección antes de valorar su integración. Si se continúa la revisión visual, usa datos ficticios y conserva los aplazamientos.
 
 Los apartados siguientes conservan el historial y la evidencia de las etapas anteriores.
 <!-- KAPTAL_ESTADO_VIGENTE_FIN -->

@@ -13,6 +13,8 @@ import { MontoPipe } from '../../core/pipes/monto.pipe';
 import { PrivacyToggleComponent } from '../../shared/components/privacy-toggle/privacy-toggle.component';
 import { AuthService } from '../../core/services/auth.service';
 
+const FORMATO_MES = /^\d{4}-(0[1-9]|1[0-2])$/;
+
 @Component({
   selector: 'app-reportes',
   imports: [FormsModule, RouterLink, MontoPipe, PrivacyToggleComponent],
@@ -27,6 +29,7 @@ export class Reportes {
   readonly rangoConsulta = signal<RangoPeriodo | null>(null);
   private rangoAnterior?: RangoPeriodo;
   private sinComparacion = false;
+  private mesElegido = false;
   private readonly finanzas = inject(FinanzasService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly auth = inject(AuthService);
@@ -67,6 +70,12 @@ export class Reportes {
         }
         this.sinComparacion = parametros.get('sinComparacion') === 'true';
         this.periodo.set(this.rangoConsulta()!.desde.slice(0, 7));
+      } else {
+        const periodo = parametros.get('periodo');
+        if (periodo && FORMATO_MES.test(periodo)) {
+          this.mesElegido = true;
+          this.periodo.set(periodo);
+        }
       }
       this.cargar();
     } catch { this.error.set('El rango del informe no es válido. Elige un mes para continuar.'); }
@@ -81,7 +90,10 @@ export class Reportes {
       listaObservada = id;
       if (listaExplicita && this.contextoLista.seleccionVersion() === seleccionInicial) return;
       this.listaConsulta = id;
-      untracked(() => { void this.router.navigate([], {relativeTo:this.route,queryParams:{listaId:id},queryParamsHandling:'merge',replaceUrl:true}); this.cargar(); });
+      untracked(() => {
+        this.actualizarUrl();
+        this.cargar();
+      });
     });
     effect(() => {
       const usuarioId = this.auth.currentUser()?.id ?? null;
@@ -103,10 +115,31 @@ export class Reportes {
   }
 
   cambiarPeriodo(value: string): void {
-    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(value)) return;
-    this.rangoConsulta.set(null); this.rangoAnterior = undefined; this.sinComparacion = false;
+    if (!FORMATO_MES.test(value)) return;
+    this.rangoConsulta.set(null);
+    this.rangoAnterior = undefined;
+    this.sinComparacion = false;
+    this.mesElegido = true;
     this.periodo.set(value);
+    this.actualizarUrl();
     this.cargar();
+  }
+
+  private actualizarUrl(): void {
+    const filtroMensual = this.mesElegido ? {
+      periodo: this.periodo(),
+      desde: null,
+      hasta: null,
+      desdeAnterior: null,
+      hastaAnterior: null,
+      sinComparacion: null,
+    } : {};
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { listaId: this.listaConsulta, ...filtroMensual },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
   }
 
   cargar(): void {
