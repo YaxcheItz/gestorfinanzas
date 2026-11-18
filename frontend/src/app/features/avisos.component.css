@@ -6,3 +6,32 @@
 .inbox-sections button { flex:1 1 8rem; min-width:0; min-height:44px; padding:.5rem .75rem; border:0; border-radius:.8rem; color:var(--kaptal-content-muted); font-weight:650; }
 .inbox-sections button[aria-pressed="true"] { background:var(--kaptal-surface); color:var(--kaptal-content); box-shadow:0 1px 4px rgb(0 0 0 / .08); }
 .inbox-sections button:focus-visible { outline:2px solid var(--kaptal-focus); outline-offset:2px; }
+
+/* El select nativo sigue abriendo las opciones y controlando el foco. */
+.select-wrap { position: relative; display: block; min-width: 0; }
+.select-wrap select { position: absolute; inset: 0; height: 100%; opacity: 0; }
+.select-value {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 12px;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 10px;
+  border: 1px solid var(--kaptal-control-border);
+  border-radius: 14px;
+  background: var(--kaptal-surface-subtle);
+  font-size: 1rem;
+  overflow-wrap: anywhere;
+  pointer-events: none;
+}
+.select-value::after {
+  content: '';
+  grid-column: 2;
+  width: 7px;
+  height: 7px;
+  justify-self: center;
+  border: solid currentColor;
+  border-width: 0 2px 2px 0;
+  transform: translateY(-2px) rotate(45deg);
+}
+.select-wrap select:focus-visible + .select-value { outline: 2px solid var(--kaptal-focus); outline-offset: 3px; }
