@@ -28,5 +28,11 @@
         <details class="report-table"><summary>Ver cifras por mes</summary><table><caption class="sr-only">Ingresos y gastos por mes en {{ moneda() }}</caption><thead><tr><th>Mes</th><th>Ingresos</th><th>Gastos</th></tr></thead><tbody>@for (item of tendencia(); track item.anio + '-' + item.mes) {<tr><th scope="row">{{ etiquetaMes(item.mes, item.anio) }}</th><td>{{ item.ingresos | monto:moneda():'symbol':'1.2-2' }}</td><td>{{ item.gastos | monto:moneda():'symbol':'1.2-2' }}</td></tr>}</tbody></table></details>
       </section>
     </div>
-  } @else {<section class="reports-empty"><h2>Tu historia empieza con un movimiento</h2><p>Cuando registres ingresos o gastos, podrás compararlos aquí.</p><a routerLink="/transacciones">Ir a Actividad</a></section>}
+  } @else {
+    <section class="reports-empty">
+      <h2>No hay movimientos en {{ rangoConsulta() ? 'este periodo' : periodoLegible() }}</h2>
+      <p>Elige otro mes para consultar sus ingresos y gastos.</p>
+      <a routerLink="/transacciones">Ir a Actividad</a>
+    </section>
+  }
 </div>
