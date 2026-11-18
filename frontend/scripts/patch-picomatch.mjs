@@ -7,11 +7,11 @@ import { pathToFileURL } from 'node:url';
 const hashes = {
   '2.3.2': [
     '3a91656f440069aa8f8e15c9d695b9f6b2209df1eab2be8127c72cbcca45ff5f',
-    '6dcd1b094e8c0a33e483e0abf4872b85b42c6a0047572d08f0e9631d5295d24c',
+    'd53be6a51e414088a46ee841f60d0b770f22bd7ac7ba185dd11476054eada716',
   ],
   '4.0.4': [
     'ce57c04e04994b83e2ca566170fa192e6fe19d710bea6da00ce2f76d01c0dea4',
-    '9183ae2258e79fceb5253e6a74290a45da29cf499c00907e5e16638933c53f60',
+    'a18e5ae077f2e9d1c1096f708c8113f662a40b1e94b6280316dbd482707e0eee',
   ],
 };
 
@@ -47,13 +47,14 @@ const analyzeWildcard = String.raw`  if (hasWildcard) {
 
 `;
 
+// Negated extglobs emit an implicit wildcard even when their body has no star token.
 const closeExtglob = [
   "    const repeated = token.type === 'plus' || token.type === 'star';",
   '    // Use the parsed tokens to respect escapes, quotes and bracket options.',
   '    const hasWildcard = repeated && tokens.slice(token.tokensIndex + 2).some((item, index, bodyTokens) => {',
   '      const next = bodyTokens[index + 1];',
   "      const opensExtglob = next?.type === 'paren' && next.value === '(' && next.extglob === true;",
-  "      return (item.type === 'star' || item.type === 'globstar') && item.value !== '' && !opensExtglob;",
+  "      return item.type === 'negate' || ((item.type === 'star' || item.type === 'globstar') && item.value !== '' && !opensExtglob);",
   '    });',
   '    const analysis = analyzeRepeatedExtglob(body, opts, hasWildcard);',
   '',
@@ -88,8 +89,7 @@ export function backport(source) {
 
 const sha256 = value => createHash('sha256').update(value).digest('hex');
 
-function apply() {
-  const frontend = new URL('../', import.meta.url);
+function installedParsers(frontend) {
   const lock = JSON.parse(readFileSync(new URL('package-lock.json', frontend), 'utf8'));
   const copies = Object.entries(lock.packages)
     .filter(([path]) => /^(?:node_modules\/(?:@[\w.-]+\/)?[\w.-]+\/)*node_modules\/picomatch$/.test(path));
@@ -97,13 +97,32 @@ function apply() {
   if (copies.length === 0) {
     throw new Error('Retira el parche: picomatch ya no figura en el lockfile.');
   }
-  const targets = copies.map(([path, metadata]) => {
+  return copies.map(([path, metadata]) => {
     if (!metadata.dev || !Object.hasOwn(hashes, metadata.version)) {
       throw new Error(`Revisa el parche de picomatch para ${path}@${metadata.version}.`);
     }
-    return { parser: new URL(`${path}/lib/parse.js`, frontend), version: metadata.version };
+    return { directory: new URL(`${path}/`, frontend),
+      parser: new URL(`${path}/lib/parse.js`, frontend), version: metadata.version };
   });
+}
 
+export function verifyPatchedPicomatch(frontend = new URL('../', import.meta.url)) {
+  const targets = installedParsers(frontend);
+  const runtimeHashes = JSON.parse(readFileSync(new URL('picomatch-runtime-hashes.json', import.meta.url), 'utf8'));
+  for (const { directory, version } of targets) {
+    const expected = { ...runtimeHashes[version], 'lib/parse.js': hashes[version][1] };
+    for (const [file, expectedHash] of Object.entries(expected)) {
+      if (sha256(readFileSync(new URL(file, directory))) !== expectedHash) {
+        throw new Error(`Picomatch ${version} sin parche verificado o con archivos alterados: ${file}.`);
+      }
+    }
+  }
+  return targets.length;
+}
+
+function apply() {
+  const frontend = new URL('../', import.meta.url);
+  const targets = installedParsers(frontend);
   if (process.env.NODE_ENV === 'production' && targets.every(({ parser }) => !existsSync(parser))) {
     console.log('Parche picomatch: instalación sin dependencias de desarrollo.');
     return;

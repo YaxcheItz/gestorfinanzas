@@ -1,5 +1,7 @@
 # Mitigación temporal de picomatch en PR288
 
+La etapa posterior corrige el caso de negación y añade aceptación condicionada a código verificado y pruebas adversarias. [Control verificado](PICOMATCH_CONTROL_VERIFICADO_2026-11-17.md).
+
 El backport se aplica al instalar las dependencias de desarrollo. El control de seguridad sigue bloqueando la integración porque npm audita las versiones publicadas y el aviso sigue abierto.
 
 ## Acuerdo vigente y desenlace de CI
