@@ -3,10 +3,11 @@
 
 - Rama `mejoras/revision-conjunta-avisos-cuentas-presupuestos` en `.local/worktrees/kaptal-revision-conjunta`, creada desde `origin/develop` `0ed4cc7` verificado. Reúne Avisos `05c5946`, Cuentas `4daea3f` y Presupuestos `47a5204`. [Informe de la revisión conjunta](REVISION_CONJUNTA_AVISOS_CUENTAS_PRESUPUESTOS_2026-11-18.md).
 - El build conjunto pasó TypeScript y 580 unitarias. Pasaron 23 casos ficticios en Chromium y siete en Firefox. Se recorrieron las tres secciones desde Configuración en una sola sesión en cada tema. Capturas y registros en `.local/revision-conjunta-avisos-cuentas-presupuestos/`.
-- La CI de Avisos y Cuentas aprobó sus seis trabajos. Al registrar la revisión, Presupuestos tenía 5 de seis trabajos aprobados. La ejecución se puede comprobar en el enlace. [CI de Presupuestos](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44377764033).
+- Las tres ramas de origen y el candidato conjunto `b0dc3a0` aprobaron sus seis trabajos de CI. La ejecución conjunta incluye los flujos con API y PostgreSQL de pruebas, PWA y navegación sintética. [CI conjunta](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44379497495) · [CI de Presupuestos](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44377764033).
+- Cuatro casos adicionales a 320 px y 200 % confirmaron que el centro de «Agregar cuenta» sigue recibiendo el toque con la confirmación visible. Se verificaron el cierre manual y la desaparición automática en Chromium y Firefox.
 - Calendario conservado. Historial, lentitud y logout siguen aplazados. Referencia de producción `73fe866`. Publicar en producción o instalar una APK requiere confirmación explícita.
 
-Para otro chat, abre `.local/worktrees/kaptal-revision-conjunta` y lee `AGENTS.md`, `docs/ESTADO_SESION.md`, `docs/PLAN_MAESTRO_KAPTAL.md` y [el informe de revisión](REVISION_CONJUNTA_AVISOS_CUENTAS_PRESUPUESTOS_2026-11-18.md). Comprueba el SHA y la CI de la rama conjunta y retoma la revisión de capturas con datos ficticios. Si se plantea una entrega, presenta SHA, cambios y destino para confirmación.
+Para otro chat, abre `.local/worktrees/kaptal-revision-conjunta` y lee `AGENTS.md`, `docs/ESTADO_SESION.md`, `docs/PLAN_MAESTRO_KAPTAL.md` y [el informe de revisión](REVISION_CONJUNTA_AVISOS_CUENTAS_PRESUPUESTOS_2026-11-18.md). El candidato web `b0dc3a0` completó la revisión. El siguiente paso es confirmar con el propietario si quiere integrar los cambios en `develop` y promoverlos a `main` para producción web. La instalación de una APK se autoriza por separado.
 
 Los apartados siguientes conservan el historial y la evidencia de las etapas anteriores.
 <!-- KAPTAL_ESTADO_VIGENTE_FIN -->
