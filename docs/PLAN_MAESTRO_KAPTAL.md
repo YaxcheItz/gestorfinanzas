@@ -1,5 +1,12 @@
 <!-- KAPTAL_ESTADO_VIGENTE_INICIO -->
-## Resumen vigente — 18 noviembre 2026 · Validación de escritorio de Reportes, Libro diario, Cuentas y Presupuestos
+## Resumen vigente — 18 noviembre 2026 · Foco del selector de Reportes y revisión de integración
+
+- La rama `correcciones/foco-selector-reportes` se creó desde `origin/develop` en `5503c57` y avanzó hasta `a7cdb52` dentro de su propio worktree, `.local/worktrees/foco-selector-reportes`.
+- La CI de `a7cdb52` aprobó cinco trabajos. Chromium con PostgreSQL registró 184 pruebas aprobadas y una fallida en el recorrido de teclado, porque el campo de mes recibía el foco con opacidad cero. Las cuatro pruebas PWA dedicadas quedaron pendientes al fallar el flujo E2E. El mismo fallo se reprodujo con el build anterior y respuestas ficticias. [CI de a7cdb52](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44456469164).
+- El campo nativo de mes dibuja ahora su propio contorno de foco. El texto superpuesto permite leer el mes y el año completos y deja pasar el clic. A 320 px y texto al 200 %, una prueba de regresión llega al campo por Tab, abre con Espacio y cambia de septiembre a octubre con flecha y Enter. La prueba falla con el build de `375079e` y pasa con el ajuste. Se observaron también el contorno y la selección por clic en Chromium. Pasaron seis pruebas de comprobación de periodos en Chromium y Firefox con datos ficticios.
+- La compilación Angular, TypeScript, 586 pruebas unitarias y el control de dependencias aprobaron localmente. El CSS de Reportes quedó en 5.06 kB frente al umbral de aviso de 4.00 kB. Los resultados de la rama corregida se guardan bajo `frontend/.local/` en `evidencia-foco-final/`, `evidencia-periodos-final/` y `evidencia-regresion-foco-antes/`. La CI del nuevo candidato se registra al terminar.
+
+### Validación previa de los cuatro apartados
 
 - La rama `correcciones/validacion-periodos-escritorio` nació de `develop` verificado en `5503c57f0c85af03cbe4d7a1a3cca13e81e26b51` e incorporó por fast-forward el cambio de producto `375079e`. El worktree de esta parte es `.local/worktrees/validacion-periodos-escritorio`. La APK instalada de referencia sigue siendo Android 0.1.46 (47), documentada en `32e0ee8`. [Entrega Android](https://github.com/YaxcheItz/gestorfinanzas/blob/32e0ee804fc14e103191ae4f7faf7163cffd0d8b/docs/ENTREGA_ANDROID_0_1_46_LIBRO_DIARIO_2026-11-18.md).
 - Reportes conserva el periodo completo en el campo y al recargar. En Chromium, a 384 px y texto al 200 %, se abrió el desplegable nativo mediante clic y se cambió de septiembre a octubre con flecha y Enter. En Firefox se editó el formato año-mes por el campo visible. En Libro diario se comprobó el 1 de enero y el 29 de febrero con navegador en inglés y japonés, en las zonas de Los Ángeles, Ciudad de México y Tokio. Pasaron seis pruebas de escritorio con respuestas ficticias.
@@ -9,7 +16,7 @@
 - Android local aprobó 29 pruebas JVM, lint de debug y la compilación de las APK de debug e instrumentación. Los 87 archivos web empaquetados coinciden byte a byte con la compilación Angular. El registro está en `android-validacion-escritorio.log` junto a la evidencia. La prueba de instrumentación en el equipo queda pendiente.
 - Calendario conservado. Historial, lentitud y logout aplazados. Queda pendiente la comprobación del selector y la fecha en la WebView del Samsung.
 
-Para otro chat, abre `.local/worktrees/validacion-periodos-escritorio` y lee `AGENTS.md`, `docs/ESTADO_SESION.md` y `docs/PLAN_MAESTRO_KAPTAL.md`. Revalida la CI del SHA remoto y continúa la revisión de integración en `develop`. La comprobación física sigue pendiente. Conserva calendario y los tres aplazamientos.
+Para otro chat, abre `.local/worktrees/foco-selector-reportes` y lee `AGENTS.md`, `docs/ESTADO_SESION.md` y `docs/PLAN_MAESTRO_KAPTAL.md`. Comprueba la CI de la rama corregida y el árbol de integración con `develop`. Valida físicamente Reportes y Libro diario en la WebView del Samsung cuando vuelva a estar disponible. Usa datos ficticios y conserva calendario e historial, lentitud y logout aplazados.
 
 <!-- KAPTAL_ESTADO_VIGENTE_FIN -->
 

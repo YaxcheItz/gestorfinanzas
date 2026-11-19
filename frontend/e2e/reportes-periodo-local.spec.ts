@@ -1,6 +1,39 @@
 import { expect, test } from '@playwright/test';
 import { createSectionsFixture } from './secciones-fixture';
 
+test('Reportes permite seleccionar el mes solo con el teclado y muestra el foco', async ({ browser, baseURL }) => {
+  const { c, p, writes, pageErrors } = await createSectionsFixture(browser, baseURL!);
+  const month = p.getByLabel('Mes', { exact: true });
+  const period = p.locator('#reports-current-period');
+
+  try {
+    await p.setViewportSize({ width: 320, height: 844 });
+    await p.goto('/reportes?periodo=2026-09');
+    await p.evaluate(() => document.documentElement.style.fontSize = '200%');
+    await p.keyboard.press('Tab');
+    await expect(p.getByRole('link', { name: 'Ir al contenido', exact: true })).toBeFocused();
+    await p.keyboard.press('Enter');
+    await expect(p.locator('#main-content')).toBeFocused();
+    await p.keyboard.press('Tab');
+    await p.keyboard.press('Tab');
+    await expect(month).toBeFocused();
+    await expect(month).toHaveCSS('opacity', '1');
+    await expect(month).toHaveCSS('outline-style', 'solid');
+    await expect(period).toHaveText('septiembre de 2026');
+
+    await p.keyboard.press('Space');
+    await p.keyboard.press('ArrowRight');
+    await p.keyboard.press('Enter');
+    await expect(month).toHaveValue('2026-10');
+    await expect(period).toHaveText('octubre de 2026');
+    await expect(p).toHaveURL(/periodo=2026-10/);
+    expect(pageErrors).toEqual([]);
+    expect(writes).toEqual([]);
+  } finally {
+    await c.close();
+  }
+});
+
 test('Reportes conserva el mes elegido en su enlace al salir de un rango', async ({ browser, baseURL }, info) => {
   const { c, p, writes, pageErrors } = await createSectionsFixture(browser, baseURL!);
   const month = p.getByLabel('Mes', { exact: true });

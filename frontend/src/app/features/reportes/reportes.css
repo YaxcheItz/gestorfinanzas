@@ -20,8 +20,12 @@ strong:focus-visible{outline:3px solid var(--kaptal-focus);outline-offset:3px}
   inset: 0;
   width: 100%;
   height: 100%;
-  opacity: 0;
   cursor: pointer;
+}
+
+.reports-month-native input:focus {
+  outline: 2px solid var(--kaptal-focus);
+  outline-offset: 3px;
 }
 
 .reports-month-native input::-webkit-calendar-picker-indicator {
@@ -40,6 +44,8 @@ strong:focus-visible{outline:3px solid var(--kaptal-focus);outline-offset:3px}
 }
 
 .reports-month-native #reports-current-period {
+  /* El texto cubre el campo y deja pasar el clic. El contorno del campo queda visible. */
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -60,11 +66,6 @@ strong:focus-visible{outline:3px solid var(--kaptal-focus);outline-offset:3px}
   border: solid currentColor;
   border-width: 0 2px 2px 0;
   transform: translateY(-2px) rotate(45deg);
-}
-
-.reports-month-native input:focus-visible + #reports-current-period {
-  outline: 2px solid var(--kaptal-focus);
-  outline-offset: 3px;
 }
 
 @media (max-width: 639px) {
