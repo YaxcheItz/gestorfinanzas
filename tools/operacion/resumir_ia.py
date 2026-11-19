@@ -1,4 +1,4 @@
-"""Summarize safe generation records; never echo source logs or private fields."""
+"""Summarize safe AI metrics; never echo source logs or private fields."""
 import argparse
 from collections import deque
 import json
@@ -11,6 +11,9 @@ RECORD = re.compile(
     r'(?<!\S)KAPTAL_AI_GENERATION provider=(openai|gemini|groq|unknown) '
     r'outcome=(success|provider_error|invalid_request|busy|invalid_response|budget_denied) '
     r'elapsed_ms=(0|[1-9][0-9]{0,14})\s*$')
+TRANSCRIPTION = re.compile(
+    r'(?<!\S)KAPTAL_AI_TRANSCRIPTION provider=(groq) '
+    r'outcome=(success|provider_error|invalid_response) elapsed_ms=(0|[1-9][0-9]{0,14})\s*$')
 REQUEST = re.compile(r'(?<!\S)KAPTAL_AI_REQUEST provider=(groq|gemini) outcome=reserved\s*$')
 BUDGET = re.compile(r'(?<!\S)KAPTAL_AI_BUDGET outcome=(unverified|blocked|exhausted|unavailable)\s*$')
 USAGE = re.compile(r'(?<!\S)KAPTAL_AI_USAGE provider=(groq|gemini) status=reported '
@@ -19,11 +22,23 @@ MISSING_USAGE = re.compile(r'(?<!\S)KAPTAL_AI_USAGE provider=(groq|gemini) statu
 MAX_TOKEN_COUNT = 1_000_000_000
 
 
+def summarize_groups(groups):
+    output = []
+    for (provider, outcome), (count, window) in sorted(groups.items()):
+        values = sorted(window)
+        size = len(values)
+        output.append({'provider': provider, 'outcome': outcome, 'count': count,
+                       'windowCount': size, 'minWindowMs': values[0], 'maxWindowMs': values[-1],
+                       'meanWindowMs': round(sum(values) / size, 3),
+                       'p95WindowMs': values[(95 * size + 99) // 100 - 1]})
+    return output
+
+
 def summarize(source):
-    groups = {}
+    groups, transcriptions = {}, {}
     requests, budget = {}, {}
     tokens, missing_tokens = {}, {}
-    accepted = ignored = 0
+    ignored = 0
     while True:
         line = source.readline(MAX_LINE + 1)
         if not line:
@@ -60,38 +75,38 @@ def summarize(source):
             reason = warning.group(1)
             budget[reason] = budget.get(reason, 0) + 1
             continue
-        match = RECORD.search(line)
+        match = TRANSCRIPTION.search(line)
+        if match:
+            target = transcriptions
+        else:
+            match = RECORD.search(line)
+            target = groups
         if not match:
             ignored += 1
             continue
         provider, outcome, duration = match.groups()
         key = provider, outcome
-        if key not in groups:
-            groups[key] = [0, deque(maxlen=WINDOW_SIZE)]
-        group = groups[key]
+        if key not in target:
+            target[key] = [0, deque(maxlen=WINDOW_SIZE)]
+        group = target[key]
         group[0] += 1
         group[1].append(int(duration))
-        accepted += 1
-    output = []
-    for (provider, outcome), (count, window) in sorted(groups.items()):
-        values = sorted(window)
-        size = len(values)
-        output.append({'provider': provider, 'outcome': outcome, 'count': count,
-                       'windowCount': size, 'minWindowMs': values[0], 'maxWindowMs': values[-1],
-                       'meanWindowMs': round(sum(values) / size, 3),
-                       'p95WindowMs': values[(95 * size + 99) // 100 - 1]})
     alerts = [{'code': 'budget_' + reason, 'count': count}
               for reason, count in sorted(budget.items())]
     for (provider, outcome), (count, _) in sorted(groups.items()):
         if outcome in ('provider_error', 'invalid_response', 'busy', 'budget_denied'):
             alerts.append({'code': outcome, 'provider': provider, 'count': count})
+    alerts.extend({'code': 'transcription_' + outcome, 'provider': provider, 'count': count}
+                  for (provider, outcome), (count, _) in sorted(transcriptions.items())
+                  if outcome != 'success')
     alerts.extend({'code': 'usage_unavailable', 'provider': provider, 'count': count}
                   for provider, count in sorted(missing_tokens.items()))
-    return {'format': 3, 'records': accepted, 'ignoredLines': ignored,
+    return {'format': 3, 'records': sum(count for count, _ in groups.values()), 'ignoredLines': ignored,
             'operationalAlerts': alerts,
             'reportedTokenUsage': dict(sorted(tokens.items())), 'unavailableTokenUsage': dict(sorted(missing_tokens.items())),
             'outboundAttempts': dict(sorted(requests.items())), 'budgetEvents': dict(sorted(budget.items())),
-            'maxWindowRecordsPerGroup': WINDOW_SIZE, 'groups': output}
+            'maxWindowRecordsPerGroup': WINDOW_SIZE, 'groups': summarize_groups(groups),
+            'transcriptionGroups': summarize_groups(transcriptions)}
 
 
 def main():

@@ -73,3 +73,11 @@ El JSON formato3 incorpora el campo aditivo `operationalAlerts`. Cada entrada co
 Una misma operacion puede producir varias senales: no sumar alertas como total de fallos. Una lista vacia significa ausencia de esas senales en la muestra, no salud global, actividad reciente o coste cero. No se envian mensajes, correos o telemetria, ni se crean cuotas o umbrales. La salida solo conserva codigos permitidos y conteos; los prefijos y textos ajenos no se reproducen.
 
 Verificacion sin proveedores reales: `python -m unittest discover -s tools/operacion`.
+
+## Latencia de transcripción
+
+Por cada intento HTTP de transcripción, el backend emite `KAPTAL_AI_TRANSCRIPTION` con el proveedor fijo `groq`, el resultado y `elapsed_ms`. El tiempo incluye la petición y el procesamiento de la respuesta en el backend. Las denegaciones anteriores al intento se reflejan en las señales de presupuesto existentes. La salida contiene únicamente códigos y tiempos.
+
+- `success` indica que hubo texto utilizable, `invalid_response` que la respuesta decodificada carecía de texto utilizable y `provider_error` que falló la solicitud o su lectura.
+- El campo aditivo `transcriptionGroups` conserva conteo y percentiles de latencia por resultado. Cada grupo usa hasta las últimas 1024 observaciones en el orden de entrada. `records` y `groups` siguen describiendo generaciones de texto. Las alertas de audio usan `transcription_invalid_response` y `transcription_provider_error`.
+- La medición es tiempo transcurrido en la solicitud. La duración total del audio y los segundos facturados quedan pendientes. La referencia de Groq describe `text` para la respuesta actual y marcas por segmento para `verbose_json`. Estas marcas no acreditan la duración total del archivo. [Referencia de API de Groq](https://console.groq.com/docs/api-reference#audio) · [Formatos de transcripción](https://console.groq.com/docs/speech-to-text).

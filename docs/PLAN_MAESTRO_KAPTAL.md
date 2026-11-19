@@ -1,5 +1,5 @@
 <!-- KAPTAL_ESTADO_VIGENTE_INICIO -->
-## Resumen vigente — 19 noviembre 2026 · Recientes publicado y revisión de Samsung, Etapa 13 y Categorías
+## Resumen vigente — 19 noviembre 2026 · Medición de transcripción en Etapa 13
 
 - Con autorización, el candidato `75ac277` se integró en `develop` y se promovió a `main` en `322623a6488f714302422dbda24aed7c71a2bd97`. El merge conserva el árbol aprobado `8694a9030768c4bf1a0d98756b6810971fae32ab`. [Commit de producción](https://github.com/YaxcheItz/gestorfinanzas/commit/322623a6488f714302422dbda24aed7c71a2bd97).
 - Vercel `7917465563` y Render `7917444529` registraron éxito para ese SHA. La portada, Inicio, Movimientos, Reportes y Libro diario devolvieron HTTP 200. La API devolvió HTTP 200 con `UP` mediante el proxy público y directamente. [Web](https://kaptalgf.vercel.app) · [Salud de API](https://kaptalgf.vercel.app/api/health).
@@ -19,6 +19,15 @@
 
 - `develop` avanzó de `90b93f3` a `75ac277f56ba2f0515fb7ff29b8ff8221d4c02ba` por fast-forward. La CI Android del SHA integrado aprobó. La CI general de develop aprobó sus seis trabajos, con 187 E2E en PostgreSQL y cuatro PWA dedicadas. La regresión de Recientes aprobó en el SHA integrado. [CI de develop](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44550798542) · [Android de develop](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44550798583).
 - Se verificó que la promoción a `main` en `a33342f` conserva el árbol probado `8694a9030768c4bf1a0d98756b6810971fae32ab`. La rama `entrega/integracion-recientes-texto` conserva las comprobaciones de Etapa 13, Categorías y Samsung como evidencia documental.
+
+### Etapa 13 · Latencia de transcripción
+
+- La rama `mejoras/latencia-transcripcion-etapa13` parte de `develop` remoto en `75ac277` y conserva el cierre documental de `0520960`. Registra el resultado y los milisegundos de cada intento HTTP de transcripción con Groq. El resumen JSON agrega estos registros en `transcriptionGroups`, con un p95 por resultado y alertas para errores y respuestas sin texto utilizable. La transcripción conserva `response_format=json`. [Referencia de Groq](https://console.groq.com/docs/api-reference#audio).
+- La prueba usa respuestas ficticias para éxito, rechazo HTTP, texto vacío y denegación antes del intento. La métrica conserva proveedor, resultado y tiempo transcurrido. El resumen evita reproducir texto, audio, claves y líneas descartadas. Los archivos locales de verificación de producción contienen evidencia de despliegue y salud, sin una muestra agregada del uso habitual.
+- Maven `verify` terminó con 712 pruebas aprobadas y 9 omitidas sin PostgreSQL. Pasaron 20 pruebas Python. El agregado de los registros emitidos por Java contiene un éxito, un error HTTP y una respuesta vacía. Evidencia local en `.local/backend-transcripcion.log` y `.local/agregado-transcripcion-ficticia.json` del worktree de la rama. [CI de la rama](https://github.com/YaxcheItz/gestorfinanzas/actions/workflows/ci.yml?query=branch%3Amejoras%2Flatencia-transcripcion-etapa13).
+- Quedan pendientes las cuotas efectivas, la duración total reportada por el proveedor y el p95 de uso habitual. El piloto bancario espera un aviso nuevo consentido. Histórico de producción web en `322623a` y última instalación habitual del Samsung 0.1.46 (47). Calendario conservado. Historial, lentitud y logout aplazados.
+
+Para otro chat, abre `.local/worktrees/latencia-transcripcion-etapa13` y lee `AGENTS.md`, `docs/ESTADO_SESION.md`, `docs/PLAN_MAESTRO_KAPTAL.md` y `docs/OPERACION_METRICAS_IA_ETAPA_13.md`. Verifica la rama y su CI antes de integrar. Continúa la observación agregada de uso habitual y espera un aviso bancario nuevo consentido.
 
 ### Etapa 13 · Comprobación operativa con datos ficticios
 
@@ -76,8 +85,6 @@
 - Evidencia de esta etapa en el worktree anterior, `.local/worktrees/reportes-diario-cuentas-presupuestos/frontend/.local/`. Los resultados están en `evidencia-periodos-nativo/`, `evidencia-presupuesto-h2/` y `evidencia-formularios-h2-reintento/`. Las configuraciones locales y las pruebas de escritorio están junto a esos resultados.
 - Android local aprobó 29 pruebas JVM, lint de debug y la compilación de las APK de debug e instrumentación. Los 87 archivos web empaquetados coinciden byte a byte con la compilación Angular. El registro está en `android-validacion-escritorio.log` junto a la evidencia. La prueba de instrumentación en el equipo queda pendiente.
 - Calendario conservado. Historial, lentitud y logout aplazados. Queda pendiente la comprobación del selector y la fecha en la WebView del Samsung.
-
-Para otro chat, lee `AGENTS.md`, `docs/ESTADO_SESION.md` y `docs/PLAN_MAESTRO_KAPTAL.md` en `.local/worktrees/publicacion-web-recientes`. La web de Recientes está en `322623a` y la comprobación WebView aislada de los tres apartados pasó. Continúa con la evidencia de uso habitual de la Etapa 13 y el próximo aviso bancario consentido. Usa datos ficticios para las pruebas y conserva calendario e historial, lentitud y logout aplazados.
 
 <!-- KAPTAL_ESTADO_VIGENTE_FIN -->
 
