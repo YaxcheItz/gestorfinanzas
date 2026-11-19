@@ -15,6 +15,14 @@ import { nombreCuentaVisible } from '../../core/utils/cuenta-financiera';
   selector: 'app-libro-diario',
   standalone: true,
   imports: [TextoFinancieroPipe, CommonModule, FormsModule, RouterLink, MontoPipe],
+  styles: [`
+    .ledger-postings { container-type: inline-size; }
+    .ledger-amount {
+      display: inline-block;
+      max-inline-size: calc(100cqi - 1.25rem);
+      overflow-wrap: anywhere;
+    }
+  `],
   template: `
     <main class="finance-page mx-auto max-w-5xl space-y-5 px-3 py-5 sm:space-y-7 sm:px-6 sm:py-8">
       <header>
@@ -30,7 +38,7 @@ import { nombreCuentaVisible } from '../../core/utils/cuenta-financiera';
         Los movimientos nuevos se registran automáticamente. Puedes revisar e incorporar los movimientos antiguos disponibles abajo; el proceso no cambia los saldos operativos.
       </aside>
 
-      <form (ngSubmit)="aplicarFiltros()" class="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs dark:border-slate-700 dark:bg-slate-900 sm:p-5">
+      <form (ngSubmit)="aplicarFiltros()" class="rounded-2xl border border-slate-200 bg-white px-2 py-4 shadow-xs dark:border-slate-700 dark:bg-slate-900 sm:p-5">
         <div class="mb-3 flex flex-wrap items-baseline justify-between gap-2">
           <h2 class="text-sm font-bold text-slate-900 dark:text-white">Buscar asientos</h2>
           <span class="text-xs text-slate-500">Al cambiar de página, se conservan los filtros aplicados.</span>
@@ -39,12 +47,12 @@ import { nombreCuentaVisible } from '../../core/utils/cuenta-financiera';
           <label class="block text-xs font-semibold text-slate-700 dark:text-slate-200">Desde
             <input type="date" name="desde" [attr.aria-invalid]="rangoInvalido() || null"
               [attr.aria-describedby]="rangoInvalido() ? 'ledger-date-range ledger-date-error' : 'ledger-date-range'"
-              [ngModel]="filtroDesde()" (ngModelChange)="filtroDesde.set($event)" class="mt-1 block min-h-11 min-w-0 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-normal text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
+              [ngModel]="filtroDesde()" (ngModelChange)="filtroDesde.set($event)" class="mt-1 block min-h-11 min-w-0 w-full rounded-lg border border-slate-300 bg-white px-1 text-sm font-normal text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white sm:px-3" />
           </label>
           <label class="block text-xs font-semibold text-slate-700 dark:text-slate-200">Hasta
             <input type="date" name="hasta" [attr.aria-invalid]="rangoInvalido() || null"
               [attr.aria-describedby]="rangoInvalido() ? 'ledger-date-range ledger-date-error' : 'ledger-date-range'"
-              [ngModel]="filtroHasta()" (ngModelChange)="filtroHasta.set($event)" class="mt-1 block min-h-11 min-w-0 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-normal text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
+              [ngModel]="filtroHasta()" (ngModelChange)="filtroHasta.set($event)" class="mt-1 block min-h-11 min-w-0 w-full rounded-lg border border-slate-300 bg-white px-1 text-sm font-normal text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white sm:px-3" />
           </label>
           <label class="block text-xs font-semibold text-slate-700 dark:text-slate-200">Movimiento
             <select name="tipoMovimiento" [ngModel]="filtroTipoMovimiento()" (ngModelChange)="filtroTipoMovimiento.set($event)" class="mt-1 block min-h-11 min-w-0 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-normal text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
@@ -224,7 +232,7 @@ import { nombreCuentaVisible } from '../../core/utils/cuenta-financiera';
                 }
               </header>
 
-              <div class="overflow-x-auto">
+              <div class="ledger-postings overflow-x-auto">
                 <table class="w-full min-w-[30rem] text-left text-sm">
                   <caption class="sr-only">Partidas contables del asiento {{ asiento.id }}</caption>
                   <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
@@ -243,11 +251,11 @@ import { nombreCuentaVisible } from '../../core/utils/cuenta-financiera';
                             {{ linea.codigoCuenta }} · {{ linea.moneda }}
                           </span>
                         </th>
-                        <td class="whitespace-nowrap px-4 py-3 text-right tabular-nums text-slate-800">
-                          {{ linea.lado === 'DEBE' ? (linea.monto | monto:linea.moneda:'symbol':'1.2-2') : '—' }}
+                        <td class="px-4 py-3 text-right tabular-nums text-slate-800">
+                          <span class="ledger-amount">{{ linea.lado === 'DEBE' ? (linea.monto | monto:linea.moneda:'symbol':'1.2-2') : '—' }}</span>
                         </td>
-                        <td class="whitespace-nowrap px-4 py-3 text-right tabular-nums text-slate-800 sm:px-5">
-                          {{ linea.lado === 'HABER' ? (linea.monto | monto:linea.moneda:'symbol':'1.2-2') : '—' }}
+                        <td class="px-4 py-3 text-right tabular-nums text-slate-800 sm:px-5">
+                          <span class="ledger-amount">{{ linea.lado === 'HABER' ? (linea.monto | monto:linea.moneda:'symbol':'1.2-2') : '—' }}</span>
                         </td>
                       </tr>
                     }

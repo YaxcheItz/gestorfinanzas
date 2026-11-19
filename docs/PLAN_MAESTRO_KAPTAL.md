@@ -1,11 +1,11 @@
 <!-- KAPTAL_ESTADO_VIGENTE_INICIO -->
-## Resumen vigente — 18 noviembre 2026 · Filtros de Libro diario corregidos
+## Resumen vigente — 18 noviembre 2026 · Libro diario y revisión conjunta
 
-- Rama `correcciones/libro-diario-filtros` desde `develop` remoto `1f0f4ca` verificado. Libro diario conserva los filtros aplicados al paginar y reintentar, cancela la consulta al limpiar, avisa junto a las fechas invertidas y distingue el vacío filtrado. [Informe](CORRECCION_FILTROS_LIBRO_DIARIO_2026-11-18.md).
-- Compilación de Angular, TypeScript, 585 unitarias y diez pruebas de navegador aprobaron. Se usaron datos ficticios y API interceptada. La CI de la rama se consulta por el SHA remoto. [CI](https://github.com/YaxcheItz/gestorfinanzas/actions/workflows/ci.yml?query=branch%3Acorrecciones%2Flibro-diario-filtros).
-- Producción web en `main` `17f0075`. Los recortes de fechas y cifras con texto al 200 % quedan en la revisión visual. Calendario conservado. Historial, lentitud y logout siguen aplazados. [Revisión de Libro diario](https://github.com/YaxcheItz/gestorfinanzas/blob/8e56399ba04c2939d27fabe206159b46133f0eec/docs/REVISION_LIBRO_DIARIO_WEB_2026-11-18.md).
+- La corrección `149277c` mantiene los filtros aplicados y resuelve la limpieza, el rango invertido y el vacío filtrado. Los flujos de CI con PostgreSQL aprobaron. La verificación de arranque de la PWA falló con dos solicitudes de catálogo sin autorización tras un 401 sintético y el trabajo se está repitiendo. [Corrección](CORRECCION_FILTROS_LIBRO_DIARIO_2026-11-18.md) · [CI](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44430937285).
+- La rama `correcciones/libro-diario-legibilidad` corrige el recorte de fechas y partidas con texto al 200 %. Angular, TypeScript, 585 unitarias, dos regresiones de navegador y comparativas Chromium y Firefox aprobaron localmente. [Evidencia visual](LEGIBILIDAD_LIBRO_DIARIO_2026-11-18.md).
+- La revisión de Gastos compartidos y el recorrido entre Captura, Actividad, Reportes y Libro diario usan datos ficticios. Producción continúa en `main` `17f0075`. Calendario conservado. Historial, lentitud y logout siguen aplazados.
 
-Para otro chat, abre `.local/worktrees/kaptal-libro-diario-filtros`. Lee `AGENTS.md`, `docs/ESTADO_SESION.md`, `docs/PLAN_MAESTRO_KAPTAL.md` y [el informe](CORRECCION_FILTROS_LIBRO_DIARIO_2026-11-18.md). Revalida el SHA remoto y la CI de `correcciones/libro-diario-filtros` antes de valorar su integración a `develop`. La publicación en web y la instalación de APK requieren confirmación por separado.
+Para retomar, abre `.local/worktrees/kaptal-libro-diario-legibilidad`. Lee `AGENTS.md`, `docs/ESTADO_SESION.md`, `docs/PLAN_MAESTRO_KAPTAL.md`, `docs/CORRECCION_FILTROS_LIBRO_DIARIO_2026-11-18.md` y [la revisión visual](LEGIBILIDAD_LIBRO_DIARIO_2026-11-18.md). Revalida la CI y completa el recorrido local. La autorización de publicación cubre esta secuencia web.
 
 Los apartados siguientes conservan el historial y la evidencia de las etapas anteriores.
 <!-- KAPTAL_ESTADO_VIGENTE_FIN -->
