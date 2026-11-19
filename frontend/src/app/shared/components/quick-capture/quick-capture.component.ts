@@ -349,12 +349,14 @@ export class QuickCaptureComponent implements OnDestroy {
       }
   }
   private async cargarCatalogoInicial(usuarioId:number,generation:number):Promise<void>{
+    const lecturaVigente = () => generation === this.chatGeneration && !this.destruido
+      && this.auth.currentUser()?.id === usuarioId;
     try {
       const catalogo=await this.offline.leerCatalogo(usuarioId);
-      if(generation!==this.chatGeneration || this.destruido)return;
+      if(!lecturaVigente())return;
       if(catalogo){this.cuentasEdicion.set(catalogo.cuentas);this.categories.set(catalogo.categorias);}
-    } catch { if(generation===this.chatGeneration)this.error.set('No se pudo leer el catálogo local.'); }
-    finally { if(generation===this.chatGeneration && !this.destruido && this.offline.conexion())this.cargarCatalogoChat(); }
+    } catch { if(lecturaVigente())this.error.set('No se pudo leer el catálogo local.'); }
+    finally { if(lecturaVigente() && this.offline.conexion())this.cargarCatalogoChat(); }
   }
   private cargarCatalogoChat():void{
     const generation=this.chatGeneration,uid=this.usuarioChat;if(uid===null)return;

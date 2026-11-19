@@ -1,10 +1,12 @@
 import { FeatureStylesService } from '../../core/services/feature-styles.service';
 import { TextoFinancieroPipe } from '../../core/pipes/texto-financiero.pipe';
 ﻿import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { AsientoContable, BackfillLibroDiario, ConciliacionCuenta, Cuenta, PageResponse, TipoTransaccion } from '../../core/models/finanzas.models';
+import type { Subscription } from 'rxjs';
+import { AsientoContable, BackfillLibroDiario, ConciliacionCuenta, Cuenta, LibroDiarioFiltro, PageResponse, TipoTransaccion } from '../../core/models/finanzas.models';
 import { FinanzasService } from '../../core/services/finanzas.service';
 import { MontoPipe } from '../../core/pipes/monto.pipe';
 import { nombreCuentaVisible } from '../../core/utils/cuenta-financiera';
@@ -13,6 +15,14 @@ import { nombreCuentaVisible } from '../../core/utils/cuenta-financiera';
   selector: 'app-libro-diario',
   standalone: true,
   imports: [TextoFinancieroPipe, CommonModule, FormsModule, RouterLink, MontoPipe],
+  styles: [`
+    .ledger-postings { container-type: inline-size; }
+    .ledger-amount {
+      display: inline-block;
+      max-inline-size: calc(100cqi - 1.25rem);
+      overflow-wrap: anywhere;
+    }
+  `],
   template: `
     <main class="finance-page mx-auto max-w-5xl space-y-5 px-3 py-5 sm:space-y-7 sm:px-6 sm:py-8">
       <header>
@@ -28,17 +38,21 @@ import { nombreCuentaVisible } from '../../core/utils/cuenta-financiera';
         Los movimientos nuevos se registran automáticamente. Puedes revisar e incorporar los movimientos antiguos disponibles abajo; el proceso no cambia los saldos operativos.
       </aside>
 
-      <form (ngSubmit)="aplicarFiltros()" class="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs dark:border-slate-700 dark:bg-slate-900 sm:p-5">
+      <form (ngSubmit)="aplicarFiltros()" class="rounded-2xl border border-slate-200 bg-white px-2 py-4 shadow-xs dark:border-slate-700 dark:bg-slate-900 sm:p-5">
         <div class="mb-3 flex flex-wrap items-baseline justify-between gap-2">
           <h2 class="text-sm font-bold text-slate-900 dark:text-white">Buscar asientos</h2>
-          <span class="text-xs text-slate-500">Los filtros se aplican también al cambiar de página.</span>
+          <span class="text-xs text-slate-500">Al cambiar de página, se conservan los filtros aplicados.</span>
         </div>
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
           <label class="block text-xs font-semibold text-slate-700 dark:text-slate-200">Desde
-            <input type="date" name="desde" aria-describedby="ledger-date-range" [ngModel]="filtroDesde()" (ngModelChange)="filtroDesde.set($event)" class="mt-1 block min-h-11 min-w-0 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-normal text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
+            <input type="date" name="desde" [attr.aria-invalid]="rangoInvalido() || null"
+              [attr.aria-describedby]="rangoInvalido() ? 'ledger-date-range ledger-date-error' : 'ledger-date-range'"
+              [ngModel]="filtroDesde()" (ngModelChange)="filtroDesde.set($event)" class="mt-1 block min-h-11 min-w-0 w-full rounded-lg border border-slate-300 bg-white px-1 text-sm font-normal text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white sm:px-3" />
           </label>
           <label class="block text-xs font-semibold text-slate-700 dark:text-slate-200">Hasta
-            <input type="date" name="hasta" aria-describedby="ledger-date-range" [ngModel]="filtroHasta()" (ngModelChange)="filtroHasta.set($event)" class="mt-1 block min-h-11 min-w-0 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-normal text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
+            <input type="date" name="hasta" [attr.aria-invalid]="rangoInvalido() || null"
+              [attr.aria-describedby]="rangoInvalido() ? 'ledger-date-range ledger-date-error' : 'ledger-date-range'"
+              [ngModel]="filtroHasta()" (ngModelChange)="filtroHasta.set($event)" class="mt-1 block min-h-11 min-w-0 w-full rounded-lg border border-slate-300 bg-white px-1 text-sm font-normal text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white sm:px-3" />
           </label>
           <label class="block text-xs font-semibold text-slate-700 dark:text-slate-200">Movimiento
             <select name="tipoMovimiento" [ngModel]="filtroTipoMovimiento()" (ngModelChange)="filtroTipoMovimiento.set($event)" class="mt-1 block min-h-11 min-w-0 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-normal text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
@@ -58,6 +72,11 @@ import { nombreCuentaVisible } from '../../core/utils/cuenta-financiera';
           </label>
         </div>
         <p id="ledger-date-range" class="mt-3 break-words text-xs text-slate-500">Fechas (año-mes-día): desde {{ filtroDesde() || 'sin límite' }} hasta {{ filtroHasta() || 'sin límite' }}.</p>
+        @if (rangoInvalido()) {
+          <p id="ledger-date-error" role="alert" class="mt-2 text-sm text-rose-700 dark:text-rose-300">
+            La fecha inicial no puede ser posterior a la fecha final.
+          </p>
+        }
         <div class="mt-3 flex flex-wrap justify-end gap-2">
           @if (tieneFiltros()) { <button type="button" (click)="limpiarFiltros()" class="min-h-11 rounded-lg px-4 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800">Limpiar</button> }
           <button type="submit" [disabled]="cargando()" class="min-h-11 rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-50">{{ cargando() ? 'Buscando…' : 'Aplicar filtros' }}</button>
@@ -168,13 +187,23 @@ import { nombreCuentaVisible } from '../../core/utils/cuenta-financiera';
         <div class="finance-loading-card" role="status" aria-label="Cargando asientos"><span class="loading-placeholder" aria-hidden="true"></span><span class="loading-placeholder loading-placeholder--amount" aria-hidden="true"></span></div>
       } @else if (pagina()?.empty) {
         <section class="rounded-2xl border border-slate-200 bg-white p-6 text-center sm:p-10">
-          <h2 class="text-lg font-semibold text-slate-900">Aún no hay asientos contables</h2>
-          <p class="mx-auto mt-2 max-w-lg text-sm leading-6 text-slate-600">
-            Cuando registres un ingreso, gasto, transferencia o saldo inicial, verás aquí sus partidas de Debe y Haber.
-          </p>
-          <a routerLink="/transacciones" class="mt-4 inline-flex min-h-11 items-center rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800">
-            Ver movimientos
-          </a>
+          @if (tieneFiltrosAplicados()) {
+            <h2 class="text-lg font-semibold text-slate-900">No hay asientos con estos filtros</h2>
+            <p class="mx-auto mt-2 max-w-lg text-sm leading-6 text-slate-600">
+              Cambia los filtros o límpialos para consultar todos los asientos.
+            </p>
+            <button type="button" (click)="limpiarFiltros()" class="mt-4 inline-flex min-h-11 items-center rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800">
+              Limpiar filtros
+            </button>
+          } @else {
+            <h2 class="text-lg font-semibold text-slate-900">Aún no hay asientos contables</h2>
+            <p class="mx-auto mt-2 max-w-lg text-sm leading-6 text-slate-600">
+              Cuando registres un ingreso, gasto, transferencia o saldo inicial, verás aquí sus partidas de Debe y Haber.
+            </p>
+            <a routerLink="/transacciones" class="mt-4 inline-flex min-h-11 items-center rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800">
+              Ver movimientos
+            </a>
+          }
         </section>
       } @else {
         <section aria-label="Asientos contables" class="space-y-4">
@@ -203,7 +232,7 @@ import { nombreCuentaVisible } from '../../core/utils/cuenta-financiera';
                 }
               </header>
 
-              <div class="overflow-x-auto">
+              <div class="ledger-postings overflow-x-auto">
                 <table class="w-full min-w-[30rem] text-left text-sm">
                   <caption class="sr-only">Partidas contables del asiento {{ asiento.id }}</caption>
                   <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
@@ -222,11 +251,11 @@ import { nombreCuentaVisible } from '../../core/utils/cuenta-financiera';
                             {{ linea.codigoCuenta }} · {{ linea.moneda }}
                           </span>
                         </th>
-                        <td class="whitespace-nowrap px-4 py-3 text-right tabular-nums text-slate-800">
-                          {{ linea.lado === 'DEBE' ? (linea.monto | monto:linea.moneda:'symbol':'1.2-2') : '—' }}
+                        <td class="px-4 py-3 text-right tabular-nums text-slate-800">
+                          <span class="ledger-amount">{{ linea.lado === 'DEBE' ? (linea.monto | monto:linea.moneda:'symbol':'1.2-2') : '—' }}</span>
                         </td>
-                        <td class="whitespace-nowrap px-4 py-3 text-right tabular-nums text-slate-800 sm:px-5">
-                          {{ linea.lado === 'HABER' ? (linea.monto | monto:linea.moneda:'symbol':'1.2-2') : '—' }}
+                        <td class="px-4 py-3 text-right tabular-nums text-slate-800 sm:px-5">
+                          <span class="ledger-amount">{{ linea.lado === 'HABER' ? (linea.monto | monto:linea.moneda:'symbol':'1.2-2') : '—' }}</span>
                         </td>
                       </tr>
                     }
@@ -258,6 +287,7 @@ export class LibroDiarioComponent implements OnInit {
   private readonly styleAssets = inject(FeatureStylesService).load('activity');
   readonly nombreCuentaVisible = nombreCuentaVisible;
   private readonly finanzasService = inject(FinanzasService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly pagina = signal<PageResponse<AsientoContable> | null>(null);
   readonly cargando = signal(false);
@@ -275,6 +305,14 @@ export class LibroDiarioComponent implements OnInit {
   readonly filtroTipoMovimiento = signal<TipoTransaccion | ''>('');
   readonly filtroCuentaId = signal<number | null>(null);
   readonly revisionesCuenta = signal<Record<string, string>>({});
+  private readonly filtrosAplicados = signal<LibroDiarioFiltro>({});
+  readonly tieneFiltrosAplicados = computed(() => Object.values(this.filtrosAplicados()).some(Boolean));
+  readonly rangoInvalido = computed(() => {
+    const desde = this.filtroDesde();
+    const hasta = this.filtroHasta();
+    return desde !== '' && hasta !== '' && desde > hasta;
+  });
+  private consulta?: Subscription;
   private paginaSolicitada = 0;
 
   ngOnInit(): void {
@@ -285,7 +323,7 @@ export class LibroDiarioComponent implements OnInit {
   }
 
   tieneFiltros(): boolean {
-    return !!(this.filtroDesde() || this.filtroHasta() || this.filtroTipoEvento()
+    return this.tieneFiltrosAplicados() || !!(this.filtroDesde() || this.filtroHasta() || this.filtroTipoEvento()
       || this.filtroTipoMovimiento() || this.filtroCuentaId() != null);
   }
 
@@ -317,10 +355,14 @@ export class LibroDiarioComponent implements OnInit {
   }
 
   aplicarFiltros(): void {
-    if (this.filtroDesde() && this.filtroHasta() && this.filtroDesde() > this.filtroHasta()) {
-      this.error.set('La fecha inicial no puede ser posterior a la fecha final.');
-      return;
-    }
+    if (this.rangoInvalido()) return;
+    this.filtrosAplicados.set({
+      desde: this.filtroDesde(),
+      hasta: this.filtroHasta(),
+      tipoEvento: this.filtroTipoEvento(),
+      tipoMovimiento: this.filtroTipoMovimiento(),
+      cuentaId: this.filtroCuentaId()
+    });
     this.paginaSolicitada = 0;
     this.pagina.set(null);
     this.cargar();
@@ -332,35 +374,32 @@ export class LibroDiarioComponent implements OnInit {
     this.filtroTipoEvento.set('');
     this.filtroTipoMovimiento.set('');
     this.filtroCuentaId.set(null);
+    this.filtrosAplicados.set({});
     this.paginaSolicitada = 0;
     this.pagina.set(null);
     this.cargar();
   }
 
   cargar(): void {
-    if (this.cargando()) return;
+    this.consulta?.unsubscribe();
     this.cargando.set(true);
     this.error.set(null);
-    this.finanzasService.getLibroDiario(this.paginaSolicitada, 20, {
-      desde: this.filtroDesde(),
-      hasta: this.filtroHasta(),
-      tipoEvento: this.filtroTipoEvento(),
-      tipoMovimiento: this.filtroTipoMovimiento(),
-      cuentaId: this.filtroCuentaId()
-    }).subscribe({
-      next: response => {
-        this.cargando.set(false);
-        if (!response.success || !response.data) {
-          this.error.set(response.message || 'No se pudo cargar el libro diario.');
-          return;
+    this.consulta = this.finanzasService.getLibroDiario(this.paginaSolicitada, 20, this.filtrosAplicados())
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: response => {
+          this.cargando.set(false);
+          if (!response.success || !response.data) {
+            this.error.set(response.message || 'No se pudo cargar el libro diario.');
+            return;
+          }
+          this.pagina.set(response.data);
+        },
+        error: err => {
+          this.cargando.set(false);
+          this.error.set(err.error?.message || 'No se pudo cargar el libro diario.');
         }
-        this.pagina.set(response.data);
-      },
-      error: err => {
-        this.cargando.set(false);
-        this.error.set(err.error?.message || 'No se pudo cargar el libro diario.');
-      }
-    });
+      });
   }
 
   revisarBackfill(): void {
@@ -410,7 +449,7 @@ export class LibroDiarioComponent implements OnInit {
 
   cambiarPagina(cambio: number): void {
     const siguiente = this.paginaSolicitada + cambio;
-    if (siguiente < 0 || siguiente >= (this.pagina()?.totalPages ?? 0)) return;
+    if (this.cargando() || siguiente < 0 || siguiente >= (this.pagina()?.totalPages ?? 0)) return;
     this.paginaSolicitada = siguiente;
     this.cargar();
   }

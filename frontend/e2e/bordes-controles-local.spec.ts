@@ -67,7 +67,12 @@ test('fechas de Libro diario con texto ampliado',async({browser,baseURL},info)=>
     await p.setViewportSize({width:320,height:844});await p.goto(origin+'/libro-diario');
     await p.evaluate(()=>{document.documentElement.style.fontSize='200%';document.documentElement.classList.add('dark');});
     await p.getByLabel('Desde',{exact:true}).fill('2026-10-01');
-    await p.getByLabel('Hasta',{exact:true}).fill('2026-11-12');
+    const hasta=p.getByLabel('Hasta',{exact:true});
+    await hasta.fill('2026-11-12');
+    expect(await hasta.evaluate(input=>{
+      const style=getComputedStyle(input);
+      return input.clientWidth-parseFloat(style.paddingInlineStart)-parseFloat(style.paddingInlineEnd);
+    })).toBeGreaterThanOrEqual(224);
     await expect(p.locator('#ledger-date-range')).toContainText('desde 2026-10-01 hasta 2026-11-12');
     await expect(p.getByLabel('Desde',{exact:true})).toHaveAccessibleDescription(/2026-10-01/);
     expect(await p.locator('#ledger-date-range').evaluate(e=>e.scrollWidth<=e.clientWidth)).toBe(true);
@@ -77,6 +82,40 @@ test('fechas de Libro diario con texto ampliado',async({browser,baseURL},info)=>
     expect(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
     expect(writes).toEqual([]);
   }finally{await c.close();}
+});
+
+test('importe de Haber completo a 320 px con texto ampliado',async({browser,baseURL})=>{
+  const {c,p,origin,writes,pageErrors}=await createSectionsFixture(browser,baseURL!);
+  const line={id:1,codigoCuenta:'1001',nombreCuenta:'Cuenta ficticia',monto:9876543210.12,moneda:'MXN',lado:'HABER'};
+  const entry={id:81,transaccionOrigenId:71,tipoEvento:'CREACION',tipoMovimiento:'GASTO',
+    fechaOperacion:'2026-11-11',descripcion:'Asiento ficticio',lineas:[line]};
+  await p.route(url=>url.pathname==='/api/libro-diario',route=>route.fulfill({json:{success:true,data:{
+    content:[entry],totalPages:1,totalElements:1,number:0,size:20,first:true,last:true,empty:false
+  }}}));
+  try {
+    await p.setViewportSize({width:320,height:844});
+    await p.goto(origin+'/libro-diario');
+    await p.evaluate(()=>{document.documentElement.style.fontSize='200%';document.documentElement.classList.add('dark');});
+    await p.evaluate(()=>document.fonts.ready);
+    const importe=p.getByRole('cell',{name:/9,876,543,210\.12/});
+    await expect(importe).toBeVisible();
+    const completo=await importe.evaluate(celda=>{
+      const ventana=celda.closest<HTMLElement>('.overflow-x-auto')!;
+      ventana.scrollTo({left:ventana.scrollWidth,behavior:'instant'});
+      const inicio=ventana.getBoundingClientRect().left+ventana.clientLeft;
+      const texto=document.createRange();
+      texto.selectNodeContents(celda.querySelector('.ledger-amount')??celda);
+      return Array.from(texto.getClientRects()).every(
+        parte=>parte.left>=inicio-1&&parte.right<=inicio+ventana.clientWidth+1
+      );
+    });
+    expect(completo).toBe(true);
+    expect(await p.evaluate(()=>document.documentElement.scrollWidth)).toBe(320);
+    expect(writes).toEqual([]);
+    expect(pageErrors).toEqual([]);
+  } finally {
+    await c.close();
+  }
 });
 
 test('etiqueta de captura seleccionable con teclado y fecha legible',async({browser,baseURL},info)=>{

@@ -1,11 +1,11 @@
 <!-- KAPTAL_ESTADO_VIGENTE_INICIO -->
-## Resumen vigente — 18 noviembre 2026 · Corrección del mes en Reportes
+## Resumen vigente — 18 noviembre 2026 · Entrega conjunta de Libro diario
 
-- Rama `correcciones/reportes-filtro-mensual-url` desde `origin/develop` `b0dc3a0` verificado. Elegir un mes actualiza la URL, conserva la lista activa y la vista recupera el mes al recargar. El estado vacío describe el mes o rango consultado. [Informe](CORRECCION_FILTRO_REPORTES_2026-11-18.md).
-- Las dos regresiones se verificaron en Chromium y Firefox. Aprobaron Angular, TypeScript y 580 unitarias. Capturas y registros en `.local/reportes-filtro-mensual-url/`.
-- Producción en `01135ec` verificado. Calendario conservado. Historial, lentitud y logout siguen aplazados. Publicar en producción o instalar una APK requiere confirmación.
+- Entrega web en `correcciones/arranque-catalogo-captura`. Incluye filtros de Libro diario, fechas e importes legibles al 200 % y una protección del catálogo inicial de Captura tras el fallo de arranque detectado en CI. [Filtros](CORRECCION_FILTROS_LIBRO_DIARIO_2026-11-18.md) · [Legibilidad](LEGIBILIDAD_LIBRO_DIARIO_2026-11-18.md) · [Arranque](ARRANQUE_CATALOGO_CAPTURA_2026-11-18.md).
+- Angular, TypeScript, 586 unitarias, 12 comprobaciones de arranque y cuatro casos locales de PWA aprobaron. La revisión de Gastos compartidos y el recorrido Captura, Actividad, Reportes y Libro diario se completaron con H2 y datos ficticios. [Revisión conjunta](https://github.com/YaxcheItz/gestorfinanzas/blob/856d2dff7deb31b9f6dd34a4c0a3f0cff82d17ef/docs/REVISION_CONJUNTA_LIBRO_DIARIO_2026-11-18.md).
+- `main` conserva `17f0075` hasta que se compruebe la CI de la entrega. La integración y publicación web de esta entrega están autorizadas. Calendario conservado. Historial, lentitud y logout siguen aplazados.
 
-Para otro chat, abre `.local/worktrees/kaptal-reportes-filtro-url` y lee `AGENTS.md`, `docs/ESTADO_SESION.md`, `docs/PLAN_MAESTRO_KAPTAL.md` y [el informe](CORRECCION_FILTRO_REPORTES_2026-11-18.md). Verifica el SHA remoto y la CI de la corrección antes de valorar su integración. Si se continúa la revisión visual, usa datos ficticios y conserva los aplazamientos.
+Para retomar, abre `.local/worktrees/kaptal-arranque-catalogo-captura`. Lee `AGENTS.md`, `docs/ESTADO_SESION.md`, `docs/PLAN_MAESTRO_KAPTAL.md` y [el informe de arranque](ARRANQUE_CATALOGO_CAPTURA_2026-11-18.md). Verifica el SHA de la rama y completa la integración y la publicación web autorizadas cuando aprueben las comprobaciones. Toda instalación de APK requiere confirmación por separado.
 
 Los apartados siguientes conservan el historial y la evidencia de las etapas anteriores.
 <!-- KAPTAL_ESTADO_VIGENTE_FIN -->
