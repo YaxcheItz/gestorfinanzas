@@ -6,7 +6,7 @@
 - Se reprodujo otro problema en Recientes a 320×640 y texto al 200 %. El ancho de la bandeja crecía con la fuente y el desplazamiento de la tarjeta seguía en 80 px. Playwright verificó que la propia tarjeta interceptaba el clic de «Editar» en el build anterior. El componente compartido mide el ancho para la resistencia del arrastre y usa la misma medida CSS para el desplazamiento al soltar. El ancho queda limitado a la mitad de la tarjeta.
 - Pasaron la regresión de «Editar» y «Eliminar» con clic de prueba y cierre con Escape, el caso general del dock, seis recorridos de Inicio, build Angular, TypeScript, 586 unitarias y 19 pruebas del control de dependencias. Los recorridos usaron una API simulada y comprobaron ausencia de escrituras. Evidencia en `frontend/.local/evidencia-acciones-antes/`, `evidencia-acciones-despues/` y `evidencia-inicio-despues/` del worktree del candidato. Pasaron también la regresión en Firefox y los gestos táctiles emulados en Chromium. La CI de `75ac277f56ba2f0515fb7ff29b8ff8221d4c02ba` aprobó sus seis trabajos. Pasaron 187 E2E con PostgreSQL, incluida la nueva regresión, las cuatro PWA dedicadas y la navegación con API ficticia. [Ejecución 44535119335](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44535119335).
 - El candidato pasó localmente 29 pruebas JVM, lint de debug y la compilación de APK de debug e instrumentación. Los 87 archivos web de Angular coinciden por SHA-256 con los empaquetados. Evidencia en `frontend/.local/android-acciones-verificado.json` del worktree del candidato.
-- El despliegue web previo corresponde a `main` en `a33342f`. La integración simulada con `develop` produjo el árbol del candidato `8694a9030768c4bf1a0d98756b6810971fae32ab`. El arreglo queda listo para revisar su integración. El cierre en `revision/inicio-botones-flotantes` documenta la evidencia. Sigue pendiente la WebView del Samsung. Calendario conservado. Historial, lentitud y logout aplazados.
+- El despliegue web previo corresponde a `main` en `a33342f`. La integración simulada con `develop` produjo el árbol del candidato `8694a9030768c4bf1a0d98756b6810971fae32ab`. El arreglo queda listo para revisar su integración. El cierre en `revision/inicio-botones-flotantes` documenta la evidencia. La WebView del Samsung se comprobó en un paquete aislado. Calendario conservado. Historial, lentitud y logout aplazados.
 
 ### Etapa 13 · Comprobación operativa con datos ficticios
 
@@ -14,6 +14,12 @@
 - Quedan por constatar las cuotas efectivas de la organización de Groq y del proyecto de Gemini. Los cuadros públicos no acreditan las cuotas de la cuenta configurada en Kaptal. [Límites de Groq](https://console.groq.com/docs/rate-limits) · [Límites de Gemini](https://ai.google.dev/gemini-api/docs/rate-limits).
 - La transcripción solicita `response_format=json` y consume el campo `text`. Kaptal todavía no registra duración de audio reportada por Groq. La latencia del código y el p95 de la muestra ficticia no acreditan rendimiento representativo. La medición real queda para el uso habitual y una consulta autorizada de métricas agregadas. [Formatos de transcripción de Groq](https://console.groq.com/docs/speech-to-text).
 - La rama `revision/etapa13-consumo-alertas` registra la revisión documental. Las pruebas usaron credenciales ficticias y servidores HTTP simulados.
+
+### Prueba física del Samsung
+
+- Samsung SM-A546E y Android WebView 157 comprobados con `75ac277`, en el paquete aislado `com.kaptal.app.qa.recientes19` y API ficticia. A 384 px de ancho y texto al 200 %, se abrió el selector nativo de Reportes. El mes se cambió por el control WebView y persistió al recargar. Libro diario mostró 18 de noviembre de 2026 para el día civil servido.
+- En Recientes funcionaron ambos gestos táctiles y «Editar» y «Eliminar» recibieron el clic de prueba. Escape cerró cada bandeja. Las tres pantallas conservaron el ancho disponible. El recorrido registró cero escrituras y cero errores JS.
+- Retirados el paquete y el puerto temporales. La instalación habitual es 0.1.46 (47) y sus fechas de instalación y actualización coinciden antes y después. Evidencia en `.local/qa-samsung/evidencia/` e `instalacion-aislada.json` dentro del worktree `webview-samsung-recientes`. El piloto bancario depende de un aviso habitual consentido.
 
 ### Publicación web previa de los cuatro apartados
 
