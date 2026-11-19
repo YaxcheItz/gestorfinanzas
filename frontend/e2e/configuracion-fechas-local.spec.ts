@@ -77,7 +77,7 @@ test('mes y año legibles dentro del selector con texto ampliado',async({browser
     await p.keyboard.press('Tab');
     await p.keyboard.press('Shift+Tab');
     await expect(input).toBeFocused();
-    await expect(visiblePeriod).toHaveCSS('outline-style', 'solid');
+    await expect(input).toHaveCSS('outline-style', 'solid');
     const control = await input.boundingBox();
     const presentation = await visiblePeriod.boundingBox();
     expect(control).toEqual(presentation);
