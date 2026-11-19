@@ -10,7 +10,22 @@
 - Vercel `7924457882` y Render `7924439809` registraron éxito para `39a42f5a1e6a6db1e5a0c8da193afe4622936f22`. Tras ambos despliegues, cinco rutas públicas respondieron HTTP 200 y `/api/health` devolvió `UP` por Vercel y directamente en Render. [Web](https://kaptalgf.vercel.app) · [API](https://kaptal-api-0xbn.onrender.com/api/health).
 - Coincidieron 18 recursos JS y CSS con el build esperado, los hashes del manifiesto PWA y la comprobación anterior a la publicación. Evidencia en `.local/produccion-etapa13-antes.json` y `.local/produccion-etapa13-evidencia.json` del worktree. El candidato registra latencia de transcripción, resultado y los dos límites reportados por Groq en el uso habitual. Queda pendiente observar una muestra agregada y verificar las cuotas de la cuenta.
 
-Para otro chat, abre `.local/worktrees/publicacion-etapa13` y lee `AGENTS.md`, `docs/ESTADO_SESION.md`, `docs/PLAN_MAESTRO_KAPTAL.md` y `docs/OPERACION_METRICAS_IA_ETAPA_13.md`. La publicación y la CI de `main` quedaron verificadas en `39a42f5`. Continúa con cuotas efectivas y métricas agregadas de uso habitual. El Samsung sigue en 0.1.46 (47) y el piloto espera un aviso bancario nuevo consentido. Conserva calendario y los aplazamientos de historial, lentitud y logout.
+### Revisión posterior de Kaptal
+
+El calendario actual se conserva durante la Etapa 13. Historial, lentitud y logout siguen aplazados en esta etapa. Los cuatro quedan en la revisión posterior, junto con el resto de Kaptal. Las comprobaciones anteriores se usarán como punto de partida para volver a probar los flujos y priorizar mejoras.
+
+- **Calendario.** Volver a probar la navegación entre periodos, las fechas en límites de mes y año, y la legibilidad de la vista en móvil y escritorio.
+- **Historial.** Volver a recorrer la búsqueda, los filtros y el detalle de movimientos con datos ficticios. Verificar que las mejoras conserven las referencias históricas.
+- **Lentitud.** Reproducir la espera tras varias horas de inactividad. Medir arranque frío y caliente y separar tiempos de pantalla, red y backend antes de elegir una corrección.
+- **Logout.** Reproducir la carrera de cierre de sesión y los casos de vencimiento y renovación simultánea en sesiones ficticias. Comprobar que el cierre se refleje correctamente en las vistas abiertas.
+
+Revisar la aplicación por secciones en web y Android. Para cada tema, registrar el comportamiento inicial, los problemas reproducibles y cómo se comprobará la mejora. Las correcciones se harán en etapas propias.
+
+### Seguimiento operativo
+
+- Se volvió a verificar la CI aprobada de `39a42f5` y el estado público de la API (`UP`). Los agregados encontrados pertenecen a pruebas ficticias y el navegador integrado sigue fallando al iniciar. Continúan pendientes las cuotas efectivas de Groq y Gemini, la primera muestra agregada de uso habitual y el próximo aviso bancario nuevo consentido.
+
+Para otro chat, abre `.local/worktrees/revision-posterior-kaptal` y lee `AGENTS.md`, `docs/ESTADO_SESION.md`, `docs/PLAN_MAESTRO_KAPTAL.md` y `docs/OPERACION_METRICAS_IA_ETAPA_13.md`. Continúa Etapa 13 con cuotas, uso habitual y el próximo aviso bancario consentido. Mantén el calendario actual y los otros tres aplazamientos durante esta etapa. Retoma los cuatro temas en la revisión posterior por secciones.
 
 
 ### Seguimiento de la entrega de Etapa 13
