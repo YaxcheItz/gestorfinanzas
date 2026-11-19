@@ -1,5 +1,12 @@
 <!-- KAPTAL_ESTADO_VIGENTE_INICIO -->
-## Resumen vigente — 19 noviembre 2026 · Revisión de Inicio y acciones de Recientes con texto ampliado
+## Resumen vigente — 19 noviembre 2026 · Recientes publicado y revisión de Samsung, Etapa 13 y Categorías
+
+- Con autorización, el candidato `75ac277` se integró en `develop` y se promovió a `main` en `322623a6488f714302422dbda24aed7c71a2bd97`. El merge conserva el árbol aprobado `8694a9030768c4bf1a0d98756b6810971fae32ab`. [Commit de producción](https://github.com/YaxcheItz/gestorfinanzas/commit/322623a6488f714302422dbda24aed7c71a2bd97).
+- Vercel `7917465563` y Render `7917444529` registraron éxito para ese SHA. La portada, Inicio, Movimientos, Reportes y Libro diario devolvieron HTTP 200. La API devolvió HTTP 200 con `UP` mediante el proxy público y directamente. [Web](https://kaptalgf.vercel.app) · [Salud de API](https://kaptalgf.vercel.app/api/health).
+- Coincidieron 18 recursos JS y CSS por SHA-256 con el build aprobado, incluidos Inicio y la tarjeta de Recientes. Se descargaron los 82 archivos verificados por el manifiesto PWA. La regresión del gesto pasó en Chromium con esa copia local y respuestas ficticias. Evidencia en `.local/produccion-recientes-evidencia.json` y `.local/evidencia-recientes-publicado/` del worktree `publicacion-web-recientes`.
+- La CI de `main` aprobó sus seis trabajos, con 187 E2E en Chromium y PostgreSQL, cuatro PWA dedicadas y la navegación sintética. La CI Android de `main` aprobó para el mismo SHA. [CI de main](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44554073578) · [Android de main](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44554073860).
+
+### Inicio y corrección de Recientes
 
 - Se retomó la comprobación interactiva de Inicio de la comparativa 14384 con datos ficticios. La rama `correcciones/acciones-recientes-texto-ampliado` partió de `origin/develop` verificado en `90b93f3` y avanzó a `5fd9902` dentro de su propio worktree para conservar el cierre web.
 - En 390×844 al 100 %, 320×640 al 200 % y 1280×800 al 100 %, con tema claro y oscuro, el desplazamiento y el foco permitieron alcanzar Presupuestos, el enlace de Recientes y las tres filas ficticias. El detalle de la última fila abrió por clic y teclado. El caso general del dock aprobó. La primera preparación de datos desplazó el reloj del navegador y venció el token ficticio. La medición se repitió con el reloj normal.
@@ -70,7 +77,7 @@
 - Android local aprobó 29 pruebas JVM, lint de debug y la compilación de las APK de debug e instrumentación. Los 87 archivos web empaquetados coinciden byte a byte con la compilación Angular. El registro está en `android-validacion-escritorio.log` junto a la evidencia. La prueba de instrumentación en el equipo queda pendiente.
 - Calendario conservado. Historial, lentitud y logout aplazados. Queda pendiente la comprobación del selector y la fecha en la WebView del Samsung.
 
-Para otro chat, lee `AGENTS.md`, `docs/ESTADO_SESION.md` y `docs/PLAN_MAESTRO_KAPTAL.md` en `.local/worktrees/inicio-botones-flotantes`. Revalida `develop` para integrar el arreglo de Recientes en `75ac277`, con CI aprobada. Cuando vuelva el Samsung, valida Reportes, Libro diario y las acciones de Recientes en su WebView con datos ficticios. Conserva calendario y deja aplazados historial, lentitud y logout.
+Para otro chat, lee `AGENTS.md`, `docs/ESTADO_SESION.md` y `docs/PLAN_MAESTRO_KAPTAL.md` en `.local/worktrees/publicacion-web-recientes`. La web de Recientes está en `322623a` y la comprobación WebView aislada de los tres apartados pasó. Continúa con la evidencia de uso habitual de la Etapa 13 y el próximo aviso bancario consentido. Usa datos ficticios para las pruebas y conserva calendario e historial, lentitud y logout aplazados.
 
 <!-- KAPTAL_ESTADO_VIGENTE_FIN -->
 
