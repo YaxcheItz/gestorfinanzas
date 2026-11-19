@@ -1,5 +1,12 @@
 <!-- KAPTAL_ESTADO_VIGENTE_INICIO -->
-## Resumen vigente — 18 noviembre 2026 · Foco del selector de Reportes y revisión de integración
+## Resumen vigente — 18 noviembre 2026 · Integración de Reportes, Libro diario, Cuentas y Presupuestos
+
+- `develop` se adelantó por fast-forward de `5503c57f0c85af03cbe4d7a1a3cca13e81e26b51` a `90b93f33950ce366e6abc933b35f19e31742c14f`. El SHA remoto coincide con el candidato aprobado, con árbol `9af80e091a519c9db53a5cdabbfbbab712f00111`. La revisión y el cierre de esta parte se llevan en `entrega/integracion-periodos-reportes`, creada desde la base verificada y adelantada al cierre anterior dentro de este worktree.
+- El push a `develop` disparó la CI general y Android para el SHA integrado. Android terminó con éxito en pruebas JVM, lint y compilación de debug e instrumentación. La CI general de `develop` aprobó sus seis trabajos. Se confirmaron 586 unitarias, 19 pruebas del control de dependencias, 186 E2E con Chromium y PostgreSQL, cuatro PWA dedicadas y las comprobaciones sintéticas de arranque y navegación. Angular conservó el aviso de tamaño del CSS de Reportes, 5.06 kB frente al umbral de 4.00 kB. [CI de develop](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44463757739) · [Android de develop](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44463757696).
+- La simulación de promoción a `main` en `81acd4592c7f464db54377339b4f01945522a720` produjo el mismo árbol. Incluye la legibilidad y el teclado de Reportes, la fecha en español de México de Libro diario y las ayudas ampliables de los formularios de Cuentas y Presupuestos. GitHub registró una vista previa de Vercel para el candidato. La promoción a producción es una etapa posterior.
+- La fuente Android integrada declara 0.1.45 (46). La APK de CI usa `com.kaptal.app.debug`, 0.1.45-pruebas (46) y firma v2 verificada. Se comprobó el contenido de sus 89 recursos web, incluidos los dos archivos de Capacitor, y los 82 hashes del service worker. Frente a la compilación local, 73 archivos coinciden por SHA-256, 13 por contenido con finales de línea normalizados y el manifiesto del service worker coincide en configuración. Evidencia en `.local/android-ci-44463757696/verificacion.json` dentro del worktree de integración. La última versión instalada registrada en el Samsung es 0.1.46 (47). Queda pendiente la comprobación física de Reportes y Libro diario en su WebView.
+
+### Validación del candidato antes de la integración
 
 - La rama `correcciones/foco-selector-reportes` se creó desde `origin/develop` en `5503c57` y avanzó hasta `a7cdb52` dentro de su propio worktree, `.local/worktrees/foco-selector-reportes`.
 - La CI de `a7cdb52` aprobó cinco trabajos. Chromium con PostgreSQL registró 184 pruebas aprobadas y una fallida en el recorrido de teclado, porque el campo de mes recibía el foco con opacidad cero. Las cuatro pruebas PWA dedicadas quedaron pendientes al fallar el flujo E2E. El mismo fallo se reprodujo con el build anterior y respuestas ficticias. [CI de a7cdb52](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44456469164).
@@ -10,7 +17,7 @@
 - En la CI de `13b1dca` pasaron el recorrido de teclado original y la prueba nueva del selector. El E2E de Chromium con PostgreSQL registró 185 pruebas aprobadas y una fallida. La prueba de Configuración seguía comprobando el contorno en el texto superpuesto y quedó fuera de la primera selección local. El commit `90b93f3` verifica el contorno en el campo nativo y conserva las comprobaciones de geometría, texto y ausencia de escrituras. Las ocho pruebas locales de Configuración y Reportes aprobaron. La revisión ampliada de `90b93f3` aprobó 55 pruebas de Chromium, incluido el recorrido de teclado. También aprobaron cuatro pruebas PWA con service worker y un recorrido Spring/H2 de alta de tarjeta y presupuesto USD, con comprobaciones después de recargar y consultar la API local. Se usaron datos ficticios. [CI de 13b1dca](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44459412128).
 - La CI de `90b93f33950ce366e6abc933b35f19e31742c14f` terminó con seis trabajos aprobados. Confirmó 586 pruebas unitarias, 19 del control de dependencias, 186 E2E de Chromium con PostgreSQL y cuatro PWA en su ejecución dedicada. También pasaron las comprobaciones sintéticas de arranque y navegación. [Ejecución 44461348333](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44461348333). La integración simulada con `develop` produjo el árbol `9af80e091a519c9db53a5cdabbfbbab712f00111`, idéntico al candidato.
 
-- El candidato queda preparado para integración en `develop`. El cierre de evidencia en `revision/cierre-foco-selector-reportes` modifica únicamente estado y plan. La CI indicada corresponde al candidato de producto. Queda pendiente la prueba física en WebView.
+- El cierre anterior, `9bdb324` en `revision/cierre-foco-selector-reportes`, documentó las pruebas del candidato.
 
 ### Validación previa de los cuatro apartados
 
@@ -22,7 +29,7 @@
 - Android local aprobó 29 pruebas JVM, lint de debug y la compilación de las APK de debug e instrumentación. Los 87 archivos web empaquetados coinciden byte a byte con la compilación Angular. El registro está en `android-validacion-escritorio.log` junto a la evidencia. La prueba de instrumentación en el equipo queda pendiente.
 - Calendario conservado. Historial, lentitud y logout aplazados. Queda pendiente la comprobación del selector y la fecha en la WebView del Samsung.
 
-Para otro chat, lee `AGENTS.md`, `docs/ESTADO_SESION.md` y `docs/PLAN_MAESTRO_KAPTAL.md` en `.local/worktrees/cierre-foco-selector-reportes`. Revalida `develop` y el candidato aprobado `90b93f3` antes de su integración. Cuando vuelva el Samsung, comprueba Reportes y Libro diario en su WebView con datos ficticios. Conserva calendario y deja aplazados historial, lentitud y logout.
+Para otro chat, lee `AGENTS.md`, `docs/ESTADO_SESION.md` y `docs/PLAN_MAESTRO_KAPTAL.md` en `.local/worktrees/integracion-periodos-reportes`. Revalida `develop` y `main` antes de preparar la promoción web. Explica el alcance del candidato y el destino antes de solicitar autorización de publicación. Cuando vuelva el Samsung, comprueba Reportes y Libro diario en su WebView con datos ficticios. Conserva calendario y deja aplazados historial, lentitud y logout.
 
 <!-- KAPTAL_ESTADO_VIGENTE_FIN -->
 
