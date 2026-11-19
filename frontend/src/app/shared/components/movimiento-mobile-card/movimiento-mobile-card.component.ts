@@ -20,9 +20,9 @@ export type MetodoCaptura = 'VOZ' | 'WHATSAPP' | 'TEXTO' | 'DESCONOCIDO';
 
 // ─── Constantes de comportamiento del swipe ──────────────────────────────────
 const SWIPE_THRESHOLD   = 44;    // px mínimos para reconocer swipe horizontal
-const TRAY_WIDTH        = 80;    // px que se revela del tray al abrir
+const DEFAULT_TRAY_WIDTH = 80;
 const DRAG_RESISTANCE   = 0.35;  // factor de fricción al arrastrar más allá del tray
-const CONFIRM_THRESHOLD = 120;   // px donde el ícono crece indicando acción disponible
+const CONFIRM_EXTRA_DISTANCE = 40; // px adicionales para destacar el ícono
 
 @Directive({
   selector: '[appSwipeActions]',
@@ -46,6 +46,7 @@ export class SwipeActionsDirective {
   private content: HTMLElement | null = null;
   private trayDelete: HTMLElement | null = null;
   private trayEdit:   HTMLElement | null = null;
+  private trayWidth = DEFAULT_TRAY_WIDTH;
 
   private start: { id: number; x: number; y: number } | null = null;
   private suppressTapUntil = 0;
@@ -65,6 +66,7 @@ export class SwipeActionsDirective {
     this.content    = this.host.querySelector<HTMLElement>('.swipe-actions__content');
     this.trayDelete = this.host.querySelector<HTMLElement>('.swipe-actions__tray--delete');
     this.trayEdit   = this.host.querySelector<HTMLElement>('.swipe-actions__tray--edit');
+    this.trayWidth  = this.trayEdit?.offsetWidth || this.trayDelete?.offsetWidth || DEFAULT_TRAY_WIDTH;
 
     // Si ya hay un tray abierto, lo cerramos y cancelamos el nuevo gesto
     if (this.openDelete || this.openEdit) {
@@ -104,11 +106,11 @@ export class SwipeActionsDirective {
     const sign     = this.direction === 'delete' ? -1 : 1;
     const positive = Math.max(0, dx * sign);
     dx = positive * sign;
-    if (positive > TRAY_WIDTH) {
-      dx = sign * (TRAY_WIDTH + (positive - TRAY_WIDTH) * DRAG_RESISTANCE);
+    if (positive > this.trayWidth) {
+      dx = sign * (this.trayWidth + (positive - this.trayWidth) * DRAG_RESISTANCE);
     }
     this.currentDx = dx;
-    this.confirmed = positive >= CONFIRM_THRESHOLD;
+    this.confirmed = positive >= this.trayWidth + CONFIRM_EXTRA_DISTANCE;
 
     cancelAnimationFrame(this.rafId);
     this.rafId = requestAnimationFrame(() => this.applyDrag(dx, positive));
@@ -143,12 +145,12 @@ export class SwipeActionsDirective {
       // Revelar tray con spring
       if (this.direction === 'delete') {
         this.openDelete = true;
-        this.setContentX(-TRAY_WIDTH);
+        this.setContentX('calc(0px - var(--swipe-tray-width))');
         this.revealTray(this.trayDelete, true);
         this.swipeDeleteReveal.emit();
       } else {
         this.openEdit = true;
-        this.setContentX(TRAY_WIDTH);
+        this.setContentX('var(--swipe-tray-width)');
         this.revealTray(this.trayEdit, true);
         this.swipeEditReveal.emit();
       }
@@ -180,7 +182,7 @@ export class SwipeActionsDirective {
     else {
       this.openDelete = true;
       this.enableTransition(this.content);
-      this.setContentX(-TRAY_WIDTH);
+      this.setContentX('calc(0px - var(--swipe-tray-width))');
       this.revealTray(this.trayDelete, true);
     }
   }
@@ -196,8 +198,8 @@ export class SwipeActionsDirective {
 
     const tray = this.direction === 'delete' ? this.trayDelete : this.trayEdit;
     if (tray) {
-      const ratio    = Math.min(positive / TRAY_WIDTH, 1);
-      const overRatio = Math.max(0, positive - TRAY_WIDTH) / Math.max(1, CONFIRM_THRESHOLD - TRAY_WIDTH);
+      const ratio    = Math.min(positive / this.trayWidth, 1);
+      const overRatio = Math.max(0, positive - this.trayWidth) / CONFIRM_EXTRA_DISTANCE;
       const iconScale = 0.7 + 0.3 * ratio + (this.confirmed ? 0.15 * overRatio : 0);
 
       tray.style.opacity   = String(Math.min(ratio * 1.4, 1));
@@ -212,7 +214,7 @@ export class SwipeActionsDirective {
     this.openDelete = false;
     this.openEdit   = false;
     this.enableTransition(this.content);
-    this.setContentX(0);
+    this.setContentX('0px');
     [this.trayDelete, this.trayEdit].forEach(t => {
       if (!t) return;
       t.style.opacity   = '0';
@@ -230,8 +232,8 @@ export class SwipeActionsDirective {
     if (btn) btn.style.transform = show ? 'scale(1)' : '';
   }
 
-  private setContentX(x: number): void {
-    if (this.content) this.content.style.transform = `translateX(${x}px)`;
+  private setContentX(x: string): void {
+    if (this.content) this.content.style.transform = `translateX(${x})`;
   }
 
   private enableTransition(el: HTMLElement | null): void {
@@ -347,6 +349,7 @@ export class SwipeActionsDirective {
       overflow: hidden;
     }
     .tx-item-wrap {
+      --swipe-tray-width: min(5rem, 50%);
       width: 100%;
       max-width: 100%;
       min-width: 0;
@@ -361,7 +364,7 @@ export class SwipeActionsDirective {
       z-index: 0;
       display: flex;
       align-items: stretch;
-      width: 5rem;
+      width: var(--swipe-tray-width);
       padding: 0.25rem;
       /* Estado inicial: invisible y colapsado */
       opacity: 0;

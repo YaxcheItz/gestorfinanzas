@@ -1,6 +1,56 @@
-import {test} from '@playwright/test';
+import {expect, test} from '@playwright/test';
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
+import { createSectionsFixture } from './secciones-fixture';
+
+test('Inicio deja operables las acciones de Recientes con texto al 200 %', async ({ browser, baseURL }) => {
+  const { c, p, writes, pageErrors } = await createSectionsFixture(browser, baseURL!);
+  const movement = {
+    id: 70, cuentaId: 11, cuentaNombre: 'Cuenta ficticia', listaId: 21,
+    categoriaId: 1, categoriaNombre: 'Compras QA', tipo: 'GASTO', monto: 45, moneda: 'MXN',
+    fecha: '2026-11-18', fechaCreacion: '2026-11-18T18:00:00', descripcion: 'Compra ficticia',
+  };
+  await p.route('**/api/dashboard/resumen?*', route => route.fulfill({ json: {
+    success: true,
+    data: { totalCuentas: 1, ultimosMovimientos: [movement], resumenPorMoneda: [{
+      moneda: 'MXN', ingresosMes: 5000, gastosMes: 45, balanceMes: 4955, balanceTotal: 4955,
+      dineroDisponible: 4955, deudaTarjetas: 0, tasaAhorro: 99, totalCuentas: 1,
+    }] },
+  } }));
+
+  try {
+    await p.setViewportSize({ width: 320, height: 640 });
+    await p.emulateMedia({ reducedMotion: 'reduce' });
+    await p.goto('/dashboard');
+    const recent = p.getByRole('region', { name: 'Recientes' });
+    const card = recent.getByRole('button', { name: 'Ver detalle de Compra ficticia', exact: true });
+    await expect(card).toBeVisible();
+    await p.evaluate(() => { document.documentElement.style.fontSize = '200%'; });
+    await card.scrollIntoViewIfNeeded();
+
+    for (const [label, distance] of [['Editar', 96], ['Eliminar', -96]] as const) {
+      const rect = (await card.boundingBox())!;
+      const x = rect.x + rect.width / 2;
+      const y = rect.y + rect.height / 2;
+      await p.mouse.move(x, y);
+      await p.mouse.down();
+      await p.mouse.move(x + distance, y, { steps: 6 });
+      await p.mouse.up();
+
+      const action = recent.getByRole('button', { name: label + ' movimiento Compra ficticia', exact: true });
+      await expect(action).toBeEnabled();
+      await action.click({ trial: true });
+      await p.keyboard.press('Escape');
+      await expect(action).toBeHidden();
+      await card.click({ trial: true });
+    }
+    expect(writes).toEqual([]);
+    expect(pageErrors).toEqual([]);
+  } finally {
+    await c.close();
+  }
+});
+
 test('dock y contenido con datos ficticios',async({browser,baseURL},testInfo)=>{
 const origin=new URL(baseURL!).origin;
 const output=testInfo.outputDir;
