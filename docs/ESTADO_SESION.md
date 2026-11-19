@@ -8,6 +8,13 @@
 - El candidato pasó localmente 29 pruebas JVM, lint de debug y la compilación de APK de debug e instrumentación. Los 87 archivos web de Angular coinciden por SHA-256 con los empaquetados. Evidencia en `frontend/.local/android-acciones-verificado.json` del worktree del candidato.
 - El despliegue web previo corresponde a `main` en `a33342f`. La integración simulada con `develop` produjo el árbol del candidato `8694a9030768c4bf1a0d98756b6810971fae32ab`. El arreglo queda listo para revisar su integración. El cierre en `revision/inicio-botones-flotantes` documenta la evidencia. Sigue pendiente la WebView del Samsung. Calendario conservado. Historial, lentitud y logout aplazados.
 
+### Etapa 13 · Comprobación operativa con datos ficticios
+
+- En `75ac277` aprobaron 43 pruebas Java de cuota, proveedores simulados, audio y métricas, además de 18 pruebas Python del resumen. El agregado de las pruebas produjo 26 registros de generación, 10 intentos reservados y alertas de presupuesto y uso ausente. Las pruebas distinguen tokens reportados en cero de metadatos ausentes. Evidencia en `.local/etapa13-java.log`, `.local/resumen-operativo-tests.log` y `.local/agregado-etapa13-sintetico.json` del worktree `etapa13-consumo-alertas`.
+- Quedan por constatar las cuotas efectivas de la organización de Groq y del proyecto de Gemini. Los cuadros públicos no acreditan las cuotas de la cuenta configurada en Kaptal. [Límites de Groq](https://console.groq.com/docs/rate-limits) · [Límites de Gemini](https://ai.google.dev/gemini-api/docs/rate-limits).
+- La transcripción solicita `response_format=json` y consume el campo `text`. Kaptal todavía no registra duración de audio reportada por Groq. La latencia del código y el p95 de la muestra ficticia no acreditan rendimiento representativo. La medición real queda para el uso habitual y una consulta autorizada de métricas agregadas. [Formatos de transcripción de Groq](https://console.groq.com/docs/speech-to-text).
+- La rama `revision/etapa13-consumo-alertas` registra la revisión documental. Las pruebas usaron credenciales ficticias y servidores HTTP simulados.
+
 ### Publicación web previa de los cuatro apartados
 
 - Tras la autorización, `main` avanzó de `81acd45` a `a33342fa49c048cb41c45f2568b24bec671720c3`. El merge tiene el árbol aprobado `9af80e091a519c9db53a5cdabbfbbab712f00111` de `develop` en `90b93f3`. Se publicaron el selector de mes legible y operable por teclado en Reportes, las fechas en español de México en Libro diario y las ayudas ampliables en los formularios de Cuentas y Presupuestos. [Commit de producción](https://github.com/YaxcheItz/gestorfinanzas/commit/a33342fa49c048cb41c45f2568b24bec671720c3).
