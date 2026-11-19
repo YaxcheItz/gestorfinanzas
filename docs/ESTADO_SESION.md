@@ -3,10 +3,10 @@
 
 - Producción web y `main` en `81acd45`. `develop` en `5503c57`, con CI aprobada y el mismo árbol `0c5cf2e`. Vercel y Render registraron éxito para el commit publicado. Las rutas públicas devolvieron HTTP 200 y la API `UP`. [Informe de publicación](PUBLICACION_LIBRO_DIARIO_2026-11-18.md).
 - Se publicaron los filtros y la legibilidad de fechas e importes de Libro diario, junto con la comprobación de identidad en el arranque de Captura. Los archivos publicados aprobaron 12 comprobaciones sintéticas en Chromium y Firefox.
-- Gastos compartidos y el recorrido Captura, Actividad, Reportes y Libro diario se verificaron con datos ficticios en H2. Al verificar la publicación, cinco trabajos de CI de `main` habían aprobado y el E2E con PostgreSQL seguía en curso. [Revisión conjunta](https://github.com/YaxcheItz/gestorfinanzas/blob/856d2dff7deb31b9f6dd34a4c0a3f0cff82d17ef/docs/REVISION_CONJUNTA_LIBRO_DIARIO_2026-11-18.md) · [CI de main](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44447825762).
+- Gastos compartidos y el recorrido Captura, Actividad, Reportes y Libro diario se verificaron con datos ficticios en H2. Los seis trabajos de CI de `main` aprobaron. [Revisión conjunta](https://github.com/YaxcheItz/gestorfinanzas/blob/856d2dff7deb31b9f6dd34a4c0a3f0cff82d17ef/docs/REVISION_CONJUNTA_LIBRO_DIARIO_2026-11-18.md) · [CI de main](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44447825762).
 - Calendario conservado. Historial, lentitud y logout siguen aplazados.
 
-Para otro chat, abre `.local/worktrees/kaptal-publicacion-libro-diario`. Lee `AGENTS.md`, `docs/ESTADO_SESION.md`, `docs/PLAN_MAESTRO_KAPTAL.md` y [el informe de publicación](PUBLICACION_LIBRO_DIARIO_2026-11-18.md). Revalida la CI posterior de `main` y el estado de la publicación. La etapa web y la revisión conjunta de esta secuencia quedaron completadas.
+Para otro chat, abre `.local/worktrees/kaptal-publicacion-libro-diario`. Lee `AGENTS.md`, `docs/ESTADO_SESION.md`, `docs/PLAN_MAESTRO_KAPTAL.md` y [el informe de publicación](PUBLICACION_LIBRO_DIARIO_2026-11-18.md). Revalida el estado de la publicación al retomar el proyecto. La etapa web y la revisión conjunta de esta secuencia quedaron completadas.
 
 Los apartados siguientes conservan el historial y la evidencia de las etapas anteriores.
 <!-- KAPTAL_ESTADO_VIGENTE_FIN -->
