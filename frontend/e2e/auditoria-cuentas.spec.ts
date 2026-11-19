@@ -91,6 +91,10 @@ for (const dark of [false, true]) {
     await type.selectOption({ label: 'Cuenta de Ahorro' });
     await expect(selected).toHaveText('Cuenta de Ahorro');
     await type.selectOption({ label: 'Tarjeta de Crédito' });
+    await expect(form.locator('#cuenta-dia-pago')).toHaveAccessibleDescription(/Indica el día base de pago/);
+    for (const help of ['nombre', 'dia-pago', 'cashback', 'saldo']) {
+      await expect(form.locator(`#cuenta-${help}-ayuda`)).toHaveCSS('font-size', '24px');
+    }
     await type.scrollIntoViewIfNeeded();
     await page.screenshot({ path: info.outputPath('tipo-320-200.png') });
     await expect(selected).toHaveText('Tarjeta de Crédito');

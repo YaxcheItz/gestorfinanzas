@@ -288,13 +288,14 @@ import { fechaCivilFinanciera } from '../../core/utils/periodo-financiero';
                 id="cuenta-nombre"
                 name="nombre"
                 type="text"
+                aria-describedby="cuenta-nombre-ayuda"
                 required
                 minlength="2"
                 maxlength="100"
                 [(ngModel)]="nombre"
                 class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white"
                 placeholder="Ej. Cuenta principal" />
-              <p class="mt-1 text-[11px] text-slate-500">El nombre debe ser único; puedes registrar varias cuentas del mismo banco con nombres distintos.</p>
+              <p id="cuenta-nombre-ayuda" class="mt-1 text-xs text-slate-500">El nombre debe ser único; puedes registrar varias cuentas del mismo banco con nombres distintos.</p>
             </div>
 
             @if (cuentaEditando()) {
@@ -351,7 +352,7 @@ import { fechaCivilFinanciera } from '../../core/utils/periodo-financiero';
                     required
                     [(ngModel)]="limiteCredito"
                     class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
-                    placeholder="Ej. 25000" />
+                    placeholder="25000" />
                 </div>
                 <div class="credit-card-dates grid grid-cols-2 gap-3">
                   <div>
@@ -374,6 +375,7 @@ import { fechaCivilFinanciera } from '../../core/utils/periodo-financiero';
                       id="cuenta-dia-pago"
                       name="diaPago"
                       type="number"
+                      aria-describedby="cuenta-dia-pago-ayuda"
                       min="1"
                       max="31"
                       step="1"
@@ -383,7 +385,7 @@ import { fechaCivilFinanciera } from '../../core/utils/periodo-financiero';
                       placeholder="1-31" />
                   </div>
                 </div>
-                <p class="text-[11px] leading-relaxed text-slate-600">
+                <p id="cuenta-dia-pago-ayuda" class="text-xs leading-relaxed text-slate-600">
                   Indica el día base de pago según tu banco, antes del ajuste por días inhábiles. En meses cortos se usa el último día del mes. El límite se estima con el calendario bancario de México; el corte conserva su día configurado. Confirma las fechas y el tiempo de acreditación en tu banco.
                 </p>
               </section>
@@ -419,6 +421,7 @@ import { fechaCivilFinanciera } from '../../core/utils/periodo-financiero';
                       id="cuenta-cashback-limite"
                       name="cashbackLimiteMensual"
                       type="number"
+                      aria-describedby="cuenta-cashback-ayuda"
                       min="0.01"
                       step="0.01"
                       [(ngModel)]="cashbackLimiteMensual"
@@ -426,7 +429,7 @@ import { fechaCivilFinanciera } from '../../core/utils/periodo-financiero';
                       placeholder="Sin límite" />
                   </div>
                 </div>
-                <p class="text-[11px] text-slate-600 dark:text-slate-300">Se aplica a los gastos registrados con esta tarjeta; el límite se reinicia cada mes.</p>
+                <p id="cuenta-cashback-ayuda" class="text-xs text-slate-600 dark:text-slate-300">Se aplica a los gastos registrados con esta tarjeta; el límite se reinicia cada mes.</p>
               </section>
             }
 
@@ -439,13 +442,14 @@ import { fechaCivilFinanciera } from '../../core/utils/periodo-financiero';
                   id="cuenta-saldo"
                   name="saldoInicial"
                   type="number"
+                  [attr.aria-describedby]="tipo === 'CREDITO' ? 'cuenta-saldo-ayuda' : null"
                   min="0"
                   step="0.01"
                   [(ngModel)]="saldoInicial"
                   class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white"
                   [placeholder]="tipo === 'CREDITO' ? 'Ej. 5000.00' : '0.00'" />
                 @if (tipo === 'CREDITO') {
-                  <p class="mt-1 text-[11px] text-slate-500">Ingresa la deuda en positivo; se registrará como saldo negativo de la tarjeta.</p>
+                  <p id="cuenta-saldo-ayuda" class="mt-1 text-xs text-slate-500">Ingresa la deuda en positivo; se registrará como saldo negativo de la tarjeta.</p>
                 }
               </div>
             }

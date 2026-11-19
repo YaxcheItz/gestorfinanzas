@@ -27,7 +27,7 @@ test('tema oscuro legible en superficies, campos y acciones; claro conservado', 
       expect(ratios.surface).toBeGreaterThan(ratios.canvas);
       for(const pair of ratios.pairs)expect(pair.ratio,route+' '+pair.fg+'/'+pair.bg).toBeGreaterThanOrEqual(pair.min);
       if(route==='reportes'){
-        expect(await p.locator('input[type=month]').evaluate(e=>{
+        expect(await p.locator('#reports-current-period').evaluate(e=>{
           const probe=document.createElement('div');probe.style.backgroundColor='var(--kaptal-surface-subtle)';document.body.append(probe);
           const same=getComputedStyle(e).backgroundColor===getComputedStyle(probe).backgroundColor;probe.remove();return same;
         }),'El campo debe usar la superficie común, sin verde heredado').toBe(true);

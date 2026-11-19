@@ -41,7 +41,7 @@ test('Reportes conserva el mes elegido en su enlace al salir de un rango', async
     await expect(month).toHaveValue('2026-09');
     await expect(range).toHaveCount(0);
     await expect(income).toHaveText('14,000.00');
-    await expect(p.getByText('Mes seleccionado: septiembre de 2026')).toBeVisible();
+    await expect(month).toHaveAccessibleDescription('septiembre de 2026');
     await p.screenshot({ path: info.outputPath('mes-septiembre-despues-recarga.png') });
     expect(writes).toEqual([]);
     expect(pageErrors).toEqual([]);

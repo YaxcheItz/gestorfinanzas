@@ -99,6 +99,8 @@ for (const dark of [false, true]) {
       await p.evaluate(() => document.fonts.ready);
       const category = form.getByRole('combobox', { name: 'Categoría', exact: true });
       const currency = form.getByRole('combobox', { name: 'Moneda del presupuesto' });
+      await expect(form.locator('#modalAlerta')).toHaveAccessibleDescription('Aviso preventivo al alcanzar este porcentaje de consumo.');
+      await expect(form.locator('#presupuesto-aviso-ayuda')).toHaveCSS('font-size', '24px');
       const selectedCategory = form.locator('#modalCat + .budget-select-value');
       const selectedCurrency = form.locator('#modalMoneda + .budget-select-value');
       await expect(selectedCurrency).toHaveText('MXN — Peso mexicano');

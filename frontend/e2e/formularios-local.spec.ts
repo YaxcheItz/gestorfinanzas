@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 test('formularios de cuenta y presupuesto con datos ficticios', async ({ browser, baseURL }, testInfo) => {
 const origin=new URL(baseURL!).origin;
 const output=testInfo.outputDir;
-const c=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});await c.addInitScript(()=>{localStorage.setItem('finanzas_token',`qa.${btoa(JSON.stringify({exp:Math.floor(Date.now()/1000)+3600}))}.synthetic`);localStorage.setItem('finanzas_user',JSON.stringify({id:995,nombre:'Prueba visual',email:'ui@example.test'}));});await c.route('**/*',async r=>{const u=new URL(r.request().url());if(u.pathname.startsWith('/api/')){let data=[];if(u.pathname.endsWith('/perfil'))data={id:995,nombre:'Prueba visual',email:'ui@example.test',tema:'CLARO',monedaPredeterminada:'MXN'};if(u.pathname.endsWith('/listas'))data=[{id:21,nombre:'Personal QA',moneda:'MXN',personal:true,rol:'PROPIETARIO',miembros:[]}];if(u.pathname.includes('transacciones')||u.pathname.endsWith('/avisos'))data={content:[],totalPages:0,totalElements:0};
+const c=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});await c.addInitScript(()=>{localStorage.setItem('finanzas_token',`qa.${btoa(JSON.stringify({exp:Math.floor(Date.now()/1000)+3600}))}.synthetic`);localStorage.setItem('finanzas_user',JSON.stringify({id:995,nombre:'Prueba visual',email:'ui@example.test'}));});await c.route('**/*',async r=>{const u=new URL(r.request().url());if(u.pathname.startsWith('/api/')){let data: unknown=[];if(u.pathname.endsWith('/perfil'))data={id:995,nombre:'Prueba visual',email:'ui@example.test',tema:'CLARO',monedaPredeterminada:'MXN'};if(u.pathname.endsWith('/listas'))data=[{id:21,nombre:'Personal QA',moneda:'MXN',personal:true,rol:'PROPIETARIO',miembros:[]}];if(u.pathname.includes('transacciones')||u.pathname.endsWith('/avisos'))data={content:[],totalPages:0,totalElements:0};
 if(u.pathname.endsWith('/asistente/captura-rapida'))data={answer:'Revisa esta propuesta ficticia antes de confirmar.',engine:'REGLAS',action:{id:'qa',type:'CREATE_TRANSACTION',summary:'Compra ficticia para reunión familiar',data:{tipo:'GASTO',monto:123456.78,moneda:'MXN',cuentaId:11,categoriaId:1,descripcion:'Compra ficticia para reunión familiar',fecha:'2026-11-11'}}};if(u.pathname.endsWith('/pareja'))data=null;if(u.pathname.endsWith('/dashboard/resumen'))data={balanceTotal:9876543.21,ingresosMes:28000,gastosMes:3456.78,balanceMes:24543.22,tasaAhorro:87,totalCuentas:1,mes:11,anio:2026,ultimosMovimientos:[],resumenPorMoneda:[{moneda:'MXN',balanceTotal:9876543.21,dineroDisponible:9876543.21,deudaTarjetas:0,ingresosMes:28000,gastosMes:3456.78,balanceMes:24543.22,tasaAhorro:87,totalCuentas:1}]};
 if(u.pathname.endsWith('/dashboard/analitica'))data={gastosPorCategoria:[{categoriaId:1,categoriaNombre:'Alimentación y compras del hogar de prueba',categoriaColor:'#ee7777',monto:3456.78,moneda:'MXN'}],ultimosSeisMeses:[{anio:2026,mes:11,ingresos:28000,gastos:3456.78,moneda:'MXN'}]};
 if(u.pathname.endsWith('/dashboard/comparacion'))data={mes:11,anio:2026,mesAnterior:10,anioAnterior:2026,porMoneda:[]};
@@ -19,7 +19,10 @@ return r.fulfill({json:{success:true,data}});}return u.origin===origin?r.continu
 
 
 fs.mkdirSync(output,{recursive:true});
-for (const [width,font,dark] of [[390,'100%',false],[320,'200%',false],[390,'100%',true]] as const) {
+for (const [width, font, dark] of [
+  [390, '100%', false], [1280, '100%', false], [320, '200%', false],
+  [390, '100%', true], [1280, '100%', true], [320, '200%', true],
+] as const) {
   await p.setViewportSize({width,height:844});
   await p.goto(origin+'/cuentas');await p.getByRole('button',{name:'Agregar cuenta',exact:false}).click();
   const dialog=p.getByRole('dialog');await dialog.waitFor();
