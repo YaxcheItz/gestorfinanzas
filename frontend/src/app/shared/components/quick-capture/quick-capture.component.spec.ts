@@ -77,6 +77,25 @@ describe('QuickCaptureComponent processing and gestures', () => {
 
   afterEach(() => { fixture.destroy(); vi.useRealTimers(); vi.unstubAllGlobals(); });
 
+  it('omite la consulta remota del catálogo cuando el arranque pierde la identidad durante la lectura local', async () => {
+    let terminarLectura!: (resultado: null) => void;
+    const lecturaLocal = new Promise<null>(resolve => { terminarLectura = resolve; });
+    offline.leerCatalogo.mockReturnValueOnce(lecturaLocal);
+    const finanzas = TestBed.inject(FinanzasService);
+    const cuentas = vi.spyOn(finanzas, 'getCuentas');
+    const categorias = vi.spyOn(finanzas, 'getCategorias');
+    usuario.set({ id: 991 });
+    fixture.detectChanges();
+    expect(offline.leerCatalogo).toHaveBeenCalledWith(991);
+
+    usuario.set(null);
+    terminarLectura(null);
+    await lecturaLocal;
+
+    expect(cuentas).not.toHaveBeenCalled();
+    expect(categorias).not.toHaveBeenCalled();
+  });
+
   it('prepara un inicio rápido sin enviar ni guardar el movimiento', () => {
     const submit=vi.spyOn(component,'submit');
     const confirm=vi.spyOn(TestBed.inject(FinanzasService),'confirmAiAction');

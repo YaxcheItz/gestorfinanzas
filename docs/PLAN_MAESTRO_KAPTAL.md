@@ -1,11 +1,11 @@
 <!-- KAPTAL_ESTADO_VIGENTE_INICIO -->
-## Resumen vigente — 18 noviembre 2026 · Libro diario y revisión conjunta
+## Resumen vigente — 18 noviembre 2026 · Entrega conjunta de Libro diario
 
-- La corrección `149277c` mantiene los filtros aplicados y resuelve la limpieza, el rango invertido y el vacío filtrado. Los flujos de CI con PostgreSQL aprobaron. La verificación de arranque de la PWA falló con dos solicitudes de catálogo sin autorización tras un 401 sintético y el trabajo se está repitiendo. [Corrección](CORRECCION_FILTROS_LIBRO_DIARIO_2026-11-18.md) · [CI](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44430937285).
-- La rama `correcciones/libro-diario-legibilidad` corrige el recorte de fechas y partidas con texto al 200 %. Angular, TypeScript, 585 unitarias, dos regresiones de navegador y comparativas Chromium y Firefox aprobaron localmente. [Evidencia visual](LEGIBILIDAD_LIBRO_DIARIO_2026-11-18.md).
-- La revisión de Gastos compartidos y el recorrido entre Captura, Actividad, Reportes y Libro diario usan datos ficticios. Producción continúa en `main` `17f0075`. Calendario conservado. Historial, lentitud y logout siguen aplazados.
+- Entrega web en `correcciones/arranque-catalogo-captura`. Incluye filtros de Libro diario, fechas e importes legibles al 200 % y una protección del catálogo inicial de Captura tras el fallo de arranque detectado en CI. [Filtros](CORRECCION_FILTROS_LIBRO_DIARIO_2026-11-18.md) · [Legibilidad](LEGIBILIDAD_LIBRO_DIARIO_2026-11-18.md) · [Arranque](ARRANQUE_CATALOGO_CAPTURA_2026-11-18.md).
+- Angular, TypeScript, 586 unitarias, 12 comprobaciones de arranque y cuatro casos locales de PWA aprobaron. La revisión de Gastos compartidos y el recorrido Captura, Actividad, Reportes y Libro diario se completaron con H2 y datos ficticios. [Revisión conjunta](https://github.com/YaxcheItz/gestorfinanzas/blob/856d2dff7deb31b9f6dd34a4c0a3f0cff82d17ef/docs/REVISION_CONJUNTA_LIBRO_DIARIO_2026-11-18.md).
+- `main` conserva `17f0075` hasta que se compruebe la CI de la entrega. La integración y publicación web de esta entrega están autorizadas. Calendario conservado. Historial, lentitud y logout siguen aplazados.
 
-Para retomar, abre `.local/worktrees/kaptal-libro-diario-legibilidad`. Lee `AGENTS.md`, `docs/ESTADO_SESION.md`, `docs/PLAN_MAESTRO_KAPTAL.md`, `docs/CORRECCION_FILTROS_LIBRO_DIARIO_2026-11-18.md` y [la revisión visual](LEGIBILIDAD_LIBRO_DIARIO_2026-11-18.md). Revalida la CI y completa el recorrido local. La autorización de publicación cubre esta secuencia web.
+Para retomar, abre `.local/worktrees/kaptal-arranque-catalogo-captura`. Lee `AGENTS.md`, `docs/ESTADO_SESION.md`, `docs/PLAN_MAESTRO_KAPTAL.md` y [el informe de arranque](ARRANQUE_CATALOGO_CAPTURA_2026-11-18.md). Verifica el SHA de la rama y completa la integración y la publicación web autorizadas cuando aprueben las comprobaciones. Toda instalación de APK requiere confirmación por separado.
 
 Los apartados siguientes conservan el historial y la evidencia de las etapas anteriores.
 <!-- KAPTAL_ESTADO_VIGENTE_FIN -->
