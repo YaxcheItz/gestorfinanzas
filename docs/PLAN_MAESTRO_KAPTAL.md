@@ -1,11 +1,12 @@
 <!-- KAPTAL_ESTADO_VIGENTE_INICIO -->
-## Resumen vigente — 18 noviembre 2026 · Libro diario y revisión conjunta
+## Resumen vigente — 18 noviembre 2026 · Revisión conjunta comprobada
 
-- La corrección `149277c` mantiene los filtros aplicados y resuelve la limpieza, el rango invertido y el vacío filtrado. Los flujos de CI con PostgreSQL aprobaron. La verificación de arranque de la PWA falló con dos solicitudes de catálogo sin autorización tras un 401 sintético y el trabajo se está repitiendo. [Corrección](CORRECCION_FILTROS_LIBRO_DIARIO_2026-11-18.md) · [CI](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44430937285).
-- La rama `correcciones/libro-diario-legibilidad` corrige el recorte de fechas y partidas con texto al 200 %. Angular, TypeScript, 585 unitarias, dos regresiones de navegador y comparativas Chromium y Firefox aprobaron localmente. [Evidencia visual](LEGIBILIDAD_LIBRO_DIARIO_2026-11-18.md).
-- La revisión de Gastos compartidos y el recorrido entre Captura, Actividad, Reportes y Libro diario usan datos ficticios. Producción continúa en `main` `17f0075`. Calendario conservado. Historial, lentitud y logout siguen aplazados.
+- Libro diario. Corrección de filtros `149277c` y legibilidad `c8f8bc8` verificadas localmente. La CI de filtros repite la comprobación de arranque de la PWA después de detectar solicitudes de catálogo sin autorización durante un 401 sintético. [Legibilidad](LEGIBILIDAD_LIBRO_DIARIO_2026-11-18.md) · [CI original](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44430937285).
+- Gastos compartidos. Aporte de 100.00 MXN, gasto de 10.01 MXN, reparto 2:1 y fondo de 89.99 MXN verificados en H2 ficticio. Los saldos personales coincidieron antes y después. [Revisión conjunta](REVISION_CONJUNTA_LIBRO_DIARIO_2026-11-18.md).
+- Captura guardó 127.35 MXN una vez. Actividad, Reportes y Libro diario mostraron el mismo movimiento y el asiento quedó balanceado. La voz simulada aprobó con la configuración E2E de CI.
+- Producción web en `main` `17f0075`. Calendario conservado. Historial, lentitud y logout siguen aplazados.
 
-Para retomar, abre `.local/worktrees/kaptal-libro-diario-legibilidad`. Lee `AGENTS.md`, `docs/ESTADO_SESION.md`, `docs/PLAN_MAESTRO_KAPTAL.md`, `docs/CORRECCION_FILTROS_LIBRO_DIARIO_2026-11-18.md` y [la revisión visual](LEGIBILIDAD_LIBRO_DIARIO_2026-11-18.md). Revalida la CI y completa el recorrido local. La autorización de publicación cubre esta secuencia web.
+Para retomar, abre `.local/worktrees/kaptal-cierre-recorrido`. Lee `AGENTS.md`, `docs/ESTADO_SESION.md`, `docs/PLAN_MAESTRO_KAPTAL.md` y [la revisión conjunta](REVISION_CONJUNTA_LIBRO_DIARIO_2026-11-18.md). Revalida la CI de la entrega y comprueba los despliegues para el SHA exacto al publicarla.
 
 Los apartados siguientes conservan el historial y la evidencia de las etapas anteriores.
 <!-- KAPTAL_ESTADO_VIGENTE_FIN -->
