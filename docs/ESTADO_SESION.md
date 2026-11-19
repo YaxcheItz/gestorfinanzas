@@ -21,6 +21,12 @@
 - En Recientes funcionaron ambos gestos táctiles y «Editar» y «Eliminar» recibieron el clic de prueba. Escape cerró cada bandeja. Las tres pantallas conservaron el ancho disponible. El recorrido registró cero escrituras y cero errores JS.
 - Retirados el paquete y el puerto temporales. La instalación habitual es 0.1.46 (47) y sus fechas de instalación y actualización coinciden antes y después. Evidencia en `.local/qa-samsung/evidencia/` e `instalacion-aislada.json` dentro del worktree `webview-samsung-recientes`. El piloto bancario depende de un aviso habitual consentido.
 
+### Revisión funcional de Categorías
+
+- En la fuente `75ac277` aprobaron 81 pruebas Java de categorías, incluidos equivalentes para compras automáticas y separación de usuarios. Tres recorridos Chromium con Spring/H2 en memoria comprobaron deduplicación de avisos ficticios y conservación de las referencias históricas al eliminar, además del flujo manual.
+- El flujo manual comprobó que una categoría del mismo tipo con espacios y mayúsculas distintos se rechaza como duplicada. El orden y el nombre editado se conservaron tras recargar la pantalla. Se pudo archivar y reactivar vía API sin cambiar una operación existente. La corrección posterior de una categoría ficticia conservó importe, cuenta, fecha, descripción y etiquetas.
+- La pantalla Mis categorías ofrece ordenar, editar y eliminar. Archivar y reactivar están disponibles mediante la API de estado, y queda pendiente decidir la exposición de estos controles en pantalla. Evidencia local en `.local/evidencia-categorias-manuales/`, `evidencia-categorias-h2/` y `categorias-java.log` del worktree `categorias-funcional-20261119`.
+
 ### Publicación web previa de los cuatro apartados
 
 - Tras la autorización, `main` avanzó de `81acd45` a `a33342fa49c048cb41c45f2568b24bec671720c3`. El merge tiene el árbol aprobado `9af80e091a519c9db53a5cdabbfbbab712f00111` de `develop` en `90b93f3`. Se publicaron el selector de mes legible y operable por teclado en Reportes, las fechas en español de México en Libro diario y las ayudas ampliables en los formularios de Cuentas y Presupuestos. [Commit de producción](https://github.com/YaxcheItz/gestorfinanzas/commit/a33342fa49c048cb41c45f2568b24bec671720c3).
