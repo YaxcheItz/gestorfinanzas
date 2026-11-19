@@ -1,11 +1,12 @@
 <!-- KAPTAL_ESTADO_VIGENTE_INICIO -->
-## Resumen vigente — 18 noviembre 2026 · Corrección del mes en Reportes
+## Resumen vigente — 18 noviembre 2026 · Corrección de Reportes publicada en web
 
-- Rama `correcciones/reportes-filtro-mensual-url` desde `origin/develop` `b0dc3a0` verificado. Elegir un mes actualiza la URL, conserva la lista activa y la vista recupera el mes al recargar. El estado vacío describe el mes o rango consultado. [Informe](CORRECCION_FILTRO_REPORTES_2026-11-18.md).
-- Las dos regresiones se verificaron en Chromium y Firefox. Aprobaron Angular, TypeScript y 580 unitarias. Capturas y registros en `.local/reportes-filtro-mensual-url/`.
-- Producción en `01135ec` verificado. Calendario conservado. Historial, lentitud y logout siguen aplazados. Publicar en producción o instalar una APK requiere confirmación.
+- `main` remoto y producción web en `17f0075`. La publicación autorizada conserva el árbol `fbef048` de `develop` `1f0f4ca`, cuyos seis trabajos de CI aprobaron. [Informe](CORRECCION_FILTRO_REPORTES_2026-11-18.md) · [CI de develop](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44418976896).
+- Vercel y Render completaron sus despliegues. `/reportes` respondió HTTP 200 y la API `UP`. Con los archivos publicados y una API ficticia pasaron las dos pruebas de Reportes sobre la recarga y los periodos vacíos. [Reportes en producción](https://kaptalgf.vercel.app/reportes).
+- Al cierre, la CI de `main` tenía cinco trabajos aprobados y el E2E Chromium con PostgreSQL en curso. La compilación Android de `main` aprobó. La instalación requiere confirmación por separado. [CI de main](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44425227219) · [Compilación Android de main](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44425227189).
+- Calendario conservado. Historial, lentitud y logout siguen aplazados.
 
-Para otro chat, abre `.local/worktrees/kaptal-reportes-filtro-url` y lee `AGENTS.md`, `docs/ESTADO_SESION.md`, `docs/PLAN_MAESTRO_KAPTAL.md` y [el informe](CORRECCION_FILTRO_REPORTES_2026-11-18.md). Verifica el SHA remoto y la CI de la corrección antes de valorar su integración. Si se continúa la revisión visual, usa datos ficticios y conserva los aplazamientos.
+Para otro chat, abre `.local/worktrees/kaptal-publicacion-web-reportes` en `entrega/publicacion-web-reportes-filtro-url`. Lee `AGENTS.md`, `docs/ESTADO_SESION.md`, `docs/PLAN_MAESTRO_KAPTAL.md` y [el informe](CORRECCION_FILTRO_REPORTES_2026-11-18.md). Revalida `main` `17f0075`, `develop` `1f0f4ca` y la CI de `main`. Continúa la revisión web por secciones con Libro diario y datos ficticios. Conserva calendario y mantén aplazados historial, lentitud y logout.
 
 Los apartados siguientes conservan el historial y la evidencia de las etapas anteriores.
 <!-- KAPTAL_ESTADO_VIGENTE_FIN -->
