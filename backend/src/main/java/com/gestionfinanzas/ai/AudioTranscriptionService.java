@@ -1,6 +1,8 @@
 package com.gestionfinanzas.ai;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -12,6 +14,7 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class AudioTranscriptionService {
@@ -21,6 +24,7 @@ public class AudioTranscriptionService {
     }
     private static final int MAX_AUDIO_BYTES = 5 * 1024 * 1024;
     private static final String GROQ_MODEL = "whisper-large-v3-turbo";
+    private static final Logger LOG = LoggerFactory.getLogger(AudioTranscriptionService.class);
 
     private final AiProperties.Groq groq;
     private final RestClient groqClient;
@@ -83,6 +87,8 @@ public class AudioTranscriptionService {
         parts.add("response_format", "json");
         parts.add("temperature", "0");
 
+        long start = System.nanoTime();
+        String outcome = "provider_error";
         try {
             JsonNode response = client.post()
                     .uri("/audio/transcriptions")
@@ -91,11 +97,16 @@ public class AudioTranscriptionService {
                     .body(parts)
                     .retrieve()
                     .body(JsonNode.class);
+            outcome = "invalid_response";
             String text = response == null ? "" : response.path("text").asText("").trim();
             if (text.isBlank()) throw new AiProviderException("No detecté voz clara en la grabación.");
+            outcome = "success";
             return text;
         } catch (RestClientException ex) {
             throw new AiProviderException("El servicio de transcripción no está disponible. Inténtalo de nuevo.");
+        } finally {
+            long elapsedMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
+            LOG.info("KAPTAL_AI_TRANSCRIPTION provider=groq outcome={} elapsed_ms={}", outcome, elapsedMs);
         }
     }
 

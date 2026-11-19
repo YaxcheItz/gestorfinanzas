@@ -14,7 +14,62 @@ def record(ms=10, provider='openai', outcome='success'):
             f'KAPTAL_AI_GENERATION provider={provider} outcome={outcome} elapsed_ms={ms}\n')
 
 
+def transcription(ms=10, provider='groq', outcome='success'):
+    return (f'KAPTAL_AI_TRANSCRIPTION provider={provider} outcome={outcome} elapsed_ms={ms}\n')
+
+
 class MetricsTest(unittest.TestCase):
+    def test_groq_quota_headers_count_observed_limits_without_summing_them(self):
+        report = summarize(io.StringIO(
+            'KAPTAL_AI_GROQ_LIMIT dimension=requests_per_day value=1000\n'
+            'KAPTAL_AI_GROQ_LIMIT dimension=requests_per_day value=500\n'
+            'KAPTAL_AI_GROQ_LIMIT dimension=tokens_per_minute value=8000\n'
+            'KAPTAL_AI_GROQ_LIMIT dimension=tokens_per_minute value=0\n'
+            'KAPTAL_AI_REQUEST provider=groq outcome=reserved\n'))
+        self.assertEqual(report['groqReportedLimits'], {
+            'requests_per_day': {'observations': 2, 'minObserved': 500, 'maxObserved': 1000},
+            'tokens_per_minute': {'observations': 2, 'minObserved': 0, 'maxObserved': 8000},
+        })
+        self.assertEqual(report['outboundAttempts'], {'groq': 1})
+        self.assertEqual(report['reportedTokenUsage'], {})
+        self.assertEqual(report['ignoredLines'], 0)
+
+    def test_groq_quota_records_reject_unknown_fields_and_keep_missing_limits_absent(self):
+        report = summarize(io.StringIO(
+            'KAPTAL_AI_GROQ_LIMIT dimension=PRIVATE_CANARY value=9\n'
+            'KAPTAL_AI_GROQ_LIMIT dimension=tokens_per_minute value=100 PRIVATE_CANARY\n'
+            'KAPTAL_AI_GROQ_LIMIT dimension=requests_per_day value=-10\n'
+            'KAPTAL_AI_GROQ_LIMIT dimension=requests_per_day value=1000000000000000\n'))
+        self.assertEqual(report['groqReportedLimits'], {})
+        self.assertEqual(report['ignoredLines'], 4)
+        self.assertNotIn('PRIVATE_CANARY', json.dumps(report))
+
+    def test_transcription_latency_and_errors_are_separate_from_text_generation(self):
+        report = summarize(io.StringIO(
+            record(500, provider='groq') + ''.join(transcription(n) for n in range(1, 21))
+            + transcription(outcome='provider_error') + transcription(outcome='invalid_response')))
+        self.assertEqual(report['records'], 1)
+        self.assertEqual(report['groups'][0]['p95WindowMs'], 500)
+        groups = {group['outcome']: group for group in report['transcriptionGroups']}
+        self.assertEqual(groups['success']['p95WindowMs'], 19)
+        self.assertEqual(groups['success']['count'], 20)
+        self.assertEqual(report['ignoredLines'], 0)
+        self.assertEqual(report['operationalAlerts'], [
+            {'code': 'transcription_invalid_response', 'provider': 'groq', 'count': 1},
+            {'code': 'transcription_provider_error', 'provider': 'groq', 'count': 1},
+        ])
+
+    def test_transcription_parser_rejects_private_fields_and_bounds_its_window(self):
+        source = (transcription(1000) + transcription(2) * WINDOW_SIZE
+                  + transcription(provider='gemini') + transcription(outcome='PRIVATE_CANARY')
+                  + transcription()[:-1] + ' PRIVATE_CANARY\n')
+        report = summarize(io.StringIO(source))
+        group, = report['transcriptionGroups']
+        self.assertEqual((group['count'], group['windowCount']), (WINDOW_SIZE + 1, WINDOW_SIZE))
+        self.assertEqual(group['maxWindowMs'], 2)
+        self.assertEqual(report['ignoredLines'], 3)
+        self.assertNotIn('PRIVATE_CANARY', json.dumps(report))
+
     def test_operational_alerts_use_only_aggregate_signals(self):
         report = summarize(io.StringIO(
             'KAPTAL_AI_BUDGET outcome=exhausted\n' * 2

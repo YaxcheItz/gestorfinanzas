@@ -1,7 +1,11 @@
 package com.gestionfinanzas.ai;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
+import org.springframework.http.MediaType;
 import org.springframework.web.client.RestClient;
 import org.springframework.test.web.client.MockRestServiceServer;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
@@ -9,6 +13,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(OutputCaptureExtension.class)
 class AudioFreePolicyTest {
     @org.junit.jupiter.params.ParameterizedTest
     @org.junit.jupiter.params.provider.ValueSource(ints={1,2})
@@ -39,18 +44,57 @@ class AudioFreePolicyTest {
             new AiProperties.Groq("synthetic-groq","https://api.groq.com/openai/v1","openai/gpt-oss-20b"),
             new AiProperties.OpenAi("synthetic-unused-key","https://api.openai.com/v1","unused"));
     }
-    @Test void failedGroqAudioNeverCallsOpenAiEvenWhenOldKeyIsPresentAndErasesAudio() {
+    @Test void failedGroqAudioNeverCallsOpenAiEvenWhenOldKeyIsPresentAndErasesAudio(CapturedOutput logs) {
         var builder=RestClient.builder();var server=MockRestServiceServer.bindTo(builder).build();
         server.expect(requestTo("https://api.groq.com/openai/v1/audio/transcriptions")).andRespond(withServerError());
         var service=new AudioTranscriptionService(builder,properties(),policy(-1));var audio=new byte[]{1,2,3};
         assertThrows(AiProviderException.class,()->service.transcribir(audio,"audio/webm"));
         assertArrayEquals(new byte[3],audio);server.verify();
+        assertTranscriptionMetric(logs, "provider_error");
     }
-    @Test void zeroBudgetPreventsTheFirstAudioRequestAndErasesAudio() {
+    @Test void zeroBudgetPreventsTheFirstAudioRequestAndErasesAudio(CapturedOutput logs) {
         var builder=RestClient.builder();var server=MockRestServiceServer.bindTo(builder).build();
         var service=new AudioTranscriptionService(builder,properties(),policy(0));var audio=new byte[]{1,2,3};
         assertThrows(AiUsagePolicy.Denied.class,()->service.transcribir(audio,"audio/webm"));
         assertArrayEquals(new byte[3],audio);server.verify();
+        assertFalse(logs.toString().contains("KAPTAL_AI_TRANSCRIPTION"));
+    }
+
+    @Test void successfulAudioKeepsTextAndLogsOnlyLatencyAndOutcome(CapturedOutput logs) {
+        var builder = RestClient.builder();
+        var server = MockRestServiceServer.bindTo(builder).build();
+        server.expect(requestTo("https://api.groq.com/openai/v1/audio/transcriptions"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("name=\"response_format\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("\r\n\r\njson\r\n")))
+                .andRespond(withSuccess("{\"text\":\"  TEXTO_FICTICIO_PRIVADO  \"}", MediaType.APPLICATION_JSON));
+        var service = new AudioTranscriptionService(builder, properties(), policy(-1));
+        var audio = new byte[]{1, 2, 3};
+
+        assertEquals("TEXTO_FICTICIO_PRIVADO", service.transcribir(audio, "audio/webm"));
+        assertArrayEquals(new byte[3], audio);
+        server.verify();
+        assertTranscriptionMetric(logs, "success");
+        assertFalse(logs.toString().contains("TEXTO_FICTICIO_PRIVADO"));
+        assertFalse(logs.toString().contains("synthetic-groq"));
+    }
+
+    @Test void emptyAudioResponseHasItsOwnOutcome(CapturedOutput logs) {
+        var builder = RestClient.builder();
+        var server = MockRestServiceServer.bindTo(builder).build();
+        server.expect(requestTo("https://api.groq.com/openai/v1/audio/transcriptions"))
+                .andRespond(withSuccess("{\"text\":\"   \"}", MediaType.APPLICATION_JSON));
+        var service = new AudioTranscriptionService(builder, properties(), policy(-1));
+
+        assertThrows(AiProviderException.class, () -> service.transcribir(new byte[]{1}, "audio/webm"));
+        server.verify();
+        assertTranscriptionMetric(logs, "invalid_response");
+    }
+
+    private void assertTranscriptionMetric(CapturedOutput logs, String outcome) {
+        var records = logs.toString().lines().filter(line -> line.contains("KAPTAL_AI_TRANSCRIPTION")).toList();
+        assertEquals(1, records.size());
+        assertTrue(records.getFirst().matches(".*KAPTAL_AI_TRANSCRIPTION provider=groq outcome=" + outcome
+                + " elapsed_ms=[0-9]+"));
     }
     @Test void zeroBudgetPreventsTextRequestsToo() {
         var builder=RestClient.builder();var server=MockRestServiceServer.bindTo(builder).build();

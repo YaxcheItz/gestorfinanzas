@@ -73,3 +73,19 @@ El JSON formato3 incorpora el campo aditivo `operationalAlerts`. Cada entrada co
 Una misma operacion puede producir varias senales: no sumar alertas como total de fallos. Una lista vacia significa ausencia de esas senales en la muestra, no salud global, actividad reciente o coste cero. No se envian mensajes, correos o telemetria, ni se crean cuotas o umbrales. La salida solo conserva codigos permitidos y conteos; los prefijos y textos ajenos no se reproducen.
 
 Verificacion sin proveedores reales: `python -m unittest discover -s tools/operacion`.
+
+## Latencia de transcripción
+
+Por cada intento HTTP de transcripción, el backend emite `KAPTAL_AI_TRANSCRIPTION` con el proveedor fijo `groq`, el resultado y `elapsed_ms`. El tiempo incluye la petición y el procesamiento de la respuesta en el backend. Las denegaciones anteriores al intento se reflejan en las señales de presupuesto existentes. La salida contiene únicamente códigos y tiempos.
+
+- `success` indica que hubo texto utilizable, `invalid_response` que la respuesta decodificada carecía de texto utilizable y `provider_error` que falló la solicitud o su lectura.
+- El campo aditivo `transcriptionGroups` conserva conteo y percentiles de latencia por resultado. Cada grupo usa hasta las últimas 1024 observaciones en el orden de entrada. `records` y `groups` siguen describiendo generaciones de texto. Las alertas de audio usan `transcription_invalid_response` y `transcription_provider_error`.
+- La medición es tiempo transcurrido en la solicitud. La duración total del audio y los segundos facturados quedan pendientes. La referencia de Groq describe `text` para la respuesta actual y marcas por segmento para `verbose_json`. Estas marcas no acreditan la duración total del archivo. [Referencia de API de Groq](https://console.groq.com/docs/api-reference#audio) · [Formatos de transcripción](https://console.groq.com/docs/speech-to-text).
+
+## Cuotas de Groq observadas en respuestas de texto
+
+El backend emite `KAPTAL_AI_GROQ_LIMIT` por cada encabezado válido de la respuesta decodificada de texto o una respuesta HTTP 429. `x-ratelimit-limit-requests` expresa solicitudes por día y `x-ratelimit-limit-tokens` expresa tokens por minuto. Se registran únicamente la unidad y su valor entero. La lectura reutiliza la respuesta de chat o captura rápida. [Encabezados de Groq](https://console.groq.com/docs/rate-limits#rate-limit-headers) · [Spring RestClient](https://docs.spring.io/spring-framework/docs/6.2.3/javadoc-api/org/springframework/web/client/RestClient.ResponseSpec.html#toEntity(java.lang.Class)).
+
+En el JSON de formato 3, `groqReportedLimits` indica cuántas veces se observó cada límite y sus valores mínimo y máximo en la entrada. Un cero explícito se conserva y un encabezado ausente, duplicado o inválido se omite. Un rango de valores puede corresponder a cambios de cuota o a una mezcla de muestras. El campo queda vacío cuando ninguna respuesta aporta un valor válido.
+
+Para verificar el plan y las demás cuotas, consulta los límites de organización y proyecto de Groq y los límites activos del proyecto de Gemini. Guarda en local solo el periodo, el modelo y las cifras pertinentes. Los límites de audio por hora y día, el consumo y el estado de facturación requieren su evidencia propia. [Organización Groq](https://console.groq.com/settings/limits) · [Proyectos Groq](https://console.groq.com/docs/projects#configuring-rate-limits) · [Google AI Studio](https://aistudio.google.com/rate-limit?timeRange=last-28-days).

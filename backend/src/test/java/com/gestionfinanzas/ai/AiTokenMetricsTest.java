@@ -5,9 +5,12 @@ import ch.qos.logback.classic.*;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.http.MediaType;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.client.RestClient;
@@ -19,6 +22,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(OutputCaptureExtension.class)
 class AiTokenMetricsTest {
     private final ObjectMapper mapper=new ObjectMapper();
     private final Logger logger=(Logger)LoggerFactory.getLogger(AiTokenMetrics.class);
@@ -101,5 +105,61 @@ class AiTokenMetricsTest {
             }
             server.verify();
         }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void groqTextAndCaptureReportOnlyQuotaCeilings(boolean captura, CapturedOutput logs) {
+        var builder = RestClient.builder();
+        var server = MockRestServiceServer.bindTo(builder).build();
+        server.expect(requestTo("https://api.groq.com/openai/v1/chat/completions"))
+                .andRespond(withSuccess("{\"choices\":[{\"message\":{\"content\":\"PRIVATE_REPLY\"}}]}",
+                        MediaType.APPLICATION_JSON)
+                        .header("x-ratelimit-limit-requests", "1000")
+                        .header("x-ratelimit-limit-tokens", "8000")
+                        .header("x-ratelimit-remaining-tokens", "7111")
+                        .header("x-request-id", "PRIVATE_HEADER"));
+        var groq = groqForLimits(builder);
+
+        String text = captura ? groq.generateCaptura("PRIVATE_PROMPT", 50) : groq.generate("PRIVATE_PROMPT", 50);
+        assertEquals("PRIVATE_REPLY", text);
+        assertEquals(java.util.List.of(
+                "KAPTAL_AI_GROQ_LIMIT dimension=requests_per_day value=1000",
+                "KAPTAL_AI_GROQ_LIMIT dimension=tokens_per_minute value=8000"), quotaRecords(logs));
+        assertFalse(logs.getAll().contains("PRIVATE_"));
+        assertFalse(logs.getAll().contains("7111"));
+        server.verify();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"PRIVATE_HEADER", "-1", "10.5", "9999999999999999", "10, 20"})
+    void groq429PreservesTheErrorAndSkipsAnInvalidQuota(String invalidTokens, CapturedOutput logs) {
+        var builder = RestClient.builder();
+        var server = MockRestServiceServer.bindTo(builder).build();
+        server.expect(requestTo("https://api.groq.com/openai/v1/chat/completions"))
+                .andRespond(withStatus(HttpStatus.TOO_MANY_REQUESTS)
+                        .header("x-ratelimit-limit-requests", "0")
+                        .header("x-ratelimit-limit-tokens", invalidTokens));
+        var groq = groqForLimits(builder);
+
+        var error = assertThrows(AiProviderException.class, () -> groq.generate("PRIVATE_PROMPT", 50));
+        assertTrue(error.getMessage().contains("Groq alcanzó el límite"));
+        assertEquals(java.util.List.of("KAPTAL_AI_GROQ_LIMIT dimension=requests_per_day value=0"), quotaRecords(logs));
+        assertFalse(logs.getAll().contains("PRIVATE_"));
+        server.verify();
+    }
+
+    private GroqAiProvider groqForLimits(RestClient.Builder builder) {
+        var policy = mock(AiUsagePolicy.class);
+        when(policy.enabled(anyString(), anyString())).thenReturn(true);
+        var properties = new AiProperties("groq", null, null, null,
+                new AiProperties.Groq("synthetic", "https://api.groq.com/openai/v1", "openai/gpt-oss-20b"));
+        return new GroqAiProvider(builder, properties, policy);
+    }
+
+    private java.util.List<String> quotaRecords(CapturedOutput logs) {
+        String marker = "KAPTAL_AI_GROQ_LIMIT";
+        return logs.getAll().lines().filter(line -> line.contains(marker))
+                .map(line -> line.substring(line.indexOf(marker))).toList();
     }
 }

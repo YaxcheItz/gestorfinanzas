@@ -1,6 +1,9 @@
 package com.gestionfinanzas.ai;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -11,6 +14,7 @@ import org.springframework.web.client.RestClientResponseException;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 @Component
 public class GroqAiProvider implements AiProvider {
@@ -19,6 +23,8 @@ public class GroqAiProvider implements AiProvider {
         this(cliente.configurar(builder),cliente.configurarCaptura(builder),properties,policy);
     }
     private static final String DEFAULT_MODEL = "openai/gpt-oss-20b";
+    private static final Logger LOG = LoggerFactory.getLogger(GroqAiProvider.class);
+    private static final Pattern QUOTA_VALUE = Pattern.compile("0|[1-9][0-9]{0,14}");
 
     private final AiProperties.Groq properties;
     private final RestClient restClient;
@@ -85,14 +91,16 @@ public class GroqAiProvider implements AiProvider {
                 payload.put("max_tokens", maxOutputTokens);
             }
 
-            JsonNode response = client.post()
+            var result = client.post()
                     .uri("/chat/completions")
                     .header("Authorization", "Bearer " + properties.apiKey())
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(payload)
                     .retrieve()
-                    .body(JsonNode.class);
+                    .toEntity(JsonNode.class);
 
+            recordQuotaLimits(result.getHeaders());
+            JsonNode response = result.getBody();
             AiTokenMetrics.groq(response);
             String text = response == null ? "" : response.path("choices").path(0)
                     .path("message").path("content").asText("").trim();
@@ -106,11 +114,26 @@ public class GroqAiProvider implements AiProvider {
                 throw new AiProviderException("Groq rechazó la clave. Verifica GROQ_API_KEY en el backend.");
             }
             if (status == HttpStatus.TOO_MANY_REQUESTS.value()) {
+                recordQuotaLimits(ex.getResponseHeaders());
                 throw new AiProviderException("Groq alcanzó el límite de solicitudes. Inténtalo más tarde.");
             }
             throw new AiProviderException("Groq no está disponible en este momento (HTTP " + status + ").");
         } catch (ResourceAccessException ex) {
             throw new AiProviderException("No fue posible conectar con Groq. Revisa la conexión a internet.");
+        }
+    }
+
+    private void recordQuotaLimits(HttpHeaders headers) {
+        if (headers == null) return;
+        // Groq defines these units in https://console.groq.com/docs/rate-limits#rate-limit-headers
+        recordQuotaLimit(headers, "x-ratelimit-limit-requests", "requests_per_day");
+        recordQuotaLimit(headers, "x-ratelimit-limit-tokens", "tokens_per_minute");
+    }
+
+    private void recordQuotaLimit(HttpHeaders headers, String headerName, String dimension) {
+        List<String> values = headers.get(headerName);
+        if (values != null && values.size() == 1 && QUOTA_VALUE.matcher(values.getFirst()).matches()) {
+            LOG.info("KAPTAL_AI_GROQ_LIMIT dimension={} value={}", dimension, values.getFirst());
         }
     }
 }
