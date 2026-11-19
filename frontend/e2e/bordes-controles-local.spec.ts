@@ -97,6 +97,9 @@ test('importe de Haber completo a 320 px con texto ampliado',async({browser,base
     await p.goto(origin+'/libro-diario');
     await p.evaluate(()=>{document.documentElement.style.fontSize='200%';document.documentElement.classList.add('dark');});
     await p.evaluate(()=>document.fonts.ready);
+    const fecha = p.locator('article time');
+    await expect(fecha).toHaveAttribute('datetime', '2026-11-11');
+    await expect(fecha).toHaveText('11 de noviembre de 2026');
     const importe=p.getByRole('cell',{name:/9,876,543,210\.12/});
     await expect(importe).toBeVisible();
     const completo=await importe.evaluate(celda=>{

@@ -64,14 +64,24 @@ test('apartados de Configuración con teclado y texto ampliado',async({browser,b
   }finally{await c.close();}
 });
 
-test('mes y año legibles aunque el control nativo recorte su texto',async({browser,baseURL},info)=>{
+test('mes y año legibles dentro del selector con texto ampliado',async({browser,baseURL},info)=>{
   const {c,p,origin,writes}=await createSectionsFixture(browser,baseURL!);
   try{
     await p.setViewportSize({width:320,height:844});await p.goto(origin+'/reportes');
     await p.evaluate(()=>{document.documentElement.style.fontSize='200%';document.documentElement.classList.add('dark');});
-    const input=p.getByLabel('Mes',{exact:true});await input.fill('2027-02');
-    await expect(p.locator('#reports-current-period')).toContainText('febrero de 2027');
-    expect(await p.locator('#reports-current-period').evaluate(e=>e.scrollWidth<=e.clientWidth)).toBe(true);
+    const input=p.getByLabel('Mes',{exact:true});await input.fill('2027-09');
+    const visiblePeriod = p.locator('#reports-current-period');
+    await expect(visiblePeriod).toHaveText('septiembre de 2027');
+    await expect(input).toHaveAccessibleDescription('septiembre de 2027');
+    await input.focus();
+    await p.keyboard.press('Tab');
+    await p.keyboard.press('Shift+Tab');
+    await expect(input).toBeFocused();
+    await expect(input).toHaveCSS('outline-style', 'solid');
+    const control = await input.boundingBox();
+    const presentation = await visiblePeriod.boundingBox();
+    expect(control).toEqual(presentation);
+    expect(await visiblePeriod.evaluate(el => el.scrollWidth <= el.clientWidth && el.scrollHeight <= el.clientHeight)).toBe(true);
     await p.screenshot({path:info.outputPath('period-200.png'),fullPage:true});expect(writes).toEqual([]);
   }finally{await c.close();}
 });

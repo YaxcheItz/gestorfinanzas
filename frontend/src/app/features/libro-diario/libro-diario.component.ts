@@ -11,6 +11,8 @@ import { FinanzasService } from '../../core/services/finanzas.service';
 import { MontoPipe } from '../../core/pipes/monto.pipe';
 import { nombreCuentaVisible } from '../../core/utils/cuenta-financiera';
 
+const fechaOperacionFormato = new Intl.DateTimeFormat('es-MX', { dateStyle: 'long', timeZone: 'UTC' });
+
 @Component({
   selector: 'app-libro-diario',
   standalone: true,
@@ -219,7 +221,8 @@ import { nombreCuentaVisible } from '../../core/utils/cuenta-financiera';
                     </span>
                   </div>
                   <p class="mt-1 text-xs text-slate-500">
-                    Movimiento #{{ asiento.transaccionOrigenId }} · {{ asiento.fechaOperacion | date:'longDate' }}
+                    Movimiento #{{ asiento.transaccionOrigenId }} ·
+                    <time [attr.datetime]="asiento.fechaOperacion">{{ fechaOperacionLegible(asiento.fechaOperacion) }}</time>
                   </p>
                   @if (asiento.tipoMovimiento !== 'SALDO_INICIAL' && asiento.tipoEvento !== 'ELIMINACION') {
                     <a routerLink="/transacciones" [queryParams]="{ movimientoId: asiento.transaccionOrigenId }" class="mt-2 inline-flex min-h-10 items-center rounded-lg px-2 text-xs font-semibold text-emerald-800 underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600 dark:text-emerald-300">Ver movimiento original</a>
@@ -286,6 +289,7 @@ import { nombreCuentaVisible } from '../../core/utils/cuenta-financiera';
 export class LibroDiarioComponent implements OnInit {
   private readonly styleAssets = inject(FeatureStylesService).load('activity');
   readonly nombreCuentaVisible = nombreCuentaVisible;
+  readonly fechaOperacionLegible = (fecha: string) => fechaOperacionFormato.format(new Date(`${fecha}T00:00:00Z`));
   private readonly finanzasService = inject(FinanzasService);
   private readonly destroyRef = inject(DestroyRef);
 

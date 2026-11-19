@@ -1,11 +1,16 @@
 <div class="reports-page finance-page">
   <header class="reports-heading"><h1>Reportes</h1><app-privacy-toggle /></header>
   <div class="reports-filters">
-    <label>Mes<input type="month" aria-describedby="reports-current-period" [ngModel]="periodo()" (ngModelChange)="cambiarPeriodo($event)" /></label>
+    <div class="reports-month">
+      <label for="reports-month">Mes</label>
+      <div class="reports-month-field" [class.reports-month-native]="month.type === 'month'">
+        <input #month id="reports-month" type="month" aria-describedby="reports-current-period" [ngModel]="periodo()" (ngModelChange)="cambiarPeriodo($event)" />
+        <span id="reports-current-period">{{ periodoLegible() }}</span>
+      </div>
+    </div>
     @if (monedas().length > 0) {<label>Moneda<select [ngModel]="moneda()" (ngModelChange)="moneda.set($event)">@for (codigo of monedas(); track codigo) {<option [value]="codigo">{{ codigo }}</option>}</select></label>}
     <button type="button" (click)="cargar()" [disabled]="loading()">Actualizar</button>
   </div>
-  <p id="reports-current-period" class="reports-comparison">Mes seleccionado: {{ periodoLegible() }}</p>
   @if (rangoConsulta(); as rango) {<p class="reports-comparison">Del {{ rango.desde }} al {{ rango.hasta }} · fechas incluidas</p>}
   @if (loading()) {
     <section class="reports-skeleton" role="status" aria-label="Cargando reportes"><span></span><span></span><span></span></section>

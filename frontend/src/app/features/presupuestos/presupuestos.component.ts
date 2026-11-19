@@ -390,6 +390,7 @@ import {
                 <input
                   id="modalAlerta"
                   type="number"
+                  aria-describedby="presupuesto-aviso-ayuda"
                   min="1"
                   max="100"
                   step="1"
@@ -401,7 +402,7 @@ import {
                 />
                 <span class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400 font-semibold">%</span>
               </div>
-              <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Aviso preventivo al alcanzar este porcentaje de consumo.</p>
+              <p id="presupuesto-aviso-ayuda" class="text-xs text-slate-500 dark:text-slate-400 mt-1">Aviso preventivo al alcanzar este porcentaje de consumo.</p>
             </div>
 
             <!-- Período informativo -->
