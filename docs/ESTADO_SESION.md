@@ -1,13 +1,13 @@
 <!-- KAPTAL_ESTADO_VIGENTE_INICIO -->
-## Resumen vigente — 18 noviembre 2026 · Entrega conjunta de Libro diario
+## Resumen vigente — 18 noviembre 2026 · Kaptal Android 0.1.46
 
-- Entrega web en `correcciones/arranque-catalogo-captura`. Incluye filtros de Libro diario, fechas e importes legibles al 200 % y una protección del catálogo inicial de Captura tras el fallo de arranque detectado en CI. [Filtros](CORRECCION_FILTROS_LIBRO_DIARIO_2026-11-18.md) · [Legibilidad](LEGIBILIDAD_LIBRO_DIARIO_2026-11-18.md) · [Arranque](ARRANQUE_CATALOGO_CAPTURA_2026-11-18.md).
-- Angular, TypeScript, 586 unitarias, 12 comprobaciones de arranque y cuatro casos locales de PWA aprobaron. La revisión de Gastos compartidos y el recorrido Captura, Actividad, Reportes y Libro diario se completaron con H2 y datos ficticios. [Revisión conjunta](https://github.com/YaxcheItz/gestorfinanzas/blob/856d2dff7deb31b9f6dd34a4c0a3f0cff82d17ef/docs/REVISION_CONJUNTA_LIBRO_DIARIO_2026-11-18.md).
-- `main` conserva `17f0075` hasta que se compruebe la CI de la entrega. La integración y publicación web de esta entrega están autorizadas. Calendario conservado. Historial, lentitud y logout siguen aplazados.
+- Samsung SM-A546E actualizado in situ a 0.1.46 (47). La APK instalada coincide con la firmada y Android conservó la fecha de primera instalación. Angular aprobó 586 pruebas y Android aprobó 29 unitarias, lint y compilación.
+- El recorrido Captura → Actividad → Reportes → Libro diario y Gastos compartidos pasó con datos ficticios en la WebView del Samsung a 384 px y texto al doble. La revisión visual registró recortes en el selector de mes de Reportes y una fecha en inglés en Libro diario.
+- Producción web en `main` `81acd45`. `develop` en `5503c57`, con el mismo árbol `0c5cf2e`. La entrega de Android se trabaja en `entrega/android-046-libro-diario` y la APK está en `.local/releases/Kaptal-0.1.46.apk`. [Publicación web](https://github.com/YaxcheItz/gestorfinanzas/blob/bf3c7c50ec09b24844db5e954961ba6c716cf1d3/docs/PUBLICACION_LIBRO_DIARIO_2026-11-18.md).
+- Calendario conservado. Historial, lentitud y logout siguen aplazados.
 
-Para retomar, abre `.local/worktrees/kaptal-arranque-catalogo-captura`. Lee `AGENTS.md`, `docs/ESTADO_SESION.md`, `docs/PLAN_MAESTRO_KAPTAL.md` y [el informe de arranque](ARRANQUE_CATALOGO_CAPTURA_2026-11-18.md). Verifica el SHA de la rama y completa la integración y la publicación web autorizadas cuando aprueben las comprobaciones. Toda instalación de APK requiere confirmación por separado.
+Para otro chat, abre `.local/worktrees/android-046-libro-diario`. Lee `AGENTS.md`, `docs/ESTADO_SESION.md`, `docs/PLAN_MAESTRO_KAPTAL.md` y [la entrega Android](ENTREGA_ANDROID_0_1_46_LIBRO_DIARIO_2026-11-18.md). En una rama nueva desde `develop` verificado, revisa el año recortado del selector en Reportes y la fecha en inglés de Libro diario. Después retoma el formulario de Cuentas y Presupuestos con datos ficticios.
 
-Los apartados siguientes conservan el historial y la evidencia de las etapas anteriores.
 <!-- KAPTAL_ESTADO_VIGENTE_FIN -->
 
 ## Valoraci?n por secci?n ? 17 noviembre 2026, 23:36 UTC
