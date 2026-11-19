@@ -19,6 +19,31 @@ def transcription(ms=10, provider='groq', outcome='success'):
 
 
 class MetricsTest(unittest.TestCase):
+    def test_groq_quota_headers_count_observed_limits_without_summing_them(self):
+        report = summarize(io.StringIO(
+            'KAPTAL_AI_GROQ_LIMIT dimension=requests_per_day value=1000\n'
+            'KAPTAL_AI_GROQ_LIMIT dimension=requests_per_day value=500\n'
+            'KAPTAL_AI_GROQ_LIMIT dimension=tokens_per_minute value=8000\n'
+            'KAPTAL_AI_GROQ_LIMIT dimension=tokens_per_minute value=0\n'
+            'KAPTAL_AI_REQUEST provider=groq outcome=reserved\n'))
+        self.assertEqual(report['groqReportedLimits'], {
+            'requests_per_day': {'observations': 2, 'minObserved': 500, 'maxObserved': 1000},
+            'tokens_per_minute': {'observations': 2, 'minObserved': 0, 'maxObserved': 8000},
+        })
+        self.assertEqual(report['outboundAttempts'], {'groq': 1})
+        self.assertEqual(report['reportedTokenUsage'], {})
+        self.assertEqual(report['ignoredLines'], 0)
+
+    def test_groq_quota_records_reject_unknown_fields_and_keep_missing_limits_absent(self):
+        report = summarize(io.StringIO(
+            'KAPTAL_AI_GROQ_LIMIT dimension=PRIVATE_CANARY value=9\n'
+            'KAPTAL_AI_GROQ_LIMIT dimension=tokens_per_minute value=100 PRIVATE_CANARY\n'
+            'KAPTAL_AI_GROQ_LIMIT dimension=requests_per_day value=-10\n'
+            'KAPTAL_AI_GROQ_LIMIT dimension=requests_per_day value=1000000000000000\n'))
+        self.assertEqual(report['groqReportedLimits'], {})
+        self.assertEqual(report['ignoredLines'], 4)
+        self.assertNotIn('PRIVATE_CANARY', json.dumps(report))
+
     def test_transcription_latency_and_errors_are_separate_from_text_generation(self):
         report = summarize(io.StringIO(
             record(500, provider='groq') + ''.join(transcription(n) for n in range(1, 21))

@@ -19,6 +19,9 @@ BUDGET = re.compile(r'(?<!\S)KAPTAL_AI_BUDGET outcome=(unverified|blocked|exhaus
 USAGE = re.compile(r'(?<!\S)KAPTAL_AI_USAGE provider=(groq|gemini) status=reported '
     r'input_tokens=(0|[1-9][0-9]{0,9}) output_tokens=(0|[1-9][0-9]{0,9}) total_tokens=(0|[1-9][0-9]{0,9})\s*$')
 MISSING_USAGE = re.compile(r'(?<!\S)KAPTAL_AI_USAGE provider=(groq|gemini) status=unavailable\s*$')
+GROQ_LIMIT = re.compile(
+    r'(?<!\S)KAPTAL_AI_GROQ_LIMIT dimension=(requests_per_day|tokens_per_minute) '
+    r'value=(0|[1-9][0-9]{0,14})\s*$')
 MAX_TOKEN_COUNT = 1_000_000_000
 
 
@@ -38,6 +41,7 @@ def summarize(source):
     groups, transcriptions = {}, {}
     requests, budget = {}, {}
     tokens, missing_tokens = {}, {}
+    groq_limits = {}
     ignored = 0
     while True:
         line = source.readline(MAX_LINE + 1)
@@ -75,6 +79,15 @@ def summarize(source):
             reason = warning.group(1)
             budget[reason] = budget.get(reason, 0) + 1
             continue
+        quota = GROQ_LIMIT.search(line)
+        if quota:
+            dimension, raw_value = quota.groups()
+            value = int(raw_value)
+            limit = groq_limits.setdefault(dimension, {'observations': 0, 'minObserved': value, 'maxObserved': value})
+            limit['observations'] += 1
+            limit['minObserved'] = min(limit['minObserved'], value)
+            limit['maxObserved'] = max(limit['maxObserved'], value)
+            continue
         match = TRANSCRIPTION.search(line)
         if match:
             target = transcriptions
@@ -106,7 +119,8 @@ def summarize(source):
             'reportedTokenUsage': dict(sorted(tokens.items())), 'unavailableTokenUsage': dict(sorted(missing_tokens.items())),
             'outboundAttempts': dict(sorted(requests.items())), 'budgetEvents': dict(sorted(budget.items())),
             'maxWindowRecordsPerGroup': WINDOW_SIZE, 'groups': summarize_groups(groups),
-            'transcriptionGroups': summarize_groups(transcriptions)}
+            'transcriptionGroups': summarize_groups(transcriptions),
+            'groqReportedLimits': dict(sorted(groq_limits.items()))}
 
 
 def main():
