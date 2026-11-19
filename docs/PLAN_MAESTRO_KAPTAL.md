@@ -1,5 +1,13 @@
 <!-- KAPTAL_ESTADO_VIGENTE_INICIO -->
-## Resumen vigente — 19 noviembre 2026 · Publicación web de Reportes, Libro diario, Cuentas y Presupuestos
+## Resumen vigente — 19 noviembre 2026 · Revisión de Inicio y acciones de Recientes con texto ampliado
+
+- Se retomó la comprobación interactiva de Inicio de la comparativa 14384 con datos ficticios. La rama `correcciones/acciones-recientes-texto-ampliado` partió de `origin/develop` verificado en `90b93f3` y avanzó a `5fd9902` dentro de su propio worktree para conservar el cierre web.
+- En 390×844 al 100 %, 320×640 al 200 % y 1280×800 al 100 %, con tema claro y oscuro, el desplazamiento y el foco permitieron alcanzar Presupuestos, el enlace de Recientes y las tres filas ficticias. El detalle de la última fila abrió por clic y teclado. El caso general del dock aprobó. La primera preparación de datos desplazó el reloj del navegador y venció el token ficticio. La medición se repitió con el reloj normal.
+- Se reprodujo otro problema en Recientes a 320×640 y texto al 200 %. El ancho de la bandeja crecía con la fuente y el desplazamiento de la tarjeta seguía en 80 px. Playwright verificó que la propia tarjeta interceptaba el clic de «Editar» en el build anterior. El componente compartido mide el ancho para la resistencia del arrastre y usa la misma medida CSS para el desplazamiento al soltar. El ancho queda limitado a la mitad de la tarjeta.
+- Pasaron la regresión de «Editar» y «Eliminar» con clic de prueba y cierre con Escape, el caso general del dock, seis recorridos de Inicio, build Angular, TypeScript, 586 unitarias y 19 pruebas del control de dependencias. Los recorridos usaron una API simulada y comprobaron ausencia de escrituras. Evidencia en `frontend/.local/evidencia-acciones-antes/`, `evidencia-acciones-despues/` y `evidencia-inicio-despues/` del worktree del candidato. Se verificará la CI del SHA remoto.
+- El despliegue web previo corresponde a `main` en `a33342f`. Pendiente revisar la integración del nuevo arreglo cuando apruebe su CI. Sigue pendiente la WebView del Samsung. Calendario conservado. Historial, lentitud y logout aplazados.
+
+### Publicación web previa de los cuatro apartados
 
 - Tras la autorización, `main` avanzó de `81acd45` a `a33342fa49c048cb41c45f2568b24bec671720c3`. El merge tiene el árbol aprobado `9af80e091a519c9db53a5cdabbfbbab712f00111` de `develop` en `90b93f3`. Se publicaron el selector de mes legible y operable por teclado en Reportes, las fechas en español de México en Libro diario y las ayudas ampliables en los formularios de Cuentas y Presupuestos. [Commit de producción](https://github.com/YaxcheItz/gestorfinanzas/commit/a33342fa49c048cb41c45f2568b24bec671720c3).
 - Vercel `7905106856` y Render `7905096517` registraron éxito para ese SHA. La reconsulta del 19 de noviembre comprobó HTTP 200 en la portada y las cuatro rutas, y HTTP 200 con `UP` en `/api/health` desde Vercel y directamente en Render. Los 16 archivos JS y CSS comprobados, incluidos los cuatro módulos de la entrega, coinciden por SHA-256 con la compilación aprobada y con los hashes del manifiesto PWA. [Web pública](https://kaptalgf.vercel.app) · [Estado público de la API](https://kaptalgf.vercel.app/api/health).
@@ -37,7 +45,7 @@
 - Android local aprobó 29 pruebas JVM, lint de debug y la compilación de las APK de debug e instrumentación. Los 87 archivos web empaquetados coinciden byte a byte con la compilación Angular. El registro está en `android-validacion-escritorio.log` junto a la evidencia. La prueba de instrumentación en el equipo queda pendiente.
 - Calendario conservado. Historial, lentitud y logout aplazados. Queda pendiente la comprobación del selector y la fecha en la WebView del Samsung.
 
-Para otro chat, lee `AGENTS.md`, `docs/ESTADO_SESION.md` y `docs/PLAN_MAESTRO_KAPTAL.md` en `.local/worktrees/publicacion-web-periodos`. La web se publicó desde `main` en `a33342f`. Cuando vuelva el Samsung, valida Reportes y Libro diario en su WebView con una compilación de prueba y datos ficticios. Conserva calendario y deja aplazados historial, lentitud y logout.
+Para otro chat, lee `AGENTS.md`, `docs/ESTADO_SESION.md` y `docs/PLAN_MAESTRO_KAPTAL.md` en `.local/worktrees/acciones-recientes-texto-ampliado`. Verifica la CI del arreglo de las acciones de Recientes y el árbol de integración con `develop`. Cuando vuelva el Samsung, valida Reportes, Libro diario y las acciones de Recientes en su WebView con datos ficticios. Conserva calendario y deja aplazados historial, lentitud y logout.
 
 <!-- KAPTAL_ESTADO_VIGENTE_FIN -->
 
