@@ -1,11 +1,12 @@
 <!-- KAPTAL_ESTADO_VIGENTE_INICIO -->
-## Resumen vigente — 18 noviembre 2026 · Entrega conjunta de Libro diario
+## Resumen vigente — 18 noviembre 2026 · Libro diario publicado y recorrido verificado
 
-- Entrega web en `correcciones/arranque-catalogo-captura`. Incluye filtros de Libro diario, fechas e importes legibles al 200 % y una protección del catálogo inicial de Captura tras el fallo de arranque detectado en CI. [Filtros](CORRECCION_FILTROS_LIBRO_DIARIO_2026-11-18.md) · [Legibilidad](LEGIBILIDAD_LIBRO_DIARIO_2026-11-18.md) · [Arranque](ARRANQUE_CATALOGO_CAPTURA_2026-11-18.md).
-- Angular, TypeScript, 586 unitarias, 12 comprobaciones de arranque y cuatro casos locales de PWA aprobaron. La revisión de Gastos compartidos y el recorrido Captura, Actividad, Reportes y Libro diario se completaron con H2 y datos ficticios. [Revisión conjunta](https://github.com/YaxcheItz/gestorfinanzas/blob/856d2dff7deb31b9f6dd34a4c0a3f0cff82d17ef/docs/REVISION_CONJUNTA_LIBRO_DIARIO_2026-11-18.md).
-- `main` conserva `17f0075` hasta que se compruebe la CI de la entrega. La integración y publicación web de esta entrega están autorizadas. Calendario conservado. Historial, lentitud y logout siguen aplazados.
+- Producción web y `main` en `81acd45`. `develop` en `5503c57`, con CI aprobada y el mismo árbol `0c5cf2e`. Vercel y Render registraron éxito para el commit publicado. Las rutas públicas devolvieron HTTP 200 y la API `UP`. [Informe de publicación](PUBLICACION_LIBRO_DIARIO_2026-11-18.md).
+- Se publicaron los filtros y la legibilidad de fechas e importes de Libro diario, junto con la comprobación de identidad en el arranque de Captura. Los archivos publicados aprobaron 12 comprobaciones sintéticas en Chromium y Firefox.
+- Gastos compartidos y el recorrido Captura, Actividad, Reportes y Libro diario se verificaron con datos ficticios en H2. Al verificar la publicación, cinco trabajos de CI de `main` habían aprobado y el E2E con PostgreSQL seguía en curso. [Revisión conjunta](https://github.com/YaxcheItz/gestorfinanzas/blob/856d2dff7deb31b9f6dd34a4c0a3f0cff82d17ef/docs/REVISION_CONJUNTA_LIBRO_DIARIO_2026-11-18.md) · [CI de main](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44447825762).
+- Calendario conservado. Historial, lentitud y logout siguen aplazados.
 
-Para retomar, abre `.local/worktrees/kaptal-arranque-catalogo-captura`. Lee `AGENTS.md`, `docs/ESTADO_SESION.md`, `docs/PLAN_MAESTRO_KAPTAL.md` y [el informe de arranque](ARRANQUE_CATALOGO_CAPTURA_2026-11-18.md). Verifica el SHA de la rama y completa la integración y la publicación web autorizadas cuando aprueben las comprobaciones. Toda instalación de APK requiere confirmación por separado.
+Para otro chat, abre `.local/worktrees/kaptal-publicacion-libro-diario`. Lee `AGENTS.md`, `docs/ESTADO_SESION.md`, `docs/PLAN_MAESTRO_KAPTAL.md` y [el informe de publicación](PUBLICACION_LIBRO_DIARIO_2026-11-18.md). Revalida la CI posterior de `main` y el estado de la publicación. La etapa web y la revisión conjunta de esta secuencia quedaron completadas.
 
 Los apartados siguientes conservan el historial y la evidencia de las etapas anteriores.
 <!-- KAPTAL_ESTADO_VIGENTE_FIN -->
