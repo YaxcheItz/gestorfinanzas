@@ -1,12 +1,13 @@
 <!-- KAPTAL_ESTADO_VIGENTE_INICIO -->
-## Resumen vigente — 19 noviembre 2026 · Integración de Etapa 13 aprobada
+## Resumen vigente — 19 noviembre 2026 · Etapa 13 publicada
 
 ### Integración de Etapa 13
 
 - La conexión volvió al inicio de la sesión. El cierre documental `86dd60d138e59c58f0e0996d6d4ebc4845a16714` se subió a `revision/seguimiento-entrega-etapa13`. `develop` avanzó de `75ac277` a `c9445af9e44156b9e5f63795574c050e62fa25ca` por fast-forward. Ambos SHA se verificaron en el remoto.
 - La CI de integración `44601591644` aprobó los seis trabajos para `develop` en `c9445af`, incluidas 187 pruebas E2E con PostgreSQL y cuatro PWA. La página pública de GitHub confirmó la conclusión durante el fallo de conexión y `gh` permitió consultar los registros al recuperarla. [CI de develop](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44601591644).
 - Con la autorización dada, `main` avanzó de `322623a` a `39a42f5a1e6a6db1e5a0c8da193afe4622936f22`. El primer intento de promoción agotó el tiempo de conexión y el reintento permitió verificar el SHA en el remoto. El merge conserva el árbol aprobado `dc0f31f9bd0483e02c2aac673fbf9b01d7c1bcbd`. La CI de `main` y los despliegues están en verificación. [Commit de main](https://github.com/YaxcheItz/gestorfinanzas/commit/39a42f5a1e6a6db1e5a0c8da193afe4622936f22) · [CI de main](https://github.com/YaxcheItz/gestorfinanzas/actions/runs/44605212109).
-- Antes de la promoción, Vercel y Render conservaron sus despliegues exitosos de `322623a`. Respondieron cinco rutas web y `/api/health` por Vercel y Render. Coincidieron 18 recursos JS y CSS con el build esperado y los hashes del manifiesto PWA. Evidencia local en `.local/produccion-etapa13-antes.json` del worktree.
+- Vercel `7924457882` y Render `7924439809` registraron éxito para `39a42f5a1e6a6db1e5a0c8da193afe4622936f22`. Tras ambos despliegues, cinco rutas públicas respondieron HTTP 200 y `/api/health` devolvió `UP` por Vercel y directamente en Render. [Web](https://kaptalgf.vercel.app) · [API](https://kaptal-api-0xbn.onrender.com/api/health).
+- Coincidieron 18 recursos JS y CSS con el build esperado, los hashes del manifiesto PWA y la comprobación anterior a la publicación. Evidencia en `.local/produccion-etapa13-antes.json` y `.local/produccion-etapa13-evidencia.json` del worktree. El candidato registra latencia de transcripción, resultado y los dos límites reportados por Groq en el uso habitual. Queda pendiente observar una muestra agregada y verificar las cuotas de la cuenta.
 
 Para otro chat, abre `.local/worktrees/publicacion-etapa13` y lee `AGENTS.md`, `docs/ESTADO_SESION.md`, `docs/PLAN_MAESTRO_KAPTAL.md` y `docs/OPERACION_METRICAS_IA_ETAPA_13.md`. Comprueba los despliegues y la CI de `main` en `39a42f5`. Continúa cuotas y uso habitual cuando haya evidencia agregada. El Samsung sigue en 0.1.46 (47) y el piloto espera un aviso bancario nuevo consentido. Conserva calendario y los aplazamientos de historial, lentitud y logout.
 
