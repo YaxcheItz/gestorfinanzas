@@ -1,11 +1,11 @@
 <!-- KAPTAL_ESTADO_VIGENTE_INICIO -->
-## Resumen vigente — 18 noviembre 2026 · Corrección del mes en Reportes
+## Resumen vigente — 18 noviembre 2026 · Filtros de Libro diario corregidos
 
-- Rama `correcciones/reportes-filtro-mensual-url` desde `origin/develop` `b0dc3a0` verificado. Elegir un mes actualiza la URL, conserva la lista activa y la vista recupera el mes al recargar. El estado vacío describe el mes o rango consultado. [Informe](CORRECCION_FILTRO_REPORTES_2026-11-18.md).
-- Las dos regresiones se verificaron en Chromium y Firefox. Aprobaron Angular, TypeScript y 580 unitarias. Capturas y registros en `.local/reportes-filtro-mensual-url/`.
-- Producción en `01135ec` verificado. Calendario conservado. Historial, lentitud y logout siguen aplazados. Publicar en producción o instalar una APK requiere confirmación.
+- Rama `correcciones/libro-diario-filtros` desde `develop` remoto `1f0f4ca` verificado. Libro diario conserva los filtros aplicados al paginar y reintentar, cancela la consulta al limpiar, avisa junto a las fechas invertidas y distingue el vacío filtrado. [Informe](CORRECCION_FILTROS_LIBRO_DIARIO_2026-11-18.md).
+- Compilación de Angular, TypeScript, 585 unitarias y diez pruebas de navegador aprobaron. Se usaron datos ficticios y API interceptada. La CI de la rama se consulta por el SHA remoto. [CI](https://github.com/YaxcheItz/gestorfinanzas/actions/workflows/ci.yml?query=branch%3Acorrecciones%2Flibro-diario-filtros).
+- Producción web en `main` `17f0075`. Los recortes de fechas y cifras con texto al 200 % quedan en la revisión visual. Calendario conservado. Historial, lentitud y logout siguen aplazados. [Revisión de Libro diario](https://github.com/YaxcheItz/gestorfinanzas/blob/8e56399ba04c2939d27fabe206159b46133f0eec/docs/REVISION_LIBRO_DIARIO_WEB_2026-11-18.md).
 
-Para otro chat, abre `.local/worktrees/kaptal-reportes-filtro-url` y lee `AGENTS.md`, `docs/ESTADO_SESION.md`, `docs/PLAN_MAESTRO_KAPTAL.md` y [el informe](CORRECCION_FILTRO_REPORTES_2026-11-18.md). Verifica el SHA remoto y la CI de la corrección antes de valorar su integración. Si se continúa la revisión visual, usa datos ficticios y conserva los aplazamientos.
+Para otro chat, abre `.local/worktrees/kaptal-libro-diario-filtros`. Lee `AGENTS.md`, `docs/ESTADO_SESION.md`, `docs/PLAN_MAESTRO_KAPTAL.md` y [el informe](CORRECCION_FILTROS_LIBRO_DIARIO_2026-11-18.md). Revalida el SHA remoto y la CI de `correcciones/libro-diario-filtros` antes de valorar su integración a `develop`. La publicación en web y la instalación de APK requieren confirmación por separado.
 
 Los apartados siguientes conservan el historial y la evidencia de las etapas anteriores.
 <!-- KAPTAL_ESTADO_VIGENTE_FIN -->
