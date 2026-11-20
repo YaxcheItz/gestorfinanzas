@@ -15,9 +15,13 @@ El código 0 representa un fallo de transporte sin respuesta HTTP. Los estados v
 
 Se verificó la identidad de firma y se instalaron en secuencia los códigos 48 y 49. El Samsung quedó en 0.1.46 (49) con la captura apagada. La primera apertura con la 48 alcanzó los datos de Inicio a los 5480 ms desde primer plano. Los dos resúmenes observados se solaparon. El resultado, los hashes y la continuidad de instalación figuran en `docs/ESTADO_SESION.md` y `.local/medicion/`. Para otro ensayo con el paquete habitual, crear nuevos candidatos con códigos superiores a 49.
 
+## Ensayo del 20 de noviembre
+
+Se firmaron las APK 50 y 51, que conservan el código web de la 49, y se instalaron en secuencia con autorización del propietario. La primera apertura con la 50 mostró los datos de Inicio en 6.488 s, tras 9 h 11 min desde la última salida registrada con la 49. La captura quedó apagada después de instalar la 51. Los hashes, la continuidad de instalación y las fases figuran en `.local/medicion/proxima-reapertura/` y en `docs/ESTADO_SESION.md`.
+
 ## Próxima reapertura
 
-Los candidatos sin firma están en `.local/medicion/proxima-reapertura/`. El código 50 activa la captura y el 51 la retira. Conservan los recursos web de la 49 para que la medición corresponda al mismo código de aplicación. Los hashes y las comprobaciones están en `candidatos.json`. El Samsung sigue en 0.1.46 (49). Antes de instalar, firmar ambos candidatos con el certificado habitual, verificar la firma y contar con autorización para actualizar el paquete habitual.
+Para medir la espera tras varias horas bajo una misma instalación, usar un par de candidatos con códigos superiores a 51 si se autoriza otro ensayo. Verificar la firma y preparar el retorno antes de instalar el diagnóstico. Registrar cuándo Kaptal sale de primer plano para poder medir el intervalo bajo el mismo APK.
 
 Con el diagnóstico autorizado e instalado, dejar Kaptal fuera de primer plano durante un periodo habitual de varias horas. Abrir la captura en Windows antes de reanudar Kaptal.
 
