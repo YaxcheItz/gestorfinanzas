@@ -17,6 +17,8 @@ Se verificó la identidad de firma y se instalaron en secuencia los códigos 48 
 
 ## Próxima reapertura
 
+Los candidatos sin firma están en `.local/medicion/proxima-reapertura/`. El código 50 activa la captura y el 51 la retira. Conservan los recursos web de la 49 para que la medición corresponda al mismo código de aplicación. Los hashes y las comprobaciones están en `candidatos.json`. El Samsung sigue en 0.1.46 (49). Antes de instalar, firmar ambos candidatos con el certificado habitual, verificar la firma y contar con autorización para actualizar el paquete habitual.
+
 Con el diagnóstico autorizado e instalado, dejar Kaptal fuera de primer plano durante un periodo habitual de varias horas. Abrir la captura en Windows antes de reanudar Kaptal.
 
 ```powershell
