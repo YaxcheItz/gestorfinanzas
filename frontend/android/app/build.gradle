@@ -1,6 +1,11 @@
 apply plugin: 'com.android.application'
 
+def startupTiming = providers.gradleProperty('kaptalStartupTiming').orElse('false').get() == 'true'
+
 android {
+    buildFeatures {
+        buildConfig true
+    }
     compileOptions {
         coreLibraryDesugaringEnabled true
     }
@@ -12,6 +17,7 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 46
         versionName "0.1.45"
+        buildConfigField 'boolean', 'STARTUP_TIMING', startupTiming.toString()
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -31,7 +37,7 @@ android {
     }
     buildTypes {
         debug {
-            applicationIdSuffix '.debug'
+            applicationIdSuffix startupTiming ? '.qa.arranque' : '.debug'
             versionNameSuffix '-pruebas'
             resValue 'string', 'app_name', 'Kaptal Pruebas'
             resValue 'string', 'title_activity_main', 'Kaptal Pruebas'

@@ -3,6 +3,7 @@ import { provideRouter, withInMemoryScrolling } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { errorInterceptor } from './core/interceptors/error.interceptor';
+import { diagnosticoArranqueInterceptor } from './core/diagnostico-arranque';
 import { AuthService } from './core/services/auth.service';
 import { routes } from './app.routes';
 import { provideServiceWorker } from '@angular/service-worker';
@@ -20,7 +21,7 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes, withInMemoryScrolling({ anchorScrolling: 'enabled' })),
     // El error global solo debe ver el resultado final, después del intento de renovación.
-    provideHttpClient(withInterceptors([errorInterceptor, authInterceptor])),
+    provideHttpClient(withInterceptors([errorInterceptor, authInterceptor, diagnosticoArranqueInterceptor])),
     provideAppInitializer(renovarSiHaceFalta),
     provideServiceWorker('ngsw-worker.js', {
       enabled: !isDevMode() && !Capacitor.isNativePlatform(),

@@ -19,6 +19,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(GoogleSignInPlugin.class);
         registerPlugin(ScreenPrivacyPlugin.class);
         registerPlugin(AppLockPlugin.class);
+        if (BuildConfig.STARTUP_TIMING) registerPlugin(StartupTimingPlugin.class);
         super.onCreate(savedInstanceState);
         ScreenPrivacyPlugin.applySavedPolicy(this);
         appLock = new AppLockController(this);
@@ -27,7 +28,16 @@ public class MainActivity extends BridgeActivity {
         WebView.setWebContentsDebuggingEnabled(
             (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0);
     }
-    @Override public void onResume() { super.onResume(); if (appLock != null) appLock.resume(); }
-    @Override public void onPause() { if (appLock != null) appLock.pause(); super.onPause(); }
+    @Override public void onResume() {
+        if (BuildConfig.STARTUP_TIMING) StartupTimingPlugin.begin();
+        super.onResume();
+        if (appLock != null) appLock.resume();
+    }
+
+    @Override public void onPause() {
+        if (BuildConfig.STARTUP_TIMING) StartupTimingPlugin.end();
+        if (appLock != null) appLock.pause();
+        super.onPause();
+    }
     @Override public void onDestroy() { if (appLock != null) appLock.destroy(); super.onDestroy(); }
 }

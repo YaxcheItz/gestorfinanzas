@@ -4,6 +4,7 @@ import { App } from './app/app';
 import { Capacitor } from '@capacitor/core';
 import { App as NativeApp } from '@capacitor/app';
 import { prepareNativeSession } from './app/core/native-session';
+import { iniciarDiagnosticoArranque, marcarArranque } from './app/core/diagnostico-arranque';
 
 if (Capacitor.isNativePlatform()) {
   void NativeApp.addListener('backButton', ({ canGoBack }) => {
@@ -12,8 +13,13 @@ if (Capacitor.isNativePlatform()) {
   });
 }
 
-prepareNativeSession().then(() => bootstrapApplication(App, appConfig))
+iniciarDiagnosticoArranque();
+prepareNativeSession().then(() => {
+  marcarArranque('sesion_nativa');
+  return bootstrapApplication(App, appConfig);
+})
   .catch((err) => {
+    marcarArranque('apertura_error');
     console.error(err);
     const root = document.querySelector('app-root');
     if (!root) return;
