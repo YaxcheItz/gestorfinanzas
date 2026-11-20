@@ -58,6 +58,8 @@ python tools/operacion/resumir_reapertura_android.py RUTA_DEL_JSON
 
 Comparar el tiempo de Android con la primera aparición de Inicio, la carga y los datos. Revisar código HTTP y duración de cada petición. Los inicios y solapamientos se estiman a partir de la marca registrada y la duración, por lo que dos peticiones simultáneas no se suman como si fueran consecutivas. Si la WebView ya tenía datos visibles al volver, una petición posterior puede corresponder a una recarga. El bloqueo o el error de Inicio pueden dejar ausente la marca de datos.
 
+La 52 conserva la versión web anterior a la corrección de periodo equivalente de `de0b913`. Si aparecen dos respuestas de resumen, registrar sus duraciones y el solapamiento. El registro de fases omite el rango consultado. Para determinar si ambas peticiones usan las mismas fechas, usar la prueba aislada de periodo equivalente.
+
 La duración HTTP incluye el recorrido observado por el cliente. Atribuir una demora a Vercel o Render requiere correlacionar la hora con evidencia de esos servicios. La apertura de la 50 sirve para comprobar el resumen y comparar hitos, con el antecedente de que ocurrió tras instalar esa APK. Una sola reapertura aporta una muestra individual.
 
 [Plugins Android de Capacitor](https://capacitorjs.com/docs/plugins/android) · [Logcat](https://developer.android.com/tools/logcat)
