@@ -21,7 +21,17 @@ Se firmaron las APK 50 y 51, que conservan el código web de la 49, y se instala
 
 ## Próxima reapertura
 
-Para medir la espera tras varias horas bajo una misma instalación, usar un par de candidatos con códigos superiores a 51 si se autoriza otro ensayo. Verificar la firma y preparar el retorno antes de instalar el diagnóstico. Registrar cuándo Kaptal sale de primer plano para poder medir el intervalo bajo el mismo APK.
+La 51 instalada tiene apagadas las marcas internas. ADB puede medir el arranque de Android y el propietario puede anotar cuándo aparecen Inicio y sus datos. Para medir también sesión, perfil, listas y resumen, se prepararon la 52 con captura y la 53 de retorno en `.local/medicion/misma-instalacion/`. Ambas requieren la firma habitual. Verificar ese certificado y preparar el retorno antes de instalar la 52 con la autorización del propietario.
+
+Tras elegir el APK para la prueba, abrir Kaptal una vez y salir a Inicio de Android. La espera cuenta desde que Android registra la salida de Kaptal con esa misma instalación. Mantener ese APK hasta terminar la medición. La referencia es de seis horas, cercana al intervalo de la primera reapertura lenta.
+
+Para comprobar por ADB el APK instalado y el inicio del intervalo, ejecutar desde el worktree con `-Codigo 51` o `-Codigo 52` según corresponda.
+
+```powershell
+powershell.exe -NoProfile -File .local/medicion/misma-instalacion/medir.ps1 -Codigo 52
+```
+
+Tras el intervalo, añadir `-Capturar` con el Samsung despierto y desbloqueado. El script comprueba que la última entrada y salida ocurrieron después de instalar el APK, registra los tiempos nativos y compara el SHA-256 y la fecha de actualización antes y después. Con la 52 recoge también la ventana de `KaptalArranque`. El JSON queda en la misma carpeta local. La ejecución de comprobación en la 51 confirmó que la última salida correspondía a la 50 y bloqueó una apertura prematura.
 
 Con el diagnóstico autorizado e instalado, dejar Kaptal fuera de primer plano durante un periodo habitual de varias horas. Abrir la captura en Windows antes de reanudar Kaptal.
 
