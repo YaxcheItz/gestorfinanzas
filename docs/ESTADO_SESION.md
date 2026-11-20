@@ -93,6 +93,13 @@ Para otro chat, abre `.local/worktrees/cuotas-groq-uso-habitual` y lee `AGENTS.m
 - Android local aprobó 29 pruebas JVM, lint de debug y la compilación de las APK de debug e instrumentación. Los 87 archivos web empaquetados coinciden byte a byte con la compilación Angular. El registro está en `android-validacion-escritorio.log` junto a la evidencia. La prueba de instrumentación en el equipo queda pendiente.
 - Calendario conservado. Historial, lentitud y logout aplazados. Queda pendiente la comprobación del selector y la fecha en la WebView del Samsung.
 
+### Punto 7 · Inicio con texto al 200 %
+
+- Se abrió `revision/diagnostico-diseno-inicio` desde `develop` en `c9445af9e44156b9e5f63795574c050e62fa25ca`, comprobado en la página de GitHub por rama y después con `git ls-remote`. Mientras el punto 6 espera la reapertura, este recorrido de Inicio usa una compilación local y datos ficticios en Chromium. [Base de develop](https://github.com/YaxcheItz/gestorfinanzas/commit/develop).
+- Pasó el build Angular con avisos de presupuesto de estilos y aprobaron las dos pruebas existentes del dock. En seis recorridos adicionales se amplió al 200 % el texto en 640×320 y 844×390 horizontales, y en 390×844 vertical, en claro y oscuro. No hubo desplazamiento horizontal. La búsqueda abrió y cerró por toque emulado. Tras desplazar Recientes, se revelaron ambas acciones y el detalle de la tercera fila abrió con Enter. El diálogo de eliminación se abrió con clic de ratón y se canceló en los seis modos. Cero escrituras registradas por el fixture y cero errores JavaScript.
+- En los seis modos, el centro de «Eliminar» estaba libre y los eventos táctiles del arnés llegaron al botón después del gesto. Chromium no generó `click` al tocarlo, tampoco al repetir con una pausa de 450 ms. La prueba con ratón sí generó el evento y abrió la confirmación. Queda por verificar el toque en un paquete aislado con datos ficticios antes de decidir si intervenir. Las capturas muestran que los controles fijos coinciden con algunas filas durante el desplazamiento, aunque el botón comprobado pudo alcanzarse.
+- Evidencia local en `.local/revision-inicio/` del worktree `.local/worktrees/revision-diseno-inicio`. Incluye `dock.log`, `horizontal-movil-final.log`, `vertical-control.log` y 18 capturas de los seis recorridos. Se inspeccionaron directamente dos vistas horizontales, una de la acción revelada y otra de Recientes. El alcance actual es la revisión de Inicio del punto 7.
+
 <!-- KAPTAL_ESTADO_VIGENTE_FIN -->
 
 ## Valoraci?n por secci?n ? 17 noviembre 2026, 23:36 UTC
