@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of, Subject, throwError } from 'rxjs';
+import { Perfil } from '../../core/models/auth.models';
 import { AuthService } from '../../core/services/auth.service';
 import { CategoriaPreferidaService } from '../../core/services/categoria-preferida.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
@@ -11,12 +12,18 @@ import { PerfilService } from '../../core/services/perfil.service';
 import { ToastService } from '../../core/services/toast.service';
 import { DashboardComponent } from './dashboard.component';
 import { ListaContextoService } from '../../core/services/lista-contexto.service';
+import { PERIODO_MENSUAL } from '../../core/utils/periodo-financiero';
 
 describe('DashboardComponent movement dialog accessibility', () => {
   let crearTransaccion: ReturnType<typeof vi.fn>;
+  let perfilActivo: ReturnType<typeof signal<Perfil | null>>;
+  const perfilPrueba: Perfil = {
+    id: 7, nombre: 'Persona ficticia', email: 'qa@example.test', tema: 'CLARO', monedaPredeterminada: 'MXN'
+  };
 
   beforeEach(async () => {
     localStorage.clear();
+    perfilActivo = signal<Perfil | null>(null);
     crearTransaccion = vi.fn(() => of({ success: true, message: '', data: undefined }));
     TestBed.configureTestingModule({
       imports: [DashboardComponent],
@@ -55,7 +62,7 @@ describe('DashboardComponent movement dialog accessibility', () => {
         },
         { provide: ToastService, useValue: { success: vi.fn(), error: vi.fn() } },
         { provide: ConfirmDialogService, useValue: { confirm: vi.fn() } },
-        { provide: PerfilService, useValue: { perfil: signal(null), cargando: signal(false) } },
+        { provide: PerfilService, useValue: { perfil: perfilActivo, cargando: signal(false) } },
         { provide: Router, useValue: { navigate: vi.fn(), parseUrl: () => ({ queryParams: {} }) } },
         { provide: ActivatedRoute, useValue: {queryParams:of({})} }
       ]
@@ -363,6 +370,50 @@ describe('DashboardComponent movement dialog accessibility', () => {
     component.aplicarPeriodo();
     expect(component.errorRango()).toBeTruthy();
     expect(component.fechasRango()).toEqual(inicial);
+  });
+
+  it('aplica una preferencia equivalente sin repetir las lecturas de Inicio', () => {
+    const finanzas = TestBed.inject(FinanzasService);
+    const resumen = vi.spyOn(finanzas, 'getDashboardResumen');
+    const analitica = vi.spyOn(finanzas, 'getDashboardAnalitica');
+    const presupuestos = vi.spyOn(finanzas, 'getPresupuestos');
+    const fixture = TestBed.createComponent(DashboardComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    const rangoInicial = component.fechasRango();
+    const datosIniciales = component.resumen();
+
+    const periodoPredeterminado = { ...PERIODO_MENSUAL, ancla: '2025-03-01' };
+    perfilActivo.set({ ...perfilPrueba, periodoPredeterminado });
+    fixture.detectChanges();
+
+    expect(component.configuracionPeriodo()).toEqual(periodoPredeterminado);
+    expect(component.fechasRango()).toEqual(rangoInicial);
+    expect(component.resumen()).toBe(datosIniciales);
+    expect(resumen).toHaveBeenCalledOnce();
+    expect(analitica).toHaveBeenCalledOnce();
+    expect(presupuestos).toHaveBeenCalledOnce();
+
+    component.cambiarPeriodo(-1);
+    expect(resumen).toHaveBeenCalledTimes(2);
+    expect(resumen.mock.calls[1].slice(2)).not.toEqual(resumen.mock.calls[0].slice(2));
+    fixture.destroy();
+  });
+
+  it('recarga el resumen si la preferencia guardada cambia las fechas', () => {
+    const resumen = vi.spyOn(TestBed.inject(FinanzasService), 'getDashboardResumen');
+    const fixture = TestBed.createComponent(DashboardComponent);
+    fixture.detectChanges();
+    const hoy = fixture.componentInstance.fechaHoy();
+    expect(resumen).toHaveBeenCalledOnce();
+
+    perfilActivo.set({ ...perfilPrueba, periodoPredeterminado: { ...PERIODO_MENSUAL, tipo: 'HOY' } });
+    fixture.detectChanges();
+
+    expect(resumen).toHaveBeenCalledTimes(2);
+    expect(resumen).toHaveBeenLastCalledWith(Number(hoy.slice(5, 7)), Number(hoy.slice(0, 4)), hoy, hoy);
+    expect(fixture.componentInstance.fechasRango()).toEqual({ desde: hoy, hasta: hoy });
+    fixture.destroy();
   });
 
   it('una consulta temporal no cambia el periodo guardado al volver a cargar el perfil', () => {

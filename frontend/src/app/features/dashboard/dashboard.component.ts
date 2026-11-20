@@ -1,7 +1,7 @@
 import { PeriodoInicioService } from '../../core/services/periodo-inicio.service';
 import { salarioPredeterminado } from '../../core/utils/salario-predeterminado';
 import { ListaContextoService } from '../../core/services/lista-contexto.service';
-import { PeriodoConfig, TipoPeriodo, PERIODO_MENSUAL, resolverPeriodo, desplazarPeriodo, desplazarRangoLibre, validarRangoPeriodo, validarPeriodo, fechaCivilFinanciera } from '../../core/utils/periodo-financiero';
+import { PeriodoConfig, RangoPeriodo, TipoPeriodo, PERIODO_MENSUAL, resolverPeriodo, desplazarPeriodo, desplazarRangoLibre, validarRangoPeriodo, validarPeriodo, fechaCivilFinanciera } from '../../core/utils/periodo-financiero';
 import { parsearEtiquetas } from '../../core/utils/etiquetas';
 import { FeatureStylesService } from '../../core/services/feature-styles.service';
 ﻿import { TextoFinancieroPipe } from '../../core/pipes/texto-financiero.pipe';
@@ -547,6 +547,7 @@ export class DashboardComponent implements OnInit {
     if (rango === 'PERSONALIZADO') { this.editandoRango.set(true); this.errorRango.set(''); return; }
     this.aplicarConfiguracion({ ...this.configuracionPeriodo(), tipo: rango });
     this.periodoModificado = true;
+    this.cargarDashboard();
     this.cerrarModalRango();
   }
   aplicarPeriodo(): void {
@@ -555,7 +556,11 @@ export class DashboardComponent implements OnInit {
       resolverPeriodo(config, this.fechaHoy());
       this.errorRango.set('');
       if (!this.guardarComoPredeterminado) {
-        this.aplicarConfiguracion(config); this.periodoModificado = true; this.cerrarModalRango(); return;
+        this.aplicarConfiguracion(config);
+        this.periodoModificado = true;
+        this.cargarDashboard();
+        this.cerrarModalRango();
+        return;
       }
       if (!this.perfilService.perfil()) { this.errorRango.set('Espera a que cargue tu perfil para guardar la preferencia.'); return; }
       const usuarioId = this.perfilService.perfil()!.id;
@@ -565,20 +570,23 @@ export class DashboardComponent implements OnInit {
           this.guardandoPeriodo.set(false);
           if (this.perfilService.perfil()?.id !== usuarioId) return;
           if (!response.success) { this.errorRango.set('No se pudo guardar el periodo. Inténtalo otra vez.'); return; }
-          this.periodoModificado = true; this.aplicarConfiguracion(config); this.cerrarModalRango();
+          this.periodoModificado = true;
+          this.aplicarConfiguracion(config);
+          this.cargarDashboard();
+          this.cerrarModalRango();
           this.toastService.success('Periodo predeterminado guardado.');
         },
         error: () => { this.guardandoPeriodo.set(false); this.errorRango.set('No se pudo guardar. Revisa la conexión e inténtalo otra vez.'); }
       });
     } catch (error) { this.errorRango.set((error as Error).message); }
   }
-  private aplicarConfiguracion(config: PeriodoConfig): void {
+  private aplicarConfiguracion(config: PeriodoConfig): RangoPeriodo {
     const rango = resolverPeriodo(config, this.fechaHoy());
     this.configuracionPeriodo.set({ ...config });
     this.tipoRango.set(config.tipo);
     this.referenciaPeriodo.set(this.fechaHoy());
     this.actualizarMesPresupuesto(rango.desde);
-    this.cargarDashboard();
+    return rango;
   }
   private actualizarMesPresupuesto(desde: string): void {
     const [anio, mes] = desde.split('-').map(Number);
@@ -796,10 +804,18 @@ export class DashboardComponent implements OnInit {
       const perfil = this.perfilService.perfil();
       if (!perfil || this.preferenciaPeriodoLeida) return;
       this.preferenciaPeriodoLeida = true;
-      if (this.periodoModificado || !perfil.periodoPredeterminado) return;
+      const periodoGuardado = perfil.periodoPredeterminado;
+      if (this.periodoModificado || !periodoGuardado) return;
       untracked(() => {
-        try { this.aplicarConfiguracion(validarPeriodo(perfil.periodoPredeterminado!)); }
-        catch { this.errorRango.set('No se pudo aplicar tu periodo guardado. Elige otro periodo.'); }
+        try {
+          const anterior = this.fechasRango();
+          const guardado = this.aplicarConfiguracion(validarPeriodo(periodoGuardado));
+          if (this.dashboardVersion > 0 && (guardado.desde !== anterior.desde || guardado.hasta !== anterior.hasta)) {
+            this.cargarDashboard();
+          }
+        } catch {
+          this.errorRango.set('No se pudo aplicar tu periodo guardado. Elige otro periodo.');
+        }
       });
     });
     let listaObservada = this.contextoLista.activaId();
