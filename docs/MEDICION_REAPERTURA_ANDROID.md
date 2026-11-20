@@ -11,6 +11,10 @@ El código 0 representa un fallo de transporte sin respuesta HTTP. Los estados v
 - Los candidatos de entrega se compilaron sobre `32e0ee804fc14e103191ae4f7faf7163cffd0d8b`, correspondiente al binario 0.1.46 (47) cuyo SHA-256 se comparó con el APK instalado. Ambos mantienen `com.kaptal.app` y el HTTP nativo. El código 48 activa la captura y el código 49 permite retirarla con una actualización. Los archivos y hashes están en `.local/medicion/` del worktree.
 - Para ensayar la instalación habitual, ambos candidatos requieren la firma de la versión instalada y se debe verificar el certificado antes de actualizar. Instalar el código 48 con `adb install -r` cuando el propietario autorice esa actualización. Después de capturar, el código 49 firmado permite desactivar el registro mediante otra actualización y conservar datos y sesión.
 
+## Ensayo del 19 de noviembre
+
+Se verificó la identidad de firma y se instalaron en secuencia los códigos 48 y 49. El Samsung quedó en 0.1.46 (49) con la captura apagada. La primera apertura con la 48 alcanzó los datos de Inicio a los 5480 ms desde primer plano. Los dos resúmenes observados se solaparon. El resultado, los hashes y la continuidad de instalación figuran en `docs/ESTADO_SESION.md` y `.local/medicion/`. Para otro ensayo con el paquete habitual, crear nuevos candidatos con códigos superiores a 49.
+
 ## Próxima reapertura
 
 Con el diagnóstico autorizado e instalado, dejar Kaptal fuera de primer plano durante un periodo habitual de varias horas. Abrir la captura en Windows antes de reanudar Kaptal.
