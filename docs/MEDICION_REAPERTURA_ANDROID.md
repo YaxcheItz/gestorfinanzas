@@ -48,4 +48,16 @@ $adb = Join-Path $env:LOCALAPPDATA 'Android/Sdk/platform-tools/adb.exe'
 
 Conservar únicamente el bloque que empieza en `phase=primer_plano elapsed_ms=0`. En paralelo, `am start -W` registra tiempo y estado nativos. Apuntar por separado cuándo ve el propietario Inicio y sus datos. Comparar los hitos con la renovación, la lista activa y el resumen registrados. La prueba de salud pública se hace después de esa apertura para respetar el estado previo del servicio.
 
+## Análisis de la captura
+
+Cuando el seguimiento termine, abrir el JSON `reapertura-52-*.json` en la carpeta local del ensayo. Confirmar `mismoApkEnUltimoUso`, `instalacionVerificada` y una sola ventana diagnóstica. Usar la ruta del archivo guardado para ejecutar el resumen.
+
+```powershell
+python tools/operacion/resumir_reapertura_android.py RUTA_DEL_JSON
+```
+
+Comparar el tiempo de Android con la primera aparición de Inicio, la carga y los datos. Revisar código HTTP y duración de cada petición. Los inicios y solapamientos se estiman a partir de la marca registrada y la duración, por lo que dos peticiones simultáneas no se suman como si fueran consecutivas. Si la WebView ya tenía datos visibles al volver, una petición posterior puede corresponder a una recarga. El bloqueo o el error de Inicio pueden dejar ausente la marca de datos.
+
+La duración HTTP incluye el recorrido observado por el cliente. Atribuir una demora a Vercel o Render requiere correlacionar la hora con evidencia de esos servicios. La apertura de la 50 sirve para comprobar el resumen y comparar hitos, con el antecedente de que ocurrió tras instalar esa APK. Una sola reapertura aporta una muestra individual.
+
 [Plugins Android de Capacitor](https://capacitorjs.com/docs/plugins/android) · [Logcat](https://developer.android.com/tools/logcat)
