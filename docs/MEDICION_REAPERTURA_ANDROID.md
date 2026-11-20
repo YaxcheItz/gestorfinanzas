@@ -19,9 +19,15 @@ Se verificó la identidad de firma y se instalaron en secuencia los códigos 48 
 
 Se firmaron las APK 50 y 51, que conservan el código web de la 49, y se instalaron en secuencia con autorización del propietario. La primera apertura con la 50 mostró los datos de Inicio en 6.488 s, tras 9 h 11 min desde la última salida registrada con la 49. La captura quedó apagada después de instalar la 51. Los hashes, la continuidad de instalación y las fases figuran en `.local/medicion/proxima-reapertura/` y en `docs/ESTADO_SESION.md`.
 
+## Espera en curso con la 52
+
+El 20 de noviembre se firmaron la 52 y la 53 y se verificó que el certificado y los archivos de ambas coinciden con los esperados. La 52 se instaló a las 10:12:03 y la salida de Kaptal quedó registrada a las 10:12:42, hora de Ciudad de México. La primera apertura registró las marcas de primer plano e Inicio con datos. La reapertura que mide la espera queda disponible desde las 16:12:42.
+
+El proceso local `esperar-reapertura.ps1` espera seis horas desde la última salida y puede abrir Kaptal una vez hasta las 18:12:42 si el Samsung está conectado, desbloqueado y en Inicio de Android. La copia instalada, su fecha de actualización y su SHA-256 deben coincidir con la 52 verificada. Consultar `.local/medicion/misma-instalacion/seguimiento-52.json` antes de realizar una apertura manual. La APK 53 de retorno está firmada y se conserva en la misma carpeta para después de validar la muestra.
+
 ## Próxima reapertura
 
-La 51 instalada tiene apagadas las marcas internas. ADB puede medir el arranque de Android y el propietario puede anotar cuándo aparecen Inicio y sus datos. Para medir también sesión, perfil, listas y resumen, se prepararon la 52 con captura y la 53 de retorno en `.local/medicion/misma-instalacion/`. Ambas requieren la firma habitual. Verificar ese certificado y preparar el retorno antes de instalar la 52 con la autorización del propietario.
+La 51 tiene apagadas las marcas internas. ADB puede medir el arranque de Android y el propietario puede anotar cuándo aparecen Inicio y sus datos. Para medir también sesión, perfil, listas y resumen, se prepararon la 52 con captura y la 53 de retorno en `.local/medicion/misma-instalacion/`. Antes de instalar una versión de diagnóstico, verificar su certificado y preparar la APK de retorno con la autorización del propietario.
 
 Tras elegir el APK para la prueba, abrir Kaptal una vez y salir a Inicio de Android. La espera cuenta desde que Android registra la salida de Kaptal con esa misma instalación. Mantener ese APK hasta terminar la medición. La referencia es de seis horas, cercana al intervalo de la primera reapertura lenta.
 
