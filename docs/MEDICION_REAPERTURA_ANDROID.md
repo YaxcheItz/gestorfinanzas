@@ -19,13 +19,38 @@ Se verificó la identidad de firma y se instalaron en secuencia los códigos 48 
 
 Se firmaron las APK 50 y 51, que conservan el código web de la 49, y se instalaron en secuencia con autorización del propietario. La primera apertura con la 50 mostró los datos de Inicio en 6.488 s, tras 9 h 11 min desde la última salida registrada con la 49. La captura quedó apagada después de instalar la 51. Los hashes, la continuidad de instalación y las fases figuran en `.local/medicion/proxima-reapertura/` y en `docs/ESTADO_SESION.md`.
 
-## Espera en curso con la 52
+## Preparación y espera con la 52
 
-El 20 de noviembre se firmaron la 52 y la 53 y se verificó que el certificado y los archivos de ambas coinciden con los esperados. La 52 se instaló a las 10:12:03 y la salida de Kaptal quedó registrada a las 10:12:42, hora de Ciudad de México. La primera apertura registró las marcas de primer plano e Inicio con datos. La reapertura que mide la espera queda disponible desde las 16:12:42.
+El 20 de noviembre se firmaron la 52 y la 53 y se verificó que el certificado y los archivos de ambas coinciden con los esperados. La 52 se instaló a las 10:12:03 y la salida de Kaptal quedó registrada a las 10:12:42, hora de Ciudad de México. La primera apertura registró las marcas de primer plano e Inicio con datos. Con esa primera salida, el umbral de seis horas quedaba a las 16:12:42.
 
-El proceso local `esperar-reapertura.ps1` espera seis horas desde la última salida y puede abrir Kaptal una vez hasta las 18:12:42 si el Samsung está conectado, desbloqueado y en Inicio de Android. La copia instalada, su fecha de actualización y su SHA-256 deben coincidir con la 52 verificada. Consultar `.local/medicion/misma-instalacion/seguimiento-52.json` antes de realizar una apertura manual. La APK 53 de retorno está firmada y se conserva en la misma carpeta para después de validar la muestra.
+El seguimiento automático tenía como límite las 18:12:42 y terminó sin guardar una captura real. Se registró su estado a las 22:33:54. ADB confirmó otra apertura a las 17:08:26 y otra salida a las 17:08:27 bajo la misma 52. La consulta posterior de Logcat devolvió cero marcas de esa apertura. Con esa salida, el nuevo umbral era a las 23:08:27 del 20 de noviembre, hora de Ciudad de México. La APK 53 firmada de retorno quedó preparada en la misma carpeta.
 
-## Próxima reapertura
+## Reapertura habitual del 20 de noviembre · punto 6
+
+A las 23:08:37, hora de Ciudad de México, Android registró el comienzo de la reapertura medida en el Samsung SM-A546E. Habían pasado 6 h 00 min 10 s desde la salida de las 17:08:27. El proceso ya existía. Antes y después coincidieron la primera instalación (2026-10-22 00:26:31), la actualización de la 52 (2026-11-20 10:12:03) y el SHA-256 de la copia instalada, `4eb92eda4af7bb33f3396cae899e9188506a99842282f6a4c3a17b5384df35fd`.
+
+`medir.ps1 -Codigo 52 -Capturar` se ejecutó una vez. El JSON original registró dos entradas a primer plano y el capturador lo rechazó. Los eventos de Android identifican el lanzamiento de ADB a las 23:08:36.922, la primera reanudación a las 23:08:37.499, la pausa a las 23:08:45.427 y la segunda reanudación a las 23:08:59.697. La marca de datos de la primera ventana quedó registrada antes de la pausa, a las 23:08:41.526. Se conservó el JSON original y se guardó aparte el de la primera ventana con 14 marcas y la referencia a las trazas. El resumidor confirmó una sola ventana y cero líneas descartadas.
+
+| Fase | Tiempo observado |
+| --- | --- |
+| Arranque Android | `WARM`, `TotalTime` 887 ms y `WaitTime` 905 ms |
+| WebView y sesión | JavaScript a los 1110 ms, sesión nativa preparada a los 1153 ms e indicador de sesión a los 1311 ms |
+| Renovación | HTTP 200 en 886 ms, respuesta registrada a los 2180 ms |
+| Inicio y carga | Inicio a los 2375 ms e indicador de carga a los 2376 ms |
+| Perfil | HTTP 200 en 414 ms, respuesta registrada a los 2601 ms |
+| Listas | HTTP 200 en 920 ms, respuesta registrada a los 3107 ms |
+| Resumen | Dos HTTP 200 en 1499 y 1319 ms, con respuestas registradas a los 3830 y 3933 ms y 1216 ms de solapamiento estimado |
+| Datos visibles en la WebView | 4030 ms desde `onResume`, 97 ms después de la última respuesta de resumen |
+
+Los hitos de la WebView se cuentan desde `onResume` y las duraciones HTTP corresponden al cliente. La demora previa de 21 s no se reprodujo. Para atribuirla a una fase o a un servicio hacen falta trazas del mismo intervalo.
+
+La evidencia quedó en `.local/medicion/misma-instalacion/` de este worktree.
+
+- `reapertura-52-20261120-230912.json` conserva el resultado original con dos ventanas. `actividad-52-20261120-230837.log` y `fases-con-hora-52-20261120-230837.log` conservan las marcas para identificar la primera.
+- `reapertura-validada-52-20261120-230912.json` y `resumen-reapertura-52-20261120-230912.json` contienen la primera ventana y su análisis. Las comprobaciones ADB están en `comprobacion-previa-52-20261120-230833.json` y `comprobacion-posterior-52-20261120-230912.json`.
+- `instalacion-53.json` acredita el retorno por actualización a Kaptal 0.1.46 (53) a las 23:11:43. El APK instalado coincidió con el SHA-256 firmado `2135443c1d6c0c90258a2812511207d2efd22dd319fbcfe146c71999f5a4df13`. El certificado coincidió con la 52 y se comprobó en el DEX que la actividad omite el registro y las llamadas del diagnóstico. Android conservó la primera fecha de instalación y el permiso de avisos, con `BankNotificationListener` activo.
+
+## Procedimiento de captura
 
 La 51 tiene apagadas las marcas internas. ADB puede medir el arranque de Android y el propietario puede anotar cuándo aparecen Inicio y sus datos. Para medir también sesión, perfil, listas y resumen, se prepararon la 52 con captura y la 53 de retorno en `.local/medicion/misma-instalacion/`. Antes de instalar una versión de diagnóstico, verificar su certificado y preparar la APK de retorno con la autorización del propietario.
 
@@ -50,7 +75,7 @@ Conservar únicamente el bloque que empieza en `phase=primer_plano elapsed_ms=0`
 
 ## Análisis de la captura
 
-Cuando el seguimiento termine, abrir el JSON `reapertura-52-*.json` en la carpeta local del ensayo. Confirmar `mismoApkEnUltimoUso`, `instalacionVerificada` y una sola ventana diagnóstica. Usar la ruta del archivo guardado para ejecutar el resumen.
+Después de capturar, abrir el JSON `reapertura-52-*.json` en la carpeta local del ensayo. Confirmar `mismoApkEnUltimoUso`, `instalacionVerificada` y una sola ventana diagnóstica. Usar la ruta del archivo guardado para ejecutar el resumen.
 
 ```powershell
 python tools/operacion/resumir_reapertura_android.py RUTA_DEL_JSON
